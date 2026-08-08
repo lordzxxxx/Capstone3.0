@@ -132,12 +132,14 @@ class _HomePageState extends State<HomePage> {
     'Immunization',
   ];
 
-  // KPI and Today's Overview state
+  // KPI and Today's Overview state.
+  // All values below are derived only from scoped, persisted Firestore
+  // records (patients/checkups/prenatal/immunizations) — none are
+  // synthesized/randomized. See _loadKPIData().
   int _todaysPendingTasks = 0;
   int _patientsCheckedInToday = 0;
-  double _appointmentCompletionRate = 85.0;
-  double _patientSatisfactionScore = 4.5;
-  int _avgResponseTimeMinutes = 12;
+  double _prenatalCoverageRate = 0.0;
+  double _documentationCompletionRate = 0.0;
   double _immunizationRate = 0.0;
   List<Map<String, dynamic>> _topDiagnoses = [];
   List<Map<String, dynamic>> _healthInsights = [];
@@ -673,434 +675,6 @@ class _HomePageState extends State<HomePage> {
       }
     }
     throw Exception('Operation failed after $maxAttempts attempts');
-  }
-
-  /// Create CHO account directly (no email invitation needed)
-  Future<void> _createCHOAccount(String name, String email) async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-
-      // Step 1: Check if user already exists
-      bool userExists = false;
-      String? userId;
-
-      try {
-        final snapshot = await getFirestoreInstance()
-            .collection('users')
-            .where('email', isEqualTo: email)
-            .limit(1)
-            .get()
-            .timeout(const Duration(seconds: 10));
-        if (snapshot.docs.isNotEmpty) {
-          userExists = true;
-          Get.snackbar(
-            'Error',
-            'Email already exists in system',
-            backgroundColor: Colors.redAccent,
-            colorText: Colors.white,
-          );
-          return;
-        }
-      } catch (e) {
-        if (kDebugMode) print('Error checking if user exists: $e');
-      }
-
-      // Step 2: Generate temporary password
-      final tempPassword = 'Temp${DateTime.now().millisecondsSinceEpoch}@Ab1';
-
-      // Step 3: Create user in Firebase Auth
-      UserCredential userCredential;
-      try {
-        userCredential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
-              email: email,
-              password: tempPassword,
-            );
-        userId = userCredential.user?.uid;
-        if (kDebugMode) {
-          print('Created new CHO account: $email with UID: $userId');
-        }
-      } catch (createErr) {
-        String errorMsg = 'Failed to create account';
-        if (createErr.toString().contains('email-already-in-use')) {
-          errorMsg = 'Email already registered';
-        } else if (createErr.toString().contains('weak-password')) {
-          errorMsg = 'Password validation failed';
-        }
-
-        Get.snackbar(
-          'Error',
-          errorMsg,
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 6),
-        );
-        if (kDebugMode) print('Failed to create CHO account: $createErr');
-        return;
-      }
-
-      // Step 4: Write user profile to Firestore
-      if (userId != null) {
-        try {
-          await getFirestoreInstance()
-              .collection('users')
-              .doc(userId)
-              .set({
-                'email': email,
-                'name': name,
-                'role': 'CHO',
-                'createdBy': user?.uid,
-                'createdAt': FieldValue.serverTimestamp(),
-                'tempPassword': tempPassword,
-                'status': 'active',
-              }, SetOptions(merge: true))
-              .timeout(const Duration(seconds: 15));
-
-          if (kDebugMode) print('User profile created for $email');
-        } catch (firestoreErr) {
-          Get.snackbar(
-            'Warning',
-            'Account created but profile save failed',
-            backgroundColor: Colors.orange,
-            colorText: Colors.white,
-          );
-          if (kDebugMode) print('Failed to write user profile: $firestoreErr');
-        }
-      }
-
-      // Step 5: Show credentials dialog to admin
-      if (!mounted) return;
-
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (c) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.green),
-              SizedBox(width: 10),
-              Text('CHO Account Created'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Account successfully created for:',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildCredentialRow('Name:', name),
-                    const SizedBox(height: 8),
-                    _buildCredentialRow('Email:', email),
-                    const SizedBox(height: 8),
-                    _buildCredentialRow('Temporary Password:', tempPassword),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue[200]!),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info, color: Colors.blue[700], size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Share these credentials with the CHO. They must change their password on first login.',
-                        style: TextStyle(fontSize: 13, color: Colors.blue[900]),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(c).pop();
-                // Copy password to clipboard
-                _copyToClipboard(tempPassword);
-              },
-              child: const Text('Copy Password'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(c).pop(),
-              style: ElevatedButton.styleFrom(backgroundColor: _primaryAqua),
-              child: const Text('Done', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      );
-
-      Get.snackbar(
-        'Success',
-        'CHO account created for $name',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 4),
-      );
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to create CHO account: $e',
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-      if (kDebugMode) print('Error in _createCHOAccount: $e');
-    }
-  }
-
-  /// Create BHO account directly (no email invitation needed)
-  Future<void> _createBHOAccount(String name, String email) async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-
-      // Step 1: Check if user already exists
-      bool userExists = false;
-      String? userId;
-
-      try {
-        final snapshot = await getFirestoreInstance()
-            .collection('users')
-            .where('email', isEqualTo: email)
-            .limit(1)
-            .get()
-            .timeout(const Duration(seconds: 10));
-        if (snapshot.docs.isNotEmpty) {
-          userExists = true;
-          Get.snackbar(
-            'Error',
-            'Email already exists in system',
-            backgroundColor: Colors.redAccent,
-            colorText: Colors.white,
-          );
-          return;
-        }
-      } catch (e) {
-        if (kDebugMode) print('Error checking if user exists: $e');
-      }
-
-      // Step 2: Generate temporary password
-      final tempPassword = 'Temp${DateTime.now().millisecondsSinceEpoch}@Ab1';
-
-      // Step 3: Create user in Firebase Auth
-      UserCredential userCredential;
-      try {
-        userCredential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
-              email: email,
-              password: tempPassword,
-            );
-        userId = userCredential.user?.uid;
-        if (kDebugMode) {
-          print('Created new BHO account: $email with UID: $userId');
-        }
-      } catch (createErr) {
-        String errorMsg = 'Failed to create account';
-        if (createErr.toString().contains('email-already-in-use')) {
-          errorMsg = 'Email already registered';
-        } else if (createErr.toString().contains('weak-password')) {
-          errorMsg = 'Password validation failed';
-        }
-
-        Get.snackbar(
-          'Error',
-          errorMsg,
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 6),
-        );
-        if (kDebugMode) print('Failed to create BHO account: $createErr');
-        return;
-      }
-
-      // Step 4: Write user profile to Firestore
-      if (userId != null) {
-        try {
-          await getFirestoreInstance()
-              .collection('users')
-              .doc(userId)
-              .set({
-                'email': email,
-                'name': name,
-                'role': 'BHO',
-                'createdBy': user?.uid,
-                'createdAt': FieldValue.serverTimestamp(),
-                'tempPassword': tempPassword,
-                'status': 'active',
-              }, SetOptions(merge: true))
-              .timeout(const Duration(seconds: 15));
-
-          if (kDebugMode) print('User profile created for $email');
-        } catch (firestoreErr) {
-          Get.snackbar(
-            'Warning',
-            'Account created but profile save failed',
-            backgroundColor: Colors.orange,
-            colorText: Colors.white,
-          );
-          if (kDebugMode) print('Failed to write user profile: $firestoreErr');
-        }
-      }
-
-      // Step 5: Show credentials dialog to admin
-      if (!mounted) return;
-
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (c) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.green),
-              SizedBox(width: 10),
-              Text('BHO Account Created'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Account successfully created for:',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildCredentialRow('Name:', name),
-                    const SizedBox(height: 8),
-                    _buildCredentialRow('Email:', email),
-                    const SizedBox(height: 8),
-                    _buildCredentialRow('Temporary Password:', tempPassword),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue[200]!),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info, color: Colors.blue[700], size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Share these credentials with the BHO. They must change their password on first login.',
-                        style: TextStyle(fontSize: 13, color: Colors.blue[900]),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(c).pop();
-                // Copy password to clipboard
-                _copyToClipboard(tempPassword);
-              },
-              child: const Text('Copy Password'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(c).pop(),
-              style: ElevatedButton.styleFrom(backgroundColor: _primaryAqua),
-              child: const Text('Done', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      );
-
-      Get.snackbar(
-        'Success',
-        'BHO account created for $name',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 4),
-      );
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to create BHO account: $e',
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-      if (kDebugMode) print('Error in _createBHOAccount: $e');
-    }
-  }
-
-  /// Helper to display credential rows
-  Widget _buildCredentialRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-        ),
-        Expanded(
-          child: TextField(
-            controller: TextEditingController(text: value),
-            readOnly: true,
-            textAlign: TextAlign.right,
-            style: const TextStyle(fontSize: 12, fontFamily: 'Courier'),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.copy, size: 16),
-                onPressed: () => _copyToClipboard(value),
-                padding: EdgeInsets.zero,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Copy text to clipboard
-  void _copyToClipboard(String text) {
-    // Note: For web, you may need to use the clipboard package
-    // For now, showing a snackbar
-    Get.snackbar(
-      'Copied',
-      'Credentials copied to clipboard',
-      duration: const Duration(seconds: 2),
-      backgroundColor: Colors.green,
-    );
   }
 
   Future<void> _createInvitation(String email) async {
@@ -2402,7 +1976,7 @@ class _HomePageState extends State<HomePage> {
       if (prenatal.isNotEmpty &&
           (prenatal.length / patients.length * 100) > 5) {
         insights.add({
-          'icon': '??',
+          'icon': Icons.trending_up,
           'title': 'Prenatal Cases Growing',
           'message':
               'Prenatal cases up ${((prenatal.length / patients.length * 100).toStringAsFixed(0))}% - consider resource allocation',
@@ -2415,7 +1989,7 @@ class _HomePageState extends State<HomePage> {
           : 0.0;
       if (immunizationRate > 85) {
         insights.add({
-          'icon': '??',
+          'icon': Icons.vaccines_outlined,
           'title': 'Immunization Rate Strong',
           'message':
               'Immunization rate at ${immunizationRate.toStringAsFixed(1)}% - continue current strategy',
@@ -2425,20 +1999,36 @@ class _HomePageState extends State<HomePage> {
 
       if (checkups.isEmpty || (checkups.length / patients.length < 0.2)) {
         insights.add({
-          'icon': '??',
+          'icon': Icons.warning_amber_rounded,
           'title': 'Low Check-up Activity',
           'message': 'Consider increasing outreach and scheduling campaigns',
           'severity': 'warning',
         });
       }
 
+      // Prenatal coverage: share of registered patients with a prenatal
+      // record on file. Same real-data shape as the immunization rate above.
+      final prenatalCoverageRate = patients.isNotEmpty
+          ? (prenatal.length / patients.length * 100)
+          : 0.0;
+
+      // Documentation completion: share of check-up records that have
+      // clinical notes recorded, mirroring the "pending review" business
+      // rule used elsewhere in this file (checkups with empty notes are
+      // treated as awaiting follow-up documentation).
+      final documentedCheckups = checkups
+          .where((c) => (c['notes'] ?? '').toString().trim().isNotEmpty)
+          .length;
+      final documentationCompletionRate = checkups.isNotEmpty
+          ? (documentedCheckups / checkups.length * 100)
+          : 0.0;
+
       if (!mounted) return;
       setState(() {
         _todaysPendingTasks = (_criticalAlerts + _pendingReviews);
         _patientsCheckedInToday = todayCheckups;
-        _appointmentCompletionRate = 85.0 + (checkups.length % 15).toDouble();
-        _patientSatisfactionScore = 4.2 + (checkups.length % 8) * 0.1;
-        _avgResponseTimeMinutes = 15 - (checkups.length % 10);
+        _prenatalCoverageRate = prenatalCoverageRate;
+        _documentationCompletionRate = documentationCompletionRate;
         _immunizationRate = immunizationRate;
         _topDiagnoses = topDiagnoses;
         _healthInsights = insights;
@@ -6127,43 +5717,47 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildKPIDashboard() {
-    final double appointmentScore = _appointmentCompletionRate
+    // Every score below is derived from persisted Firestore records
+    // (patients/checkups/prenatal/immunizations) via _loadKPIData() — none
+    // are randomized or formula-fabricated.
+    final double checkupVolumeScore = _totalPatients > 0
+        ? ((_checkupsThisMonth / _totalPatients) * 100.0)
+              .clamp(0.0, 100.0)
+              .toDouble()
+        : 0.0;
+    final double documentationScore = _documentationCompletionRate
         .clamp(0.0, 100.0)
         .toDouble();
-    final double satisfactionScore = ((_patientSatisfactionScore / 5.0) * 100.0)
+    final double prenatalScore = _prenatalCoverageRate
         .clamp(0.0, 100.0)
         .toDouble();
-    final double responseScore =
-        (100.0 - ((_avgResponseTimeMinutes / 30.0) * 100.0))
-            .clamp(0.0, 100.0)
-            .toDouble();
     final double immunizationScore = _immunizationRate
         .clamp(0.0, 100.0)
         .toDouble();
 
     final metrics = <Map<String, dynamic>>[
       {
-        'label': 'Appointment Completion',
-        'short': 'Appt',
-        'display': '${_appointmentCompletionRate.toStringAsFixed(1)}%',
-        'score': appointmentScore,
-        'target': 90.0,
+        'label': 'Check-ups This Month',
+        'short': 'Ckup',
+        'display': '$_checkupsThisMonth of $_totalPatients patients',
+        'score': checkupVolumeScore,
+        'target': 50.0,
         'color': _accentGreen,
       },
       {
-        'label': 'Patient Satisfaction',
-        'short': 'Sat',
-        'display': '${_patientSatisfactionScore.toStringAsFixed(1)}/5',
-        'score': satisfactionScore,
-        'target': 88.0,
+        'label': 'Documentation Completion',
+        'short': 'Docs',
+        'display': '${_documentationCompletionRate.toStringAsFixed(1)}%',
+        'score': documentationScore,
+        'target': 90.0,
         'color': _primaryAqua,
       },
       {
-        'label': 'Response Performance',
-        'short': 'Resp',
-        'display': '$_avgResponseTimeMinutes min',
-        'score': responseScore,
-        'target': 70.0,
+        'label': 'Prenatal Coverage',
+        'short': 'Pren',
+        'display': '${_prenatalCoverageRate.toStringAsFixed(1)}%',
+        'score': prenatalScore,
+        'target': 80.0,
         'color': _accentOrange,
       },
       {

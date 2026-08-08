@@ -589,7 +589,6 @@ class DatabaseHelper {
         } catch (e) {
           // Silently provide a safe default recovery plan format
           map['ai_recovery_plan'] = {
-            'medications': [],
             'home_care': [],
             'precautions': [],
             'estimated_recovery': 'Varies by condition',
@@ -894,7 +893,6 @@ class DatabaseHelper {
       );
 
       final safeDefault = {
-        'medications': [],
         'home_care': [],
         'precautions': [],
         'estimated_recovery': 'Varies by condition',

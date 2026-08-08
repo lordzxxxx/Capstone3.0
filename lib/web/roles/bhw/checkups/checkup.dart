@@ -7622,7 +7622,7 @@ Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
             ),
             const SizedBox(width: 10),
             const Text(
-              'Recovery Recommendations',
+              'AI-Assisted Home-Care Recommendation',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
@@ -7668,7 +7668,8 @@ Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
         // Home Care
         if (homeCare.isNotEmpty) ...[
           _buildRecommendationSection(
-            '🏠 Home Care Instructions',
+            'Home Care Instructions',
+            Icons.home_outlined,
             homeCare,
             Colors.orange.shade700,
             Colors.orange.shade50,
@@ -7679,7 +7680,8 @@ Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
         // Precautions
         if (precautions.isNotEmpty) ...[
           _buildRecommendationSection(
-            '⚠️ Important Precautions',
+            'Important Precautions',
+            Icons.warning_amber_rounded,
             precautions,
             Colors.red.shade700,
             Colors.red.shade50,
@@ -7690,7 +7692,8 @@ Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
         // General Advice
         if (generalAdvice.isNotEmpty) ...[
           _buildRecommendationSection(
-            '💡 General Advice',
+            'General Advice',
+            Icons.info_outline,
             generalAdvice,
             Colors.teal.shade700,
             Colors.teal.shade50,
@@ -7719,7 +7722,9 @@ Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
               const SizedBox(width: 6),
               Expanded(
                 child: const Text(
-                  'These are AI-generated suggestions. Always consult a healthcare professional.',
+                  'AI-generated information provides supportive home-care '
+                  'guidance only. Medication and clinical decisions remain '
+                  'under the attending physician.',
                   style: TextStyle(
                     fontSize: 10.5,
                     color: Colors.white70,
@@ -7737,12 +7742,11 @@ Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
 
 Widget _buildRecommendationSection(
   String title,
+  IconData icon,
   List<String> items,
   Color textColor,
   Color bgColor,
 ) {
-  final cleanTitle = title.replaceFirst(RegExp(r'^[^A-Za-z]+'), '');
-
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -7756,13 +7760,19 @@ Widget _buildRecommendationSection(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              cleanTitle,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
+            Row(
+              children: [
+                Icon(icon, size: 15, color: textColor),
+                const SizedBox(width: 6),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             ...items.map(

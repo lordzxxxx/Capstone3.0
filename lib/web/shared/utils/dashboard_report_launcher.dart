@@ -957,6 +957,8 @@ Future<Uint8List> _buildOverallHealthPdf(
   // Yield to event loop at the start
   await Future.delayed(const Duration(milliseconds: 1));
 
+  final generatedAt = DateTime.now();
+
   final headerLogos = await Future.wait<pw.MemoryImage?>([
     _loadPdfAssetImage('assets/logo1.png'),
     _loadPdfAssetImage('assets/logo2.png'),
@@ -1293,19 +1295,29 @@ Future<Uint8List> _buildOverallHealthPdf(
       ),
       footer: (context) => pw.Container(
         margin: const pw.EdgeInsets.only(top: 6),
-        child: pw.Row(
+        child: pw.Column(
+          mainAxisSize: pw.MainAxisSize.min,
           children: [
-            pw.Expanded(
-              child: pw.Container(height: 0.6, color: PdfColors.black),
-            ),
-            pw.SizedBox(width: 10),
-            pw.Text(
-              'Page ${context.pageNumber} of ${context.pagesCount}',
-              style: pw.TextStyle(
-                fontSize: 8.5,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.black,
-              ),
+            pw.Container(height: 0.6, color: PdfColors.black),
+            pw.SizedBox(height: 4),
+            pw.Row(
+              children: [
+                pw.Expanded(
+                  child: pw.Text(
+                    'Generated: ${DateFormat('MMMM dd, yyyy  hh:mm a').format(generatedAt)}',
+                    style: pw.TextStyle(fontSize: 8.5, color: PdfColors.black),
+                  ),
+                ),
+                pw.SizedBox(width: 10),
+                pw.Text(
+                  'Page ${context.pageNumber} of ${context.pagesCount}',
+                  style: pw.TextStyle(
+                    fontSize: 8.5,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -1423,6 +1435,11 @@ pw.Widget _buildOverallPdfHeader(
                   fontWeight: pw.FontWeight.bold,
                   color: PdfColors.black,
                 ),
+              ),
+              pw.SizedBox(height: 3),
+              pw.Text(
+                'Period: ${selection.period.label} — ${selection.scopeLabel}',
+                style: pw.TextStyle(fontSize: 9, color: PdfColors.black),
               ),
               pw.SizedBox(height: 4),
               pw.Text(
@@ -1641,15 +1658,15 @@ pw.Widget _buildAgeMetricsTable(
         headerDecoration: const pw.BoxDecoration(color: PdfColors.white),
         headerStyle: pw.TextStyle(
           color: PdfColors.black,
-          fontSize: 8,
+          fontSize: 11,
           fontWeight: pw.FontWeight.bold,
         ),
-        cellStyle: pw.TextStyle(fontSize: 7.8, color: PdfColors.black),
+        cellStyle: pw.TextStyle(fontSize: 9.5, color: PdfColors.black),
         headerPadding: const pw.EdgeInsets.symmetric(
-          horizontal: 4,
-          vertical: 6,
+          horizontal: 5,
+          vertical: 7,
         ),
-        cellPadding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+        cellPadding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 6),
         columnWidths: const {
           0: pw.FlexColumnWidth(2.6),
           1: pw.FlexColumnWidth(0.7),
@@ -1716,15 +1733,15 @@ pw.Widget _buildSexMetricsTable(
         headerDecoration: const pw.BoxDecoration(color: PdfColors.white),
         headerStyle: pw.TextStyle(
           color: PdfColors.black,
-          fontSize: 8,
+          fontSize: 11,
           fontWeight: pw.FontWeight.bold,
         ),
-        cellStyle: pw.TextStyle(fontSize: 7.8, color: PdfColors.black),
+        cellStyle: pw.TextStyle(fontSize: 9.5, color: PdfColors.black),
         headerPadding: const pw.EdgeInsets.symmetric(
-          horizontal: 4,
-          vertical: 6,
+          horizontal: 5,
+          vertical: 7,
         ),
-        cellPadding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+        cellPadding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 6),
         columnWidths: const {
           0: pw.FlexColumnWidth(2.7),
           1: pw.FlexColumnWidth(0.7),
@@ -1777,7 +1794,7 @@ Future<_DashboardReportPayload> _loadDashboardReportPayload(
           ReportCsvColumn(
             'Sex',
             (record) => reportText(record['gender'] ?? record['sex']),
-            flex: 0.55,
+            flex: 0.7,
             center: true,
           ),
           ReportCsvColumn(
@@ -2081,7 +2098,7 @@ Future<_DashboardReportPayload> _loadDashboardReportPayload(
                     (record['sourceRecord'] as Map?)?['sex'],
               ),
             ),
-            flex: 0.55,
+            flex: 0.7,
             center: true,
           ),
           ReportCsvColumn(
@@ -2148,7 +2165,7 @@ Future<_DashboardReportPayload> _loadDashboardReportPayload(
           ReportCsvColumn(
             'Sex',
             (record) => reportText(record['gender']),
-            flex: 0.6,
+            flex: 0.7,
             center: true,
           ),
           ReportCsvColumn(
@@ -2219,7 +2236,7 @@ List<ReportCsvColumn> _buildClassifiedDiseaseColumns() {
               (record['sourceRecord'] as Map?)?['sex'],
         ),
       ),
-      flex: 0.55,
+      flex: 0.7,
       center: true,
     ),
     ReportCsvColumn(

@@ -12,6 +12,20 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 
+/// CHO referral review/approval workspace — reached from the sidebar
+/// "Referrals" destination (`cho_navigation.dart`). Owns the referral
+/// state machine (`_ReferralRecord`, statuses: pending_review /
+/// hospital_assigned / doctor_assigned / waiting_consultation / consulted
+/// / completed), which matches what `firestore.rules`' `canUpdateReferral`
+/// checks (see `pending_review` / `returned_for_correction` there) — this
+/// is the authoritative referral status vocabulary.
+///
+/// `lib/web/roles/cho/referrals/referral.dart` defines a *different*
+/// class, `CHOReferralWorkspacePage` (reached from CHO dashboard quick
+/// actions), which uses its own incompatible status vocabulary and adds
+/// doctor-registry management, filters, and PDF printing this page
+/// doesn't have. See that file's doc comment for the full explanation —
+/// this is a known, documented divergence, not an oversight.
 class CHOPreferralPage extends StatefulWidget {
   const CHOPreferralPage({super.key});
 

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/web/roles/bhw/checkups/checkup_database_helper.dart';
@@ -7,6 +8,8 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality_database
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_database_helper.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
 import 'package:mycapstone_project/web/roles/bhw/prenatal/prenatal_database_helper.dart';
+import 'package:mycapstone_project/web/shared/models/doctor_note.dart';
+import 'package:mycapstone_project/web/shared/services/doctor_notes_service.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
 class PatientTimelineEvent {
@@ -36,6 +39,8 @@ class PatientModuleHistorySnapshot {
   final List<Map<String, dynamic>> nonCommunicableHistory;
   final List<Map<String, dynamic>> mortalityHistory;
   final List<Map<String, dynamic>> morbidityHistory;
+  final List<Map<String, dynamic>> referralHistory;
+  final List<DoctorNote> doctorNotes;
 
   const PatientModuleHistorySnapshot({
     required this.patient,
@@ -46,6 +51,8 @@ class PatientModuleHistorySnapshot {
     required this.nonCommunicableHistory,
     required this.mortalityHistory,
     required this.morbidityHistory,
+    required this.referralHistory,
+    required this.doctorNotes,
   });
 
   int get totalRecords =>
@@ -55,7 +62,8 @@ class PatientModuleHistorySnapshot {
       communicableHistory.length +
       nonCommunicableHistory.length +
       mortalityHistory.length +
-      morbidityHistory.length;
+      morbidityHistory.length +
+      referralHistory.length;
 
   List<PatientTimelineEvent> get timeline {
     final events = <PatientTimelineEvent>[];
@@ -162,6 +170,43 @@ class PatientModuleHistorySnapshot {
         subtitleBuilder: (record) => _safeText(
           record['status'],
           fallback: _safeText(record['details'], fallback: 'No status'),
+        ),
+      ),
+    );
+
+    events.addAll(
+      _buildTimeline(
+        module: 'Referral',
+        records: referralHistory,
+        dateKeys: const ['createdAt', 'referralDateTime'],
+        titleBuilder: (record) => _safeText(
+          record['referralReason'],
+          fallback:
+              'Referral ${_safeText(record['status'], fallback: 'submitted')}',
+        ),
+        subtitleBuilder: (record) {
+          final status = _safeText(record['status'], fallback: 'submitted');
+          final doctor = _safeText(record['assignedDoctorName']);
+          return doctor.isNotEmpty
+              ? 'Status: $status | Assigned: $doctor'
+              : 'Status: $status';
+        },
+      ),
+    );
+
+    events.addAll(
+      doctorNotes.map(
+        (note) => PatientTimelineEvent(
+          module: 'Doctor Note',
+          recordId: note.id,
+          eventDate: note.createdAt,
+          title: note.authorName.isEmpty
+              ? 'Doctor note'
+              : '${note.authorName}${note.authorRole.isEmpty ? '' : ' (${note.authorRole})'}',
+          subtitle: note.note.length > 140
+              ? '${note.note.substring(0, 140)}…'
+              : note.note,
+          rawRecord: const <String, dynamic>{},
         ),
       ),
     );
@@ -592,6 +637,10 @@ class PatientCenteredHistoryService {
   ) async {
     final patientIdentifiers = _collectPatientIdentifiers(patient);
     final patientName = _normalize(_buildPatientName(patient));
+    final patientId = _safeText(
+      patient['patientId'],
+      fallback: _safeText(patient['id']),
+    );
 
     final results = await Future.wait<List<Map<String, dynamic>>>([
       _checkupHelper.getAllRecords(),
@@ -599,6 +648,7 @@ class PatientCenteredHistoryService {
       _immunizationHelper.getAllRecords(),
       _mortalityHelper.getAllRecords(),
       _loadMorbidityRecords(),
+      _loadReferralHistory(patient: patient, patientId: patientId),
     ]);
 
     final allCheckups = results[0];
@@ -606,6 +656,10 @@ class PatientCenteredHistoryService {
     final allImmunizations = results[2];
     final allMortality = results[3];
     final allMorbidity = results[4];
+    final referralHistory = results[5];
+    final doctorNotes = await DoctorNotesService().fetchNotesForPatient(
+      patientId,
+    );
 
     final linkedCheckups = allCheckups.where((record) {
       return _recordMatchesPatient(
@@ -727,7 +781,49 @@ class PatientCenteredHistoryService {
       nonCommunicableHistory: nonCommunicableHistory,
       mortalityHistory: mortalityHistory,
       morbidityHistory: morbidityHistory,
+      referralHistory: referralHistory,
+      doctorNotes: doctorNotes,
     );
+  }
+
+  /// Fetches this patient's referral history using a query filter that
+  /// mirrors `canReadReferral` in firestore.rules exactly, so the query
+  /// never asks Firestore for documents the current user isn't authorized
+  /// to read: CHO/SuperAdmin see every referral for the patient; a DOCTOR
+  /// sees referrals assigned to them; a BHW sees referrals they created.
+  Future<List<Map<String, dynamic>>> _loadReferralHistory({
+    required Map<String, dynamic> patient,
+    required String patientId,
+  }) async {
+    final rawPatientName = _buildPatientName(patient);
+    if (patientId.isEmpty && rawPatientName.isEmpty) {
+      return const <Map<String, dynamic>>[];
+    }
+
+    try {
+      final scope = await UserAccessScopeService.instance.loadCurrentScope();
+      Query<Map<String, dynamic>> query = getFirestoreInstance().collection(
+        'referrals',
+      );
+      query = patientId.isNotEmpty
+          ? query.where('patientId', isEqualTo: patientId)
+          : query.where('patientName', isEqualTo: rawPatientName);
+
+      if (!scope.canViewAllBarangays) {
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid == null) {
+          return const <Map<String, dynamic>>[];
+        }
+        query = scope.role == 'doctor'
+            ? query.where('assignedDoctorUid', isEqualTo: uid)
+            : query.where('createdByUid', isEqualTo: uid);
+      }
+
+      final snapshot = await query.get();
+      return snapshot.docs.map(materializeFirestoreRecord).toList();
+    } on FirebaseException {
+      return const <Map<String, dynamic>>[];
+    }
   }
 
   bool _isMorbidityLikeRecord(Map<String, dynamic> record) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
+import 'package:mycapstone_project/web/shared/widgets/doctor_notes_section.dart';
 
 class CanonicalPatientDetailsModal extends StatelessWidget {
   const CanonicalPatientDetailsModal({
@@ -217,7 +218,7 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 18),
-                _healthTimeline(),
+                _healthTimelineAndNotes(),
                 const SizedBox(height: 18),
                 _quickActions(context),
                 const SizedBox(height: 30),
@@ -229,7 +230,7 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
     );
   }
 
-  Widget _healthTimeline() {
+  Widget _healthTimelineAndNotes() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -267,11 +268,20 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
                 );
               }
               if (snapshot.hasError) {
-                return const Text(
-                  'Linked health records could not be loaded.',
-                  style: TextStyle(color: Colors.white60),
+                return const Row(
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.white60),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Linked health records could not be loaded.',
+                        style: TextStyle(color: Colors.white60),
+                      ),
+                    ),
+                  ],
                 );
               }
+
               final history = snapshot.data;
               if (history == null || history.totalRecords == 0) {
                 return const Text(
@@ -279,33 +289,51 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
                   style: TextStyle(color: Colors.white60),
                 );
               }
-              final counts = <(String, int)>[
-                ('Check-ups', history.checkUpHistory.length),
-                ('Prenatal', history.prenatalHistory.length),
-                ('Immunization', history.immunizationHistory.length),
-                ('Morbidity', history.morbidityHistory.length),
-                ('Mortality', history.mortalityHistory.length),
-              ];
+
+              final checkupOptions = history.checkUpHistory
+                  .map(
+                    (record) => DoctorNoteCheckupOption(
+                      id: (record['id'] ?? '').toString(),
+                      label:
+                          '${_formatDate(_recordDate(record))} — '
+                          '${(record['type'] ?? 'Check-up').toString()}',
+                    ),
+                  )
+                  .where((option) => option.id.isNotEmpty)
+                  .toList(growable: false);
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: counts
-                        .map(
-                          (entry) => Chip(
-                            backgroundColor: _field,
-                            side: BorderSide(
-                              color: _accent.withValues(alpha: 0.22),
-                            ),
-                            label: Text(
-                              '${entry.$1}: ${entry.$2}',
-                              style: const TextStyle(color: _text),
-                            ),
-                          ),
-                        )
-                        .toList(growable: false),
+                    children:
+                        <(String, int)>[
+                              ('Check-ups', history.checkUpHistory.length),
+                              ('Prenatal', history.prenatalHistory.length),
+                              (
+                                'Immunization',
+                                history.immunizationHistory.length,
+                              ),
+                              ('Morbidity', history.morbidityHistory.length),
+                              ('Mortality', history.mortalityHistory.length),
+                              ('Referrals', history.referralHistory.length),
+                              ('Doctor Notes', history.doctorNotes.length),
+                            ]
+                            .map(
+                              (entry) => Chip(
+                                backgroundColor: _field,
+                                side: BorderSide(
+                                  color: _accent.withValues(alpha: 0.22),
+                                ),
+                                label: Text(
+                                  '${entry.$1}: ${entry.$2}',
+                                  style: const TextStyle(color: _text),
+                                ),
+                              ),
+                            )
+                            .toList(growable: false),
                   ),
                   const SizedBox(height: 14),
                   ...history.timeline
@@ -338,6 +366,16 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
                           ),
                         ),
                       ),
+                  const SizedBox(height: 18),
+                  DoctorNotesSection(
+                    patientId: _fallbackValue('patientId', 'id', fallback: ''),
+                    patientName: _fullName,
+                    patientBarangayCode: _value(
+                      patient['barangayCode'],
+                      fallback: '',
+                    ),
+                    checkupOptions: checkupOptions,
+                  ),
                 ],
               );
             },
@@ -345,6 +383,16 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  DateTime? _recordDate(Map<String, dynamic> record) {
+    for (final key in const ['datetime', 'date', 'followup']) {
+      final raw = record[key]?.toString().trim() ?? '';
+      if (raw.isEmpty) continue;
+      final parsed = DateTime.tryParse(raw);
+      if (parsed != null) return parsed;
+    }
+    return null;
   }
 
   Widget _quickActions(BuildContext context) {

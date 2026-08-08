@@ -120,7 +120,17 @@ class _PrenatalPageState extends State<PrenatalPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Successfully added 100 sample prenatal records!'),
+            content: Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Successfully added 100 sample prenatal records!',
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: Color(0xFF27AE60),
             duration: Duration(seconds: 3),
           ),
@@ -133,8 +143,14 @@ class _PrenatalPageState extends State<PrenatalPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Error seeding data: $e'),
-            backgroundColor: Color(0xFFE74C3C),
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Error seeding data: $e')),
+              ],
+            ),
+            backgroundColor: const Color(0xFFE74C3C),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -237,7 +253,9 @@ class _PrenatalPageState extends State<PrenatalPage> {
                               itemLabel: 'records',
                               accentColor: _primaryAqua,
                               textColor: _lightOffWhite,
-                              surfaceColor: _darkDeepTeal.withValues(alpha: 0.55),
+                              surfaceColor: _darkDeepTeal.withValues(
+                                alpha: 0.55,
+                              ),
                               onRowsPerPageChanged: (value) {
                                 setState(() {
                                   _rowsPerPage = value > 0
@@ -783,7 +801,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
           'Review previous prenatal visits before recording the next maternal check-in for the same patient.',
       addButtonLabel: 'Add Another Prenatal Visit',
       titleBuilder: (entry) =>
-          (entry['riskLevel'] ?? entry['status'] ?? 'Prenatal visit').toString(),
+          (entry['riskLevel'] ?? entry['status'] ?? 'Prenatal visit')
+              .toString(),
       subtitleBuilder: (entry) =>
           'Gestational age: ${(entry['gestationalAge'] ?? entry['aog'] ?? 'N/A').toString()}',
       metaBuilder: (entry) =>
@@ -791,8 +810,10 @@ class _PrenatalPageState extends State<PrenatalPage> {
       dateKeys: const ['registrationDate', 'dueDate', 'lmpDate'],
       secondaryActionLabel: 'Medical History',
       onSecondaryAction: () => _showPatientMedicalHistory(context, record),
-      onAddAnother: () =>
-          _showNewPrenatalModal(context, patientSeed: history.isNotEmpty ? history.first : record),
+      onAddAnother: () => _showNewPrenatalModal(
+        context,
+        patientSeed: history.isNotEmpty ? history.first : record,
+      ),
       onOpenRecord: (entry) => _showPatientDetails(context, entry),
     );
   }
@@ -896,7 +917,11 @@ class _PrenatalPageState extends State<PrenatalPage> {
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.add_circle_outline, size: 20, color: _primaryAqua),
+                      Icon(
+                        Icons.add_circle_outline,
+                        size: 20,
+                        color: _primaryAqua,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'Add Another Prenatal Visit',
@@ -989,7 +1014,9 @@ class _PrenatalPageState extends State<PrenatalPage> {
                     });
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4ECDC4).withValues(alpha: 0.1),
+                    backgroundColor: const Color(
+                      0xFF4ECDC4,
+                    ).withValues(alpha: 0.1),
                     side: const BorderSide(color: Color(0xFF4ECDC4), width: 2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1048,7 +1075,11 @@ class _PrenatalPageState extends State<PrenatalPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.delete_sweep, size: 20, color: Colors.red.shade700),
+                      Icon(
+                        Icons.delete_sweep,
+                        size: 20,
+                        color: Colors.red.shade700,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Delete Selected',
@@ -1765,7 +1796,9 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                                   Text(
                                     'Estimated Recovery: ',
                                     style: TextStyle(
-                                      color: _lightOffWhite.withValues(alpha: 0.72),
+                                      color: _lightOffWhite.withValues(
+                                        alpha: 0.72,
+                                      ),
                                       fontSize: 13,
                                     ),
                                   ),
@@ -2013,7 +2046,10 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
 
     if (patientSeed != null) {
       final seededName = (patientSeed['patientName'] ?? '').toString().trim();
-      final nameParts = seededName.split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+      final nameParts = seededName
+          .split(RegExp(r'\s+'))
+          .where((part) => part.isNotEmpty)
+          .toList();
       if (nameParts.isNotEmpty) {
         firstNameController.text = nameParts.first;
         if (nameParts.length > 1) {
@@ -2023,15 +2059,20 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
       ageController.text = (patientSeed['age'] ?? '').toString();
       addressController.text = (patientSeed['address'] ?? '').toString();
       patientIdController.text = (patientSeed['patientId'] ?? '').toString();
-      contactNumberController.text = (patientSeed['contactNumber'] ?? '').toString();
-      civilStatusController.text = (patientSeed['civilStatus'] ?? '').toString();
-      philhealthNumberController.text = (patientSeed['philhealthNumber'] ?? '').toString();
-      philhealthMemberController.text = (patientSeed['philhealthMember'] ?? '').toString();
+      contactNumberController.text = (patientSeed['contactNumber'] ?? '')
+          .toString();
+      civilStatusController.text = (patientSeed['civilStatus'] ?? '')
+          .toString();
+      philhealthNumberController.text = (patientSeed['philhealthNumber'] ?? '')
+          .toString();
+      philhealthMemberController.text = (patientSeed['philhealthMember'] ?? '')
+          .toString();
       religionController.text = (patientSeed['religion'] ?? '').toString();
       gravidaController.text = (patientSeed['gravida'] ?? '').toString();
       paraController.text = (patientSeed['para'] ?? '').toString();
       selectedRiskLevel =
-          (patientSeed['riskLevel'] ?? patientSeed['status'] ?? 'Active').toString();
+          (patientSeed['riskLevel'] ?? patientSeed['status'] ?? 'Active')
+              .toString();
       bloodTypeController.text = (patientSeed['bloodType'] ?? '').toString();
       allergiesController.text = (patientSeed['allergies'] ?? '').toString();
       preExistingConditionsController.text =
@@ -2039,18 +2080,31 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
       previousComplicationsController.text =
           (patientSeed['previousComplications'] ?? '').toString();
       aogController.text =
-          (patientSeed['gestationalAge'] ?? patientSeed['aog'] ?? '').toString();
-      wtController.text = (patientSeed['weight'] ?? patientSeed['wt'] ?? '').toString();
-      atController.text = (patientSeed['abdominalTenderness'] ?? patientSeed['at'] ?? '').toString();
-      tempController.text = (patientSeed['temperature'] ?? patientSeed['temp'] ?? '').toString();
-      bpController.text = (patientSeed['bloodPressure'] ?? patientSeed['bp'] ?? '').toString();
+          (patientSeed['gestationalAge'] ?? patientSeed['aog'] ?? '')
+              .toString();
+      wtController.text = (patientSeed['weight'] ?? patientSeed['wt'] ?? '')
+          .toString();
+      atController.text =
+          (patientSeed['abdominalTenderness'] ?? patientSeed['at'] ?? '')
+              .toString();
+      tempController.text =
+          (patientSeed['temperature'] ?? patientSeed['temp'] ?? '').toString();
+      bpController.text =
+          (patientSeed['bloodPressure'] ?? patientSeed['bp'] ?? '').toString();
       bmiController.text = (patientSeed['bmi'] ?? '').toString();
-      fhController.text = (patientSeed['fundalHeight'] ?? patientSeed['fh'] ?? '').toString();
-      dhbController.text = (patientSeed['fetalHeartBeat'] ?? patientSeed['dhb'] ?? '').toString();
+      fhController.text =
+          (patientSeed['fundalHeight'] ?? patientSeed['fh'] ?? '').toString();
+      dhbController.text =
+          (patientSeed['fetalHeartBeat'] ?? patientSeed['dhb'] ?? '')
+              .toString();
       tcbController.text = (patientSeed['tcb'] ?? '').toString();
-      registeredByController.text = (patientSeed['registeredBy'] ?? '').toString();
+      registeredByController.text = (patientSeed['registeredBy'] ?? '')
+          .toString();
       additionalNoteController.text =
-          (patientSeed['additionalNotes'] ?? patientSeed['additionalNote'] ?? '').toString();
+          (patientSeed['additionalNotes'] ??
+                  patientSeed['additionalNote'] ??
+                  '')
+              .toString();
       lmpDate = _parseDate(patientSeed['lmpDate']);
       eddDate = _parseDate(patientSeed['eddDate'] ?? patientSeed['dueDate']);
       lastDeliveryDate = _parseDate(patientSeed['lastDeliveryDate']);
@@ -2079,7 +2133,10 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [_darkDeepTeal, _darkDeepTeal.withValues(alpha: 0.9)],
+                      colors: [
+                        _darkDeepTeal,
+                        _darkDeepTeal.withValues(alpha: 0.9),
+                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -3054,7 +3111,10 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _lightOffWhite.withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(
+          color: _lightOffWhite.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
         boxShadow: const [],
       ),
       child: Column(
@@ -3105,11 +3165,15 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
             fillColor: Colors.transparent,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+              borderSide: BorderSide(
+                color: _lightOffWhite.withValues(alpha: 0.3),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+              borderSide: BorderSide(
+                color: _lightOffWhite.withValues(alpha: 0.3),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -3556,7 +3620,9 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? _primaryAqua : _primaryAqua.withValues(alpha: 0.2),
+            color: isSelected
+                ? _primaryAqua
+                : _primaryAqua.withValues(alpha: 0.2),
             width: isSelected ? 2.5 : 1.5,
           ),
           boxShadow: [
@@ -3802,7 +3868,10 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.2), width: 1.5),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: _mutedCoolGray.withValues(alpha: 0.08),
@@ -3887,7 +3956,10 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 2),
+          border: Border.all(
+            color: _primaryAqua.withValues(alpha: 0.3),
+            width: 2,
+          ),
           boxShadow: [
             BoxShadow(
               color: _darkDeepTeal.withValues(alpha: 0.2),

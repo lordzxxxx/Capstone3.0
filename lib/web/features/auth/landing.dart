@@ -1,16 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/features/auth/signup.dart';
 import 'package:mycapstone_project/web/features/auth/bhw_registration.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
 const Color _primaryAqua = Color(0xFF00A8B5);
+const Color _primaryAquaBright = Color(0xFF29C7D1);
 const Color _secondaryIceBlue = Color(0xFF1E5A7A);
 const Color _darkDeepTeal = Color(0xFF0A1F24);
 const Color _mutedCoolGray = Color(0xFF546E7A);
 const Color _lightOffWhite = Color(0xFFF5F5F5);
 const Color _sidebarDark = Color(0xFF0E2F34);
 const Color _panelSurface = Color(0xFF061920);
+
+// Plus Jakarta Sans is already the established typeface for the auth flow
+// (login.dart, signup.dart, bhw_registration.dart) — applied here too so the
+// landing page matches instead of falling back to the platform default font.
+TextStyle _display({
+  required double size,
+  FontWeight weight = FontWeight.w800,
+  Color color = _lightOffWhite,
+  double? letterSpacing,
+}) => GoogleFonts.plusJakartaSans(
+  fontSize: size,
+  fontWeight: weight,
+  color: color,
+  letterSpacing: letterSpacing,
+  height: 1.1,
+);
+
+TextStyle _body({
+  required double size,
+  FontWeight weight = FontWeight.w500,
+  Color color = _lightOffWhite,
+  double? height,
+}) => GoogleFonts.plusJakartaSans(
+  fontSize: size,
+  fontWeight: weight,
+  color: color,
+  height: height,
+);
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -41,7 +72,8 @@ class _LandingPageState extends State<LandingPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_didPrecacheLogo) return;
-    precacheImage(const AssetImage('assets/bg3.png'), context);
+    precacheImage(const AssetImage('assets/newlogo.png'), context);
+    precacheImage(const AssetImage('assets/newsystembg_web.webp'), context);
     _didPrecacheLogo = true;
   }
 
@@ -50,32 +82,29 @@ class _LandingPageState extends State<LandingPage> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: _sidebarDark,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: _primaryAqua.withValues(alpha: 0.18)),
-        ),
-        title: const Text(
-          'Register As',
-          style: TextStyle(color: _lightOffWhite, fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Register As', style: _display(size: 20)),
+        content: Text(
           'Choose your account type. BHW requests require City Health Office approval. Administrator accounts are not available through public registration.',
-          style: TextStyle(color: _lightOffWhite),
+          style: _body(size: 14, color: _lightOffWhite.withValues(alpha: 0.85)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'Cancel',
-              style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.8)),
+              style: _body(
+                size: 14,
+                weight: FontWeight.w600,
+                color: _lightOffWhite.withValues(alpha: 0.8),
+              ),
             ),
           ),
-          OutlinedButton(
+          FilledButton(
             onPressed: () => Navigator.of(context).pop('CHO'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _lightOffWhite,
+            style: FilledButton.styleFrom(
               backgroundColor: _panelSurface,
-              side: const BorderSide(color: _primaryAqua, width: 1.5),
+              foregroundColor: _lightOffWhite,
             ),
             child: const Text('City Health Office (CHO)'),
           ),
@@ -105,6 +134,44 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
+  Widget _buildSystemLogo({required double size, BoxFit fit = BoxFit.contain}) {
+    return ColorFiltered(
+      colorFilter: const ColorFilter.matrix(<double>[
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+      ]),
+      child: Image.asset(
+        'assets/newlogo.png',
+        width: size,
+        height: size,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) => Icon(
+          Icons.health_and_safety_rounded,
+          color: _primaryAqua,
+          size: size * 0.65,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -113,13 +180,39 @@ class _LandingPageState extends State<LandingPage> {
       backgroundColor: _darkDeepTeal,
       body: Stack(
         children: [
+          // Hero background image (never stretched/distorted — BoxFit.cover
+          // crops to fill while preserving aspect ratio). Falls back to the
+          // original flat gradient if the asset ever fails to load.
+          Positioned.fill(
+            child: Image.asset(
+              'assets/newsystembg_web.webp',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [_darkDeepTeal, _darkDeepTeal, _sidebarDark],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          // Dark-teal scrim over the photo, at partial opacity, so the hero
+          // text/CTA panels stay readable while the image remains visible.
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [_darkDeepTeal, _darkDeepTeal, _sidebarDark],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.backgroundDark.withValues(alpha: 0.55),
+                    AppColors.backgroundDark.withValues(alpha: 0.68),
+                    AppColors.surfaceDark.withValues(alpha: 0.82),
+                  ],
                 ),
               ),
             ),
@@ -148,33 +241,26 @@ class _LandingPageState extends State<LandingPage> {
               color: _sidebarDark.withValues(alpha: 0.82),
             ),
           ),
+          // The landing route is deliberately a constrained application
+          // surface.  It owns its viewport and never participates in the
+          // document's scrollable flow (other routes keep their normal
+          // scrolling behaviour).
           SafeArea(
-            child: SizedBox.expand(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 620),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                transitionBuilder: (child, animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position:
-                          Tween<Offset>(
-                            begin: const Offset(0, 0.04),
-                            end: Offset.zero,
-                          ).animate(
-                            CurvedAnimation(
-                              parent: animation,
-                              curve: Curves.easeOutCubic,
-                            ),
-                          ),
-                      child: child,
-                    ),
-                  );
-                },
-                child: _showIntroLoader
-                    ? _buildLandingLoader()
-                    : _buildLandingContent(context),
+            child: ClipRect(
+              child: SizedBox.expand(
+                child: AnimatedSwitcher(
+                  // Only fade the loader/content state.  The hero itself is
+                  // not translated or scaled during/after a resize.
+                  duration: const Duration(milliseconds: 260),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+                  child: _showIntroLoader
+                      ? _buildLandingLoader()
+                      : _buildLandingContent(context),
+                ),
               ),
             ),
           ),
@@ -186,89 +272,70 @@ class _LandingPageState extends State<LandingPage> {
   Widget _buildLandingLoader() {
     return Center(
       key: const ValueKey('landing_loader'),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 360),
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 34),
-          decoration: BoxDecoration(
-            color: _sidebarDark,
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: _primaryAqua.withValues(alpha: 0.18),
-              width: 1.4,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 360),
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 34),
+            decoration: BoxDecoration(
+              color: _sidebarDark,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.26),
+                  blurRadius: 32,
+                  offset: const Offset(0, 14),
+                ),
+              ],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.22),
-                blurRadius: 28,
-                offset: const Offset(0, 12),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 112,
-                height: 112,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [_panelSurface, _sidebarDark],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 112,
+                  height: 112,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [_panelSurface, _sidebarDark],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    border: Border.all(
+                      color: _primaryAqua.withValues(alpha: 0.18),
+                      width: 1.2,
+                    ),
                   ),
-                  border: Border.all(
-                    color: _primaryAqua.withValues(alpha: 0.18),
-                    width: 1.2,
-                  ),
+                  child: ClipOval(child: _buildSystemLogo(size: 84)),
                 ),
-                child: ClipOval(
-                  child: Image.asset(
-                    'assets/bg3.png',
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(
-                        Icons.medical_services_rounded,
-                        size: 64,
-                        color: _primaryAqua,
-                      );
-                    },
+                const SizedBox(height: 24),
+                const SizedBox(
+                  width: 42,
+                  height: 42,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3.2,
+                    valueColor: AlwaysStoppedAnimation<Color>(_primaryAqua),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              const SizedBox(
-                width: 42,
-                height: 42,
-                child: CircularProgressIndicator(
-                  strokeWidth: 3.2,
-                  valueColor: AlwaysStoppedAnimation<Color>(_primaryAqua),
+                const SizedBox(height: 20),
+                Text(
+                  'Preparing AI-DSUHIS',
+                  style: _display(size: 22, letterSpacing: 0.3),
                 ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Preparing AI-DSUHIS',
-                style: TextStyle(
-                  color: _lightOffWhite,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.3,
+                const SizedBox(height: 8),
+                Text(
+                  'Loading your healthcare portal',
+                  style: _body(
+                    size: 14,
+                    color: _lightOffWhite.withValues(alpha: 0.72),
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Loading your healthcare portal',
-                style: TextStyle(
-                  color: _lightOffWhite.withValues(alpha: 0.72),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -279,55 +346,89 @@ class _LandingPageState extends State<LandingPage> {
     return LayoutBuilder(
       key: const ValueKey('landing_content'),
       builder: (context, constraints) {
-        final isWideScreen = constraints.maxWidth >= 1100;
+        final height = constraints.maxHeight;
+        final isDesktop = constraints.maxWidth >= 980;
+        final logoSize = isDesktop
+            ? _responsive(height, 0.16, 108, 178)
+            : _responsive(height, 0.13, 88, 138);
+        final titleSize = isDesktop
+            ? _responsive(height, 0.066, 42, 72)
+            : _responsive(height, 0.050, 32, 48);
+        final subtitleSize = isDesktop
+            ? _responsive(height, 0.022, 16, 23)
+            : _responsive(height, 0.019, 14, 19);
+        final contentPadding = isDesktop
+            ? EdgeInsets.symmetric(
+                horizontal: _responsive(constraints.maxWidth, 0.025, 22, 48),
+                vertical: _responsive(height, 0.014, 10, 18),
+              )
+            : EdgeInsets.symmetric(
+                horizontal: _responsive(constraints.maxWidth, 0.045, 14, 24),
+                vertical: _responsive(height, 0.012, 10, 16),
+              );
 
-        if (isWideScreen) {
-          return Row(
-            children: [
-              Expanded(
-                flex: 5,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(36, 36, 18, 36),
-                  child: _buildHeroPanel(
-                    logoSize: 200,
-                    titleSize: 72,
-                    subtitleSize: 24,
-                    contentPadding: const EdgeInsets.all(60),
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 4,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 36, 36, 36),
-                  child: Center(
-                    child: SingleChildScrollView(
-                      child: _buildAccessPanel(context, compact: false),
+        final hero = _buildHeroPanel(
+          logoSize: logoSize,
+          titleSize: titleSize,
+          subtitleSize: subtitleSize,
+          contentPadding: contentPadding,
+          isDesktop: isDesktop,
+        );
+
+        if (isDesktop) {
+          // One stable parent alignment system for both columns.  Neither
+          // side is independently offset, translated, or content-scaled.
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1440),
+              child: SizedBox(
+                width: constraints.maxWidth.clamp(0.0, 1440.0).toDouble(),
+                height: constraints.maxHeight,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(flex: 11, child: hero),
+                    Expanded(
+                      flex: 8,
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 430),
+                          child: _buildAccessPanel(context, compact: false),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-            ],
+            ),
           );
         }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
-          child: Column(
-            children: [
-              _buildHeroPanel(
-                logoSize: 160,
-                titleSize: 44,
-                subtitleSize: 18,
-                contentPadding: const EdgeInsets.all(28),
-              ),
-              const SizedBox(height: 20),
-              _buildAccessPanel(context, compact: true),
-            ],
+        // Tablet/mobile switches intentionally at a meaningful width.  The
+        // landing route still owns the viewport and does not add a scroll
+        // view; dimensions above are chosen from the available height.
+        return Center(
+          child: SizedBox(
+            width: constraints.maxWidth,
+            height: constraints.maxHeight,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: hero),
+                SizedBox(height: _responsive(height, 0.018, 10, 18)),
+                Flexible(child: _buildAccessPanel(context, compact: true)),
+              ],
+            ),
           ),
         );
       },
     );
+  }
+
+  double _responsive(double basis, double fraction, double min, double max) {
+    return (basis * fraction).clamp(min, max).toDouble();
   }
 
   Widget _buildHeroPanel({
@@ -335,8 +436,9 @@ class _LandingPageState extends State<LandingPage> {
     required double titleSize,
     required double subtitleSize,
     required EdgeInsets contentPadding,
+    required bool isDesktop,
   }) {
-    final partnerLogoSize = logoSize >= 200 ? 98.0 : 78.0;
+    final partnerLogoSize = _responsive(logoSize, 0.48, 52, 86);
 
     final heroContent = Column(
       mainAxisSize: MainAxisSize.min,
@@ -355,121 +457,53 @@ class _LandingPageState extends State<LandingPage> {
               ),
             ],
           ),
-          child: ClipOval(
-            child: Image.asset(
-              'assets/bg3.png',
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(
-                  Icons.medical_services_rounded,
-                  size: 100,
-                  color: _primaryAqua,
-                );
-              },
-            ),
-          ),
+          child: _buildSystemLogo(size: logoSize),
         ),
-        SizedBox(height: logoSize >= 200 ? 28 : 20),
+        SizedBox(height: _responsive(logoSize, 0.14, 10, 20)),
         _buildPartnerLogos(partnerLogoSize),
-        SizedBox(height: logoSize >= 200 ? 34 : 24),
-        Text(
-          'AI-DSUHIS',
-          style: TextStyle(
-            fontSize: titleSize,
-            fontWeight: FontWeight.bold,
-            color: _lightOffWhite,
-            letterSpacing: 2,
+        SizedBox(height: _responsive(logoSize, 0.16, 12, 22)),
+        ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [_lightOffWhite, _primaryAquaBright],
+          ).createShader(bounds),
+          child: Text(
+            'AI-DSUHIS',
+            style: _display(size: titleSize, letterSpacing: 1.5),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: _responsive(titleSize, 0.24, 8, 16)),
         Text(
           'AI-Driven Solution For Unified Health Information System',
-          style: TextStyle(
-            fontSize: subtitleSize,
-            color: _lightOffWhite.withValues(alpha: 0.82),
-            fontWeight: FontWeight.w300,
+          style: _body(
+            size: subtitleSize,
+            weight: FontWeight.w400,
+            color: _lightOffWhite.withValues(alpha: 0.78),
+            height: 1.4,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 32),
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          alignment: WrapAlignment.center,
-          children: [
-            _buildFeatureBadge(
-              Icons.health_and_safety_rounded,
-              'Health Monitoring',
-            ),
-            _buildFeatureBadge(Icons.analytics_rounded, 'Advanced Analytics'),
-            _buildFeatureBadge(Icons.security_rounded, 'Secure & Private'),
-            _buildFeatureBadge(Icons.cloud_sync_rounded, 'Cloud Sync'),
-          ],
-        ),
+        SizedBox(height: _responsive(subtitleSize, 0.9, 12, 24)),
+        _buildFeatureGrid(desktop: isDesktop, compact: logoSize < 150),
       ],
     );
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final hasBoundedHeight = constraints.maxHeight.isFinite;
-        final availableHeight = hasBoundedHeight
-            ? (constraints.maxHeight - contentPadding.vertical).clamp(
-                0.0,
-                double.infinity,
-              )
-            : 0.0;
-
-        final content = hasBoundedHeight
-            ? Positioned.fill(
-                child: Padding(
-                  padding: contentPadding,
-                  child: SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(minHeight: availableHeight),
-                      child: Center(child: heroContent),
-                    ),
-                  ),
-                ),
-              )
-            : Center(
-                child: Padding(padding: contentPadding, child: heroContent),
-              );
-
-        return Stack(
-          children: [
-            Positioned(
-              top: -90,
-              left: -90,
-              child: _buildBackdropOrb(
-                size: 260,
-                color: _primaryAqua.withValues(alpha: 0.10),
-              ),
-            ),
-            Positioned(
-              bottom: -70,
-              right: -60,
-              child: _buildBackdropOrb(
-                size: 220,
-                color: _secondaryIceBlue.withValues(alpha: 0.12),
-              ),
-            ),
-            content,
-          ],
-        );
-      },
+    return Padding(
+      padding: contentPadding,
+      child: Center(child: heroContent),
     );
   }
 
   Widget _buildPartnerLogos(double size) {
-    return Wrap(
-      spacing: 14,
-      runSpacing: 10,
-      alignment: WrapAlignment.center,
-      children: [
-        _buildPartnerLogoItem('assets/logo2.png', size),
-        _buildPartnerLogoItem('assets/logo3.png', size),
-      ],
+    return SizedBox(
+      height: size,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildPartnerLogoItem('assets/logo2.png', size),
+          SizedBox(width: _responsive(size, 0.16, 8, 14)),
+          _buildPartnerLogoItem('assets/logo3.png', size),
+        ],
+      ),
     );
   }
 
@@ -496,19 +530,28 @@ class _LandingPageState extends State<LandingPage> {
       constraints: compact ? null : const BoxConstraints(maxWidth: 500),
       padding: EdgeInsets.all(compact ? 0 : 40),
       child: Container(
-        padding: EdgeInsets.all(compact ? 28 : 40),
+        padding: EdgeInsets.all(compact ? 26 : 40),
         decoration: BoxDecoration(
-          color: _sidebarDark,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: _primaryAqua.withValues(alpha: 0.15),
-            width: 1.5,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              _sidebarDark,
+              _sidebarDark.withValues(alpha: 0.96),
+              _panelSurface,
+            ],
           ),
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.22),
-              blurRadius: 28,
-              offset: const Offset(0, 12),
+              color: Colors.black.withValues(alpha: 0.34),
+              blurRadius: 40,
+              offset: const Offset(0, 20),
+            ),
+            BoxShadow(
+              color: _primaryAqua.withValues(alpha: 0.10),
+              blurRadius: 70,
+              offset: const Offset(0, 32),
             ),
           ],
         ),
@@ -516,16 +559,38 @@ class _LandingPageState extends State<LandingPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Welcome Back',
-              style: TextStyle(
-                fontSize: compact ? 32 : 42,
-                fontWeight: FontWeight.bold,
-                color: _lightOffWhite,
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [_primaryAquaBright, _primaryAqua],
+                ),
+              ),
+              child: const Icon(
+                Icons.shield_moon_outlined,
+                color: _darkDeepTeal,
+                size: 26,
               ),
             ),
-            const SizedBox(height: 12),
-            SizedBox(height: compact ? 32 : 48),
+            SizedBox(height: compact ? 18 : 22),
+            Text(
+              'Welcome Back',
+              style: _display(size: compact ? 30 : 38, weight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Sign in to continue to your healthcare portal.',
+              style: _body(
+                size: 14.5,
+                weight: FontWeight.w500,
+                color: _lightOffWhite.withValues(alpha: 0.62),
+              ),
+            ),
+            SizedBox(height: compact ? 28 : 36),
             _buildActionButton(
               context: context,
               label: 'Login as BHW',
@@ -565,9 +630,10 @@ class _LandingPageState extends State<LandingPage> {
             SizedBox(height: compact ? 28 : 40),
             Text(
               '(c) 2026 AI-DSUHIS. All rights reserved.',
-              style: TextStyle(
-                fontSize: 14,
-                color: _mutedCoolGray.withValues(alpha: 0.85),
+              style: _body(
+                size: 13,
+                weight: FontWeight.w500,
+                color: _mutedCoolGray.withValues(alpha: 0.9),
               ),
               textAlign: TextAlign.center,
             ),
@@ -577,33 +643,136 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
-  Widget _buildFeatureBadge(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: _panelSurface,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.22),
-          width: 1,
-        ),
-      ),
-      child: Row(
+  Widget _buildFeatureGrid({required bool desktop, required bool compact}) {
+    final gap = compact ? 8.0 : 12.0;
+    final features = <(IconData, String)>[
+      (Icons.health_and_safety_rounded, 'Health Monitoring'),
+      (Icons.analytics_rounded, 'Advanced Analytics'),
+      (Icons.security_rounded, 'Secure & Private'),
+      (Icons.cloud_sync_rounded, 'Cloud Sync'),
+    ];
+
+    Widget cell((IconData, String) feature) {
+      return _buildFeatureBadge(
+        feature.$1,
+        feature.$2,
+        compact: compact,
+        stretch: true,
+      );
+    }
+
+    if (desktop) {
+      return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: _primaryAqua, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              color: _lightOffWhite,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+          Row(
+            children: [
+              Expanded(child: cell(features[0])),
+              SizedBox(width: gap),
+              Expanded(child: cell(features[1])),
+              SizedBox(width: gap),
+              Expanded(child: cell(features[2])),
+            ],
+          ),
+          SizedBox(height: gap),
+          Row(
+            children: [
+              const Expanded(child: SizedBox()),
+              SizedBox(width: gap),
+              Expanded(child: cell(features[3])),
+              SizedBox(width: gap),
+              const Expanded(child: SizedBox()),
+            ],
+          ),
+        ],
+      );
+    }
+
+    // Mobile/tablet uses a deliberate 2 × 2 grid rather than implicit wrap.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Expanded(child: cell(features[0])),
+            SizedBox(width: gap),
+            Expanded(child: cell(features[1])),
+          ],
+        ),
+        SizedBox(height: gap),
+        Row(
+          children: [
+            Expanded(child: cell(features[2])),
+            SizedBox(width: gap),
+            Expanded(child: cell(features[3])),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeatureBadge(
+    IconData icon,
+    String label, {
+    required bool compact,
+    bool stretch = false,
+  }) {
+    final iconSize = compact ? 28.0 : 34.0;
+    final textSize = compact ? 11.5 : 13.5;
+    final badge = Container(
+      height: compact ? 44 : 52,
+      width: stretch ? double.infinity : null,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 10,
+        vertical: compact ? 7 : 9,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: stretch
+            ? MainAxisAlignment.center
+            : MainAxisAlignment.start,
+        mainAxisSize: stretch ? MainAxisSize.max : MainAxisSize.min,
+        children: [
+          Container(
+            width: iconSize,
+            height: iconSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  _primaryAquaBright.withValues(alpha: 0.9),
+                  _primaryAqua.withValues(alpha: 0.7),
+                ],
+              ),
+            ),
+            child: Icon(icon, color: _darkDeepTeal, size: compact ? 15 : 18),
+          ),
+          SizedBox(width: compact ? 7 : 10),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: _body(size: textSize, weight: FontWeight.w600),
             ),
           ),
         ],
       ),
     );
+    return stretch ? SizedBox(width: double.infinity, child: badge) : badge;
   }
 
   Widget _buildActionButton({
@@ -613,62 +782,87 @@ class _LandingPageState extends State<LandingPage> {
     required bool isPrimary,
     required VoidCallback onPressed,
   }) {
+    final child = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isPrimary
+                ? Colors.black.withValues(alpha: 0.12)
+                : _primaryAqua.withValues(alpha: 0.14),
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: isPrimary ? _darkDeepTeal : _primaryAquaBright,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Text(
+          label,
+          style: _body(
+            size: 16,
+            weight: FontWeight.w700,
+            color: isPrimary ? _darkDeepTeal : _lightOffWhite,
+          ),
+        ),
+      ],
+    );
+
+    if (isPrimary) {
+      return Container(
+        height: 60,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: const LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [_primaryAquaBright, _primaryAqua],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: _primaryAqua.withValues(alpha: 0.35),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onPressed,
+            child: Center(child: child),
+          ),
+        ),
+      );
+    }
+
     return Container(
-      height: 65,
+      height: 60,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: isPrimary
-            ? [
-                BoxShadow(
-                  color: _primaryAqua.withValues(alpha: 0.18),
-                  blurRadius: 18,
-                  offset: const Offset(0, 10),
-                ),
-              ]
-            : null,
+        color: Colors.white.withValues(alpha: 0.07),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      child: isPrimary
-          ? ElevatedButton.icon(
-              onPressed: onPressed,
-              icon: Icon(icon, size: 24),
-              label: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _primaryAqua,
-                foregroundColor: _darkDeepTeal,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-            )
-          : OutlinedButton.icon(
-              onPressed: onPressed,
-              icon: Icon(icon, size: 24),
-              label: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _lightOffWhite,
-                backgroundColor: _panelSurface,
-                side: BorderSide(
-                  color: _primaryAqua.withValues(alpha: 0.85),
-                  width: 1.6,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onPressed,
+          hoverColor: _primaryAqua.withValues(alpha: 0.10),
+          child: Center(child: child),
+        ),
+      ),
     );
   }
 }

@@ -35,6 +35,17 @@
   <title>mycapstone_project</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      /* Flutter routes own their overflow.  The landing route is constrained
+         to one viewport; long dashboards/auth forms can still scroll. */
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+  </style>
   
   <!-- Google Sign-In -->
   <meta name="google-signin-client_id" content="YOUR_WEB_CLIENT_ID.apps.googleusercontent.com">

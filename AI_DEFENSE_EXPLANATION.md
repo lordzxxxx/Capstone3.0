@@ -1,3 +1,18 @@
+> **CORRECTION NOTICE — August 2026 panel revision, read before using this
+> guide with the panel:** Earlier drafts of this document described the AI
+> as retrieving medication suggestions from its internal database. That
+> capability has since been **removed at the source code level** in
+> `health_ai_classifier.dart`, per the panel's own prior feedback that
+> doctors — not AI — must remain responsible for medication. The AI now
+> generates only non-prescriptive supportive guidance (home care,
+> precautions, estimated recovery, general advice), clearly labeled
+> "AI-Assisted Home-Care Recommendation" in the UI, with a disclaimer that
+> medication and clinical decisions remain with the attending physician.
+> When presenting this system, describe the AI as **decision-support and
+> home-care guidance only, with no medication-suggestion capability** — see
+> `IMPLEMENTATION_SUMMARY_BATCH2.md` for the current, accurate description
+> of every system component, including the dataset.
+
 # AI Classification System - Panelist Defense Guide
 
 ## 🎯 Overview for Panelists
@@ -126,10 +141,9 @@ else if (moderate_symptoms) → Medium
 else → Low
 ```
 
-**Step 5: Recovery Recommendations**
+**Step 5: Recovery Recommendations** *(updated August 2026 — see note below)*
 ```dart
 Based on detected condition:
-  - Retrieve medications from database
   - Generate home care instructions
   - Provide precautions
   - Estimate recovery time

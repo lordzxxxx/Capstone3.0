@@ -1,3 +1,11 @@
+> **CORRECTION NOTICE — August 2026 panel revision**
+> This document is kept for historical/development record. The
+> "💊 Suggested Medications" examples below **no longer reflect the
+> system's behavior** — medication-recommendation data was removed from
+> `health_ai_classifier.dart` at the source level per the panel's
+> requirement that doctors, not AI, remain responsible for medication. See
+> `IMPLEMENTATION_SUMMARY_BATCH2.md` for the current, accurate description.
+
 # 🎉 Recovery Recommendations Feature - Complete!
 
 ## ✅ What Was Added

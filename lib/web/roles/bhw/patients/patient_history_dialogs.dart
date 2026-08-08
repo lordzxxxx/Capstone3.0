@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
+import 'package:mycapstone_project/web/shared/widgets/doctor_notes_section.dart';
 
 class PatientHistoryDialogs {
   static const Color _primaryAqua = Color(0xFF00A8B5);
@@ -628,6 +629,35 @@ class PatientHistoryDialogs {
                                         }),
                                     ],
                                   ),
+                                ),
+                                const SizedBox(height: 20),
+                                DoctorNotesSection(
+                                  patientId: patientId,
+                                  patientName: patientName,
+                                  patientBarangayCode: _safeText(
+                                    effectivePatient['barangayCode'],
+                                  ),
+                                  checkupOptions: snapshot.checkUpHistory
+                                      .map((record) {
+                                        final date = _firstDate(record, const [
+                                          'datetime',
+                                          'date',
+                                          'followup',
+                                        ]);
+                                        final dateLabel = date == null
+                                            ? 'Undated'
+                                            : _formatDate(date);
+                                        final type = _safeText(
+                                          record['type'],
+                                          fallback: 'Check-up',
+                                        );
+                                        return DoctorNoteCheckupOption(
+                                          id: _safeText(record['id']),
+                                          label: '$dateLabel — $type',
+                                        );
+                                      })
+                                      .where((option) => option.id.isNotEmpty)
+                                      .toList(growable: false),
                                 ),
                                 const SizedBox(height: 24),
                                 _buildClinicalDisclaimer(),

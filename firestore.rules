@@ -241,6 +241,22 @@ service cloud.firestore {
         );
     }
 
+    // Doctor notes are an append-only clinical log tied to a specific
+    // check-up/consultation. Any CHO or DOCTOR account may read notes
+    // (continuity of care requires a later doctor to see an earlier
+    // doctor's notes, regardless of which referral they were assigned to);
+    // BHW accounts may read notes for patients within their own barangay.
+    function canReadDoctorNote(data) {
+      return isChoRole() ||
+        isDoctorRole() ||
+        (isBhwRole() && sameBarangay(data));
+    }
+
+    function canCreateDoctorNote(data) {
+      return (isChoRole() || isDoctorRole()) &&
+        data.authorUid == request.auth.uid;
+    }
+
     function canReadReferral(data) {
       return isChoRole() ||
         (isDoctorRole() && data.assignedDoctorUid == request.auth.uid) ||
@@ -678,6 +694,37 @@ service cloud.firestore {
     match /password_resets/{document=**} {
       allow create: if request.size < 2048;
       allow read, update, delete: if false;
+    }
+
+    // Doctor notes: append-only continuity-of-care log tied to a check-up.
+    // Notes are never edited or deleted once written.
+    match /doctor_notes/{noteId} {
+      allow read: if canReadDoctorNote(resource.data);
+      allow create: if canCreateDoctorNote(request.resource.data);
+      allow update, delete: if false;
+    }
+
+    // Referral-review notifications. CHO creates them; the named recipient
+    // (and CHO) may read them.
+    match /notifications/{notificationId} {
+      allow read: if isChoRole() ||
+        (isSignedIn() && ('recipientUid' in resource.data) &&
+          resource.data.recipientUid == request.auth.uid);
+      allow create: if isChoRole();
+      allow update, delete: if false;
+    }
+
+    // Reference list of partner hospitals/facilities used when assigning
+    // referrals. Read-only reference data for signed-in users; managed by CHO.
+    match /hospitals/{hospitalId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isChoRole();
+    }
+
+    // CHO-published announcements/broadcasts, visible to all signed-in staff.
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isChoRole();
     }
   }
 }

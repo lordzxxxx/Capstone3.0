@@ -23,6 +23,7 @@ import 'package:mycapstone_project/web/shared/widgets/login_success_sweet_alert.
 import 'package:mycapstone_project/web/shared/services/firestore_rest_reader.dart';
 
 const Color _primaryAqua = Color(0xFF00A8B5);
+const Color _primaryAquaBright = Color(0xFF29C7D1);
 const Color _secondaryIceBlue = Color(0xFF1E5A7A);
 const Color _darkDeepTeal = Color(0xFF0A1F24);
 const Color _mutedCoolGray = Color(0xFF546E7A);
@@ -903,45 +904,42 @@ class _LoginState extends State<Login> {
   }
 
   Widget _buildBrandMark(double size) {
-    return Container(
+    return SizedBox(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: _primaryAqua.withValues(alpha: 0.28),
-            blurRadius: 28,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: ClipOval(
+      child: ColorFiltered(
+        // The supplied logo is white artwork on black. Convert the black
+        // pixels to transparency so the mark sits cleanly over bg2.2.png.
+        colorFilter: const ColorFilter.matrix(<double>[
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+        ]),
         child: Image.asset(
-          'assets/bg3.png',
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [_primaryAqua, _secondaryIceBlue],
-                ),
-              ),
-              child: const Center(
-                child: Text(
-                  'DS',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            );
-          },
+          'assets/newlogo.png',
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) => Icon(
+            Icons.health_and_safety_rounded,
+            color: Colors.white,
+            size: size * 0.68,
+          ),
         ),
       ),
     );
@@ -954,7 +952,13 @@ class _LoginState extends State<Login> {
       decoration: BoxDecoration(
         color: _panelSurface.withValues(alpha: 0.82),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -982,119 +986,47 @@ class _LoginState extends State<Login> {
   }
 
   Widget _buildHeroPanel({required bool isCompact}) {
-    return Container(
-      padding: EdgeInsets.all(isCompact ? 24 : 34),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [_sidebarDark, _panelSurface],
-        ),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.26),
-            blurRadius: 36,
-            offset: const Offset(0, 18),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _buildInfoPill(
-                Icons.health_and_safety_outlined,
-                'City health command center',
-              ),
-              _buildInfoPill(
-                Icons.verified_user_outlined,
-                'Role-secured access',
-              ),
-            ],
-          ),
-          SizedBox(height: isCompact ? 18 : 24),
-          Row(
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 20 : 48),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildBrandMark(isCompact ? 72 : 86),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'DSUHIS',
-                      style: TextStyle(
-                        fontSize: isCompact ? 28 : 42,
-                        fontWeight: FontWeight.w800,
-                        color: _lightOffWhite,
-                        letterSpacing: -1.2,
-                        height: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'A calmer way to manage city and barangay health workflows.',
-                      style: TextStyle(
-                        fontSize: isCompact ? 15 : 18,
-                        color: _lightOffWhite.withValues(alpha: 0.82),
-                        height: 1.55,
-                      ),
-                    ),
-                  ],
+              _buildBrandMark(isCompact ? 150 : 230),
+              const SizedBox(height: 28),
+              Text(
+                'AI-DSUHIS',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: isCompact ? 32 : 52,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: -1.2,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Secure access to unified city and barangay health information.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: isCompact ? 15 : 20,
+                  color: Colors.white.withValues(alpha: 0.88),
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'A trusted workspace for patient records, referrals, analytics, and community health operations.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: isCompact ? 13 : 15,
+                  color: Colors.white.withValues(alpha: 0.72),
+                  height: 1.55,
                 ),
               ),
             ],
           ),
-          SizedBox(height: isCompact ? 20 : 28),
-          Text(
-            'Sign in once, then move directly into patients, referrals, analytics, and barangay-level monitoring without digging through disconnected screens.',
-            style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.72),
-              fontSize: isCompact ? 13.5 : 15,
-              height: 1.65,
-            ),
-          ),
-          SizedBox(height: isCompact ? 18 : 26),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              _buildHeroMetric(
-                '24/7',
-                'Access to synchronized records and live dashboards',
-              ),
-              _buildHeroMetric(
-                'Role-based',
-                'CHO, doctor, and barangay workflows kept separated',
-              ),
-              _buildHeroMetric(
-                'Fast',
-                'Designed for quick log-in and fewer input errors',
-              ),
-            ],
-          ),
-          SizedBox(height: isCompact ? 20 : 28),
-          _buildFeatureItem(
-            Icons.shield_outlined,
-            'Protected access and verified role routing',
-          ),
-          const SizedBox(height: 14),
-          _buildFeatureItem(
-            Icons.analytics_outlined,
-            'Immediate visibility across health activity and outcomes',
-          ),
-          const SizedBox(height: 14),
-          _buildFeatureItem(
-            Icons.hub_outlined,
-            'Connected city and barangay operations in one workspace',
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -1105,7 +1037,13 @@ class _LoginState extends State<Login> {
       decoration: BoxDecoration(
         color: _panelSurface.withValues(alpha: 0.84),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.14),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1140,64 +1078,68 @@ class _LoginState extends State<Login> {
         backgroundColor: _darkDeepTeal,
         body: Stack(
           children: [
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [_darkDeepTeal, _darkDeepTeal, _sidebarDark],
+            // Static reference background: it never participates in layout
+            // and never moves when the browser is resized or zoomed.
+            Positioned.fill(
+              child: Image.asset(
+                'assets/bg2.2.png',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [_secondaryIceBlue, _darkDeepTeal],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      _darkDeepTeal.withValues(alpha: 0.48),
+                      _secondaryIceBlue.withValues(alpha: 0.62),
+                      _darkDeepTeal.withValues(alpha: 0.72),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-
-            Positioned(
-              top: -100,
-              right: -100,
-              child: _buildBackdropOrb(
-                size: 300,
-                color: _primaryAqua.withValues(alpha: 0.14),
-              ),
-            ),
-
-            Positioned(
-              bottom: -150,
-              left: -150,
-              child: _buildBackdropOrb(
-                size: 400,
-                color: _secondaryIceBlue.withValues(alpha: 0.10),
-              ),
-            ),
-            Positioned(
-              top: size.height * 0.18,
-              left: size.width * 0.12,
-              child: _buildBackdropOrb(
-                size: 220,
-                color: _sidebarDark.withValues(alpha: 0.82),
-              ),
-            ),
-            Positioned(
-              top: size.height * 0.1,
-              right: size.width * 0.24,
-              child: _buildBackdropOrb(
-                size: 180,
-                color: Colors.white.withValues(alpha: 0.05),
               ),
             ),
 
             SafeArea(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isWideScreen ? 32 : 24,
-                    vertical: 40,
-                  ),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1200),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final contentWidth =
+                      (constraints.maxWidth - (isWideScreen ? 64 : 40))
+                          .clamp(280.0, 1200.0)
+                          .toDouble();
+                  final composition = SizedBox(
+                    width: contentWidth,
                     child: isWideScreen
                         ? _buildWideScreenLayout(context)
                         : _buildMobileLayout(context),
-                  ),
-                ),
+                  );
+
+                  // Desktop auth is intentionally one viewport tall.  A
+                  // scale-down keeps the complete split composition visible
+                  // at 720px laptop heights while preserving comfortable
+                  // field sizes on larger screens. Mobile remains naturally
+                  // scrollable for keyboard and browser chrome.
+                  if (isWideScreen) {
+                    return ClipRect(child: Center(child: composition));
+                  }
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+                    child: composition,
+                  );
+                },
               ),
             ),
 
@@ -1211,14 +1153,11 @@ class _LoginState extends State<Login> {
                     decoration: BoxDecoration(
                       color: _sidebarDark,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _primaryAqua.withValues(alpha: 0.18),
-                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.18),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 14,
+                          offset: const Offset(0, 5),
                         ),
                       ],
                     ),
@@ -1287,7 +1226,6 @@ class _LoginState extends State<Login> {
           decoration: BoxDecoration(
             color: _panelSurface.withValues(alpha: 0.86),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
           ),
           child: Icon(icon, color: _primaryAqua, size: 24),
         ),
@@ -1310,309 +1248,145 @@ class _LoginState extends State<Login> {
   // Login card widget
   Widget _buildLoginCard(BuildContext context, {required bool isCompact}) {
     return Container(
-      padding: EdgeInsets.all(isCompact ? 24 : 30),
+      padding: EdgeInsets.all(isCompact ? 24 : 34),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [_sidebarDark, _sidebarDark, _panelSurface],
-        ),
-        borderRadius: BorderRadius.circular(34),
-        border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.20),
-          width: 1.5,
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xFFE5EEF0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 44,
-            offset: const Offset(0, 24),
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 32,
+            offset: const Offset(0, 16),
           ),
         ],
       ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: -24,
-            right: -10,
-            child: _buildBackdropOrb(
-              size: 180,
-              color: _primaryAqua.withValues(alpha: 0.14),
+      child: AutofillGroup(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Welcome back',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: isCompact ? 28 : 34,
+                fontWeight: FontWeight.w800,
+                color: _darkDeepTeal,
+                letterSpacing: -0.8,
+              ),
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
+            const SizedBox(height: 8),
+            Text(
+              'Sign in to securely access the AI-DSUHIS platform.',
+              style: TextStyle(
+                fontSize: 14,
+                color: _mutedCoolGray,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 26),
+            _buildFieldLabel(context, 'Email address'),
+            const SizedBox(height: 8),
+            _buildTextField(
+              controller: emailController,
+              hintText: 'you@example.com',
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildFieldLabel(context, 'Password'),
+                TextButton(
+                  onPressed: () =>
+                      pushAuthPage(context, const ForgotPassword()),
+                  child: const Text('Forgot password?'),
                 ),
-                decoration: BoxDecoration(
-                  color: _panelSurface.withValues(alpha: 0.88),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: _primaryAqua.withValues(alpha: 0.14),
+              ],
+            ),
+            _buildPasswordField(),
+            const SizedBox(height: 22),
+            SizedBox(
+              height: 54,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : signIn,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primaryAqua,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFB8C9CC),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    _buildBrandMark(isCompact ? 48 : 54),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Welcome Back',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: isCompact ? 26 : 30,
-                              fontWeight: FontWeight.w800,
-                              color: _lightOffWhite,
-                              letterSpacing: -0.8,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Secure access to city and barangay health operations.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: _lightOffWhite.withValues(alpha: 0.72),
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 9,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _primaryAqua.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Text(
-                        'Live',
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : const Text(
+                        'Sign in',
                         style: TextStyle(
-                          color: _primaryAqua,
+                          fontSize: 15.5,
                           fontWeight: FontWeight.w800,
-                          fontSize: 12,
                         ),
                       ),
-                    ),
-                  ],
-                ),
               ),
-              SizedBox(height: isCompact ? 16 : 20),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _buildInfoPill(Icons.lock_outline_rounded, 'Secure sign in'),
-                  _buildInfoPill(Icons.bolt_rounded, 'Fast dashboard access'),
-                ],
-              ),
-              SizedBox(height: isCompact ? 16 : 18),
-              _buildFieldLabel(context, 'Email Address'),
-              const SizedBox(height: 8),
-              _buildTextField(
-                controller: emailController,
-                hintText: 'you@example.com',
-                icon: Icons.email_outlined,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 14),
-              _buildFieldLabel(context, 'Password'),
-              const SizedBox(height: 8),
-              _buildPasswordField(),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    pushAuthPage(context, const ForgotPassword());
-                  },
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                  ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                const Expanded(child: Divider(color: Color(0xFFD8E2E4))),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text(
-                    'Forgot Password?',
+                    'OR',
                     style: TextStyle(
-                      color: _primaryAqua,
+                      color: _mutedCoolGray,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      fontSize: 13.5,
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: _panelSurface,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.05),
-                  ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const Expanded(child: Divider(color: Color(0xFFD8E2E4))),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _buildSocialButtonLarge(
+              label: 'Continue with Google',
+              icon: Icons.g_mobiledata,
+              color: const Color(0xFF4285F4),
+              onTap: _isLoading ? null : signInWithGoogle,
+            ),
+            const SizedBox(height: 18),
+            Center(
+              child: RichText(
+                text: TextSpan(
+                  style: const TextStyle(color: _mutedCoolGray, fontSize: 13.5),
                   children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: _primaryAqua.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.info_outline_rounded,
+                    const TextSpan(text: "Don't have an account? "),
+                    TextSpan(
+                      text: 'Create one',
+                      style: const TextStyle(
                         color: _primaryAqua,
-                        size: 18,
+                        fontWeight: FontWeight.w800,
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Use your approved CHO, doctor, or barangay account. Access is routed automatically after verification.',
-                        style: TextStyle(
-                          color: _lightOffWhite.withValues(alpha: 0.76),
-                          fontSize: 12,
-                          height: 1.4,
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => pushAuthPage(
+                          context,
+                          const Signup(preselectedRole: 'CHO'),
                         ),
-                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 18),
-              SizedBox(
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : signIn,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryAqua,
-                    foregroundColor: _darkDeepTeal,
-                    disabledBackgroundColor: _mutedCoolGray.withValues(
-                      alpha: 0.3,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              _darkDeepTeal,
-                            ),
-                            strokeWidth: 2.5,
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.login, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Sign In',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15.5,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Divider(
-                      color: _lightOffWhite.withValues(alpha: 0.14),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text(
-                      'OR',
-                      style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.62),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Divider(
-                      color: _lightOffWhite.withValues(alpha: 0.14),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              _buildSocialButtonLarge(
-                label: 'Continue with Google',
-                icon: Icons.g_mobiledata,
-                color: const Color(0xFF4285F4),
-                onTap: _isLoading ? null : signInWithGoogle,
-              ),
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: _panelSurface.withValues(alpha: 0.82),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: _primaryAqua.withValues(alpha: 0.12),
-                  ),
-                ),
-                child: RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                      color: _lightOffWhite.withValues(alpha: 0.78),
-                      fontSize: 13.5,
-                    ),
-                    children: [
-                      const TextSpan(text: "Don't have an account? "),
-                      TextSpan(
-                        text: 'Sign Up',
-                        style: const TextStyle(
-                          color: _primaryAqua,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            pushAuthPage(
-                              context,
-                              const Signup(preselectedRole: 'CHO'),
-                            );
-                          },
-                      ),
-                      const TextSpan(
-                        text:
-                            ' and wait for approval if your role requires review.',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1623,7 +1397,7 @@ class _LoginState extends State<Login> {
       label,
       style: TextStyle(
         fontSize: 12.5,
-        color: _lightOffWhite,
+        color: _darkDeepTeal,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.4,
       ),
@@ -1651,15 +1425,18 @@ class _LoginState extends State<Login> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        textInputAction: TextInputAction.next,
+        autofillHints: const [AutofillHints.email, AutofillHints.username],
+        onSubmitted: (_) => FocusScope.of(context).nextFocus(),
         style: TextStyle(
-          color: _lightOffWhite,
+          color: _darkDeepTeal,
           fontWeight: FontWeight.w600,
           fontSize: 14,
         ),
         decoration: InputDecoration(
           hintText: hintText,
           hintStyle: TextStyle(
-            color: _mutedCoolGray.withValues(alpha: 0.85),
+            color: _mutedCoolGray.withValues(alpha: 0.72),
             fontSize: 14,
           ),
           prefixIcon: Icon(icon, color: _primaryAqua, size: 20),
@@ -1669,17 +1446,14 @@ class _LoginState extends State<Login> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide(
-              color: Colors.white.withValues(alpha: 0.08),
-              width: 1,
-            ),
+            borderSide: BorderSide(color: const Color(0xFFD7E3E5), width: 1),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(18),
             borderSide: BorderSide(color: _primaryAqua, width: 2),
           ),
           filled: true,
-          fillColor: _panelSurface.withValues(alpha: 0.96),
+          fillColor: const Color(0xFFF8FBFB),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 18,
             vertical: 16,
@@ -1705,15 +1479,20 @@ class _LoginState extends State<Login> {
       child: TextField(
         controller: passwordController,
         obscureText: _obscurePassword,
+        textInputAction: TextInputAction.done,
+        autofillHints: const [AutofillHints.password],
+        onSubmitted: (_) {
+          if (!_isLoading) signIn();
+        },
         style: TextStyle(
-          color: _lightOffWhite,
+          color: _darkDeepTeal,
           fontWeight: FontWeight.w500,
           fontSize: 15,
         ),
         decoration: InputDecoration(
           hintText: 'Enter your password',
           hintStyle: TextStyle(
-            color: _mutedCoolGray.withValues(alpha: 0.85),
+            color: _mutedCoolGray.withValues(alpha: 0.72),
             fontSize: 15,
           ),
           prefixIcon: const Icon(
@@ -1722,6 +1501,7 @@ class _LoginState extends State<Login> {
             size: 20,
           ),
           suffixIcon: IconButton(
+            tooltip: _obscurePassword ? 'Show password' : 'Hide password',
             icon: Icon(
               _obscurePassword
                   ? Icons.visibility_off_outlined
@@ -1739,17 +1519,14 @@ class _LoginState extends State<Login> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: _primaryAqua.withValues(alpha: 0.22),
-              width: 1,
-            ),
+            borderSide: BorderSide(color: const Color(0xFFD7E3E5), width: 1),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(color: _primaryAqua, width: 2),
           ),
           filled: true,
-          fillColor: _panelSurface,
+          fillColor: const Color(0xFFF8FBFB),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
             vertical: 18,
@@ -1772,17 +1549,14 @@ class _LoginState extends State<Login> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: _panelSurface,
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.08),
-            width: 1.2,
-          ),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFB9C7C9)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 8,
-              offset: const Offset(0, 2),
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -1794,7 +1568,7 @@ class _LoginState extends State<Login> {
             Text(
               label,
               style: TextStyle(
-                color: _lightOffWhite,
+                color: _darkDeepTeal,
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),

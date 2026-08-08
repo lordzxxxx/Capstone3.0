@@ -2125,6 +2125,70 @@ class _ChoDashboardState extends State<ChoDashboard> {
     return value[0].toUpperCase() + value.substring(1).toLowerCase();
   }
 
+  static const List<String> _weekdayOrder = <String>[
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+    'sunday',
+  ];
+  static const List<String> _weekdaySet = <String>[
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+  ];
+
+  /// Human-readable summary of a doctor's *configured* recurring schedule
+  /// (not the point-in-time slot check `_assessDoctorAvailability` does).
+  /// "Available Daily" is only ever shown when the doctor's own working-day
+  /// configuration actually covers every day — either because all 7 days
+  /// are explicitly listed, or because no day restriction has been
+  /// configured at all (which is how `_assessDoctorAvailability` itself
+  /// already treats an unset schedule: unrestricted). This never fabricates
+  /// availability; it only describes what is actually on file.
+  String _doctorScheduleSummary(Map<String, dynamic> doctor) {
+    final status = _doctorStatus(doctor);
+    if (status == 'unavailable' || status == 'inactive') {
+      return 'Marked unavailable in the doctor directory';
+    }
+
+    final workingDays = _doctorWorkingDays(
+      doctor,
+    ).map((day) => day.toLowerCase()).toSet();
+
+    String dayLabel;
+    if (workingDays.isEmpty) {
+      dayLabel = 'Available Daily';
+    } else if (_weekdayOrder.every(workingDays.contains)) {
+      dayLabel = 'Available Daily';
+    } else if (_weekdaySet.every(workingDays.contains) &&
+        workingDays.length == _weekdaySet.length) {
+      dayLabel = 'Available Weekdays (Mon–Fri)';
+    } else {
+      final orderedShortNames = _weekdayOrder
+          .where(workingDays.contains)
+          .map((day) => _titleCase(day.substring(0, 3)))
+          .toList(growable: false);
+      dayLabel = orderedShortNames.isEmpty
+          ? 'Working days not published'
+          : 'Available: ${orderedShortNames.join(', ')}';
+    }
+
+    final today = DateTime.now();
+    final hours = _doctorHoursForDate(doctor, today);
+    final startMinutes = hours['start'] as int?;
+    final endMinutes = hours['end'] as int?;
+    if (startMinutes != null && endMinutes != null) {
+      dayLabel += ' • ${_clockLabel(startMinutes)}–${_clockLabel(endMinutes)}';
+    }
+
+    return dayLabel;
+  }
+
   String _clockLabel(int totalMinutes) {
     final normalized = totalMinutes.clamp(0, (24 * 60) - 1);
     return _timeLabel(
@@ -2284,7 +2348,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   _buildHeroAction(
                     icon: Icons.assignment_ind_outlined,
                     label: 'Referral workspace',
-                    onTap: () => Get.to(() => const CHOPreferralPage()),
+                    onTap: () => Get.to(() => const CHOReferralWorkspacePage()),
                     primary: true,
                   ),
                   _buildHeroAction(
@@ -3775,7 +3839,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: () => Get.to(() => const CHOPreferralPage()),
+                  onPressed: () =>
+                      Get.to(() => const CHOReferralWorkspacePage()),
                   icon: const Icon(Icons.open_in_new_rounded, size: 16),
                   label: const Text('Open referrals'),
                 ),
@@ -3958,6 +4023,28 @@ class _ChoDashboardState extends State<ChoDashboard> {
               fontSize: 9,
               fontWeight: FontWeight.w700,
             ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(
+                Icons.calendar_today_outlined,
+                size: 12,
+                color: _lightOffWhite.withValues(alpha: 0.55),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  _doctorScheduleSummary(doctor),
+                  style: TextStyle(
+                    color: _lightOffWhite.withValues(alpha: 0.55),
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

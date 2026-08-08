@@ -38,14 +38,43 @@ const List<String> _doctorAvailabilityOptions = <String>[
   'unavailable',
 ];
 
-class CHOPreferralPage extends StatefulWidget {
-  const CHOPreferralPage({super.key});
+/// CHO doctor-directory and filtered-referral browsing workspace.
+///
+/// This was previously named `CHOPreferralPage`, identically to the class
+/// in `cho_referral_management.dart` — a naming collision, not a shared
+/// implementation. That other page (reached from the sidebar "Referrals"
+/// destination) owns the referral review/approval state machine
+/// (`_ReferralRecord`, statuses: pending_review / hospital_assigned /
+/// doctor_assigned / waiting_consultation / consulted / completed) and its
+/// status vocabulary is the one `firestore.rules`' `canUpdateReferral`
+/// actually checks (see `pending_review` / `returned_for_correction`
+/// there). This page instead uses its own, different status vocabulary
+/// (submitted / under_review / assigned / in_treatment / completed) and
+/// adds doctor-registry management (register/edit/archive/restore),
+/// referral filters, summary cards, and PDF printing that the sidebar page
+/// does not have.
+///
+/// Both pages read/write the same root `referrals` collection, so a
+/// referral's displayed status can differ depending on which page a CHO
+/// user is looking at it from. Reconciling the two status vocabularies
+/// into one is a real, pre-existing issue — deliberately not attempted in
+/// the August 2026 panel-revision pass because it touches referral
+/// creation (BHW app), both CHO pages, the doctor-facing view, and PDF
+/// export, and a rushed merge risked breaking the referral workflow this
+/// close to the deadline. Recommended follow-up: treat
+/// `cho_referral_management.dart`'s vocabulary as authoritative (it's
+/// what the deployed security rules assume) and port this page's
+/// doctor-registry/filter/PDF features into that file, then retire this
+/// one.
+class CHOReferralWorkspacePage extends StatefulWidget {
+  const CHOReferralWorkspacePage({super.key});
 
   @override
-  State<CHOPreferralPage> createState() => _CHOPreferralPageState();
+  State<CHOReferralWorkspacePage> createState() =>
+      _CHOReferralWorkspacePageState();
 }
 
-class _CHOPreferralPageState extends State<CHOPreferralPage> {
+class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
   final FirebaseFirestore _firestore = getFirestoreInstance();
   final AccountPolicyService _accountPolicyService =
       AccountPolicyService.instance;

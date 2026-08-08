@@ -493,9 +493,12 @@ class PrenatalDatabaseHelper {
         return;
       }
 
-      final accessScope = await UserAccessScopeService.instance.loadCurrentScope();
+      final accessScope = await UserAccessScopeService.instance
+          .loadCurrentScope();
       if (!accessScope.isAuthenticated) {
-        print('No authenticated access scope. Skipping prenatal Firebase sync.');
+        print(
+          'No authenticated access scope. Skipping prenatal Firebase sync.',
+        );
         return;
       }
       if (!accessScope.canViewAllBarangays &&
@@ -653,7 +656,6 @@ class PrenatalDatabaseHelper {
       );
 
       final safeDefault = {
-        'medications': [],
         'home_care': [],
         'precautions': [],
         'estimated_recovery': 'Varies by condition',

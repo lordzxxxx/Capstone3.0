@@ -22,6 +22,7 @@ import 'package:mycapstone_project/web/shared/widgets/barangay_logo_image.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 
 const Color _primaryAqua = Color(0xFF00A8B5);
+const Color _primaryAquaBright = Color(0xFF29C7D1);
 const Color _secondaryIceBlue = Color(0xFF1E5A7A);
 const Color _darkDeepTeal = Color(0xFF0A1F24);
 const Color _mutedCoolGray = Color(0xFF546E7A);
@@ -892,45 +893,40 @@ class _SignupState extends State<Signup> {
   }
 
   Widget _buildBrandMark(double size) {
-    return Container(
+    return SizedBox(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: _primaryAqua.withValues(alpha: 0.28),
-            blurRadius: 28,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: ClipOval(
+      child: ColorFiltered(
+        colorFilter: const ColorFilter.matrix(<double>[
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+        ]),
         child: Image.asset(
-          'assets/bg3.png',
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [_primaryAqua, _secondaryIceBlue],
-                ),
-              ),
-              child: const Center(
-                child: Text(
-                  'DS',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            );
-          },
+          'assets/newlogo.png',
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) => Icon(
+            Icons.health_and_safety_rounded,
+            color: Colors.white,
+            size: size * 0.68,
+          ),
         ),
       ),
     );
@@ -940,9 +936,15 @@ class _SignupState extends State<Signup> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
+        color: Colors.white.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.14),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -997,110 +999,47 @@ class _SignupState extends State<Signup> {
   }
 
   Widget _buildHeroPanel({required bool isCompact}) {
-    return Container(
-      padding: EdgeInsets.all(isCompact ? 24 : 30),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withValues(alpha: 0.06),
-            _sidebarDark.withValues(alpha: 0.94),
-          ],
-        ),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.26),
-            blurRadius: 36,
-            offset: const Offset(0, 18),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _buildInfoPill(
-                Icons.person_add_alt_1_rounded,
-                'Guided onboarding',
-              ),
-              _buildInfoPill(Icons.approval_outlined, 'Approval-aware access'),
-            ],
-          ),
-          SizedBox(height: isCompact ? 16 : 20),
-          Row(
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 20 : 48),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildBrandMark(isCompact ? 58 : 72),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Create your DSUHIS access',
-                      style: TextStyle(
-                        fontSize: isCompact ? 25 : 34,
-                        fontWeight: FontWeight.w800,
-                        color: _lightOffWhite,
-                        letterSpacing: -1.1,
-                        height: 1.05,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Set up your role, choose the right barangay when needed, and enter the system with less confusion.',
-                      style: TextStyle(
-                        fontSize: isCompact ? 13.5 : 15,
-                        color: _lightOffWhite.withValues(alpha: 0.82),
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
+              _buildBrandMark(isCompact ? 150 : 230),
+              const SizedBox(height: 28),
+              Text(
+                'AI-DSUHIS',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: isCompact ? 32 : 52,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: -1.2,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Create secure access to unified city and barangay health information.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: isCompact ? 15 : 20,
+                  color: Colors.white.withValues(alpha: 0.88),
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Choose the correct role and provide the details needed for a reliable, approval-aware account.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: isCompact ? 13 : 15,
+                  color: Colors.white.withValues(alpha: 0.72),
+                  height: 1.55,
                 ),
               ),
             ],
           ),
-          SizedBox(height: isCompact ? 16 : 20),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              _buildHeroMetric(
-                '2 mins',
-                'Average time to complete the registration flow',
-              ),
-              _buildHeroMetric(
-                'CHO/BHW',
-                'Role-specific setup with clear access boundaries',
-              ),
-              _buildHeroMetric(
-                'Barangay-ready',
-                'Searchable assignment with district grouping and logos',
-              ),
-            ],
-          ),
-          SizedBox(height: isCompact ? 16 : 20),
-          _buildFeatureItem(
-            Icons.fact_check_outlined,
-            'Clear role selection before account submission',
-          ),
-          const SizedBox(height: 10),
-          _buildFeatureItem(
-            Icons.location_city_outlined,
-            'Faster barangay assignment with search and district grouping',
-          ),
-          const SizedBox(height: 10),
-          _buildFeatureItem(
-            Icons.visibility_outlined,
-            'Cleaner form layout that reduces missed details during signup',
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -1120,47 +1059,38 @@ class _SignupState extends State<Signup> {
         backgroundColor: _darkDeepTeal,
         body: Stack(
           children: [
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [_darkDeepTeal, _darkDeepTeal, _sidebarDark],
+            // Static reference background. It is isolated from the form
+            // layout so resizing/zooming cannot move the composition.
+            Positioned.fill(
+              child: Image.asset(
+                'assets/bg2.2.png',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [_secondaryIceBlue, _darkDeepTeal],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      _darkDeepTeal.withValues(alpha: 0.48),
+                      _secondaryIceBlue.withValues(alpha: 0.62),
+                      _darkDeepTeal.withValues(alpha: 0.72),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-
-            Positioned(
-              top: -100,
-              right: -100,
-              child: _buildBackdropOrb(
-                size: 300,
-                color: _primaryAqua.withValues(alpha: 0.14),
-              ),
-            ),
-
-            Positioned(
-              bottom: -150,
-              left: -150,
-              child: _buildBackdropOrb(
-                size: 400,
-                color: _secondaryIceBlue.withValues(alpha: 0.10),
-              ),
-            ),
-            Positioned(
-              top: size.height * 0.18,
-              left: size.width * 0.12,
-              child: _buildBackdropOrb(
-                size: 220,
-                color: _sidebarDark.withValues(alpha: 0.82),
-              ),
-            ),
-            Positioned(
-              top: size.height * 0.1,
-              right: size.width * 0.24,
-              child: _buildBackdropOrb(
-                size: 180,
-                color: Colors.white.withValues(alpha: 0.05),
               ),
             ),
 
@@ -1290,378 +1220,205 @@ class _SignupState extends State<Signup> {
 
   // Signup card widget
   Widget _buildSignupCard(BuildContext context, {required bool isCompact}) {
-    final double fieldWidth = isCompact ? 382 : 232;
+    Widget fieldLabel(String label, Widget child) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildFieldLabel(context, label),
+          const SizedBox(height: 8),
+          child,
+        ],
+      );
+    }
 
-    return Container(
-      padding: EdgeInsets.all(isCompact ? 24 : 28),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.white.withValues(alpha: 0.08),
-            _sidebarDark.withValues(alpha: 0.96),
-            _darkDeepTeal.withValues(alpha: 0.98),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(34),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 44,
-            offset: const Offset(0, 24),
+    final username = fieldLabel(
+      'Username',
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildTextField(
+            controller: usernameController,
+            hintText: 'Enter your username',
+            icon: Icons.person_outline,
+            suffixIcon: _buildAvailabilitySuffix(
+              value: usernameController.text,
+              isChecking: _isCheckingUsername,
+              isUnavailable: _usernameExists,
+              minLength: 3,
+            ),
+          ),
+          _buildValidationMessage(
+            message: _usernameValidationMessage,
+            isError: _usernameExists,
           ),
         ],
       ),
-      child: Stack(
+    );
+    final email = fieldLabel(
+      'Email address',
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Positioned(
-            top: -30,
-            right: -6,
-            child: _buildBackdropOrb(
-              size: 180,
-              color: _primaryAqua.withValues(alpha: 0.12),
+          _buildTextField(
+            controller: emailController,
+            hintText: 'you@example.com',
+            icon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
+            suffixIcon: _buildAvailabilitySuffix(
+              value: emailController.text,
+              isChecking: _isCheckingEmail,
+              isUnavailable: _emailExists,
+              minLength: 4,
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.06),
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildBrandMark(isCompact ? 46 : 50),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Create Account',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: isCompact ? 24 : 28,
-                                  fontWeight: FontWeight.w800,
-                                  color: _lightOffWhite,
-                                  letterSpacing: -0.7,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Single-screen onboarding with role-aware registration.',
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  color: _lightOffWhite.withValues(alpha: 0.72),
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 9,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _primaryAqua.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: const Text(
-                            'Onboard',
-                            style: TextStyle(
-                              color: _primaryAqua,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      _buildInfoPill(
-                        Icons.person_outline_rounded,
-                        'New account',
-                      ),
-                      _buildInfoPill(Icons.how_to_reg_outlined, 'Guided setup'),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _panelSurface,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.05),
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: _primaryAqua.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.tips_and_updates_outlined,
-                            color: _primaryAqua,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Choose CHO for city-wide access or BHW for barangay-specific access. Availability and uniqueness are checked before submission.',
-                            style: TextStyle(
-                              color: _lightOffWhite.withValues(alpha: 0.76),
-                              fontSize: 12,
-                              height: 1.35,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 14,
-                    runSpacing: 14,
-                    children: [
-                      SizedBox(
-                        width: fieldWidth,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildFieldLabel(context, 'Username'),
-                            const SizedBox(height: 8),
-                            _buildTextField(
-                              controller: usernameController,
-                              hintText: 'Enter your username',
-                              icon: Icons.person_outline,
-                              keyboardType: TextInputType.text,
-                              suffixIcon: _buildAvailabilitySuffix(
-                                value: usernameController.text,
-                                isChecking: _isCheckingUsername,
-                                isUnavailable: _usernameExists,
-                                minLength: 3,
-                              ),
-                            ),
-                            _buildValidationMessage(
-                              message: _usernameValidationMessage,
-                              isError: _usernameExists,
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(
-                        width: fieldWidth,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildFieldLabel(context, 'Email Address'),
-                            const SizedBox(height: 8),
-                            _buildTextField(
-                              controller: emailController,
-                              hintText: 'you@example.com',
-                              icon: Icons.email_outlined,
-                              keyboardType: TextInputType.emailAddress,
-                              suffixIcon: _buildAvailabilitySuffix(
-                                value: emailController.text,
-                                isChecking: _isCheckingEmail,
-                                isUnavailable: _emailExists,
-                                minLength: 4,
-                              ),
-                            ),
-                            _buildValidationMessage(
-                              message: _emailValidationMessage,
-                              isError: _emailExists,
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(
-                        width: fieldWidth,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildFieldLabel(context, 'Account Type'),
-                            const SizedBox(height: 8),
-                            _buildRoleSelector(),
-                          ],
-                        ),
-                      ),
-                      SizedBox(
-                        width: fieldWidth,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildFieldLabel(context, 'Password'),
-                            const SizedBox(height: 8),
-                            _buildPasswordField(),
-                          ],
-                        ),
-                      ),
-                      SizedBox(
-                        width: fieldWidth,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildFieldLabel(context, 'Confirm Password'),
-                            const SizedBox(height: 8),
-                            _buildConfirmPasswordField(),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  if (_requiresBarangayAssignment) ...[
-                    _buildFieldLabel(context, 'Assigned Barangay'),
-                    const SizedBox(height: 8),
-                    _buildBarangaySelector(),
-                    if (_selectedBarangay != null && !isCompact) ...[
-                      const SizedBox(height: 12),
-                      _buildBarangayLogoPreview(),
-                    ],
-                    const SizedBox(height: 12),
-                  ] else if (_isChoRegistration) ...[
-                    _buildChoAccessNotice(),
-                    const SizedBox(height: 12),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  'CHO account registration is handled here. BHW applicants must use the dedicated BHW request page and wait for City Health Office approval.',
-                  style: TextStyle(
-                    color: _lightOffWhite.withValues(alpha: 0.7),
-                    fontSize: 12,
-                    height: 1.35,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : signup,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryAqua,
-                    foregroundColor: _darkDeepTeal,
-                    disabledBackgroundColor: _mutedCoolGray.withValues(
-                      alpha: 0.3,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              _darkDeepTeal,
-                            ),
-                            strokeWidth: 2.5,
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.person_add, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Create Account',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15.5,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                      color: _lightOffWhite.withValues(alpha: 0.78),
-                      fontSize: 13,
-                    ),
-                    children: [
-                      const TextSpan(text: 'Already have an account? '),
-                      TextSpan(
-                        text: 'Sign In',
-                        style: const TextStyle(
-                          color: _primaryAqua,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            replaceWithAuthPage(
-                              context,
-                              const Login(),
-                              begin: const Offset(-0.06, 0),
-                            );
-                          },
-                      ),
-                      const TextSpan(
-                        text: ' instead of creating a duplicate account.',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          _buildValidationMessage(
+            message: _emailValidationMessage,
+            isError: _emailExists,
           ),
         ],
+      ),
+    );
+    final accountType = fieldLabel('Account type', _buildRoleSelector());
+    final password = fieldLabel('Password', _buildPasswordField());
+    final confirm = fieldLabel(
+      'Confirm password',
+      _buildConfirmPasswordField(),
+    );
+
+    Widget desktopPair(Widget first, Widget second) {
+      if (isCompact) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [first, const SizedBox(height: 14), second],
+        );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: first),
+          const SizedBox(width: 14),
+          Expanded(child: second),
+        ],
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.all(isCompact ? 22 : 30),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xFFE5EEF0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 32,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
+      child: AutofillGroup(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Create your account',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: isCompact ? 27 : 32,
+                fontWeight: FontWeight.w800,
+                color: _darkDeepTeal,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Register with the role and access details required for your health workflow.',
+              style: TextStyle(color: _mutedCoolGray, height: 1.4),
+            ),
+            const SizedBox(height: 22),
+            desktopPair(username, email),
+            const SizedBox(height: 14),
+            desktopPair(accountType, password),
+            const SizedBox(height: 14),
+            if (isCompact) confirm else desktopPair(confirm, const SizedBox()),
+            if (_requiresBarangayAssignment) ...[
+              const SizedBox(height: 16),
+              _buildFieldLabel(context, 'Assigned barangay'),
+              const SizedBox(height: 8),
+              _buildBarangaySelector(),
+              if (_selectedBarangay != null && !isCompact) ...[
+                const SizedBox(height: 12),
+                _buildBarangayLogoPreview(),
+              ],
+            ] else if (_isChoRegistration) ...[
+              const SizedBox(height: 16),
+              _buildChoAccessNotice(),
+            ],
+            const SizedBox(height: 18),
+            Text(
+              'CHO account registration is handled here. BHW applicants must use the dedicated BHW request page and wait for approval.',
+              style: TextStyle(
+                color: _mutedCoolGray,
+                fontSize: 12,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              height: 54,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : signup,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primaryAqua,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFB8C9CC),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : const Text(
+                        'Create account',
+                        style: TextStyle(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: RichText(
+                text: TextSpan(
+                  style: const TextStyle(color: _mutedCoolGray, fontSize: 13),
+                  children: [
+                    const TextSpan(text: 'Already have an account? '),
+                    TextSpan(
+                      text: 'Sign in',
+                      style: const TextStyle(
+                        color: _primaryAqua,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => replaceWithAuthPage(
+                          context,
+                          const Login(),
+                          begin: const Offset(-0.06, 0),
+                        ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1672,7 +1429,7 @@ class _SignupState extends State<Signup> {
       label,
       style: TextStyle(
         fontSize: 12.5,
-        color: _lightOffWhite,
+        color: _darkDeepTeal,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.4,
       ),
@@ -1757,15 +1514,19 @@ class _SignupState extends State<Signup> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        textInputAction: TextInputAction.next,
+        autofillHints: keyboardType == TextInputType.emailAddress
+            ? const [AutofillHints.email]
+            : const [AutofillHints.username],
         style: TextStyle(
-          color: _lightOffWhite,
+          color: _darkDeepTeal,
           fontWeight: FontWeight.w600,
           fontSize: 14,
         ),
         decoration: InputDecoration(
           hintText: hintText,
           hintStyle: TextStyle(
-            color: _mutedCoolGray.withValues(alpha: 0.85),
+            color: _mutedCoolGray.withValues(alpha: 0.72),
             fontSize: 14,
           ),
           prefixIcon: Icon(icon, color: _primaryAqua, size: 20),
@@ -1776,17 +1537,14 @@ class _SignupState extends State<Signup> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide(
-              color: Colors.white.withValues(alpha: 0.08),
-              width: 1,
-            ),
+            borderSide: BorderSide(color: const Color(0xFFD7E3E5), width: 1),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(18),
             borderSide: BorderSide(color: _primaryAqua, width: 2),
           ),
           filled: true,
-          fillColor: _panelSurface.withValues(alpha: 0.96),
+          fillColor: const Color(0xFFF8FBFB),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 18,
             vertical: 16,
@@ -1802,7 +1560,7 @@ class _SignupState extends State<Signup> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.32)),
-        color: _panelSurface,
+        color: const Color(0xFFF8FBFB),
       ),
       child: Row(
         children: [Expanded(child: _buildRoleOption(label: 'CHO'))],
@@ -1832,7 +1590,7 @@ class _SignupState extends State<Signup> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(22),
-              color: _panelSurface,
+              color: const Color(0xFFF8FBFB),
               border: Border.all(
                 color:
                     _showBarangayValidationError || _selectedBarangayUnavailable
@@ -1884,7 +1642,7 @@ class _SignupState extends State<Signup> {
                                 : 'Assigned Barangay Selected',
                             style: TextStyle(
                               color: barangay == null
-                                  ? _lightOffWhite
+                                  ? _darkDeepTeal
                                   : _primaryAqua,
                               fontWeight: FontWeight.w700,
                               fontSize: 15,
@@ -1896,7 +1654,7 @@ class _SignupState extends State<Signup> {
                                 ? 'Type to search, browse by district, and select in seconds.'
                                 : 'Tap to change or remove the current assignment.',
                             style: TextStyle(
-                              color: _lightOffWhite.withValues(alpha: 0.62),
+                              color: _mutedCoolGray,
                               fontSize: 12.5,
                               height: 1.35,
                             ),
@@ -1940,7 +1698,7 @@ class _SignupState extends State<Signup> {
           Text(
             'Checking barangay availability...',
             style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.66),
+              color: _mutedCoolGray,
               fontSize: 12.5,
               fontWeight: FontWeight.w600,
             ),
@@ -1959,7 +1717,7 @@ class _SignupState extends State<Signup> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _darkDeepTeal,
+        color: const Color(0xFFF8FBFB),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.22)),
       ),
@@ -1982,7 +1740,7 @@ class _SignupState extends State<Signup> {
                       child: Text(
                         barangay.name,
                         style: const TextStyle(
-                          color: _lightOffWhite,
+                          color: _darkDeepTeal,
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                         ),
@@ -1998,10 +1756,7 @@ class _SignupState extends State<Signup> {
                 const SizedBox(height: 4),
                 Text(
                   barangay.district,
-                  style: TextStyle(
-                    color: _lightOffWhite.withValues(alpha: 0.66),
-                    fontSize: 12.5,
-                  ),
+                  style: TextStyle(color: _mutedCoolGray, fontSize: 12.5),
                 ),
                 if (availability != null) ...[
                   const SizedBox(height: 6),
@@ -2041,7 +1796,7 @@ class _SignupState extends State<Signup> {
                 ),
                 child: const Icon(
                   Icons.close_rounded,
-                  color: _lightOffWhite,
+                  color: _darkDeepTeal,
                   size: 18,
                 ),
               ),
@@ -2071,7 +1826,7 @@ class _SignupState extends State<Signup> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            color: _panelSurface,
+            color: const Color(0xFFF0F8F8),
             border: Border.all(color: _primaryAqua.withValues(alpha: 0.22)),
           ),
           child: Row(
@@ -2093,7 +1848,7 @@ class _SignupState extends State<Signup> {
                     Text(
                       barangay.name,
                       style: const TextStyle(
-                        color: _lightOffWhite,
+                        color: _darkDeepTeal,
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
                       ),
@@ -2101,10 +1856,7 @@ class _SignupState extends State<Signup> {
                     const SizedBox(height: 4),
                     Text(
                       barangay.district,
-                      style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.68),
-                        height: 1.35,
-                      ),
+                      style: TextStyle(color: _mutedCoolGray, height: 1.35),
                     ),
                     const SizedBox(height: 10),
                     Text(
@@ -2114,7 +1866,7 @@ class _SignupState extends State<Signup> {
                           ? 'Official barangay logo loaded from the local logo library for this barangay.'
                           : 'No barangay-specific logo has been published yet for this barangay.',
                       style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.78),
+                        color: _mutedCoolGray,
                         fontSize: 12,
                         height: 1.4,
                       ),
@@ -2153,7 +1905,7 @@ class _SignupState extends State<Signup> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        color: _darkDeepTeal,
+        color: const Color(0xFFF8FBFB),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
       ),
       child: Row(
@@ -2164,7 +1916,7 @@ class _SignupState extends State<Signup> {
           Text(
             label,
             style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.84),
+              color: _mutedCoolGray,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -2194,7 +1946,7 @@ class _SignupState extends State<Signup> {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: isSelected ? _primaryAqua : _darkDeepTeal,
+          color: isSelected ? _primaryAqua : const Color(0xFFF8FBFB),
           border: Border.all(
             color: isSelected
                 ? _primaryAqua
@@ -2205,7 +1957,7 @@ class _SignupState extends State<Signup> {
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? _darkDeepTeal : _lightOffWhite,
+              color: _darkDeepTeal,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.4,
             ),
@@ -2219,7 +1971,7 @@ class _SignupState extends State<Signup> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _panelSurface,
+        color: const Color(0xFFF0F8F8),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.22)),
       ),
@@ -2235,17 +1987,14 @@ class _SignupState extends State<Signup> {
                 const Text(
                   'CHO accounts use city-wide access',
                   style: TextStyle(
-                    color: _lightOffWhite,
+                    color: _darkDeepTeal,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'No barangay assignment is required. A successfully registered CHO account receives city-wide access immediately.',
-                  style: TextStyle(
-                    color: _lightOffWhite.withValues(alpha: 0.72),
-                    height: 1.4,
-                  ),
+                  style: TextStyle(color: _mutedCoolGray, height: 1.4),
                 ),
               ],
             ),
@@ -2271,15 +2020,17 @@ class _SignupState extends State<Signup> {
       child: TextField(
         controller: passwordController,
         obscureText: _obscurePassword,
+        textInputAction: TextInputAction.next,
+        autofillHints: const [AutofillHints.newPassword],
         style: TextStyle(
-          color: _lightOffWhite,
+          color: _darkDeepTeal,
           fontWeight: FontWeight.w500,
           fontSize: 15,
         ),
         decoration: InputDecoration(
           hintText: 'At least 6 characters',
           hintStyle: TextStyle(
-            color: _mutedCoolGray.withValues(alpha: 0.85),
+            color: _mutedCoolGray.withValues(alpha: 0.72),
             fontSize: 15,
           ),
           prefixIcon: const Icon(
@@ -2288,6 +2039,7 @@ class _SignupState extends State<Signup> {
             size: 20,
           ),
           suffixIcon: IconButton(
+            tooltip: _obscurePassword ? 'Show password' : 'Hide password',
             icon: Icon(
               _obscurePassword
                   ? Icons.visibility_off_outlined
@@ -2305,17 +2057,14 @@ class _SignupState extends State<Signup> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: _primaryAqua.withValues(alpha: 0.22),
-              width: 1,
-            ),
+            borderSide: BorderSide(color: const Color(0xFFD7E3E5), width: 1),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(color: _primaryAqua, width: 2),
           ),
           filled: true,
-          fillColor: _panelSurface,
+          fillColor: const Color(0xFFF8FBFB),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
             vertical: 18,
@@ -2341,15 +2090,17 @@ class _SignupState extends State<Signup> {
       child: TextField(
         controller: confirmPasswordController,
         obscureText: _obscureConfirmPassword,
+        textInputAction: TextInputAction.done,
+        autofillHints: const [AutofillHints.newPassword],
         style: TextStyle(
-          color: _lightOffWhite,
+          color: _darkDeepTeal,
           fontWeight: FontWeight.w500,
           fontSize: 15,
         ),
         decoration: InputDecoration(
           hintText: 'Re-enter your password',
           hintStyle: TextStyle(
-            color: _mutedCoolGray.withValues(alpha: 0.85),
+            color: _mutedCoolGray.withValues(alpha: 0.72),
             fontSize: 15,
           ),
           prefixIcon: const Icon(
@@ -2358,6 +2109,9 @@ class _SignupState extends State<Signup> {
             size: 20,
           ),
           suffixIcon: IconButton(
+            tooltip: _obscureConfirmPassword
+                ? 'Show password'
+                : 'Hide password',
             icon: Icon(
               _obscureConfirmPassword
                   ? Icons.visibility_off_outlined
@@ -2377,17 +2131,14 @@ class _SignupState extends State<Signup> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: _primaryAqua.withValues(alpha: 0.22),
-              width: 1,
-            ),
+            borderSide: BorderSide(color: const Color(0xFFD7E3E5), width: 1),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(color: _primaryAqua, width: 2),
           ),
           filled: true,
-          fillColor: _panelSurface,
+          fillColor: const Color(0xFFF8FBFB),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
             vertical: 18,

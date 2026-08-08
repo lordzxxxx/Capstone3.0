@@ -143,7 +143,15 @@ class _CheckUpPageState extends State<CheckUpPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Successfully added 100 sample checkup records!'),
+            content: Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text('Successfully added 100 sample checkup records!'),
+                ),
+              ],
+            ),
             backgroundColor: _primaryAqua,
             duration: Duration(seconds: 3),
           ),
@@ -159,7 +167,13 @@ class _CheckUpPageState extends State<CheckUpPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Error seeding data: $e'),
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Error seeding data: $e')),
+              ],
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -782,20 +796,26 @@ class _CheckUpPageState extends State<CheckUpPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '📋 Recovery Recommendations',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: _lightOffWhite,
-          ),
+        const Row(
+          children: [
+            Icon(Icons.healing_outlined, color: _lightOffWhite, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'AI-Assisted Home-Care Recommendation',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: _lightOffWhite,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
 
         // Home Care
         if (homeCare.isNotEmpty) ...[
           _buildDialogRecommendationSection(
-            icon: Icons.home,
+            icon: Icons.home_outlined,
             title: 'Home Care',
             color: Colors.green,
             items: homeCare,
@@ -806,7 +826,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
         // Precautions
         if (precautions.isNotEmpty) ...[
           _buildDialogRecommendationSection(
-            icon: Icons.warning_amber,
+            icon: Icons.warning_amber_rounded,
             title: 'Precautions',
             color: Colors.orange,
             items: precautions,
@@ -817,7 +837,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
         // General Advice
         if (generalAdvice.isNotEmpty) ...[
           _buildDialogRecommendationSection(
-            icon: Icons.tips_and_updates,
+            icon: Icons.info_outline,
             title: 'General Advice',
             color: Colors.purple,
             items: generalAdvice,
@@ -850,7 +870,34 @@ class _CheckUpPageState extends State<CheckUpPage> {
               ],
             ),
           ),
+          const SizedBox(height: 12),
         ],
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: _lightOffWhite.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: _lightOffWhite.withValues(alpha: 0.12)),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.info_outline, color: _primaryAqua, size: 14),
+              SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'AI-generated information provides supportive home-care '
+                  'guidance only. Medication and clinical decisions remain '
+                  'under the attending physician.',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    color: Colors.white70,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -3196,7 +3243,7 @@ Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
             Icon(Icons.healing, color: Colors.green.shade700, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Recovery Recommendations',
+              'AI-Assisted Home-Care Recommendation',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
@@ -3239,7 +3286,8 @@ Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
         // Home Care
         if (homeCare.isNotEmpty) ...[
           _buildRecommendationSection(
-            '🏠 Home Care Instructions',
+            'Home Care Instructions',
+            Icons.home_outlined,
             homeCare,
             Colors.orange.shade700,
             Colors.orange.shade50,
@@ -3250,7 +3298,8 @@ Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
         // Precautions
         if (precautions.isNotEmpty) ...[
           _buildRecommendationSection(
-            '⚠️ Important Precautions',
+            'Important Precautions',
+            Icons.warning_amber_rounded,
             precautions,
             Colors.red.shade700,
             Colors.red.shade50,
@@ -3261,7 +3310,8 @@ Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
         // General Advice
         if (generalAdvice.isNotEmpty) ...[
           _buildRecommendationSection(
-            '💡 General Advice',
+            'General Advice',
+            Icons.info_outline,
             generalAdvice,
             Colors.teal.shade700,
             Colors.teal.shade50,
@@ -3283,7 +3333,9 @@ Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'These are AI-generated suggestions. Always consult a healthcare professional.',
+                  'AI-generated information provides supportive home-care '
+                  'guidance only. Medication and clinical decisions remain '
+                  'under the attending physician.',
                   style: TextStyle(
                     fontSize: 10,
                     color: Colors.amber.shade900,
@@ -3301,6 +3353,7 @@ Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
 
 Widget _buildRecommendationSection(
   String title,
+  IconData icon,
   List<String> items,
   Color textColor,
   Color bgColor,
@@ -3308,13 +3361,19 @@ Widget _buildRecommendationSection(
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(
-        title,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: textColor,
-        ),
+      Row(
+        children: [
+          Icon(icon, size: 14, color: textColor),
+          const SizedBox(width: 6),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
+        ],
       ),
       const SizedBox(height: 6),
       ...items.map(
@@ -4870,19 +4929,25 @@ class _NewCheckUpFullScreenModalState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Self-Care Recommendations',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: _lightOffWhite,
-          ),
+        const Row(
+          children: [
+            Icon(Icons.healing_outlined, color: _lightOffWhite, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'AI-Assisted Home-Care Recommendation',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: _lightOffWhite,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
 
         if (homeCare.isNotEmpty) ...[
           _buildModalRecommendationSection(
-            icon: Icons.home,
+            icon: Icons.home_outlined,
             title: 'Home Remedies / Self-Care',
             color: Colors.green,
             items: homeCare,
@@ -4932,7 +4997,34 @@ class _NewCheckUpFullScreenModalState
               ],
             ),
           ),
+          const SizedBox(height: 12),
         ],
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: _lightOffWhite.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: _lightOffWhite.withValues(alpha: 0.12)),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.info_outline, color: _primaryAqua, size: 14),
+              SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'AI-generated information provides supportive home-care '
+                  'guidance only. Medication and clinical decisions remain '
+                  'under the attending physician.',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    color: Colors.white70,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -6036,19 +6128,25 @@ class _EditCheckUpFullScreenModalState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '📋 Recovery Recommendations',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: _lightOffWhite,
-          ),
+        const Row(
+          children: [
+            Icon(Icons.healing_outlined, color: _lightOffWhite, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'AI-Assisted Home-Care Recommendation',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: _lightOffWhite,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
 
         if (homeCare.isNotEmpty) ...[
           _buildEditModalRecommendationSection(
-            icon: Icons.home,
+            icon: Icons.home_outlined,
             title: 'Home Care',
             color: Colors.green,
             items: homeCare,
@@ -6098,7 +6196,34 @@ class _EditCheckUpFullScreenModalState
               ],
             ),
           ),
+          const SizedBox(height: 12),
         ],
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: _lightOffWhite.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: _lightOffWhite.withValues(alpha: 0.12)),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.info_outline, color: _primaryAqua, size: 14),
+              SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'AI-generated information provides supportive home-care '
+                  'guidance only. Medication and clinical decisions remain '
+                  'under the attending physician.',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    color: Colors.white70,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

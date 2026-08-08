@@ -1,3 +1,18 @@
+> **CORRECTION NOTICE — August 2026 panel revision**
+> This document is kept for historical/development record but is **no longer
+> accurate about medication content**. It was written when
+> `health_ai_classifier.dart`'s `treatmentDatabase` still listed medication
+> names (Paracetamol, Metformin, Insulin, etc.) alongside home-care advice.
+> Following the panel's explicit direction that doctors — not AI — remain
+> responsible for medication, **all medication-recommendation data has been
+> removed from the source code**, not just hidden from the UI. The
+> classifier now returns only non-prescriptive supportive information:
+> home care, precautions, estimated recovery, and general advice, labeled
+> in the UI as "AI-Assisted Home-Care Recommendation." See
+> `IMPLEMENTATION_SUMMARY_BATCH2.md` for the current, accurate description
+> of the AI system. Do not cite this file's medication examples as current
+> behavior.
+
 # 🎉 AI Classification Integration - Complete!
 
 ## ✅ What Was Implemented

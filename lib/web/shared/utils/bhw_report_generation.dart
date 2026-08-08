@@ -1068,13 +1068,20 @@ Future<List<int>> _generatePdfBytesInBackground(
   );
 
   final generatedAt = DateTime.now();
-  final reportTitle = _buildOfficialReportTitle(params.moduleLabel, params.selection.period);
+  final reportTitle = _buildOfficialReportTitle(
+    params.moduleLabel,
+    params.selection.period,
+  );
   final reportReference = _buildReportReference(
     params.moduleLabel,
     params.selection,
     generatedAt,
   );
-  final aggregation = _summarizeRecords(params.records, params.moduleLabel, params.dateResolver);
+  final aggregation = _summarizeRecords(
+    params.records,
+    params.moduleLabel,
+    params.dateResolver,
+  );
 
   pdf.addPage(
     pw.MultiPage(
@@ -1551,22 +1558,22 @@ pw.Widget _buildRecordsTable(
       verticalInside: pw.BorderSide(color: PdfColors.black),
     ),
     headerStyle: pw.TextStyle(
-      fontSize: 7.4,
+      fontSize: 10.5,
       fontWeight: pw.FontWeight.bold,
       color: PdfColors.black,
     ),
     cellStyle: pw.TextStyle(
-      fontSize: 7.2,
+      fontSize: 9.5,
       color: PdfColors.black,
-      height: 1.2,
+      height: 1.25,
     ),
     oddCellStyle: pw.TextStyle(
-      fontSize: 7.2,
+      fontSize: 9.5,
       color: PdfColors.black,
-      height: 1.2,
+      height: 1.25,
     ),
-    headerPadding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 7),
-    cellPadding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+    headerPadding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 8),
+    cellPadding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 7),
     cellHeight: 0,
     headerHeight: 0,
   );
@@ -1618,7 +1625,7 @@ pw.Widget _buildTotalsSection(_ReportAggregation aggregation) {
               child: pw.Text(
                 entry.key,
                 style: pw.TextStyle(
-                  fontSize: 8.2,
+                  fontSize: 9.5,
                   fontWeight: pw.FontWeight.bold,
                   color: PdfColors.black,
                 ),
@@ -1628,10 +1635,7 @@ pw.Widget _buildTotalsSection(_ReportAggregation aggregation) {
               padding: const pw.EdgeInsets.all(9),
               child: pw.Text(
                 entry.value,
-                style: pw.TextStyle(
-                  fontSize: 8.5,
-                  color: PdfColors.black,
-                ),
+                style: pw.TextStyle(fontSize: 9.5, color: PdfColors.black),
               ),
             ),
           ],
@@ -1664,10 +1668,7 @@ pw.Widget _buildRemarksSection(String remarks) {
         pw.SizedBox(height: 8),
         pw.Text(
           'System notice: This document is generated from the encoded BHW database and should be reviewed before final submission.',
-          style: pw.TextStyle(
-            fontSize: 8.2,
-            color: PdfColors.black,
-          ),
+          style: pw.TextStyle(fontSize: 8.2, color: PdfColors.black),
         ),
       ],
     ),

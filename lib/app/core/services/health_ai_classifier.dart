@@ -35,7 +35,6 @@ class HealthAIClassifier {
   // Medical treatment and recovery recommendations database
   static const Map<String, Map<String, dynamic>> treatmentDatabase = {
     'fever': {
-      'medications': ['Paracetamol/Acetaminophen', 'Ibuprofen'],
       'home_care': [
         'Rest and stay hydrated',
         'Apply cool compress to forehead',
@@ -47,7 +46,6 @@ class HealthAIClassifier {
       'recovery_time': '3-7 days',
     },
     'cough': {
-      'medications': ['Cough suppressants', 'Expectorants', 'Honey (natural)'],
       'home_care': [
         'Drink warm fluids (tea, soup)',
         'Use humidifier in room',
@@ -59,21 +57,14 @@ class HealthAIClassifier {
       'recovery_time': '1-3 weeks',
     },
     'chest pain': {
-      'medications': ['As prescribed by emergency physician'],
       'home_care': ['SEEK IMMEDIATE MEDICAL ATTENTION'],
       'precautions': [
         'Call emergency services immediately',
         'Do not drive yourself',
-        'Chew aspirin if not allergic',
       ],
       'recovery_time': 'Requires immediate medical evaluation',
     },
     'diabetes': {
-      'medications': [
-        'Metformin',
-        'Insulin (as prescribed)',
-        'Other oral hypoglycemics',
-      ],
       'home_care': [
         'Monitor blood glucose regularly',
         'Follow diabetic diet (low sugar, high fiber)',
@@ -85,11 +76,6 @@ class HealthAIClassifier {
       'recovery_time': 'Lifelong management',
     },
     'hypertension': {
-      'medications': [
-        'ACE inhibitors',
-        'Beta blockers',
-        'Calcium channel blockers',
-      ],
       'home_care': [
         'Reduce sodium intake (<2000mg/day)',
         'DASH diet (fruits, vegetables, whole grains)',
@@ -102,9 +88,8 @@ class HealthAIClassifier {
       'recovery_time': 'Lifelong management',
     },
     'pneumonia': {
-      'medications': ['Antibiotics', 'Fever reducers', 'Pain relievers'],
       'home_care': [
-        'Complete full course of antibiotics',
+        'Take all medications exactly as prescribed by your doctor',
         'Rest adequately',
         'Drink plenty of fluids',
         'Use humidifier',
@@ -114,11 +99,6 @@ class HealthAIClassifier {
       'recovery_time': '2-4 weeks',
     },
     'asthma': {
-      'medications': [
-        'Inhalers (bronchodilators)',
-        'Corticosteroids',
-        'Controller medications',
-      ],
       'home_care': [
         'Identify and avoid triggers',
         'Use peak flow meter daily',
@@ -130,12 +110,8 @@ class HealthAIClassifier {
       'recovery_time': 'Lifelong management',
     },
     'diarrhea': {
-      'medications': [
-        'Oral rehydration solution',
-        'Loperamide (if appropriate)',
-      ],
       'home_care': [
-        'Stay well hydrated (ORS, clear fluids)',
+        'Stay well hydrated (oral rehydration solution, clear fluids)',
         'BRAT diet (Bananas, Rice, Applesauce, Toast)',
         'Avoid dairy temporarily',
         'Maintain hand hygiene',
@@ -145,7 +121,6 @@ class HealthAIClassifier {
       'recovery_time': '2-7 days',
     },
     'pregnant': {
-      'medications': ['Prenatal vitamins', 'Folic acid', 'Iron supplements'],
       'home_care': [
         'Regular prenatal checkups',
         'Balanced, nutritious diet',
@@ -158,12 +133,6 @@ class HealthAIClassifier {
       'recovery_time': 'Throughout pregnancy',
     },
     'prenatal': {
-      'medications': [
-        'Prenatal vitamins',
-        'Folic acid',
-        'Iron supplements',
-        'Calcium supplements',
-      ],
       'home_care': [
         'Regular prenatal checkups every 4 weeks (1st-2nd trimester)',
         'Prenatal checkups every 2 weeks (3rd trimester)',
@@ -183,7 +152,6 @@ class HealthAIClassifier {
       'recovery_time': 'Throughout pregnancy until delivery',
     },
     'gestational': {
-      'medications': ['Prenatal vitamins', 'Iron supplements', 'Folic acid'],
       'home_care': [
         'Monitor gestational age milestones',
         'Attend all scheduled prenatal visits',
@@ -199,7 +167,6 @@ class HealthAIClassifier {
       'recovery_time': 'Full term: 37-42 weeks',
     },
     'maternal': {
-      'medications': ['Prenatal vitamins', 'Folic acid', 'Iron supplements'],
       'home_care': [
         'Maintain a healthy, balanced diet',
         'Get regular moderate exercise',
@@ -251,9 +218,6 @@ class HealthAIClassifier {
   // Safe fallback guidance when no keyword-specific treatment is found.
   static const Map<String, Map<String, dynamic>> categoryFallbackTreatment = {
     'Communicable Disease': {
-      'medications': [
-        'Use symptom-relief medicines only as prescribed by a clinician',
-      ],
       'home_care': [
         'Rest and stay hydrated',
         'Monitor symptoms daily',
@@ -263,7 +227,6 @@ class HealthAIClassifier {
       'recovery_time': 'Usually days to weeks depending on infection',
     },
     'Non-Communicable Disease': {
-      'medications': ['Continue maintenance medications as prescribed'],
       'home_care': [
         'Follow diet and lifestyle plan',
         'Track blood pressure/glucose as advised',
@@ -273,13 +236,11 @@ class HealthAIClassifier {
       'recovery_time': 'Ongoing long-term management',
     },
     'Emergency': {
-      'medications': ['Do not self-medicate before emergency assessment'],
       'home_care': ['Seek urgent in-person care immediately'],
       'precautions': ['Call emergency services for severe or sudden symptoms'],
       'recovery_time': 'Requires immediate professional evaluation',
     },
     'Routine Checkup': {
-      'medications': ['No medication unless prescribed after evaluation'],
       'home_care': [
         'Maintain hydration, sleep, and balanced nutrition',
         'Continue preventive screening as scheduled',
@@ -288,7 +249,6 @@ class HealthAIClassifier {
       'recovery_time': 'No acute recovery needed',
     },
     'Prenatal Care': {
-      'medications': ['Prenatal supplements as prescribed'],
       'home_care': [
         'Attend regular prenatal visits',
         'Maintain healthy diet and hydration',
@@ -300,7 +260,6 @@ class HealthAIClassifier {
       'recovery_time': 'Throughout pregnancy',
     },
     'Pediatric Care': {
-      'medications': ['Use pediatric-dose medicines only as prescribed'],
       'home_care': [
         'Ensure hydration, nutrition, and rest',
         'Keep vaccinations and checkups up to date',
@@ -929,44 +888,44 @@ class HealthAIClassifier {
 
     if (severity == 'Critical' || category == 'Emergency') {
       actions.addAll([
-        '🚨 Immediate medical attention required',
-        '📞 Call emergency services or go to ER',
-        '⚕️ Do not delay treatment',
+        'Immediate medical attention required',
+        'Call emergency services or go to the ER',
+        'Do not delay treatment',
       ]);
     } else if (severity == 'High') {
       actions.addAll([
-        '⚠️ Urgent medical consultation needed',
-        '📅 Schedule appointment within 24 hours',
-        '📋 Monitor symptoms closely',
+        'Urgent medical consultation needed',
+        'Schedule appointment within 24 hours',
+        'Monitor symptoms closely',
       ]);
     } else if (severity == 'Medium') {
       actions.addAll([
-        '👨‍⚕️ Schedule medical consultation',
-        '📊 Track symptoms for changes',
-        '📝 Follow the care plan provided by your clinician',
+        'Schedule medical consultation',
+        'Track symptoms for changes',
+        'Follow the care plan provided by your clinician',
       ]);
     }
 
     switch (category) {
       case 'Communicable Disease':
         actions.addAll([
-          '😷 Practice isolation if necessary',
-          '🧼 Maintain good hygiene',
-          '👥 Limit contact with others',
+          'Practice isolation if necessary',
+          'Maintain good hygiene',
+          'Limit contact with others',
         ]);
         break;
       case 'Non-Communicable Disease':
         actions.addAll([
-          '🩺 Follow your long-term care plan',
-          '🏃 Maintain healthy lifestyle',
-          '📅 Regular follow-up appointments',
+          'Follow your long-term care plan',
+          'Maintain healthy lifestyle',
+          'Regular follow-up appointments',
         ]);
         break;
       case 'Prenatal Care':
         actions.addAll([
-          '🤰 Regular prenatal checkups',
-          '📘 Follow your prenatal care plan',
-          '🥗 Maintain healthy diet',
+          'Regular prenatal checkups',
+          'Follow your prenatal care plan',
+          'Maintain healthy diet',
         ]);
         break;
     }

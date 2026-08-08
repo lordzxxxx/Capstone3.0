@@ -1,4 +1,15 @@
-FIRESTORE SECURITY RULES FOR YOUR PROJECT
+OBSOLETE — DO NOT USE. DO NOT DEPLOY.
+==========================================
+This file predates the project's real firestore.rules (root of the repo),
+which now covers every collection the app actually uses (including
+doctor_notes, notifications, hospitals, announcements) with role/barangay
+-scoped least-privilege rules. Both options below are wide-open placeholder
+rules kept only for historical reference. Deploying either would remove
+patient-record access control entirely. The authoritative rules file is
+/firestore.rules — deploy that one.
+==========================================
+
+FIRESTORE SECURITY RULES FOR YOUR PROJECT (historical draft, superseded)
 ==========================================
 
 Current Project: capstone-c98f9

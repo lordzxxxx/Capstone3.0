@@ -1,3 +1,15 @@
+> **CORRECTION NOTICE — August 2026 panel revision**
+> This document is kept for historical/development record. Its examples
+> below showing `'medications': ['Paracetamol', ...]`,
+> `'Medications: Metformin, Insulin'`, and similar drug-name suggestions
+> **no longer reflect the system's behavior**. Per the panel's requirement
+> that doctors — not AI — remain responsible for medication, all
+> medication-recommendation fields and data were removed from
+> `health_ai_classifier.dart` at the source level. The AI now generates
+> only non-prescriptive home-care guidance (home care, precautions,
+> estimated recovery, general advice). See
+> `IMPLEMENTATION_SUMMARY_BATCH2.md` for the current, accurate description.
+
 # 🏥 AI Recovery Recommendations - Feature Guide
 
 ## Overview
