@@ -1,0 +1,820 @@
+{
+  "validatedAt": "2026-07-15T15:01:09.535168+00:00",
+  "expectedModelLabels": 100,
+  "seedRecords": 100,
+  "uniqueDiseaseKeys": 100,
+  "matchedModelLabels": 100,
+  "missingModelLabels": [],
+  "unmatchedModelLabels": [],
+  "missingDiseaseKeys": [],
+  "unmatchedDiseaseKeys": [],
+  "criticalErrorCount": 0,
+  "warningCount": 100,
+  "valid": true,
+  "criticalErrors": [],
+  "warnings": [
+    "actinic_keratosis: ICD-10 codes unavailable; clinical mapping required",
+    "acute_bronchiolitis: ICD-10 codes unavailable; clinical mapping required",
+    "acute_bronchitis: ICD-10 codes unavailable; clinical mapping required",
+    "acute_bronchospasm: ICD-10 codes unavailable; clinical mapping required",
+    "acute_kidney_injury: ICD-10 codes unavailable; clinical mapping required",
+    "acute_pancreatitis: ICD-10 codes unavailable; clinical mapping required",
+    "acute_sinusitis: ICD-10 codes unavailable; clinical mapping required",
+    "allergy: ICD-10 codes unavailable; clinical mapping required",
+    "angina: ICD-10 codes unavailable; clinical mapping required",
+    "anxiety: ICD-10 codes unavailable; clinical mapping required",
+    "appendicitis: ICD-10 codes unavailable; clinical mapping required",
+    "arthritis_of_the_hip: ICD-10 codes unavailable; clinical mapping required",
+    "asthma: ICD-10 codes unavailable; clinical mapping required",
+    "benign_prostatic_hyperplasia_bph: ICD-10 codes unavailable; clinical mapping required",
+    "brachial_neuritis: ICD-10 codes unavailable; clinical mapping required",
+    "bursitis: ICD-10 codes unavailable; clinical mapping required",
+    "carpal_tunnel_syndrome: ICD-10 codes unavailable; clinical mapping required",
+    "cholecystitis: ICD-10 codes unavailable; clinical mapping required",
+    "chronic_back_pain: ICD-10 codes unavailable; clinical mapping required",
+    "chronic_constipation: ICD-10 codes unavailable; clinical mapping required",
+    "chronic_obstructive_pulmonary_disease_copd: ICD-10 codes unavailable; clinical mapping required",
+    "common_cold: ICD-10 codes unavailable; clinical mapping required",
+    "complex_regional_pain_syndrome: ICD-10 codes unavailable; clinical mapping required",
+    "concussion: ICD-10 codes unavailable; clinical mapping required",
+    "conjunctivitis: ICD-10 codes unavailable; clinical mapping required",
+    "conjunctivitis_due_to_allergy: ICD-10 codes unavailable; clinical mapping required",
+    "contact_dermatitis: ICD-10 codes unavailable; clinical mapping required",
+    "cornea_infection: ICD-10 codes unavailable; clinical mapping required",
+    "croup: ICD-10 codes unavailable; clinical mapping required",
+    "cystitis: ICD-10 codes unavailable; clinical mapping required",
+    "degenerative_disc_disease: ICD-10 codes unavailable; clinical mapping required",
+    "dental_caries: ICD-10 codes unavailable; clinical mapping required",
+    "depression: ICD-10 codes unavailable; clinical mapping required",
+    "developmental_disability: ICD-10 codes unavailable; clinical mapping required",
+    "diaper_rash: ICD-10 codes unavailable; clinical mapping required",
+    "diverticulitis: ICD-10 codes unavailable; clinical mapping required",
+    "drug_reaction: ICD-10 codes unavailable; clinical mapping required",
+    "ear_drum_damage: ICD-10 codes unavailable; clinical mapping required",
+    "eczema: ICD-10 codes unavailable; clinical mapping required",
+    "esophagitis: ICD-10 codes unavailable; clinical mapping required",
+    "eustachian_tube_dysfunction_ear_disorder: ICD-10 codes unavailable; clinical mapping required",
+    "fungal_infection_of_the_hair: ICD-10 codes unavailable; clinical mapping required",
+    "gallstone: ICD-10 codes unavailable; clinical mapping required",
+    "gastrointestinal_hemorrhage: ICD-10 codes unavailable; clinical mapping required",
+    "gout: ICD-10 codes unavailable; clinical mapping required",
+    "gum_disease: ICD-10 codes unavailable; clinical mapping required",
+    "heart_attack: ICD-10 codes unavailable; clinical mapping required",
+    "heart_failure: ICD-10 codes unavailable; clinical mapping required",
+    "hemorrhoids: ICD-10 codes unavailable; clinical mapping required",
+    "herniated_disk: ICD-10 codes unavailable; clinical mapping required",
+    "hiatal_hernia: ICD-10 codes unavailable; clinical mapping required",
+    "hyperemesis_gravidarum: ICD-10 codes unavailable; clinical mapping required",
+    "hypertensive_heart_disease: ICD-10 codes unavailable; clinical mapping required",
+    "hypoglycemia: ICD-10 codes unavailable; clinical mapping required",
+    "idiopathic_excessive_menstruation: ICD-10 codes unavailable; clinical mapping required",
+    "idiopathic_irregular_menstrual_cycle: ICD-10 codes unavailable; clinical mapping required",
+    "idiopathic_painful_menstruation: ICD-10 codes unavailable; clinical mapping required",
+    "infectious_gastroenteritis: ICD-10 codes unavailable; clinical mapping required",
+    "injury_to_the_arm: ICD-10 codes unavailable; clinical mapping required",
+    "injury_to_the_leg: ICD-10 codes unavailable; clinical mapping required",
+    "injury_to_the_trunk: ICD-10 codes unavailable; clinical mapping required",
+    "liver_disease: ICD-10 codes unavailable; clinical mapping required",
+    "macular_degeneration: ICD-10 codes unavailable; clinical mapping required",
+    "marijuana_abuse: ICD-10 codes unavailable; clinical mapping required",
+    "multiple_sclerosis: ICD-10 codes unavailable; clinical mapping required",
+    "noninfectious_gastroenteritis: ICD-10 codes unavailable; clinical mapping required",
+    "nose_disorder: ICD-10 codes unavailable; clinical mapping required",
+    "obstructive_sleep_apnea_osa: ICD-10 codes unavailable; clinical mapping required",
+    "otitis_externa_swimmer_s_ear: ICD-10 codes unavailable; clinical mapping required",
+    "otitis_media: ICD-10 codes unavailable; clinical mapping required",
+    "pain_after_an_operation: ICD-10 codes unavailable; clinical mapping required",
+    "panic_disorder: ICD-10 codes unavailable; clinical mapping required",
+    "pelvic_inflammatory_disease: ICD-10 codes unavailable; clinical mapping required",
+    "peripheral_nerve_disorder: ICD-10 codes unavailable; clinical mapping required",
+    "personality_disorder: ICD-10 codes unavailable; clinical mapping required",
+    "pneumonia: ICD-10 codes unavailable; clinical mapping required",
+    "problem_during_pregnancy: ICD-10 codes unavailable; clinical mapping required",
+    "psoriasis: ICD-10 codes unavailable; clinical mapping required",
+    "pyogenic_skin_infection: ICD-10 codes unavailable; clinical mapping required",
+    "rectal_disorder: ICD-10 codes unavailable; clinical mapping required",
+    "schizophrenia: ICD-10 codes unavailable; clinical mapping required",
+    "seasonal_allergies_hay_fever: ICD-10 codes unavailable; clinical mapping required",
+    "sebaceous_cyst: ICD-10 codes unavailable; clinical mapping required",
+    "sepsis: ICD-10 codes unavailable; clinical mapping required",
+    "sickle_cell_crisis: ICD-10 codes unavailable; clinical mapping required",
+    "sinus_bradycardia: ICD-10 codes unavailable; clinical mapping required",
+    "skin_pigmentation_disorder: ICD-10 codes unavailable; clinical mapping required",
+    "skin_polyp: ICD-10 codes unavailable; clinical mapping required",
+    "spinal_stenosis: ICD-10 codes unavailable; clinical mapping required",
+    "spondylosis: ICD-10 codes unavailable; clinical mapping required",
+    "spontaneous_abortion: ICD-10 codes unavailable; clinical mapping required",
+    "sprain_or_strain: ICD-10 codes unavailable; clinical mapping required",
+    "strep_throat: ICD-10 codes unavailable; clinical mapping required",
+    "stye: ICD-10 codes unavailable; clinical mapping required",
+    "temporary_or_benign_blood_in_urine: ICD-10 codes unavailable; clinical mapping required",
+    "threatened_pregnancy: ICD-10 codes unavailable; clinical mapping required",
+    "urinary_tract_infection: ICD-10 codes unavailable; clinical mapping required",
+    "vaginal_cyst: ICD-10 codes unavailable; clinical mapping required",
+    "vaginitis: ICD-10 codes unavailable; clinical mapping required",
+    "vulvodynia: ICD-10 codes unavailable; clinical mapping required"
+  ],
+  "records": [
+    {
+      "diseaseKey": "actinic_keratosis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "acute_bronchiolitis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "acute_bronchitis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "acute_bronchospasm",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "acute_kidney_injury",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "acute_pancreatitis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "acute_sinusitis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "allergy",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "angina",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "anxiety",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "appendicitis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "arthritis_of_the_hip",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "asthma",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "benign_prostatic_hyperplasia_bph",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "brachial_neuritis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "bursitis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "carpal_tunnel_syndrome",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "cholecystitis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "chronic_back_pain",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "chronic_constipation",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "chronic_obstructive_pulmonary_disease_copd",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "common_cold",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "complex_regional_pain_syndrome",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "concussion",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "conjunctivitis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "conjunctivitis_due_to_allergy",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "contact_dermatitis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "cornea_infection",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "croup",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "cystitis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "degenerative_disc_disease",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "dental_caries",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "depression",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "developmental_disability",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "diaper_rash",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "diverticulitis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "drug_reaction",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "ear_drum_damage",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "eczema",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "esophagitis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "eustachian_tube_dysfunction_ear_disorder",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "fungal_infection_of_the_hair",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "gallstone",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "gastrointestinal_hemorrhage",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "gout",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "gum_disease",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "heart_attack",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "heart_failure",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "hemorrhoids",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "herniated_disk",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "hiatal_hernia",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "hyperemesis_gravidarum",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "hypertensive_heart_disease",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "hypoglycemia",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "idiopathic_excessive_menstruation",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "idiopathic_irregular_menstrual_cycle",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "idiopathic_painful_menstruation",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "infectious_gastroenteritis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "injury_to_the_arm",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "injury_to_the_leg",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "injury_to_the_trunk",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "liver_disease",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "macular_degeneration",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "marijuana_abuse",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "multiple_sclerosis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "noninfectious_gastroenteritis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "nose_disorder",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "obstructive_sleep_apnea_osa",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "otitis_externa_swimmer_s_ear",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "otitis_media",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "pain_after_an_operation",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "panic_disorder",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "pelvic_inflammatory_disease",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "peripheral_nerve_disorder",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "personality_disorder",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "pneumonia",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "problem_during_pregnancy",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "psoriasis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "pyogenic_skin_infection",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "rectal_disorder",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "schizophrenia",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "seasonal_allergies_hay_fever",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "sebaceous_cyst",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "sepsis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "sickle_cell_crisis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "sinus_bradycardia",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "skin_pigmentation_disorder",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "skin_polyp",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "spinal_stenosis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "spondylosis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "spontaneous_abortion",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "sprain_or_strain",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "strep_throat",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "stye",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "temporary_or_benign_blood_in_urine",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "threatened_pregnancy",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "urinary_tract_infection",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "vaginal_cyst",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "vaginitis",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    },
+    {
+      "diseaseKey": "vulvodynia",
+      "errors": [],
+      "warnings": [
+        "ICD-10 codes unavailable; clinical mapping required"
+      ]
+    }
+  ],
+  "modelLabelSource": "C:\\Users\\THEO\\Documents\\capstone2-main\\backend\\models\\disease_model.pkl"
+}

@@ -1,0 +1,74 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.dart_appdata/
+.flutter-plugins-dependencies
+.flutter
+.flutter_tool_state
+.codex-tmp/
+.pub-cache/
+.pub/
+/build/
+/coverage/
+/flutter/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Node dependencies
+node_modules/
+functions/node_modules/
+
+# Firebase local credentials and secrets
+functions/serviceAccount.json
+functions/*firebase-adminsdk*.json
+backend/firebase/*firebase-adminsdk*.json
+android/app/google-services.json
+android/app/google-services (*).json
+ios/Runner/GoogleService-Info.plist
+GoogleService-Info.plist
+.env
+.env.*
+!.env.example
+supabase.config.json
+
+# Backend experiment artifacts that exceed GitHub's regular file limit.
+backend/dataset/excluded/legacy_merged_dataset.csv
+backend/models/experiments/raw_baseline.pkl
+backend/models/experiments/kaggle_100k.pkl
+backend/models/experiments/merged_union.pkl
+backend/models/experiments/merged_common_features.pkl

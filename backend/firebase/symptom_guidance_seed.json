@@ -1,0 +1,177 @@
+[
+  {
+    "symptomKey": "_default",
+    "symptom": "General symptom guidance",
+    "homeCare": [
+      "Rest as needed, keep a record of symptoms, and maintain normal hydration and nutrition when medically appropriate."
+    ],
+    "precautions": [
+      "Do not use leftover prescription medicines, antibiotics, steroids, or unreviewed herbal products.",
+      "Ask a licensed clinician or pharmacist before using medicine for a child, during pregnancy, or with an existing medical condition."
+    ],
+    "whenToSeekCare": [
+      "Contact a healthcare professional if symptoms are severe, persistent, recurrent, worsening, or interfering with normal activities."
+    ],
+    "emergencyWarningSigns": [
+      "Trouble breathing or inability to speak normally because of breathlessness",
+      "Chest pain or pressure",
+      "Fainting, inability to wake, sudden confusion, or seizure",
+      "Blue, gray, or very pale lips or skin",
+      "Heavy bleeding, coughing blood, or vomiting blood",
+      "Severe or rapidly worsening pain"
+    ],
+    "references": [
+      {
+        "organization": "MedlinePlus",
+        "title": "Breathing difficulties - first aid",
+        "url": "https://medlineplus.gov/ency/article/000007.htm"
+      }
+    ],
+    "clinicalReview": {"status": "needs_review", "reviewedBy": "", "notes": "Conservative draft for licensed clinical review."},
+    "isActive": true
+  },
+  {
+    "symptomKey": "fever",
+    "symptom": "fever",
+    "homeCare": [
+      "For a mild fever without concerning symptoms, rest, drink fluids, and avoid excessive clothing or blankets."
+    ],
+    "precautions": [
+      "Fever guidance differs for infants, children, pregnancy, older adults, and people with weakened immunity or serious chronic illness."
+    ],
+    "whenToSeekCare": [
+      "Seek medical advice for a persistent or worsening fever, dehydration, a new rash, painful urination, or other concerning symptoms."
+    ],
+    "emergencyWarningSigns": [
+      "Fever with difficulty breathing, blue lips, severe headache, stiff neck, confusion, inability to wake, or seizure"
+    ],
+    "references": [
+      {
+        "organization": "MedlinePlus",
+        "title": "Fever",
+        "url": "https://medlineplus.gov/ency/article/003090.htm"
+      }
+    ],
+    "clinicalReview": {"status": "needs_review", "reviewedBy": "", "notes": "Draft derived from cited public-health guidance."},
+    "isActive": true
+  },
+  {
+    "symptomKey": "cough",
+    "symptom": "cough",
+    "homeCare": [
+      "Drink water when medically appropriate and avoid smoke or other known airway irritants."
+    ],
+    "precautions": [
+      "Ask a clinician before giving over-the-counter cough medicine to a young child."
+    ],
+    "whenToSeekCare": [
+      "Contact a healthcare professional for a cough that persists, produces blood, occurs with fever, or is rapidly worsening."
+    ],
+    "emergencyWarningSigns": [
+      "Cough with shortness of breath, difficulty breathing, facial or throat swelling, or difficulty swallowing"
+    ],
+    "references": [
+      {
+        "organization": "MedlinePlus",
+        "title": "Cough",
+        "url": "https://medlineplus.gov/ency/article/003072.htm"
+      }
+    ],
+    "clinicalReview": {"status": "needs_review", "reviewedBy": "", "notes": "Draft derived from cited public-health guidance."},
+    "isActive": true
+  },
+  {
+    "symptomKey": "shortness_of_breath",
+    "symptom": "shortness of breath",
+    "homeCare": [],
+    "precautions": [
+      "Unexpected or significant breathing difficulty should not be managed with home remedies while waiting to see whether it improves."
+    ],
+    "whenToSeekCare": [
+      "Contact a healthcare professional promptly for new or worsening breathlessness."
+    ],
+    "emergencyWarningSigns": [
+      "Sudden or severe breathing difficulty is an emergency; contact local emergency services immediately"
+    ],
+    "references": [
+      {
+        "organization": "MedlinePlus",
+        "title": "Breathing difficulties - first aid",
+        "url": "https://medlineplus.gov/ency/article/000007.htm"
+      }
+    ],
+    "clinicalReview": {"status": "needs_review", "reviewedBy": "", "notes": "Emergency-oriented draft derived from cited guidance."},
+    "isActive": true
+  },
+  {
+    "symptomKey": "nasal_congestion",
+    "symptom": "nasal congestion",
+    "homeCare": [
+      "Avoid known irritants and maintain comfortable hydration when medically appropriate."
+    ],
+    "precautions": [
+      "Read combination cold-medicine labels carefully and ask a clinician or pharmacist which products are safe for you."
+    ],
+    "whenToSeekCare": [
+      "Seek medical advice for facial or eye swelling, blurred vision, severe throat pain, or foul-smelling one-sided discharge."
+    ],
+    "emergencyWarningSigns": [],
+    "references": [
+      {
+        "organization": "MedlinePlus",
+        "title": "Stuffy or runny nose - adult",
+        "url": "https://medlineplus.gov/ency/article/003049.htm"
+      }
+    ],
+    "clinicalReview": {"status": "needs_review", "reviewedBy": "", "notes": "Draft derived from cited guidance."},
+    "isActive": true
+  },
+  {
+    "symptomKey": "painful_urination",
+    "symptom": "painful urination",
+    "homeCare": [
+      "Rest and drink enough fluids to pass pale urine regularly when fluids are not medically restricted."
+    ],
+    "precautions": [
+      "Do not use leftover antibiotics; urinary symptoms may require assessment and a urine test."
+    ],
+    "whenToSeekCare": [
+      "Seek prompt medical advice for painful urination, especially during pregnancy, in children, in men, or with recurrent symptoms."
+    ],
+    "emergencyWarningSigns": [
+      "Urinary symptoms with confusion, marked drowsiness, difficulty speaking, severe back or side pain, or rapidly worsening illness"
+    ],
+    "references": [
+      {
+        "organization": "National Health Service",
+        "title": "Urinary tract infections",
+        "url": "https://www.nhs.uk/conditions/urinary-tract-infections-utis/"
+      }
+    ],
+    "clinicalReview": {"status": "needs_review", "reviewedBy": "", "notes": "Draft derived from cited public-health guidance."},
+    "isActive": true
+  },
+  {
+    "symptomKey": "frequent_urination",
+    "symptom": "frequent urination",
+    "homeCare": [
+      "Track fluid intake, urinary frequency, pain, fever, urine appearance, and other accompanying symptoms for clinical review."
+    ],
+    "precautions": [
+      "Frequent urination can have many causes and should not be treated as a confirmed infection without assessment."
+    ],
+    "whenToSeekCare": [
+      "Seek medical advice if urinary frequency is new, persistent, painful, occurs at night repeatedly, or is accompanied by blood in urine."
+    ],
+    "emergencyWarningSigns": [],
+    "references": [
+      {
+        "organization": "National Health Service",
+        "title": "Urinary tract infections",
+        "url": "https://www.nhs.uk/conditions/urinary-tract-infections-utis/"
+      }
+    ],
+    "clinicalReview": {"status": "needs_review", "reviewedBy": "", "notes": "Draft derived from cited public-health guidance."},
+    "isActive": true
+  }
+]

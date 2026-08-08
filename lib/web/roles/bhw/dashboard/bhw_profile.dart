@@ -1,0 +1,541 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:mycapstone_project/firebase_helper.dart';
+import 'package:mycapstone_project/shared/user_access_scope.dart';
+import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+
+const Color _profileAqua = Color(0xFF00A8B5);
+const Color _profileDark = Color(0xFF0A1F24);
+const Color _profileSurface = Color(0xFF0E2F34);
+
+class BHWProfilePage extends StatefulWidget {
+  const BHWProfilePage({super.key});
+
+  @override
+  State<BHWProfilePage> createState() => _BHWProfilePageState();
+}
+
+class _BHWProfilePageState extends State<BHWProfilePage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isLoading = true;
+  String? _error;
+  Map<String, dynamic> _profile = <String, dynamic>{};
+  UserAccessScope _scope = UserAccessScope.unauthenticated;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw StateError('No authenticated user session found.');
+      }
+
+      await UserAccessScopeService.instance.ensureCurrentUserRootMirror();
+      final scope = await UserAccessScopeService.instance.loadCurrentScope(
+        forceRefresh: true,
+      );
+      final snapshot = await getFirestoreInstance()
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      final data = snapshot.data() ?? <String, dynamic>{};
+
+      if (!mounted) return;
+      setState(() {
+        _scope = scope;
+        _profile = <String, dynamic>{
+          ...data,
+          'uid': user.uid,
+          'email': _firstValue([data['email'], user.email]),
+          'displayName': _firstValue([
+            data['fullName'],
+            data['displayName'],
+            data['username'],
+            user.displayName,
+          ]),
+        };
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = error.toString();
+      });
+    }
+  }
+
+  static String _firstValue(Iterable<dynamic> values, {String fallback = ''}) {
+    for (final value in values) {
+      final text = value?.toString().trim() ?? '';
+      if (text.isNotEmpty && text.toLowerCase() != 'null') return text;
+    }
+    return fallback;
+  }
+
+  String get _displayName => _firstValue([
+    _profile['fullName'],
+    _profile['displayName'],
+    _profile['username'],
+  ], fallback: 'Barangay Health Worker');
+
+  String get _assignedBarangay => _firstValue([
+    _profile['barangay'],
+    _profile['barangayName'],
+    _profile['assignedBarangay'],
+    _scope.barangay,
+    _scope.barangayCode,
+  ], fallback: 'Not assigned');
+
+  String _formatDate(dynamic value) {
+    DateTime? date;
+    if (value is Timestamp) {
+      date = value.toDate();
+    } else if (value is DateTime) {
+      date = value;
+    } else if (value != null) {
+      date = DateTime.tryParse(value.toString());
+    }
+    if (date == null) return 'Not available';
+    const months = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: _profileDark,
+      drawer: WebAppSidebar(
+        userName: _displayName,
+        activeItem: WebSidebarItem.profile,
+      ),
+      body: Column(
+        children: [
+          _buildTopBar(),
+          Expanded(
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: _profileAqua),
+                  )
+                : _error != null
+                ? _buildErrorState()
+                : RefreshIndicator(
+                    onRefresh: _loadProfile,
+                    color: _profileAqua,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(24),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1180),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildProfileHero(),
+                              const SizedBox(height: 20),
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final stacked = constraints.maxWidth < 850;
+                                  final identity = _buildInformationCard(
+                                    title: 'User Details',
+                                    icon: Icons.badge_outlined,
+                                    rows: [
+                                      _ProfileRow(
+                                        'Full name',
+                                        _displayName,
+                                        Icons.person_outline,
+                                      ),
+                                      _ProfileRow(
+                                        'Username',
+                                        _firstValue([
+                                          _profile['username'],
+                                        ], fallback: 'Not provided'),
+                                        Icons.alternate_email_rounded,
+                                      ),
+                                      _ProfileRow(
+                                        'Email address',
+                                        _firstValue([
+                                          _profile['email'],
+                                        ], fallback: 'Not provided'),
+                                        Icons.email_outlined,
+                                      ),
+                                      _ProfileRow(
+                                        'Contact number',
+                                        _firstValue([
+                                          _profile['contactNumber'],
+                                          _profile['phoneNumber'],
+                                          _profile['phone'],
+                                        ], fallback: 'Not provided'),
+                                        Icons.phone_outlined,
+                                      ),
+                                      _ProfileRow(
+                                        'Role',
+                                        'Barangay Health Worker (BHW)',
+                                        Icons.medical_services_outlined,
+                                      ),
+                                    ],
+                                  );
+                                  final assignment = _buildInformationCard(
+                                    title: 'Barangay Assignment',
+                                    icon: Icons.location_city_outlined,
+                                    rows: [
+                                      _ProfileRow(
+                                        'Assigned barangay',
+                                        _assignedBarangay,
+                                        Icons.location_on_outlined,
+                                      ),
+                                      _ProfileRow(
+                                        'Barangay code',
+                                        _firstValue([
+                                          _profile['barangayCode'],
+                                          _scope.barangayCode,
+                                        ], fallback: 'Not provided'),
+                                        Icons.tag_rounded,
+                                      ),
+                                      _ProfileRow(
+                                        'District',
+                                        _firstValue([
+                                          _profile['barangayDistrict'],
+                                          _scope.barangayDistrict,
+                                        ], fallback: 'Not provided'),
+                                        Icons.map_outlined,
+                                      ),
+                                      _ProfileRow(
+                                        'Access scope',
+                                        'Assigned barangay records only',
+                                        Icons.lock_outline_rounded,
+                                      ),
+                                      _ProfileRow(
+                                        'Member since',
+                                        _formatDate(_profile['createdAt']),
+                                        Icons.calendar_today_outlined,
+                                      ),
+                                    ],
+                                  );
+                                  if (stacked) {
+                                    return Column(
+                                      children: [
+                                        identity,
+                                        const SizedBox(height: 16),
+                                        assignment,
+                                      ],
+                                    );
+                                  }
+                                  return Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(child: identity),
+                                      const SizedBox(width: 20),
+                                      Expanded(child: assignment),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Container(
+      height: 70,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: BoxDecoration(
+        color: _profileDark,
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.07)),
+        ),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            icon: const Icon(Icons.menu_rounded, color: Colors.white),
+          ),
+          const SizedBox(width: 10),
+          const Text(
+            'My Profile',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 21,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            tooltip: 'Refresh profile',
+            onPressed: _loadProfile,
+            icon: const Icon(Icons.refresh_rounded, color: _profileAqua),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileHero() {
+    final initial = _displayName.isEmpty ? 'B' : _displayName[0].toUpperCase();
+    final accountStatus = _firstValue([
+      _profile['accountStatus'],
+      _profile['approvalStatus'],
+    ], fallback: 'Active');
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0E3D43), Color(0xFF14515A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _profileAqua.withValues(alpha: 0.35)),
+      ),
+      child: Wrap(
+        spacing: 22,
+        runSpacing: 18,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Container(
+            width: 82,
+            height: 82,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: _profileAqua.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+              border: Border.all(color: _profileAqua, width: 2),
+            ),
+            child: Text(
+              initial,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 34,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 260, maxWidth: 620),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _displayName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 25,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Barangay Health Worker',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 9,
+                  runSpacing: 8,
+                  children: [
+                    _buildHeroChip(
+                      Icons.location_on_outlined,
+                      _assignedBarangay,
+                      _profileAqua,
+                    ),
+                    _buildHeroChip(
+                      Icons.verified_user_outlined,
+                      accountStatus,
+                      const Color(0xFF55D69E),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroChip(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.38)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 15),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInformationCard({
+    required String title,
+    required IconData icon,
+    required List<_ProfileRow> rows,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _profileSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _profileAqua.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: _profileAqua, size: 21),
+              const SizedBox(width: 9),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 17),
+          ...rows.map(
+            (row) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(13),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.035),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Icon(row.icon, color: Colors.white54, size: 18),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          row.label,
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 10.5,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          row.value,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.cloud_off_outlined,
+              color: Colors.orange,
+              size: 52,
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Profile could not be loaded',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 19,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _error ?? 'Check your connection and try again.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white60),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _loadProfile,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileRow {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const _ProfileRow(this.label, this.value, this.icon);
+}

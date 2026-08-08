@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" href="web/icons/Icon-192.png">
+    <link rel="icon" type="image/png" href="web/favicon.png">
+    <title>Test Firestore Connection</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <h1>Firebase Firestore Connection Test</h1>
+    <button onclick="testConnection()">Test Connection</button>
+    <button onclick="writeTestRecord()">Write Test Record</button>
+    <button onclick="readRecords()">Read Records</button>
+    <pre id="output"></pre>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCi_JVTayAfb5cjS1CuYvZeB8Q6HyxBWfY",
+            authDomain: "capstone-c98f9.firebaseapp.com",
+            projectId: "capstone-c98f9",
+            storageBucket: "capstone-c98f9.firebasestorage.app",
+            messagingSenderId: "628319595773",
+            appId: "1:628319595773:web:afe9520590fad2a3192294",
+            measurementId: "G-DFQ4GMPTHP"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const output = document.getElementById('output');
+
+        function log(message) {
+            output.textContent += message + '\n';
+            console.log(message);
+        }
+
+        async function testConnection() {
+            output.textContent = '';
+            log('Testing Firestore connection...');
+            try {
+                // Try to read from Firestore
+                const snapshot = await db.collection('checkup_records').limit(1).get();
+                log('✅ Connection successful!');
+                log(`Found ${snapshot.size} document(s) in checkup_records collection`);
+            } catch (error) {
+                log('❌ Connection failed:');
+                log(error.message);
+                log('Error code: ' + error.code);
+            }
+        }
+
+        async function writeTestRecord() {
+            output.textContent = '';
+            log('Writing test record...');
+            try {
+                const testData = {
+                    patient: 'Test Patient',
+                    datetime: new Date().toISOString(),
+                    type: 'General',
+                    diseaseType: 'General',
+                    age: '30',
+                    address: 'Test Address',
+                    vitalsigns: 'BP: 120/80, Temp: 37°C',
+                    symptoms: 'Test symptoms',
+                    details: 'Test details',
+                    plan: 'Test plan',
+                    status: 'Pending',
+                    followup: 'N/A',
+                    id: 'test_' + Date.now()
+                };
+                
+                await db.collection('checkup_records').doc(testData.id).set(testData);
+                log('✅ Test record written successfully!');
+                log('Record ID: ' + testData.id);
+            } catch (error) {
+                log('❌ Write failed:');
+                log(error.message);
+                log('Error code: ' + error.code);
+            }
+        }
+
+        async function readRecords() {
+            output.textContent = '';
+            log('Reading records from checkup_records collection...');
+            try {
+                const snapshot = await db.collection('checkup_records')
+                    .orderBy('datetime', 'desc')
+                    .limit(5)
+                    .get();
+                
+                log(`✅ Found ${snapshot.size} record(s)\n`);
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    log(`ID: ${doc.id}`);
+                    log(`Patient: ${data.patient}`);
+                    log(`DateTime: ${data.datetime}`);
+                    log(`---`);
+                });
+                
+                if (snapshot.empty) {
+                    log('Collection is empty. Try writing a test record first.');
+                }
+            } catch (error) {
+                log('❌ Read failed:');
+                log(error.message);
+                log('Error code: ' + error.code);
+                
+                if (error.code === 'permission-denied') {
+                    log('\n⚠️ PERMISSION DENIED!');
+                    log('Check your Firestore security rules in Firebase Console.');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+FIRESTORE SECURITY RULES FOR YOUR PROJECT
+==========================================
+
+Current Project: capstone-c98f9
+
+Go to: https://console.firebase.google.com/project/capstone-c98f9/firestore/rules
+
+OPTION 1 - For Development/Testing (Not secure for production):
+----------------------------------------------------------------
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+
+OPTION 2 - For Production (Requires Authentication):
+----------------------------------------------------
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /checkup_records/{recordId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    match /prenatal_records/{recordId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    match /immunization_records/{recordId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    match /patient_records/{recordId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+}
+
+WHICH ONE TO USE?
+-----------------
+- Use OPTION 1 if you're just testing and want it to work immediately
+- Use OPTION 2 if you have Firebase Authentication set up (users must be logged in)
+
+After updating rules:
+1. Click "Publish" in Firebase Console
+2. Wait 1-2 minutes for rules to propagate
+3. Try saving a record again
+
+COMMON ERRORS:
+--------------
+❌ "permission-denied" = Your rules are blocking writes
+   → Update to OPTION 1 or 2 above
+
+❌ "not-found" = Collection doesn't exist yet
+   → This is normal! First write will create it
+
+❌ "unauthenticated" = Using OPTION 2 but not logged in
+   → Make sure you're logged in to your app first

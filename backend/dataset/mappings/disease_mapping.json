@@ -1,0 +1,16 @@
+{
+  "covid19": "covid-19",
+  "covid 19": "covid-19",
+  "covid-19": "covid-19",
+  "high blood pressure": "hypertension",
+  "hypertensive disease": "hypertension",
+  "htn": "hypertension",
+  "copd": "chronic obstructive pulmonary disease (copd)",
+  "chronic obstructive pulmonary disease": "chronic obstructive pulmonary disease (copd)",
+  "flu": "influenza",
+  "influenza (flu)": "influenza",
+  "uti": "urinary tract infection",
+  "urinary tract infection (uti)": "urinary tract infection",
+  "type 2 diabetes mellitus": "type 2 diabetes",
+  "type ii diabetes": "type 2 diabetes"
+}

@@ -1,0 +1,55 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function tokenRole() {
+      return isSignedIn() && ('role' in request.auth.token)
+        ? request.auth.token.role
+        : '';
+    }
+
+    function tokenHasAnyRole(roles) {
+      return isSignedIn() && (
+        tokenRole() in roles ||
+        (
+          ('roles' in request.auth.token) &&
+          request.auth.token.roles is list &&
+          request.auth.token.roles.hasAny(roles)
+        )
+      );
+    }
+
+    match /referral_attachments/{ownerUid}/{referralId}/{fileName} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == ownerUid ||
+        tokenHasAnyRole([
+          'CHO',
+          'cho',
+          'CHO_SUPER_ADMIN',
+          'cho_super_admin',
+          'SUPER_ADMIN',
+          'super_admin',
+          'ADMIN',
+          'admin'
+        ]) ||
+        tokenHasAnyRole(['DOCTOR', 'doctor'])
+      );
+
+      allow create: if isSignedIn() &&
+        request.auth.uid == ownerUid &&
+        request.resource.size <= 10 * 1024 * 1024 &&
+        request.resource.contentType.matches(
+          'application/pdf|image/jpeg|image/png'
+        );
+
+      allow update, delete: if false;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

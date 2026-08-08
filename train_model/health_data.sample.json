@@ -1,0 +1,23 @@
+[
+  {
+    "symptoms": "fever and cough",
+    "details": "Age: 28, BP: 118/76, Temp: 38.3, HR: 96",
+    "age": 28,
+    "ai_category": "Communicable Disease",
+    "ai_severity": "Medium"
+  },
+  {
+    "symptoms": "severe chest pain and shortness of breath",
+    "details": "Age: 61, BP: 182/118, Temp: 36.9, HR: 122",
+    "age": 61,
+    "ai_category": "Emergency",
+    "ai_severity": "Critical"
+  },
+  {
+    "symptoms": "regular prenatal follow-up",
+    "details": "Age: 31, BP: 112/72, Temp: 36.8, HR: 88",
+    "age": 31,
+    "ai_category": "Prenatal Care",
+    "ai_severity": "Low"
+  }
+]

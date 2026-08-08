@@ -1,0 +1,683 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Optimized rules with better performance
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function currentUser() {
+      return isSignedIn()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+        : null;
+    }
+
+    function authRole() {
+      return isSignedIn() && ('role' in request.auth.token)
+        ? request.auth.token.role
+        : '';
+    }
+
+    function tokenRole() {
+      return authRole();
+    }
+
+    function roleEqualsAny(role, allowedRoles) {
+      return role != null && allowedRoles.hasAny([role]);
+    }
+
+    function tokenRolesHasAny(allowedRoles) {
+      return isSignedIn() &&
+        ('roles' in request.auth.token) &&
+        request.auth.token.roles is list &&
+        request.auth.token.roles.hasAny(allowedRoles);
+    }
+
+    function authBarangay() {
+      return isSignedIn() && ('barangay' in request.auth.token)
+        ? request.auth.token.barangay
+        : (
+          isSignedIn() && ('barangayName' in request.auth.token)
+            ? request.auth.token.barangayName
+            : ''
+        );
+    }
+
+    function authBarangayCode() {
+      return isSignedIn() && ('barangayCode' in request.auth.token)
+        ? request.auth.token.barangayCode
+        : (
+          isSignedIn() && ('barangay_code' in request.auth.token)
+            ? request.auth.token.barangay_code
+            : ''
+        );
+    }
+
+    function hasApprovedActiveProfile() {
+      let profile = currentUser();
+      return profile != null &&
+        (
+          (
+            ('approvalStatus' in profile) &&
+            profile.approvalStatus in ['approved', 'Approved']
+          ) ||
+          (('isApproved' in profile) && profile.isApproved == true)
+        ) &&
+        (
+          (
+            ('accountStatus' in profile) &&
+            profile.accountStatus in ['active', 'Active', 'approved', 'Approved']
+          ) ||
+          (
+            ('status' in profile) &&
+            profile.status in ['active', 'Active', 'approved', 'Approved']
+          )
+        );
+    }
+
+    function userRole() {
+      return tokenRole() != ''
+        ? tokenRole()
+        : (
+          hasApprovedActiveProfile() &&
+          ('role' in currentUser()) &&
+          currentUser().role != ''
+            ? currentUser().role
+            : ''
+        );
+    }
+
+    function userBarangay() {
+      return currentUser() != null && ('barangay' in currentUser()) && currentUser().barangay != ''
+        ? currentUser().barangay
+        : authBarangay();
+    }
+
+    function userBarangayCode() {
+      return currentUser() != null && ('barangayCode' in currentUser()) && currentUser().barangayCode != ''
+        ? currentUser().barangayCode
+        : authBarangayCode();
+    }
+
+    function authEmail() {
+      return isSignedIn() && ('email' in request.auth.token)
+        ? request.auth.token.email
+        : '';
+    }
+
+    function canReadOwnUserDoc(userId, data) {
+      return isSignedIn() && (
+        request.auth.uid == userId ||
+        (data != null && ('uid' in data) && data.uid == request.auth.uid) ||
+        (authEmail() != '' && (
+          (data != null && ('email' in data) && data.email == authEmail()) ||
+          (data != null && ('emailLower' in data) && data.emailLower == authEmail())
+        ))
+      );
+    }
+
+    function isAllowedSignupRole(role) {
+      return roleEqualsAny(role, ['CHO', 'BHW']);
+    }
+
+    function canCreateOwnUserProfile(userId, data) {
+      return isSignedIn() &&
+        request.auth.uid == userId &&
+        data.uid == request.auth.uid &&
+        isAllowedSignupRole(data.role) &&
+        (
+          (
+            data.role == 'BHW' &&
+            data.approvalStatus == 'pending' &&
+            data.accountStatus == 'pending_approval' &&
+            data.isApproved == false
+          ) ||
+          (
+            data.role == 'CHO' &&
+            data.approvalStatus == 'approved' &&
+            data.accountStatus == 'active'
+          )
+        ) &&
+        data.email == authEmail();
+    }
+
+    function preservesProtectedUserFields(existingData, newData) {
+      return !newData.diff(existingData).affectedKeys().hasAny([
+        'uid',
+        'email',
+        'emailLower',
+        'role',
+        'roles',
+        'approvalStatus',
+        'accountStatus',
+        'accessScope',
+        'organizationLevel',
+        'dataVisibilityStartAt',
+        'barangay',
+        'barangayCode',
+        'barangayDistrict',
+        'barangayVerified',
+        'barangayPath',
+        'barangayUserPath',
+        'createdAt'
+      ]);
+    }
+
+    function isChoRole() {
+      let choRoles = [
+        'CHO',
+        'cho',
+        'CHO_SUPER_ADMIN',
+        'cho_super_admin',
+        'SUPER_ADMIN',
+        'super_admin',
+        'ADMIN',
+        'admin'
+      ];
+      return isSignedIn() && (
+        roleEqualsAny(tokenRole(), choRoles) ||
+        tokenRolesHasAny(choRoles) ||
+        (
+          hasApprovedActiveProfile() &&
+          ('role' in currentUser()) &&
+          roleEqualsAny(currentUser().role, choRoles)
+        )
+      );
+    }
+
+    function isBhwRole() {
+      let bhwRoles = ['BHW', 'bhw'];
+      return isSignedIn() && (
+        roleEqualsAny(userRole(), bhwRoles) ||
+        roleEqualsAny(tokenRole(), bhwRoles) ||
+        tokenRolesHasAny(bhwRoles)
+      );
+    }
+
+    function isDoctorRole() {
+      let doctorRoles = ['DOCTOR', 'doctor'];
+      return isSignedIn() && (
+        roleEqualsAny(userRole(), doctorRoles) ||
+        roleEqualsAny(tokenRole(), doctorRoles) ||
+        tokenRolesHasAny(doctorRoles)
+      );
+    }
+
+    function sameBarangay(data) {
+      return isSignedIn() && userRole() != '' && data != null && (
+        (('barangayCode' in data) && data.barangayCode == userBarangayCode()) ||
+        (('barangay' in data) && data.barangay == userBarangay())
+      );
+    }
+
+    function canReadScopedRecord(data) {
+      return isChoRole() || sameBarangay(data);
+    }
+
+    function canWriteScopedRecord(data) {
+      return isChoRole() || (isBhwRole() && sameBarangay(data));
+    }
+
+    function sameBarangayPath(barangayCode) {
+      return isSignedIn() && userBarangayCode() == barangayCode;
+    }
+
+    function canReadBarangayScopedRecord(barangayCode, data) {
+      return isChoRole() ||
+        (isBhwRole() && sameBarangayPath(barangayCode)) ||
+        sameBarangay(data);
+    }
+
+    function canWriteBarangayScopedRecord(barangayCode, data) {
+      return isChoRole() ||
+        (
+          isBhwRole() &&
+          sameBarangay(data) &&
+          (
+            sameBarangayPath(barangayCode) ||
+            (('barangay' in data) && data.barangay == userBarangay())
+          )
+        );
+    }
+
+    function canReadReferral(data) {
+      return isChoRole() ||
+        (isDoctorRole() && data.assignedDoctorUid == request.auth.uid) ||
+        (isBhwRole() && data.createdByUid == request.auth.uid);
+    }
+
+    function canCreateReferral(data) {
+      return isChoRole() ||
+        (isBhwRole() && data.createdByUid == request.auth.uid && sameBarangay(data));
+    }
+
+    function canUpdateReferral(existingData, newData) {
+      let role = userRole();
+      let changed = newData.diff(existingData).affectedKeys();
+      let bhwOwnsRecord = existingData.createdByUid == request.auth.uid &&
+        newData.createdByUid == request.auth.uid &&
+        newData.barangayCode == existingData.barangayCode &&
+        newData.barangay == existingData.barangay;
+      let correctsReturned = existingData.status in [
+          'returned',
+          'returned_for_correction',
+          'return_for_correction'
+        ] &&
+        newData.status == 'pending_review' &&
+        newData.submissionStatus == 'submitted' &&
+        changed.hasOnly([
+          'patientId', 'patientRecordId', 'linkedPatientId', 'patientName',
+          'patientInformation', 'latestCheckup', 'latestVitalSigns',
+          'prenatalInformation', 'morbidityInformation', 'homeCare',
+          'referralReason', 'priority', 'observations', 'bhwNotes',
+          'supportingNotes', 'destinationFacility', 'attachments', 'status',
+          'submissionStatus', 'submittedAt', 'updatedAt', 'statusHistory'
+        ]);
+      let recordsFollowUp = existingData.status in ['consulted', 'completed'] &&
+        newData.status == existingData.status &&
+        changed.hasOnly([
+          'followUps', 'latestFollowUpNotes', 'homeVisitCompleted',
+          'homeVisitCompletedAt', 'updatedAt'
+        ]);
+      return role in [
+          'CHO', 'cho', 'CHO_SUPER_ADMIN', 'cho_super_admin',
+          'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
+        ] ||
+        (role in ['DOCTOR', 'doctor'] &&
+          existingData.assignedDoctorUid == request.auth.uid &&
+          newData.assignedDoctorUid == request.auth.uid) ||
+        (role in ['BHW', 'bhw'] &&
+          bhwOwnsRecord &&
+          (correctsReturned || recordsFollowUp));
+    }
+
+    function isSuperAdmin() {
+      let superRoles = [
+        'CHO_SUPER_ADMIN',
+        'cho_super_admin',
+        'SUPER_ADMIN',
+        'super_admin',
+        'ADMIN',
+        'admin'
+      ];
+      return isSignedIn() &&
+        (
+          roleEqualsAny(userRole(), superRoles) ||
+          roleEqualsAny(tokenRole(), superRoles) ||
+          tokenRolesHasAny(superRoles)
+        );
+    }
+    
+    // User profile/role docs - Allow authenticated users to create and update their own profile
+    // This is used during signup and user profile management
+    match /users/{userId} {
+      allow get: if canReadOwnUserDoc(userId, resource.data) || isChoRole() || isSuperAdmin();
+      allow list: if isSignedIn() && (
+        (
+          ('role' in request.auth.token) &&
+          request.auth.token.role in [
+            'CHO', 'cho', 'CHO_SUPER_ADMIN', 'cho_super_admin',
+            'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
+          ]
+        ) ||
+        tokenRolesHasAny([
+          'CHO', 'cho', 'CHO_SUPER_ADMIN', 'cho_super_admin',
+          'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
+        ]) ||
+        isChoRole() ||
+        isSuperAdmin()
+      );
+      allow create: if canCreateOwnUserProfile(userId, request.resource.data) || isSuperAdmin();
+      allow update: if (
+        isSignedIn() &&
+        request.auth.uid == userId &&
+        preservesProtectedUserFields(resource.data, request.resource.data)
+      ) || isChoRole() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Dedicated CHO review queue. A BHW creates exactly one pending request
+    // using their own UID during the same transaction as account registration.
+    match /bhw_registration_requests/{userId} {
+      allow get: if canReadOwnUserDoc(userId, resource.data) || isChoRole() || isSuperAdmin();
+      allow list: if isSignedIn() && (
+        (
+          ('role' in request.auth.token) &&
+          request.auth.token.role in [
+            'CHO', 'cho', 'CHO_SUPER_ADMIN', 'cho_super_admin',
+            'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
+          ]
+        ) ||
+        tokenRolesHasAny([
+          'CHO', 'cho', 'CHO_SUPER_ADMIN', 'cho_super_admin',
+          'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
+        ]) ||
+        isChoRole() ||
+        isSuperAdmin()
+      );
+      allow create: if canCreateOwnUserProfile(userId, request.resource.data) &&
+        request.resource.data.requestId == userId &&
+        request.resource.data.applicantUid == request.auth.uid &&
+        request.resource.data.requestType == 'BHW_ACCOUNT_REGISTRATION' &&
+        request.resource.data.submissionStatus == 'submitted';
+      allow update: if isChoRole() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // CHO-managed doctor registry for referral assignment workflows
+    match /doctor_registry/{doctorId} {
+      allow read: if isChoRole() || isSuperAdmin();
+      allow create, update, delete: if isChoRole() || isSuperAdmin();
+    }
+
+    match /barangays/{barangayCode}/users/{userId} {
+      allow read: if canReadOwnUserDoc(userId, resource.data) || isChoRole() || isSuperAdmin();
+      allow create: if isSignedIn() &&
+        (canCreateOwnUserProfile(userId, request.resource.data) || isSuperAdmin()) &&
+        request.resource.data.barangayCode == barangayCode;
+      allow update: if isSignedIn() &&
+        (
+          (
+            request.auth.uid == userId &&
+            preservesProtectedUserFields(resource.data, request.resource.data)
+          ) || isChoRole() || isSuperAdmin()
+        ) &&
+        resource.data.barangayCode == barangayCode &&
+        request.resource.data.barangayCode == barangayCode;
+      allow delete: if isSuperAdmin();
+    }
+
+    match /barangays/{barangayCode} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() &&
+        request.resource.data.barangayCode == barangayCode &&
+        (
+          isChoRole() ||
+          isSuperAdmin() ||
+          (isBhwRole() && sameBarangayPath(barangayCode))
+        );
+      allow delete: if isSuperAdmin();
+    }
+
+    match /barangays/{barangayCode}/workspace_modules/{moduleId} {
+      allow read: if isSignedIn() &&
+        (
+          isChoRole() ||
+          isSuperAdmin() ||
+          sameBarangayPath(barangayCode)
+        );
+      allow create, update: if isSignedIn() &&
+        request.resource.data.barangayCode == barangayCode &&
+        (
+          isChoRole() ||
+          isSuperAdmin() ||
+          (isBhwRole() && sameBarangayPath(barangayCode))
+        );
+      allow delete: if isSuperAdmin();
+    }
+
+    match /registration_username_locks/{usernameKey} {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow create: if isSignedIn() &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.usernameLower == usernameKey;
+      allow update: if isSignedIn() &&
+        resource.data.uid == request.auth.uid &&
+        request.resource.data.uid == request.auth.uid &&
+        resource.data.usernameLower == usernameKey &&
+        request.resource.data.usernameLower == usernameKey;
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    match /registration_barangay_locks/{barangayCode} {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow create: if isSignedIn() &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.barangayCode == barangayCode;
+      allow update: if isSignedIn() &&
+        (
+          resource.data.uid == request.auth.uid ||
+          isSuperAdmin()
+        ) &&
+        request.resource.data.barangayCode == barangayCode &&
+        (
+          request.resource.data.uid == resource.data.uid ||
+          isSuperAdmin()
+        );
+      allow delete: if isSignedIn() &&
+        (
+          resource.data.uid == request.auth.uid ||
+          isSuperAdmin()
+        );
+    }
+
+    match /barangay_registration_status/{barangayCode} {
+      allow read: if true;
+      allow create: if isSignedIn() &&
+        request.resource.data.barangayCode == barangayCode &&
+        request.resource.data.isAvailable == false &&
+        (
+          request.resource.data.uid == request.auth.uid ||
+          isSuperAdmin()
+        );
+      allow update: if isSignedIn() &&
+        (
+          resource.data.uid == request.auth.uid ||
+          isSuperAdmin()
+        ) &&
+        request.resource.data.barangayCode == barangayCode &&
+        request.resource.data.isAvailable == false &&
+        (
+          request.resource.data.uid == resource.data.uid ||
+          isSuperAdmin()
+        );
+      allow delete: if isSignedIn() &&
+        (
+          resource.data.uid == request.auth.uid ||
+          isSuperAdmin()
+        );
+    }
+
+    match /invitations/{invitationId} {
+      allow read: if isSuperAdmin() ||
+        (isChoRole() && resource.data.createdBy == request.auth.uid);
+      allow create: if isSuperAdmin() ||
+        (
+          isChoRole() &&
+          request.resource.data.createdBy == request.auth.uid &&
+          request.resource.data.role in ['DOCTOR', 'doctor']
+        );
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin() ||
+        (isChoRole() && resource.data.createdBy == request.auth.uid);
+    }
+
+    match /barangay_branding/{barangayCode} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /referrals/{referralId} {
+      allow read: if canReadReferral(resource.data);
+      allow create: if canCreateReferral(request.resource.data);
+      allow update: if canUpdateReferral(resource.data, request.resource.data);
+      allow delete: if isChoRole();
+    }
+
+    match /barangays/{barangayCode}/referrals/{referralId} {
+      allow read: if canReadReferral(resource.data);
+      allow create: if canCreateReferral(request.resource.data) &&
+        request.resource.data.barangayCode == barangayCode;
+      allow update: if canUpdateReferral(resource.data, request.resource.data) &&
+        resource.data.barangayCode == barangayCode &&
+        request.resource.data.barangayCode == barangayCode;
+      allow delete: if isChoRole();
+    }
+
+    // Ensure CHO can list/read all record collections via collectionGroup queries.
+    // Keep these static collection-id matches so Firestore can safely evaluate
+    // collectionGroup access across every possible parent path.
+    match /{documentPath=**}/checkup_records/{recordId} {
+      allow read: if isChoRole();
+    }
+    match /{documentPath=**}/prenatal_records/{recordId} {
+      allow read: if isChoRole();
+    }
+    match /{documentPath=**}/immunization_records/{recordId} {
+      allow read: if isChoRole();
+    }
+    match /{documentPath=**}/patient_records/{recordId} {
+      allow read: if isChoRole();
+    }
+    match /{documentPath=**}/barangay_records/{recordId} {
+      allow read: if isChoRole();
+    }
+    match /{documentPath=**}/morbidity_records/{recordId} {
+      allow read: if isChoRole();
+    }
+    match /{documentPath=**}/mortality_records/{recordId} {
+      allow read: if isChoRole();
+    }
+    match /{documentPath=**}/summary_records/{recordId} {
+      allow read: if isChoRole();
+    }
+    
+    // Health records - all by authenticated users
+    match /checkup_records/{recordId} {
+      allow read: if canReadScopedRecord(resource.data);
+      allow create: if canWriteScopedRecord(request.resource.data);
+      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
+      allow delete: if canWriteScopedRecord(resource.data);
+    }
+    match /barangays/{barangayCode}/checkup_records/{recordId} {
+      allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        request.resource.data.barangayCode == barangayCode;
+      allow update: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
+        canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        resource.data.barangayCode == barangayCode &&
+        request.resource.data.barangayCode == barangayCode;
+      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data);
+    }
+    match /prenatal_records/{recordId} {
+      allow read: if canReadScopedRecord(resource.data);
+      allow create: if canWriteScopedRecord(request.resource.data);
+      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
+      allow delete: if canWriteScopedRecord(resource.data);
+    }
+    match /barangays/{barangayCode}/prenatal_records/{recordId} {
+      allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        request.resource.data.barangayCode == barangayCode;
+      allow update: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
+        canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        resource.data.barangayCode == barangayCode &&
+        request.resource.data.barangayCode == barangayCode;
+      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data);
+    }
+    match /immunization_records/{recordId} {
+      allow read: if canReadScopedRecord(resource.data);
+      allow create: if canWriteScopedRecord(request.resource.data);
+      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
+      allow delete: if canWriteScopedRecord(resource.data);
+    }
+    match /barangays/{barangayCode}/immunization_records/{recordId} {
+      allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        request.resource.data.barangayCode == barangayCode;
+      allow update: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
+        canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        resource.data.barangayCode == barangayCode &&
+        request.resource.data.barangayCode == barangayCode;
+      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data);
+    }
+    match /patient_records/{recordId} {
+      allow read: if canReadScopedRecord(resource.data);
+      allow create: if canWriteScopedRecord(request.resource.data);
+      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
+      allow delete: if canWriteScopedRecord(resource.data);
+    }
+    match /barangays/{barangayCode}/patient_records/{recordId} {
+      allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        request.resource.data.barangayCode == barangayCode;
+      allow update: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
+        canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        resource.data.barangayCode == barangayCode &&
+        request.resource.data.barangayCode == barangayCode;
+      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data);
+    }
+    match /barangay_records/{recordId} {
+      allow read: if canReadScopedRecord(resource.data);
+      allow create: if canWriteScopedRecord(request.resource.data);
+      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
+      allow delete: if canWriteScopedRecord(resource.data);
+    }
+    match /morbidity_records/{recordId} {
+      allow read: if canReadScopedRecord(resource.data);
+      allow create: if canWriteScopedRecord(request.resource.data);
+      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
+      allow delete: if canWriteScopedRecord(resource.data);
+    }
+    match /barangays/{barangayCode}/morbidity_records/{recordId} {
+      allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        request.resource.data.barangayCode == barangayCode;
+      allow update: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
+        canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        resource.data.barangayCode == barangayCode &&
+        request.resource.data.barangayCode == barangayCode;
+      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data);
+    }
+    match /mortality_records/{recordId} {
+      allow read: if canReadScopedRecord(resource.data);
+      allow create: if canWriteScopedRecord(request.resource.data);
+      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
+      allow delete: if canWriteScopedRecord(resource.data);
+    }
+    match /barangays/{barangayCode}/mortality_records/{recordId} {
+      allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        request.resource.data.barangayCode == barangayCode;
+      allow update: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
+        canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        resource.data.barangayCode == barangayCode &&
+        request.resource.data.barangayCode == barangayCode;
+      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data);
+    }
+    match /summary_records/{recordId} {
+      allow read: if canReadScopedRecord(resource.data);
+      allow create: if canWriteScopedRecord(request.resource.data);
+      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
+      allow delete: if canWriteScopedRecord(resource.data);
+    }
+    match /barangays/{barangayCode}/summary_records/{recordId} {
+      allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        request.resource.data.barangayCode == barangayCode;
+      allow update: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
+        canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        resource.data.barangayCode == barangayCode &&
+        request.resource.data.barangayCode == barangayCode;
+      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data);
+    }
+
+    // Clinically reviewed disease knowledge. Signed-in app users may read only
+    // active documents. Only authorized administrators may manage seed content.
+    // Firebase Admin seed scripts bypass these client rules by design.
+    match /diseases/{diseaseKey} {
+      allow read: if isSuperAdmin() ||
+        (isSignedIn() && resource.data.isActive == true);
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    // Password reset collection - allows unauthenticated password reset creation
+    match /password_resets/{document=**} {
+      allow create: if request.size < 2048;
+      allow read, update, delete: if false;
+    }
+  }
+}

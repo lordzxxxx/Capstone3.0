@@ -1,0 +1,240 @@
+{
+  "categories": [
+    "Communicable Disease",
+    "Emergency",
+    "Non-Communicable Disease",
+    "Pediatric Care",
+    "Prenatal Care",
+    "Routine Checkup"
+  ],
+  "severity_levels": [
+    "Critical",
+    "High",
+    "Low",
+    "Medium"
+  ],
+  "feature_keywords": [
+    "fever",
+    "cough",
+    "flu",
+    "cold",
+    "infection",
+    "tuberculosis",
+    "dengue",
+    "covid",
+    "measles",
+    "chickenpox",
+    "pneumonia",
+    "sore throat",
+    "runny nose",
+    "body pain",
+    "headache",
+    "chills",
+    "rash",
+    "vomiting",
+    "diarrhea",
+    "malaria",
+    "hepatitis",
+    "typhoid",
+    "pertussis",
+    "mumps",
+    "rubella",
+    "meningitis",
+    "bronchitis",
+    "viral infection",
+    "bacterial infection",
+    "respiratory infection",
+    "skin infection",
+    "ear infection",
+    "pink eye",
+    "conjunctivitis",
+    "hand foot and mouth disease",
+    "hfmd",
+    "scabies",
+    "lice",
+    "parasite",
+    "worm infection",
+    "gastroenteritis",
+    "uti",
+    "urinary tract infection",
+    "chest pain",
+    "difficulty breathing",
+    "severe bleeding",
+    "unconscious",
+    "seizure",
+    "stroke",
+    "heart attack",
+    "fainting",
+    "loss of consciousness",
+    "shortness of breath",
+    "severe headache",
+    "confusion",
+    "slurred speech",
+    "numbness",
+    "paralysis",
+    "high fever",
+    "convulsion",
+    "severe burn",
+    "broken bone",
+    "fracture",
+    "deep wound",
+    "vomiting blood",
+    "blood in stool",
+    "severe dehydration",
+    "allergic reaction",
+    "anaphylaxis",
+    "poisoning",
+    "snake bite",
+    "dog bite",
+    "road accident",
+    "trauma",
+    "collapse",
+    "labor pain",
+    "heavy vaginal bleeding",
+    "unresponsive",
+    "bluish lips",
+    "rapid heartbeat",
+    "diabetes",
+    "hypertension",
+    "asthma",
+    "arthritis",
+    "cancer",
+    "thyroid",
+    "cholesterol",
+    "obesity",
+    "heart disease",
+    "kidney disease",
+    "chronic kidney disease",
+    "ckd",
+    "copd",
+    "chronic obstructive pulmonary disease",
+    "osteoporosis",
+    "gout",
+    "epilepsy",
+    "migraine",
+    "allergy",
+    "eczema",
+    "psoriasis",
+    "anemia",
+    "liver disease",
+    "fatty liver",
+    "ulcer",
+    "gastritis",
+    "acid reflux",
+    "gerd",
+    "depression",
+    "anxiety",
+    "mental illness",
+    "bronchial asthma",
+    "high blood pressure",
+    "coronary artery disease",
+    "stroke history",
+    "heart failure",
+    "arrhythmia",
+    "insomnia",
+    "constipation",
+    "pregnant",
+    "pregnancy",
+    "prenatal",
+    "antenatal",
+    "maternal",
+    "infant",
+    "child",
+    "baby",
+    "newborn",
+    "toddler"
+  ],
+  "keyword_hash": {
+    "algorithm": "fnv1a_32",
+    "feature_start_index": 1,
+    "bucket_count": 50
+  },
+  "vital_feature_indices": {
+    "bp_systolic": 51,
+    "bp_diastolic": 52,
+    "temperature": 53,
+    "heart_rate": 54
+  },
+  "category_recovery_guidance": {
+    "Communicable Disease": {
+      "medications": [
+        "Use symptom-relief medicines as prescribed by a clinician"
+      ],
+      "home_care": [
+        "Rest and stay hydrated",
+        "Monitor symptoms daily",
+        "Practice hygiene and avoid close contact while contagious"
+      ],
+      "general_advice": [
+        "Seek medical review if symptoms worsen",
+        "Complete prescribed treatment course"
+      ]
+    },
+    "Non-Communicable Disease": {
+      "medications": [
+        "Continue maintenance medications as prescribed"
+      ],
+      "home_care": [
+        "Follow diet and lifestyle plan",
+        "Track blood pressure or glucose as advised",
+        "Keep regular follow-up appointments"
+      ],
+      "general_advice": [
+        "Do not stop long-term medications without medical advice",
+        "Maintain routine preventive care"
+      ]
+    },
+    "Emergency": {
+      "medications": [
+        "Do not self-medicate before emergency assessment"
+      ],
+      "home_care": [
+        "Seek urgent in-person care immediately"
+      ],
+      "general_advice": [
+        "Call emergency services for severe or sudden symptoms",
+        "Do not delay treatment"
+      ]
+    },
+    "Routine Checkup": {
+      "medications": [
+        "No medication unless prescribed after assessment"
+      ],
+      "home_care": [
+        "Maintain hydration, sleep, and balanced nutrition",
+        "Continue preventive screening as scheduled"
+      ],
+      "general_advice": [
+        "Return for review if new symptoms appear",
+        "Follow personalized clinician advice"
+      ]
+    },
+    "Prenatal Care": {
+      "medications": [
+        "Prenatal supplements as prescribed"
+      ],
+      "home_care": [
+        "Attend regular prenatal visits",
+        "Maintain healthy diet and hydration",
+        "Monitor fetal movement and warning signs"
+      ],
+      "general_advice": [
+        "Seek care for bleeding, severe pain, or reduced fetal movement",
+        "Follow obstetric provider recommendations closely"
+      ]
+    },
+    "Pediatric Care": {
+      "medications": [
+        "Use pediatric-dose medicines only as prescribed"
+      ],
+      "home_care": [
+        "Ensure hydration, nutrition, and rest",
+        "Keep vaccinations and checkups up to date"
+      ],
+      "general_advice": [
+        "Seek urgent care for breathing issues or persistent high fever",
+        "Consult pediatrician for dosing and follow-up"
+      ]
+    }
+  }
+}
