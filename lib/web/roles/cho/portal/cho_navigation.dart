@@ -38,9 +38,14 @@ class ChoNavigationDrawer extends StatelessWidget {
                       color: ChoColors.aqua.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(13),
                     ),
-                    child: const Icon(
-                      Icons.health_and_safety_rounded,
-                      color: ChoColors.navText,
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'AI',
+                      style: TextStyle(
+                        color: ChoColors.navText,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -51,7 +56,7 @@ class ChoNavigationDrawer extends StatelessWidget {
                         Text(
                           'AI-DSUHIS',
                           style: TextStyle(
-                            fontFamily: 'Manrope',
+                            fontFamily: 'Inter',
                             color: ChoColors.navText,
                             fontWeight: FontWeight.w900,
                             fontSize: 18,
@@ -60,7 +65,7 @@ class ChoNavigationDrawer extends StatelessWidget {
                         Text(
                           'City Health Office Portal',
                           style: TextStyle(
-                            fontFamily: 'Manrope',
+                            fontFamily: 'Inter',
                             color: ChoColors.navMuted,
                             fontSize: 11,
                           ),
@@ -94,7 +99,7 @@ class ChoNavigationDrawer extends StatelessWidget {
                             user?.email?.split('@').first ?? 'CHO Staff',
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontFamily: 'Manrope',
+                              fontFamily: 'Inter',
                               color: ChoColors.navText,
                               fontWeight: FontWeight.w700,
                             ),
@@ -102,7 +107,7 @@ class ChoNavigationDrawer extends StatelessWidget {
                           const Text(
                             'CHO • City-wide operations',
                             style: TextStyle(
-                              fontFamily: 'Manrope',
+                              fontFamily: 'Inter',
                               color: ChoColors.navMuted,
                               fontSize: 10,
                             ),
@@ -213,7 +218,7 @@ class ChoNavigationDrawer extends StatelessWidget {
     child: Text(
       label,
       style: const TextStyle(
-        fontFamily: 'Manrope',
+        fontFamily: 'Inter',
         color: ChoColors.navMuted,
         fontSize: 9,
         fontWeight: FontWeight.w800,
@@ -245,7 +250,7 @@ class ChoNavigationDrawer extends StatelessWidget {
               borderRadius: BorderRadius.circular(11),
             ),
             textStyle: const TextStyle(
-              fontFamily: 'Manrope',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -268,13 +273,13 @@ class ChoNavigationDrawer extends StatelessWidget {
         ),
         title: const Text(
           'Logout from CHO Portal?',
-          style: TextStyle(fontFamily: 'Manrope', color: ChoColors.text),
+          style: TextStyle(fontFamily: 'Inter', color: ChoColors.text),
         ),
         content: const Text(
           'You will need to sign in again to access city-wide health records.',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontFamily: 'Manrope',
+            fontFamily: 'Inter',
             color: ChoColors.muted,
             height: 1.4,
           ),
@@ -345,7 +350,7 @@ class ChoNavigationDrawer extends StatelessWidget {
           title: Text(
             label,
             style: TextStyle(
-              fontFamily: 'Manrope',
+              fontFamily: 'Inter',
               fontSize: 13,
               fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
             ),

@@ -21,14 +21,14 @@ import 'package:mycapstone_project/web/shared/services/barangay_branding_service
 import 'package:mycapstone_project/web/shared/widgets/barangay_logo_image.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _primaryAquaBright = Color(0xFF29C7D1);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _sidebarDark = Color(0xFF0E2F34);
-const Color _panelSurface = Color(0xFF061920);
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _primaryAquaBright = Color(0xFF4EA1FF);
+const Color _secondaryIceBlue = Color(0xFF163B66);
+const Color _darkDeepTeal = Color(0xFF071A33);
+const Color _mutedCoolGray = Color(0xFF4B6075);
+const Color _lightOffWhite = Color(0xFFF8FBFF);
+const Color _sidebarDark = Color(0xFF0D274D);
+const Color _panelSurface = Color(0xFF0D274D);
 
 class Signup extends StatefulWidget {
   final String? preselectedRole;
@@ -992,7 +992,7 @@ class _SignupState extends State<Signup> {
               Text(
                 'AI-DSUHIS',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
+                  fontFamily: 'Inter',
                   fontSize: isCompact ? 32 : 52,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -1003,7 +1003,7 @@ class _SignupState extends State<Signup> {
               Text(
                 'Create secure access to unified city and barangay health information.',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
+                  fontFamily: 'Inter',
                   fontSize: isCompact ? 15 : 20,
                   color: Colors.white.withValues(alpha: 0.88),
                   height: 1.45,
@@ -1013,7 +1013,7 @@ class _SignupState extends State<Signup> {
               Text(
                 'Choose the correct role and provide the details needed for a reliable, approval-aware account.',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
+                  fontFamily: 'Inter',
                   fontSize: isCompact ? 13 : 15,
                   color: Colors.white.withValues(alpha: 0.72),
                   height: 1.55,
@@ -1033,7 +1033,7 @@ class _SignupState extends State<Signup> {
 
     return Theme(
       data: Theme.of(context).copyWith(
-        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Manrope'),
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Inter'),
       ),
       child: Scaffold(
         backgroundColor: _darkDeepTeal,
@@ -1046,32 +1046,12 @@ class _SignupState extends State<Signup> {
                 'assets/bg2.2.png',
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  return const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [_secondaryIceBlue, _darkDeepTeal],
-                      ),
-                    ),
-                  );
+                  return const ColoredBox(color: _darkDeepTeal);
                 },
               ),
             ),
             Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      _darkDeepTeal.withValues(alpha: 0.48),
-                      _secondaryIceBlue.withValues(alpha: 0.62),
-                      _darkDeepTeal.withValues(alpha: 0.72),
-                    ],
-                  ),
-                ),
-              ),
+              child: ColoredBox(color: Color(0xD9071A33)),
             ),
 
             SafeArea(
@@ -1283,10 +1263,10 @@ class _SignupState extends State<Signup> {
     }
 
     return Container(
-      padding: EdgeInsets.all(isCompact ? 22 : 30),
+      padding: EdgeInsets.all(isCompact ? 20 : 26),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFE5EEF0)),
         boxShadow: [
           BoxShadow(
@@ -1304,7 +1284,7 @@ class _SignupState extends State<Signup> {
             Text(
               'Create your account',
               style: TextStyle(
-                fontFamily: 'Manrope',
+                fontFamily: 'Inter',
                 fontSize: isCompact ? 27 : 32,
                 fontWeight: FontWeight.w800,
                 color: _darkDeepTeal,
@@ -1345,7 +1325,7 @@ class _SignupState extends State<Signup> {
             ),
             const SizedBox(height: 18),
             SizedBox(
-              height: 54,
+              height: 50,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : signup,
                 style: ElevatedButton.styleFrom(

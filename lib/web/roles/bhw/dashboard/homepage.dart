@@ -2200,11 +2200,7 @@ class _HomePageState extends State<HomePage> {
             height: 70,
             padding: const EdgeInsets.symmetric(horizontal: 32),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [const Color(0xFF071A33), const Color(0xFF0D274D)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
+              color: const Color(0xFF071A33),
             ),
             child: Row(
               children: [
@@ -3351,13 +3347,7 @@ class _HomePageState extends State<HomePage> {
     final user = FirebaseAuth.instance.currentUser;
     return Drawer(
       child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_sidebarDark, _sidebarDark.withValues(alpha: 0.95)],
-          ),
-        ),
+        decoration: const BoxDecoration(color: _sidebarDark),
         child: Column(
           children: [
             Container(
@@ -3366,11 +3356,7 @@ class _HomePageState extends State<HomePage> {
                 horizontal: 16.0,
               ),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_primaryAqua, _secondaryIceBlue],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: _secondaryIceBlue,
               ),
               child: Column(
                 children: [

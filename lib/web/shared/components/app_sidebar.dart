@@ -260,9 +260,14 @@ class WebAppSidebar extends StatelessWidget {
             color: _BhwDrawerColors.aqua.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(13),
           ),
-          child: const Icon(
-            Icons.health_and_safety_rounded,
-            color: _BhwDrawerColors.aqua,
+          alignment: Alignment.center,
+          child: const Text(
+            'AI',
+            style: TextStyle(
+              color: _BhwDrawerColors.text,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+            ),
           ),
         ),
         const SizedBox(width: 12),
@@ -273,7 +278,7 @@ class WebAppSidebar extends StatelessWidget {
               Text(
                 'AI-DSUHIS',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
+                  fontFamily: 'Inter',
                   color: _BhwDrawerColors.text,
                   fontWeight: FontWeight.w900,
                   fontSize: 18,
@@ -282,7 +287,7 @@ class WebAppSidebar extends StatelessWidget {
               Text(
                 'Barangay Health Worker Portal',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
+                  fontFamily: 'Inter',
                   color: _BhwDrawerColors.muted,
                   fontSize: 11,
                 ),
@@ -317,7 +322,7 @@ class WebAppSidebar extends StatelessWidget {
                   userName,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
+                    fontFamily: 'Inter',
                     color: _BhwDrawerColors.text,
                     fontWeight: FontWeight.w700,
                   ),
@@ -327,7 +332,7 @@ class WebAppSidebar extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
+                    fontFamily: 'Inter',
                     color: _BhwDrawerColors.muted,
                     fontSize: 10,
                     height: 1.3,
@@ -347,7 +352,7 @@ class WebAppSidebar extends StatelessWidget {
       child: Text(
         title,
         style: const TextStyle(
-          fontFamily: 'Manrope',
+          fontFamily: 'Inter',
           color: _BhwDrawerColors.muted,
           fontSize: 9,
           fontWeight: FontWeight.w800,
@@ -376,7 +381,7 @@ class WebAppSidebar extends StatelessWidget {
         title: Text(
           label,
           style: TextStyle(
-            fontFamily: 'Manrope',
+            fontFamily: 'Inter',
             fontSize: 13,
             fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
           ),
@@ -415,7 +420,7 @@ class WebAppSidebar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(11),
               ),
               textStyle: const TextStyle(
-                fontFamily: 'Manrope',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -439,13 +444,13 @@ class WebAppSidebar extends StatelessWidget {
         ),
         title: const Text(
           'Logout from BHW Portal?',
-          style: TextStyle(fontFamily: 'Manrope', color: _BhwDrawerColors.text),
+          style: TextStyle(fontFamily: 'Inter', color: _BhwDrawerColors.text),
         ),
         content: const Text(
           'You will need to sign in again to access your assigned barangay records.',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontFamily: 'Manrope',
+            fontFamily: 'Inter',
             color: _BhwDrawerColors.muted,
             height: 1.4,
           ),

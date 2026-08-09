@@ -5,13 +5,13 @@ import 'package:get/get.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _sidebarDark = Color(0xFF0E2F34);
-const Color _panelSurface = Color(0xFF123942);
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _secondaryIceBlue = Color(0xFF163B66);
+const Color _darkDeepTeal = Color(0xFF071A33);
+const Color _mutedCoolGray = Color(0xFF4B6075);
+const Color _lightOffWhite = Color(0xFFF8FBFF);
+const Color _sidebarDark = Color(0xFF0D274D);
+const Color _panelSurface = Color(0xFF0D274D);
 
 class ForgotPassword extends StatefulWidget {
   const ForgotPassword({super.key});
@@ -144,7 +144,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
 
     return Theme(
       data: Theme.of(context).copyWith(
-        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Manrope'),
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Inter'),
       ),
       child: Scaffold(
         backgroundColor: _darkDeepTeal,
@@ -158,58 +158,12 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                 'assets/bg2.2.png',
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  return const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [_darkDeepTeal, _darkDeepTeal, _sidebarDark],
-                      ),
-                    ),
-                  );
+                  return const ColoredBox(color: _darkDeepTeal);
                 },
               ),
             ),
             Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      _darkDeepTeal.withValues(alpha: 0.72),
-                      _secondaryIceBlue.withValues(alpha: 0.55),
-                      _sidebarDark.withValues(alpha: 0.86),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            Positioned(
-              top: -100,
-              right: -100,
-              child: _buildBackdropOrb(
-                size: 300,
-                color: _primaryAqua.withValues(alpha: 0.14),
-              ),
-            ),
-
-            Positioned(
-              bottom: -150,
-              left: -150,
-              child: _buildBackdropOrb(
-                size: 400,
-                color: _secondaryIceBlue.withValues(alpha: 0.10),
-              ),
-            ),
-            Positioned(
-              top: size.height * 0.18,
-              left: size.width * 0.12,
-              child: _buildBackdropOrb(
-                size: 220,
-                color: _sidebarDark.withValues(alpha: 0.82),
-              ),
+              child: const ColoredBox(color: Color(0xD9071A33)),
             ),
 
             // Main content

@@ -12,14 +12,14 @@ import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 
-const _blue = Color(0xFF00A8B5);
-const _aqua = Color(0xFF00A8B5);
-const _ink = Color(0xFF0A1F24);
-const _muted = Color(0xFF546E7A);
-const _page = Color(0xFF0A1F24);
+const _blue = Color(0xFF2F80ED);
+const _aqua = Color(0xFF2F80ED);
+const _ink = Color(0xFF0B1F3A);
+const _muted = Color(0xFF4B6075);
+const _page = Color(0xFF071A33);
 const _surface = Colors.white;
-const _surfaceAlt = Color(0xFFF1F5F7);
-const _border = Color(0xFFE5EEF0);
+const _surfaceAlt = Color(0xFFF4F7FB);
+const _border = Color(0xFFD9E5F2);
 
 class BhwRegistrationPage extends StatefulWidget {
   const BhwRegistrationPage({super.key});
@@ -492,7 +492,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
     if (_submitted) return _successPage();
     return Theme(
       data: Theme.of(context).copyWith(
-        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Manrope'),
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Inter'),
       ),
       child: Scaffold(
         backgroundColor: _page,
@@ -514,17 +514,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
             ),
             Positioned.fill(
               child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      _page.withValues(alpha: 0.86),
-                      const Color(0xFF1E5A7A).withValues(alpha: 0.68),
-                      _page.withValues(alpha: 0.92),
-                    ],
-                  ),
-                ),
+                decoration: BoxDecoration(color: _page.withValues(alpha: 0.90)),
               ),
             ),
             SafeArea(
@@ -811,10 +801,10 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
 
   Widget _pageHeader() => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(36),
+    padding: const EdgeInsets.all(28),
     decoration: BoxDecoration(
       color: _surface,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(20),
       border: Border.all(color: _border),
       boxShadow: [
         BoxShadow(
@@ -848,7 +838,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
         const Text(
           'Create BHW Account',
           style: TextStyle(
-            fontFamily: 'Manrope',
+            fontFamily: 'Inter',
             color: _ink,
             fontSize: 30,
             fontWeight: FontWeight.w800,
@@ -878,11 +868,11 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
     required List<Widget> children,
   }) => Container(
     width: double.infinity,
-    margin: const EdgeInsets.only(bottom: 24),
-    padding: const EdgeInsets.all(32),
+    margin: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
       color: _surface,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(18),
       border: Border.all(color: _border),
       boxShadow: [
         BoxShadow(
@@ -902,7 +892,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
             Text(
               number,
               style: const TextStyle(
-                fontFamily: 'Manrope',
+                fontFamily: 'Inter',
                 color: _aqua,
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
@@ -912,7 +902,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
             Text(
               title,
               style: const TextStyle(
-                fontFamily: 'Manrope',
+                fontFamily: 'Inter',
                 color: _ink,
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
@@ -1332,7 +1322,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
                   'Registration submitted',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontFamily: 'Manrope',
+                    fontFamily: 'Inter',
                     color: _ink,
                     fontSize: 27,
                     fontWeight: FontWeight.w800,
