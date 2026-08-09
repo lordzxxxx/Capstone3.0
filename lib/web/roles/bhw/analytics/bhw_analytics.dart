@@ -1191,7 +1191,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: const Color(0xFFF5F7FA),
       drawer: WebAppSidebar(
         userName: userName,
         activeItem: WebSidebarItem.analytics,

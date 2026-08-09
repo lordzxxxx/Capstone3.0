@@ -4599,8 +4599,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
         child: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: ChoColors.navBackground,
-            border: Border.all(color: ChoColors.navBorder),
+            color: ChoColors.surfaceAlt,
+            border: Border.all(color: ChoColors.border),
           ),
           child: _rows.isEmpty && _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -4609,7 +4609,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   child: Text(
                     'No patient records available yet.',
                     style: TextStyle(
-                      color: ChoColors.navMuted,
+                      color: ChoColors.muted,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
@@ -4632,9 +4632,16 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         vertical: 9,
                       ),
                       decoration: BoxDecoration(
-                        color: ChoColors.navSurface,
+                        color: ChoColors.surface,
                         borderRadius: BorderRadius.circular(11),
-                        border: Border.all(color: ChoColors.navBorder),
+                        border: Border.all(color: ChoColors.border),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x0D0B1F3A),
+                            blurRadius: 8,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
@@ -4646,7 +4653,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                             child: Text(
                               (i + 1).toString(),
                               style: const TextStyle(
-                                color: ChoColors.navBackground,
+                                color: Colors.white,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -4662,7 +4669,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    color: ChoColors.navText,
+                                    color: ChoColors.text,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -4673,7 +4680,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    color: ChoColors.navMuted,
+                                    color: ChoColors.muted,
                                     fontSize: 11,
                                     height: 1.35,
                                   ),

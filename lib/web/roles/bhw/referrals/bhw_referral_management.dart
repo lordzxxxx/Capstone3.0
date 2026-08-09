@@ -132,13 +132,13 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
         : user?.email?.split('@').first ?? 'BHW';
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _background,
+      backgroundColor: const Color(0xFFF5F7FA),
       drawer: WebAppSidebar(
         userName: userName,
         activeItem: WebSidebarItem.referrals,
       ),
       appBar: AppBar(
-        backgroundColor: _background,
+        backgroundColor: const Color(0xFF071A33),
         title: const Text('BHW Referral Management'),
         leading: IconButton(
           icon: const Icon(Icons.menu),

@@ -307,7 +307,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: const Color(0xFFF5F7FA),
       drawer: WebAppSidebar(
         userName: userName,
         activeItem: WebSidebarItem.nonCommunicable,
@@ -320,7 +320,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
           // Content Area
           Expanded(
             child: RefreshIndicator(
-              backgroundColor: _darkDeepTeal,
+              backgroundColor: const Color(0xFFF5F7FA),
               color: _primaryAqua,
               onRefresh: () async {
                 await _loadPatients();

@@ -5136,19 +5136,9 @@ class _HomePageState extends State<HomePage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _primaryAqua.withValues(alpha: 0.08),
-            _secondaryIceBlue.withValues(alpha: 0.05),
-          ],
-        ),
+        color: const Color(0xFFEDF3FA),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.15),
-          width: 1.5,
-        ),
+        border: Border.all(color: const Color(0xFFD9E5F2)),
       ),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -5181,9 +5171,12 @@ class _HomePageState extends State<HomePage> {
                   icon: const Icon(
                     Icons.refresh_rounded,
                     size: 16,
-                    color: _lightOffWhite,
+                    color: _primaryAqua,
                   ),
-                  label: const Text('Refresh'),
+                  label: const Text(
+                    'Refresh',
+                    style: TextStyle(color: _primaryAqua),
+                  ),
                 ),
               ],
             ),
@@ -5199,9 +5192,7 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(height: 12),
                       Text(
                         'Loading activity...',
-                        style: TextStyle(
-                          color: Colors.black.withValues(alpha: 0.5),
-                        ),
+                        style: TextStyle(color: _mutedCoolGray),
                       ),
                     ],
                   ),
@@ -5216,14 +5207,12 @@ class _HomePageState extends State<HomePage> {
                       Icon(
                         Icons.inbox,
                         size: 40,
-                        color: Colors.black.withValues(alpha: 0.2),
+                        color: _mutedCoolGray.withValues(alpha: 0.55),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         'No recent activity',
-                        style: TextStyle(
-                          color: Colors.black.withValues(alpha: 0.5),
-                        ),
+                        style: TextStyle(color: _mutedCoolGray),
                       ),
                     ],
                   ),
@@ -5241,12 +5230,10 @@ class _HomePageState extends State<HomePage> {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: _sidebarDark,
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: (activity['color'] as Color).withValues(
-                              alpha: 0.2,
-                            ),
+                            color: const Color(0xFFD9E5F2),
                             width: 1,
                           ),
                         ),
@@ -5256,7 +5243,7 @@ class _HomePageState extends State<HomePage> {
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: (activity['color'] as Color).withValues(
-                                  alpha: 0.15,
+                                  alpha: 0.12,
                                 ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -5284,9 +5271,7 @@ class _HomePageState extends State<HomePage> {
                                     activity['subtitle'] as String,
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: Colors.white.withValues(
-                                        alpha: 0.6,
-                                      ),
+                                      color: _mutedCoolGray,
                                     ),
                                   ),
                                 ],

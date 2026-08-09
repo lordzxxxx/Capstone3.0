@@ -32,8 +32,8 @@ class HealthModuleViewHeader extends StatelessWidget {
     required this.activeView,
     required this.onViewChanged,
     this.primaryColor = const Color(0xFF2F80ED),
-    this.foregroundColor = Colors.white,
-    this.mutedColor = Colors.white70,
+    this.foregroundColor = const Color(0xFF0B1F3A),
+    this.mutedColor = const Color(0xFF4B6075),
     this.actions = const [],
     this.insightsLabel = 'Insights',
     this.recordsLabel = 'Records',
@@ -60,12 +60,12 @@ class HealthModuleViewHeader extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFF122B48),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF26476B)),
+          border: Border.all(color: const Color(0xFFD9E5F2)),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x33000000),
+              color: Color(0x120B1F3A),
               blurRadius: 18,
               offset: Offset(0, 8),
             ),
@@ -150,9 +150,9 @@ class HealthModuleViewTabs extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: const Color(0xFF0B1F3A),
+          color: const Color(0xFFEDF3FA),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFF26476B)),
+          border: Border.all(color: const Color(0xFFD9E5F2)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -178,7 +178,9 @@ class HealthModuleViewTabs extends StatelessWidget {
                   ),
                   label: Text(label),
                   style: TextButton.styleFrom(
-                    foregroundColor: selected ? Colors.white : Colors.white70,
+                    foregroundColor: selected
+                        ? Colors.white
+                        : const Color(0xFF4B6075),
                     backgroundColor: selected
                         ? primaryColor
                         : Colors.transparent,
@@ -224,13 +226,13 @@ class ModuleEmptyState extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 20),
           child: Column(
             children: [
-              Icon(icon, size: 52, color: Colors.white54),
+              Icon(icon, size: 52, color: const Color(0xFF7A91A6)),
               const SizedBox(height: 16),
               Text(
                 title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: const Color(0xFF0B1F3A),
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                 ),
@@ -239,7 +241,7 @@ class ModuleEmptyState extends StatelessWidget {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white70, height: 1.5),
+                style: const TextStyle(color: Color(0xFF4B6075), height: 1.5),
               ),
               if (action != null) ...[const SizedBox(height: 18), action!],
             ],

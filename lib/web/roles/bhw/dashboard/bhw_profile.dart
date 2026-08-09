@@ -132,7 +132,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _profileDark,
+      backgroundColor: const Color(0xFFF5F7FA),
       drawer: WebAppSidebar(
         userName: _displayName,
         activeItem: WebSidebarItem.profile,
