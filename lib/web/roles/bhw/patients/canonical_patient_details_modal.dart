@@ -13,10 +13,11 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
   final void Function(String action, Map<String, dynamic> patient)? onAction;
 
   static const _accent = Color(0xFF2F80ED);
-  static const _background = Color(0xFF081D22);
-  static const _surface = Color(0xFF0D274D);
-  static const _field = Color(0xFF0B1F3A);
-  static const _text = Color(0xFFF5F7FA);
+  static const _background = Color(0xFFF5F7FA);
+  static const _surface = Colors.white;
+  static const _field = Color(0xFFEDF3FA);
+  static const _text = Color(0xFF0B1F3A);
+  static const _muted = Color(0xFF4B6075);
 
   String _value(dynamic value, {String fallback = 'Not provided'}) {
     final text = value?.toString().trim() ?? '';
@@ -98,7 +99,7 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
               ),
               Text(
                 'Canonical patient registration record',
-                style: TextStyle(fontSize: 12, color: Colors.white60),
+                style: TextStyle(fontSize: 12, color: _muted),
               ),
             ],
           ),
@@ -253,7 +254,7 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
           const SizedBox(height: 4),
           const Text(
             'Linked records using this Patient ID.',
-            style: TextStyle(color: Colors.white60),
+            style: TextStyle(color: _muted),
           ),
           const SizedBox(height: 16),
           FutureBuilder<PatientModuleHistorySnapshot>(
@@ -270,12 +271,12 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
               if (snapshot.hasError) {
                 return const Row(
                   children: [
-                    Icon(Icons.error_outline, color: Colors.white60),
+                    Icon(Icons.error_outline, color: _muted),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Linked health records could not be loaded.',
-                        style: TextStyle(color: Colors.white60),
+                        style: TextStyle(color: _muted),
                       ),
                     ),
                   ],
@@ -286,7 +287,7 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
               if (history == null || history.totalRecords == 0) {
                 return const Text(
                   'No linked health-service records yet.',
-                  style: TextStyle(color: Colors.white60),
+                  style: TextStyle(color: _muted),
                 );
               }
 
@@ -355,14 +356,11 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
                           ),
                           subtitle: Text(
                             event.subtitle,
-                            style: const TextStyle(color: Colors.white60),
+                            style: const TextStyle(color: _muted),
                           ),
                           trailing: Text(
                             _formatDate(event.eventDate),
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 11,
-                            ),
+                            style: const TextStyle(color: _muted, fontSize: 11),
                           ),
                         ),
                       ),
@@ -468,9 +466,7 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF103D44), Color(0xFF0D274D)],
-        ),
+        color: const Color(0xFFEAF3FF),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _accent.withValues(alpha: 0.35)),
       ),
@@ -501,7 +497,7 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Patient ID: $patientId',
-                  style: const TextStyle(color: Colors.white70),
+                  style: const TextStyle(color: _muted),
                 ),
               ],
             ),
@@ -551,7 +547,7 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(color: Colors.white60)),
+          Text(subtitle, style: const TextStyle(color: _muted)),
           const SizedBox(height: 18),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -597,7 +593,7 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
       decoration: BoxDecoration(
         color: _field,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: const Color(0xFFD9E5F2)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -611,7 +607,7 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
                 Text(
                   label,
                   style: const TextStyle(
-                    color: Colors.white60,
+                    color: _muted,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),

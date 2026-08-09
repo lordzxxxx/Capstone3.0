@@ -24,10 +24,11 @@ class CanonicalPatientRegistrationModal extends StatefulWidget {
 class _CanonicalPatientRegistrationModalState
     extends State<CanonicalPatientRegistrationModal> {
   static const _accent = Color(0xFF2F80ED);
-  static const _background = Color(0xFF081D22);
-  static const _surface = Color(0xFF0D274D);
-  static const _field = Color(0xFF0B1F3A);
-  static const _text = Color(0xFFF5F7FA);
+  static const _background = Color(0xFFF5F7FA);
+  static const _surface = Colors.white;
+  static const _field = Color(0xFFEDF3FA);
+  static const _text = Color(0xFF0B1F3A);
+  static const _muted = Color(0xFF4B6075);
 
   final _formKey = GlobalKey<FormState>();
   final _patientService = PatientCenteredHistoryService();
@@ -171,7 +172,7 @@ class _CanonicalPatientRegistrationModalState
                 _isEditing
                     ? 'Update the canonical patient registration record'
                     : 'One-time canonical patient registration',
-                style: const TextStyle(fontSize: 12, color: Colors.white60),
+                style: const TextStyle(fontSize: 12, color: _muted),
               ),
             ],
           ),
@@ -353,9 +354,7 @@ class _CanonicalPatientRegistrationModalState
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_accent.withValues(alpha: 0.2), _surface],
-        ),
+        color: const Color(0xFFEAF3FF),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _accent.withValues(alpha: 0.28)),
       ),
@@ -369,7 +368,7 @@ class _CanonicalPatientRegistrationModalState
               children: [
                 const Text(
                   'Patient ID (Auto-generated)',
-                  style: TextStyle(color: Colors.white60, fontSize: 12),
+                  style: TextStyle(color: _muted, fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 SelectableText(
@@ -400,7 +399,7 @@ class _CanonicalPatientRegistrationModalState
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+        border: Border.all(color: const Color(0xFFD9E5F2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -414,10 +413,7 @@ class _CanonicalPatientRegistrationModalState
             ),
           ),
           const SizedBox(height: 5),
-          Text(
-            subtitle,
-            style: const TextStyle(color: Colors.white54, height: 1.4),
-          ),
+          Text(subtitle, style: const TextStyle(color: _muted, height: 1.4)),
           const SizedBox(height: 18),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -512,18 +508,18 @@ class _CanonicalPatientRegistrationModalState
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      labelStyle: const TextStyle(color: Colors.white70),
-      hintStyle: const TextStyle(color: Colors.white30),
+      labelStyle: const TextStyle(color: _muted),
+      hintStyle: const TextStyle(color: Color(0xFF7890A6)),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: _field,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(color: Color(0xFFD9E5F2)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _accent),
+        borderSide: const BorderSide(color: _accent, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -603,7 +599,7 @@ class _CanonicalPatientRegistrationModalState
             ),
             content: const Text(
               'A matching patient record already exists. Search and use the existing patient instead of creating a duplicate.',
-              style: TextStyle(color: Colors.white70),
+              style: TextStyle(color: _muted),
             ),
             actions: [
               TextButton(
