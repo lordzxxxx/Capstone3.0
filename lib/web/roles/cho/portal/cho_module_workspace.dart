@@ -529,104 +529,118 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
   }
 
   Widget _filters(List<String> barangays, List<String> statuses) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        SizedBox(
-          width: 330,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const _ChoFilterLabel('Search records'),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _searchController,
-                style: const TextStyle(
-                  color: Color(0xFF12252B),
-                  fontWeight: FontWeight.w600,
-                ),
-                cursorColor: ChoColors.aqua,
-                onChanged: (value) {
-                  _searchDebounce?.cancel();
-                  _searchDebounce = Timer(
-                    const Duration(milliseconds: 300),
-                    () {
-                      if (mounted) {
-                        setState(() {
-                          _search = value.trim();
-                          _page = 1;
-                        });
-                      }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 700;
+        final fullWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 330.0;
+        final searchWidth = compact ? fullWidth : 330.0;
+        final dropdownWidth = compact ? fullWidth : 190.0;
+
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            SizedBox(
+              width: searchWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const _ChoFilterLabel('Search records'),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: _searchController,
+                    style: const TextStyle(
+                      color: Color(0xFF12252B),
+                      fontWeight: FontWeight.w600,
+                    ),
+                    cursorColor: ChoColors.aqua,
+                    onChanged: (value) {
+                      _searchDebounce?.cancel();
+                      _searchDebounce = Timer(
+                        const Duration(milliseconds: 300),
+                        () {
+                          if (mounted) {
+                            setState(() {
+                              _search = value.trim();
+                              _page = 1;
+                            });
+                          }
+                        },
+                      );
                     },
-                  );
-                },
-                decoration: InputDecoration(
-                  hintText: 'Name, ID, contact, or household',
-                  hintStyle: const TextStyle(color: Color(0xFF6B7D84)),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: Color(0xFF415A63),
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFFF7FAFC),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFB7C7CC)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFB7C7CC)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(
-                      color: ChoColors.aqua,
-                      width: 2,
+                    decoration: InputDecoration(
+                      hintText: 'Name, ID, contact, or household',
+                      hintStyle: const TextStyle(color: Color(0xFF6B7D84)),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Color(0xFF415A63),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFF7FAFC),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFB7C7CC)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFB7C7CC)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: ChoColors.aqua,
+                          width: 2,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-        ),
-        _dropdown(
-          value: _barangay,
-          label: 'Barangay',
-          values: ['All', ...barangays],
-          onChanged: (value) => setState(() {
-            _barangay = value;
-            _page = 1;
-          }),
-        ),
-        _dropdown(
-          value: _status,
-          label: 'Status',
-          values: ['All', ...statuses],
-          onChanged: (value) => setState(() {
-            _status = value;
-            _page = 1;
-          }),
-        ),
-        OutlinedButton.icon(
-          onPressed: () => setState(() => _descending = !_descending),
-          icon: Icon(_descending ? Icons.south : Icons.north),
-          label: Text(_descending ? 'Newest first' : 'Oldest first'),
-        ),
-      ],
+            ),
+            _dropdown(
+              width: dropdownWidth,
+              value: _barangay,
+              label: 'Barangay',
+              values: ['All', ...barangays],
+              onChanged: (value) => setState(() {
+                _barangay = value;
+                _page = 1;
+              }),
+            ),
+            _dropdown(
+              width: dropdownWidth,
+              value: _status,
+              label: 'Status',
+              values: ['All', ...statuses],
+              onChanged: (value) => setState(() {
+                _status = value;
+                _page = 1;
+              }),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => setState(() => _descending = !_descending),
+              icon: Icon(_descending ? Icons.south : Icons.north),
+              label: Text(_descending ? 'Newest first' : 'Oldest first'),
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _dropdown({
+    required double width,
     required String value,
     required String label,
     required List<String> values,
     required ValueChanged<String> onChanged,
   }) {
     return SizedBox(
-      width: 190,
+      width: width,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

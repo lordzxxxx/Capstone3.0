@@ -870,7 +870,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
       child: Text(
         label,
         style: TextStyle(
-          color: _lightOffWhite.withValues(alpha: 0.9),
+          color: Colors.white,
           fontSize: 12,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.2,
@@ -885,7 +885,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
     return Container(
       width: 1,
       height: 18,
-      color: _lightOffWhite.withValues(alpha: 0.2),
+      color: Colors.white.withValues(alpha: 0.28),
     );
   }
 
@@ -918,7 +918,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
             child: Text(
               'Actions',
               style: TextStyle(
-                color: _lightOffWhite,
+                color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,
@@ -999,7 +999,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: _darkDeepTeal,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: _primaryAqua.withValues(alpha: 0.25),
@@ -1007,14 +1007,14 @@ class _MorbidityPageState extends State<MorbidityPage> {
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<int>(
-                      dropdownColor: _darkDeepTeal,
+                      dropdownColor: Colors.white,
                       value: effectiveRowsPerPage,
                       style: const TextStyle(
                         color: _lightOffWhite,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
-                      iconEnabledColor: _lightOffWhite,
+                      iconEnabledColor: _primaryAqua,
                       items: const [
                         DropdownMenuItem(value: 10, child: Text('10 / page')),
                         DropdownMenuItem(value: 20, child: Text('20 / page')),
@@ -1049,7 +1049,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: _darkDeepTeal,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: _primaryAqua.withValues(alpha: 0.25),
@@ -2508,7 +2508,7 @@ class _MorbidityRecordCard extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 74, color: const Color(0xFF26476B));
+    return Container(width: 1, height: 74, color: const Color(0xFFD9E5F2));
   }
 
   Widget _buildActionButton({
@@ -2520,7 +2520,7 @@ class _MorbidityRecordCard extends StatelessWidget {
       message: tooltip,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF163B66),
+          color: _primaryAqua,
           borderRadius: BorderRadius.circular(7),
           boxShadow: [
             BoxShadow(
@@ -2560,15 +2560,15 @@ class _MorbidityRecordCard extends StatelessWidget {
     final status = _safe(record['status'], 'Pending');
     final remarks = _safe(record['remarks'], 'No remarks recorded');
     final reportDateText = _formatReportedDate(record['reportedDate']);
-    const rowText = Color(0xFFF3F8FC);
-    const mutedText = Color(0xFFB1C4D5);
+    const rowText = Color(0xFF0B1F3A);
+    const mutedText = Color(0xFF4B6075);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: _darkDeepTeal.withValues(alpha: 0.96),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF26476B), width: 1),
+        border: Border.all(color: const Color(0xFFD9E5F2), width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -2798,15 +2798,15 @@ class _FilterDropdown extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
+        color: const Color(0xFFF7FAFD),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFD9E5F2)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          dropdownColor: _panelTeal,
+          dropdownColor: Colors.white,
           style: const TextStyle(color: _lightOffWhite),
           iconEnabledColor: _primaryAqua,
           items: options

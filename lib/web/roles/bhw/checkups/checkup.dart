@@ -40,13 +40,16 @@ const Color _sidebarDark = Colors.white;
 
 ThemeData _buildDarkDatePickerTheme(BuildContext context) {
   return Theme.of(context).copyWith(
-    colorScheme: const ColorScheme.dark(
+    // The rest of the module uses the light, high-contrast records surface.
+    // Keep the picker on that same surface so dates and controls never become
+    // white-on-white or inherit the old teal dark theme.
+    colorScheme: const ColorScheme.light(
       primary: _primaryAqua,
       onPrimary: Colors.white,
-      surface: _sidebarDark,
-      onSurface: Colors.white,
+      surface: Colors.white,
+      onSurface: _lightOffWhite,
     ),
-    dialogTheme: DialogThemeData(backgroundColor: _sidebarDark),
+    dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
   );
 }
 
@@ -262,7 +265,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                     'The signed-in account may still be syncing its barangay scope. Try signing out and signing in again.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: Colors.white70,
+                  color: _mutedCoolGray,
                   fontSize: 14,
                   height: 1.45,
                 ),
@@ -1069,7 +1072,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                             vertical: 2,
                                                           ),
                                                       decoration: BoxDecoration(
-                                                        color: _darkDeepTeal,
+                                                        color: Colors.white,
                                                         borderRadius:
                                                             BorderRadius.circular(
                                                               8,
@@ -1084,20 +1087,18 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                       child: DropdownButtonHideUnderline(
                                                         child: DropdownButton<int>(
                                                           dropdownColor:
-                                                              _darkDeepTeal,
+                                                              Colors.white,
                                                           value:
                                                               effectiveRowsPerPage,
-                                                          style:
-                                                              const TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontSize: 12,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                              ),
+                                                          style: const TextStyle(
+                                                            color:
+                                                                _lightOffWhite,
+                                                            fontSize: 12,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
                                                           iconEnabledColor:
-                                                              Colors.white,
+                                                              _primaryAqua,
                                                           items: const [
                                                             DropdownMenuItem(
                                                               value: 10,
@@ -1157,7 +1158,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                             vertical: 6,
                                                           ),
                                                       decoration: BoxDecoration(
-                                                        color: _darkDeepTeal,
+                                                        color: Colors.white,
                                                         borderRadius:
                                                             BorderRadius.circular(
                                                               8,
@@ -2006,279 +2007,284 @@ class _CheckUpPageState extends State<CheckUpPage> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          // Title Section
-          Icon(Icons.tune_rounded, color: _primaryAqua, size: 20),
-          const SizedBox(width: 12),
-          Text(
-            'Filter Results',
-            style: TextStyle(
-              color: _lightOffWhite,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
-            ),
-          ),
-          const SizedBox(width: 32),
-
-          // Date Range Picker (From - To)
-          Expanded(
-            flex: 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Date Range',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: _mutedCoolGray,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.3,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final dateWidth = math.min(
+            440.0,
+            math.max(260.0, constraints.maxWidth - 40),
+          );
+          return Wrap(
+            spacing: 20,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              // Title Section
+              Icon(Icons.tune_rounded, color: _primaryAqua, size: 20),
+              const SizedBox(width: 12),
+              Text(
+                'Filter Results',
+                style: TextStyle(
+                  color: _lightOffWhite,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
                 ),
-                const SizedBox(height: 6),
-                Row(
+              ),
+              const SizedBox(width: 8),
+
+              // Date Range Picker (From - To)
+              SizedBox(
+                width: dateWidth,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // From Date Picker
-                    Expanded(
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: _fromDate ?? DateTime.now(),
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime.now(),
-                              builder: (context, child) {
-                                return Theme(
-                                  data: _buildDarkDatePickerTheme(context),
-                                  child: child!,
-                                );
-                              },
-                            );
-                            if (picked != null) {
-                              setState(() {
-                                _fromDate = picked;
-                                // Ensure toDate is not before fromDate
-                                if (_toDate != null &&
-                                    _toDate!.isBefore(picked)) {
-                                  _toDate = picked;
-                                }
-                                _currentPage = 1;
-                              });
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: _primaryAqua.withValues(alpha: 0.2),
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                              color: _darkDeepTeal,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.calendar_today_rounded,
-                                  color: Colors.white,
-                                  size: 12,
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    _fromDate != null
-                                        ? "${_fromDate!.year}-${_fromDate!.month.toString().padLeft(2, '0')}-${_fromDate!.day.toString().padLeft(2, '0')}"
-                                        : 'From',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 12,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     Text(
-                      '-',
+                      'Date Range',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 11,
+                        color: _mutedCoolGray,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    // To Date Picker
-                    Expanded(
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: _toDate ?? DateTime.now(),
-                              firstDate: _fromDate ?? DateTime(2020),
-                              lastDate: DateTime.now(),
-                              builder: (context, child) {
-                                return Theme(
-                                  data: _buildDarkDatePickerTheme(context),
-                                  child: child!,
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        // From Date Picker
+                        Expanded(
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: _fromDate ?? DateTime.now(),
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime.now(),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: _buildDarkDatePickerTheme(context),
+                                      child: child!,
+                                    );
+                                  },
                                 );
+                                if (picked != null) {
+                                  setState(() {
+                                    _fromDate = picked;
+                                    // Ensure toDate is not before fromDate
+                                    if (_toDate != null &&
+                                        _toDate!.isBefore(picked)) {
+                                      _toDate = picked;
+                                    }
+                                    _currentPage = 1;
+                                  });
+                                }
                               },
-                            );
-                            if (picked != null) {
-                              setState(() {
-                                _toDate = picked;
-                                _currentPage = 1;
-                              });
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: _primaryAqua.withValues(alpha: 0.2),
-                                width: 1,
-                              ),
                               borderRadius: BorderRadius.circular(8),
-                              color: _darkDeepTeal,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.calendar_today_rounded,
-                                  color: Colors.white,
-                                  size: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
                                 ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    _toDate != null
-                                        ? "${_toDate!.year}-${_toDate!.month.toString().padLeft(2, '0')}-${_toDate!.day.toString().padLeft(2, '0')}"
-                                        : 'To',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 12,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: _primaryAqua.withValues(alpha: 0.2),
+                                    width: 1,
                                   ),
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: const Color(0xFFF7FAFD),
                                 ),
-                              ],
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_rounded,
+                                      color: _primaryAqua,
+                                      size: 12,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        _fromDate != null
+                                            ? "${_fromDate!.year}-${_fromDate!.month.toString().padLeft(2, '0')}-${_fromDate!.day.toString().padLeft(2, '0')}"
+                                            : 'From',
+                                        style: TextStyle(
+                                          color: _lightOffWhite,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        Text('-', style: TextStyle(color: _mutedCoolGray)),
+                        const SizedBox(width: 8),
+                        // To Date Picker
+                        Expanded(
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: _toDate ?? DateTime.now(),
+                                  firstDate: _fromDate ?? DateTime(2020),
+                                  lastDate: DateTime.now(),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: _buildDarkDatePickerTheme(context),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    _toDate = picked;
+                                    _currentPage = 1;
+                                  });
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: _primaryAqua.withValues(alpha: 0.2),
+                                    width: 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: const Color(0xFFF7FAFD),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_rounded,
+                                      color: _primaryAqua,
+                                      size: 12,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        _toDate != null
+                                            ? "${_toDate!.year}-${_toDate!.month.toString().padLeft(2, '0')}-${_toDate!.day.toString().padLeft(2, '0')}"
+                                            : 'To',
+                                        style: TextStyle(
+                                          color: _lightOffWhite,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Status Filter
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: _primaryAqua.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFFF7FAFD),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.flag_outlined, color: _primaryAqua, size: 12),
+                    const SizedBox(width: 6),
+                    DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _statusFilter,
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        isDense: true,
+                        iconSize: 18,
+                        style: const TextStyle(
+                          color: _lightOffWhite,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        iconEnabledColor: _primaryAqua,
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'All',
+                            child: Text('All Status'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Pending',
+                            child: Text('Pending'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Completed',
+                            child: Text('Completed'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setState(() {
+                            _statusFilter = value;
+                            _currentPage = 1;
+                          });
+                        },
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 24),
-
-          // Status Filter
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: _primaryAqua.withValues(alpha: 0.2),
-                width: 1,
               ),
-              borderRadius: BorderRadius.circular(8),
-              color: _darkDeepTeal,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.flag_outlined,
-                  color: Colors.white.withValues(alpha: 0.85),
-                  size: 12,
-                ),
-                const SizedBox(width: 6),
-                DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _statusFilter,
-                    dropdownColor: _darkDeepTeal,
-                    borderRadius: BorderRadius.circular(10),
-                    isDense: true,
+              const SizedBox(width: 20),
+
+              // Clear Filter Button
+              if (_fromDate != null ||
+                  _toDate != null ||
+                  _statusFilter != 'All' ||
+                  _effectiveSearchQuery.isNotEmpty)
+                Container(
+                  decoration: BoxDecoration(
+                    color: _primaryAqua.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.close_rounded, color: _primaryAqua),
                     iconSize: 18,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    iconEnabledColor: Colors.white,
-                    items: const [
-                      DropdownMenuItem(value: 'All', child: Text('All Status')),
-                      DropdownMenuItem(
-                        value: 'Pending',
-                        child: Text('Pending'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'Completed',
-                        child: Text('Completed'),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
+                    onPressed: () {
                       setState(() {
-                        _statusFilter = value;
+                        _fromDate = null;
+                        _toDate = null;
+                        _statusFilter = 'All';
+                        _effectiveSearchController.clear();
+                        _searchQuery = '';
                         _currentPage = 1;
                       });
                     },
+                    tooltip: 'Clear filters',
                   ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 20),
-
-          // Clear Filter Button
-          if (_fromDate != null ||
-              _toDate != null ||
-              _statusFilter != 'All' ||
-              _effectiveSearchQuery.isNotEmpty)
-            Container(
-              decoration: BoxDecoration(
-                color: _primaryAqua.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.close_rounded, color: Colors.white),
-                iconSize: 18,
-                onPressed: () {
-                  setState(() {
-                    _fromDate = null;
-                    _toDate = null;
-                    _statusFilter = 'All';
-                    _effectiveSearchController.clear();
-                    _searchQuery = '';
-                    _currentPage = 1;
-                  });
-                },
-                tooltip: 'Clear filters',
-              ),
-            ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -3361,7 +3367,7 @@ class _CheckUpTable extends StatelessWidget {
       return Center(
         child: Text(
           'No records found.',
-          style: TextStyle(color: Colors.white, fontSize: 16),
+          style: TextStyle(color: _lightOffWhite, fontSize: 16),
         ),
       );
     }
