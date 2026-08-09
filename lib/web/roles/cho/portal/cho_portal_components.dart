@@ -75,7 +75,7 @@ class ChoPageHeader extends StatelessWidget {
                       Text(
                         '$breadcrumb / $title',
                         style: const TextStyle(
-                          fontFamily: 'Manrope',
+                          fontFamily: 'Mont',
                           color: ChoColors.aqua,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -85,7 +85,7 @@ class ChoPageHeader extends StatelessWidget {
                       Text(
                         title,
                         style: TextStyle(
-                          fontFamily: 'Manrope',
+                          fontFamily: 'Mont',
                           color: ChoColors.text,
                           fontSize: compact ? 23 : 28,
                           fontWeight: FontWeight.w800,
@@ -95,7 +95,7 @@ class ChoPageHeader extends StatelessWidget {
                       Text(
                         description,
                         style: const TextStyle(
-                          fontFamily: 'Manrope',
+                          fontFamily: 'Mont',
                           color: ChoColors.muted,
                           height: 1.45,
                         ),
@@ -184,7 +184,7 @@ class ChoViewTabs extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     textStyle: const TextStyle(
-                      fontFamily: 'Manrope',
+                      fontFamily: 'Mont',
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -257,7 +257,7 @@ class ChoKpiCard extends StatelessWidget {
               Text(
                 value,
                 style: const TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Mont',
                   color: ChoColors.navText,
                   fontSize: 23,
                   fontWeight: FontWeight.w800,
@@ -266,7 +266,7 @@ class ChoKpiCard extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Mont',
                   color: ChoColors.navMuted,
                   fontWeight: FontWeight.w700,
                 ),
@@ -278,7 +278,7 @@ class ChoKpiCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontFamily: 'Inter',
+                    fontFamily: 'Mont',
                     color: ChoColors.navMuted,
                     fontSize: 11,
                   ),
@@ -373,7 +373,7 @@ class ChoStatusBadge extends StatelessWidget {
                   softWrap: false,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontFamily: 'Manrope',
+                    fontFamily: 'Mont',
                     color: color,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -417,7 +417,7 @@ class ChoEmptyState extends StatelessWidget {
             Text(
               title,
               style: const TextStyle(
-                fontFamily: 'Manrope',
+                fontFamily: 'Mont',
                 color: ChoColors.text,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -428,7 +428,7 @@ class ChoEmptyState extends StatelessWidget {
               displayMessage,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontFamily: 'Manrope',
+                fontFamily: 'Mont',
                 color: ChoColors.muted,
               ),
             ),
@@ -466,7 +466,7 @@ class ChoErrorState extends StatelessWidget {
             const Text(
               'Data could not be loaded',
               style: TextStyle(
-                fontFamily: 'Manrope',
+                fontFamily: 'Mont',
                 color: ChoColors.text,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -477,7 +477,7 @@ class ChoErrorState extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontFamily: 'Manrope',
+                fontFamily: 'Mont',
                 color: ChoColors.muted,
               ),
             ),

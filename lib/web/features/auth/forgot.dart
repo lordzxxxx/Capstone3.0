@@ -144,7 +144,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
 
     return Theme(
       data: Theme.of(context).copyWith(
-        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Inter'),
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Mont'),
       ),
       child: Scaffold(
         backgroundColor: _darkDeepTeal,
@@ -162,9 +162,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                 },
               ),
             ),
-            Positioned.fill(
-              child: const ColoredBox(color: Color(0xD9071A33)),
-            ),
+            Positioned.fill(child: const ColoredBox(color: Color(0xD9071A33))),
 
             // Main content
             SafeArea(

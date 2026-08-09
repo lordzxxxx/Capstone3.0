@@ -992,7 +992,7 @@ class _SignupState extends State<Signup> {
               Text(
                 'AI-DSUHIS',
                 style: TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Mont',
                   fontSize: isCompact ? 32 : 52,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -1003,7 +1003,7 @@ class _SignupState extends State<Signup> {
               Text(
                 'Create secure access to unified city and barangay health information.',
                 style: TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Mont',
                   fontSize: isCompact ? 15 : 20,
                   color: Colors.white.withValues(alpha: 0.88),
                   height: 1.45,
@@ -1013,7 +1013,7 @@ class _SignupState extends State<Signup> {
               Text(
                 'Choose the correct role and provide the details needed for a reliable, approval-aware account.',
                 style: TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Mont',
                   fontSize: isCompact ? 13 : 15,
                   color: Colors.white.withValues(alpha: 0.72),
                   height: 1.55,
@@ -1033,7 +1033,7 @@ class _SignupState extends State<Signup> {
 
     return Theme(
       data: Theme.of(context).copyWith(
-        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Inter'),
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Mont'),
       ),
       child: Scaffold(
         backgroundColor: _darkDeepTeal,
@@ -1050,9 +1050,7 @@ class _SignupState extends State<Signup> {
                 },
               ),
             ),
-            Positioned.fill(
-              child: ColoredBox(color: Color(0xD9071A33)),
-            ),
+            Positioned.fill(child: ColoredBox(color: Color(0xD9071A33))),
 
             SafeArea(
               child: Center(
@@ -1284,7 +1282,7 @@ class _SignupState extends State<Signup> {
             Text(
               'Create your account',
               style: TextStyle(
-                fontFamily: 'Inter',
+                fontFamily: 'Mont',
                 fontSize: isCompact ? 27 : 32,
                 fontWeight: FontWeight.w800,
                 color: _darkDeepTeal,

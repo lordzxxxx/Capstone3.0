@@ -520,10 +520,10 @@ class _LandingPageState extends State<LandingPage>
                 color: _sidebarDark.withValues(alpha: 0.82),
               ),
             ),
-            // The landing route is deliberately a constrained application
-            // surface.  It owns its viewport and never participates in the
-            // document's scrollable flow (other routes keep their normal
-            // scrolling behaviour).
+            // The hero keeps its stable viewport composition. The branded
+            // footer lives below it in the landing scroll surface so it can
+            // contain the full team/legal information without compressing or
+            // reflowing the hero and authentication panel.
             SafeArea(
               child: ClipRect(
                 child: SizedBox.expand(
@@ -538,7 +538,7 @@ class _LandingPageState extends State<LandingPage>
                     },
                     child: _showIntroLoader
                         ? _buildLandingLoader()
-                        : _buildLandingContent(context),
+                        : _buildLandingScroll(context),
                   ),
                 ),
               ),
@@ -619,6 +619,27 @@ class _LandingPageState extends State<LandingPage>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLandingScroll(BuildContext context) {
+    return LayoutBuilder(
+      key: const ValueKey('landing_scroll'),
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: Column(
+            children: [
+              SizedBox(
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+                child: _buildLandingContent(context),
+              ),
+              _buildLandingFooter(context),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1110,6 +1131,280 @@ class _LandingPageState extends State<LandingPage>
             child: child,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLandingFooter(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final compact = width < 860;
+    final horizontalPadding = compact ? 24.0 : 64.0;
+
+    final brand = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _buildSystemLogo(size: compact ? 52 : 64),
+            const SizedBox(width: 14),
+            Text(
+              'AI-DSUHIS',
+              style: _display(
+                size: compact ? 24 : 30,
+                color: Colors.white,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Unified health information for coordinated, human-led care.',
+          style: _body(
+            size: 14,
+            weight: FontWeight.w400,
+            color: Colors.white.withValues(alpha: 0.72),
+            height: 1.45,
+          ),
+        ),
+      ],
+    );
+
+    final team = _buildFooterColumn(
+      title: 'Team',
+      children: [
+        _buildFooterLabel('TEAM LEADER'),
+        _buildFooterName('TRISHA JEANNE ALSOLA'),
+        const SizedBox(height: 14),
+        _buildFooterLabel('MAIN DEVELOPERS'),
+        _buildFooterName('ATHEO JESSAR CALIAO'),
+        _buildFooterName('LORD LYLE KIMPERT AGREDA'),
+        _buildFooterName('DHARRYL DAVE CLERIGO'),
+      ],
+    );
+
+    final legal = _buildFooterColumn(
+      title: 'Information',
+      children: [
+        Text(
+          'Responsible access for City Health Office and Barangay Health Worker teams.',
+          style: _body(
+            size: 13,
+            weight: FontWeight.w400,
+            color: Colors.white.withValues(alpha: 0.72),
+            height: 1.45,
+          ),
+        ),
+        const SizedBox(height: 14),
+        _buildFooterLink(
+          context,
+          'Privacy Policy',
+          'AI-DSUHIS Privacy Policy',
+          'AI-DSUHIS uses role-based access to protect account and health information. Access is limited to authorized users and activity is recorded for accountability.',
+        ),
+        _buildFooterLink(
+          context,
+          'Terms of Service',
+          'AI-DSUHIS Terms of Service',
+          'Use AI-DSUHIS only for authorized health-service work. AI guidance is supportive information; clinical decisions, referrals, and prescriptions remain the responsibility of qualified health professionals.',
+        ),
+      ],
+    );
+
+    final columns = compact
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              brand,
+              const SizedBox(height: 36),
+              team,
+              const SizedBox(height: 32),
+              legal,
+            ],
+          )
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 3, child: brand),
+              const SizedBox(width: 44),
+              Expanded(flex: 3, child: team),
+              const SizedBox(width: 44),
+              Expanded(flex: 3, child: legal),
+            ],
+          );
+
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFF061B3A),
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        compact ? 42 : 58,
+        horizontalPadding,
+        compact ? 26 : 34,
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            right: compact ? -18 : 10,
+            bottom: compact ? 48 : 36,
+            child: IgnorePointer(
+              child: Text(
+                'AI-DSUHIS',
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: compact ? 76 : 170,
+                  fontWeight: FontWeight.w700,
+                  height: 0.8,
+                  letterSpacing: -5,
+                  color: Colors.white.withValues(alpha: 0.035),
+                ),
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              columns,
+              const SizedBox(height: 44),
+              Divider(color: Colors.white.withValues(alpha: 0.16), height: 1),
+              const SizedBox(height: 18),
+              if (compact)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildFooterCopyright(),
+                    const SizedBox(height: 12),
+                    _buildFooterLegalLinks(context),
+                  ],
+                )
+              else
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildFooterCopyright(),
+                    _buildFooterLegalLinks(context),
+                  ],
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFooterColumn({
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: _display(size: 17, color: Colors.white, letterSpacing: 0.1),
+        ),
+        const SizedBox(height: 14),
+        ...children,
+      ],
+    );
+  }
+
+  Widget _buildFooterLabel(String text) {
+    return Text(
+      text,
+      style: _body(
+        size: 10,
+        weight: FontWeight.w700,
+        color: _primaryAquaBright,
+        height: 1.2,
+      ),
+    );
+  }
+
+  Widget _buildFooterName(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 5),
+      child: Text(
+        text,
+        style: _body(
+          size: 12.5,
+          weight: FontWeight.w500,
+          color: Colors.white.withValues(alpha: 0.82),
+          height: 1.25,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooterLink(
+    BuildContext context,
+    String label,
+    String title,
+    String message,
+  ) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton(
+        onPressed: () => _showLegalDialog(context, title, message),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          foregroundColor: Colors.white,
+          textStyle: _body(size: 13, weight: FontWeight.w700),
+        ),
+        child: Text(label),
+      ),
+    );
+  }
+
+  Widget _buildFooterCopyright() {
+    return Text(
+      '© 2026 AI-DSUHIS. All rights reserved.',
+      style: _body(
+        size: 12,
+        weight: FontWeight.w400,
+        color: Colors.white.withValues(alpha: 0.68),
+      ),
+    );
+  }
+
+  Widget _buildFooterLegalLinks(BuildContext context) {
+    return Wrap(
+      spacing: 18,
+      runSpacing: 4,
+      children: [
+        _buildFooterLink(
+          context,
+          'Privacy Policy',
+          'AI-DSUHIS Privacy Policy',
+          'AI-DSUHIS uses role-based access to protect account and health information. Access is limited to authorized users and activity is recorded for accountability.',
+        ),
+        _buildFooterLink(
+          context,
+          'Terms of Service',
+          'AI-DSUHIS Terms of Service',
+          'Use AI-DSUHIS only for authorized health-service work. AI guidance is supportive information; clinical decisions, referrals, and prescriptions remain the responsibility of qualified health professionals.',
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showLegalDialog(
+    BuildContext context,
+    String title,
+    String message,
+  ) {
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }

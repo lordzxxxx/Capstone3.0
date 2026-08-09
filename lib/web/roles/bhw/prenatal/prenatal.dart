@@ -8178,7 +8178,7 @@ class _PrenatalCard extends StatelessWidget {
                         color: mutedText,
                         fontSize: 10.5,
                         fontWeight: FontWeight.w500,
-                        fontFamily: 'monospace',
+                        fontFamily: 'Mont',
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

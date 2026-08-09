@@ -977,7 +977,7 @@ class _LoginState extends State<Login> {
               Text(
                 'AI-DSUHIS',
                 style: TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Mont',
                   fontSize: isCompact ? 32 : 52,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -988,7 +988,7 @@ class _LoginState extends State<Login> {
               Text(
                 'Secure access to unified city and barangay health information.',
                 style: TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Mont',
                   fontSize: isCompact ? 15 : 20,
                   color: Colors.white.withValues(alpha: 0.88),
                   height: 1.45,
@@ -998,7 +998,7 @@ class _LoginState extends State<Login> {
               Text(
                 'A trusted workspace for patient records, referrals, analytics, and community health operations.',
                 style: TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Mont',
                   fontSize: isCompact ? 13 : 15,
                   color: Colors.white.withValues(alpha: 0.72),
                   height: 1.55,
@@ -1050,7 +1050,7 @@ class _LoginState extends State<Login> {
 
     return Theme(
       data: Theme.of(context).copyWith(
-        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Inter'),
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Mont'),
       ),
       child: Scaffold(
         backgroundColor: _darkDeepTeal,
@@ -1067,9 +1067,7 @@ class _LoginState extends State<Login> {
                 },
               ),
             ),
-            Positioned.fill(
-              child: ColoredBox(color: Color(0xD9071A33)),
-            ),
+            Positioned.fill(child: ColoredBox(color: Color(0xD9071A33))),
 
             SafeArea(
               child: LayoutBuilder(
@@ -1227,7 +1225,7 @@ class _LoginState extends State<Login> {
             Text(
               'Welcome back',
               style: TextStyle(
-                fontFamily: 'Inter',
+                fontFamily: 'Mont',
                 fontSize: isCompact ? 28 : 34,
                 fontWeight: FontWeight.w800,
                 color: _darkDeepTeal,

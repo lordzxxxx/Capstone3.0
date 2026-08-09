@@ -63,7 +63,7 @@ class ChoNavigationDrawer extends StatelessWidget {
                         Text(
                           'AI-DSUHIS',
                           style: TextStyle(
-                            fontFamily: 'Inter',
+                            fontFamily: 'Mont',
                             color: ChoColors.navText,
                             fontWeight: FontWeight.w900,
                             fontSize: 18,
@@ -72,7 +72,7 @@ class ChoNavigationDrawer extends StatelessWidget {
                         Text(
                           'City Health Office Portal',
                           style: TextStyle(
-                            fontFamily: 'Inter',
+                            fontFamily: 'Mont',
                             color: ChoColors.navMuted,
                             fontSize: 11,
                           ),
@@ -106,7 +106,7 @@ class ChoNavigationDrawer extends StatelessWidget {
                             user?.email?.split('@').first ?? 'CHO Staff',
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontFamily: 'Inter',
+                              fontFamily: 'Mont',
                               color: ChoColors.navText,
                               fontWeight: FontWeight.w700,
                             ),
@@ -114,7 +114,7 @@ class ChoNavigationDrawer extends StatelessWidget {
                           const Text(
                             'CHO • City-wide operations',
                             style: TextStyle(
-                              fontFamily: 'Inter',
+                              fontFamily: 'Mont',
                               color: ChoColors.navMuted,
                               fontSize: 10,
                             ),
@@ -225,7 +225,7 @@ class ChoNavigationDrawer extends StatelessWidget {
     child: Text(
       label,
       style: const TextStyle(
-        fontFamily: 'Manrope',
+        fontFamily: 'Mont',
         color: ChoColors.navMuted,
         fontSize: 9,
         fontWeight: FontWeight.w800,
@@ -257,7 +257,7 @@ class ChoNavigationDrawer extends StatelessWidget {
               borderRadius: BorderRadius.circular(11),
             ),
             textStyle: const TextStyle(
-              fontFamily: 'Inter',
+              fontFamily: 'Mont',
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -280,13 +280,13 @@ class ChoNavigationDrawer extends StatelessWidget {
         ),
         title: const Text(
           'Logout from CHO Portal?',
-          style: TextStyle(fontFamily: 'Inter', color: ChoColors.text),
+          style: TextStyle(fontFamily: 'Mont', color: ChoColors.text),
         ),
         content: const Text(
           'You will need to sign in again to access city-wide health records.',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontFamily: 'Inter',
+            fontFamily: 'Mont',
             color: ChoColors.muted,
             height: 1.4,
           ),
@@ -357,7 +357,7 @@ class ChoNavigationDrawer extends StatelessWidget {
           title: Text(
             label,
             style: TextStyle(
-              fontFamily: 'Manrope',
+              fontFamily: 'Mont',
               fontSize: 13,
               fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
             ),

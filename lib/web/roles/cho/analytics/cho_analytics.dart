@@ -598,7 +598,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
         title: const Text(
           'CHO Reports and Analytics',
           style: TextStyle(
-            fontFamily: 'Manrope',
+            fontFamily: 'Mont',
             color: ChoColors.navText,
             fontWeight: FontWeight.w800,
           ),

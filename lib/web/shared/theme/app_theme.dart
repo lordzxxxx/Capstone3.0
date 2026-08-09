@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Centralized color palette for the Smart Health Integration web app.
 ///
@@ -76,6 +75,11 @@ class AppSpacing {
 class AppTheme {
   AppTheme._();
 
+  /// Mont is the system typeface for all CHO/BHW web surfaces. The landing
+  /// page deliberately overrides its local text styles to retain its
+  /// marketing typography.
+  static const String fontFamily = 'Mont';
+
   static ThemeData light({bool isWeb = false}) {
     final colorScheme = ColorScheme.light(
       primary: AppColors.primary,
@@ -90,7 +94,7 @@ class AppTheme {
       onError: Colors.white,
     );
 
-    final textTheme = GoogleFonts.interTextTheme(const TextTheme(
+    const textTheme = TextTheme(
       // Hero / display — large marketing-style headings.
       displayLarge: TextStyle(
         fontSize: 40,
@@ -159,10 +163,11 @@ class AppTheme {
         fontWeight: FontWeight.w500,
         color: AppColors.textSecondary,
       ),
-    ));
+    );
 
     return ThemeData(
       useMaterial3: true,
+      fontFamily: fontFamily,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.backgroundLight,
       textTheme: textTheme,

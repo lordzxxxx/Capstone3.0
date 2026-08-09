@@ -63,6 +63,7 @@ class MyApp extends StatelessWidget {
       title: 'Health Monitoring System',
       theme: ThemeData(
         useMaterial3: true,
+        fontFamily: 'Mont',
         colorScheme: ColorScheme.light(
           primary: _primaryAqua,
           onPrimary: _darkDeepTeal,
