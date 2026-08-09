@@ -15,14 +15,15 @@ import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/services/barangay_branding_service.dart';
 import 'package:mycapstone_project/web/shared/widgets/barangay_logo_image.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _sidebarDark = Color(0xFF0E2F34);
-const Color _panelSurface = Color(0xFF061920);
+const Color _primaryAqua = AppDesign.blue;
+const Color _secondaryIceBlue = AppDesign.navySoft;
+const Color _darkDeepTeal = AppDesign.ink;
+const Color _mutedCoolGray = AppDesign.subtle;
+const Color _lightOffWhite = AppDesign.ink;
+const Color _sidebarDark = Colors.white;
+const Color _panelSurface = AppDesign.page;
 
 class Signup extends StatefulWidget {
   const Signup({super.key});
@@ -93,7 +94,8 @@ class _SignupState extends State<Signup> {
     }
 
     try {
-      final availability = await _accountPolicyService.getBarangayAvailability();
+      final availability = await _accountPolicyService
+          .getBarangayAvailability();
       if (!mounted) return;
       setState(() {
         _barangayAvailabilityByCode
@@ -138,7 +140,10 @@ class _SignupState extends State<Signup> {
     required String role,
     BarangayReference? barangay,
   }) async {
-    final roleRef = getRealtimeDatabaseInstance().ref().child('users').child(uid);
+    final roleRef = getRealtimeDatabaseInstance()
+        .ref()
+        .child('users')
+        .child(uid);
 
     final payload = {
       'uid': uid,
@@ -172,7 +177,8 @@ class _SignupState extends State<Signup> {
           'unknown',
         };
         final shouldRetry =
-            retryableCodes.contains(e.code) && attempt < _realtimeDbWriteAttempts;
+            retryableCodes.contains(e.code) &&
+            attempt < _realtimeDbWriteAttempts;
         if (!shouldRetry) rethrow;
         await Future.delayed(Duration(seconds: attempt * 2));
       }
@@ -235,10 +241,12 @@ class _SignupState extends State<Signup> {
       'organizationLevel': isBarangayScoped ? 'barangay' : 'citywide',
       'dataVisibilityStartAt': FieldValue.serverTimestamp(),
       'barangay': isBarangayScoped ? barangay.name : FieldValue.delete(),
-      'barangayCode':
-          isBarangayScoped ? normalizedBarangayCode : FieldValue.delete(),
-      'barangayDistrict':
-          isBarangayScoped ? barangay.district : FieldValue.delete(),
+      'barangayCode': isBarangayScoped
+          ? normalizedBarangayCode
+          : FieldValue.delete(),
+      'barangayDistrict': isBarangayScoped
+          ? barangay.district
+          : FieldValue.delete(),
       'barangayVerified': isBarangayScoped,
       'barangayPath': barangayPath ?? FieldValue.delete(),
       'barangayUserPath': barangayUserPath ?? FieldValue.delete(),
@@ -248,11 +256,13 @@ class _SignupState extends State<Signup> {
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
-    final conflict = await firestore.runTransaction<String?>((transaction) async {
+    final conflict = await firestore.runTransaction<String?>((
+      transaction,
+    ) async {
       final usernameLockSnapshot = await transaction.get(usernameLockRef);
       if (usernameLockSnapshot.exists) {
-        final existingUid =
-            (usernameLockSnapshot.data()?['uid'] ?? '').toString();
+        final existingUid = (usernameLockSnapshot.data()?['uid'] ?? '')
+            .toString();
         if (existingUid.isNotEmpty && existingUid != uid) {
           return _duplicateAccountConflict;
         }
@@ -263,8 +273,8 @@ class _SignupState extends State<Signup> {
         if (barangayLockSnapshot.exists) {
           final lockData = barangayLockSnapshot.data() ?? <String, dynamic>{};
           final existingUid = (lockData['uid'] ?? '').toString();
-          final accountStatus =
-              (lockData['accountStatus'] ?? 'active').toString();
+          final accountStatus = (lockData['accountStatus'] ?? 'active')
+              .toString();
           final isActiveLock =
               accountStatus != 'disabled' && accountStatus != 'archived';
           if (existingUid.isNotEmpty && existingUid != uid && isActiveLock) {
@@ -472,7 +482,9 @@ class _SignupState extends State<Signup> {
     } catch (e) {
       backendPolicyAvailable = false;
       if (kDebugMode) {
-        print('Signup policy precheck unavailable, continuing with fallback: $e');
+        print(
+          'Signup policy precheck unavailable, continuing with fallback: $e',
+        );
       }
 
       if (_requiresStrictBarangayPolicy(_selectedRole) &&
@@ -668,12 +680,12 @@ class _SignupState extends State<Signup> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: AppDesign.page,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppDesign.navy,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: _lightOffWhite, size: 24),
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
           onPressed: () {
             final navigator = Navigator.of(context);
             if (navigator.canPop()) {
@@ -686,31 +698,21 @@ class _SignupState extends State<Signup> {
         title: Text(
           'Create Account',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _lightOffWhite,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _darkDeepTeal,
-              _secondaryIceBlue.withValues(alpha: 0.28),
-              _sidebarDark,
-            ],
-          ),
-        ),
+        color: AppDesign.page,
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40),
             child: Container(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
               decoration: BoxDecoration(
-                color: _sidebarDark.withValues(alpha: 0.94),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: _primaryAqua.withValues(alpha: 0.16),
@@ -732,6 +734,7 @@ class _SignupState extends State<Signup> {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
+                        color: AppDesign.navy,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -743,7 +746,7 @@ class _SignupState extends State<Signup> {
                       ),
                       child: ClipOval(
                         child: Image.asset(
-                          'assets/bg3.png',
+                          'assets/newlogo.png',
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
                             return const Icon(
@@ -762,16 +765,17 @@ class _SignupState extends State<Signup> {
                     children: [
                       Text(
                         'Create Account',
-                        style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: _lightOffWhite,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(
+                              color: _darkDeepTeal,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Select your barangay and continue with account creation.',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: _lightOffWhite.withValues(alpha: 0.72),
+                          color: AppDesign.muted,
                           height: 1.4,
                         ),
                       ),
@@ -815,7 +819,7 @@ class _SignupState extends State<Signup> {
                       onPressed: _isLoading ? null : signup,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primaryAqua,
-                        foregroundColor: _darkDeepTeal,
+                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -828,7 +832,7 @@ class _SignupState extends State<Signup> {
                               width: 20,
                               child: CircularProgressIndicator(
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  _darkDeepTeal,
+                                  Colors.white,
                                 ),
                                 strokeWidth: 2.5,
                               ),
@@ -836,10 +840,11 @@ class _SignupState extends State<Signup> {
                           : const Icon(Icons.person_add, size: 20),
                       label: Text(
                         _isLoading ? 'Creating Account...' : 'Create Account',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: _darkDeepTeal,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                     ),
                   ),
@@ -847,9 +852,9 @@ class _SignupState extends State<Signup> {
                   Center(
                     child: RichText(
                       text: TextSpan(
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(color: _lightOffWhite),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppDesign.muted,
+                        ),
                         children: [
                           const TextSpan(text: 'Already have an account? '),
                           TextSpan(
@@ -888,7 +893,7 @@ class _SignupState extends State<Signup> {
     return Text(
       label,
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        color: Colors.white,
+        color: _darkDeepTeal,
         fontWeight: FontWeight.bold,
       ),
     );
@@ -904,13 +909,10 @@ class _SignupState extends State<Signup> {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
-      style: const TextStyle(
-        color: _lightOffWhite,
-        fontWeight: FontWeight.w500,
-      ),
+      style: const TextStyle(color: _darkDeepTeal, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: TextStyle(color: _lightOffWhite.withValues(alpha: 0.42)),
+        hintStyle: const TextStyle(color: AppDesign.subtle),
         prefixIcon: Icon(icon, color: _primaryAqua, size: 20),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -987,14 +989,16 @@ class _SignupState extends State<Signup> {
           borderRadius: BorderRadius.circular(10),
           color: isSelected ? _primaryAqua : _darkDeepTeal,
           border: Border.all(
-            color: isSelected ? _primaryAqua : _primaryAqua.withValues(alpha: 0.18),
+            color: isSelected
+                ? _primaryAqua
+                : _primaryAqua.withValues(alpha: 0.18),
           ),
         ),
         child: Center(
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? _darkDeepTeal : _lightOffWhite,
+              color: isSelected ? Colors.white : _darkDeepTeal,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.4,
             ),
@@ -1016,7 +1020,7 @@ class _SignupState extends State<Signup> {
           hint: Text(
             'Select Barangay',
             style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.48),
+              color: AppDesign.subtle,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -1025,7 +1029,8 @@ class _SignupState extends State<Signup> {
                 .map(
                   (barangay) => _buildBarangayDropdownLabel(
                     barangay: barangay,
-                    profile: _brandingCache[barangay.code] ??
+                    profile:
+                        _brandingCache[barangay.code] ??
                         BarangayBrandingProfile.fallback(barangay),
                     showDistrict: false,
                   ),
@@ -1036,7 +1041,8 @@ class _SignupState extends State<Signup> {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(
-                color: (_showBarangayValidationError ||
+                color:
+                    (_showBarangayValidationError ||
                         _selectedBarangayUnavailable)
                     ? const Color(0xFFD32F2F)
                     : _primaryAqua.withValues(alpha: 0.20),
@@ -1046,7 +1052,8 @@ class _SignupState extends State<Signup> {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(
-                color: (_showBarangayValidationError ||
+                color:
+                    (_showBarangayValidationError ||
                         _selectedBarangayUnavailable)
                     ? const Color(0xFFD32F2F)
                     : _primaryAqua.withValues(alpha: 0.20),
@@ -1056,7 +1063,8 @@ class _SignupState extends State<Signup> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(
-                color: (_showBarangayValidationError ||
+                color:
+                    (_showBarangayValidationError ||
                         _selectedBarangayUnavailable)
                     ? const Color(0xFFD32F2F)
                     : _primaryAqua,
@@ -1070,30 +1078,27 @@ class _SignupState extends State<Signup> {
               vertical: 12,
             ),
           ),
-          items: MalaybalayBarangays.all
-              .map(
-                (barangay) {
-                  final profile =
-                      _brandingCache[barangay.code] ??
-                      BarangayBrandingProfile.fallback(barangay);
-                  final availability = _barangayAvailabilityByCode[barangay.code];
-                  final unavailable = availability != null && !availability.isAvailable;
+          items: MalaybalayBarangays.all.map((barangay) {
+            final profile =
+                _brandingCache[barangay.code] ??
+                BarangayBrandingProfile.fallback(barangay);
+            final availability = _barangayAvailabilityByCode[barangay.code];
+            final unavailable =
+                availability != null && !availability.isAvailable;
 
-                  return DropdownMenuItem<BarangayReference>(
-                    value: barangay,
-                    enabled: !unavailable,
-                    child: Opacity(
-                      opacity: unavailable ? 0.55 : 1,
-                      child: _buildBarangayDropdownLabel(
-                        barangay: barangay,
-                        profile: profile,
-                        showDistrict: true,
-                      ),
-                    ),
-                  );
-                },
-              )
-              .toList(),
+            return DropdownMenuItem<BarangayReference>(
+              value: barangay,
+              enabled: !unavailable,
+              child: Opacity(
+                opacity: unavailable ? 0.55 : 1,
+                child: _buildBarangayDropdownLabel(
+                  barangay: barangay,
+                  profile: profile,
+                  showDistrict: true,
+                ),
+              ),
+            );
+          }).toList(),
           onChanged: _isLoading
               ? null
               : (value) {
@@ -1153,7 +1158,7 @@ class _SignupState extends State<Signup> {
                 barangay.name,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  color: _lightOffWhite,
+                  color: _darkDeepTeal,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1162,7 +1167,7 @@ class _SignupState extends State<Signup> {
                   barangay.district,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: _lightOffWhite.withValues(alpha: 0.68),
+                    color: AppDesign.muted,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -1179,13 +1184,10 @@ class _SignupState extends State<Signup> {
     return TextField(
       controller: passwordController,
       obscureText: _obscurePassword,
-      style: const TextStyle(
-        color: _lightOffWhite,
-        fontWeight: FontWeight.w500,
-      ),
+      style: const TextStyle(color: _darkDeepTeal, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: 'At least 6 characters',
-        hintStyle: TextStyle(color: _lightOffWhite.withValues(alpha: 0.42)),
+        hintStyle: const TextStyle(color: AppDesign.subtle),
         prefixIcon: const Icon(
           Icons.lock_outline,
           color: _primaryAqua,
@@ -1234,13 +1236,10 @@ class _SignupState extends State<Signup> {
     return TextField(
       controller: confirmPasswordController,
       obscureText: _obscureConfirmPassword,
-      style: const TextStyle(
-        color: _lightOffWhite,
-        fontWeight: FontWeight.w500,
-      ),
+      style: const TextStyle(color: _darkDeepTeal, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: 'Re-enter your password',
-        hintStyle: TextStyle(color: _lightOffWhite.withValues(alpha: 0.42)),
+        hintStyle: const TextStyle(color: AppDesign.subtle),
         prefixIcon: const Icon(
           Icons.lock_outline,
           color: _primaryAqua,

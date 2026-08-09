@@ -27,12 +27,13 @@ import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helpe
 import 'package:mycapstone_project/app/features/immunization/immunization_database_helper.dart';
 import 'package:mycapstone_project/app/features/patients/patient_database_helper.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
+const Color _primaryAqua = AppDesign.blue;
+const Color _secondaryIceBlue = AppDesign.navySoft;
+const Color _darkDeepTeal = AppDesign.ink;
+const Color _mutedCoolGray = AppDesign.muted;
+const Color _lightOffWhite = Colors.white;
 
 class HomePage extends StatefulWidget {
   final User? user;
@@ -1405,9 +1406,9 @@ class _HomePageState extends State<HomePage> {
     return BottomNavigationBar(
       currentIndex: _selectedBottomNavIndex,
       type: BottomNavigationBarType.fixed,
-      backgroundColor: const Color(0xFF0D232B),
+      backgroundColor: AppDesign.surface,
       selectedItemColor: _primaryAqua,
-      unselectedItemColor: _lightOffWhite.withValues(alpha: 0.7),
+      unselectedItemColor: AppDesign.subtle,
       onTap: (index) {
         if (index == 1) {
           Get.to(() => const AnalyticsPage());
@@ -1576,17 +1577,14 @@ class _HomePageState extends State<HomePage> {
           Text(
             'HUB',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: _lightOffWhite,
+              color: _darkDeepTeal,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Tap a category to open the related modules.',
-            style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.75),
-              fontSize: 14,
-            ),
+            style: TextStyle(color: AppDesign.muted, fontSize: 14),
           ),
           const SizedBox(height: 16),
           ListView.separated(
@@ -1687,7 +1685,7 @@ class _HomePageState extends State<HomePage> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  color: _lightOffWhite,
+                  color: _darkDeepTeal,
                   fontSize: 13.5,
                   fontWeight: FontWeight.w800,
                   height: 1.18,
@@ -1719,7 +1717,7 @@ class _HomePageState extends State<HomePage> {
     }
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: AppDesign.page,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(0),
         child: Container(),
@@ -1727,20 +1725,10 @@ class _HomePageState extends State<HomePage> {
       drawer: SizedBox(
         width: 350,
         child: Drawer(
-          backgroundColor: Colors.transparent,
+          backgroundColor: Colors.white,
           elevation: 0,
           child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  _darkDeepTeal,
-                  const Color(0xFF07161A),
-                  _secondaryIceBlue.withValues(alpha: 0.14),
-                ],
-              ),
-            ),
+            decoration: const BoxDecoration(color: Colors.white),
             child: Stack(
               children: [
                 Positioned(
@@ -1975,9 +1963,7 @@ class _HomePageState extends State<HomePage> {
                                   backgroundColor: isLoggedIn
                                       ? Colors.red.shade700
                                       : _primaryAqua,
-                                  foregroundColor: isLoggedIn
-                                      ? _lightOffWhite
-                                      : _darkDeepTeal,
+                                  foregroundColor: Colors.white,
                                   elevation: 6,
                                   shadowColor:
                                       (isLoggedIn
@@ -2002,16 +1988,14 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   label: const Text('Create Account'),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: _lightOffWhite,
+                                    foregroundColor: _secondaryIceBlue,
                                     side: BorderSide(
                                       color: _primaryAqua.withValues(
                                         alpha: 0.55,
                                       ),
                                       width: 1.4,
                                     ),
-                                    backgroundColor: Colors.white.withValues(
-                                      alpha: 0.03,
-                                    ),
+                                    backgroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(16),
                                     ),
@@ -2383,7 +2367,7 @@ class _HomePageState extends State<HomePage> {
                           Text(
                             'System Status: Online',
                             style: TextStyle(
-                              color: _lightOffWhite,
+                              color: _darkDeepTeal,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -2636,7 +2620,7 @@ class _HomePageState extends State<HomePage> {
                               style: TextStyle(
                                 fontSize: kIsWeb ? 20 : 16,
                                 fontWeight: FontWeight.bold,
-                                color: _lightOffWhite,
+                                color: _darkDeepTeal,
                                 letterSpacing: 0.3,
                               ),
                             ),
@@ -3365,7 +3349,7 @@ class _HomePageState extends State<HomePage> {
                               style: TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.bold,
-                                color: _lightOffWhite,
+                                color: _darkDeepTeal,
                                 letterSpacing: -0.5,
                               ),
                               maxLines: 1,
@@ -3375,7 +3359,7 @@ class _HomePageState extends State<HomePage> {
                               title,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: _lightOffWhite,
+                                color: _darkDeepTeal,
                                 fontWeight: FontWeight.w600,
                               ),
                               maxLines: 1,
@@ -3445,7 +3429,7 @@ class _HomePageState extends State<HomePage> {
                       unit,
                       style: TextStyle(
                         fontSize: 11,
-                        color: _lightOffWhite.withValues(alpha: 0.7),
+                        color: AppDesign.muted,
                         fontWeight: FontWeight.w500,
                       ),
                       maxLines: 1,
@@ -3932,9 +3916,9 @@ class _HomePageState extends State<HomePage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.045),
+        color: AppDesign.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _lightOffWhite.withValues(alpha: 0.10)),
+        border: Border.all(color: AppDesign.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.16),
@@ -3962,7 +3946,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: _lightOffWhite, size: 18),
+                child: Icon(icon, color: Colors.white, size: 18),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -3972,7 +3956,7 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       title,
                       style: const TextStyle(
-                        color: _lightOffWhite,
+                        color: _darkDeepTeal,
                         fontSize: 15.5,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.2,
@@ -3982,7 +3966,7 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.68),
+                        color: AppDesign.muted,
                         fontSize: 12.2,
                         height: 1.3,
                       ),
@@ -4187,7 +4171,7 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _lightOffWhite.withValues(alpha: 0.12)),
+            border: Border.all(color: AppDesign.border),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.18),
@@ -4219,7 +4203,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Icon(icon, color: _lightOffWhite, size: 18),
+                      child: Icon(icon, color: Colors.white, size: 18),
                     ),
                     const Spacer(),
                     Container(
@@ -4230,7 +4214,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       child: Icon(
                         Icons.arrow_outward_rounded,
-                        color: _lightOffWhite.withValues(alpha: 0.75),
+                        color: AppDesign.muted,
                         size: 14,
                       ),
                     ),
@@ -4242,7 +4226,7 @@ class _HomePageState extends State<HomePage> {
                     child: Text(
                       label,
                       style: const TextStyle(
-                        color: _lightOffWhite,
+                        color: _darkDeepTeal,
                         fontSize: 12.8,
                         fontWeight: FontWeight.w800,
                         height: 1.18,

@@ -33,7 +33,7 @@ class AuthLogoBadge extends StatelessWidget {
       ),
       child: ClipOval(
         child: Image.asset(
-          'assets/bg3.png',
+          'assets/newlogo.png',
           fit: fit,
           errorBuilder: (context, error, stackTrace) {
             return Container(

@@ -3,6 +3,7 @@ import 'package:mycapstone_project/app/features/immunization/immunization_databa
 import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls.dart';
 import 'dart:math' as math;
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
+import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 
 const Color _primaryAqua = Color(0xFF00A8B5);
 const Color _secondaryIceBlue = Color(0xFF1E5A7A);
@@ -200,7 +201,6 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     return _vaccineTypeOptions.first;
   }
 
-
   String _getPatientHistoryKey(Map<String, dynamic> record) {
     final patientId = (record['patientId'] ?? '').toString().trim();
     if (patientId.isNotEmpty) {
@@ -215,9 +215,12 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     Map<String, dynamic> seedRecord,
   ) {
     final historyKey = _getPatientHistoryKey(seedRecord);
-    final history = _immunizationRecords.where((record) {
-      return _getPatientHistoryKey(record) == historyKey;
-    }).map((record) => Map<String, dynamic>.from(record)).toList();
+    final history = _immunizationRecords
+        .where((record) {
+          return _getPatientHistoryKey(record) == historyKey;
+        })
+        .map((record) => Map<String, dynamic>.from(record))
+        .toList();
 
     history.sort((left, right) {
       final leftDate =
@@ -249,16 +252,19 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
   ) {
     final history = _getPatientHistoryRecords(seedRecord);
     final latestRecord = history.isNotEmpty ? history.first : seedRecord;
-    final patientName =
-        (latestRecord['patientName'] ?? 'Unknown Patient').toString();
-    final patientId =
-        (latestRecord['patientId'] ?? 'No patient ID').toString().trim();
-    final latestVaccine =
-        (latestRecord['vaccine'] ?? 'No vaccine recorded').toString();
-    final latestStatus =
-        (latestRecord['status'] ?? 'Completed').toString().trim();
-    final lastAdministration =
-        _formatDate((latestRecord['administrationDate'] ?? '').toString());
+    final patientName = (latestRecord['patientName'] ?? 'Unknown Patient')
+        .toString();
+    final patientId = (latestRecord['patientId'] ?? 'No patient ID')
+        .toString()
+        .trim();
+    final latestVaccine = (latestRecord['vaccine'] ?? 'No vaccine recorded')
+        .toString();
+    final latestStatus = (latestRecord['status'] ?? 'Completed')
+        .toString()
+        .trim();
+    final lastAdministration = _formatDate(
+      (latestRecord['administrationDate'] ?? '').toString(),
+    );
     final nextDose = _formatDate(
       (latestRecord['nextDoseDueDate'] ?? '').toString(),
     );
@@ -299,7 +305,11 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.history, color: _lightOffWhite, size: 28),
+                      const Icon(
+                        Icons.history,
+                        color: _lightOffWhite,
+                        size: 28,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -373,8 +383,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   crossAxisCount: 2,
                                   crossAxisSpacing: 10,
                                   mainAxisSpacing: 10,
-                                  childAspectRatio:
-                                      constraints.maxWidth < 420 ? 1.45 : 1.7,
+                                  childAspectRatio: constraints.maxWidth < 420
+                                      ? 1.45
+                                      : 1.7,
                                 ),
                             itemBuilder: (context, index) {
                               final item = cardItems[index];
@@ -431,7 +442,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                       : ListView.separated(
                           padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                           itemCount: history.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 10),
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 10),
                           itemBuilder: (_, index) {
                             final historyRecord = history[index];
                             final vaccine =
@@ -442,7 +454,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   .toString(),
                             );
                             final nextDoseDue = _formatDate(
-                              (historyRecord['nextDoseDueDate'] ?? '').toString(),
+                              (historyRecord['nextDoseDueDate'] ?? '')
+                                  .toString(),
                             );
                             final administeredBy =
                                 (historyRecord['administeredBy'] ??
@@ -471,10 +484,14 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 child: Container(
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
-                                    color: _secondaryIceBlue.withValues(alpha: 0.2),
+                                    color: _secondaryIceBlue.withValues(
+                                      alpha: 0.2,
+                                    ),
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
-                                      color: _lightOffWhite.withValues(alpha: 0.12),
+                                      color: _lightOffWhite.withValues(
+                                        alpha: 0.12,
+                                      ),
                                     ),
                                   ),
                                   child: Column(
@@ -651,12 +668,10 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           (_isDeleteDialogShowing ||
               (_isSelectionMode && _selectedIndices.isNotEmpty))
           ? null
-          : FloatingActionButton.extended(
-              backgroundColor: _primaryAqua,
-              foregroundColor: _darkDeepTeal,
-              onPressed: () => _showNewImmunizationModal(context),
-              icon: const Icon(Icons.add),
-              label: const Text('New Immunization'),
+          : RecordCreationFabGroup(
+              moduleLabel: 'Immunization',
+              manualLabel: 'New Immunization',
+              onManualCreate: () => _showNewImmunizationModal(context),
             ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: _primaryAqua))
@@ -694,7 +709,10 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 _showEditImmunizationModal(context, record);
                               },
                               onTap: (record) {
-                                _showPatientImmunizationHistory(context, record);
+                                _showPatientImmunizationHistory(
+                                  context,
+                                  record,
+                                );
                               },
                               onLongPress: (record) {
                                 _showRecordActionModal(context, record);
@@ -710,7 +728,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                               itemLabel: 'records',
                               accentColor: _primaryAqua,
                               textColor: _lightOffWhite,
-                              surfaceColor: _darkDeepTeal.withValues(alpha: 0.55),
+                              surfaceColor: _darkDeepTeal.withValues(
+                                alpha: 0.55,
+                              ),
                               onRowsPerPageChanged: (value) {
                                 setState(() {
                                   _rowsPerPage = value > 0
@@ -774,8 +794,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       // Search filter by patient name, vaccine, or patient ID
       bool searchMatch = true;
       if (_searchQuery.isNotEmpty) {
-        final patientName =
-            (record['patientName'] ?? '').toString().toLowerCase();
+        final patientName = (record['patientName'] ?? '')
+            .toString()
+            .toLowerCase();
         final vaccine = (record['vaccine'] ?? '').toString().toLowerCase();
         final patientId = (record['patientId'] ?? '').toString().toLowerCase();
         searchMatch =
@@ -1089,12 +1110,13 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       final seededName = (patientSeed['patientName'] ?? '').toString().trim();
       final nameParts = seededName.isEmpty ? <String>[] : seededName.split(' ');
       firstNameController.text = nameParts.isNotEmpty ? nameParts.first : '';
-      surnameController.text =
-          nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+      surnameController.text = nameParts.length > 1
+          ? nameParts.sublist(1).join(' ')
+          : '';
       patientIdController.text = (patientSeed['patientId'] ?? '').toString();
       ageController.text = (patientSeed['age'] ?? '').toString();
-      contactNumberController.text =
-          (patientSeed['contactNumber'] ?? '').toString();
+      contactNumberController.text = (patientSeed['contactNumber'] ?? '')
+          .toString();
     }
 
     String selectedVaccineType = _normalizeVaccineType(
@@ -1112,8 +1134,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     final administeredByController = TextEditingController();
     final adverseEventsController = TextEditingController();
     DateTime? nextDoseDueDate;
-    final modalTitle =
-        patientSeed == null ? 'New Immunization Record' : 'Add Another Immunization';
+    final modalTitle = patientSeed == null
+        ? 'New Immunization Record'
+        : 'Add Another Immunization';
 
     showModalBottomSheet(
       context: context,
@@ -1578,7 +1601,10 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _lightOffWhite.withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(
+          color: _lightOffWhite.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
         boxShadow: [],
       ),
       child: Column(
@@ -1629,11 +1655,15 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             fillColor: Colors.transparent,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+              borderSide: BorderSide(
+                color: _lightOffWhite.withValues(alpha: 0.3),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+              borderSide: BorderSide(
+                color: _lightOffWhite.withValues(alpha: 0.3),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -2210,7 +2240,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? _primaryAqua : _primaryAqua.withValues(alpha: 0.2),
+            color: isSelected
+                ? _primaryAqua
+                : _primaryAqua.withValues(alpha: 0.2),
             width: isSelected ? 2.5 : 1.5,
           ),
           boxShadow: [
@@ -3208,7 +3240,10 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.2), width: 1.5),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: _mutedCoolGray.withValues(alpha: 0.08),
@@ -3293,7 +3328,10 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 2),
+          border: Border.all(
+            color: _primaryAqua.withValues(alpha: 0.3),
+            width: 2,
+          ),
           boxShadow: [
             BoxShadow(
               color: _darkDeepTeal.withValues(alpha: 0.2),
@@ -3543,8 +3581,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     BuildContext context,
     Map<String, dynamic> record,
   ) {
-    final rawName =
-        (record['patientName'] ?? record['childName'] ?? '').toString().trim();
+    final rawName = (record['patientName'] ?? record['childName'] ?? '')
+        .toString()
+        .trim();
     final patientName = rawName.isEmpty ? 'Record Details' : rawName;
 
     showModalBottomSheet(
@@ -3639,7 +3678,11 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.add_circle_outline, size: 20, color: _primaryAqua),
+                      Icon(
+                        Icons.add_circle_outline,
+                        size: 20,
+                        color: _primaryAqua,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'Add Another Immunization',
@@ -3664,7 +3707,10 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _lightOffWhite.withValues(alpha: 0.08),
-                    side: BorderSide(color: _lightOffWhite.withValues(alpha: 0.6), width: 2),
+                    side: BorderSide(
+                      color: _lightOffWhite.withValues(alpha: 0.6),
+                      width: 2,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -3765,7 +3811,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                     });
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4ECDC4).withValues(alpha: 0.1),
+                    backgroundColor: const Color(
+                      0xFF4ECDC4,
+                    ).withValues(alpha: 0.1),
                     side: const BorderSide(color: Color(0xFF4ECDC4), width: 2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -3824,7 +3872,11 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.delete_sweep, size: 20, color: Colors.red.shade700),
+                      Icon(
+                        Icons.delete_sweep,
+                        size: 20,
+                        color: Colors.red.shade700,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Delete Selected',

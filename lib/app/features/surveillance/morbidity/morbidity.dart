@@ -4,6 +4,7 @@ import 'package:community_charts_flutter/community_charts_flutter.dart'
 import 'package:mycapstone_project/app/features/surveillance/morbidity/morbidity_database_helper.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
+import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 
 const Color _primaryAqua = Color(0xFF00A8B5);
 const Color _secondaryIceBlue = Color(0xFF1E5A7A);
@@ -138,9 +139,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                   (record['patientName'] ?? record['patient'] ?? record['name'])
                       .toString()
                       .toLowerCase()
-                      .contains(
-                    _searchQuery.toLowerCase(),
-                  ) ||
+                      .contains(_searchQuery.toLowerCase()) ||
                   record['disease'].toString().toLowerCase().contains(
                     _searchQuery.toLowerCase(),
                   ) ||
@@ -191,63 +190,71 @@ class _MorbidityPageState extends State<MorbidityPage> {
                 ),
               ]
             : [
-          Tooltip(
-            message: _lastUpdated != null
-                ? 'Last updated: ${_lastUpdated!.hour}:${_lastUpdated!.minute.toString().padLeft(2, '0')}'
-                : 'Updating...',
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Center(
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => _loadData(),
-                      child: _isLoadingMetrics
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  _primaryAqua,
-                                ),
+                Tooltip(
+                  message: _lastUpdated != null
+                      ? 'Last updated: ${_lastUpdated!.hour}:${_lastUpdated!.minute.toString().padLeft(2, '0')}'
+                      : 'Updating...',
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Center(
+                      child: Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () => _loadData(),
+                            child: _isLoadingMetrics
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        _primaryAqua,
+                                      ),
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.refresh,
+                                    color: _primaryAqua,
+                                    size: 24,
+                                  ),
+                          ),
+                          const SizedBox(width: 12),
+                          GestureDetector(
+                            onTap: () async {
+                              await _dbHelper.seedData();
+                              _loadData();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      '✅ 100 sample records seeded',
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            child: Tooltip(
+                              message: 'Seed 100 test records',
+                              child: Icon(
+                                Icons.grain,
+                                color: _primaryAqua,
+                                size: 24,
                               ),
-                            )
-                          : Icon(Icons.refresh, color: _primaryAqua, size: 24),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () async {
-                        await _dbHelper.seedData();
-                        _loadData();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('✅ 100 sample records seeded'),
                             ),
-                          );
-                        }
-                      },
-                      child: Tooltip(
-                        message: 'Seed 100 test records',
-                        child: Icon(Icons.grain, color: _primaryAqua, size: 24),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-          ),
               ],
       ),
       floatingActionButton: widget.analyticsOnly == true
           ? null
-          : FloatingActionButton.extended(
-              backgroundColor: _primaryAqua,
-              foregroundColor: _darkDeepTeal,
-              onPressed: () => _showNewMorbidityModal(context),
-              icon: const Icon(Icons.add),
-              label: const Text('New Record'),
+          : RecordCreationFabGroup(
+              moduleLabel: 'Morbidity',
+              manualLabel: 'New Record',
+              onManualCreate: () => _showNewMorbidityModal(context),
             ),
       body: _isLoadingMetrics
           ? const Center(child: CircularProgressIndicator(color: _primaryAqua))
@@ -473,7 +480,10 @@ class _MorbidityPageState extends State<MorbidityPage> {
           decoration: BoxDecoration(
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 1),
+            border: Border.all(
+              color: _primaryAqua.withValues(alpha: 0.3),
+              width: 1,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -562,7 +572,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
                 decoration: BoxDecoration(
                   color: _darkDeepTeal.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: _primaryAqua.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -616,7 +628,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
                                           vertical: 2,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: _primaryAqua.withValues(alpha: 0.2),
+                                          color: _primaryAqua.withValues(
+                                            alpha: 0.2,
+                                          ),
                                           borderRadius: BorderRadius.circular(
                                             4,
                                           ),
@@ -676,7 +690,10 @@ class _MorbidityPageState extends State<MorbidityPage> {
           decoration: BoxDecoration(
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 1),
+            border: Border.all(
+              color: _primaryAqua.withValues(alpha: 0.3),
+              width: 1,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -737,7 +754,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
                 decoration: BoxDecoration(
                   color: _darkDeepTeal.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _secondaryIceBlue.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: _secondaryIceBlue.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -803,7 +822,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
                 decoration: BoxDecoration(
                   color: _darkDeepTeal.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _secondaryIceBlue.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: _secondaryIceBlue.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -881,7 +902,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
                                           vertical: 2,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: _primaryAqua.withValues(alpha: 0.15),
+                                          color: _primaryAqua.withValues(
+                                            alpha: 0.15,
+                                          ),
                                           borderRadius: BorderRadius.circular(
                                             4,
                                           ),
@@ -1025,7 +1048,10 @@ class _MorbidityPageState extends State<MorbidityPage> {
     );
   }
 
-  void _showMorbidityHistory(BuildContext context, Map<String, dynamic> record) {
+  void _showMorbidityHistory(
+    BuildContext context,
+    Map<String, dynamic> record,
+  ) {
     final history = _getMorbidityHistory(record);
     PatientHistoryDialogs.showModuleHistoryDialog(
       context: context,
@@ -1171,7 +1197,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
                     _showNewMorbidityModal(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4ECDC4).withValues(alpha: 0.1),
+                    backgroundColor: const Color(
+                      0xFF4ECDC4,
+                    ).withValues(alpha: 0.1),
                     side: const BorderSide(color: Color(0xFF4ECDC4), width: 2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1542,178 +1570,191 @@ class _MorbidityTableState extends State<_MorbidityTable> {
           shrinkWrap: true,
           itemCount: pageRecords.length,
           itemBuilder: (context, index) {
-        final record = pageRecords[index];
-        final absoluteIndex = startIndex + index;
-        final patientNameValue =
-            (record['patientName'] ?? record['patient'] ?? record['name'] ?? '')
-                .toString()
-                .trim();
-        final patientName = patientNameValue.isEmpty ? 'Unknown' : patientNameValue;
-        final disease = (record['disease'] ?? 'N/A').toString();
-        final age = (record['age'] ?? 'N/A').toString();
-        final severity = (record['severity'] ?? 'Mild').toString();
-        final dateReported = _formatDate(record['dateReported'] ?? record['date']);
-        final severityColor = _getSeverityColor(severity);
+            final record = pageRecords[index];
+            final absoluteIndex = startIndex + index;
+            final patientNameValue =
+                (record['patientName'] ??
+                        record['patient'] ??
+                        record['name'] ??
+                        '')
+                    .toString()
+                    .trim();
+            final patientName = patientNameValue.isEmpty
+                ? 'Unknown'
+                : patientNameValue;
+            final disease = (record['disease'] ?? 'N/A').toString();
+            final age = (record['age'] ?? 'N/A').toString();
+            final severity = (record['severity'] ?? 'Mild').toString();
+            final dateReported = _formatDate(
+              record['dateReported'] ?? record['date'],
+            );
+            final severityColor = _getSeverityColor(severity);
 
-        return GestureDetector(
-          onTap: () => widget.onView(record),
-          onLongPress: () => widget.onLongPress(record),
-          child: Card(
-            elevation: 2,
-            color: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _lightOffWhite.withValues(alpha: 0.3),
-                  width: 1.5,
+            return GestureDetector(
+              onTap: () => widget.onView(record),
+              onLongPress: () => widget.onLongPress(record),
+              child: Card(
+                elevation: 2,
+                color: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _getAvatarColor(absoluteIndex),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _getAvatarColor(
-                              absoluteIndex,
-                            ).withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _lightOffWhite.withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _getAvatarColor(absoluteIndex),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _getAvatarColor(
+                                  absoluteIndex,
+                                ).withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          _getInitials(patientName),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                          child: Center(
+                            child: Text(
+                              _getInitials(patientName),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            patientName,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: _lightOffWhite,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            disease,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: _lightOffWhite.withValues(alpha: 0.7),
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: 'Age: ',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: _lightOffWhite.withValues(alpha: 0.7),
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                              Text(
+                                patientName,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: _lightOffWhite,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                disease,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: _lightOffWhite.withValues(alpha: 0.7),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: RichText(
+                                      text: TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text: 'Age: ',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: _lightOffWhite.withValues(
+                                                alpha: 0.7,
+                                              ),
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: age,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: _lightOffWhite,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      TextSpan(
-                                        text: age,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: _lightOffWhite,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: RichText(
+                                      text: TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text: 'Date: ',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: _lightOffWhite.withValues(
+                                                alpha: 0.7,
+                                              ),
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: dateReported,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: _lightOffWhite,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: severityColor.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: severityColor.withValues(
+                                      alpha: 0.35,
+                                    ),
+                                    width: 1,
                                   ),
                                 ),
-                              ),
-                              Expanded(
-                                child: RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: 'Date: ',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: _lightOffWhite.withValues(alpha: 0.7),
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: dateReported,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: _lightOffWhite,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
+                                child: Text(
+                                  'Severity: $severity',
+                                  style: TextStyle(
+                                    color: severityColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: severityColor.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: severityColor.withValues(alpha: 0.35),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              'Severity: $severity',
-                              style: TextStyle(
-                                color: severityColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-        );
+            );
           },
         ),
         const SizedBox(height: 16),
@@ -1798,7 +1839,10 @@ void _showNewMorbidityModal(BuildContext context) {
         backgroundColor: _darkDeepTeal,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3), width: 1.5),
+          side: BorderSide(
+            color: _lightOffWhite.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
         ),
         title: Text(
           'New Morbidity Record',
@@ -1821,7 +1865,10 @@ void _showNewMorbidityModal(BuildContext context) {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: _lightOffWhite)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: _lightOffWhite),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -1839,7 +1886,11 @@ void _showNewMorbidityModal(BuildContext context) {
 
 Widget _buildModalTextField(String label) {
   return TextField(
-    style: const TextStyle(color: _lightOffWhite, fontSize: 14, fontWeight: FontWeight.w600),
+    style: const TextStyle(
+      color: _lightOffWhite,
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+    ),
     decoration: InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: _lightOffWhite),
