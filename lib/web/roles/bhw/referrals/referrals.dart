@@ -19,10 +19,10 @@ import 'package:mycapstone_project/web/shared/services/user_access_scope_service
 import 'package:mycapstone_project/web/shared/utils/referral_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/report_print.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _panelSurface = Color(0xFF102E38);
-const Color _panelAlt = Color(0xFF123B46);
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _darkDeepTeal = Color(0xFF071A33);
+const Color _panelSurface = Color(0xFF0D274D);
+const Color _panelAlt = Color(0xFF163B66);
 const Color _lightOffWhite = Color(0xFFF5F5F5);
 const Color _mutedCoolGray = Color(0xFF8EA5AE);
 

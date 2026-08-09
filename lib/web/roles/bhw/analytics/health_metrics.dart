@@ -10,10 +10,10 @@ import 'package:mycapstone_project/web/roles/bhw/analytics/ai_summary.dart' as a
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
-const Color _primaryAqua = Color(0xFF8ED7DA);
-const Color _darkDeepTeal = Color(0xFF0C252A);
-const Color _panelTeal = Color(0xFF123A41);
-const Color _panelTealSoft = Color(0xFF1A4C54);
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _darkDeepTeal = Color(0xFF071A33);
+const Color _panelTeal = Color(0xFF0D274D);
+const Color _panelTealSoft = Color(0xFF163B66);
 const Color _lightOffWhite = Color(0xFFF3F5F1);
 const Color _mutedCoolGray = Color(0xFF9DB3B6);
 const Color _signalGreen = Color(0xFF74D7A7);

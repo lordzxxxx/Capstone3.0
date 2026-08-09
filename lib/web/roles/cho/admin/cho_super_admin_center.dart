@@ -14,7 +14,7 @@ import 'package:mycapstone_project/web/shared/services/barangay_branding_service
 import 'package:mycapstone_project/web/shared/widgets/barangay_logo_image.dart';
 import 'package:universal_html/html.dart' as html;
 
-const Color _primaryAqua = Color(0xFF00A8B5);
+const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF0A1F24);
 const Color _lightOffWhite = Color(0xFFF5F5F5);
 const Color _panelSurface = Color(0xFF061920);

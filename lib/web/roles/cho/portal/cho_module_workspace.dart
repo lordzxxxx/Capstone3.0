@@ -209,7 +209,8 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
       backgroundColor: ChoColors.background,
       drawer: ChoNavigationDrawer(current: widget.config.destination),
       appBar: AppBar(
-        backgroundColor: ChoColors.background,
+        backgroundColor: ChoColors.navBackground,
+        foregroundColor: ChoColors.navText,
         title: Text('${widget.config.title} • CHO'),
         actions: [
           const Center(child: ChoStatusBadge('City Health Office')),
@@ -403,7 +404,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
                                   minHeight: 12,
                                   value: entry.value / maxCount,
                                   color: ChoColors.aqua,
-                                  backgroundColor: Colors.white10,
+                                  backgroundColor: ChoColors.border,
                                 ),
                               ),
                             ),
@@ -723,7 +724,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.white10)),
+        border: Border(bottom: BorderSide(color: ChoColors.border)),
       ),
       child: Row(
         children: [
@@ -936,7 +937,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
                   padding: const EdgeInsets.all(18),
                   itemCount: entries.length,
                   separatorBuilder: (_, _) =>
-                      const Divider(color: Colors.white10),
+                      const Divider(color: ChoColors.border),
                   itemBuilder: (context, index) {
                     final entry = entries[index];
                     return Row(

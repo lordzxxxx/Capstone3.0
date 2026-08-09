@@ -34,6 +34,11 @@
 
   <title>mycapstone_project</title>
   <link rel="manifest" href="manifest.json">
+  <!-- Inter is the shared web UI typeface; Flutter falls back to the bundled
+       fonts when a network connection is unavailable. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <style>
     html, body {
@@ -44,6 +49,7 @@
          to one viewport; long dashboards/auth forms can still scroll. */
       overflow-x: hidden;
       overflow-y: auto;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
   </style>
   

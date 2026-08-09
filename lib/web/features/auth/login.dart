@@ -270,6 +270,7 @@ class _LoginState extends State<Login> {
         : 'Dashboard';
 
     final proceedToDashboard = await showLoginSuccessSweetAlert(
+      context: context,
       title: 'Login successful',
       message: isSuperAdmin
           ? 'Your CHO Super Admin account is verified. Continue to the governance center.'

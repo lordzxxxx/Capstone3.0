@@ -131,7 +131,8 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
       backgroundColor: ChoColors.background,
       drawer: ChoNavigationDrawer(current: _destination),
       appBar: AppBar(
-        backgroundColor: ChoColors.background,
+        backgroundColor: ChoColors.navBackground,
+        foregroundColor: ChoColors.navText,
         title: Text('$_title • CHO'),
       ),
       body: _checkingAccess
@@ -526,7 +527,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
         backgroundColor: ChoColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(22),
-          side: const BorderSide(color: Colors.white12),
+          side: const BorderSide(color: ChoColors.border),
         ),
         child: ConstrainedBox(
           constraints: BoxConstraints(
@@ -577,7 +578,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                   ],
                 ),
               ),
-              const Divider(height: 1, color: Colors.white12),
+              const Divider(height: 1, color: ChoColors.border),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
@@ -657,7 +658,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                   ),
                 ),
               ),
-              const Divider(height: 1, color: Colors.white12),
+              const Divider(height: 1, color: ChoColors.border),
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -703,7 +704,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
         decoration: BoxDecoration(
           color: ChoColors.background,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(color: ChoColors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1211,7 +1212,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                   ),
                 ),
               ),
-              const Divider(color: Colors.white10),
+              const Divider(color: ChoColors.border),
               const Text(
                 'Role changes and permission management are not available in personal settings.',
                 style: TextStyle(color: ChoColors.muted),

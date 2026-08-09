@@ -41,12 +41,12 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // Color scheme
-  static const Color _primaryAqua = Color(0xFF00A8B5);
-  static const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-  static const Color _darkDeepTeal = Color(0xFF0A1F24);
+  static const Color _primaryAqua = Color(0xFF2F80ED);
+  static const Color _secondaryIceBlue = Color(0xFF163B66);
+  static const Color _darkDeepTeal = Color(0xFF071A33);
   static const Color _mutedCoolGray = Color(0xFF546E7A);
   static const Color _lightOffWhite = Color(0xFFF5F5F5);
-  static const Color _sidebarDark = Color(0xFF0E2F34);
+  static const Color _sidebarDark = Color(0xFF0D274D);
 
   // Filter state
   String _selectedStatus = 'All';

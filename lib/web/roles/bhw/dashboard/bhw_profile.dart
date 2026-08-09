@@ -6,9 +6,9 @@ import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
-const Color _profileAqua = Color(0xFF00A8B5);
-const Color _profileDark = Color(0xFF0A1F24);
-const Color _profileSurface = Color(0xFF0E2F34);
+const Color _profileAqua = Color(0xFF2F80ED);
+const Color _profileDark = Color(0xFF071A33);
+const Color _profileSurface = Color(0xFF0D274D);
 
 class BHWProfilePage extends StatefulWidget {
   const BHWProfilePage({super.key});

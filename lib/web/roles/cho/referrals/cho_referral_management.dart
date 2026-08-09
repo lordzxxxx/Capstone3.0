@@ -93,7 +93,8 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       backgroundColor: ChoColors.background,
       drawer: const ChoNavigationDrawer(current: ChoDestination.referrals),
       appBar: AppBar(
-        backgroundColor: ChoColors.background,
+        backgroundColor: ChoColors.navBackground,
+        foregroundColor: ChoColors.navText,
         title: const Text('CHO Referral Management'),
         actions: [
           IconButton(
@@ -1175,7 +1176,7 @@ class _ReferralBarChart extends StatelessWidget {
                   value: entry.value / maxValue,
                   minHeight: 14,
                   color: ChoColors.aqua,
-                  backgroundColor: Colors.white10,
+                  backgroundColor: ChoColors.border,
                 ),
               ),
             ),

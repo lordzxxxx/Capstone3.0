@@ -36,6 +36,7 @@ class _BHOLoginState extends State<BHOLogin> {
 
   Future<void> _showSuccessDialogAndNavigate() async {
     final proceedToDashboard = await showLoginSuccessSweetAlert(
+      context: context,
       title: 'Login successful',
       message: 'Your account is verified. Continue to the dashboard.',
       confirmButtonText: 'Open Dashboard',

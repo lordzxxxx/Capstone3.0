@@ -17,13 +17,15 @@ import 'package:mycapstone_project/web/shared/services/user_access_scope_service
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 import 'package:mycapstone_project/web/shared/utils/report_download.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _panelSurface = Color(0xFF102E38);
-const Color _panelAlt = Color(0xFF123B46);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _mutedCoolGray = Color(0xFF8EA5AE);
+// Names are historical (page was dark-themed); values now point at the
+// white-card system used across the rest of the app.
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _secondaryIceBlue = Color(0xFF163B66);
+const Color _darkDeepTeal = Color(0xFFF4F7FB);
+const Color _panelSurface = Colors.white;
+const Color _panelAlt = Color(0xFFF1F5F7);
+const Color _lightOffWhite = Color(0xFF0A1F24);
+const Color _mutedCoolGray = Color(0xFF546E7A);
 
 class AnalyticsPage extends StatefulWidget {
   const AnalyticsPage({super.key});
@@ -588,6 +590,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       drawer: const ChoNavigationDrawer(current: ChoDestination.reports),
       appBar: AppBar(
         backgroundColor: _darkDeepTeal,
+        foregroundColor: _lightOffWhite,
         title: const Text('CHO Reports and Analytics'),
         leading: IconButton(
           icon: const Icon(Icons.menu),
@@ -1281,11 +1284,11 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             scrollDirection: Axis.horizontal,
             child: DataTable(
               headingTextStyle: const TextStyle(
-                color: Colors.white,
+                color: _lightOffWhite,
                 fontWeight: FontWeight.w800,
               ),
               dataTextStyle: const TextStyle(
-                color: Colors.white,
+                color: _lightOffWhite,
                 fontWeight: FontWeight.w500,
               ),
               headingRowColor: WidgetStatePropertyAll(
@@ -1325,7 +1328,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               final summary = Text(
                 'Showing $firstVisible–$lastVisible of ${_records.length} activities',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: _lightOffWhite,
                   fontWeight: FontWeight.w600,
                 ),
               );
@@ -1339,7 +1342,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     icon: const Icon(Icons.chevron_left_rounded, size: 18),
                     label: const Text('Previous'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
+                      foregroundColor: _lightOffWhite,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1358,7 +1361,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     child: Text(
                       'Page $page of $pageCount',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: _lightOffWhite,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1372,7 +1375,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     label: const Text('Next'),
                     iconAlignment: IconAlignment.end,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
+                      foregroundColor: _lightOffWhite,
                     ),
                   ),
                 ],

@@ -31,12 +31,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _secondaryIceBlue = Color(0xFF163B66);
+const Color _darkDeepTeal = Color(0xFF071A33);
 const Color _mutedCoolGray = Color(0xFF546E7A);
 const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _sidebarDark = Color(0xFF0E2F34);
+const Color _sidebarDark = Color(0xFF0D274D);
 
 ThemeData _buildDarkDatePickerTheme(BuildContext context) {
   return Theme.of(context).copyWith(
