@@ -826,30 +826,31 @@ class _LandingPageState extends State<LandingPage>
     required bool isPrimary,
     required VoidCallback onPressed,
   }) {
-    // Icon is pinned at a fixed inset from the left edge instead of being
-    // centered as one floating cluster with the label — otherwise the icon
-    // sits at a different x-position on every button since "Login as BHW",
-    // "Login as CHO", and "Create Account" are different lengths, and the
-    // whole group visually reads as lopsided (icon closer to one edge than
-    // the text is to the other).
-    final child = Row(
+    // Icon stays pinned to the left edge (consistent x-position across all
+    // three buttons regardless of label length) while the label is
+    // independently centered in the button — a Row can't do both at once,
+    // so this is a Stack: icon positioned left, text centered on top.
+    final child = Stack(
+      alignment: Alignment.center,
       children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isPrimary
-                ? Colors.white.withValues(alpha: 0.16)
-                : _darkBlue.withValues(alpha: 0.10),
-          ),
-          child: Icon(
-            icon,
-            size: 18,
-            color: isPrimary ? Colors.white : _darkBlue,
+        Positioned(
+          left: 0,
+          child: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isPrimary
+                  ? Colors.white.withValues(alpha: 0.16)
+                  : _darkBlue.withValues(alpha: 0.10),
+            ),
+            child: Icon(
+              icon,
+              size: 18,
+              color: isPrimary ? Colors.white : _darkBlue,
+            ),
           ),
         ),
-        const SizedBox(width: 14),
         Text(
           label,
           style: _body(
