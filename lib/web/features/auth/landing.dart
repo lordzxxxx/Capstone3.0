@@ -827,38 +827,43 @@ class _LandingPageState extends State<LandingPage>
     required VoidCallback onPressed,
   }) {
     // Icon stays pinned to the left edge (consistent x-position across all
-    // three buttons regardless of label length) while the label is
-    // independently centered in the button — a Row can't do both at once,
-    // so this is a Stack: icon positioned left, text centered on top.
-    final child = Stack(
-      alignment: Alignment.center,
+    // three buttons regardless of label length). The label centers in the
+    // space *between* two equal gutters — the icon slot on the left and a
+    // matching blank spacer on the right — rather than on the full button
+    // width, otherwise the icon's footprint made the right-hand gap read
+    // much bigger than the left, i.e. lopsided instead of balanced.
+    const iconSlotWidth = 34.0 + 14.0;
+    final child = Row(
       children: [
-        Positioned(
-          left: 0,
-          child: Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isPrimary
-                  ? Colors.white.withValues(alpha: 0.16)
-                  : _darkBlue.withValues(alpha: 0.10),
-            ),
-            child: Icon(
-              icon,
-              size: 18,
-              color: isPrimary ? Colors.white : _darkBlue,
-            ),
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isPrimary
+                ? Colors.white.withValues(alpha: 0.16)
+                : _darkBlue.withValues(alpha: 0.10),
           ),
-        ),
-        Text(
-          label,
-          style: _body(
-            size: 16,
-            weight: FontWeight.w700,
+          child: Icon(
+            icon,
+            size: 18,
             color: isPrimary ? Colors.white : _darkBlue,
           ),
         ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Center(
+            child: Text(
+              label,
+              style: _body(
+                size: 16,
+                weight: FontWeight.w700,
+                color: isPrimary ? Colors.white : _darkBlue,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: iconSlotWidth),
       ],
     );
 
