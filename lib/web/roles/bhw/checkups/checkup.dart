@@ -3039,10 +3039,8 @@ class _CheckUpDashboardHeader extends StatelessWidget {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: interval,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: Colors.white.withValues(alpha: 0.08),
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (_) =>
+              FlLine(color: const Color(0xFFD9E5F2), strokeWidth: 1),
         ),
         titlesData: _chartTitles(
           labels: trend.map((entry) => entry.key).toList(growable: false),
@@ -3103,7 +3101,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
         child: Text(
           emptyMessage,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white54, fontSize: 13),
+          style: const TextStyle(color: _mutedCoolGray, fontSize: 13),
         ),
       );
     }
@@ -3119,10 +3117,8 @@ class _CheckUpDashboardHeader extends StatelessWidget {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: interval,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: Colors.white.withValues(alpha: 0.08),
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (_) =>
+              FlLine(color: const Color(0xFFD9E5F2), strokeWidth: 1),
         ),
         titlesData: _chartTitles(
           labels: entries.map((entry) => _shortLabel(entry.key)).toList(),
@@ -3180,7 +3176,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
           interval: interval,
           getTitlesWidget: (value, _) => Text(
             value.toInt().toString(),
-            style: const TextStyle(color: Colors.white54, fontSize: 10),
+            style: const TextStyle(color: _mutedCoolGray, fontSize: 10),
           ),
         ),
       ),
@@ -3199,7 +3195,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
                 labels[index],
                 textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white60, fontSize: 10),
+                style: const TextStyle(color: _mutedCoolGray, fontSize: 10),
               ),
             );
           },

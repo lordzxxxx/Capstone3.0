@@ -2305,10 +2305,8 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                 show: true,
                 drawVerticalLine: false,
                 horizontalInterval: interval,
-                getDrawingHorizontalLine: (_) => FlLine(
-                  color: Colors.white.withValues(alpha: 0.10),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (_) =>
+                    FlLine(color: const Color(0xFFD9E5F2), strokeWidth: 1),
               ),
               borderData: FlBorderData(show: false),
               lineBarsData: [
@@ -2346,10 +2344,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                     interval: interval,
                     getTitlesWidget: (value, _) => Text(
                       value.toInt().toString(),
-                      style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.65),
-                        fontSize: 10,
-                      ),
+                      style: TextStyle(color: _mutedCoolGray, fontSize: 10),
                     ),
                   ),
                 ),
@@ -2366,10 +2361,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           points[index].label,
-                          style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.70),
-                            fontSize: 10,
-                          ),
+                          style: TextStyle(color: _mutedCoolGray, fontSize: 10),
                         ),
                       );
                     },
@@ -2441,10 +2433,8 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                 show: true,
                 drawVerticalLine: false,
                 horizontalInterval: math.max(1, (maxY / 4).ceil()).toDouble(),
-                getDrawingHorizontalLine: (_) => FlLine(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (_) =>
+                    FlLine(color: const Color(0xFFD9E5F2), strokeWidth: 1),
               ),
               borderData: FlBorderData(show: false),
               titlesData: FlTitlesData(
@@ -2460,10 +2450,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                     reservedSize: 28,
                     getTitlesWidget: (value, _) => Text(
                       value.toInt().toString(),
-                      style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.6),
-                        fontSize: 10,
-                      ),
+                      style: TextStyle(color: _mutedCoolGray, fontSize: 10),
                     ),
                   ),
                 ),
@@ -2480,7 +2467,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                         child: Text(
                           agePoints[index].label,
                           style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.70),
+                            color: _mutedCoolGray,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                           ),
@@ -2909,10 +2896,8 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
             show: true,
             drawVerticalLine: false,
             horizontalInterval: interval,
-            getDrawingHorizontalLine: (value) => FlLine(
-              color: Colors.white.withValues(alpha: 0.08),
-              strokeWidth: 1,
-            ),
+            getDrawingHorizontalLine: (value) =>
+                FlLine(color: const Color(0xFFD9E5F2), strokeWidth: 1),
           ),
           borderData: FlBorderData(show: false),
           titlesData: FlTitlesData(
@@ -2929,10 +2914,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                 interval: interval,
                 getTitlesWidget: (value, _) => Text(
                   value.toInt().toString(),
-                  style: TextStyle(
-                    color: _lightOffWhite.withValues(alpha: 0.6),
-                    fontSize: 10,
-                  ),
+                  style: TextStyle(color: _mutedCoolGray, fontSize: 10),
                 ),
               ),
             ),
@@ -2949,7 +2931,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                     child: Text(
                       series[index].label,
                       style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.7),
+                        color: _mutedCoolGray,
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                       ),

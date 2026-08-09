@@ -6225,7 +6225,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           reservedSize: 32,
           getTitlesWidget: (value, _) => Text(
             value.toInt().toString(),
-            style: const TextStyle(color: Colors.white54, fontSize: 10),
+            style: const TextStyle(color: _mutedCoolGray, fontSize: 10),
           ),
         ),
       ),
@@ -6244,7 +6244,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
               child: Text(
                 label.length > 13 ? '${label.substring(0, 11)}…' : label,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white60, fontSize: 9.5),
+                style: const TextStyle(color: _mutedCoolGray, fontSize: 9.5),
               ),
             );
           },
@@ -6295,7 +6295,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                     Text(
                       title,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: _lightOffWhite,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
@@ -6303,10 +6303,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.58),
-                        fontSize: 11.5,
-                      ),
+                      style: TextStyle(color: _mutedCoolGray, fontSize: 11.5),
                     ),
                   ],
                 ),
@@ -6335,10 +6332,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: interval,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: Colors.white.withValues(alpha: 0.08),
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (_) =>
+              FlLine(color: const Color(0xFFD9E5F2), strokeWidth: 1),
         ),
         titlesData: _prenatalChartTitles(
           values.map((entry) => entry.key).toList(),
@@ -6399,7 +6394,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         child: Text(
           emptyMessage,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white54, fontSize: 13),
+          style: const TextStyle(color: _mutedCoolGray, fontSize: 13),
         ),
       );
     }
@@ -6415,10 +6410,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: interval,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: Colors.white.withValues(alpha: 0.08),
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (_) =>
+              FlLine(color: const Color(0xFFD9E5F2), strokeWidth: 1),
         ),
         titlesData: _prenatalChartTitles(
           entries.map((entry) => entry.key).toList(),
@@ -6506,7 +6499,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
       return const Center(
         child: Text(
           'No data available yet.',
-          style: TextStyle(color: Colors.white54, fontSize: 13),
+          style: TextStyle(color: _mutedCoolGray, fontSize: 13),
         ),
       );
     }
@@ -6550,7 +6543,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                       Text(
                         centerLabel,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: _lightOffWhite,
                           fontSize: 23,
                           fontWeight: FontWeight.w800,
                         ),
@@ -6559,7 +6552,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                         Text(
                           centerSubtitle,
                           style: const TextStyle(
-                            color: Colors.white54,
+                            color: _mutedCoolGray,
                             fontSize: 10,
                           ),
                         ),
@@ -6594,7 +6587,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                         '${entries[index].key} (${entries[index].value})',
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Colors.white70,
+                          color: _mutedCoolGray,
                           fontSize: 10.5,
                         ),
                       ),
@@ -6681,7 +6674,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
               Text(
                 'Highlights Requiring Care-Team Attention',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: _lightOffWhite,
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                 ),
@@ -6691,7 +6684,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           const SizedBox(height: 6),
           const Text(
             'Decision-support highlights from recorded data. Review and confirm each case clinically.',
-            style: TextStyle(color: Colors.white54, fontSize: 12),
+            style: TextStyle(color: _mutedCoolGray, fontSize: 12),
           ),
           const SizedBox(height: 16),
           if (highlights.isEmpty)
@@ -6704,7 +6697,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
               ),
               child: const Text(
                 'No prenatal records currently meet the configured attention indicators.',
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+                style: TextStyle(color: _mutedCoolGray, fontSize: 13),
               ),
             )
           else
@@ -6742,7 +6735,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                           Text(
                             patient,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: _lightOffWhite,
                               fontWeight: FontWeight.w700,
                               fontSize: 13.5,
                             ),
@@ -6751,7 +6744,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                           Text(
                             '${_recordBarangay(record)} • ${highlight.value.join(' • ')}',
                             style: const TextStyle(
-                              color: Colors.white60,
+                              color: _mutedCoolGray,
                               fontSize: 11.5,
                               height: 1.4,
                             ),

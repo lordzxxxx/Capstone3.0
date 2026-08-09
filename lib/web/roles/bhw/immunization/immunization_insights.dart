@@ -4,8 +4,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 const _aqua = Color(0xFF2F80ED);
-const _panel = Color(0xFF0D274D);
-const _text = Color(0xFFF5F5F5);
+const _panel = Colors.white;
+const _text = Color(0xFF0B1F3A);
+const _muted = Color(0xFF4B6075);
 const _palette = <Color>[
   Color(0xFF2F80ED),
   Color(0xFF5EC7FF),
@@ -216,7 +217,7 @@ class ImmunizationInsights extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    color: _text.withValues(alpha: 0.62),
+                    color: _muted,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -299,10 +300,7 @@ class ImmunizationInsights extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        color: _text.withValues(alpha: 0.58),
-                        fontSize: 11.5,
-                      ),
+                      style: TextStyle(color: _muted, fontSize: 11.5),
                     ),
                   ],
                 ),
@@ -580,7 +578,7 @@ class ImmunizationInsights extends StatelessWidget {
         ),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => const Color(0xFF071A1F),
+            getTooltipColor: (_) => const Color(0xFF163B66),
             getTooltipItems: (spots) => spots.map((spot) {
               final entry = entries[spot.x.toInt()];
               return LineTooltipItem(
@@ -648,7 +646,7 @@ class ImmunizationInsights extends StatelessWidget {
         ),
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => const Color(0xFF071A1F),
+            getTooltipColor: (_) => const Color(0xFF163B66),
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final entry = visible[group.x];
               final value = percentageScale
@@ -742,7 +740,7 @@ class ImmunizationInsights extends StatelessWidget {
                       child: Text(
                         '${entry.key}: ${entry.value}',
                         style: TextStyle(
-                          color: _text.withValues(alpha: 0.78),
+                          color: _muted,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -771,7 +769,7 @@ class ImmunizationInsights extends StatelessWidget {
       drawVerticalLine: false,
       horizontalInterval: interval,
       getDrawingHorizontalLine: (_) =>
-          FlLine(color: Colors.white.withValues(alpha: 0.08), strokeWidth: 1),
+          FlLine(color: const Color(0xFFD9E5F2), strokeWidth: 1),
     );
   }
 
@@ -790,7 +788,7 @@ class ImmunizationInsights extends StatelessWidget {
           interval: interval,
           getTitlesWidget: (value, _) => Text(
             '${value.toInt()}$suffix',
-            style: const TextStyle(color: Colors.white54, fontSize: 9),
+            style: const TextStyle(color: _muted, fontSize: 9),
           ),
         ),
       ),
@@ -816,7 +814,7 @@ class ImmunizationInsights extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white60, fontSize: 9),
+                  style: const TextStyle(color: _muted, fontSize: 9),
                 ),
               ),
             );
@@ -841,7 +839,7 @@ class ImmunizationInsights extends StatelessWidget {
       child: Text(
         message,
         textAlign: TextAlign.center,
-        style: TextStyle(color: _text.withValues(alpha: 0.55), fontSize: 13),
+        style: const TextStyle(color: _muted, fontSize: 13),
       ),
     );
   }
