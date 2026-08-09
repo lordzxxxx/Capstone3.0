@@ -32,6 +32,11 @@ const Color _panelTeal = Colors.white;
 const Color _panelTealAlt = Color(0xFFF1F5F7);
 const Color _mutedCoolGray = Color(0xFF546E7A);
 const Color _lightOffWhite = Color(0xFF0A1F24);
+const Color _chartText = Color(0xFF4B6075);
+const Color _chartGrid = Color(0xFFD9E5F2);
+const Color _chartGreen = Color(0xFF1F9D63);
+const Color _chartCyan = Color(0xFF0F9BA8);
+const Color _chartLime = Color(0xFF79A82E);
 
 class _ChartLegendDot extends StatelessWidget {
   final String label;
@@ -56,8 +61,9 @@ class _ChartLegendDot extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: _lightOffWhite.withValues(alpha: 0.75),
+            color: _chartText,
             fontSize: 10,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -4474,11 +4480,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: <Color>[_panelTealAlt, _panelTeal, _darkDeepTeal],
-          ),
+          color: ChoColors.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: Colors.black.withValues(alpha: 0.07)),
           boxShadow: <BoxShadow>[
@@ -4514,7 +4516,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     style: const TextStyle(
                       color: _lightOffWhite,
                       fontSize: 14,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
@@ -4524,13 +4526,13 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.greenAccent.withValues(alpha: 0.08),
+                    color: const Color(0xFFE7F7EF),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: const Text(
                     'LIVE',
                     style: TextStyle(
-                      color: Colors.greenAccent,
+                      color: Color(0xFF16875A),
                       fontSize: 8,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.5,
@@ -4543,8 +4545,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
             Text(
               subtitle,
               style: TextStyle(
-                color: _lightOffWhite.withValues(alpha: 0.62),
+                color: ChoColors.muted,
                 fontSize: 11,
+                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 12),
@@ -4678,7 +4681,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         child: Text(
           'No check-up trend data available yet.',
           style: TextStyle(
-            color: _lightOffWhite.withValues(alpha: 0.82),
+            color: ChoColors.text,
             fontSize: 11,
             fontWeight: FontWeight.w500,
           ),
@@ -4723,7 +4726,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         'Peak: ${trendLabels[peakIndex]} (${trendValues[peakIndex]}). '
         'Window total: $total.',
         style: TextStyle(
-          color: _lightOffWhite.withValues(alpha: 0.82),
+          color: ChoColors.text,
           fontSize: 11,
           fontWeight: FontWeight.w500,
           height: 1.35,
@@ -4760,10 +4763,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 show: true,
                 drawVerticalLine: false,
                 horizontalInterval: interval,
-                getDrawingHorizontalLine: (_) => FlLine(
-                  color: _lightOffWhite.withValues(alpha: 0.12),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (_) =>
+                    FlLine(color: _chartGrid, strokeWidth: 1),
               ),
               borderData: FlBorderData(show: false),
               lineBarsData: [
@@ -4797,8 +4798,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     getTitlesWidget: (value, _) => Text(
                       value.toInt().toString(),
                       style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.65),
+                        color: _chartText,
                         fontSize: 10,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -4817,8 +4819,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         child: Text(
                           trendLabels[idx],
                           style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.70),
+                            color: _chartText,
                             fontSize: 10,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       );
@@ -4847,8 +4850,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
         child: Text(
           'No disease trend data yet',
           style: TextStyle(
-            color: _lightOffWhite.withValues(alpha: 0.75),
+            color: _chartText,
             fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
         ),
       );
@@ -4881,8 +4885,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
         child: Text(
           'No disease trend data yet',
           style: TextStyle(
-            color: _lightOffWhite.withValues(alpha: 0.75),
+            color: _chartText,
             fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
         ),
       );
@@ -4910,8 +4915,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
     const seriesColors = <Color>[
       Colors.redAccent,
       Colors.orangeAccent,
-      Colors.lightGreenAccent,
-      Colors.cyanAccent,
+      _chartLime,
+      _chartCyan,
     ];
 
     return Column(
@@ -4928,10 +4933,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 show: true,
                 drawVerticalLine: false,
                 horizontalInterval: interval,
-                getDrawingHorizontalLine: (_) => FlLine(
-                  color: _lightOffWhite.withValues(alpha: 0.12),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (_) =>
+                    FlLine(color: _chartGrid, strokeWidth: 1),
               ),
               borderData: FlBorderData(show: false),
               lineBarsData: List.generate(plottedSeries.length, (index) {
@@ -4963,8 +4966,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     getTitlesWidget: (value, _) => Text(
                       value.toInt().toString(),
                       style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.65),
+                        color: _chartText,
                         fontSize: 10,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -4987,8 +4991,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         child: Text(
                           monthLabels[idx],
                           style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.70),
+                            color: _chartText,
                             fontSize: 10,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       );
@@ -5031,10 +5036,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
       _primaryAqua,
       _secondaryIceBlue,
       Colors.pinkAccent,
-      Colors.greenAccent,
+      _chartGreen,
       Colors.orangeAccent,
       Colors.redAccent,
-      Colors.cyanAccent,
+      _chartCyan,
     ];
     final maxY = _maxFromIntValues(values, minimum: 5) * 1.2;
     final interval = ((maxY / 4).clamp(1, maxY)).toDouble();
@@ -5047,10 +5052,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: interval,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: _lightOffWhite.withValues(alpha: 0.12),
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (_) =>
+              FlLine(color: _chartGrid, strokeWidth: 1),
         ),
         borderData: FlBorderData(show: false),
         barGroups: List.generate(values.length, (i) {
@@ -5081,8 +5084,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
               getTitlesWidget: (value, _) => Text(
                 value.toInt().toString(),
                 style: TextStyle(
-                  color: _lightOffWhite.withValues(alpha: 0.65),
+                  color: _chartText,
                   fontSize: 10,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -5100,8 +5104,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   child: Text(
                     labels[idx],
                     style: TextStyle(
-                      color: _lightOffWhite.withValues(alpha: 0.70),
+                      color: _chartText,
                       fontSize: 10,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 );
@@ -5142,21 +5147,19 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 show: true,
                 drawVerticalLine: false,
                 horizontalInterval: interval,
-                getDrawingHorizontalLine: (_) => FlLine(
-                  color: _lightOffWhite.withValues(alpha: 0.12),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (_) =>
+                    FlLine(color: _chartGrid, strokeWidth: 1),
               ),
               borderData: FlBorderData(show: false),
               lineBarsData: [
                 LineChartBarData(
                   isCurved: true,
-                  color: Colors.cyanAccent,
+                  color: _chartCyan,
                   barWidth: 3,
                   dotData: FlDotData(show: true),
                   belowBarData: BarAreaData(
                     show: true,
-                    color: Colors.cyanAccent.withValues(alpha: 0.18),
+                    color: _chartCyan.withValues(alpha: 0.18),
                   ),
                   spots: List.generate(
                     trendValues.length,
@@ -5179,8 +5182,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     getTitlesWidget: (value, _) => Text(
                       value.toInt().toString(),
                       style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.65),
+                        color: _chartText,
                         fontSize: 10,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -5199,8 +5203,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         child: Text(
                           trendLabels[idx],
                           style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.70),
+                            color: _chartText,
                             fontSize: 10,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       );
@@ -5215,7 +5220,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         Text(
           'Submitted: ${_safeMetricText(_referralsSubmitted)} | Assigned: ${_safeMetricText(_referralsAssigned)} | In-treatment: ${_safeMetricText(_referralsInTreatment)} | Completed: ${_safeMetricText(_referralsCompleted)}',
           style: TextStyle(
-            color: _lightOffWhite.withValues(alpha: 0.78),
+            color: _chartText,
             fontSize: 11,
             fontWeight: FontWeight.w500,
           ),
@@ -5236,7 +5241,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       Colors.orangeAccent,
       Colors.lightBlueAccent,
       Colors.amberAccent,
-      Colors.greenAccent,
+      _chartGreen,
     ];
 
     final total = values.fold<int>(0, (sum, value) => sum + value);
@@ -5245,8 +5250,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
         child: Text(
           'No referral status activity yet',
           style: TextStyle(
-            color: _lightOffWhite.withValues(alpha: 0.75),
+            color: _chartText,
             fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
         ),
       );
@@ -5267,10 +5273,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 show: true,
                 drawVerticalLine: false,
                 horizontalInterval: interval,
-                getDrawingHorizontalLine: (_) => FlLine(
-                  color: _lightOffWhite.withValues(alpha: 0.12),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (_) =>
+                    FlLine(color: _chartGrid, strokeWidth: 1),
               ),
               borderData: FlBorderData(show: false),
               barGroups: List.generate(values.length, (i) {
@@ -5301,8 +5305,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     getTitlesWidget: (value, _) => Text(
                       value.toInt().toString(),
                       style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.65),
+                        color: _chartText,
                         fontSize: 10,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -5321,8 +5326,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         child: Text(
                           labels[idx],
                           style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.70),
+                            color: _chartText,
                             fontSize: 9,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       );
@@ -5361,8 +5367,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
         child: Text(
           'No referral barangay data yet',
           style: TextStyle(
-            color: _lightOffWhite.withValues(alpha: 0.75),
+            color: _chartText,
             fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
         ),
       );
@@ -5383,10 +5390,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 show: true,
                 drawVerticalLine: false,
                 horizontalInterval: interval,
-                getDrawingHorizontalLine: (_) => FlLine(
-                  color: _lightOffWhite.withValues(alpha: 0.12),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (_) =>
+                    FlLine(color: _chartGrid, strokeWidth: 1),
               ),
               borderData: FlBorderData(show: false),
               barGroups: List.generate(values.length, (i) {
@@ -5396,7 +5401,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     BarChartRodData(
                       toY: values[i].toDouble(),
                       width: 16,
-                      color: Colors.tealAccent,
+                      color: _chartCyan,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ],
@@ -5417,8 +5422,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     getTitlesWidget: (value, _) => Text(
                       value.toInt().toString(),
                       style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.65),
+                        color: _chartText,
                         fontSize: 10,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -5437,8 +5443,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         child: Text(
                           _truncateLabel(labels[idx], max: 8),
                           style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.70),
+                            color: _chartText,
                             fontSize: 9,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       );
@@ -5456,7 +5463,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
           children: List.generate(labels.length, (i) {
             return _ChartLegendDot(
               label: '${_truncateLabel(labels[i], max: 16)} (${values[i]})',
-              color: Colors.tealAccent,
+              color: _chartCyan,
             );
           }),
         ),
@@ -5469,7 +5476,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     final colors = <Color>[
       Colors.redAccent,
       Colors.orangeAccent,
-      Colors.lightGreenAccent,
+      _chartLime,
       Colors.blueGrey,
     ];
     final rawRiskValues = _safeIntList(_riskLevelCounts, fallbackLength: 4);
@@ -5482,8 +5489,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
         child: Text(
           'No risk data yet',
           style: TextStyle(
-            color: _lightOffWhite.withValues(alpha: 0.75),
+            color: _chartText,
             fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
         ),
       );
@@ -5513,7 +5521,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   radius: 46,
                   title: '$pct%',
                   titleStyle: const TextStyle(
-                    color: _lightOffWhite,
+                    color: ChoColors.text,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -5541,9 +5549,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 const SizedBox(width: 5),
                 Text(
                   '${labels[i]} (${riskValues[i]})',
-                  style: TextStyle(
-                    color: _lightOffWhite.withValues(alpha: 0.75),
+                  style: const TextStyle(
+                    color: _chartText,
                     fontSize: 10,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
