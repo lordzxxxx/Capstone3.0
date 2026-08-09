@@ -1176,14 +1176,14 @@ class _LandingPageState extends State<LandingPage>
         _buildFooterLabel('TEAM LEADER'),
         _buildFooterName('TRISHA JEANNE ALSOLA'),
         const SizedBox(height: 14),
-        _buildFooterLabel('CAPSTONE ADVISER'),
-        _buildFooterName('Dr. Marilou O. Espina'),
-        _buildFooterName('Dean, College of Technologies'),
-        const SizedBox(height: 14),
         _buildFooterLabel('MAIN DEVELOPERS'),
         _buildFooterName('ATHEO JESSAR CALIAO'),
         _buildFooterName('LORD LYLE KIMPERT AGREDA'),
         _buildFooterName('DHARRYL DAVE CLERIGO'),
+        const SizedBox(height: 14),
+        _buildFooterLabel('CAPSTONE ADVISER'),
+        _buildFooterName('Dr. Marilou O. Espina'),
+        _buildFooterName('Dean, College of Technologies'),
       ],
     );
 
