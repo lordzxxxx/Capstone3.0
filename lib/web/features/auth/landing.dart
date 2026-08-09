@@ -399,8 +399,8 @@ class _LandingPageState extends State<LandingPage>
             ? _responsive(height, 0.24, 190, 260)
             : _responsive(height, 0.19, 140, 190);
         final titleSize = isDesktop
-            ? _responsive(height, 0.066, 42, 72)
-            : _responsive(height, 0.050, 32, 48);
+            ? _responsive(height, 0.086, 56, 96)
+            : _responsive(height, 0.064, 40, 60);
         final subtitleSize = isDesktop
             ? _responsive(height, 0.022, 16, 23)
             : _responsive(height, 0.019, 14, 19);
@@ -524,9 +524,20 @@ class _LandingPageState extends State<LandingPage>
           shaderCallback: (bounds) => const LinearGradient(
             colors: [_lightOffWhite, _primaryAquaBright],
           ).createShader(bounds),
+          // A dedicated display face for the wordmark — Manrope (used for
+          // all body/UI text) reads as too generic at this size; Space
+          // Grotesk's more geometric, tighter-set letterforms give the
+          // brand name actual presence.
           child: Text(
             'AI-DSUHIS',
-            style: _display(size: titleSize, letterSpacing: 1.5),
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontSize: titleSize,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+              height: 1.05,
+              color: _lightOffWhite,
+            ),
             textAlign: TextAlign.center,
           ),
         ),
@@ -815,8 +826,13 @@ class _LandingPageState extends State<LandingPage>
     required bool isPrimary,
     required VoidCallback onPressed,
   }) {
+    // Icon is pinned at a fixed inset from the left edge instead of being
+    // centered as one floating cluster with the label — otherwise the icon
+    // sits at a different x-position on every button since "Login as BHW",
+    // "Login as CHO", and "Create Account" are different lengths, and the
+    // whole group visually reads as lopsided (icon closer to one edge than
+    // the text is to the other).
     final child = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
           width: 34,
@@ -865,7 +881,10 @@ class _LandingPageState extends State<LandingPage>
           hoverColor: isPrimary
               ? Colors.white.withValues(alpha: 0.08)
               : _darkBlue.withValues(alpha: 0.08),
-          child: Center(child: child),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: child,
+          ),
         ),
       ),
     );
