@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
-const Color _dialogAqua = Color(0xFF00A8B5);
-const Color _dialogInk = Color(0xFF0A1F24);
-const Color _dialogMuted = Color(0xFF546E7A);
-const Color _dialogBorder = Color(0xFFE5EEF0);
+const Color _dialogBlue = Color(0xFF2F80ED);
+const Color _dialogNavy = Color(0xFF071A33);
+const Color _dialogSurface = Color(0xFF0D274D);
+const Color _dialogMuted = Color(0xFFB8C9DB);
+const Color _dialogBorder = Color(0xFF1C3D66);
 
 /// Native Flutter replacement for the old JS-interop SweetAlert2 popup —
 /// that dialog used its own default font/styling and never matched the
-/// rest of the (Manrope, white-card) auth design system.
+/// rest of the navy/white auth design system.
 Future<bool> showLoginSuccessSweetAlert({
   required BuildContext context,
   required String title,
@@ -17,7 +18,7 @@ Future<bool> showLoginSuccessSweetAlert({
   final result = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
-    barrierColor: _dialogInk.withValues(alpha: 0.55),
+    barrierColor: _dialogNavy.withValues(alpha: 0.78),
     builder: (context) => PopScope(
       canPop: false,
       child: Dialog(
@@ -28,7 +29,7 @@ Future<bool> showLoginSuccessSweetAlert({
           child: Container(
             padding: const EdgeInsets.fromLTRB(32, 36, 32, 28),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _dialogSurface,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: _dialogBorder),
               boxShadow: [
@@ -47,11 +48,11 @@ Future<bool> showLoginSuccessSweetAlert({
                   height: 72,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _dialogAqua.withValues(alpha: 0.12),
+                    color: _dialogBlue.withValues(alpha: 0.18),
                   ),
                   child: const Icon(
                     Icons.check_rounded,
-                    color: _dialogAqua,
+                    color: _dialogBlue,
                     size: 40,
                   ),
                 ),
@@ -60,10 +61,10 @@ Future<bool> showLoginSuccessSweetAlert({
                   title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
+                    fontFamily: 'Inter',
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: _dialogInk,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -71,7 +72,7 @@ Future<bool> showLoginSuccessSweetAlert({
                   message,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
+                    fontFamily: 'Inter',
                     fontSize: 14.5,
                     fontWeight: FontWeight.w500,
                     color: _dialogMuted,
@@ -85,7 +86,7 @@ Future<bool> showLoginSuccessSweetAlert({
                   child: FilledButton(
                     onPressed: () => Navigator.of(context).pop(true),
                     style: FilledButton.styleFrom(
-                      backgroundColor: _dialogAqua,
+                      backgroundColor: _dialogBlue,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -94,7 +95,7 @@ Future<bool> showLoginSuccessSweetAlert({
                     child: Text(
                       confirmButtonText,
                       style: const TextStyle(
-                        fontFamily: 'Manrope',
+                        fontFamily: 'Inter',
                         fontSize: 15.5,
                         fontWeight: FontWeight.w700,
                       ),
