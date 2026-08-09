@@ -226,7 +226,11 @@ class ChoKpiCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          height: 132,
+          // Leave enough vertical room for the value, label, and optional
+          // two-line supporting text at the readable sans-serif weight.
+          // This prevents the yellow/black RenderFlex overflow stripe on
+          // CHO and BHW module summary cards.
+          height: 154,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: ChoColors.navSurface,

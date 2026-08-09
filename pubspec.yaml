@@ -98,16 +98,16 @@ flutter:
     - assets/models/
 
   fonts:
+    # Keep the existing family name for compatibility with the web widgets,
+    # but use a normal-weight sans-serif face for every standard interface
+    # style. The previous ExtraLight asset was too thin for body copy.
     - family: Mont
       fonts:
         - asset: assets/Mont-ExtraLightDEMO.otf
-          weight: 300
-        - asset: assets/Mont-HeavyDEMO.otf
-          # The supplied Mont family has no regular face. Register the readable
-          # heavy face as the normal UI weight so body copy never falls back to
-          # the very thin ExtraLight face. Headings may still request 800.
-          weight: 500
-        - asset: assets/Mont-HeavyDEMO.otf
+          weight: 400
+        - asset: assets/fonts/Roboto-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Roboto-Bold.ttf
           weight: 800
     - family: RobotoPdf
       fonts:
