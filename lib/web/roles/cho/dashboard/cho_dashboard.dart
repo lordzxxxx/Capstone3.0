@@ -4046,10 +4046,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: <Color>[_panelTealAlt, _panelTeal, _darkDeepTeal],
+          colors: <Color>[ChoColors.navSurface, ChoColors.navBackground],
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: color.withValues(alpha: 0.18)),
@@ -4083,7 +4083,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: _lightOffWhite.withValues(alpha: 0.68),
+                    color: ChoColors.navMuted,
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -4092,7 +4092,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 Text(
                   value,
                   style: const TextStyle(
-                    color: _lightOffWhite,
+                    color: ChoColors.navText,
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                   ),
@@ -6089,7 +6089,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     }
 
     return Scaffold(
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: ChoColors.background,
       drawer: const ChoNavigationDrawer(current: ChoDestination.dashboard),
       appBar: AppBar(
         title: const Row(
@@ -6103,7 +6103,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             ),
           ],
         ),
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: ChoColors.navBackground,
         foregroundColor: ChoColors.navText,
         elevation: 0,
       ),

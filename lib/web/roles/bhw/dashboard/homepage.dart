@@ -3881,7 +3881,7 @@ class _HomePageState extends State<HomePage> {
           child: Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: _sidebarDark,
+              color: const Color(0xFF0D274D),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: _primaryAqua.withValues(alpha: 0.15),
@@ -3911,7 +3911,7 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.transparent, width: 1),
                       ),
-                      child: Icon(icon, color: _lightOffWhite, size: 20),
+                      child: Icon(icon, color: Colors.white, size: 20),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -3943,7 +3943,7 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: _lightOffWhite,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -3952,13 +3952,16 @@ class _HomePageState extends State<HomePage> {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: _lightOffWhite,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 12, color: _mutedCoolGray),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFFB8C9DB),
+                  ),
                 ),
               ],
             ),
