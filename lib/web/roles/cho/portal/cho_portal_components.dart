@@ -226,39 +226,48 @@ class ChoKpiCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          height: 165,
-          padding: const EdgeInsets.all(18),
+          height: 132,
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: ChoColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: ChoColors.border),
+            color: ChoColors.navSurface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: ChoColors.navBorder),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 16,
-                offset: const Offset(0, 7),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: color, size: 24),
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(color: color.withValues(alpha: 0.35)),
+                ),
+                child: Icon(icon, color: Colors.white, size: 20),
+              ),
               const Spacer(),
               Text(
                 value,
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
-                  color: ChoColors.text,
-                  fontSize: 28,
+                  fontFamily: 'Inter',
+                  color: ChoColors.navText,
+                  fontSize: 23,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               Text(
                 label,
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
-                  color: ChoColors.text,
+                  fontFamily: 'Inter',
+                  color: ChoColors.navMuted,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -269,8 +278,8 @@ class ChoKpiCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
-                    color: ChoColors.muted,
+                    fontFamily: 'Inter',
+                    color: ChoColors.navMuted,
                     fontSize: 11,
                   ),
                 ),

@@ -281,7 +281,7 @@ class PatientOperationalSummary extends StatelessWidget {
               color: metric.color.withValues(alpha: 0.13),
               borderRadius: BorderRadius.circular(11),
             ),
-            child: Icon(metric.icon, color: metric.color, size: 22),
+            child: Icon(metric.icon, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 13),
           Expanded(

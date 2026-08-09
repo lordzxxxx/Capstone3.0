@@ -3260,7 +3260,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
                         color: color.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(icon, color: color, size: 24),
+                      child: Icon(icon, color: Colors.white, size: 24),
                     ),
                   ],
                 ),

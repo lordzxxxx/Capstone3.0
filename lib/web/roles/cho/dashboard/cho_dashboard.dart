@@ -4634,15 +4634,15 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       decoration: BoxDecoration(
                         color: ChoColors.navSurface,
                         borderRadius: BorderRadius.circular(11),
-                        border: Border.all(
-                          color: ChoColors.navBorder,
-                        ),
+                        border: Border.all(color: ChoColors.navBorder),
                       ),
                       child: Row(
                         children: [
                           CircleAvatar(
                             radius: 20,
-                            backgroundColor: ChoColors.aqua.withValues(alpha: 0.86),
+                            backgroundColor: ChoColors.aqua.withValues(
+                              alpha: 0.86,
+                            ),
                             child: Text(
                               (i + 1).toString(),
                               style: const TextStyle(
@@ -6106,24 +6106,28 @@ class _ChoDashboardState extends State<ChoDashboard> {
               padding: const EdgeInsets.all(14),
               margin: const EdgeInsets.only(bottom: 14),
               decoration: BoxDecoration(
-                color: _secondaryIceBlue.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _primaryAqua.withValues(alpha: 0.15)),
+                color: ChoColors.navSurface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: ChoColors.navBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     'CHO Dashboard: Firestore-powered patient monitoring, service delivery tracking, and public health risk surveillance.',
-                    style: TextStyle(color: _lightOffWhite, fontSize: 13),
+                    style: TextStyle(
+                      color: ChoColors.navText,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   // Sync status indicator
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: _darkDeepTeal.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(8),
+                      color: ChoColors.navBackground,
+                      borderRadius: BorderRadius.circular(9),
                     ),
                     child: Row(
                       children: [
@@ -6132,8 +6136,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                               ? Icons.cloud_done
                               : Icons.cloud_sync,
                           color: _syncStatus.values.every((v) => v)
-                              ? Colors.greenAccent
-                              : _primaryAqua,
+                              ? const Color(0xFF65E6B0)
+                              : ChoColors.aqua,
                           size: 16,
                         ),
                         const SizedBox(width: 8),
@@ -6143,8 +6147,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                               : 'Syncing Firestore collections...',
                           style: TextStyle(
                             color: _syncStatus.values.every((v) => v)
-                                ? Colors.greenAccent
-                                : _primaryAqua,
+                                ? const Color(0xFF65E6B0)
+                                : ChoColors.aqua,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -6190,13 +6194,48 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     ? constraints.maxWidth
                     : (constraints.maxWidth - (gap * (columns - 1))) / columns;
                 final cards = <Widget>[
-                  _summaryCard('Patient Records', _safeMetricText(_totalPatients), Icons.people, _primaryAqua),
-                  _summaryCard('Checkup Records', _safeMetricText(_checkupsThisMonth), Icons.medical_services, _secondaryIceBlue),
-                  _summaryCard('Active Prenatal Cases', _safeMetricText(_activePrenatal), Icons.pregnant_woman, Colors.pinkAccent),
-                  _summaryCard('Immunization Records', _safeMetricText(_immunizationRecords), Icons.vaccines, Colors.greenAccent),
-                  _summaryCard('Morbidity Reports', _safeMetricText(_morbidityReports), Icons.monitor_heart, Colors.orangeAccent),
-                  _summaryCard('Mortality Reports', _safeMetricText(_mortalityReports), Icons.heart_broken, Colors.redAccent),
-                  _summaryCard('Referral Reports', _safeMetricText(_referralReports), Icons.assignment_ind_outlined, Colors.cyanAccent),
+                  _summaryCard(
+                    'Patient Records',
+                    _safeMetricText(_totalPatients),
+                    Icons.people,
+                    _primaryAqua,
+                  ),
+                  _summaryCard(
+                    'Checkup Records',
+                    _safeMetricText(_checkupsThisMonth),
+                    Icons.medical_services,
+                    _secondaryIceBlue,
+                  ),
+                  _summaryCard(
+                    'Active Prenatal Cases',
+                    _safeMetricText(_activePrenatal),
+                    Icons.pregnant_woman,
+                    Colors.pinkAccent,
+                  ),
+                  _summaryCard(
+                    'Immunization Records',
+                    _safeMetricText(_immunizationRecords),
+                    Icons.vaccines,
+                    Colors.greenAccent,
+                  ),
+                  _summaryCard(
+                    'Morbidity Reports',
+                    _safeMetricText(_morbidityReports),
+                    Icons.monitor_heart,
+                    Colors.orangeAccent,
+                  ),
+                  _summaryCard(
+                    'Mortality Reports',
+                    _safeMetricText(_mortalityReports),
+                    Icons.heart_broken,
+                    Colors.redAccent,
+                  ),
+                  _summaryCard(
+                    'Referral Reports',
+                    _safeMetricText(_referralReports),
+                    Icons.assignment_ind_outlined,
+                    Colors.cyanAccent,
+                  ),
                 ];
                 return Wrap(
                   spacing: gap,

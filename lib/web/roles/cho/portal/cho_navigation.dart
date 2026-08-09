@@ -38,14 +38,21 @@ class ChoNavigationDrawer extends StatelessWidget {
                       color: ChoColors.aqua.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(13),
                     ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'AI',
-                      style: TextStyle(
-                        color: ChoColors.navText,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
-                      ),
+                    padding: const EdgeInsets.all(7),
+                    child: Image.asset(
+                      'assets/newlogo_white.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Center(
+                            child: Text(
+                              'AI',
+                              style: TextStyle(
+                                color: ChoColors.navText,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
                     ),
                   ),
                   const SizedBox(width: 12),

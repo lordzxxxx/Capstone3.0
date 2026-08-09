@@ -856,27 +856,35 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _panelSurface,
+        color: const Color(0xFF0D274D),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+        border: Border.all(color: const Color(0xFF1C3D66)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: _primaryAqua),
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: _primaryAqua.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
           const SizedBox(height: 12),
           Text(
             value,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: _lightOffWhite,
+              color: Colors.white,
               fontSize: 22,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 6),
-          Text(label, style: const TextStyle(color: _mutedCoolGray)),
+          Text(label, style: const TextStyle(color: Color(0xFFB8C9DB))),
         ],
       ),
     );

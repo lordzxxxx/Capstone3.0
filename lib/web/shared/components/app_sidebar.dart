@@ -260,13 +260,19 @@ class WebAppSidebar extends StatelessWidget {
             color: _BhwDrawerColors.aqua.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(13),
           ),
-          alignment: Alignment.center,
-          child: const Text(
-            'AI',
-            style: TextStyle(
-              color: _BhwDrawerColors.text,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.5,
+          padding: const EdgeInsets.all(7),
+          child: Image.asset(
+            'assets/newlogo_white.png',
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const Center(
+              child: Text(
+                'AI',
+                style: TextStyle(
+                  color: _BhwDrawerColors.text,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                ),
+              ),
             ),
           ),
         ),
@@ -304,7 +310,7 @@ class WebAppSidebar extends StatelessWidget {
     child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-            color: _BhwDrawerColors.surface,
+        color: _BhwDrawerColors.surface,
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
@@ -374,7 +380,7 @@ class WebAppSidebar extends StatelessWidget {
       label: '$label navigation item',
       child: ListTile(
         selected: isActive,
-          selectedColor: _BhwDrawerColors.text,
+        selectedColor: _BhwDrawerColors.text,
         textColor: _BhwDrawerColors.muted,
         iconColor: isActive ? _BhwDrawerColors.aqua : _BhwDrawerColors.muted,
         leading: Icon(icon, size: 20),
