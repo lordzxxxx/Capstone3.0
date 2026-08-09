@@ -36,7 +36,7 @@ const Color _secondaryIceBlue = Color(0xFF163B66); // Shared deep blue
 const Color _darkDeepTeal = Color(0xFFF5F7FA); // page background
 const Color _cardBackground = Colors.white; // card background
 const Color _mutedCoolGray = Color(0xFF4B6075); // Shared readable gray
-const Color _lightOffWhite = Color(0xFF0A1F24); // primary text
+const Color _lightOffWhite = Color(0xFF0D274D); // primary text
 const Color _sidebarDark = Colors.white; // panel/surface background
 const Color _accentPurple = Color(0xFF7C3AED); // Vibrant Purple
 const Color _accentGreen = Color(0xFF10B981); // Bright Green
@@ -44,7 +44,7 @@ const Color _accentOrange = Color(0xFFFF8C0D); // Vibrant Orange
 const Color _accentRed = Color(0xFFEF4444); // Vibrant Red
 const Color _brightCyan = Color(0xFF2F80ED); // Shared dashboard blue
 const Color _bgDarkTeal = Color(0xFFF5F7FA); // Analytics-aligned background
-const Color _offWhiteOpacity = Color(0xFF0A1F24); // primary text
+const Color _offWhiteOpacity = Color(0xFF0D274D); // primary text
 
 class HomePage extends StatefulWidget {
   final User? user;
@@ -1091,14 +1091,14 @@ class _HomePageState extends State<HomePage> {
             final dialogTheme = Theme.of(context).copyWith(
               brightness: Brightness.dark,
               dialogTheme: Theme.of(context).dialogTheme.copyWith(
-                backgroundColor: const Color(0xFF0E2F34),
+                backgroundColor: const Color(0xFF0D274D),
                 surfaceTintColor: Colors.transparent,
               ),
               colorScheme: Theme.of(context).colorScheme.copyWith(
                 brightness: Brightness.dark,
                 primary: _primaryAqua,
                 onPrimary: Colors.white,
-                surface: const Color(0xFF0E2F34),
+                surface: const Color(0xFF0D274D),
                 onSurface: Colors.white,
               ),
               inputDecorationTheme: Theme.of(context).inputDecorationTheme
@@ -1129,7 +1129,7 @@ class _HomePageState extends State<HomePage> {
             return Theme(
               data: dialogTheme,
               child: AlertDialog(
-                backgroundColor: const Color(0xFF0E2F34),
+                backgroundColor: const Color(0xFF0D274D),
                 title: Text(
                   helpText,
                   style: const TextStyle(color: Colors.white),
@@ -1139,7 +1139,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     DropdownButtonFormField<int>(
                       initialValue: tempMonth,
-                      dropdownColor: const Color(0xFF0A1F24),
+                      dropdownColor: const Color(0xFF0D274D),
                       style: const TextStyle(color: Colors.white),
                       iconEnabledColor: Colors.white70,
                       iconDisabledColor: Colors.white54,
@@ -1175,7 +1175,7 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(height: 12),
                     DropdownButtonFormField<int>(
                       initialValue: tempYear,
-                      dropdownColor: const Color(0xFF0A1F24),
+                      dropdownColor: const Color(0xFF0D274D),
                       style: const TextStyle(color: Colors.white),
                       iconEnabledColor: Colors.white70,
                       iconDisabledColor: Colors.white54,
@@ -2199,9 +2199,7 @@ class _HomePageState extends State<HomePage> {
           Container(
             height: 70,
             padding: const EdgeInsets.symmetric(horizontal: 32),
-            decoration: BoxDecoration(
-              color: const Color(0xFF071A33),
-            ),
+            decoration: BoxDecoration(color: const Color(0xFF071A33)),
             child: Row(
               children: [
                 IconButton(
@@ -3355,9 +3353,7 @@ class _HomePageState extends State<HomePage> {
                 vertical: 20.0,
                 horizontal: 16.0,
               ),
-              decoration: BoxDecoration(
-                color: _secondaryIceBlue,
-              ),
+              decoration: BoxDecoration(color: _secondaryIceBlue),
               child: Column(
                 children: [
                   Container(
@@ -4368,7 +4364,7 @@ class _HomePageState extends State<HomePage> {
             height: 320,
             padding: const EdgeInsets.fromLTRB(10, 14, 14, 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF061920),
+              color: const Color(0xFF0B1F3A),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _primaryAqua.withValues(alpha: 0.22),
@@ -4735,7 +4731,7 @@ class _HomePageState extends State<HomePage> {
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: const Color(0xFF061920),
+                color: const Color(0xFF0B1F3A),
                 border: Border.all(
                   color: _primaryAqua.withValues(alpha: 0.2),
                   width: 1.2,
@@ -5826,7 +5822,7 @@ class _HomePageState extends State<HomePage> {
               height: 260,
               padding: const EdgeInsets.fromLTRB(10, 14, 14, 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF061920),
+                color: const Color(0xFF0B1F3A),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: _primaryAqua.withValues(alpha: 0.22),

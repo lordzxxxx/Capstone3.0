@@ -32,8 +32,8 @@ import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _secondaryIceBlue = Color(0xFF163B66);
 const Color _darkDeepTeal = Color(0xFF071A33);
-const Color _cardBackground = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
+const Color _cardBackground = Color(0xFF0D274D);
+const Color _mutedCoolGray = Color(0xFFB8C9DB);
 const Color _lightOffWhite = Color(0xFFF5F5F5);
 const Color _sidebarDark = Color(0xFF0D274D);
 
@@ -887,7 +887,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF00E5FF), Color(0xFF00A8B5)],
+              colors: [Color(0xFF00E5FF), Color(0xFF2F80ED)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -1501,7 +1501,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF123942),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.25),
@@ -3522,7 +3522,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
         statusColor = const Color(0xFF2196F3);
         break;
       default:
-        statusColor = const Color(0xFF546E7A);
+        statusColor = const Color(0xFFB8C9DB);
     }
 
     return Container(
@@ -5603,7 +5603,7 @@ class _ImmunizationCard extends StatelessWidget {
         lower.contains('due')) {
       return const Color(0xFFFF9800);
     }
-    return const Color(0xFF546E7A);
+    return const Color(0xFFB8C9DB);
   }
 
   Color _vaccineChipColor(String vaccine) {
@@ -5617,13 +5617,13 @@ class _ImmunizationCard extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 70, color: const Color(0xFF214047));
+    return Container(width: 1, height: 70, color: const Color(0xFF26476B));
   }
 
   Widget _buildActionButton({
     required IconData icon,
     required VoidCallback onTap,
-    Color backgroundColor = const Color(0xFF003B5C),
+    Color backgroundColor = const Color(0xFF163B66),
     Color iconColor = Colors.white,
   }) {
     return Container(
@@ -5703,7 +5703,7 @@ class _ImmunizationCard extends StatelessWidget {
     final adverseEvents = _safe(record['adverseEvents'], 'None reported');
     final statusColor = _statusColor(status);
     final rowBg = _darkDeepTeal.withValues(alpha: 0.96);
-    const adminLabelText = Color(0xFF00E5F7);
+    const adminLabelText = Color(0xFF60A5FA);
     const rowText = Color(0xFFF3F8FC);
     const mutedText = Color(0xFFB1C4D5);
 
@@ -5721,7 +5721,7 @@ class _ImmunizationCard extends StatelessWidget {
           border: Border.all(
             color: isSelected
                 ? _primaryAqua.withValues(alpha: 0.85)
-                : const Color(0xFF214047),
+                : const Color(0xFF26476B),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -5925,7 +5925,7 @@ class _ImmunizationCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Color(0xFF003B5C),
+                          color: Color(0xFF163B66),
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),

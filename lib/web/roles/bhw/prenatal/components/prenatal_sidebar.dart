@@ -3,7 +3,8 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
-import 'package:mycapstone_project/web/roles/bhw/checkups/checkup.dart' as checkup_page;
+import 'package:mycapstone_project/web/roles/bhw/checkups/checkup.dart'
+    as checkup_page;
 import 'package:mycapstone_project/web/roles/bhw/analytics/health_metrics.dart';
 import 'package:mycapstone_project/web/roles/cho/analytics/cho_analytics.dart';
 import 'package:mycapstone_project/web/roles/bhw/immunization/immunization.dart';
@@ -16,10 +17,7 @@ import 'prenatal_constants.dart';
 class PrenatalSidebar extends StatelessWidget {
   final String userName;
 
-  const PrenatalSidebar({
-    super.key,
-    required this.userName,
-  });
+  const PrenatalSidebar({super.key, required this.userName});
 
   @override
   Widget build(BuildContext context) {
@@ -40,24 +38,60 @@ class PrenatalSidebar extends StatelessWidget {
 
             // Main Menu Section
             _buildMenuSection('MAIN MENU', [
-              ('Dashboard', Icons.dashboard_rounded, () => Get.to(() => const HomePage())),
-              ('Check-ups', Icons.assignment_turned_in_rounded, () => Get.to(() => const checkup_page.CheckUpPage())),
-              ('Summary Generation', Icons.favorite_rounded, () => Get.to(() => const HealthMetricsPage())),
-              ('Analytics', Icons.analytics_rounded, () => Get.to(() => const AnalyticsPage())),
+              (
+                'Dashboard',
+                Icons.dashboard_rounded,
+                () => Get.to(() => const HomePage()),
+              ),
+              (
+                'Check-ups',
+                Icons.assignment_turned_in_rounded,
+                () => Get.to(() => const checkup_page.CheckUpPage()),
+              ),
+              (
+                'Summary Generation',
+                Icons.favorite_rounded,
+                () => Get.to(() => const HealthMetricsPage()),
+              ),
+              (
+                'Analytics',
+                Icons.analytics_rounded,
+                () => Get.to(() => const AnalyticsPage()),
+              ),
             ]),
 
             // Patient Care Section
             _buildMenuSection('PATIENT CARE', [
               ('Prenatal Care', Icons.pregnant_woman_rounded, () {}, true),
-              ('Immunization', Icons.vaccines_rounded, () => Get.to(() => const ImmunizationPage())),
-              ('Patient Records', Icons.person_rounded, () => Get.to(() => const PatientRecordPage())),
+              (
+                'Immunization',
+                Icons.vaccines_rounded,
+                () => Get.to(() => const ImmunizationPage()),
+              ),
+              (
+                'Patient Records',
+                Icons.person_rounded,
+                () => Get.to(() => const PatientRecordPage()),
+              ),
             ]),
 
             // Disease Tracking Section
             _buildMenuSection('DISEASE TRACKING', [
-              ('Communicable', Icons.coronavirus_rounded, () => Get.to(() => const CommunicablePage())),
-              ('Non-Communicable', Icons.health_and_safety_rounded, () => Get.to(() => const NonCommunicablePage())),
-              ('Mortality', Icons.analytics_outlined, () => Get.to(() => const MortalityPage())),
+              (
+                'Communicable',
+                Icons.coronavirus_rounded,
+                () => Get.to(() => const CommunicablePage()),
+              ),
+              (
+                'Non-Communicable',
+                Icons.health_and_safety_rounded,
+                () => Get.to(() => const NonCommunicablePage()),
+              ),
+              (
+                'Mortality',
+                Icons.analytics_outlined,
+                () => Get.to(() => const MortalityPage()),
+              ),
             ]),
 
             // Logout Button
@@ -109,11 +143,7 @@ class PrenatalSidebar extends StatelessWidget {
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
                     color: Colors.white,
-                    child: Icon(
-                      Icons.person,
-                      size: 35,
-                      color: primaryAqua,
-                    ),
+                    child: Icon(Icons.person, size: 35, color: primaryAqua),
                   );
                 },
               ),
@@ -225,7 +255,10 @@ class PrenatalSidebar extends StatelessWidget {
             // Menu Items
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 4,
+                  horizontal: 10,
+                ),
                 children: items.map((item) {
                   return _buildSidebarItem(
                     icon: item.$2,
@@ -291,7 +324,9 @@ class PrenatalSidebar extends StatelessWidget {
                   ),
                   child: Icon(
                     icon,
-                    color: isActive ? primaryAqua : Colors.white.withValues(alpha: 0.8),
+                    color: isActive
+                        ? primaryAqua
+                        : Colors.white.withValues(alpha: 0.8),
                     size: 18,
                   ),
                 ),
@@ -300,7 +335,9 @@ class PrenatalSidebar extends StatelessWidget {
                   child: Text(
                     label,
                     style: TextStyle(
-                      color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.8),
+                      color: isActive
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.8),
                       fontSize: 12.5,
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                       letterSpacing: 0.3,
@@ -333,10 +370,7 @@ class PrenatalSidebar extends StatelessWidget {
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(
-            color: Colors.white.withValues(alpha: 0.1),
-            width: 1,
-          ),
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
         ),
       ),
       child: Material(
@@ -365,11 +399,7 @@ class PrenatalSidebar extends StatelessWidget {
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.logout_rounded,
-                  color: Colors.white,
-                  size: 16,
-                ),
+                Icon(Icons.logout_rounded, color: Colors.white, size: 16),
                 SizedBox(width: 8),
                 Text(
                   'Logout',

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 /// Prenatal page color constants
-const Color primaryAqua = Color(0xFF00A8B5);
-const Color secondaryIceBlue = Color(0xFF1E5A7A);
-const Color darkDeepTeal = Color(0xFF0A1F24);
-const Color mutedCoolGray = Color(0xFF546E7A);
+const Color primaryAqua = Color(0xFF2F80ED);
+const Color secondaryIceBlue = Color(0xFF163B66);
+const Color darkDeepTeal = Color(0xFF0D274D);
+const Color mutedCoolGray = Color(0xFFB8C9DB);
 const Color lightOffWhite = Color(0xFFF5F5F5);
-const Color sidebarDark = Color(0xFF0E2F34);
+const Color sidebarDark = Color(0xFF0D274D);
 
 /// Prenatal status filter options
 const List<String> statusFilterOptions = [

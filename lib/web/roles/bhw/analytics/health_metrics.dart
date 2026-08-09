@@ -6,7 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
-import 'package:mycapstone_project/web/roles/bhw/analytics/ai_summary.dart' as ai;
+import 'package:mycapstone_project/web/roles/bhw/analytics/ai_summary.dart'
+    as ai;
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
@@ -15,7 +16,7 @@ const Color _darkDeepTeal = Color(0xFF071A33);
 const Color _panelTeal = Color(0xFF0D274D);
 const Color _panelTealSoft = Color(0xFF163B66);
 const Color _lightOffWhite = Color(0xFFF3F5F1);
-const Color _mutedCoolGray = Color(0xFF9DB3B6);
+const Color _mutedCoolGray = Color(0xFFB8C9DB);
 const Color _signalGreen = Color(0xFF74D7A7);
 const Color _signalAmber = Color(0xFFFFC86B);
 
@@ -371,10 +372,11 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
   ) {
     final firestore = getFirestoreInstance();
 
-    return buildScopedRecordQuery(firestore, 'summary_records', accessScope)
-        .orderBy('generatedAt', descending: true)
-        .limit(24)
-        .snapshots();
+    return buildScopedRecordQuery(
+      firestore,
+      'summary_records',
+      accessScope,
+    ).orderBy('generatedAt', descending: true).limit(24).snapshots();
   }
 
   void _copySummaryToClipboard() {
@@ -633,11 +635,11 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
           spacing: 10,
           runSpacing: 10,
           children: [
-                                _PillTag(
-                                  icon: _currentPeriodIcon,
-                                  label: _effectivePeriod,
-                                  accent: _primaryAqua,
-                                ),
+            _PillTag(
+              icon: _currentPeriodIcon,
+              label: _effectivePeriod,
+              accent: _primaryAqua,
+            ),
             _PillTag(
               icon: Icons.event_available_rounded,
               label: _currentPeriodLabel,
@@ -1196,7 +1198,9 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                       decoration: BoxDecoration(
                         color: _panelTealSoft.withValues(alpha: 0.20),
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+                        border: Border.all(
+                          color: _primaryAqua.withValues(alpha: 0.16),
+                        ),
                       ),
                       child: Text(
                         'No saved summaries for $_currentPeriodLabel yet.',
@@ -1212,7 +1216,9 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                       final data = doc.data();
                       final generatedAt = data['generatedAt'];
                       final when = generatedAt is Timestamp
-                          ? DateFormat.yMMMd().add_jm().format(generatedAt.toDate())
+                          ? DateFormat.yMMMd().add_jm().format(
+                              generatedAt.toDate(),
+                            )
                           : 'Recent';
 
                       return Padding(
@@ -1537,7 +1543,9 @@ class _PeriodOptionButton extends StatelessWidget {
               : Colors.black.withValues(alpha: 0.14),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isSelected ? _primaryAqua : _primaryAqua.withValues(alpha: 0.18),
+            color: isSelected
+                ? _primaryAqua
+                : _primaryAqua.withValues(alpha: 0.18),
           ),
         ),
         child: Row(

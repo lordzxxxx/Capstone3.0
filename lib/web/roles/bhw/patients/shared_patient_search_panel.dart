@@ -21,8 +21,8 @@ class SharedPatientSearchPanel extends StatelessWidget {
   final String? secondaryActionLabel;
   final void Function(Map<String, dynamic> patient)? onSecondaryAction;
 
-  static const Color _accent = Color(0xFF00A8B5);
-  static const Color _surface = Color(0xFF0A1F24);
+  static const Color _accent = Color(0xFF2F80ED);
+  static const Color _surface = Color(0xFF0D274D);
   static const Color _surfaceAlt = Color(0xFF10343C);
   static const Color _text = Color(0xFFF5F5F5);
   static const Color _muted = Color(0xFF8BA3A8);

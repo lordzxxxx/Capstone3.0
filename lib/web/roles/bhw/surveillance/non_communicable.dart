@@ -24,7 +24,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable_insig
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _secondaryIceBlue = Color(0xFF163B66);
 const Color _darkDeepTeal = Color(0xFF071A33);
-const Color _mutedCoolGray = Color(0xFF546E7A);
+const Color _mutedCoolGray = Color(0xFFB8C9DB);
 const Color _sidebarDark = Color(0xFF0D274D);
 
 final RegExp _vitalLabelPattern = RegExp(
@@ -56,7 +56,7 @@ Widget _buildHighlightedVitalLabelText(
     spans.add(
       TextSpan(
         text: text.substring(match.start, match.end),
-        style: baseStyle.copyWith(color: const Color(0xFF00E5F7)),
+        style: baseStyle.copyWith(color: const Color(0xFF60A5FA)),
       ),
     );
     start = match.end;
@@ -1374,7 +1374,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF123942),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.25),
@@ -1430,13 +1430,13 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   }
 
   Widget _buildPatientRowDivider() {
-    return Container(width: 1, height: 70, color: const Color(0xFF214047));
+    return Container(width: 1, height: 70, color: const Color(0xFF26476B));
   }
 
   Widget _buildTableActionButton({
     required IconData icon,
     required VoidCallback onTap,
-    Color backgroundColor = const Color(0xFF003B5C),
+    Color backgroundColor = const Color(0xFF163B66),
     Color iconColor = Colors.white,
   }) {
     return Container(
@@ -1605,7 +1605,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
           border: Border.all(
             color: isSelected
                 ? _primaryAqua.withValues(alpha: 0.85)
-                : const Color(0xFF214047),
+                : const Color(0xFF26476B),
             width: isSelected ? 2 : 1,
           ),
         ),

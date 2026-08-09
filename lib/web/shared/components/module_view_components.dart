@@ -31,7 +31,7 @@ class HealthModuleViewHeader extends StatelessWidget {
     required this.description,
     required this.activeView,
     required this.onViewChanged,
-    this.primaryColor = const Color(0xFF00A8B5),
+    this.primaryColor = const Color(0xFF2F80ED),
     this.foregroundColor = Colors.white,
     this.mutedColor = Colors.white70,
     this.actions = const [],
@@ -60,9 +60,16 @@ class HealthModuleViewHeader extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.055),
+          color: const Color(0xFF122B48),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: const Color(0xFF26476B)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x33000000),
+              blurRadius: 18,
+              offset: Offset(0, 8),
+            ),
+          ],
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -126,7 +133,7 @@ class HealthModuleViewTabs extends StatelessWidget {
     super.key,
     required this.activeView,
     required this.onChanged,
-    this.primaryColor = const Color(0xFF00A8B5),
+    this.primaryColor = const Color(0xFF2F80ED),
     this.insightsLabel = 'Insights',
     this.recordsLabel = 'Records',
   });
@@ -143,8 +150,9 @@ class HealthModuleViewTabs extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.22),
+          color: const Color(0xFF0B1F3A),
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFF26476B)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

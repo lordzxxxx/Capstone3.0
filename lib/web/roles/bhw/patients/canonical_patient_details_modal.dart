@@ -12,10 +12,10 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
   final Map<String, dynamic> patient;
   final void Function(String action, Map<String, dynamic> patient)? onAction;
 
-  static const _accent = Color(0xFF00A8B5);
+  static const _accent = Color(0xFF2F80ED);
   static const _background = Color(0xFF081D22);
-  static const _surface = Color(0xFF0E2F34);
-  static const _field = Color(0xFF061920);
+  static const _surface = Color(0xFF0D274D);
+  static const _field = Color(0xFF0B1F3A);
   static const _text = Color(0xFFF5F7FA);
 
   String _value(dynamic value, {String fallback = 'Not provided'}) {
@@ -469,7 +469,7 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF103D44), Color(0xFF0E2F34)],
+          colors: [Color(0xFF103D44), Color(0xFF0D274D)],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _accent.withValues(alpha: 0.35)),

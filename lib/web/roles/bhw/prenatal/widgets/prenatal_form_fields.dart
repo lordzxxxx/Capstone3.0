@@ -55,17 +55,24 @@ class PrenatalTextField extends StatelessWidget {
             fillColor: lightOffWhite,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: mutedCoolGray.withValues(alpha: 0.3)),
+              borderSide: BorderSide(
+                color: mutedCoolGray.withValues(alpha: 0.3),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: mutedCoolGray.withValues(alpha: 0.3)),
+              borderSide: BorderSide(
+                color: mutedCoolGray.withValues(alpha: 0.3),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: primaryAqua, width: 2),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],
@@ -257,10 +264,7 @@ class PrenatalSectionHeader extends StatelessWidget {
 class PrenatalFormCard extends StatelessWidget {
   final List<Widget> children;
 
-  const PrenatalFormCard({
-    super.key,
-    required this.children,
-  });
+  const PrenatalFormCard({super.key, required this.children});
 
   @override
   Widget build(BuildContext context) {
@@ -269,7 +273,10 @@ class PrenatalFormCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: primaryAqua.withValues(alpha: 0.2), width: 1.5),
+        border: Border.all(
+          color: primaryAqua.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: mutedCoolGray.withValues(alpha: 0.08),
@@ -290,10 +297,7 @@ class PrenatalFormCard extends StatelessWidget {
 class PrenatalStatusChip extends StatelessWidget {
   final String status;
 
-  const PrenatalStatusChip({
-    super.key,
-    required this.status,
-  });
+  const PrenatalStatusChip({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {

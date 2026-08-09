@@ -2697,7 +2697,7 @@ class _MortalityPageState extends State<MortalityPage> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF00E5FF), Color(0xFF00A8B5)],
+              colors: [Color(0xFF00E5FF), Color(0xFF2F80ED)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -2998,7 +2998,7 @@ class _MortalityPageState extends State<MortalityPage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF123942),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.25),
@@ -3057,7 +3057,7 @@ class _MortalityPageState extends State<MortalityPage> {
   }
 
   Widget _buildRowDivider() {
-    return Container(width: 1, height: 70, color: const Color(0xFF214047));
+    return Container(width: 1, height: 70, color: const Color(0xFF26476B));
   }
 
   Widget _buildRowActionButton({
@@ -3066,11 +3066,11 @@ class _MortalityPageState extends State<MortalityPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF003B5C),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(7),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF003B5C).withValues(alpha: 0.28),
+            color: const Color(0xFF163B66).withValues(alpha: 0.28),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -3109,7 +3109,7 @@ class _MortalityPageState extends State<MortalityPage> {
       decoration: BoxDecoration(
         color: _darkDeepTeal.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF214047), width: 1),
+        border: Border.all(color: const Color(0xFF26476B), width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -3219,7 +3219,7 @@ class _MortalityPageState extends State<MortalityPage> {
                     child: Text(
                       verification,
                       style: const TextStyle(
-                        color: Color(0xFF003B5C),
+                        color: Color(0xFF163B66),
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
@@ -4741,7 +4741,7 @@ class _MortalityPageState extends State<MortalityPage> {
                         padding: EdgeInsets.all(isCompact ? 20 : 24),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF123942), Color(0xFF0A1F24)],
+                            colors: [Color(0xFF163B66), Color(0xFF0D274D)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -4765,7 +4765,7 @@ class _MortalityPageState extends State<MortalityPage> {
                                     gradient: const LinearGradient(
                                       colors: [
                                         Color(0xFF00E5FF),
-                                        Color(0xFF00A8B5),
+                                        Color(0xFF2F80ED),
                                       ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
@@ -5363,7 +5363,7 @@ class _MortalityPageState extends State<MortalityPage> {
                       gradient: LinearGradient(
                         colors: alreadyVerified
                             ? const [Color(0xFF23443A), Color(0xFF10261F)]
-                            : const [Color(0xFF1A4A38), Color(0xFF0A1F24)],
+                            : const [Color(0xFF1A4A38), Color(0xFF0D274D)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),

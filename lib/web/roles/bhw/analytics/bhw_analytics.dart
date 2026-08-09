@@ -19,7 +19,7 @@ const Color _darkDeepTeal = Color(0xFF071A33);
 const Color _panelSurface = Color(0xFF0D274D);
 const Color _panelAlt = Color(0xFF163B66);
 const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _mutedCoolGray = Color(0xFF8EA5AE);
+const Color _mutedCoolGray = Color(0xFFB8C9DB);
 
 class BHWAnalyticsPage extends StatefulWidget {
   const BHWAnalyticsPage({super.key});

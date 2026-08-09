@@ -74,10 +74,7 @@ class PrenatalDashboardStats extends StatelessWidget {
       decoration: BoxDecoration(
         color: darkDeepTeal.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.3),
@@ -105,9 +102,13 @@ class PrenatalDashboardStats extends StatelessWidget {
                 ),
                 child: Icon(icon, color: color, size: 28),
               ),
+
               /// Active badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
@@ -124,6 +125,7 @@ class PrenatalDashboardStats extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+
           /// Value
           Text(
             value,
@@ -135,6 +137,7 @@ class PrenatalDashboardStats extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
+
           /// Title
           Text(
             title,
@@ -145,6 +148,7 @@ class PrenatalDashboardStats extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
+
           /// Subtitle
           Text(
             subtitle,

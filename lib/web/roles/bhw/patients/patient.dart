@@ -44,7 +44,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   static const Color _primaryAqua = Color(0xFF2F80ED);
   static const Color _secondaryIceBlue = Color(0xFF163B66);
   static const Color _darkDeepTeal = Color(0xFF071A33);
-  static const Color _mutedCoolGray = Color(0xFF546E7A);
+  static const Color _mutedCoolGray = Color(0xFFB8C9DB);
   static const Color _lightOffWhite = Color(0xFFF5F5F5);
   static const Color _sidebarDark = Color(0xFF0D274D);
 
@@ -1643,7 +1643,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     FontWeight valueWeight = FontWeight.w600,
     String separator = '   ',
   }) {
-    const labelBlue = Color(0xFF00E5F7);
+    const labelBlue = Color(0xFF60A5FA);
     const valueWhite = Color(0xFFF3F8FC);
     final spans = <TextSpan>[];
 
@@ -1696,7 +1696,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF123942),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.25),
@@ -1763,11 +1763,11 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF003B5C),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(7),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF003B5C).withValues(alpha: 0.28),
+            color: const Color(0xFF163B66).withValues(alpha: 0.28),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -2322,7 +2322,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           border: Border.all(
             color: isSelected
                 ? _primaryAqua.withValues(alpha: 0.85)
-                : const Color(0xFF214047),
+                : const Color(0xFF26476B),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -4369,7 +4369,7 @@ Future<void> _downloadPatientRecordPdf(
   BuildContext context,
   Map<String, dynamic> patient,
 ) async {
-  const pdfActionColor = Color(0xFF00A8B5);
+  const pdfActionColor = Color(0xFF2F80ED);
   final messenger = ScaffoldMessenger.maybeOf(context);
   final patientName =
       '${patient['firstName'] ?? ''} ${patient['surname'] ?? ''}'.trim();
@@ -4435,11 +4435,11 @@ class _AddPatientModalState extends State<AddPatientModal> {
   final int _totalPages = 10;
 
   // Color scheme
-  static const Color _primaryAqua = Color(0xFF00A8B5);
-  static const Color _darkDeepTeal = Color(0xFF0A1F24);
-  static const Color _sidebarDark = Color(0xFF0E2F34);
-  static const Color _panelSurface = Color(0xFF123942);
-  static const Color _fieldSurface = Color(0xFF061920);
+  static const Color _primaryAqua = Color(0xFF2F80ED);
+  static const Color _darkDeepTeal = Color(0xFF0D274D);
+  static const Color _sidebarDark = Color(0xFF0D274D);
+  static const Color _panelSurface = Color(0xFF163B66);
+  static const Color _fieldSurface = Color(0xFF0B1F3A);
   static const Color _lightOffWhite = Color(0xFFF5F7FA);
 
   // Personal Details Controllers
@@ -4698,7 +4698,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
                   DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF00E5FF), Color(0xFF00A8B5)],
+                        colors: [Color(0xFF00E5FF), Color(0xFF2F80ED)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -4882,10 +4882,10 @@ class _AddPatientModalState extends State<AddPatientModal> {
           if (_currentPage > 0)
             Expanded(
               child: OutlinedButton.icon(
-                icon: const Icon(Icons.arrow_back, color: Color(0xFF00A8B5)),
+                icon: const Icon(Icons.arrow_back, color: Color(0xFF2F80ED)),
                 label: const Text(
                   'Previous',
-                  style: TextStyle(color: Color(0xFF00A8B5)),
+                  style: TextStyle(color: Color(0xFF2F80ED)),
                 ),
                 onPressed: () {
                   _pageController.previousPage(
@@ -4894,7 +4894,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
                   );
                 },
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF00A8B5),
+                  foregroundColor: const Color(0xFF2F80ED),
                   side: BorderSide(
                     color: _primaryAqua.withValues(alpha: 0.5),
                     width: 1.2,
@@ -6061,9 +6061,9 @@ class _EditPatientModalState extends State<EditPatientModal> {
   ];
 
   // Color scheme
-  static const Color _primaryAqua = Color(0xFF00A8B5);
-  static const Color _darkDeepTeal = Color(0xFF003D40);
-  static const Color _mutedCoolGray = Color(0xFF6B7280);
+  static const Color _primaryAqua = Color(0xFF2F80ED);
+  static const Color _darkDeepTeal = Color(0xFF071A33);
+  static const Color _mutedCoolGray = Color(0xFFB8C9DB);
   static const Color _lightOffWhite = Color(0xFFF7F9FC);
 
   // Controllers - will be initialized with existing data

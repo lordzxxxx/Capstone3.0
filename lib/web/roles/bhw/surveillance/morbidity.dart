@@ -23,7 +23,7 @@ const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF071A33);
 const Color _panelTeal = Color(0xFF0D274D);
 const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _mutedCoolGray = Color(0xFF546E7A);
+const Color _mutedCoolGray = Color(0xFFB8C9DB);
 const Color _signalGreen = Color(0xFF74D7A7);
 const Color _signalAmber = Color(0xFFFFC86B);
 const Color _signalRed = Color(0xFFF0897C);
@@ -902,7 +902,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF123942),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.25),
@@ -2516,7 +2516,7 @@ class _MorbidityRecordCard extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 74, color: const Color(0xFF214047));
+    return Container(width: 1, height: 74, color: const Color(0xFF26476B));
   }
 
   Widget _buildActionButton({
@@ -2528,11 +2528,11 @@ class _MorbidityRecordCard extends StatelessWidget {
       message: tooltip,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF003B5C),
+          color: const Color(0xFF163B66),
           borderRadius: BorderRadius.circular(7),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF003B5C).withValues(alpha: 0.28),
+              color: const Color(0xFF163B66).withValues(alpha: 0.28),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -2576,7 +2576,7 @@ class _MorbidityRecordCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: _darkDeepTeal.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF214047), width: 1),
+        border: Border.all(color: const Color(0xFF26476B), width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),

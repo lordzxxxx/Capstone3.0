@@ -23,10 +23,10 @@ class CanonicalPatientRegistrationModal extends StatefulWidget {
 
 class _CanonicalPatientRegistrationModalState
     extends State<CanonicalPatientRegistrationModal> {
-  static const _accent = Color(0xFF00A8B5);
+  static const _accent = Color(0xFF2F80ED);
   static const _background = Color(0xFF081D22);
-  static const _surface = Color(0xFF0E2F34);
-  static const _field = Color(0xFF061920);
+  static const _surface = Color(0xFF0D274D);
+  static const _field = Color(0xFF0B1F3A);
   static const _text = Color(0xFFF5F7FA);
 
   final _formKey = GlobalKey<FormState>();

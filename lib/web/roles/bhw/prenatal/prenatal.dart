@@ -34,7 +34,7 @@ import 'dart:math' as math;
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _secondaryIceBlue = Color(0xFF163B66);
 const Color _darkDeepTeal = Color(0xFF071A33);
-const Color _mutedCoolGray = Color(0xFF546E7A);
+const Color _mutedCoolGray = Color(0xFFB8C9DB);
 const Color _lightOffWhite = Color(0xFFF5F5F5);
 const Color _sidebarDark = Color(0xFF0D274D);
 
@@ -1086,7 +1086,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF0A1F24), Color(0xFF1E5A7A)],
+                  colors: [Color(0xFF0D274D), Color(0xFF163B66)],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -1153,7 +1153,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF0A1F24), Color(0xFF1E5A7A)],
+              colors: [Color(0xFF0D274D), Color(0xFF163B66)],
             ),
           ),
           child: Column(
@@ -3150,7 +3150,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
             ),
             prefixIcon: Icon(icon, color: Colors.white, size: 20),
             filled: true,
-            fillColor: const Color(0xFF061920),
+            fillColor: const Color(0xFF0B1F3A),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
@@ -6339,7 +6339,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         ),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => const Color(0xFF173C43),
+            getTooltipColor: (_) => const Color(0xFF163B66),
             getTooltipItems: (spots) => spots
                 .map(
                   (spot) => LineTooltipItem(
@@ -6419,7 +6419,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         ),
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => const Color(0xFF173C43),
+            getTooltipColor: (_) => const Color(0xFF163B66),
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final entry = entries[group.x];
               return BarTooltipItem(
@@ -6886,7 +6886,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF00E5FF), Color(0xFF00A8B5)],
+              colors: [Color(0xFF00E5FF), Color(0xFF2F80ED)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -6960,7 +6960,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF123942),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.25),
@@ -7921,7 +7921,7 @@ class _PrenatalCard extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 70, color: const Color(0xFF214047));
+    return Container(width: 1, height: 70, color: const Color(0xFF26476B));
   }
 
   Widget _buildIconActionButton({
@@ -7930,11 +7930,11 @@ class _PrenatalCard extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF003B5C),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(7),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF003B5C).withValues(alpha: 0.28),
+            color: const Color(0xFF163B66).withValues(alpha: 0.28),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -8019,7 +8019,7 @@ class _PrenatalCard extends StatelessWidget {
           border: Border.all(
             color: isSelected
                 ? _primaryAqua.withValues(alpha: 0.85)
-                : const Color(0xFF214047),
+                : const Color(0xFF26476B),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -8094,7 +8094,7 @@ class _PrenatalCard extends StatelessWidget {
                       child: const Text(
                         'Prenatal Care',
                         style: TextStyle(
-                          color: Color(0xFF003B5C),
+                          color: Color(0xFF163B66),
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),

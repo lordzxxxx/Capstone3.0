@@ -66,9 +66,9 @@ class PatientFirstServiceSelector extends StatefulWidget {
 
 class _PatientFirstServiceSelectorState
     extends State<PatientFirstServiceSelector> {
-  static const _accent = Color(0xFF00A8B5);
+  static const _accent = Color(0xFF2F80ED);
   static const _background = Color(0xFF081D22);
-  static const _surface = Color(0xFF0E2F34);
+  static const _surface = Color(0xFF0D274D);
   static const _text = Color(0xFFF5F5F5);
 
   final TextEditingController _controller = TextEditingController();

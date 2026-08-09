@@ -14,8 +14,8 @@ class PatientOperationalSummary extends StatelessWidget {
   final ValueChanged<Map<String, dynamic>> onViewPatient;
   final VoidCallback onViewAll;
 
-  static const _accent = Color(0xFF00A8B5);
-  static const _surface = Color(0xFF0E2F34);
+  static const _accent = Color(0xFF2F80ED);
+  static const _surface = Color(0xFF0D274D);
   static const _text = Color(0xFFF5F7FA);
 
   String _textValue(dynamic value) => value?.toString().trim() ?? '';
@@ -469,7 +469,7 @@ class PatientOperationalSummary extends StatelessWidget {
           ),
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) => const Color(0xFF173C43),
+              getTooltipColor: (_) => const Color(0xFF163B66),
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 final count = counts[group.x];
                 return BarTooltipItem(
@@ -660,7 +660,7 @@ class _Metric {
     this.title,
     this.value,
     this.icon, {
-    this.color = const Color(0xFF00A8B5),
+    this.color = const Color(0xFF2F80ED),
   });
 
   final String title;

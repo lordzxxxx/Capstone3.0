@@ -3,11 +3,11 @@ import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-const _accent = Color(0xFF00A8B5);
-const _panel = Color(0xFF0E2F34);
+const _accent = Color(0xFF2F80ED);
+const _panel = Color(0xFF0D274D);
 const _foreground = Color(0xFFF5F5F5);
 const _palette = <Color>[
-  Color(0xFF00A8B5),
+  Color(0xFF2F80ED),
   Color(0xFF5EC7FF),
   Color(0xFFFFB74D),
   Color(0xFF66BB6A),
@@ -324,7 +324,7 @@ class CommunicableInsights extends StatelessWidget {
         ),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => const Color(0xFF173C43),
+            getTooltipColor: (_) => const Color(0xFF163B66),
             getTooltipItems: (spots) => spots
                 .map(
                   (spot) => LineTooltipItem(
@@ -390,7 +390,7 @@ class CommunicableInsights extends StatelessWidget {
         ),
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => const Color(0xFF173C43),
+            getTooltipColor: (_) => const Color(0xFF163B66),
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final entry = visible[group.x];
               return BarTooltipItem(

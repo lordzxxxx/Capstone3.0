@@ -68,16 +68,16 @@ class _PrenatalFilterBarState extends State<PrenatalFilterBar> {
                   const SizedBox(height: 4),
                   Text(
                     'View and manage all prenatal patient records',
-                    style: TextStyle(
-                      color: mutedCoolGray,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: mutedCoolGray, fontSize: 13),
                   ),
                 ],
               ),
               // Total count badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: primaryAqua.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
@@ -103,10 +103,7 @@ class _PrenatalFilterBarState extends State<PrenatalFilterBar> {
           Row(
             children: [
               // Status Filter Dropdown
-              Expanded(
-                flex: 2,
-                child: _buildStatusFilterDropdown(),
-              ),
+              Expanded(flex: 2, child: _buildStatusFilterDropdown()),
               const SizedBox(width: 12),
 
               // Date Filters
@@ -162,10 +159,7 @@ class _PrenatalFilterBarState extends State<PrenatalFilterBar> {
       decoration: BoxDecoration(
         color: darkDeepTeal.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: primaryAqua.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: primaryAqua.withValues(alpha: 0.3), width: 1),
       ),
       child: Row(
         children: [
@@ -217,7 +211,9 @@ class _PrenatalFilterBarState extends State<PrenatalFilterBar> {
               : darkDeepTeal.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: date != null ? primaryAqua : mutedCoolGray.withValues(alpha: 0.3),
+            color: date != null
+                ? primaryAqua
+                : mutedCoolGray.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
