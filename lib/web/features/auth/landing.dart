@@ -5,17 +5,17 @@ import 'package:mycapstone_project/web/features/auth/bhw_registration.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _primaryAquaBright = Color(0xFF29C7D1);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
+const Color _primaryAqua = AppColors.primary;
+const Color _primaryAquaBright = Color(0xFF4EA1FF);
+const Color _secondaryIceBlue = AppColors.secondary;
 // Clean solid navy used for the access panel's buttons — flatter and more
 // restrained than the teal gradient, per request.
 const Color _darkBlue = Color(0xFF123A5C);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
+const Color _darkDeepTeal = AppColors.backgroundDark;
 const Color _mutedCoolGray = Color(0xFF546E7A);
 const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _sidebarDark = Color(0xFF0E2F34);
-const Color _panelSurface = Color(0xFF061920);
+const Color _sidebarDark = AppColors.surfaceDark;
+const Color _panelSurface = Color(0xFF0B1F3A);
 
 // Manrope is the established typeface for the auth flow (login.dart,
 // signup.dart, bhw_registration.dart) — applied here too so the landing
@@ -133,43 +133,278 @@ class _LandingPageState extends State<LandingPage>
   Future<String?> _showRoleSelectionDialog(BuildContext context) {
     return showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: _sidebarDark,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Register As', style: _display(size: 20)),
-        content: Text(
-          'Choose your account type. BHW requests require City Health Office approval. Administrator accounts are not available through public registration.',
-          style: _body(size: 14, color: _lightOffWhite.withValues(alpha: 0.85)),
+      barrierColor: Colors.black.withValues(alpha: 0.68),
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(28, 26, 28, 22),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceDark,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: _primaryAqua.withValues(alpha: 0.32)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x66000000),
+                  blurRadius: 32,
+                  offset: Offset(0, 18),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: _primaryAqua.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _primaryAqua.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: _buildSystemLogo(size: 28),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Create your AI-DSUHIS account',
+                        style: _display(size: 19, letterSpacing: 0.1),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Close',
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                      color: _lightOffWhite.withValues(alpha: 0.72),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Choose your access role',
+                  style: _display(size: 25, color: AppColors.textOnDark),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  'Select the workspace that matches your responsibilities. Public BHW requests are reviewed by the City Health Office before activation.',
+                  style: _body(
+                    size: 13.5,
+                    color: AppColors.textOnDark.withValues(alpha: 0.72),
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _primaryAqua.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _primaryAqua.withValues(alpha: 0.18),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.verified_user_outlined,
+                        size: 18,
+                        color: _primaryAquaBright,
+                      ),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Text(
+                          'Your role controls the forms, approvals, and portal features available after sign-in.',
+                          style: _body(
+                            size: 12.5,
+                            color: AppColors.textOnDark.withValues(alpha: 0.78),
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final cardWidth = constraints.maxWidth >= 500
+                        ? (constraints.maxWidth - 12) / 2
+                        : constraints.maxWidth;
+                    return Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        _buildRoleOption(
+                          width: cardWidth,
+                          icon: Icons.account_balance_outlined,
+                          title: 'City Health Office',
+                          label: 'CHO',
+                          description:
+                              'City-wide operations, oversight, and health administration.',
+                          accent: _primaryAquaBright,
+                          onTap: () => Navigator.of(dialogContext).pop('CHO'),
+                        ),
+                        _buildRoleOption(
+                          width: cardWidth,
+                          icon: Icons.groups_outlined,
+                          title: 'Barangay Health Worker',
+                          label: 'BHW',
+                          description:
+                              'Barangay-level care delivery and patient follow-up.',
+                          accent: _primaryAqua,
+                          badge: 'Approval required',
+                          onTap: () => Navigator.of(dialogContext).pop('BHW'),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 18),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.textOnDark.withValues(
+                        alpha: 0.72,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Cancel',
-              style: _body(
-                size: 14,
-                weight: FontWeight.w600,
-                color: _lightOffWhite.withValues(alpha: 0.8),
-              ),
+      ),
+    );
+  }
+
+  Widget _buildRoleOption({
+    required double width,
+    required IconData icon,
+    required String title,
+    required String label,
+    required String description,
+    required Color accent,
+    required VoidCallback onTap,
+    String? badge,
+  }) {
+    return SizedBox(
+      width: width,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Ink(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundDark.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: accent.withValues(alpha: 0.34)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: accent, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: _body(
+                                size: 14,
+                                weight: FontWeight.w800,
+                                color: AppColors.textOnDark,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            label,
+                            style: _body(
+                              size: 11,
+                              weight: FontWeight.w800,
+                              color: accent,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        description,
+                        style: _body(
+                          size: 12,
+                          color: AppColors.textOnDark.withValues(alpha: 0.66),
+                          height: 1.35,
+                        ),
+                      ),
+                      if (badge != null) ...[
+                        const SizedBox(height: 9),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: accent.withValues(alpha: 0.13),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: Text(
+                            badge,
+                            style: _body(
+                              size: 10.5,
+                              weight: FontWeight.w700,
+                              color: accent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 18,
+                    color: accent.withValues(alpha: 0.9),
+                  ),
+                ),
+              ],
             ),
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop('CHO'),
-            style: FilledButton.styleFrom(
-              backgroundColor: _panelSurface,
-              foregroundColor: _lightOffWhite,
-            ),
-            child: const Text('City Health Office (CHO)'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop('BHW'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryAqua,
-              foregroundColor: _darkDeepTeal,
-            ),
-            child: const Text('Barangay Health Worker (BHW)'),
-          ),
-        ],
+        ),
       ),
     );
   }
