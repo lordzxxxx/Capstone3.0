@@ -2691,17 +2691,33 @@ class _CheckUpDashboardHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Metrics Grid - 4 columns for web with better spacing
-        Row(
-          children: [
-            Expanded(child: _buildTotalCheckupsCard(totalCheckups)),
-            const SizedBox(width: 20),
-            Expanded(child: _buildThisMonthCard(thisMonthCheckups)),
-            const SizedBox(width: 20),
-            Expanded(child: _buildWithVitalsCard(vitalRecordsCount)),
-            const SizedBox(width: 20),
-            Expanded(child: _buildStatusCard(vitalRecordsCount, totalCheckups)),
-          ],
+        // Metrics stay in one row on wide screens and become a compact,
+        // evenly spaced grid on tablets and phones.
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 1100
+                ? 4
+                : constraints.maxWidth >= 680
+                ? 2
+                : 1;
+            const spacing = 16.0;
+            final cardWidth = columns == 1
+                ? constraints.maxWidth
+                : (constraints.maxWidth - spacing * (columns - 1)) / columns;
+            final cards = <Widget>[
+              _buildTotalCheckupsCard(totalCheckups),
+              _buildThisMonthCard(thisMonthCheckups),
+              _buildWithVitalsCard(vitalRecordsCount),
+              _buildStatusCard(vitalRecordsCount, totalCheckups),
+            ];
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: cards
+                  .map((card) => SizedBox(width: cardWidth, child: card))
+                  .toList(growable: false),
+            );
+          },
         ),
         const SizedBox(height: 20),
         LayoutBuilder(
@@ -3230,7 +3246,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 160),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: _sidebarDark,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: _primaryAqua.withValues(alpha: 0.15),
@@ -3260,7 +3276,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
                         color: color.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(icon, color: Colors.white, size: 24),
+                      child: Icon(icon, color: color, size: 24),
                     ),
                   ],
                 ),
@@ -3270,7 +3286,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: _darkDeepTeal,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -3278,7 +3294,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     fontSize: 13,
-                    color: Colors.white,
+                    color: Color(0xFF4B6075),
                     fontWeight: FontWeight.w500,
                   ),
                 ),

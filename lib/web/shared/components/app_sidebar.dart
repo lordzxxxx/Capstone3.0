@@ -23,7 +23,7 @@ abstract final class _BhwDrawerColors {
   static const border = Color(0xFF1C3D66);
   static const aqua = Color(0xFF4EA1FF);
   static const text = Color(0xFFF8FBFF);
-  static const muted = Color(0xFFB8C9DB);
+  static const muted = Color(0xFFE3EDF8);
 }
 
 enum WebSidebarItem {
@@ -358,7 +358,7 @@ class WebAppSidebar extends StatelessWidget {
       child: Text(
         title,
         style: const TextStyle(
-          fontFamily: 'Inter',
+          fontFamily: 'Manrope',
           color: _BhwDrawerColors.muted,
           fontSize: 9,
           fontWeight: FontWeight.w800,
@@ -381,22 +381,22 @@ class WebAppSidebar extends StatelessWidget {
       child: ListTile(
         selected: isActive,
         selectedColor: _BhwDrawerColors.text,
-        textColor: _BhwDrawerColors.muted,
-        iconColor: isActive ? _BhwDrawerColors.aqua : _BhwDrawerColors.muted,
+        textColor: _BhwDrawerColors.text,
+        iconColor: isActive ? _BhwDrawerColors.aqua : _BhwDrawerColors.text,
         leading: Icon(icon, size: 20),
         title: Text(
           label,
           style: TextStyle(
-            fontFamily: 'Inter',
+            fontFamily: 'Manrope',
             fontSize: 13,
             fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
           ),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
         tileColor: isActive
-            ? _BhwDrawerColors.aqua.withValues(alpha: 0.18)
+            ? _BhwDrawerColors.aqua.withValues(alpha: 0.24)
             : null,
-        hoverColor: _BhwDrawerColors.aqua.withValues(alpha: 0.06),
+        hoverColor: _BhwDrawerColors.aqua.withValues(alpha: 0.12),
         onTap: onTap,
       ),
     );

@@ -5912,44 +5912,51 @@ class _PrenatalPageState extends State<PrenatalPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildWebMetricCard(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 1100
+                ? 4
+                : constraints.maxWidth >= 680
+                ? 2
+                : 1;
+            const spacing = 12.0;
+            final cardWidth = columns == 1
+                ? constraints.maxWidth
+                : (constraints.maxWidth - spacing * (columns - 1)) / columns;
+            final cards = <Widget>[
+              _buildWebMetricCard(
                 title: 'Total Prenatal',
                 value: '$total',
                 icon: Icons.pregnant_woman_rounded,
                 color: _primaryAqua,
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildWebMetricCard(
+              _buildWebMetricCard(
                 title: 'Active',
                 value: '$active',
                 icon: Icons.favorite_rounded,
                 color: const Color(0xFF4CAF50),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildWebMetricCard(
+              _buildWebMetricCard(
                 title: 'High Risk',
                 value: '$highRisk',
                 icon: Icons.warning_rounded,
                 color: const Color(0xFFFF9800),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildWebMetricCard(
+              _buildWebMetricCard(
                 title: 'Completed',
                 value: '$completed',
                 icon: Icons.check_circle_rounded,
                 color: const Color(0xFF2196F3),
               ),
-            ),
-          ],
+            ];
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: cards
+                  .map((card) => SizedBox(width: cardWidth, child: card))
+                  .toList(growable: false),
+            );
+          },
         ),
         const SizedBox(height: 20),
         LayoutBuilder(
@@ -6774,7 +6781,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: _sidebarDark,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
           boxShadow: [
@@ -6837,7 +6844,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
             Text(
               title,
               style: const TextStyle(
-                color: Colors.white70,
+                color: Color(0xFF4B6075),
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),

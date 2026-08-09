@@ -32,7 +32,7 @@ import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _secondaryIceBlue = Color(0xFF163B66);
 const Color _darkDeepTeal = Color(0xFF071A33);
-const Color _cardBackground = Color(0xFF0D274D);
+const Color _cardBackground = Colors.white;
 const Color _mutedCoolGray = Color(0xFFB8C9DB);
 const Color _lightOffWhite = Color(0xFFF5F5F5);
 const Color _sidebarDark = Color(0xFF0D274D);

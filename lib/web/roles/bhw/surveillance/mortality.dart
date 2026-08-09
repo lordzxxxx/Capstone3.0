@@ -32,7 +32,8 @@ import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _secondaryIceBlue = Color(0xFF163B66);
 const Color _darkDeepTeal = Color(0xFF071A33);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
+const Color _lightOffWhite = Color(0xFF0B1F3A);
+const Color _mutedCoolGray = Color(0xFF4B6075);
 const Color _sidebarDark = Color(0xFF0D274D);
 
 class MortalityPage extends StatefulWidget {
@@ -1663,7 +1664,7 @@ class _MortalityPageState extends State<MortalityPage> {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
       decoration: BoxDecoration(
-        color: backgroundColor.withValues(alpha: 0.5),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accentColor.withValues(alpha: 0.3), width: 2),
         boxShadow: [
@@ -1693,7 +1694,7 @@ class _MortalityPageState extends State<MortalityPage> {
             style: TextStyle(
               fontSize: isSmallText ? 14 : 24,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: _darkDeepTeal,
               letterSpacing: 0.5,
             ),
             maxLines: isSmallText ? 2 : 1,
@@ -1704,7 +1705,7 @@ class _MortalityPageState extends State<MortalityPage> {
             title,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.7),
+              color: _mutedCoolGray,
               fontWeight: FontWeight.w500,
               letterSpacing: 0.3,
             ),

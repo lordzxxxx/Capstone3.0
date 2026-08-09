@@ -16,10 +16,10 @@ import 'package:mycapstone_project/web/shared/services/user_access_scope_service
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF071A33);
-const Color _panelSurface = Color(0xFF0D274D);
-const Color _panelAlt = Color(0xFF163B66);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _mutedCoolGray = Color(0xFFB8C9DB);
+const Color _panelSurface = Colors.white;
+const Color _panelAlt = Color(0xFFEDF3FA);
+const Color _lightOffWhite = Color(0xFF0B1F3A);
+const Color _mutedCoolGray = Color(0xFF4B6075);
 
 class BHWAnalyticsPage extends StatefulWidget {
   const BHWAnalyticsPage({super.key});

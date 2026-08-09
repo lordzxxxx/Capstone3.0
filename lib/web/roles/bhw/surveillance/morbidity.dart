@@ -21,9 +21,9 @@ import 'package:mycapstone_project/web/shared/services/user_access_scope_service
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF071A33);
-const Color _panelTeal = Color(0xFF0D274D);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _mutedCoolGray = Color(0xFFB8C9DB);
+const Color _panelTeal = Colors.white;
+const Color _lightOffWhite = Color(0xFF0B1F3A);
+const Color _mutedCoolGray = Color(0xFF4B6075);
 const Color _signalGreen = Color(0xFF74D7A7);
 const Color _signalAmber = Color(0xFFFFC86B);
 const Color _signalRed = Color(0xFFF0897C);
@@ -265,13 +265,13 @@ class _MorbidityPageState extends State<MorbidityPage> {
         backgroundColor: _darkDeepTeal,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: _lightOffWhite, size: 36),
+          icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 36),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(
           'Morbidity Dashboard',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _lightOffWhite,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -282,10 +282,8 @@ class _MorbidityPageState extends State<MorbidityPage> {
               child: OutlinedButton.icon(
                 onPressed: _generateMorbidityReport,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: _lightOffWhite,
-                  side: BorderSide(
-                    color: _lightOffWhite.withValues(alpha: 0.22),
-                  ),
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 12,

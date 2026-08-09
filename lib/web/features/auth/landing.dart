@@ -631,8 +631,8 @@ class _LandingPageState extends State<LandingPage>
         final height = constraints.maxHeight;
         final isDesktop = constraints.maxWidth >= 980;
         final logoSize = isDesktop
-            ? _responsive(height, 0.24, 190, 260)
-            : _responsive(height, 0.19, 140, 190);
+            ? _responsive(height, 0.27, 220, 300)
+            : _responsive(height, 0.22, 160, 220);
         final titleSize = isDesktop
             ? _responsive(height, 0.086, 56, 96)
             : _responsive(height, 0.064, 40, 60);
@@ -731,7 +731,7 @@ class _LandingPageState extends State<LandingPage>
     required EdgeInsets contentPadding,
     required bool isDesktop,
   }) {
-    final partnerLogoSize = _responsive(logoSize, 0.42, 55, 70);
+    final partnerLogoSize = _responsive(logoSize, 0.46, 70, 96);
 
     final heroContent = Column(
       mainAxisSize: MainAxisSize.min,
@@ -755,26 +755,19 @@ class _LandingPageState extends State<LandingPage>
         SizedBox(height: _responsive(logoSize, 0.14, 10, 20)),
         _buildPartnerLogos(partnerLogoSize),
         SizedBox(height: _responsive(logoSize, 0.16, 12, 22)),
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [_lightOffWhite, _primaryAquaBright],
-          ).createShader(bounds),
-          // A dedicated display face for the wordmark — Manrope (used for
-          // all body/UI text) reads as too generic at this size; Space
-          // Grotesk's more geometric, tighter-set letterforms give the
-          // brand name actual presence.
-          child: Text(
-            'AI-DSUHIS',
-            style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
-              fontSize: titleSize,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.5,
-              height: 1.05,
-              color: _lightOffWhite,
-            ),
-            textAlign: TextAlign.center,
+        // Keep the wordmark a crisp solid white so it remains readable over
+        // every part of the photographic backdrop.
+        Text(
+          'AI-DSUHIS',
+          style: TextStyle(
+            fontFamily: 'SpaceGrotesk',
+            fontSize: titleSize,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.5,
+            height: 1.05,
+            color: Colors.white,
           ),
+          textAlign: TextAlign.center,
         ),
         SizedBox(height: _responsive(titleSize, 0.24, 8, 16)),
         Text(
@@ -782,7 +775,7 @@ class _LandingPageState extends State<LandingPage>
           style: _body(
             size: subtitleSize,
             weight: FontWeight.w400,
-            color: _lightOffWhite.withValues(alpha: 0.78),
+            color: Colors.white.withValues(alpha: 0.90),
             height: 1.4,
           ),
           textAlign: TextAlign.center,
@@ -941,28 +934,16 @@ class _LandingPageState extends State<LandingPage>
     }
 
     if (desktop) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
+      return Row(
+        mainAxisSize: MainAxisSize.max,
         children: [
-          Row(
-            children: [
-              Expanded(child: cell(features[0])),
-              SizedBox(width: gap),
-              Expanded(child: cell(features[1])),
-              SizedBox(width: gap),
-              Expanded(child: cell(features[2])),
-            ],
-          ),
-          SizedBox(height: gap),
-          Row(
-            children: [
-              const Expanded(child: SizedBox()),
-              SizedBox(width: gap),
-              Expanded(child: cell(features[3])),
-              SizedBox(width: gap),
-              const Expanded(child: SizedBox()),
-            ],
-          ),
+          Expanded(child: cell(features[0])),
+          SizedBox(width: gap),
+          Expanded(child: cell(features[1])),
+          SizedBox(width: gap),
+          Expanded(child: cell(features[2])),
+          SizedBox(width: gap),
+          Expanded(child: cell(features[3])),
         ],
       );
     }
@@ -996,13 +977,13 @@ class _LandingPageState extends State<LandingPage>
     required bool compact,
     bool stretch = false,
   }) {
-    final iconSize = compact ? 28.0 : 34.0;
-    final textSize = compact ? 11.5 : 13.5;
+    final iconSize = compact ? 28.0 : 30.0;
+    final textSize = compact ? 11.5 : 12.0;
     final badge = Container(
       height: compact ? 44 : 52,
       width: stretch ? double.infinity : null,
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 10,
+        horizontal: compact ? 8 : 7,
         vertical: compact ? 7 : 9,
       ),
       decoration: BoxDecoration(
@@ -1045,7 +1026,11 @@ class _LandingPageState extends State<LandingPage>
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               softWrap: false,
-              style: _body(size: textSize, weight: FontWeight.w600),
+              style: _body(
+                size: textSize,
+                weight: FontWeight.w700,
+                color: Colors.white,
+              ),
             ),
           ),
         ],

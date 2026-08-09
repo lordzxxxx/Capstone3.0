@@ -225,7 +225,7 @@ class ChoNavigationDrawer extends StatelessWidget {
     child: Text(
       label,
       style: const TextStyle(
-        fontFamily: 'Inter',
+        fontFamily: 'Manrope',
         color: ChoColors.navMuted,
         fontSize: 9,
         fontWeight: FontWeight.w800,
@@ -351,13 +351,13 @@ class ChoNavigationDrawer extends StatelessWidget {
         builder: (itemContext) => ListTile(
           selected: selected,
           selectedColor: ChoColors.navText,
-          textColor: ChoColors.navMuted,
-          iconColor: selected ? ChoColors.aqua : ChoColors.navMuted,
+          textColor: ChoColors.navText,
+          iconColor: selected ? ChoColors.aqua : ChoColors.navText,
           leading: Icon(icon, size: 20),
           title: Text(
             label,
             style: TextStyle(
-              fontFamily: 'Inter',
+              fontFamily: 'Manrope',
               fontSize: 13,
               fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
             ),
@@ -365,7 +365,8 @@ class ChoNavigationDrawer extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(11),
           ),
-          tileColor: selected ? ChoColors.aqua.withValues(alpha: 0.18) : null,
+          tileColor: selected ? ChoColors.aqua.withValues(alpha: 0.24) : null,
+          hoverColor: ChoColors.aqua.withValues(alpha: 0.12),
           onTap: () =>
               _navigateFromDrawer(itemContext, destination, selected: selected),
         ),

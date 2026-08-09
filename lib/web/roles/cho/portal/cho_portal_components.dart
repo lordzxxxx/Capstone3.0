@@ -12,7 +12,7 @@ abstract final class ChoColors {
   static const navBackground = Color(0xFF071A33);
   static const navSurface = Color(0xFF0D274D);
   static const navText = Color(0xFFF8FBFF);
-  static const navMuted = Color(0xFFB8C9DB);
+  static const navMuted = Color(0xFFE3EDF8);
   static const navBorder = Color(0xFF1C3D66);
 }
 

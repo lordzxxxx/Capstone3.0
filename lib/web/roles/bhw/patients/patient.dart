@@ -949,7 +949,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: _sidebarDark,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _primaryAqua.withValues(alpha: 0.15),
@@ -979,7 +979,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                         color: color.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(icon, color: Colors.white, size: 24),
+                      child: Icon(icon, color: color, size: 24),
                     ),
                   ],
                 ),
@@ -989,7 +989,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                   style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: _darkDeepTeal,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -997,7 +997,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                   title,
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Colors.white,
+                    color: _mutedCoolGray,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -1016,7 +1016,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
           decoration: BoxDecoration(
-            color: _sidebarDark,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _primaryAqua.withValues(alpha: 0.2),
@@ -1100,7 +1100,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                   const Text(
                     'Date Range',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: _darkDeepTeal,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1183,7 +1183,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: _sidebarDark,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: _primaryAqua.withValues(alpha: 0.2),
@@ -1196,7 +1196,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
             Text(
               date != null ? '${date.day}/${date.month}' : label,
               style: TextStyle(
-                color: _lightOffWhite,
+                color: _darkDeepTeal,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),
@@ -1802,7 +1802,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: const Color(0xFFF3F8FC),
+            color: _darkDeepTeal,
             fontSize: 12,
             height: 1.25,
             fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
@@ -1861,7 +1861,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: _sidebarDark,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _primaryAqua.withValues(alpha: 0.3),
@@ -1892,7 +1892,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: _darkDeepTeal,
+                              color: const Color(0xFFEDF3FA),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: _primaryAqua.withValues(alpha: 0.3),
@@ -1912,7 +1912,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                                     child: DropdownButton<String>(
                                       value: _selectedStatus,
                                       isExpanded: true,
-                                      dropdownColor: _darkDeepTeal,
+                                      dropdownColor: Colors.white,
                                       isDense: true,
                                       iconSize: 18,
                                       icon: Icon(
@@ -1921,7 +1921,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                                         size: 18,
                                       ),
                                       style: const TextStyle(
-                                        color: Colors.white,
+                                        color: _darkDeepTeal,
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -2302,7 +2302,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     );
 
     final statusColor = _getPatientStatusColor(status);
-    final rowBg = _darkDeepTeal.withValues(alpha: 0.96);
+    const rowBg = Colors.white;
 
     return GestureDetector(
       onTap: _isSelectionMode
@@ -2322,7 +2322,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           border: Border.all(
             color: isSelected
                 ? _primaryAqua.withValues(alpha: 0.85)
-                : const Color(0xFF26476B),
+                : Color(0xFFD9E5F2),
             width: isSelected ? 2 : 1,
           ),
         ),

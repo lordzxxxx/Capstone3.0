@@ -13,10 +13,10 @@ import 'package:mycapstone_project/web/shared/services/user_access_scope_service
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF071A33);
-const Color _panelTeal = Color(0xFF0D274D);
-const Color _panelTealSoft = Color(0xFF163B66);
-const Color _lightOffWhite = Color(0xFFF3F5F1);
-const Color _mutedCoolGray = Color(0xFFB8C9DB);
+const Color _panelTeal = Colors.white;
+const Color _panelTealSoft = Color(0xFFEDF3FA);
+const Color _lightOffWhite = Color(0xFF0B1F3A);
+const Color _mutedCoolGray = Color(0xFF4B6075);
 const Color _signalGreen = Color(0xFF74D7A7);
 const Color _signalAmber = Color(0xFFFFC86B);
 
@@ -426,7 +426,7 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
         backgroundColor: _darkDeepTeal,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: _lightOffWhite),
+          icon: const Icon(Icons.menu_rounded, color: Colors.white),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         title: Column(
@@ -435,7 +435,7 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
             Text(
               'Summary Generation',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: _lightOffWhite,
+                color: Colors.white,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -443,7 +443,7 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
               'Operational reporting workspace',
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: _mutedCoolGray),
+              ).textTheme.bodySmall?.copyWith(color: Colors.white70),
             ),
           ],
         ),
