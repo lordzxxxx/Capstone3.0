@@ -143,9 +143,9 @@ class AppTheme {
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
-      // Body — main content text, readable base size.
-      // Mont ExtraLight is intentionally reserved for decorative/marketing
-      // text. Normal application copy uses the readable supplied Mont face.
+      // Body — main content text, readable base size. The Mont compatibility
+      // family maps to a normal sans-serif face; no light/ExtraLight face is
+      // used for interface copy.
       bodyLarge: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w500,
