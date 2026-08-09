@@ -11,6 +11,7 @@ import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
+import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
@@ -589,9 +590,19 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       backgroundColor: _darkDeepTeal,
       drawer: const ChoNavigationDrawer(current: ChoDestination.reports),
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
-        foregroundColor: _lightOffWhite,
-        title: const Text('CHO Reports and Analytics'),
+        // Keep reports aligned with the CHO portal shell. The page content is
+        // intentionally light, but the navigation bar stays the shared navy
+        // surface so its title and controls remain legible.
+        backgroundColor: ChoColors.navBackground,
+        foregroundColor: ChoColors.navText,
+        title: const Text(
+          'CHO Reports and Analytics',
+          style: TextStyle(
+            fontFamily: 'Manrope',
+            color: ChoColors.navText,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
