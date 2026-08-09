@@ -84,12 +84,12 @@ class HealthAIClassifier {
         'Manage stress through relaxation',
         'Monitor BP daily',
       ],
-      'precautions': ['Never stop medications without doctor consultation'],
+      'precautions': ['Do not change the care plan without clinician guidance'],
       'recovery_time': 'Lifelong management',
     },
     'pneumonia': {
       'home_care': [
-        'Take all medications exactly as prescribed by your doctor',
+        'Follow the treatment plan provided by your clinician',
         'Rest adequately',
         'Drink plenty of fluids',
         'Use humidifier',
@@ -232,7 +232,7 @@ class HealthAIClassifier {
         'Track blood pressure/glucose as advised',
         'Keep scheduled follow-up visits',
       ],
-      'precautions': ['Do not stop long-term medications without advice'],
+      'precautions': ['Keep scheduled clinical follow-up and monitoring'],
       'recovery_time': 'Ongoing long-term management',
     },
     'Emergency': {
@@ -953,6 +953,23 @@ class HealthAIClassifier {
     return _getTreatmentForKeyword(keyword) != null;
   }
 
+  // AI guidance is limited to supportive care, precautions, monitoring, and
+  // referral prompts. Medication, dosage, prescription, and inhaler wording
+  // is filtered at the final boundary so legacy model metadata cannot turn
+  // into an AI medication recommendation.
+  static bool _isMedicationInstruction(String value) {
+    return RegExp(
+      r'\b(medications?|medicines?|dosage|prescription|prescribed|antibiotics?|inhaler)\b',
+      caseSensitive: false,
+    ).hasMatch(value);
+  }
+
+  static List<String> _safeGuidanceItems(Iterable<String> values) {
+    return values
+        .where((value) => !_isMedicationInstruction(value))
+        .toList(growable: false);
+  }
+
   /// Generate detailed recovery recommendations based on keywords.
   /// Falls back to category-level recommendations when keyword-level
   /// treatments are unavailable.
@@ -1024,10 +1041,10 @@ class HealthAIClassifier {
     }
 
     return {
-      'home_care': homeCare.toList(),
-      'precautions': precautions.toList(),
+      'home_care': _safeGuidanceItems(homeCare),
+      'precautions': _safeGuidanceItems(precautions),
       'estimated_recovery': estimatedRecovery ?? 'Varies by condition',
-      'general_advice': generalAdvice.toList(),
+      'general_advice': _safeGuidanceItems(generalAdvice),
     };
   }
 

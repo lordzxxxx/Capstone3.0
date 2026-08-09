@@ -1304,14 +1304,11 @@ class _CommunicablePageState extends State<CommunicablePage> {
     );
   }
 
-  void _showAddPatientDialog() {
-    Get.snackbar(
-      'Add Patient',
-      'Patient registration form coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: _primaryAqua,
-      colorText: Colors.white,
-    );
+  Future<void> _showAddPatientDialog() async {
+    // Keep one canonical patient-registration flow across every BHW module.
+    // The surveillance pages previously displayed a placeholder snackbar,
+    // which left users without a way to create the patient needed for a case.
+    await Get.to(() => const PatientRecordPage(openRegistrationOnLoad: true));
   }
 
   void _viewPatientDetails(Map<String, dynamic> patient) {

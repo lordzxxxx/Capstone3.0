@@ -144,9 +144,23 @@ class AppTheme {
         color: AppColors.textPrimary,
       ),
       // Body — main content text, readable base size.
-      bodyLarge: TextStyle(fontSize: 16, color: AppColors.textPrimary),
-      bodyMedium: TextStyle(fontSize: 14, color: AppColors.textPrimary),
-      bodySmall: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+      // Mont ExtraLight is intentionally reserved for decorative/marketing
+      // text. Normal application copy uses the readable supplied Mont face.
+      bodyLarge: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textPrimary,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textPrimary,
+      ),
+      bodySmall: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textSecondary,
+      ),
       // Labels — buttons and captions.
       labelLarge: TextStyle(
         fontSize: 14,

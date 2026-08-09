@@ -152,6 +152,7 @@ def test_guidance_endpoint_accepts_explicit_disease_without_predicting() -> None
     assert payload["ignoredSymptoms"] == []
     assert "prediction" not in payload
     assert payload["homeCare"] == ["Rest and maintain hydration"]
+    assert payload["precautions"] == []
     assert payload["suggestedHealthCategory"] == "Needs Clinical Review"
     assert payload["categoryBasis"] == "unmapped_explicit_condition"
 

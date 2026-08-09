@@ -1994,14 +1994,10 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     );
   }
 
-  void _showAddPatientDialog() {
-    Get.snackbar(
-      'Add Patient',
-      'Patient registration form coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: _primaryAqua,
-      colorText: Colors.white,
-    );
+  Future<void> _showAddPatientDialog() async {
+    // Use the same canonical registration modal exposed by Patient Records
+    // instead of leaving this module on a non-functional placeholder.
+    await Get.to(() => const PatientRecordPage(openRegistrationOnLoad: true));
   }
 
   void _viewPatientDetails(Map<String, dynamic> patient) {

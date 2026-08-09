@@ -103,6 +103,11 @@ flutter:
         - asset: assets/Mont-ExtraLightDEMO.otf
           weight: 300
         - asset: assets/Mont-HeavyDEMO.otf
+          # The supplied Mont family has no regular face. Register the readable
+          # heavy face as the normal UI weight so body copy never falls back to
+          # the very thin ExtraLight face. Headings may still request 800.
+          weight: 500
+        - asset: assets/Mont-HeavyDEMO.otf
           weight: 800
     - family: RobotoPdf
       fonts:

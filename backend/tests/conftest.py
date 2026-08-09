@@ -8,7 +8,16 @@ from pathlib import Path
 import pytest
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
-for path in (BACKEND_DIR, BACKEND_DIR / "app", BACKEND_DIR / "firebase"):
+# Keep both invocation styles working: ``python -m pytest`` from the
+# repository root and the documented ``cd backend && python -m pytest``.
+# The latter otherwise cannot resolve imports written as ``backend.*``.
+REPOSITORY_DIR = BACKEND_DIR.parent
+for path in (
+    REPOSITORY_DIR,
+    BACKEND_DIR,
+    BACKEND_DIR / "app",
+    BACKEND_DIR / "firebase",
+):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 

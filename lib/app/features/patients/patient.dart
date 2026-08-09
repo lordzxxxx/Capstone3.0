@@ -8,7 +8,9 @@ import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 
 class PatientRecordPage extends StatefulWidget {
-  const PatientRecordPage({super.key});
+  const PatientRecordPage({super.key, this.openRegistrationOnLoad = false});
+
+  final bool openRegistrationOnLoad;
 
   @override
   State<PatientRecordPage> createState() => _PatientRecordPageState();
@@ -32,6 +34,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   bool _isSelectionMode = false;
   final Set<int> _selectedIndices = {};
   bool _isDeleteDialogShowing = false;
+  bool _registrationOpened = false;
 
   // Database helper
   final _dbHelper = PatientDatabaseHelper.instance;
@@ -47,7 +50,15 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   @override
   void initState() {
     super.initState();
-    _loadPatients();
+    _loadPatients().then((_) {
+      if (!widget.openRegistrationOnLoad || _registrationOpened || !mounted) {
+        return;
+      }
+      _registrationOpened = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showAddPatientModal();
+      });
+    });
     _dbHelper.startConnectivityListener();
   }
 

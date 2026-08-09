@@ -90,7 +90,6 @@ HR_FEATURE_INDEX = TEMP_FEATURE_INDEX + 1
 # Category-level guidance used when no keyword-specific treatment is matched.
 CATEGORY_RECOVERY_GUIDANCE = {
     'Communicable Disease': {
-        'medications': ['Use symptom-relief medicines as prescribed by a clinician'],
         'home_care': [
             'Rest and stay hydrated',
             'Monitor symptoms daily',
@@ -102,19 +101,17 @@ CATEGORY_RECOVERY_GUIDANCE = {
         ],
     },
     'Non-Communicable Disease': {
-        'medications': ['Continue maintenance medications as prescribed'],
         'home_care': [
             'Follow diet and lifestyle plan',
             'Track blood pressure or glucose as advised',
             'Keep regular follow-up appointments',
         ],
         'general_advice': [
-            'Do not stop long-term medications without medical advice',
+            'Keep scheduled clinical follow-up and monitoring',
             'Maintain routine preventive care',
         ],
     },
     'Emergency': {
-        'medications': ['Do not self-medicate before emergency assessment'],
         'home_care': ['Seek urgent in-person care immediately'],
         'general_advice': [
             'Call emergency services for severe or sudden symptoms',
@@ -122,7 +119,6 @@ CATEGORY_RECOVERY_GUIDANCE = {
         ],
     },
     'Routine Checkup': {
-        'medications': ['No medication unless prescribed after assessment'],
         'home_care': [
             'Maintain hydration, sleep, and balanced nutrition',
             'Continue preventive screening as scheduled',
@@ -133,7 +129,6 @@ CATEGORY_RECOVERY_GUIDANCE = {
         ],
     },
     'Prenatal Care': {
-        'medications': ['Prenatal supplements as prescribed'],
         'home_care': [
             'Attend regular prenatal visits',
             'Maintain healthy diet and hydration',
@@ -145,7 +140,6 @@ CATEGORY_RECOVERY_GUIDANCE = {
         ],
     },
     'Pediatric Care': {
-        'medications': ['Use pediatric-dose medicines only as prescribed'],
         'home_care': [
             'Ensure hydration, nutrition, and rest',
             'Keep vaccinations and checkups up to date',

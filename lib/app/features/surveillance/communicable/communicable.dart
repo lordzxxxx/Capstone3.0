@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
+import 'package:mycapstone_project/app/features/patients/patient.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
@@ -1136,13 +1137,9 @@ class _CommunicablePageState extends State<CommunicablePage> {
   }
 
   // Action Methods
-  void _showAddPatientDialog() {
-    Get.snackbar(
-      'Add Patient',
-      'Patient registration form coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: _primaryAqua,
-      colorText: Colors.white,
+  Future<void> _showAddPatientDialog() async {
+    await Get.to(
+      () => const PatientRecordPage(openRegistrationOnLoad: true),
     );
   }
 

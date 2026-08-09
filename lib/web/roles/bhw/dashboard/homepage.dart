@@ -14,6 +14,7 @@ import 'package:mycapstone_project/web/roles/cho/analytics/analytics.dart';
 import 'package:mycapstone_project/web/roles/bhw/prenatal/prenatal.dart';
 import 'package:mycapstone_project/web/roles/bhw/immunization/immunization.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
+import 'package:mycapstone_project/web/roles/bhw/dashboard/bhw_profile.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
@@ -2489,12 +2490,9 @@ class _HomePageState extends State<HomePage> {
                           'Review your current account identity and dashboard session details.',
                       color: _primaryAqua,
                       badge: 'Account',
-                      onTap: () {
+                      onTap: () async {
                         Navigator.of(dialogContext).pop();
-                        _showSettingsSnack(
-                          'Profile overview',
-                          'A dedicated profile screen is not available yet.',
-                        );
+                        await Get.to(() => const BHWProfilePage());
                       },
                     ),
                     const SizedBox(height: 12),

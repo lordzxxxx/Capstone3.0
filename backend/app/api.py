@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 from typing import Any
 
@@ -69,6 +70,20 @@ DISCLAIMER = (
     "medical diagnosis. Consult a licensed healthcare professional."
 )
 LOW_CONFIDENCE_WARNING = "The prediction confidence is low."
+_MEDICATION_GUIDANCE_PATTERN = re.compile(
+    r"\b(medications?|medicines?|dosage|prescription|prescribed|"
+    r"antibiotics?|inhaler)\b",
+    re.IGNORECASE,
+)
+
+
+def _safe_guidance_strings(values: list[str]) -> list[str]:
+    """Keep active guidance supportive; never return medication instructions."""
+    return [
+        value
+        for value in values
+        if not _MEDICATION_GUIDANCE_PATTERN.search(str(value))
+    ]
 
 
 class JsonLogFormatter(logging.Formatter):
@@ -383,6 +398,17 @@ def create_app() -> FastAPI:
         guidance["emergencyWarningSigns"] = merged_strings(
             guidance["emergencyWarningSigns"], "emergencyWarningSigns"
         )
+        # Firestore guidance is reviewed reference content, but older documents
+        # may still contain medication wording. Enforce the clinical boundary
+        # at the API response so active AI output stays limited to supportive
+        # care, precautions, warning signs, monitoring, and referral prompts.
+        for field in (
+            "homeCare",
+            "precautions",
+            "whenToSeekCare",
+            "emergencyWarningSigns",
+        ):
+            guidance[field] = _safe_guidance_strings(guidance[field])
         references = list(guidance["references"])
         for document in condition_documents:
             raw_references = document.get("references")

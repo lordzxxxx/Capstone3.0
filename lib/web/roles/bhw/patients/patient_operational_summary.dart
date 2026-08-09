@@ -193,6 +193,14 @@ class PatientOperationalSummary extends StatelessWidget {
           ),
         ]),
         _gap,
+        _householdSummary(),
+        _gap,
+        _healthSummary(),
+        _gap,
+        _followUpSummary(),
+        _gap,
+        _patientAlerts(),
+        _gap,
         _sectionTitle(
           'Demographic Overview',
           'Simple assigned-patient counts.',
@@ -594,6 +602,137 @@ class PatientOperationalSummary extends StatelessWidget {
         )
         .toList(growable: false),
   );
+
+  Widget _householdSummary() {
+    final households = <String>{};
+    for (final patient in patients) {
+      final household = _textValue(patient['householdId']);
+      if (household.isNotEmpty) households.add(household);
+    }
+    return _listCard(
+      title: 'Household Summary',
+      icon: Icons.home_work_outlined,
+      emptyText: 'No household assignments recorded yet.',
+      children: households.isEmpty
+          ? const []
+          : [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  '${households.length} household${households.length == 1 ? '' : 's'} represented',
+                  style: const TextStyle(
+                    color: _text,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                subtitle: Text(
+                  '${patients.length} registered patient${patients.length == 1 ? '' : 's'} linked to household records.',
+                  style: const TextStyle(color: _muted),
+                ),
+              ),
+            ],
+    );
+  }
+
+  Widget _healthSummary() {
+    final withHistory = patients
+        .where(
+          (patient) =>
+              _hasText(patient, const ['medicalHistory', 'healthHistory']),
+        )
+        .length;
+    final withAllergies = patients
+        .where((patient) => _hasText(patient, const ['allergies', 'allergy']))
+        .length;
+    return _listCard(
+      title: 'Health Summary',
+      icon: Icons.health_and_safety_outlined,
+      emptyText: 'No health information recorded yet.',
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            '$withHistory with medical history',
+            style: const TextStyle(color: _text, fontWeight: FontWeight.w700),
+          ),
+          subtitle: Text(
+            '$withAllergies with documented allergies or sensitivities.',
+            style: const TextStyle(color: _muted),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _followUpSummary() {
+    final scheduled = patients
+        .where(
+          (patient) => _hasText(patient, const [
+            'followup',
+            'followUp',
+            'followupDate',
+            'nextVisit',
+            'lastCheckup',
+          ]),
+        )
+        .length;
+    return _listCard(
+      title: 'Follow-up Summary',
+      icon: Icons.event_available_outlined,
+      emptyText: 'No follow-up schedule recorded yet.',
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            '$scheduled patient${scheduled == 1 ? '' : 's'} with follow-up information',
+            style: const TextStyle(color: _text, fontWeight: FontWeight.w700),
+          ),
+          subtitle: const Text(
+            'Review the patient history to confirm the next care action.',
+            style: TextStyle(color: _muted),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _patientAlerts() {
+    final alerts = patients.where(_isHighRisk).toList(growable: false);
+    return _listCard(
+      title: 'Patient Alerts',
+      icon: Icons.notifications_active_outlined,
+      emptyText: 'No high-risk patient alerts at this time.',
+      children: alerts
+          .take(5)
+          .map(
+            (patient) => ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange,
+              ),
+              title: Text(
+                patientDisplayName(patient),
+                style: const TextStyle(
+                  color: _text,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              subtitle: Text(
+                _textValue(patient['riskLevel']).isEmpty
+                    ? 'High-risk record requires review.'
+                    : 'Risk level: ${_textValue(patient['riskLevel'])}',
+                style: const TextStyle(color: _muted),
+              ),
+              trailing: TextButton(
+                onPressed: () => onViewPatient(patient),
+                child: const Text('View Profile'),
+              ),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
 
   Widget _listCard({
     required String title,
