@@ -302,14 +302,8 @@ class _MorbidityPageState extends State<MorbidityPage> {
           ),
         ],
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_darkDeepTeal, Color(0xFF08191C)],
-          ),
-        ),
+      body: ColoredBox(
+        color: Color(0xFFF5F7FA),
         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: _morbidityStream(),
           builder: (context, snapshot) {
@@ -1126,7 +1120,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                   color: _primaryAqua,
                 ),
                 filled: true,
-                fillColor: Colors.black.withValues(alpha: 0.16),
+                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide(

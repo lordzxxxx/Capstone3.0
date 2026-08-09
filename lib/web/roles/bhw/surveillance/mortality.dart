@@ -1458,11 +1458,7 @@ class _MortalityPageState extends State<MortalityPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_darkDeepTeal, _secondaryIceBlue],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Colors.white,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24),
@@ -1489,7 +1485,7 @@ class _MortalityPageState extends State<MortalityPage> {
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: _lightOffWhite,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -1514,7 +1510,7 @@ class _MortalityPageState extends State<MortalityPage> {
                       const Text(
                         'Real-time Data',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: _lightOffWhite,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1529,7 +1525,7 @@ class _MortalityPageState extends State<MortalityPage> {
               const Center(
                 child: Padding(
                   padding: EdgeInsets.all(20),
-                  child: CircularProgressIndicator(color: Colors.white),
+                  child: CircularProgressIndicator(color: _primaryAqua),
                 ),
               )
             else
@@ -2611,7 +2607,7 @@ class _MortalityPageState extends State<MortalityPage> {
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
-                color: _sidebarDark,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: _primaryAqua.withValues(alpha: 0.3),
@@ -2627,20 +2623,21 @@ class _MortalityPageState extends State<MortalityPage> {
               ),
               child: TextField(
                 controller: _searchController,
+                style: const TextStyle(color: _lightOffWhite),
                 onChanged: (value) {
                   _filterRecords(value);
                   _scheduleSharedPatientSearch(value);
                 },
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: _sidebarDark,
+                  fillColor: Colors.white,
                   hintText:
                       'Search by name, cause, place, or verification status...',
-                  hintStyle: TextStyle(color: Colors.white),
-                  prefixIcon: Icon(Icons.search, color: Colors.white),
+                  hintStyle: const TextStyle(color: _mutedCoolGray),
+                  prefixIcon: const Icon(Icons.search, color: _primaryAqua),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: Icon(Icons.clear, color: Colors.white),
+                          icon: const Icon(Icons.clear, color: _mutedCoolGray),
                           onPressed: () {
                             _searchController.clear();
                             _filterRecords('');
@@ -2654,7 +2651,6 @@ class _MortalityPageState extends State<MortalityPage> {
                     vertical: 14,
                   ),
                 ),
-                style: const TextStyle(color: Colors.white),
               ),
             ),
             if (_searchQuery.trim().isNotEmpty ||

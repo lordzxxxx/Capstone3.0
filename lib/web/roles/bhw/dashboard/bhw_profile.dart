@@ -8,7 +8,9 @@ import 'package:mycapstone_project/web/shared/services/user_access_scope_service
 
 const Color _profileAqua = Color(0xFF2F80ED);
 const Color _profileDark = Color(0xFF071A33);
-const Color _profileSurface = Color(0xFF0D274D);
+const Color _profileSurface = Colors.white;
+const Color _profileInk = Color(0xFF0B1F3A);
+const Color _profileMuted = Color(0xFF4B6075);
 
 class BHWProfilePage extends StatefulWidget {
   const BHWProfilePage({super.key});
@@ -318,11 +320,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
       width: double.infinity,
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0E3D43), Color(0xFF14515A)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: _profileAqua.withValues(alpha: 0.35)),
       ),
@@ -343,7 +341,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
             child: Text(
               initial,
               style: const TextStyle(
-                color: Colors.white,
+                color: _profileInk,
                 fontSize: 34,
                 fontWeight: FontWeight.w800,
               ),
@@ -357,7 +355,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
                 Text(
                   _displayName,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: _profileInk,
                     fontSize: 25,
                     fontWeight: FontWeight.w800,
                   ),
@@ -365,7 +363,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
                 const SizedBox(height: 6),
                 const Text(
                   'Barangay Health Worker',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                  style: const TextStyle(color: _profileMuted, fontSize: 14),
                 ),
                 const SizedBox(height: 14),
                 Wrap(
@@ -408,7 +406,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
           Text(
             label,
             style: const TextStyle(
-              color: Colors.white,
+              color: _profileInk,
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
             ),
@@ -440,7 +438,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
               Text(
                 title,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: _profileInk,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
@@ -453,12 +451,12 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.035),
+                color: const Color(0xFFEDF3FA),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 children: [
-                  Icon(row.icon, color: Colors.white54, size: 18),
+                  Icon(row.icon, color: _profileMuted, size: 18),
                   const SizedBox(width: 11),
                   Expanded(
                     child: Column(
@@ -467,7 +465,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
                         Text(
                           row.label,
                           style: const TextStyle(
-                            color: Colors.white54,
+                            color: _profileMuted,
                             fontSize: 10.5,
                           ),
                         ),
@@ -475,7 +473,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
                         Text(
                           row.value,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: _profileInk,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
@@ -508,7 +506,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
             const Text(
               'Profile could not be loaded',
               style: TextStyle(
-                color: Colors.white,
+                color: _profileInk,
                 fontSize: 19,
                 fontWeight: FontWeight.w700,
               ),
@@ -517,7 +515,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
             Text(
               _error ?? 'Check your connection and try again.',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white60),
+              style: const TextStyle(color: _profileMuted),
             ),
             const SizedBox(height: 16),
             FilledButton.icon(

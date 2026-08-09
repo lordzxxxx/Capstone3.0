@@ -1328,12 +1328,20 @@ class _ReferralsPageState extends State<ReferralsPage> {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: _lightOffWhite),
+      labelStyle: const TextStyle(color: _mutedCoolGray),
       filled: true,
-      fillColor: _darkDeepTeal,
+      fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(color: Color(0xFFD9E5F2)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFD9E5F2)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _primaryAqua, width: 2),
       ),
     );
   }

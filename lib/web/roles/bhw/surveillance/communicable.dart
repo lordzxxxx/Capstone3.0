@@ -24,8 +24,8 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable_insig
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _secondaryIceBlue = Color(0xFF163B66);
 const Color _darkDeepTeal = Color(0xFF071A33);
-const Color _mutedCoolGray = Color(0xFFB8C9DB);
-const Color _sidebarDark = Color(0xFF0D274D);
+const Color _mutedCoolGray = Color(0xFF4B6075);
+const Color _sidebarDark = Colors.white;
 
 final RegExp _vitalLabelPattern = RegExp(
   r'\b(?:BP|Temp|HR|Bpm|bprm|O2|Weight|Height):',
@@ -485,19 +485,16 @@ class _CommunicablePageState extends State<CommunicablePage> {
       child: TextField(
         controller: _searchController,
         onChanged: _filterPatients,
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(color: Color(0xFF0B1F3A)),
         decoration: InputDecoration(
           filled: true,
           fillColor: _sidebarDark,
           hintText: 'Search by patient name, condition, or status...',
-          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+          hintStyle: const TextStyle(color: _mutedCoolGray),
           prefixIcon: Icon(Icons.search, color: _primaryAqua),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: Icon(
-                    Icons.clear,
-                    color: Colors.white.withValues(alpha: 0.6),
-                  ),
+                  icon: Icon(Icons.clear, color: _mutedCoolGray),
                   onPressed: () {
                     _searchController.clear();
                     _filterPatients('');
@@ -527,17 +524,14 @@ class _CommunicablePageState extends State<CommunicablePage> {
               Icon(
                 Icons.search_off,
                 size: 64,
-                color: Colors.white.withValues(alpha: 0.5),
+                color: _mutedCoolGray.withValues(alpha: 0.55),
               ),
               const SizedBox(height: 16),
               Text(
                 _searchQuery.isEmpty
                     ? 'No patients found'
                     : 'No results for "$_searchQuery"',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white.withValues(alpha: 0.7),
-                ),
+                style: TextStyle(fontSize: 16, color: const Color(0xFF0B1F3A)),
               ),
             ],
           ),
@@ -605,7 +599,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
         child: Text(
           label,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.9),
+            color: const Color(0xFF0B1F3A),
             fontSize: 12,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.2,
@@ -620,7 +614,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
     return Container(
       width: 1,
       margin: const EdgeInsets.symmetric(vertical: 2),
-      color: Colors.white.withValues(alpha: 0.2),
+      color: const Color(0xFFD9E5F2),
     );
   }
 
@@ -893,9 +887,9 @@ class _CommunicablePageState extends State<CommunicablePage> {
     final status = patient['currentStatus']?.toString() ?? 'Pending';
     final statusColor = _getStatusColor(status);
 
-    final rowBg = _darkDeepTeal.withValues(alpha: 0.96);
-    const rowText = Color(0xFFF3F8FC);
-    const mutedText = Color(0xFFB1C4D5);
+    const rowBg = Colors.white;
+    const rowText = Color(0xFF0B1F3A);
+    const mutedText = Color(0xFF546E7A);
 
     return GestureDetector(
       onTap: _isSelectionMode && patientId.isNotEmpty
@@ -910,19 +904,19 @@ class _CommunicablePageState extends State<CommunicablePage> {
             }
           : null,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
+        margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: rowBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
                 ? _primaryAqua.withValues(alpha: 0.85)
-                : const Color(0xFF26476B),
+                : const Color(0xFFD9E5F2),
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           child: IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,

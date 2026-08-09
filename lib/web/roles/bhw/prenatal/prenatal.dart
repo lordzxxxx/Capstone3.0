@@ -34,9 +34,9 @@ import 'dart:math' as math;
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _secondaryIceBlue = Color(0xFF163B66);
 const Color _darkDeepTeal = Color(0xFF071A33);
-const Color _mutedCoolGray = Color(0xFFB8C9DB);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _sidebarDark = Color(0xFF0D274D);
+const Color _mutedCoolGray = Color(0xFF4B6075);
+const Color _lightOffWhite = Color(0xFF0B1F3A);
+const Color _sidebarDark = Colors.white;
 
 class PrenatalPage extends StatefulWidget {
   const PrenatalPage({super.key, this.initialPatient});
@@ -7534,7 +7534,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
-        color: _darkDeepTeal,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.3),
@@ -7543,7 +7543,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
       ),
       child: TextField(
         controller: _searchController,
-        style: const TextStyle(color: Colors.white, fontSize: 14),
+        style: const TextStyle(color: _lightOffWhite, fontSize: 14),
         onChanged: (value) {
           setState(() {
             _searchQuery = value;
@@ -7553,13 +7553,13 @@ class _PrenatalPageState extends State<PrenatalPage> {
         },
         decoration: InputDecoration(
           hintText: 'Search by name, age, contact, address...',
-          hintStyle: const TextStyle(color: Colors.white70, fontSize: 13),
+          hintStyle: const TextStyle(color: _mutedCoolGray, fontSize: 13),
           prefixIcon: Icon(Icons.search_rounded, color: _primaryAqua, size: 20),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
                   icon: const Icon(
                     Icons.clear,
-                    color: Colors.white70,
+                    color: _mutedCoolGray,
                     size: 18,
                   ),
                   onPressed: () {
@@ -7573,7 +7573,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 )
               : null,
           filled: true,
-          fillColor: _darkDeepTeal,
+          fillColor: Colors.white,
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
@@ -7928,7 +7928,7 @@ class _PrenatalCard extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 70, color: const Color(0xFF26476B));
+    return Container(width: 1, height: 70, color: const Color(0xFFD9E5F2));
   }
 
   Widget _buildIconActionButton({
@@ -8010,28 +8010,28 @@ class _PrenatalCard extends StatelessWidget {
     final timeLabel = registration['time'] ?? '';
 
     final statusColor = _getPrenatalStatusColor(status);
-    final rowBg = _darkDeepTeal.withValues(alpha: 0.96);
-    const rowText = Color(0xFFF3F8FC);
-    const mutedText = Color(0xFFB1C4D5);
+    const rowBg = Colors.white;
+    const rowText = Color(0xFF0B1F3A);
+    const mutedText = Color(0xFF546E7A);
 
     return GestureDetector(
       onTap: isSelectionMode
           ? () => onSelectionChanged(index, !isSelected)
           : null,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
+        margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: rowBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
                 ? _primaryAqua.withValues(alpha: 0.85)
-                : const Color(0xFF26476B),
+                : const Color(0xFFD9E5F2),
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [

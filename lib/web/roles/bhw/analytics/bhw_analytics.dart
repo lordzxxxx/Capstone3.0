@@ -1278,9 +1278,9 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
             width: 310,
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: _darkDeepTeal.withValues(alpha: 0.82),
+              color: _panelAlt,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              border: Border.all(color: const Color(0xFFD9E5F2)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

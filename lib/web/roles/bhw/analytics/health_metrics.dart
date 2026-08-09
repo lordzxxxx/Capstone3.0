@@ -448,14 +448,8 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
           ],
         ),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_darkDeepTeal, Color(0xFF08191C)],
-          ),
-        ),
+      body: ColoredBox(
+        color: Color(0xFFF5F7FA),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Center(
@@ -508,11 +502,7 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [_panelTealSoft, _panelTeal, _darkDeepTeal],
-        ),
+        color: _panelTeal,
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.22)),
         boxShadow: [
           BoxShadow(

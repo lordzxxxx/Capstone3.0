@@ -44,7 +44,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   static const Color _primaryAqua = Color(0xFF2F80ED);
   static const Color _secondaryIceBlue = Color(0xFF163B66);
   static const Color _darkDeepTeal = Color(0xFF071A33);
-  static const Color _mutedCoolGray = Color(0xFFB8C9DB);
+  static const Color _mutedCoolGray = Color(0xFF4B6075);
   static const Color _lightOffWhite = Color(0xFFF5F5F5);
   static const Color _sidebarDark = Color(0xFF0D274D);
 
@@ -1252,7 +1252,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
-        color: _darkDeepTeal,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.2),
@@ -1278,16 +1278,16 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
             });
           });
         },
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(color: Color(0xFF0B1F3A)),
         cursorColor: _primaryAqua,
         decoration: InputDecoration(
           hintText:
               'Search by name, Patient ID, barangay, household, or contact...',
-          hintStyle: const TextStyle(color: Colors.white),
-          prefixIcon: const Icon(Icons.search, color: Colors.white),
+          hintStyle: const TextStyle(color: Color(0xFF4B6075)),
+          prefixIcon: const Icon(Icons.search, color: _primaryAqua),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.white),
+                  icon: const Icon(Icons.clear, color: Color(0xFF4B6075)),
                   onPressed: () {
                     _searchDebounce?.cancel();
                     setState(() {
@@ -1299,8 +1299,19 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                 )
               : null,
           filled: true,
-          fillColor: Colors.transparent,
-          border: InputBorder.none,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Color(0xFFD9E5F2)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Color(0xFFD9E5F2)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: _primaryAqua, width: 2),
+          ),
           contentPadding: const EdgeInsets.all(16),
         ),
       ),

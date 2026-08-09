@@ -34,9 +34,9 @@ import 'dart:math' as math;
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _secondaryIceBlue = Color(0xFF163B66);
 const Color _darkDeepTeal = Color(0xFF071A33);
-const Color _mutedCoolGray = Color(0xFFB8C9DB);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _sidebarDark = Color(0xFF0D274D);
+const Color _mutedCoolGray = Color(0xFF4B6075);
+const Color _lightOffWhite = Color(0xFF0B1F3A);
+const Color _sidebarDark = Colors.white;
 
 ThemeData _buildDarkDatePickerTheme(BuildContext context) {
   return Theme.of(context).copyWith(
@@ -251,7 +251,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                 'Check-up records could not be loaded.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: _lightOffWhite,
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                 ),
@@ -691,7 +691,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                               Text(
                                 'Loading check-up records...',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: _lightOffWhite,
                                   fontSize: 16,
                                 ),
                               ),
@@ -846,8 +846,8 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                               Icon(
                                                                 Icons
                                                                     .check_circle_outline,
-                                                                color: Colors
-                                                                    .white,
+                                                                color:
+                                                                    _primaryAqua,
                                                                 size: 18,
                                                               ),
                                                               const SizedBox(
@@ -856,8 +856,8 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                               const Text(
                                                                 'Select',
                                                                 style: TextStyle(
-                                                                  color: Colors
-                                                                      .white,
+                                                                  color:
+                                                                      _lightOffWhite,
                                                                   fontSize: 13,
                                                                   fontWeight:
                                                                       FontWeight
@@ -969,7 +969,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                       ),
                                                       child: Icon(
                                                         Icons.inbox_rounded,
-                                                        color: Colors.white,
+                                                        color: _primaryAqua,
                                                         size: 48,
                                                       ),
                                                     ),
@@ -977,7 +977,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                     Text(
                                                       'No records found',
                                                       style: TextStyle(
-                                                        color: Colors.white,
+                                                        color: _lightOffWhite,
                                                         fontSize: 18,
                                                         fontWeight:
                                                             FontWeight.bold,
@@ -987,10 +987,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                     Text(
                                                       'Try adjusting your filters or add a new check-up record',
                                                       style: TextStyle(
-                                                        color: Colors.white
-                                                            .withValues(
-                                                              alpha: 0.7,
-                                                            ),
+                                                        color: _mutedCoolGray,
                                                         fontSize: 14,
                                                       ),
                                                     ),
@@ -1059,10 +1056,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                         'Showing ${pageStartIndex + 1}-$pageEndIndex of ${filteredRecords.length} records',
                                                         style: TextStyle(
                                                           fontSize: 12,
-                                                          color: Colors.white
-                                                              .withValues(
-                                                                alpha: 0.72,
-                                                              ),
+                                                          color: _mutedCoolGray,
                                                           fontWeight:
                                                               FontWeight.w500,
                                                         ),
@@ -1154,7 +1148,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                       icon: const Icon(
                                                         Icons.chevron_left,
                                                       ),
-                                                      color: Colors.white,
+                                                      color: _mutedCoolGray,
                                                     ),
                                                     Container(
                                                       padding:
@@ -1178,7 +1172,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                       child: Text(
                                                         '$currentPage / $totalPages',
                                                         style: const TextStyle(
-                                                          color: Colors.white,
+                                                          color: _lightOffWhite,
                                                           fontSize: 12,
                                                           fontWeight:
                                                               FontWeight.w600,
@@ -1201,7 +1195,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                       icon: const Icon(
                                                         Icons.chevron_right,
                                                       ),
-                                                      color: Colors.white,
+                                                      color: _lightOffWhite,
                                                     ),
                                                   ],
                                                 ),
@@ -1282,7 +1276,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
-                            color: Colors.white,
+                            color: _mutedCoolGray,
                             child: Icon(
                               Icons.person,
                               size: 35,
@@ -1920,7 +1914,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: const Color(0xFF0A2228),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.18),
@@ -1945,23 +1939,20 @@ class _CheckUpPageState extends State<CheckUpPage> {
           });
           _scheduleSharedPatientSearch(value);
         },
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(color: _lightOffWhite),
         decoration: InputDecoration(
           hintText:
               'Search by patient name, address, age, symptoms, or status...',
-          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.52)),
+          hintStyle: const TextStyle(color: _mutedCoolGray),
           filled: true,
-          fillColor: const Color(0xFF10343C),
+          fillColor: Colors.white,
           prefixIcon: Icon(
             Icons.search_rounded,
             color: _primaryAqua.withValues(alpha: 0.88),
           ),
           suffixIcon: _effectiveSearchQuery.isNotEmpty
               ? IconButton(
-                  icon: Icon(
-                    Icons.clear_rounded,
-                    color: Colors.white.withValues(alpha: 0.84),
-                  ),
+                  icon: Icon(Icons.clear_rounded, color: _mutedCoolGray),
                   onPressed: () {
                     _effectiveSearchController.clear();
                     setState(() {
@@ -1975,10 +1966,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
               : null,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(
-              color: Colors.white.withValues(alpha: 0.04),
-              width: 1,
-            ),
+            borderSide: BorderSide(color: const Color(0xFFD9E5F2), width: 1),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
@@ -2021,12 +2009,12 @@ class _CheckUpPageState extends State<CheckUpPage> {
       child: Row(
         children: [
           // Title Section
-          Icon(Icons.tune_rounded, color: Colors.white, size: 20),
+          Icon(Icons.tune_rounded, color: _primaryAqua, size: 20),
           const SizedBox(width: 12),
           Text(
             'Filter Results',
             style: TextStyle(
-              color: Colors.white,
+              color: _lightOffWhite,
               fontSize: 14,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.3,
@@ -2044,7 +2032,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                   'Date Range',
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: _mutedCoolGray,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.3,
                   ),
@@ -3008,7 +2996,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: _lightOffWhite,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
@@ -3016,10 +3004,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.58),
-                        fontSize: 11.5,
-                      ),
+                      style: TextStyle(color: _mutedCoolGray, fontSize: 11.5),
                     ),
                   ],
                 ),
@@ -4071,7 +4056,7 @@ class _CheckUpCard extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 70, color: const Color(0xFF26476B));
+    return Container(width: 1, height: 70, color: const Color(0xFFD9E5F2));
   }
 
   Widget _buildActionButton({
@@ -4118,28 +4103,28 @@ class _CheckUpCard extends StatelessWidget {
     final symptoms = _safe(record['symptoms'], 'No symptoms recorded');
     final vitals = _safe(record['vitalsigns'], 'No vitals recorded');
 
-    final rowBg = _darkDeepTeal.withValues(alpha: 0.96);
-    const rowText = Color(0xFFF3F8FC);
-    const mutedText = Color(0xFFB1C4D5);
+    const rowBg = Colors.white;
+    const rowText = Color(0xFF0B1F3A);
+    const mutedText = Color(0xFF546E7A);
 
     return GestureDetector(
       onTap: isSelectionMode
           ? () => onSelectionChanged(index, !isSelected)
           : () => onViewHistory(record),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
+        margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: rowBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
                 ? _primaryAqua.withValues(alpha: 0.85)
-                : const Color(0xFF26476B),
+                : const Color(0xFFD9E5F2),
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [

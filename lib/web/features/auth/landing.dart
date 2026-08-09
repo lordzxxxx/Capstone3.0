@@ -142,9 +142,9 @@ class _LandingPageState extends State<LandingPage>
           child: Container(
             padding: const EdgeInsets.fromLTRB(28, 26, 28, 22),
             decoration: BoxDecoration(
-              color: AppColors.surfaceDark,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: _primaryAqua.withValues(alpha: 0.32)),
+              border: Border.all(color: const Color(0xFFD9E5F2)),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x66000000),
@@ -176,30 +176,30 @@ class _LandingPageState extends State<LandingPage>
                     Expanded(
                       child: Text(
                         'Create your AI-DSUHIS account',
-                        style: _display(size: 19, letterSpacing: 0.1),
+                        style: _display(
+                          size: 19,
+                          letterSpacing: 0.1,
+                          color: _darkDeepTeal,
+                        ),
                       ),
                     ),
                     IconButton(
                       tooltip: 'Close',
                       onPressed: () => Navigator.of(dialogContext).pop(),
                       icon: const Icon(Icons.close_rounded),
-                      color: _lightOffWhite.withValues(alpha: 0.72),
+                      color: _darkDeepTeal.withValues(alpha: 0.64),
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
                 Text(
                   'Choose your access role',
-                  style: _display(size: 25, color: AppColors.textOnDark),
+                  style: _display(size: 25, color: _darkDeepTeal),
                 ),
                 const SizedBox(height: 7),
                 Text(
                   'Select the workspace that matches your responsibilities. Public BHW requests are reviewed by the City Health Office before activation.',
-                  style: _body(
-                    size: 13.5,
-                    color: AppColors.textOnDark.withValues(alpha: 0.72),
-                    height: 1.45,
-                  ),
+                  style: _body(size: 13.5, color: _mutedCoolGray, height: 1.45),
                 ),
                 const SizedBox(height: 18),
                 Container(
@@ -228,7 +228,7 @@ class _LandingPageState extends State<LandingPage>
                           'Your role controls the forms, approvals, and portal features available after sign-in.',
                           style: _body(
                             size: 12.5,
-                            color: AppColors.textOnDark.withValues(alpha: 0.78),
+                            color: _darkDeepTeal.withValues(alpha: 0.82),
                             height: 1.35,
                           ),
                         ),
@@ -277,9 +277,7 @@ class _LandingPageState extends State<LandingPage>
                   child: TextButton(
                     onPressed: () => Navigator.of(dialogContext).pop(),
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.textOnDark.withValues(
-                        alpha: 0.72,
-                      ),
+                      foregroundColor: _darkDeepTeal.withValues(alpha: 0.72),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 10,
@@ -316,7 +314,7 @@ class _LandingPageState extends State<LandingPage>
           child: Ink(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.backgroundDark.withValues(alpha: 0.72),
+              color: const Color(0xFFF7FAFC),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: accent.withValues(alpha: 0.34)),
             ),
@@ -345,7 +343,7 @@ class _LandingPageState extends State<LandingPage>
                               style: _body(
                                 size: 14,
                                 weight: FontWeight.w800,
-                                color: AppColors.textOnDark,
+                                color: _darkDeepTeal,
                               ),
                             ),
                           ),
@@ -364,7 +362,7 @@ class _LandingPageState extends State<LandingPage>
                         description,
                         style: _body(
                           size: 12,
-                          color: AppColors.textOnDark.withValues(alpha: 0.66),
+                          color: _mutedCoolGray,
                           height: 1.35,
                         ),
                       ),
