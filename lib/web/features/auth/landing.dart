@@ -8,6 +8,9 @@ import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 const Color _primaryAqua = Color(0xFF00A8B5);
 const Color _primaryAquaBright = Color(0xFF29C7D1);
 const Color _secondaryIceBlue = Color(0xFF1E5A7A);
+// Clean solid navy used for the access panel's buttons — flatter and more
+// restrained than the teal gradient, per request.
+const Color _darkBlue = Color(0xFF123A5C);
 const Color _darkDeepTeal = Color(0xFF0A1F24);
 const Color _mutedCoolGray = Color(0xFF546E7A);
 const Color _lightOffWhite = Color(0xFFF5F5F5);
@@ -51,22 +54,56 @@ class LandingPage extends StatefulWidget {
   State<LandingPage> createState() => _LandingPageState();
 }
 
-class _LandingPageState extends State<LandingPage> {
+class _LandingPageState extends State<LandingPage>
+    with TickerProviderStateMixin {
   static bool _hasShownIntroLoader = false;
 
   bool _showIntroLoader = !_hasShownIntroLoader;
   bool _didPrecacheLogo = false;
 
+  // Slow, continuous "Ken Burns" breathing zoom on the backdrop photo.
+  late final AnimationController _bgController;
+  // One-shot staggered entrance for the hero branding and access panel.
+  late final AnimationController _contentController;
+  late final Animation<double> _heroEntrance;
+  late final Animation<double> _panelEntrance;
+
   @override
   void initState() {
     super.initState();
+    _bgController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 24),
+    )..repeat(reverse: true);
+    _contentController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _heroEntrance = CurvedAnimation(
+      parent: _contentController,
+      curve: const Interval(0.0, 0.75, curve: Curves.easeOut),
+    );
+    _panelEntrance = CurvedAnimation(
+      parent: _contentController,
+      curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
+    );
     if (_showIntroLoader) {
       Future<void>.delayed(const Duration(milliseconds: 1150), () {
         if (!mounted) return;
         setState(() => _showIntroLoader = false);
         _hasShownIntroLoader = true;
+        _contentController.forward();
       });
+    } else {
+      _contentController.forward();
     }
+  }
+
+  @override
+  void dispose() {
+    _bgController.dispose();
+    _contentController.dispose();
+    super.dispose();
   }
 
   @override
@@ -76,6 +113,21 @@ class _LandingPageState extends State<LandingPage> {
     precacheImage(const AssetImage('assets/newlogo_white.png'), context);
     precacheImage(const AssetImage('assets/bg2.2.png'), context);
     _didPrecacheLogo = true;
+  }
+
+  Widget _fadeSlideIn({
+    required Animation<double> animation,
+    required Widget child,
+  }) {
+    return FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position: animation.drive(
+          Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero),
+        ),
+        child: child,
+      ),
+    );
   }
 
   Future<String?> _showRoleSelectionDialog(BuildContext context) {
@@ -170,20 +222,28 @@ class _LandingPageState extends State<LandingPage> {
             // same bg2.2.png photo as login/signup so the whole auth flow
             // reads as one visual system.
             Positioned.fill(
-              child: Image.asset(
-                'assets/bg2.2.png',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [_darkDeepTeal, _darkDeepTeal, _sidebarDark],
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 1.0, end: 1.045).animate(
+                  CurvedAnimation(
+                    parent: _bgController,
+                    curve: Curves.easeInOut,
+                  ),
+                ),
+                child: Image.asset(
+                  'assets/bg2.2.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [_darkDeepTeal, _darkDeepTeal, _sidebarDark],
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
             // Deep navy/teal/blue layered scrim over the photo so the hero
@@ -354,12 +414,15 @@ class _LandingPageState extends State<LandingPage> {
                 vertical: _responsive(height, 0.012, 10, 16),
               );
 
-        final hero = _buildHeroPanel(
-          logoSize: logoSize,
-          titleSize: titleSize,
-          subtitleSize: subtitleSize,
-          contentPadding: contentPadding,
-          isDesktop: isDesktop,
+        final hero = _fadeSlideIn(
+          animation: _heroEntrance,
+          child: _buildHeroPanel(
+            logoSize: logoSize,
+            titleSize: titleSize,
+            subtitleSize: subtitleSize,
+            contentPadding: contentPadding,
+            isDesktop: isDesktop,
+          ),
         );
 
         if (isDesktop) {
@@ -381,7 +444,10 @@ class _LandingPageState extends State<LandingPage> {
                         alignment: Alignment.center,
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 430),
-                          child: _buildAccessPanel(context, compact: false),
+                          child: _fadeSlideIn(
+                            animation: _panelEntrance,
+                            child: _buildAccessPanel(context, compact: false),
+                          ),
                         ),
                       ),
                     ),
@@ -405,7 +471,12 @@ class _LandingPageState extends State<LandingPage> {
               children: [
                 Flexible(child: hero),
                 SizedBox(height: _responsive(height, 0.018, 10, 18)),
-                Flexible(child: _buildAccessPanel(context, compact: true)),
+                Flexible(
+                  child: _fadeSlideIn(
+                    animation: _panelEntrance,
+                    child: _buildAccessPanel(context, compact: true),
+                  ),
+                ),
               ],
             ),
           ),
@@ -517,7 +588,7 @@ class _LandingPageState extends State<LandingPage> {
       constraints: compact ? null : const BoxConstraints(maxWidth: 500),
       padding: EdgeInsets.all(compact ? 0 : 40),
       child: Container(
-        padding: EdgeInsets.all(compact ? 28 : 40),
+        padding: EdgeInsets.all(compact ? 24 : 36),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
@@ -531,27 +602,28 @@ class _LandingPageState extends State<LandingPage> {
           ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               'Welcome Back',
               style: _display(
-                size: compact ? 26 : 32,
+                size: compact ? 24 : 28,
                 weight: FontWeight.w800,
                 color: _darkDeepTeal,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               'Sign in to continue to your healthcare portal.',
               style: _body(
-                size: 14.5,
+                size: 14,
                 weight: FontWeight.w500,
                 color: _mutedCoolGray,
               ),
             ),
-            SizedBox(height: compact ? 28 : 36),
+            SizedBox(height: compact ? 22 : 28),
             _buildActionButton(
               context: context,
               label: 'Login as BHW',
@@ -588,7 +660,7 @@ class _LandingPageState extends State<LandingPage> {
                 );
               },
             ),
-            SizedBox(height: compact ? 28 : 40),
+            SizedBox(height: compact ? 20 : 24),
             Text(
               '(c) 2026 AI-DSUHIS. All rights reserved.',
               style: _body(
@@ -752,13 +824,13 @@ class _LandingPageState extends State<LandingPage> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isPrimary
-                ? Colors.black.withValues(alpha: 0.12)
-                : _primaryAqua.withValues(alpha: 0.14),
+                ? Colors.white.withValues(alpha: 0.16)
+                : _darkBlue.withValues(alpha: 0.10),
           ),
           child: Icon(
             icon,
             size: 18,
-            color: isPrimary ? Colors.white : _primaryAqua,
+            color: isPrimary ? Colors.white : _darkBlue,
           ),
         ),
         const SizedBox(width: 14),
@@ -767,54 +839,32 @@ class _LandingPageState extends State<LandingPage> {
           style: _body(
             size: 16,
             weight: FontWeight.w700,
-            color: isPrimary ? Colors.white : _darkDeepTeal,
+            color: isPrimary ? Colors.white : _darkBlue,
           ),
         ),
       ],
     );
 
-    if (isPrimary) {
-      return Container(
-        height: 60,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [_primaryAquaBright, _primaryAqua],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: _primaryAqua.withValues(alpha: 0.35),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: onPressed,
-            child: Center(child: child),
-          ),
-        ),
-      );
-    }
-
+    // Flat, solid navy for both variants — primary is fully filled, secondary
+    // is a light tint of the same color — instead of the previous teal
+    // gradient + neutral-gray split, for a cleaner, single-color system.
     return Container(
-      height: 60,
+      height: 56,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFFF1F5F7),
-        border: Border.all(color: const Color(0xFFE5EEF0)),
+        borderRadius: BorderRadius.circular(14),
+        color: isPrimary ? _darkBlue : _darkBlue.withValues(alpha: 0.06),
+        border: isPrimary
+            ? null
+            : Border.all(color: _darkBlue.withValues(alpha: 0.16)),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           onTap: onPressed,
-          hoverColor: _primaryAqua.withValues(alpha: 0.08),
+          hoverColor: isPrimary
+              ? Colors.white.withValues(alpha: 0.08)
+              : _darkBlue.withValues(alpha: 0.08),
           child: Center(child: child),
         ),
       ),

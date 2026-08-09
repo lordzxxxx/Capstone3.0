@@ -12,6 +12,7 @@ import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
+import 'package:mycapstone_project/web/features/auth/landing.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/roles/cho/dashboard/cho_dashboard.dart';
 import 'package:mycapstone_project/web/features/auth/cho_access_session.dart';
@@ -1125,7 +1126,7 @@ class _SignupState extends State<Signup> {
                     }
                     replaceWithAuthPage(
                       context,
-                      const Login(),
+                      const LandingPage(),
                       begin: const Offset(-0.06, 0),
                     );
                   },

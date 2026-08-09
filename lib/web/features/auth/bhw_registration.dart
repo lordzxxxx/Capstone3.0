@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
+import 'package:mycapstone_project/web/features/auth/landing.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
@@ -526,38 +527,6 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
                 ),
               ),
             ),
-            Positioned(
-              top: 16,
-              left: 16,
-              child: SafeArea(
-                child: IconButton(
-                  tooltip: 'Back to login',
-                  icon: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      // Kept dark (matches the floating back button on every
-                      // other auth page) even though the form content below
-                      // switches to a white surface.
-                      color: _page,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 14,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                  onPressed: () => replaceWithAuthPage(context, const Login()),
-                ),
-              ),
-            ),
             SafeArea(
               child: Form(
                 key: _formKey,
@@ -794,6 +763,43 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
                       ),
                     ),
                   ),
+                ),
+              ),
+            ),
+            // Painted after the form so it actually receives taps — the
+            // scroll view's top padding is part of its hit-test area even
+            // though it renders empty, and would otherwise swallow clicks
+            // meant for this button.
+            Positioned(
+              top: 16,
+              left: 16,
+              child: SafeArea(
+                child: IconButton(
+                  tooltip: 'Back to landing',
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      // Kept dark (matches the floating back button on every
+                      // other auth page) even though the form content below
+                      // switches to a white surface.
+                      color: _page,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 14,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  onPressed: () =>
+                      replaceWithAuthPage(context, const LandingPage()),
                 ),
               ),
             ),
