@@ -106,6 +106,18 @@ flutter:
         - asset: fonts/Roboto-BoldItalic.ttf
           weight: 700
           style: italic
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope/Manrope-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Manrope/Manrope-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Manrope/Manrope-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Manrope/Manrope-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Manrope/Manrope-ExtraBold.ttf
+          weight: 800
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

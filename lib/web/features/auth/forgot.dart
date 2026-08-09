@@ -99,19 +99,14 @@ class _ForgotPasswordState extends State<ForgotPassword> {
     super.dispose();
   }
 
-  Widget _buildBackdropOrb({
-    required double size,
-    required Color color,
-  }) {
+  Widget _buildBackdropOrb({required double size, required Color color}) {
     return IgnorePointer(
       child: Container(
         width: size,
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [color, color.withValues(alpha: 0)],
-          ),
+          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
         ),
       ),
     );
@@ -147,104 +142,138 @@ class _ForgotPasswordState extends State<ForgotPassword> {
     final size = MediaQuery.of(context).size;
     final isWideScreen = size.width > 900;
 
-    return Scaffold(
-      backgroundColor: _darkDeepTeal,
-      body: Stack(
-        children: [
-          // Background gradient pattern
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [_darkDeepTeal, _darkDeepTeal, _sidebarDark],
-              ),
-            ),
-          ),
-
-          Positioned(
-            top: -100,
-            right: -100,
-            child: _buildBackdropOrb(
-              size: 300,
-              color: _primaryAqua.withValues(alpha: 0.14),
-            ),
-          ),
-
-          Positioned(
-            bottom: -150,
-            left: -150,
-            child: _buildBackdropOrb(
-              size: 400,
-              color: _secondaryIceBlue.withValues(alpha: 0.10),
-            ),
-          ),
-          Positioned(
-            top: size.height * 0.18,
-            left: size.width * 0.12,
-            child: _buildBackdropOrb(
-              size: 220,
-              color: _sidebarDark.withValues(alpha: 0.82),
-            ),
-          ),
-
-          // Main content
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isWideScreen ? 0 : 24,
-                    vertical: 40,
-                  ),
-                  child: isWideScreen
-                      ? _buildWideScreenLayout(context)
-                      : _buildMobileLayout(context),
-                ),
-              ),
-            ),
-          ),
-
-          // Back button
-          Positioned(
-            top: 16,
-            left: 16,
-            child: SafeArea(
-              child: IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: _sidebarDark,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _primaryAqua.withValues(alpha: 0.18),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.18),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+    return Theme(
+      data: Theme.of(context).copyWith(
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Manrope'),
+      ),
+      child: Scaffold(
+        backgroundColor: _darkDeepTeal,
+        body: Stack(
+          children: [
+            // Same bg2.2.png hero photo as login/signup/BHW registration, with
+            // a deep navy/teal scrim, so this page reads as part of the same
+            // auth flow rather than a separate utility screen.
+            Positioned.fill(
+              child: Image.asset(
+                'assets/bg2.2.png',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [_darkDeepTeal, _darkDeepTeal, _sidebarDark],
                       ),
-                    ],
-                  ),
-                  child: const Icon(Icons.arrow_back, color: _lightOffWhite, size: 24),
-                ),
-                onPressed: () {
-                  final navigator = Navigator.of(context);
-                  if (navigator.canPop()) {
-                    navigator.pop();
-                    return;
-                  }
-                  replaceWithAuthPage(
-                    context,
-                    const Login(),
-                    begin: const Offset(-0.06, 0),
+                    ),
                   );
                 },
               ),
             ),
-          ),
-        ],
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      _darkDeepTeal.withValues(alpha: 0.72),
+                      _secondaryIceBlue.withValues(alpha: 0.55),
+                      _sidebarDark.withValues(alpha: 0.86),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            Positioned(
+              top: -100,
+              right: -100,
+              child: _buildBackdropOrb(
+                size: 300,
+                color: _primaryAqua.withValues(alpha: 0.14),
+              ),
+            ),
+
+            Positioned(
+              bottom: -150,
+              left: -150,
+              child: _buildBackdropOrb(
+                size: 400,
+                color: _secondaryIceBlue.withValues(alpha: 0.10),
+              ),
+            ),
+            Positioned(
+              top: size.height * 0.18,
+              left: size.width * 0.12,
+              child: _buildBackdropOrb(
+                size: 220,
+                color: _sidebarDark.withValues(alpha: 0.82),
+              ),
+            ),
+
+            // Main content
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isWideScreen ? 0 : 24,
+                      vertical: 40,
+                    ),
+                    child: isWideScreen
+                        ? _buildWideScreenLayout(context)
+                        : _buildMobileLayout(context),
+                  ),
+                ),
+              ),
+            ),
+
+            // Back button
+            Positioned(
+              top: 16,
+              left: 16,
+              child: SafeArea(
+                child: IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _sidebarDark,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _primaryAqua.withValues(alpha: 0.18),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.18),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: _lightOffWhite,
+                      size: 24,
+                    ),
+                  ),
+                  onPressed: () {
+                    final navigator = Navigator.of(context);
+                    if (navigator.canPop()) {
+                      navigator.pop();
+                      return;
+                    }
+                    replaceWithAuthPage(
+                      context,
+                      const Login(),
+                      begin: const Offset(-0.06, 0),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -329,11 +358,20 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                     ),
                   ),
                   const SizedBox(height: 40),
-                  _buildFeatureItem(Icons.mark_email_read_outlined, 'Secure Email Recovery'),
+                  _buildFeatureItem(
+                    Icons.mark_email_read_outlined,
+                    'Secure Email Recovery',
+                  ),
                   const SizedBox(height: 16),
-                  _buildFeatureItem(Icons.verified_user_outlined, 'Protected Account Access'),
+                  _buildFeatureItem(
+                    Icons.verified_user_outlined,
+                    'Protected Account Access',
+                  ),
                   const SizedBox(height: 16),
-                  _buildFeatureItem(Icons.lock_clock_outlined, 'Fast Reset Workflow'),
+                  _buildFeatureItem(
+                    Icons.lock_clock_outlined,
+                    'Fast Reset Workflow',
+                  ),
                 ],
               ),
             ),
@@ -551,7 +589,9 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                       height: 24,
                       width: 24,
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(_darkDeepTeal),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          _darkDeepTeal,
+                        ),
                         strokeWidth: 2.5,
                       ),
                     )

@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
@@ -13,14 +12,13 @@ import 'package:mycapstone_project/web/shared/services/account_policy_service.da
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 
 const _blue = Color(0xFF00A8B5);
-const _blueDark = Color(0xFF0A2830);
 const _aqua = Color(0xFF00A8B5);
-const _ink = Color(0xFFF5F7FA);
-const _muted = Color(0xFFA8BBC2);
+const _ink = Color(0xFF0A1F24);
+const _muted = Color(0xFF546E7A);
 const _page = Color(0xFF0A1F24);
-const _surface = Color(0xFF102E38);
-const _surfaceAlt = Color(0xFF123B46);
-const _border = Color(0xFF28515A);
+const _surface = Colors.white;
+const _surfaceAlt = Color(0xFFF1F5F7);
+const _border = Color(0xFFE5EEF0);
 
 class BhwRegistrationPage extends StatefulWidget {
   const BhwRegistrationPage({super.key});
@@ -225,8 +223,8 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
       firstDate: birthDate ? DateTime(1940) : DateTime(1970),
       lastDate: DateTime.now(),
       builder: (context, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
+        data: ThemeData.light().copyWith(
+          colorScheme: const ColorScheme.light(
             primary: _aqua,
             surface: _surface,
             onSurface: _ink,
@@ -491,249 +489,315 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
   @override
   Widget build(BuildContext context) {
     if (_submitted) return _successPage();
-    return Scaffold(
-      backgroundColor: _page,
-      appBar: AppBar(
-        backgroundColor: _page,
-        foregroundColor: _ink,
-        elevation: 0,
-        leading: IconButton(
-          tooltip: 'Back to login',
-          onPressed: () => replaceWithAuthPage(context, const Login()),
-          icon: const Icon(Icons.arrow_back_rounded),
-        ),
-        title: Row(
-          children: [
-            const Icon(Icons.health_and_safety_rounded, color: _aqua),
-            const SizedBox(width: 10),
-            Text(
-              'BHW Account Registration',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
-            ),
-          ],
-        ),
+    return Theme(
+      data: Theme.of(context).copyWith(
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Manrope'),
       ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.fromLTRB(20, 28, 20, 48),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1180),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _pageHeader(),
-                    const SizedBox(height: 24),
-                    _section(
-                      number: '01',
-                      title: 'Personal Information',
-                      icon: Icons.badge_outlined,
-                      children: [
-                        _field(_firstName, 'First Name *', required: true),
-                        _field(_middleName, 'Middle Name'),
-                        _field(_lastName, 'Last Name *', required: true),
-                        _field(_suffix, 'Suffix', hint: 'Jr., Sr., III'),
-                        _dateField(
-                          'Date of Birth *',
-                          _dateOfBirth,
-                          () => _pickDate(birthDate: true),
-                          required: true,
-                        ),
-                        _dropdown('Sex *', _sex, const [
-                          'Male',
-                          'Female',
-                        ], (value) => setState(() => _sex = value)),
-                        _dropdown(
-                          'Civil Status *',
-                          _civilStatus,
-                          const ['Single', 'Married', 'Widowed', 'Separated'],
-                          (value) => setState(() => _civilStatus = value),
-                        ),
-                        _field(
-                          _contact,
-                          'Contact Number *',
-                          required: true,
-                          keyboard: TextInputType.phone,
-                          formatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'[0-9+]'),
-                            ),
-                            LengthLimitingTextInputFormatter(15),
-                          ],
-                          validator: (value) =>
-                              RegExp(r'^(\+63|0)\d{10}$').hasMatch(value.trim())
-                              ? null
-                              : 'Use 09XXXXXXXXX or +639XXXXXXXXX.',
-                        ),
-                        _field(
-                          _email,
-                          'Email Address *',
-                          required: true,
-                          keyboard: TextInputType.emailAddress,
-                          validator: (value) => _validEmail(value.trim())
-                              ? null
-                              : 'Enter a valid email address.',
-                          helper: _emailMessage,
-                          helperGood: _emailAvailable,
-                        ),
-                        _field(
-                          _residentialAddress,
-                          'Residential Address *',
-                          required: true,
-                          wide: true,
-                          hint: 'House number, street or landmark',
-                        ),
-                        _field(_province, 'Province *', required: true),
-                        _field(
-                          _municipality,
-                          'Municipality / City *',
-                          required: true,
-                        ),
-                        _barangayDropdown(
-                          'Barangay *',
-                          _residentialBarangay,
-                          (value) =>
-                              setState(() => _residentialBarangay = value),
-                        ),
-                        _field(_sitio, 'Sitio / Purok'),
-                      ],
-                    ),
-                    _section(
-                      number: '02',
-                      title: 'BHW Information',
-                      icon: Icons.medical_services_outlined,
-                      children: [
-                        _field(
-                          _bhwId,
-                          'BHW ID Number',
-                          hint: 'Optional if not yet assigned',
-                        ),
-                        _barangayDropdown(
-                          'Assigned Barangay *',
-                          _assignedBarangay,
-                          (value) => setState(() => _assignedBarangay = value),
-                        ),
-                        _field(_assignedSitio, 'Assigned Sitio / Purok'),
-                        _field(
-                          _yearsOfService,
-                          'Years of Service',
-                          keyboard: TextInputType.number,
-                          formatters: [FilteringTextInputFormatter.digitsOnly],
-                          validator: (value) =>
-                              value.isNotEmpty &&
-                                  (int.tryParse(value) ?? -1) < 0
-                              ? 'Enter a valid number.'
-                              : null,
-                        ),
-                        _dateField(
-                          'Date Started as BHW',
-                          _dateStarted,
-                          () => _pickDate(birthDate: false),
-                        ),
-                        _field(_position, 'Position', readOnly: true),
-                        _dropdown(
-                          'Employment Status',
-                          _employmentStatus,
-                          const ['Active', 'Volunteer', 'Contractual'],
-                          (value) => setState(
-                            () => _employmentStatus = value ?? 'Volunteer',
-                          ),
-                        ),
-                      ],
-                    ),
-                    _section(
-                      number: '03',
-                      title: 'Account Credentials',
-                      icon: Icons.lock_person_outlined,
-                      children: [
-                        _field(
-                          _username,
-                          'Username *',
-                          required: true,
-                          validator: (value) =>
-                              RegExp(
-                                r'^[A-Za-z0-9._-]{3,30}$',
-                              ).hasMatch(value.trim())
-                              ? null
-                              : 'Use 3–30 letters, numbers, dots, dashes, or underscores.',
-                          helper: _usernameMessage,
-                          helperGood: _usernameAvailable,
-                        ),
-                        _field(
-                          _email,
-                          'Account Email *',
-                          required: true,
-                          readOnly: true,
-                          helper:
-                              'Uses the email entered in Personal Information.',
-                        ),
-                        _passwordField(
-                          _password,
-                          'Password *',
-                          _obscurePassword,
-                          () => setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          ),
-                        ),
-                        _passwordField(
-                          _confirmPassword,
-                          'Confirm Password *',
-                          _obscureConfirm,
-                          () => setState(
-                            () => _obscureConfirm = !_obscureConfirm,
-                          ),
-                          confirm: true,
-                        ),
-                        _passwordRequirements(),
-                      ],
-                    ),
-                    _declarationSection(),
-                    const SizedBox(height: 22),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 58,
-                      child: FilledButton.icon(
-                        onPressed: !_allDeclarations || _submitting
-                            ? null
-                            : _submit,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: _aqua,
-                          foregroundColor: _page,
-                          disabledBackgroundColor: _surfaceAlt,
-                          disabledForegroundColor: _muted,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        icon: _submitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.4,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.send_rounded),
-                        label: Text(
-                          _submitting
-                              ? 'Submitting registration...'
-                              : 'Submit Registration Request',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+      child: Scaffold(
+        backgroundColor: _page,
+        body: Stack(
+          children: [
+            // Same bg2.2.png hero photo + navy/teal scrim as the rest of the
+            // auth flow, so this page reads as part of one application
+            // instead of a separate admin form bolted onto the side.
+            Positioned.fill(
+              child: Image.asset(
+                'assets/bg2.2.png',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const DecoratedBox(
+                    decoration: BoxDecoration(color: _page),
+                  );
+                },
+              ),
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      _page.withValues(alpha: 0.86),
+                      const Color(0xFF1E5A7A).withValues(alpha: 0.68),
+                      _page.withValues(alpha: 0.92),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
+            Positioned(
+              top: 16,
+              left: 16,
+              child: SafeArea(
+                child: IconButton(
+                  tooltip: 'Back to login',
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      // Kept dark (matches the floating back button on every
+                      // other auth page) even though the form content below
+                      // switches to a white surface.
+                      color: _page,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 14,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  onPressed: () => replaceWithAuthPage(context, const Login()),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  // Generous top padding keeps the form floating clear of the
+                  // back button instead of butting up against the top edge.
+                  padding: const EdgeInsets.fromLTRB(24, 96, 24, 72),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1180),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _pageHeader(),
+                          const SizedBox(height: 28),
+                          _section(
+                            number: '01',
+                            title: 'Personal Information',
+                            children: [
+                              _field(
+                                _firstName,
+                                'First Name *',
+                                required: true,
+                              ),
+                              _field(_middleName, 'Middle Name'),
+                              _field(_lastName, 'Last Name *', required: true),
+                              _field(_suffix, 'Suffix', hint: 'Jr., Sr., III'),
+                              _dateField(
+                                'Date of Birth *',
+                                _dateOfBirth,
+                                () => _pickDate(birthDate: true),
+                                required: true,
+                              ),
+                              _dropdown('Sex *', _sex, const [
+                                'Male',
+                                'Female',
+                              ], (value) => setState(() => _sex = value)),
+                              _dropdown(
+                                'Civil Status *',
+                                _civilStatus,
+                                const [
+                                  'Single',
+                                  'Married',
+                                  'Widowed',
+                                  'Separated',
+                                ],
+                                (value) => setState(() => _civilStatus = value),
+                              ),
+                              _field(
+                                _contact,
+                                'Contact Number *',
+                                required: true,
+                                keyboard: TextInputType.phone,
+                                formatters: [
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'[0-9+]'),
+                                  ),
+                                  LengthLimitingTextInputFormatter(15),
+                                ],
+                                validator: (value) =>
+                                    RegExp(
+                                      r'^(\+63|0)\d{10}$',
+                                    ).hasMatch(value.trim())
+                                    ? null
+                                    : 'Use 09XXXXXXXXX or +639XXXXXXXXX.',
+                              ),
+                              _field(
+                                _email,
+                                'Email Address *',
+                                required: true,
+                                keyboard: TextInputType.emailAddress,
+                                validator: (value) => _validEmail(value.trim())
+                                    ? null
+                                    : 'Enter a valid email address.',
+                                helper: _emailMessage,
+                                helperGood: _emailAvailable,
+                              ),
+                              _field(
+                                _residentialAddress,
+                                'Residential Address *',
+                                required: true,
+                                wide: true,
+                                hint: 'House number, street or landmark',
+                              ),
+                              _field(_province, 'Province *', required: true),
+                              _field(
+                                _municipality,
+                                'Municipality / City *',
+                                required: true,
+                              ),
+                              _barangayDropdown(
+                                'Barangay *',
+                                _residentialBarangay,
+                                (value) => setState(
+                                  () => _residentialBarangay = value,
+                                ),
+                              ),
+                              _field(_sitio, 'Sitio / Purok'),
+                            ],
+                          ),
+                          _section(
+                            number: '02',
+                            title: 'BHW Information',
+                            children: [
+                              _field(
+                                _bhwId,
+                                'BHW ID Number',
+                                hint: 'Optional if not yet assigned',
+                              ),
+                              _barangayDropdown(
+                                'Assigned Barangay *',
+                                _assignedBarangay,
+                                (value) =>
+                                    setState(() => _assignedBarangay = value),
+                              ),
+                              _field(_assignedSitio, 'Assigned Sitio / Purok'),
+                              _field(
+                                _yearsOfService,
+                                'Years of Service',
+                                keyboard: TextInputType.number,
+                                formatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                validator: (value) =>
+                                    value.isNotEmpty &&
+                                        (int.tryParse(value) ?? -1) < 0
+                                    ? 'Enter a valid number.'
+                                    : null,
+                              ),
+                              _dateField(
+                                'Date Started as BHW',
+                                _dateStarted,
+                                () => _pickDate(birthDate: false),
+                              ),
+                              _field(_position, 'Position', readOnly: true),
+                              _dropdown(
+                                'Employment Status',
+                                _employmentStatus,
+                                const ['Active', 'Volunteer', 'Contractual'],
+                                (value) => setState(
+                                  () =>
+                                      _employmentStatus = value ?? 'Volunteer',
+                                ),
+                              ),
+                            ],
+                          ),
+                          _section(
+                            number: '03',
+                            title: 'Account Credentials',
+                            children: [
+                              _field(
+                                _username,
+                                'Username *',
+                                required: true,
+                                validator: (value) =>
+                                    RegExp(
+                                      r'^[A-Za-z0-9._-]{3,30}$',
+                                    ).hasMatch(value.trim())
+                                    ? null
+                                    : 'Use 3–30 letters, numbers, dots, dashes, or underscores.',
+                                helper: _usernameMessage,
+                                helperGood: _usernameAvailable,
+                              ),
+                              _field(
+                                _email,
+                                'Account Email *',
+                                required: true,
+                                readOnly: true,
+                                helper:
+                                    'Uses the email entered in Personal Information.',
+                              ),
+                              _passwordField(
+                                _password,
+                                'Password *',
+                                _obscurePassword,
+                                () => setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
+                              ),
+                              _passwordField(
+                                _confirmPassword,
+                                'Confirm Password *',
+                                _obscureConfirm,
+                                () => setState(
+                                  () => _obscureConfirm = !_obscureConfirm,
+                                ),
+                                confirm: true,
+                              ),
+                              _passwordRequirements(),
+                            ],
+                          ),
+                          _declarationSection(),
+                          const SizedBox(height: 22),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 58,
+                            child: FilledButton.icon(
+                              onPressed: !_allDeclarations || _submitting
+                                  ? null
+                                  : _submit,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: _aqua,
+                                foregroundColor: _page,
+                                disabledBackgroundColor: _surfaceAlt,
+                                disabledForegroundColor: _muted,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              icon: _submitting
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.4,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(Icons.send_rounded),
+                              label: Text(
+                                _submitting
+                                    ? 'Submitting registration...'
+                                    : 'Submit Registration Request',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -741,22 +805,17 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
 
   Widget _pageHeader() => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(28),
+    padding: const EdgeInsets.all(36),
     decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFF123B46), _blueDark, Color(0xFF07191E)],
-      ),
+      color: _surface,
       borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: _aqua.withValues(alpha: .22)),
+      border: Border.all(color: _border),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: .30),
-          blurRadius: 28,
-          offset: const Offset(0, 14),
+          color: Colors.black.withValues(alpha: 0.08),
+          blurRadius: 24,
+          offset: const Offset(0, 12),
         ),
-        BoxShadow(color: _aqua.withValues(alpha: .06), blurRadius: 34),
       ],
     ),
     child: Column(
@@ -765,32 +824,26 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: _aqua.withValues(alpha: .12),
+            color: _aqua.withValues(alpha: .10),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: _aqua.withValues(alpha: .28)),
+            border: Border.all(color: _aqua.withValues(alpha: .24)),
           ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.person_add_alt_1_rounded, color: _aqua, size: 15),
-              SizedBox(width: 7),
-              Text(
-                'BHW ACCOUNT ONBOARDING',
-                style: TextStyle(
-                  color: _aqua,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.1,
-                ),
-              ),
-            ],
+          child: const Text(
+            'BHW ACCOUNT ONBOARDING',
+            style: TextStyle(
+              color: _blue,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.1,
+            ),
           ),
         ),
         const SizedBox(height: 16),
-        Text(
+        const Text(
           'Create BHW Account',
-          style: GoogleFonts.plusJakartaSans(
-            color: Colors.white,
+          style: TextStyle(
+            fontFamily: 'Manrope',
+            color: _ink,
             fontSize: 30,
             fontWeight: FontWeight.w800,
           ),
@@ -805,12 +858,9 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
           ),
         ),
         const SizedBox(height: 6),
-        Text(
+        const Text(
           'Your registration request will be reviewed by the City Health Office before your account is activated.',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: .84),
-            height: 1.45,
-          ),
+          style: TextStyle(color: _muted, height: 1.45),
         ),
       ],
     ),
@@ -819,21 +869,20 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
   Widget _section({
     required String number,
     required String title,
-    required IconData icon,
     required List<Widget> children,
   }) => Container(
     width: double.infinity,
-    margin: const EdgeInsets.only(bottom: 20),
-    padding: const EdgeInsets.all(24),
+    margin: const EdgeInsets.only(bottom: 24),
+    padding: const EdgeInsets.all(32),
     decoration: BoxDecoration(
       color: _surface,
       borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: _aqua.withValues(alpha: .18)),
+      border: Border.all(color: _border),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: .28),
-          blurRadius: 18,
-          offset: Offset(0, 6),
+          color: Colors.black.withValues(alpha: 0.06),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
         ),
       ],
     ),
@@ -841,26 +890,26 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
           children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: _aqua.withValues(alpha: .12),
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(color: _aqua.withValues(alpha: .20)),
+            Text(
+              number,
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                color: _aqua,
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
               ),
-              child: Icon(icon, color: _aqua),
             ),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Text(
-                '$number  $title',
-                style: GoogleFonts.plusJakartaSans(
-                  color: _ink,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
-                ),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                color: _ink,
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ],
@@ -1053,10 +1102,10 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
       fontWeight: FontWeight.w700,
     ),
     hintStyle: TextStyle(color: _muted.withValues(alpha: .72)),
-    errorStyle: const TextStyle(color: Color(0xFFFF8A80)),
+    errorStyle: const TextStyle(color: Color(0xFFD32F2F)),
     suffixIconColor: _aqua,
     filled: true,
-    fillColor: Colors.transparent,
+    fillColor: const Color(0xFFF8FAFC),
     contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 17),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
@@ -1087,7 +1136,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _page,
+            color: _surfaceAlt,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -1168,7 +1217,6 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
   Widget _declarationSection() => _section(
     number: '04',
     title: 'Declaration',
-    icon: Icons.fact_check_outlined,
     children: [
       _WideField(
         child: Column(
@@ -1225,7 +1273,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
             }
             return _surfaceAlt;
           }),
-          side: const BorderSide(color: Color(0xFFE7FAFC), width: 2),
+          side: const BorderSide(color: Color(0xFFB9C7C9), width: 2),
           checkboxShape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(4),
           ),
@@ -1277,7 +1325,8 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
                 Text(
                   'Registration submitted',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
                     color: _ink,
                     fontSize: 27,
                     fontWeight: FontWeight.w800,

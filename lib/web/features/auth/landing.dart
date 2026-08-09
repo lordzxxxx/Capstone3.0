@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/features/auth/signup.dart';
 import 'package:mycapstone_project/web/features/auth/bhw_registration.dart';
@@ -15,15 +14,16 @@ const Color _lightOffWhite = Color(0xFFF5F5F5);
 const Color _sidebarDark = Color(0xFF0E2F34);
 const Color _panelSurface = Color(0xFF061920);
 
-// Plus Jakarta Sans is already the established typeface for the auth flow
-// (login.dart, signup.dart, bhw_registration.dart) — applied here too so the
-// landing page matches instead of falling back to the platform default font.
+// Manrope is the established typeface for the auth flow (login.dart,
+// signup.dart, bhw_registration.dart) — applied here too so the landing
+// page matches instead of falling back to the platform default font.
 TextStyle _display({
   required double size,
   FontWeight weight = FontWeight.w800,
   Color color = _lightOffWhite,
   double? letterSpacing,
-}) => GoogleFonts.plusJakartaSans(
+}) => TextStyle(
+  fontFamily: 'Manrope',
   fontSize: size,
   fontWeight: weight,
   color: color,
@@ -36,7 +36,8 @@ TextStyle _body({
   FontWeight weight = FontWeight.w500,
   Color color = _lightOffWhite,
   double? height,
-}) => GoogleFonts.plusJakartaSans(
+}) => TextStyle(
+  fontFamily: 'Manrope',
   fontSize: size,
   fontWeight: weight,
   color: color,
@@ -72,8 +73,8 @@ class _LandingPageState extends State<LandingPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_didPrecacheLogo) return;
-    precacheImage(const AssetImage('assets/newlogo.png'), context);
-    precacheImage(const AssetImage('assets/newsystembg_web.webp'), context);
+    precacheImage(const AssetImage('assets/newlogo_white.png'), context);
+    precacheImage(const AssetImage('assets/bg2.2.png'), context);
     _didPrecacheLogo = true;
   }
 
@@ -135,39 +136,18 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   Widget _buildSystemLogo({required double size, BoxFit fit = BoxFit.contain}) {
-    return ColorFiltered(
-      colorFilter: const ColorFilter.matrix(<double>[
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        1,
-        0,
-        0,
-        0,
-        0,
-      ]),
-      child: Image.asset(
-        'assets/newlogo.png',
-        width: size,
-        height: size,
-        fit: fit,
-        errorBuilder: (context, error, stackTrace) => Icon(
-          Icons.health_and_safety_rounded,
-          color: _primaryAqua,
-          size: size * 0.65,
-        ),
+    // Pre-processed white-on-transparent PNG (derived from newlogo.png's
+    // luminance) — avoids ColorFilter.matrix, whose offset-scale behavior
+    // is inconsistent across Flutter's web renderers.
+    return Image.asset(
+      'assets/newlogo_white.png',
+      width: size,
+      height: size,
+      fit: fit,
+      errorBuilder: (context, error, stackTrace) => Icon(
+        Icons.health_and_safety_rounded,
+        color: _primaryAqua,
+        size: size * 0.65,
       ),
     );
   }
@@ -176,95 +156,102 @@ class _LandingPageState extends State<LandingPage> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
-    return Scaffold(
-      backgroundColor: _darkDeepTeal,
-      body: Stack(
-        children: [
-          // Hero background image (never stretched/distorted — BoxFit.cover
-          // crops to fill while preserving aspect ratio). Falls back to the
-          // original flat gradient if the asset ever fails to load.
-          Positioned.fill(
-            child: Image.asset(
-              'assets/newsystembg_web.webp',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [_darkDeepTeal, _darkDeepTeal, _sidebarDark],
+    return Theme(
+      data: Theme.of(context).copyWith(
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Manrope'),
+      ),
+      child: Scaffold(
+        backgroundColor: _darkDeepTeal,
+        body: Stack(
+          children: [
+            // Hero background image (never stretched/distorted — BoxFit.cover
+            // crops to fill while preserving aspect ratio). Falls back to the
+            // original flat gradient if the asset ever fails to load. Uses the
+            // same bg2.2.png photo as login/signup so the whole auth flow
+            // reads as one visual system.
+            Positioned.fill(
+              child: Image.asset(
+                'assets/bg2.2.png',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [_darkDeepTeal, _darkDeepTeal, _sidebarDark],
+                      ),
                     ),
+                  );
+                },
+              ),
+            ),
+            // Deep navy/teal/blue layered scrim over the photo so the hero
+            // text/CTA panels stay readable while the image remains visible.
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.backgroundDark.withValues(alpha: 0.72),
+                      _secondaryIceBlue.withValues(alpha: 0.55),
+                      AppColors.surfaceDark.withValues(alpha: 0.86),
+                    ],
                   ),
-                );
-              },
-            ),
-          ),
-          // Dark-teal scrim over the photo, at partial opacity, so the hero
-          // text/CTA panels stay readable while the image remains visible.
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.backgroundDark.withValues(alpha: 0.55),
-                    AppColors.backgroundDark.withValues(alpha: 0.68),
-                    AppColors.surfaceDark.withValues(alpha: 0.82),
-                  ],
                 ),
               ),
             ),
-          ),
-          Positioned(
-            top: -120,
-            left: -100,
-            child: _buildBackdropOrb(
-              size: 340,
-              color: _primaryAqua.withValues(alpha: 0.16),
+            Positioned(
+              top: -120,
+              left: -100,
+              child: _buildBackdropOrb(
+                size: 340,
+                color: _primaryAqua.withValues(alpha: 0.16),
+              ),
             ),
-          ),
-          Positioned(
-            top: size.height * 0.10,
-            right: size.width * 0.16,
-            child: _buildBackdropOrb(
-              size: 220,
-              color: _secondaryIceBlue.withValues(alpha: 0.14),
+            Positioned(
+              top: size.height * 0.10,
+              right: size.width * 0.16,
+              child: _buildBackdropOrb(
+                size: 220,
+                color: _secondaryIceBlue.withValues(alpha: 0.14),
+              ),
             ),
-          ),
-          Positioned(
-            bottom: -150,
-            right: -120,
-            child: _buildBackdropOrb(
-              size: 360,
-              color: _sidebarDark.withValues(alpha: 0.82),
+            Positioned(
+              bottom: -150,
+              right: -120,
+              child: _buildBackdropOrb(
+                size: 360,
+                color: _sidebarDark.withValues(alpha: 0.82),
+              ),
             ),
-          ),
-          // The landing route is deliberately a constrained application
-          // surface.  It owns its viewport and never participates in the
-          // document's scrollable flow (other routes keep their normal
-          // scrolling behaviour).
-          SafeArea(
-            child: ClipRect(
-              child: SizedBox.expand(
-                child: AnimatedSwitcher(
-                  // Only fade the loader/content state.  The hero itself is
-                  // not translated or scaled during/after a resize.
-                  duration: const Duration(milliseconds: 260),
-                  switchInCurve: Curves.easeOut,
-                  switchOutCurve: Curves.easeIn,
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(opacity: animation, child: child);
-                  },
-                  child: _showIntroLoader
-                      ? _buildLandingLoader()
-                      : _buildLandingContent(context),
+            // The landing route is deliberately a constrained application
+            // surface.  It owns its viewport and never participates in the
+            // document's scrollable flow (other routes keep their normal
+            // scrolling behaviour).
+            SafeArea(
+              child: ClipRect(
+                child: SizedBox.expand(
+                  child: AnimatedSwitcher(
+                    // Only fade the loader/content state.  The hero itself is
+                    // not translated or scaled during/after a resize.
+                    duration: const Duration(milliseconds: 260),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
+                    child: _showIntroLoader
+                        ? _buildLandingLoader()
+                        : _buildLandingContent(context),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -349,8 +336,8 @@ class _LandingPageState extends State<LandingPage> {
         final height = constraints.maxHeight;
         final isDesktop = constraints.maxWidth >= 980;
         final logoSize = isDesktop
-            ? _responsive(height, 0.16, 108, 178)
-            : _responsive(height, 0.13, 88, 138);
+            ? _responsive(height, 0.24, 190, 260)
+            : _responsive(height, 0.19, 140, 190);
         final titleSize = isDesktop
             ? _responsive(height, 0.066, 42, 72)
             : _responsive(height, 0.050, 32, 48);
@@ -438,7 +425,7 @@ class _LandingPageState extends State<LandingPage> {
     required EdgeInsets contentPadding,
     required bool isDesktop,
   }) {
-    final partnerLogoSize = _responsive(logoSize, 0.48, 52, 86);
+    final partnerLogoSize = _responsive(logoSize, 0.42, 55, 70);
 
     final heroContent = Column(
       mainAxisSize: MainAxisSize.min,
@@ -530,28 +517,16 @@ class _LandingPageState extends State<LandingPage> {
       constraints: compact ? null : const BoxConstraints(maxWidth: 500),
       padding: EdgeInsets.all(compact ? 0 : 40),
       child: Container(
-        padding: EdgeInsets.all(compact ? 26 : 40),
+        padding: EdgeInsets.all(compact ? 28 : 40),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _sidebarDark,
-              _sidebarDark.withValues(alpha: 0.96),
-              _panelSurface,
-            ],
-          ),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: const Color(0xFFE5EEF0)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.34),
-              blurRadius: 40,
-              offset: const Offset(0, 20),
-            ),
-            BoxShadow(
-              color: _primaryAqua.withValues(alpha: 0.10),
-              blurRadius: 70,
-              offset: const Offset(0, 32),
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 32,
+              offset: const Offset(0, 16),
             ),
           ],
         ),
@@ -559,27 +534,13 @@ class _LandingPageState extends State<LandingPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [_primaryAquaBright, _primaryAqua],
-                ),
-              ),
-              child: const Icon(
-                Icons.shield_moon_outlined,
-                color: _darkDeepTeal,
-                size: 26,
-              ),
-            ),
-            SizedBox(height: compact ? 18 : 22),
             Text(
               'Welcome Back',
-              style: _display(size: compact ? 30 : 38, weight: FontWeight.w800),
+              style: _display(
+                size: compact ? 26 : 32,
+                weight: FontWeight.w800,
+                color: _darkDeepTeal,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -587,7 +548,7 @@ class _LandingPageState extends State<LandingPage> {
               style: _body(
                 size: 14.5,
                 weight: FontWeight.w500,
-                color: _lightOffWhite.withValues(alpha: 0.62),
+                color: _mutedCoolGray,
               ),
             ),
             SizedBox(height: compact ? 28 : 36),
@@ -797,7 +758,7 @@ class _LandingPageState extends State<LandingPage> {
           child: Icon(
             icon,
             size: 18,
-            color: isPrimary ? _darkDeepTeal : _primaryAquaBright,
+            color: isPrimary ? Colors.white : _primaryAqua,
           ),
         ),
         const SizedBox(width: 14),
@@ -806,7 +767,7 @@ class _LandingPageState extends State<LandingPage> {
           style: _body(
             size: 16,
             weight: FontWeight.w700,
-            color: isPrimary ? _darkDeepTeal : _lightOffWhite,
+            color: isPrimary ? Colors.white : _darkDeepTeal,
           ),
         ),
       ],
@@ -845,21 +806,15 @@ class _LandingPageState extends State<LandingPage> {
       height: 60,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: Colors.white.withValues(alpha: 0.07),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        color: const Color(0xFFF1F5F7),
+        border: Border.all(color: const Color(0xFFE5EEF0)),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: onPressed,
-          hoverColor: _primaryAqua.withValues(alpha: 0.10),
+          hoverColor: _primaryAqua.withValues(alpha: 0.08),
           child: Center(child: child),
         ),
       ),

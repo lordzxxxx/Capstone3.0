@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/roles/cho/admin/cho_super_admin_center.dart';
@@ -904,42 +903,19 @@ class _LoginState extends State<Login> {
   }
 
   Widget _buildBrandMark(double size) {
+    // Pre-processed white-on-transparent PNG (derived from newlogo.png's
+    // luminance) — avoids ColorFilter.matrix, whose offset-scale behavior
+    // is inconsistent across Flutter's web renderers.
     return SizedBox(
       width: size,
       height: size,
-      child: ColorFiltered(
-        // The supplied logo is white artwork on black. Convert the black
-        // pixels to transparency so the mark sits cleanly over bg2.2.png.
-        colorFilter: const ColorFilter.matrix(<double>[
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          1,
-          0,
-          0,
-          0,
-          0,
-        ]),
-        child: Image.asset(
-          'assets/newlogo.png',
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) => Icon(
-            Icons.health_and_safety_rounded,
-            color: Colors.white,
-            size: size * 0.68,
-          ),
+      child: Image.asset(
+        'assets/newlogo_white.png',
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => Icon(
+          Icons.health_and_safety_rounded,
+          color: Colors.white,
+          size: size * 0.68,
         ),
       ),
     );
@@ -995,11 +971,12 @@ class _LoginState extends State<Login> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildBrandMark(isCompact ? 150 : 230),
+              _buildBrandMark(isCompact ? 190 : 300),
               const SizedBox(height: 28),
               Text(
                 'AI-DSUHIS',
-                style: GoogleFonts.plusJakartaSans(
+                style: TextStyle(
+                  fontFamily: 'Manrope',
                   fontSize: isCompact ? 32 : 52,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -1009,7 +986,8 @@ class _LoginState extends State<Login> {
               const SizedBox(height: 12),
               Text(
                 'Secure access to unified city and barangay health information.',
-                style: GoogleFonts.plusJakartaSans(
+                style: TextStyle(
+                  fontFamily: 'Manrope',
                   fontSize: isCompact ? 15 : 20,
                   color: Colors.white.withValues(alpha: 0.88),
                   height: 1.45,
@@ -1018,7 +996,8 @@ class _LoginState extends State<Login> {
               const SizedBox(height: 20),
               Text(
                 'A trusted workspace for patient records, referrals, analytics, and community health operations.',
-                style: GoogleFonts.plusJakartaSans(
+                style: TextStyle(
+                  fontFamily: 'Manrope',
                   fontSize: isCompact ? 13 : 15,
                   color: Colors.white.withValues(alpha: 0.72),
                   height: 1.55,
@@ -1070,9 +1049,7 @@ class _LoginState extends State<Login> {
 
     return Theme(
       data: Theme.of(context).copyWith(
-        textTheme: GoogleFonts.plusJakartaSansTextTheme(
-          Theme.of(context).textTheme,
-        ),
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Manrope'),
       ),
       child: Scaffold(
         backgroundColor: _darkDeepTeal,
@@ -1191,7 +1168,7 @@ class _LoginState extends State<Login> {
   // Wide screen layout (desktop/tablet landscape)
   Widget _buildWideScreenLayout(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           flex: 11,
@@ -1263,11 +1240,13 @@ class _LoginState extends State<Login> {
       ),
       child: AutofillGroup(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               'Welcome back',
-              style: GoogleFonts.plusJakartaSans(
+              style: TextStyle(
+                fontFamily: 'Manrope',
                 fontSize: isCompact ? 28 : 34,
                 fontWeight: FontWeight.w800,
                 color: _darkDeepTeal,
