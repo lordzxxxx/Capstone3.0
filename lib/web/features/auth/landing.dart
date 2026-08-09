@@ -661,28 +661,37 @@ class _LandingPageState extends State<LandingPage>
         );
 
         if (isDesktop) {
-          // One stable parent alignment system for both columns.  Neither
-          // side is independently offset, translated, or content-scaled.
+          // One stable parent alignment system for both columns. Keep the
+          // access card at a predictable width instead of giving it a large
+          // flex column with unused space around it; this keeps the hero and
+          // form visually balanced at wide desktop sizes.
+          final layoutWidth = constraints.maxWidth
+              .clamp(0.0, 1560.0)
+              .toDouble();
+          final panelWidth = _responsive(layoutWidth, 0.30, 390, 480);
+          final columnGap = _responsive(layoutWidth, 0.025, 24, 42);
           return Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1440),
+              constraints: const BoxConstraints(maxWidth: 1560),
               child: SizedBox(
-                width: constraints.maxWidth.clamp(0.0, 1440.0).toDouble(),
+                width: layoutWidth,
                 height: constraints.maxHeight,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(flex: 11, child: hero),
                     Expanded(
-                      flex: 8,
+                      child: Padding(
+                        padding: EdgeInsets.only(right: columnGap),
+                        child: hero,
+                      ),
+                    ),
+                    SizedBox(
+                      width: panelWidth,
                       child: Align(
                         alignment: Alignment.center,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 430),
-                          child: _fadeSlideIn(
-                            animation: _panelEntrance,
-                            child: _buildAccessPanel(context, compact: false),
-                          ),
+                        child: _fadeSlideIn(
+                          animation: _panelEntrance,
+                          child: _buildAccessPanel(context, compact: false),
                         ),
                       ),
                     ),
@@ -824,8 +833,8 @@ class _LandingPageState extends State<LandingPage>
 
   Widget _buildAccessPanel(BuildContext context, {required bool compact}) {
     return Container(
-      constraints: compact ? null : const BoxConstraints(maxWidth: 500),
-      padding: EdgeInsets.all(compact ? 0 : 40),
+      constraints: compact ? null : const BoxConstraints(maxWidth: 480),
+      padding: EdgeInsets.zero,
       child: Container(
         padding: EdgeInsets.all(compact ? 24 : 36),
         decoration: BoxDecoration(
@@ -989,6 +998,7 @@ class _LandingPageState extends State<LandingPage>
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.16),
