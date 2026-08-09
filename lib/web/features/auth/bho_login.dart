@@ -7,13 +7,13 @@ import 'package:mycapstone_project/web/features/auth/landing.dart';
 import 'package:mycapstone_project/web/features/auth/forgot.dart';
 import 'package:mycapstone_project/web/shared/widgets/login_success_sweet_alert.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _sidebarDark = Color(0xFF0E2F34);
-const Color _panelSurface = Color(0xFF061920);
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _secondaryIceBlue = Color(0xFF163B66);
+const Color _darkDeepTeal = Color(0xFF071A33);
+const Color _mutedCoolGray = Color(0xFF4B6075);
+const Color _lightOffWhite = Color(0xFFF8FBFF);
+const Color _sidebarDark = Color(0xFF0D274D);
+const Color _panelSurface = Color(0xFF0D274D);
 
 class BHOLogin extends StatefulWidget {
   const BHOLogin({super.key});
@@ -36,6 +36,7 @@ class _BHOLoginState extends State<BHOLogin> {
 
   Future<void> _showSuccessDialogAndNavigate() async {
     final proceedToDashboard = await showLoginSuccessSweetAlert(
+      context: context,
       title: 'Login successful',
       message: 'Your account is verified. Continue to the dashboard.',
       confirmButtonText: 'Open Dashboard',
@@ -208,57 +209,7 @@ class _BHOLoginState extends State<BHOLogin> {
       backgroundColor: _darkDeepTeal,
       body: Stack(
         children: [
-          // Background gradient pattern
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  _primaryAqua.withValues(alpha: 0.05),
-                  _secondaryIceBlue.withValues(alpha: 0.05),
-                  _darkDeepTeal,
-                ],
-              ),
-            ),
-          ),
-
-          // Decorative circles
-          Positioned(
-            top: -100,
-            right: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    _primaryAqua.withValues(alpha: 0.1),
-                    _primaryAqua.withValues(alpha: 0.0),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          Positioned(
-            bottom: -150,
-            left: -150,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    _secondaryIceBlue.withValues(alpha: 0.08),
-                    _secondaryIceBlue.withValues(alpha: 0.0),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          const Positioned.fill(child: ColoredBox(color: _darkDeepTeal)),
 
           // Main content
           SafeArea(

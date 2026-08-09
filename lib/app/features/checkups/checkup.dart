@@ -10,6 +10,7 @@ import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls
 import 'package:mycapstone_project/app/features/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
+import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 
 const Color _primaryAqua = Color(0xFF00A8B5);
 const Color _secondaryIceBlue = Color(0xFF1E5A7A);
@@ -1179,12 +1180,10 @@ class _CheckUpPageState extends State<CheckUpPage> {
           (_isDeleteDialogShowing ||
               (_isSelectionMode && _selectedIndices.isNotEmpty))
           ? null
-          : FloatingActionButton.extended(
-              backgroundColor: _primaryAqua,
-              foregroundColor: _darkDeepTeal,
-              icon: const Icon(Icons.add),
-              label: const Text('New Check Up'),
-              onPressed: () => _showNewCheckUpModal(context),
+          : RecordCreationFabGroup(
+              moduleLabel: 'Check-up',
+              manualLabel: 'New Check Up',
+              onManualCreate: () => _showNewCheckUpModal(context),
             ),
       bottomNavigationBar: (_isSelectionMode && _selectedIndices.isNotEmpty)
           ? BottomAppBar(

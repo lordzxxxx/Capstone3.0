@@ -31,12 +31,12 @@ import 'package:mycapstone_project/web/roles/bhw/patients/shared_patient_search_
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'dart:math' as math;
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _sidebarDark = Color(0xFF0E2F34);
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _secondaryIceBlue = Color(0xFF163B66);
+const Color _darkDeepTeal = Color(0xFF071A33);
+const Color _mutedCoolGray = Color(0xFF4B6075);
+const Color _lightOffWhite = Color(0xFF0B1F3A);
+const Color _sidebarDark = Colors.white;
 
 class PrenatalPage extends StatefulWidget {
   const PrenatalPage({super.key, this.initialPatient});
@@ -292,7 +292,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: const Color(0xFFF5F7FA),
       drawer: WebAppSidebar(
         userName: userName,
         activeItem: WebSidebarItem.prenatalCare,
@@ -1086,7 +1086,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF0A1F24), Color(0xFF1E5A7A)],
+                  colors: [Color(0xFF0D274D), Color(0xFF163B66)],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -1153,7 +1153,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF0A1F24), Color(0xFF1E5A7A)],
+              colors: [Color(0xFF0D274D), Color(0xFF163B66)],
             ),
           ),
           child: Column(
@@ -3150,7 +3150,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
             ),
             prefixIcon: Icon(icon, color: Colors.white, size: 20),
             filled: true,
-            fillColor: const Color(0xFF061920),
+            fillColor: const Color(0xFF0B1F3A),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
@@ -5912,44 +5912,51 @@ class _PrenatalPageState extends State<PrenatalPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildWebMetricCard(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 1100
+                ? 4
+                : constraints.maxWidth >= 680
+                ? 2
+                : 1;
+            const spacing = 12.0;
+            final cardWidth = columns == 1
+                ? constraints.maxWidth
+                : (constraints.maxWidth - spacing * (columns - 1)) / columns;
+            final cards = <Widget>[
+              _buildWebMetricCard(
                 title: 'Total Prenatal',
                 value: '$total',
                 icon: Icons.pregnant_woman_rounded,
                 color: _primaryAqua,
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildWebMetricCard(
+              _buildWebMetricCard(
                 title: 'Active',
                 value: '$active',
                 icon: Icons.favorite_rounded,
                 color: const Color(0xFF4CAF50),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildWebMetricCard(
+              _buildWebMetricCard(
                 title: 'High Risk',
                 value: '$highRisk',
                 icon: Icons.warning_rounded,
                 color: const Color(0xFFFF9800),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildWebMetricCard(
+              _buildWebMetricCard(
                 title: 'Completed',
                 value: '$completed',
                 icon: Icons.check_circle_rounded,
                 color: const Color(0xFF2196F3),
               ),
-            ),
-          ],
+            ];
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: cards
+                  .map((card) => SizedBox(width: cardWidth, child: card))
+                  .toList(growable: false),
+            );
+          },
         ),
         const SizedBox(height: 20),
         LayoutBuilder(
@@ -6218,7 +6225,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           reservedSize: 32,
           getTitlesWidget: (value, _) => Text(
             value.toInt().toString(),
-            style: const TextStyle(color: Colors.white54, fontSize: 10),
+            style: const TextStyle(color: _mutedCoolGray, fontSize: 10),
           ),
         ),
       ),
@@ -6237,7 +6244,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
               child: Text(
                 label.length > 13 ? '${label.substring(0, 11)}…' : label,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white60, fontSize: 9.5),
+                style: const TextStyle(color: _mutedCoolGray, fontSize: 9.5),
               ),
             );
           },
@@ -6288,7 +6295,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                     Text(
                       title,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: _lightOffWhite,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
@@ -6296,10 +6303,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.58),
-                        fontSize: 11.5,
-                      ),
+                      style: TextStyle(color: _mutedCoolGray, fontSize: 11.5),
                     ),
                   ],
                 ),
@@ -6328,10 +6332,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: interval,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: Colors.white.withValues(alpha: 0.08),
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (_) =>
+              FlLine(color: const Color(0xFFD9E5F2), strokeWidth: 1),
         ),
         titlesData: _prenatalChartTitles(
           values.map((entry) => entry.key).toList(),
@@ -6339,7 +6341,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         ),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => const Color(0xFF173C43),
+            getTooltipColor: (_) => const Color(0xFF163B66),
             getTooltipItems: (spots) => spots
                 .map(
                   (spot) => LineTooltipItem(
@@ -6392,7 +6394,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         child: Text(
           emptyMessage,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white54, fontSize: 13),
+          style: const TextStyle(color: _mutedCoolGray, fontSize: 13),
         ),
       );
     }
@@ -6408,10 +6410,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: interval,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: Colors.white.withValues(alpha: 0.08),
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (_) =>
+              FlLine(color: const Color(0xFFD9E5F2), strokeWidth: 1),
         ),
         titlesData: _prenatalChartTitles(
           entries.map((entry) => entry.key).toList(),
@@ -6419,7 +6419,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         ),
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => const Color(0xFF173C43),
+            getTooltipColor: (_) => const Color(0xFF163B66),
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final entry = entries[group.x];
               return BarTooltipItem(
@@ -6499,7 +6499,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
       return const Center(
         child: Text(
           'No data available yet.',
-          style: TextStyle(color: Colors.white54, fontSize: 13),
+          style: TextStyle(color: _mutedCoolGray, fontSize: 13),
         ),
       );
     }
@@ -6543,7 +6543,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                       Text(
                         centerLabel,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: _lightOffWhite,
                           fontSize: 23,
                           fontWeight: FontWeight.w800,
                         ),
@@ -6552,7 +6552,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                         Text(
                           centerSubtitle,
                           style: const TextStyle(
-                            color: Colors.white54,
+                            color: _mutedCoolGray,
                             fontSize: 10,
                           ),
                         ),
@@ -6587,7 +6587,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                         '${entries[index].key} (${entries[index].value})',
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Colors.white70,
+                          color: _mutedCoolGray,
                           fontSize: 10.5,
                         ),
                       ),
@@ -6674,7 +6674,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
               Text(
                 'Highlights Requiring Care-Team Attention',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: _lightOffWhite,
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                 ),
@@ -6684,7 +6684,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           const SizedBox(height: 6),
           const Text(
             'Decision-support highlights from recorded data. Review and confirm each case clinically.',
-            style: TextStyle(color: Colors.white54, fontSize: 12),
+            style: TextStyle(color: _mutedCoolGray, fontSize: 12),
           ),
           const SizedBox(height: 16),
           if (highlights.isEmpty)
@@ -6697,7 +6697,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
               ),
               child: const Text(
                 'No prenatal records currently meet the configured attention indicators.',
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+                style: TextStyle(color: _mutedCoolGray, fontSize: 13),
               ),
             )
           else
@@ -6735,7 +6735,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                           Text(
                             patient,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: _lightOffWhite,
                               fontWeight: FontWeight.w700,
                               fontSize: 13.5,
                             ),
@@ -6744,7 +6744,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                           Text(
                             '${_recordBarangay(record)} • ${highlight.value.join(' • ')}',
                             style: const TextStyle(
-                              color: Colors.white60,
+                              color: _mutedCoolGray,
                               fontSize: 11.5,
                               height: 1.4,
                             ),
@@ -6774,7 +6774,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: _sidebarDark,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
           boxShadow: [
@@ -6837,7 +6837,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
             Text(
               title,
               style: const TextStyle(
-                color: Colors.white70,
+                color: Color(0xFF4B6075),
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -6886,7 +6886,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF00E5FF), Color(0xFF00A8B5)],
+              colors: [Color(0xFF00E5FF), Color(0xFF2F80ED)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -6960,7 +6960,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF123942),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.25),
@@ -7527,7 +7527,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
-        color: _darkDeepTeal,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.3),
@@ -7536,7 +7536,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
       ),
       child: TextField(
         controller: _searchController,
-        style: const TextStyle(color: Colors.white, fontSize: 14),
+        style: const TextStyle(color: _lightOffWhite, fontSize: 14),
         onChanged: (value) {
           setState(() {
             _searchQuery = value;
@@ -7546,13 +7546,13 @@ class _PrenatalPageState extends State<PrenatalPage> {
         },
         decoration: InputDecoration(
           hintText: 'Search by name, age, contact, address...',
-          hintStyle: const TextStyle(color: Colors.white70, fontSize: 13),
+          hintStyle: const TextStyle(color: _mutedCoolGray, fontSize: 13),
           prefixIcon: Icon(Icons.search_rounded, color: _primaryAqua, size: 20),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
                   icon: const Icon(
                     Icons.clear,
-                    color: Colors.white70,
+                    color: _mutedCoolGray,
                     size: 18,
                   ),
                   onPressed: () {
@@ -7566,7 +7566,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 )
               : null,
           filled: true,
-          fillColor: _darkDeepTeal,
+          fillColor: Colors.white,
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
@@ -7921,7 +7921,7 @@ class _PrenatalCard extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 70, color: const Color(0xFF214047));
+    return Container(width: 1, height: 70, color: const Color(0xFFD9E5F2));
   }
 
   Widget _buildIconActionButton({
@@ -7930,11 +7930,11 @@ class _PrenatalCard extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF003B5C),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(7),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF003B5C).withValues(alpha: 0.28),
+            color: const Color(0xFF163B66).withValues(alpha: 0.28),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -8003,28 +8003,28 @@ class _PrenatalCard extends StatelessWidget {
     final timeLabel = registration['time'] ?? '';
 
     final statusColor = _getPrenatalStatusColor(status);
-    final rowBg = _darkDeepTeal.withValues(alpha: 0.96);
-    const rowText = Color(0xFFF3F8FC);
-    const mutedText = Color(0xFFB1C4D5);
+    const rowBg = Colors.white;
+    const rowText = Color(0xFF0B1F3A);
+    const mutedText = Color(0xFF546E7A);
 
     return GestureDetector(
       onTap: isSelectionMode
           ? () => onSelectionChanged(index, !isSelected)
           : null,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
+        margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: rowBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
                 ? _primaryAqua.withValues(alpha: 0.85)
-                : const Color(0xFF214047),
+                : const Color(0xFFD9E5F2),
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -8094,7 +8094,7 @@ class _PrenatalCard extends StatelessWidget {
                       child: const Text(
                         'Prenatal Care',
                         style: TextStyle(
-                          color: Color(0xFF003B5C),
+                          color: Color(0xFF163B66),
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),

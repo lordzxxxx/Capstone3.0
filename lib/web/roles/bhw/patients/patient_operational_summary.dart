@@ -14,9 +14,10 @@ class PatientOperationalSummary extends StatelessWidget {
   final ValueChanged<Map<String, dynamic>> onViewPatient;
   final VoidCallback onViewAll;
 
-  static const _accent = Color(0xFF00A8B5);
-  static const _surface = Color(0xFF0E2F34);
-  static const _text = Color(0xFFF5F7FA);
+  static const _accent = Color(0xFF2F80ED);
+  static const _surface = Colors.white;
+  static const _text = Color(0xFF0B1F3A);
+  static const _muted = Color(0xFF4B6075);
 
   String _textValue(dynamic value) => value?.toString().trim() ?? '';
 
@@ -103,7 +104,7 @@ class PatientOperationalSummary extends StatelessWidget {
             Text(
               'Insights and graphs will appear after patient records are registered in this barangay.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white60),
+              style: TextStyle(color: _muted),
             ),
           ],
         ),
@@ -237,7 +238,7 @@ class PatientOperationalSummary extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 3),
-        Text(subtitle, style: const TextStyle(color: Colors.white60)),
+        Text(subtitle, style: const TextStyle(color: _muted)),
       ],
     ),
   );
@@ -271,7 +272,7 @@ class PatientOperationalSummary extends StatelessWidget {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+        border: Border.all(color: const Color(0xFFD9E5F2)),
       ),
       child: Row(
         children: [
@@ -281,7 +282,7 @@ class PatientOperationalSummary extends StatelessWidget {
               color: metric.color.withValues(alpha: 0.13),
               borderRadius: BorderRadius.circular(11),
             ),
-            child: Icon(metric.icon, color: metric.color, size: 22),
+            child: Icon(metric.icon, color: _accent, size: 22),
           ),
           const SizedBox(width: 13),
           Expanded(
@@ -298,7 +299,7 @@ class PatientOperationalSummary extends StatelessWidget {
                 ),
                 Text(
                   metric.title,
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  style: const TextStyle(color: _muted, fontSize: 12),
                 ),
               ],
             ),
@@ -376,10 +377,7 @@ class PatientOperationalSummary extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.58),
-                      fontSize: 11.5,
-                    ),
+                    style: TextStyle(color: _muted, fontSize: 11.5),
                   ),
                 ],
               ),
@@ -410,7 +408,7 @@ class PatientOperationalSummary extends StatelessWidget {
         child: Text(
           'No patient age data recorded in Firebase.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white60),
+          style: TextStyle(color: _muted),
         ),
       );
     }
@@ -431,10 +429,8 @@ class PatientOperationalSummary extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             horizontalInterval: interval,
-            getDrawingHorizontalLine: (_) => FlLine(
-              color: Colors.white.withValues(alpha: 0.08),
-              strokeWidth: 1,
-            ),
+            getDrawingHorizontalLine: (_) =>
+                FlLine(color: const Color(0xFFD9E5F2), strokeWidth: 1),
           ),
           titlesData: FlTitlesData(
             topTitles: const AxisTitles(
@@ -450,7 +446,7 @@ class PatientOperationalSummary extends StatelessWidget {
                 interval: interval,
                 getTitlesWidget: (value, _) => Text(
                   value.toInt().toString(),
-                  style: const TextStyle(color: Colors.white54, fontSize: 10),
+                  style: const TextStyle(color: _muted, fontSize: 10),
                 ),
               ),
             ),
@@ -461,7 +457,7 @@ class PatientOperationalSummary extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 7),
                   child: Text(
                     const ['0–5', '6–17', '18–59', '60+'][value.toInt()],
-                    style: const TextStyle(color: Colors.white70, fontSize: 11),
+                    style: const TextStyle(color: _muted, fontSize: 11),
                   ),
                 ),
               ),
@@ -469,7 +465,7 @@ class PatientOperationalSummary extends StatelessWidget {
           ),
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) => const Color(0xFF173C43),
+              getTooltipColor: (_) => const Color(0xFF163B66),
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 final count = counts[group.x];
                 return BarTooltipItem(
@@ -516,7 +512,7 @@ class PatientOperationalSummary extends StatelessWidget {
         child: Text(
           'No patient sex data recorded in Firebase.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white60),
+          style: TextStyle(color: _muted),
         ),
       );
     }
@@ -568,7 +564,7 @@ class PatientOperationalSummary extends StatelessWidget {
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
       const SizedBox(width: 7),
-      Text('$label  $value', style: const TextStyle(color: Colors.white70)),
+      Text('$label  $value', style: const TextStyle(color: _muted)),
     ],
   );
 
@@ -587,7 +583,7 @@ class PatientOperationalSummary extends StatelessWidget {
             ),
             subtitle: Text(
               '${_textValue(patient['age'])} years • ${_textValue(patient['sex'] ?? patient['gender'])} • ${_textValue(patient['barangay'])}\n${_formatDate(_date(patient['registrationDate']))}',
-              style: const TextStyle(color: Colors.white60),
+              style: const TextStyle(color: _muted),
             ),
             isThreeLine: true,
             trailing: TextButton(
@@ -610,7 +606,7 @@ class PatientOperationalSummary extends StatelessWidget {
     decoration: BoxDecoration(
       color: _surface,
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+      border: Border.all(color: const Color(0xFFD9E5F2)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -636,10 +632,7 @@ class PatientOperationalSummary extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Center(
-              child: Text(
-                emptyText,
-                style: const TextStyle(color: Colors.white60),
-              ),
+              child: Text(emptyText, style: const TextStyle(color: _muted)),
             ),
           )
         else
@@ -660,7 +653,7 @@ class _Metric {
     this.title,
     this.value,
     this.icon, {
-    this.color = const Color(0xFF00A8B5),
+    this.color = const Color(0xFF2F80ED),
   });
 
   final String title;

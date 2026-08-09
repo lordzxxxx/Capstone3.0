@@ -29,24 +29,22 @@ import 'package:mycapstone_project/web/shared/services/user_access_scope_service
 import 'package:mycapstone_project/firebase_helper.dart';
 
 // Professional Vibrant Color Palette - Matching Analytics Page
-const Color _primaryAqua = Color(0xFF00A8B5); // Analytics-aligned Teal Cyan
-const Color _secondaryIceBlue = Color(0xFF1E5A7A); // Analytics-aligned Blue
-const Color _darkDeepTeal = Color(
-  0xFF0A1F24,
-); // Analytics-aligned dark background
-const Color _cardBackground = Color(
-  0xFF0A1F24,
-); // Analytics-aligned card background
-const Color _mutedCoolGray = Color(0xFF546E7A); // Analytics-aligned Gray
-const Color _lightOffWhite = Color(0xFFF5F5F5); // Analytics-aligned Off-white
-const Color _sidebarDark = Color(0xFF0E2F34); // Analytics-aligned dark sidebar
+// Names are historical (page was dark-themed); values now point at the
+// white-card system used across the rest of the app.
+const Color _primaryAqua = Color(0xFF2F80ED); // Shared dashboard blue
+const Color _secondaryIceBlue = Color(0xFF163B66); // Shared deep blue
+const Color _darkDeepTeal = Color(0xFFF5F7FA); // page background
+const Color _cardBackground = Colors.white; // card background
+const Color _mutedCoolGray = Color(0xFF4B6075); // Shared readable gray
+const Color _lightOffWhite = Color(0xFF0D274D); // primary text
+const Color _sidebarDark = Colors.white; // panel/surface background
 const Color _accentPurple = Color(0xFF7C3AED); // Vibrant Purple
 const Color _accentGreen = Color(0xFF10B981); // Bright Green
 const Color _accentOrange = Color(0xFFFF8C0D); // Vibrant Orange
 const Color _accentRed = Color(0xFFEF4444); // Vibrant Red
-const Color _brightCyan = Color(0xFF00A8B5); // Analytics-aligned accent cyan
-const Color _bgDarkTeal = Color(0xFF0A1F24); // Analytics-aligned background
-const Color _offWhiteOpacity = Color(0xFFF5F5F5); // Analytics-aligned off-white
+const Color _brightCyan = Color(0xFF2F80ED); // Shared dashboard blue
+const Color _bgDarkTeal = Color(0xFFF5F7FA); // Analytics-aligned background
+const Color _offWhiteOpacity = Color(0xFF0D274D); // primary text
 
 class HomePage extends StatefulWidget {
   final User? user;
@@ -1023,7 +1021,7 @@ class _HomePageState extends State<HomePage> {
     return OutlinedButton.icon(
       onPressed: _pickKeyMetricsDate,
       style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.white,
+        foregroundColor: _lightOffWhite,
         side: BorderSide(color: _primaryAqua.withValues(alpha: 0.25)),
         backgroundColor: _primaryAqua.withValues(alpha: 0.08),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -1093,14 +1091,14 @@ class _HomePageState extends State<HomePage> {
             final dialogTheme = Theme.of(context).copyWith(
               brightness: Brightness.dark,
               dialogTheme: Theme.of(context).dialogTheme.copyWith(
-                backgroundColor: _sidebarDark,
+                backgroundColor: const Color(0xFF0D274D),
                 surfaceTintColor: Colors.transparent,
               ),
               colorScheme: Theme.of(context).colorScheme.copyWith(
                 brightness: Brightness.dark,
                 primary: _primaryAqua,
                 onPrimary: Colors.white,
-                surface: _sidebarDark,
+                surface: const Color(0xFF0D274D),
                 onSurface: Colors.white,
               ),
               inputDecorationTheme: Theme.of(context).inputDecorationTheme
@@ -1110,7 +1108,7 @@ class _HomePageState extends State<HomePage> {
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Colors.black.withValues(alpha: 0.2),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
@@ -1122,7 +1120,7 @@ class _HomePageState extends State<HomePage> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Colors.black.withValues(alpha: 0.2),
                       ),
                     ),
                   ),
@@ -1131,7 +1129,7 @@ class _HomePageState extends State<HomePage> {
             return Theme(
               data: dialogTheme,
               child: AlertDialog(
-                backgroundColor: _sidebarDark,
+                backgroundColor: const Color(0xFF0D274D),
                 title: Text(
                   helpText,
                   style: const TextStyle(color: Colors.white),
@@ -1141,7 +1139,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     DropdownButtonFormField<int>(
                       initialValue: tempMonth,
-                      dropdownColor: _darkDeepTeal,
+                      dropdownColor: const Color(0xFF0D274D),
                       style: const TextStyle(color: Colors.white),
                       iconEnabledColor: Colors.white70,
                       iconDisabledColor: Colors.white54,
@@ -1149,7 +1147,7 @@ class _HomePageState extends State<HomePage> {
                         labelText: 'Month',
                         labelStyle: const TextStyle(color: Colors.white70),
                         floatingLabelStyle: const TextStyle(
-                          color: Colors.white,
+                          color: _lightOffWhite,
                         ),
                         filled: true,
                         fillColor: _secondaryIceBlue.withValues(alpha: 0.22),
@@ -1177,7 +1175,7 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(height: 12),
                     DropdownButtonFormField<int>(
                       initialValue: tempYear,
-                      dropdownColor: _darkDeepTeal,
+                      dropdownColor: const Color(0xFF0D274D),
                       style: const TextStyle(color: Colors.white),
                       iconEnabledColor: Colors.white70,
                       iconDisabledColor: Colors.white54,
@@ -1185,7 +1183,7 @@ class _HomePageState extends State<HomePage> {
                         labelText: 'Year',
                         labelStyle: const TextStyle(color: Colors.white70),
                         floatingLabelStyle: const TextStyle(
-                          color: Colors.white,
+                          color: _lightOffWhite,
                         ),
                         filled: true,
                         fillColor: _secondaryIceBlue.withValues(alpha: 0.22),
@@ -2065,7 +2063,7 @@ class _HomePageState extends State<HomePage> {
                       Icon(
                         Icons.notifications_off,
                         size: 64,
-                        color: Colors.white,
+                        color: _lightOffWhite,
                       ),
                       const SizedBox(height: 16),
                       const Text(
@@ -2110,7 +2108,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                                 child: Icon(
                                   notif['icon'] as IconData,
-                                  color: Colors.white,
+                                  color: _lightOffWhite,
                                   size: 20,
                                 ),
                               ),
@@ -2201,13 +2199,7 @@ class _HomePageState extends State<HomePage> {
           Container(
             height: 70,
             padding: const EdgeInsets.symmetric(horizontal: 32),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [_darkDeepTeal, _darkDeepTeal.withValues(alpha: 0.95)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-            ),
+            decoration: BoxDecoration(color: const Color(0xFF071A33)),
             child: Row(
               children: [
                 IconButton(
@@ -2240,7 +2232,7 @@ class _HomePageState extends State<HomePage> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
                     side: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.18),
+                      color: Colors.white.withValues(alpha: 0.28),
                     ),
                     backgroundColor: _sidebarDark.withValues(alpha: 0.4),
                     padding: const EdgeInsets.symmetric(
@@ -2364,7 +2356,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                           child: const Icon(
                             Icons.settings_suggest_rounded,
-                            color: Colors.white,
+                            color: _lightOffWhite,
                             size: 28,
                           ),
                         ),
@@ -2378,7 +2370,7 @@ class _HomePageState extends State<HomePage> {
                                 style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.white,
+                                  color: _lightOffWhite,
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -2406,7 +2398,7 @@ class _HomePageState extends State<HomePage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.04),
+                        color: Colors.black.withValues(alpha: 0.04),
                         borderRadius: BorderRadius.circular(22),
                         border: Border.all(
                           color: _lightOffWhite.withValues(alpha: 0.08),
@@ -2429,7 +2421,7 @@ class _HomePageState extends State<HomePage> {
                             child: Text(
                               avatarLetter,
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: _lightOffWhite,
                                 fontSize: 24,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -2445,7 +2437,7 @@ class _HomePageState extends State<HomePage> {
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w700,
-                                    color: Colors.white,
+                                    color: _lightOffWhite,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -2591,7 +2583,7 @@ class _HomePageState extends State<HomePage> {
                           child: OutlinedButton(
                             onPressed: () => Navigator.of(dialogContext).pop(),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
+                              foregroundColor: _lightOffWhite,
                               side: BorderSide(
                                 color: _lightOffWhite.withValues(alpha: 0.18),
                               ),
@@ -2672,7 +2664,7 @@ class _HomePageState extends State<HomePage> {
       child: Text(
         label,
         style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.92),
+          color: Colors.black.withValues(alpha: 0.92),
           fontSize: 11,
           fontWeight: FontWeight.w600,
         ),
@@ -2696,7 +2688,7 @@ class _HomePageState extends State<HomePage> {
         child: Ink(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.045),
+            color: Colors.black.withValues(alpha: 0.045),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: _lightOffWhite.withValues(alpha: 0.08)),
           ),
@@ -2724,7 +2716,7 @@ class _HomePageState extends State<HomePage> {
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              color: _lightOffWhite,
                             ),
                           ),
                         ),
@@ -2854,7 +2846,7 @@ class _HomePageState extends State<HomePage> {
           const Text(
             'Barangay dashboard could not be loaded',
             style: TextStyle(
-              color: Colors.white,
+              color: _lightOffWhite,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
@@ -2865,7 +2857,7 @@ class _HomePageState extends State<HomePage> {
                 ? 'Your BHW account could not read one or more barangay collections. Sign out, sign in again, and retry after deploying the latest Firestore rules.'
                 : 'Check your Firestore connection and account permissions, then try again.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.68)),
+            style: TextStyle(color: Colors.black.withValues(alpha: 0.68)),
           ),
           const SizedBox(height: 16),
           OutlinedButton.icon(
@@ -3002,7 +2994,7 @@ class _HomePageState extends State<HomePage> {
                   color: _primaryAqua.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(9),
                 ),
-                child: Icon(icon, color: Colors.white, size: 20),
+                child: Icon(icon, color: _lightOffWhite, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -3012,7 +3004,7 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       title,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: _lightOffWhite,
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                       ),
@@ -3021,7 +3013,7 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.58),
+                        color: Colors.black.withValues(alpha: 0.58),
                         fontSize: 11.5,
                       ),
                     ),
@@ -3046,14 +3038,14 @@ class _HomePageState extends State<HomePage> {
           children: [
             Icon(
               Icons.insert_chart_outlined_rounded,
-              color: Colors.white.withValues(alpha: 0.35),
+              color: Colors.black.withValues(alpha: 0.35),
               size: 34,
             ),
             const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.55)),
+              style: TextStyle(color: Colors.black.withValues(alpha: 0.55)),
             ),
           ],
         ),
@@ -3085,7 +3077,7 @@ class _HomePageState extends State<HomePage> {
                         ? 1
                         : (maxCount / 4).ceilToDouble(),
                     getDrawingHorizontalLine: (_) => FlLine(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       strokeWidth: 1,
                     ),
                   ),
@@ -3107,7 +3099,7 @@ class _HomePageState extends State<HomePage> {
                         getTitlesWidget: (value, meta) => Text(
                           value.toInt().toString(),
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: Colors.black.withValues(alpha: 0.5),
                             fontSize: 10,
                           ),
                         ),
@@ -3128,7 +3120,7 @@ class _HomePageState extends State<HomePage> {
                             child: Text(
                               _consultationMonthLabels[index],
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.62),
+                                color: Colors.black.withValues(alpha: 0.62),
                                 fontSize: 10,
                               ),
                             ),
@@ -3197,7 +3189,7 @@ class _HomePageState extends State<HomePage> {
                               entry.key,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: _lightOffWhite,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -3218,7 +3210,7 @@ class _HomePageState extends State<HomePage> {
                         child: LinearProgressIndicator(
                           minHeight: 7,
                           value: ratio,
-                          backgroundColor: Colors.white.withValues(alpha: 0.08),
+                          backgroundColor: Colors.black.withValues(alpha: 0.08),
                           color: _primaryAqua,
                         ),
                       ),
@@ -3265,7 +3257,7 @@ class _HomePageState extends State<HomePage> {
                             Text(
                               alert['title']?.toString() ?? 'Patient alert',
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: _lightOffWhite,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -3273,7 +3265,7 @@ class _HomePageState extends State<HomePage> {
                             Text(
                               alert['subtitle']?.toString() ?? '',
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.62),
+                                color: Colors.black.withValues(alpha: 0.62),
                                 fontSize: 11,
                               ),
                             ),
@@ -3296,7 +3288,7 @@ class _HomePageState extends State<HomePage> {
                             Text(
                               _formatTime(date),
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.42),
+                                color: Colors.black.withValues(alpha: 0.42),
                                 fontSize: 9,
                               ),
                             ),
@@ -3353,13 +3345,7 @@ class _HomePageState extends State<HomePage> {
     final user = FirebaseAuth.instance.currentUser;
     return Drawer(
       child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_sidebarDark, _sidebarDark.withValues(alpha: 0.95)],
-          ),
-        ),
+        decoration: const BoxDecoration(color: _sidebarDark),
         child: Column(
           children: [
             Container(
@@ -3367,13 +3353,7 @@ class _HomePageState extends State<HomePage> {
                 vertical: 20.0,
                 horizontal: 16.0,
               ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_primaryAqua, _secondaryIceBlue],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
+              decoration: BoxDecoration(color: _secondaryIceBlue),
               child: Column(
                 children: [
                   Container(
@@ -3389,11 +3369,11 @@ class _HomePageState extends State<HomePage> {
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
-                            color: Colors.white,
+                            color: _lightOffWhite,
                             child: Icon(
                               Icons.person,
                               size: 35,
-                              color: Colors.white,
+                              color: _lightOffWhite,
                             ),
                           );
                         },
@@ -3404,7 +3384,7 @@ class _HomePageState extends State<HomePage> {
                   Text(
                     userName,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: _lightOffWhite,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       letterSpacing: 0.5,
@@ -3415,7 +3395,7 @@ class _HomePageState extends State<HomePage> {
                   Text(
                     user?.email ?? '',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
+                      color: Colors.black.withValues(alpha: 0.9),
                       fontSize: 11,
                       letterSpacing: 0.3,
                     ),
@@ -3428,10 +3408,10 @@ class _HomePageState extends State<HomePage> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
+                      color: Colors.black.withValues(alpha: 0.25),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: Colors.black.withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
@@ -3450,7 +3430,7 @@ class _HomePageState extends State<HomePage> {
                         const Text(
                           'Online',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: _lightOffWhite,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.5,
@@ -3479,7 +3459,7 @@ class _HomePageState extends State<HomePage> {
                   Text(
                     'MAIN MENU',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
@@ -3537,7 +3517,7 @@ class _HomePageState extends State<HomePage> {
                         Text(
                           'PATIENT CARE',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: Colors.black.withValues(alpha: 0.5),
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.2,
@@ -3581,7 +3561,7 @@ class _HomePageState extends State<HomePage> {
                         Text(
                           'DISEASE TRACKING',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: Colors.black.withValues(alpha: 0.5),
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.2,
@@ -3613,7 +3593,7 @@ class _HomePageState extends State<HomePage> {
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),
@@ -3642,14 +3622,14 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         Icon(
                           Icons.logout_rounded,
-                          color: Colors.white,
+                          color: _lightOffWhite,
                           size: 16,
                         ),
                         SizedBox(width: 8),
                         Text(
                           'Logout',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: _lightOffWhite,
                             fontSize: 12.5,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -3680,7 +3660,7 @@ class _HomePageState extends State<HomePage> {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
-          hoverColor: Colors.white.withValues(alpha: 0.08),
+          hoverColor: Colors.black.withValues(alpha: 0.08),
           splashColor: _primaryAqua.withValues(alpha: 0.2),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
@@ -3711,10 +3691,10 @@ class _HomePageState extends State<HomePage> {
                   decoration: BoxDecoration(
                     color: isActive
                         ? _primaryAqua.withValues(alpha: 0.15)
-                        : Colors.white.withValues(alpha: 0.05),
+                        : Colors.black.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Icon(icon, color: Colors.white, size: 18),
+                  child: Icon(icon, color: _lightOffWhite, size: 18),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -3723,7 +3703,7 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(
                       color: isActive
                           ? Colors.white
-                          : Colors.white.withValues(alpha: 0.8),
+                          : Colors.black.withValues(alpha: 0.8),
                       fontSize: 12.5,
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                       letterSpacing: 0.3,
@@ -3739,7 +3719,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     child: const Icon(
                       Icons.chevron_right,
-                      color: Colors.white,
+                      color: _lightOffWhite,
                       size: 14,
                     ),
                   ),
@@ -3764,7 +3744,7 @@ class _HomePageState extends State<HomePage> {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
-          hoverColor: Colors.white.withValues(alpha: 0.08),
+          hoverColor: Colors.black.withValues(alpha: 0.08),
           splashColor: _primaryAqua.withValues(alpha: 0.2),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
@@ -3802,7 +3782,7 @@ class _HomePageState extends State<HomePage> {
                     icon,
                     color: isActive
                         ? _primaryAqua
-                        : Colors.white.withValues(alpha: 0.8),
+                        : Colors.black.withValues(alpha: 0.8),
                     size: 18,
                   ),
                 ),
@@ -3813,7 +3793,7 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(
                       color: isActive
                           ? Colors.white
-                          : Colors.white.withValues(alpha: 0.8),
+                          : Colors.black.withValues(alpha: 0.8),
                       fontSize: 12.5,
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                       letterSpacing: 0.3,
@@ -3829,7 +3809,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     child: const Icon(
                       Icons.chevron_right,
-                      color: Colors.white,
+                      color: _lightOffWhite,
                       size: 14,
                     ),
                   ),
@@ -3851,12 +3831,12 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white, size: 16),
+          Icon(icon, color: _lightOffWhite, size: 16),
           const SizedBox(width: 6),
           Text(
             label,
             style: const TextStyle(
-              color: Colors.white,
+              color: _lightOffWhite,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -3883,7 +3863,7 @@ class _HomePageState extends State<HomePage> {
           child: Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: _sidebarDark,
+              color: const Color(0xFF0D274D),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: _primaryAqua.withValues(alpha: 0.15),
@@ -3960,7 +3940,10 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 12, color: Colors.white),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFFB8C9DB),
+                  ),
                 ),
               ],
             ),
@@ -3989,7 +3972,7 @@ class _HomePageState extends State<HomePage> {
                   color: _primaryAqua.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: Colors.white, size: 20),
+                child: Icon(icon, color: _lightOffWhite, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -3998,7 +3981,7 @@ class _HomePageState extends State<HomePage> {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: _lightOffWhite,
                   ),
                 ),
               ),
@@ -4008,7 +3991,7 @@ class _HomePageState extends State<HomePage> {
                   icon: const Icon(
                     Icons.refresh_rounded,
                     size: 18,
-                    color: Colors.white,
+                    color: _lightOffWhite,
                   ),
                   onPressed: onRefresh,
                   tooltip: 'Refresh',
@@ -4093,7 +4076,7 @@ class _HomePageState extends State<HomePage> {
                               style: const TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: _lightOffWhite,
                               ),
                             ),
                             TextSpan(
@@ -4113,14 +4096,14 @@ class _HomePageState extends State<HomePage> {
                           Icon(
                             Icons.access_time_rounded,
                             size: 16,
-                            color: Colors.white,
+                            color: _lightOffWhite,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             timeFormatted,
                             style: const TextStyle(
                               fontSize: 14,
-                              color: Colors.white,
+                              color: _lightOffWhite,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -4240,7 +4223,7 @@ class _HomePageState extends State<HomePage> {
                 Text(
                   'Syncing disease trends...',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: Colors.black.withValues(alpha: 0.6),
                     fontSize: 12,
                   ),
                 ),
@@ -4252,7 +4235,7 @@ class _HomePageState extends State<HomePage> {
             child: Text(
               'No disease trend data yet',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.65),
+                color: Colors.black.withValues(alpha: 0.65),
                 fontSize: 12,
               ),
             ),
@@ -4268,7 +4251,7 @@ class _HomePageState extends State<HomePage> {
                 drawVerticalLine: false,
                 horizontalInterval: interval,
                 getDrawingHorizontalLine: (_) => FlLine(
-                  color: Colors.white.withValues(alpha: 0.10),
+                  color: Colors.black.withValues(alpha: 0.10),
                   strokeWidth: 1,
                 ),
               ),
@@ -4304,7 +4287,7 @@ class _HomePageState extends State<HomePage> {
                     getTitlesWidget: (value, _) => Text(
                       value.toInt().toString(),
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.65),
+                        color: Colors.black.withValues(alpha: 0.65),
                         fontSize: 10,
                       ),
                     ),
@@ -4328,7 +4311,7 @@ class _HomePageState extends State<HomePage> {
                         child: Text(
                           monthLabels[idx],
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.72),
+                            color: Colors.black.withValues(alpha: 0.72),
                             fontSize: 10,
                           ),
                         ),
@@ -4355,12 +4338,12 @@ class _HomePageState extends State<HomePage> {
         children: [
           const Row(
             children: [
-              Icon(Icons.analytics_outlined, color: Colors.white, size: 24),
+              Icon(Icons.analytics_outlined, color: _lightOffWhite, size: 24),
               SizedBox(width: 10),
               Text(
                 'Disease Trend Analysis',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: _lightOffWhite,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
@@ -4371,7 +4354,7 @@ class _HomePageState extends State<HomePage> {
           Text(
             'CHO-style monthly trend view from Firestore morbidity records.',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.6),
+              color: Colors.black.withValues(alpha: 0.6),
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -4381,7 +4364,7 @@ class _HomePageState extends State<HomePage> {
             height: 320,
             padding: const EdgeInsets.fromLTRB(10, 14, 14, 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF061920),
+              color: const Color(0xFF0B1F3A),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _primaryAqua.withValues(alpha: 0.22),
@@ -4416,7 +4399,7 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       shortLabel,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.75),
+                        color: Colors.black.withValues(alpha: 0.75),
                         fontSize: 10,
                       ),
                     ),
@@ -4511,7 +4494,7 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       const Icon(
                         Icons.analytics_outlined,
-                        color: Colors.white,
+                        color: _lightOffWhite,
                         size: 22,
                       ),
                       const SizedBox(width: 10),
@@ -4524,15 +4507,15 @@ class _HomePageState extends State<HomePage> {
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: _lightOffWhite,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Power BI-style trend board for symptom movement and load',
+                              'Trend board for symptom movement and load',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.white.withValues(alpha: 0.6),
+                                color: Colors.black.withValues(alpha: 0.6),
                               ),
                             ),
                           ],
@@ -4559,7 +4542,7 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         Icon(
                           Icons.date_range_outlined,
-                          color: Colors.white,
+                          color: _lightOffWhite,
                           size: 14,
                         ),
                         SizedBox(width: 6),
@@ -4589,7 +4572,7 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             Icon(
                               Icons.analytics_outlined,
-                              color: Colors.white,
+                              color: _lightOffWhite,
                               size: 22,
                             ),
                             SizedBox(width: 10),
@@ -4598,17 +4581,17 @@ class _HomePageState extends State<HomePage> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: _lightOffWhite,
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Power BI-style trend board for symptom movement and load',
+                          'Trend board for symptom movement and load',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.6),
+                            color: Colors.black.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
@@ -4633,7 +4616,7 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         Icon(
                           Icons.date_range_outlined,
-                          color: Colors.white,
+                          color: _lightOffWhite,
                           size: 14,
                         ),
                         SizedBox(width: 6),
@@ -4748,7 +4731,7 @@ class _HomePageState extends State<HomePage> {
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: const Color(0xFF061920),
+                color: const Color(0xFF0B1F3A),
                 border: Border.all(
                   color: _primaryAqua.withValues(alpha: 0.2),
                   width: 1.2,
@@ -4770,7 +4753,7 @@ class _HomePageState extends State<HomePage> {
                             Text(
                               'Loading trend data...',
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.5),
+                                color: Colors.black.withValues(alpha: 0.5),
                                 fontSize: 12,
                               ),
                             ),
@@ -4784,14 +4767,14 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             Icon(
                               Icons.info_outline,
-                              color: Colors.white.withValues(alpha: 0.3),
+                              color: Colors.black.withValues(alpha: 0.3),
                               size: 40,
                             ),
                             const SizedBox(height: 12),
                             Text(
                               'No disease data available for the selected period',
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.5),
+                                color: Colors.black.withValues(alpha: 0.5),
                                 fontSize: 12,
                               ),
                             ),
@@ -4806,7 +4789,7 @@ class _HomePageState extends State<HomePage> {
                             horizontalInterval: yInterval,
                             getDrawingHorizontalLine: (value) {
                               return FlLine(
-                                color: Colors.white.withValues(alpha: 0.09),
+                                color: Colors.black.withValues(alpha: 0.09),
                                 strokeWidth: 0.9,
                               );
                             },
@@ -4883,11 +4866,11 @@ class _HomePageState extends State<HomePage> {
                             show: true,
                             border: Border(
                               bottom: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.2),
+                                color: Colors.black.withValues(alpha: 0.2),
                                 width: 1,
                               ),
                               left: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.2),
+                                color: Colors.black.withValues(alpha: 0.2),
                                 width: 1,
                               ),
                             ),
@@ -5011,7 +4994,7 @@ class _HomePageState extends State<HomePage> {
                               Text(
                                 symptomLabel,
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.9),
+                                  color: Colors.black.withValues(alpha: 0.9),
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -5042,7 +5025,7 @@ class _HomePageState extends State<HomePage> {
           label,
           style: TextStyle(
             fontSize: 11,
-            color: Colors.white.withValues(alpha: 0.6),
+            color: Colors.black.withValues(alpha: 0.6),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -5069,7 +5052,10 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: Text(
                       _monthYearLabel(date),
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      style: const TextStyle(
+                        color: _lightOffWhite,
+                        fontSize: 13,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -5120,7 +5106,7 @@ class _HomePageState extends State<HomePage> {
                 Text(
                   label,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.65),
+                    color: Colors.black.withValues(alpha: 0.65),
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -5131,7 +5117,7 @@ class _HomePageState extends State<HomePage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: _lightOffWhite,
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
                   ),
@@ -5150,19 +5136,9 @@ class _HomePageState extends State<HomePage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _primaryAqua.withValues(alpha: 0.08),
-            _secondaryIceBlue.withValues(alpha: 0.05),
-          ],
-        ),
+        color: const Color(0xFFEDF3FA),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.15),
-          width: 1.5,
-        ),
+        border: Border.all(color: const Color(0xFFD9E5F2)),
       ),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -5174,14 +5150,18 @@ class _HomePageState extends State<HomePage> {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.history_rounded, color: Colors.white, size: 24),
+                    Icon(
+                      Icons.history_rounded,
+                      color: _lightOffWhite,
+                      size: 24,
+                    ),
                     SizedBox(width: 10),
                     Text(
                       'Recent Activity',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: _lightOffWhite,
                       ),
                     ),
                   ],
@@ -5191,9 +5171,12 @@ class _HomePageState extends State<HomePage> {
                   icon: const Icon(
                     Icons.refresh_rounded,
                     size: 16,
-                    color: Colors.white,
+                    color: _primaryAqua,
                   ),
-                  label: const Text('Refresh'),
+                  label: const Text(
+                    'Refresh',
+                    style: TextStyle(color: _primaryAqua),
+                  ),
                 ),
               ],
             ),
@@ -5209,9 +5192,7 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(height: 12),
                       Text(
                         'Loading activity...',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                        ),
+                        style: TextStyle(color: _mutedCoolGray),
                       ),
                     ],
                   ),
@@ -5226,14 +5207,12 @@ class _HomePageState extends State<HomePage> {
                       Icon(
                         Icons.inbox,
                         size: 40,
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: _mutedCoolGray.withValues(alpha: 0.55),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         'No recent activity',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                        ),
+                        style: TextStyle(color: _mutedCoolGray),
                       ),
                     ],
                   ),
@@ -5251,12 +5230,10 @@ class _HomePageState extends State<HomePage> {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: _sidebarDark,
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: (activity['color'] as Color).withValues(
-                              alpha: 0.2,
-                            ),
+                            color: const Color(0xFFD9E5F2),
                             width: 1,
                           ),
                         ),
@@ -5266,7 +5243,7 @@ class _HomePageState extends State<HomePage> {
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: (activity['color'] as Color).withValues(
-                                  alpha: 0.15,
+                                  alpha: 0.12,
                                 ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -5286,7 +5263,7 @@ class _HomePageState extends State<HomePage> {
                                     style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.white,
+                                      color: _lightOffWhite,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -5294,9 +5271,7 @@ class _HomePageState extends State<HomePage> {
                                     activity['subtitle'] as String,
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: Colors.white.withValues(
-                                        alpha: 0.6,
-                                      ),
+                                      color: _mutedCoolGray,
                                     ),
                                   ),
                                 ],
@@ -5342,7 +5317,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Icon(
                   Icons.calendar_today_rounded,
-                  color: Colors.white,
+                  color: _lightOffWhite,
                   size: 24,
                 ),
                 SizedBox(width: 10),
@@ -5351,7 +5326,7 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: _lightOffWhite,
                   ),
                 ),
               ],
@@ -5364,7 +5339,7 @@ class _HomePageState extends State<HomePage> {
                   child: Text(
                     'No upcoming appointments',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -5419,7 +5394,7 @@ class _HomePageState extends State<HomePage> {
                                     style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.white,
+                                      color: _lightOffWhite,
                                     ),
                                   ),
                                   Text(
@@ -5487,14 +5462,14 @@ class _HomePageState extends State<HomePage> {
         children: [
           const Row(
             children: [
-              Icon(Icons.today_rounded, color: Colors.white, size: 24),
+              Icon(Icons.today_rounded, color: _lightOffWhite, size: 24),
               SizedBox(width: 10),
               Text(
                 "Today's Overview",
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: _lightOffWhite,
                 ),
               ),
             ],
@@ -5550,7 +5525,7 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Column(
         children: [
-          Icon(icon, color: Colors.white, size: 18),
+          Icon(icon, color: _lightOffWhite, size: 18),
           const SizedBox(height: 6),
           Text(
             value,
@@ -5565,7 +5540,7 @@ class _HomePageState extends State<HomePage> {
             label,
             style: TextStyle(
               fontSize: 10,
-              color: Colors.white.withValues(alpha: 0.6),
+              color: Colors.black.withValues(alpha: 0.6),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -5590,14 +5565,14 @@ class _HomePageState extends State<HomePage> {
         children: [
           const Row(
             children: [
-              Icon(Icons.favorite_rounded, color: Colors.white, size: 24),
+              Icon(Icons.favorite_rounded, color: _lightOffWhite, size: 24),
               SizedBox(width: 10),
               Text(
                 'Health Snapshot',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: _lightOffWhite,
                 ),
               ),
             ],
@@ -5609,7 +5584,7 @@ class _HomePageState extends State<HomePage> {
                 padding: const EdgeInsets.all(12),
                 child: Text(
                   'No diagnosis data available',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                  style: TextStyle(color: Colors.black.withValues(alpha: 0.5)),
                 ),
               ),
             )
@@ -5623,7 +5598,7 @@ class _HomePageState extends State<HomePage> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: Colors.black.withValues(alpha: 0.8),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -5684,14 +5659,14 @@ class _HomePageState extends State<HomePage> {
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: _lightOffWhite,
                                 ),
                               ),
                               Text(
                                 '${(diagnosis['count'] ?? 0)} cases',
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: Colors.white.withValues(alpha: 0.5),
+                                  color: Colors.black.withValues(alpha: 0.5),
                                 ),
                               ),
                             ],
@@ -5785,23 +5760,23 @@ class _HomePageState extends State<HomePage> {
         children: [
           const Row(
             children: [
-              Icon(Icons.trending_up_rounded, color: Colors.white, size: 24),
+              Icon(Icons.trending_up_rounded, color: _lightOffWhite, size: 24),
               SizedBox(width: 10),
               Text(
                 'Performance Indicators',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: _lightOffWhite,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
-            'Power BI KPI matrix (Actual vs Target, normalized score)',
+            'KPI matrix (actual versus target, normalized score)',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.6),
+              color: Colors.black.withValues(alpha: 0.6),
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -5819,7 +5794,7 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       'Loading performance indicators...',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         fontSize: 12,
                       ),
                     ),
@@ -5832,7 +5807,7 @@ class _HomePageState extends State<HomePage> {
               height: 260,
               padding: const EdgeInsets.fromLTRB(10, 14, 14, 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF061920),
+                color: const Color(0xFF0B1F3A),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: _primaryAqua.withValues(alpha: 0.22),
@@ -5876,7 +5851,7 @@ class _HomePageState extends State<HomePage> {
                             return BarTooltipItem(
                               '$label\n',
                               const TextStyle(
-                                color: Colors.white,
+                                color: _lightOffWhite,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 12,
                               ),
@@ -5885,7 +5860,7 @@ class _HomePageState extends State<HomePage> {
                                   text:
                                       'Actual: $display (${score.toStringAsFixed(1)}/100)\n',
                                   style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.85),
+                                    color: Colors.black.withValues(alpha: 0.85),
                                     fontWeight: FontWeight.w500,
                                     fontSize: 11,
                                   ),
@@ -5894,7 +5869,7 @@ class _HomePageState extends State<HomePage> {
                                   text:
                                       'Target: ${target.toStringAsFixed(1)}/100\n',
                                   style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.85),
+                                    color: Colors.black.withValues(alpha: 0.85),
                                     fontWeight: FontWeight.w500,
                                     fontSize: 11,
                                   ),
@@ -5913,7 +5888,7 @@ class _HomePageState extends State<HomePage> {
                                   text:
                                       'Hovered: ${isTargetRod ? 'Target' : 'Actual'} ${rod.toY.toStringAsFixed(1)}',
                                   style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.72),
+                                    color: Colors.black.withValues(alpha: 0.72),
                                     fontWeight: FontWeight.w500,
                                     fontSize: 10.5,
                                   ),
@@ -5928,7 +5903,7 @@ class _HomePageState extends State<HomePage> {
                     drawVerticalLine: false,
                     horizontalInterval: 20,
                     getDrawingHorizontalLine: (_) => FlLine(
-                      color: Colors.white.withValues(alpha: 0.10),
+                      color: Colors.black.withValues(alpha: 0.10),
                       strokeWidth: 1,
                     ),
                   ),
@@ -5936,11 +5911,11 @@ class _HomePageState extends State<HomePage> {
                     show: true,
                     border: Border(
                       left: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.22),
+                        color: Colors.black.withValues(alpha: 0.22),
                         width: 1,
                       ),
                       bottom: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.22),
+                        color: Colors.black.withValues(alpha: 0.22),
                         width: 1,
                       ),
                     ),
@@ -5960,7 +5935,7 @@ class _HomePageState extends State<HomePage> {
                         getTitlesWidget: (value, _) => Text(
                           '${value.toInt()}',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.72),
+                            color: Colors.black.withValues(alpha: 0.72),
                             fontSize: 10,
                           ),
                         ),
@@ -5979,7 +5954,7 @@ class _HomePageState extends State<HomePage> {
                             child: Text(
                               metrics[index]['short'].toString(),
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.82),
+                                color: Colors.black.withValues(alpha: 0.82),
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -6011,7 +5986,7 @@ class _HomePageState extends State<HomePage> {
                         BarChartRodData(
                           toY: target,
                           width: 7,
-                          color: Colors.white.withValues(alpha: 0.55),
+                          color: Colors.black.withValues(alpha: 0.55),
                           borderRadius: BorderRadius.circular(3),
                         ),
                       ],

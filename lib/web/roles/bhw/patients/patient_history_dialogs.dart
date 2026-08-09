@@ -5,9 +5,9 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_histo
 import 'package:mycapstone_project/web/shared/widgets/doctor_notes_section.dart';
 
 class PatientHistoryDialogs {
-  static const Color _primaryAqua = Color(0xFF00A8B5);
-  static const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-  static const Color _darkDeepTeal = Color(0xFF0A1F24);
+  static const Color _primaryAqua = Color(0xFF2F80ED);
+  static const Color _secondaryIceBlue = Color(0xFF163B66);
+  static const Color _darkDeepTeal = Color(0xFF0D274D);
   static const Color _lightOffWhite = Color(0xFFF5F5F5);
 
   static List<Map<String, dynamic>> collectHistory({

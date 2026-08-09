@@ -72,15 +72,12 @@ class PrenatalDashboardStats extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: darkDeepTeal.withValues(alpha: 0.6),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: const Color(0x140B1F3A),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -105,9 +102,13 @@ class PrenatalDashboardStats extends StatelessWidget {
                 ),
                 child: Icon(icon, color: color, size: 28),
               ),
+
               /// Active badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
@@ -124,6 +125,7 @@ class PrenatalDashboardStats extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+
           /// Value
           Text(
             value,
@@ -135,21 +137,23 @@ class PrenatalDashboardStats extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
+
           /// Title
           Text(
             title,
             style: const TextStyle(
-              color: Colors.white,
+              color: Color(0xFF0B1F3A),
               fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 4),
+
           /// Subtitle
           Text(
             subtitle,
             style: TextStyle(
-              color: mutedCoolGray,
+              color: const Color(0xFF4B6075),
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),

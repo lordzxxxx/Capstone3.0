@@ -51,24 +51,26 @@ Future<void> testFirestoreConnection() async {
 
     print('   📝 Writing to collection: checkup_records');
     print('   🆔 Document ID: $testId');
-    
+
     final startTime = DateTime.now();
     await getFirestoreInstance()
         .collection('checkup_records')
         .doc(testId)
         .set(testData);
     final elapsed = DateTime.now().difference(startTime).inMilliseconds;
-    
+
     print('   ✅ Write successful! (${elapsed}ms)');
     print('   📍 Document path: checkup_records/$testId');
   } on FirebaseException catch (e) {
     print('   ❌ Firebase error: ${e.code}');
     print('   💬 Message: ${e.message}');
-    
+
     if (e.code == 'permission-denied') {
       print('\n   🔒 PERMISSION DENIED!');
       print('   Fix: Update your Firestore security rules at:');
-      print('   🔗 https://console.firebase.google.com/project/capstone-c98f9/firestore/rules');
+      print(
+        '   🔗 https://console.firebase.google.com/project/capstone-c98f9/firestore/rules',
+      );
       print('\n   Option 1 (Development - allows all access):');
       print('   ----------------------------------------');
       print('   rules_version = \'2\';');
@@ -95,10 +97,10 @@ Future<void> testFirestoreConnection() async {
         .where('testRecord', isEqualTo: true)
         .limit(5)
         .get();
-    
+
     print('   ✅ Read successful!');
     print('   📊 Found ${snapshot.docs.length} test record(s)');
-    
+
     if (snapshot.docs.isNotEmpty) {
       print('\n   📄 Most recent test record:');
       final doc = snapshot.docs.first;
@@ -116,10 +118,10 @@ Future<void> testFirestoreConnection() async {
     final snapshot = await getFirestoreInstance()
         .collection('checkup_records')
         .get();
-    
+
     print('   ✅ Collection accessed successfully');
     print('   📊 Total documents in checkup_records: ${snapshot.docs.length}');
-    
+
     if (snapshot.docs.isNotEmpty) {
       print('\n   📋 Recent records:');
       for (var doc in snapshot.docs.take(5)) {
@@ -134,11 +136,15 @@ Future<void> testFirestoreConnection() async {
   print('\n========================================');
   print('✅ TEST COMPLETE');
   print('========================================\n');
-  
+
   print('Next steps:');
   print('1. Check the Firebase Console at:');
-  print('   https://console.firebase.google.com/project/capstone-c98f9/firestore/data');
-  print('2. Make sure you selected the "capstone-c98f9" database (not "default")');
+  print(
+    '   https://console.firebase.google.com/project/capstone-c98f9/firestore/data',
+  );
+  print(
+    '2. Make sure you selected the "capstone-c98f9" database (not "default")',
+  );
   print('3. Look for the "checkup_records" collection');
   print('4. You should see documents with timestamps\n');
 }

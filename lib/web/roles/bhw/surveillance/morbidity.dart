@@ -19,11 +19,11 @@ import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _panelTeal = Color(0xFF0E2F34);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _mutedCoolGray = Color(0xFF546E7A);
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _darkDeepTeal = Color(0xFF071A33);
+const Color _panelTeal = Colors.white;
+const Color _lightOffWhite = Color(0xFF0B1F3A);
+const Color _mutedCoolGray = Color(0xFF4B6075);
 const Color _signalGreen = Color(0xFF74D7A7);
 const Color _signalAmber = Color(0xFFFFC86B);
 const Color _signalRed = Color(0xFFF0897C);
@@ -255,7 +255,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: const Color(0xFFF5F7FA),
       drawer: WebAppSidebar(
         userName: userName,
         activeItem: WebSidebarItem.morbidity,
@@ -265,13 +265,13 @@ class _MorbidityPageState extends State<MorbidityPage> {
         backgroundColor: _darkDeepTeal,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: _lightOffWhite, size: 36),
+          icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 36),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(
           'Morbidity Dashboard',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _lightOffWhite,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -282,10 +282,8 @@ class _MorbidityPageState extends State<MorbidityPage> {
               child: OutlinedButton.icon(
                 onPressed: _generateMorbidityReport,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: _lightOffWhite,
-                  side: BorderSide(
-                    color: _lightOffWhite.withValues(alpha: 0.22),
-                  ),
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 12,
@@ -304,14 +302,8 @@ class _MorbidityPageState extends State<MorbidityPage> {
           ),
         ],
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_darkDeepTeal, Color(0xFF08191C)],
-          ),
-        ),
+      body: ColoredBox(
+        color: Color(0xFFF5F7FA),
         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: _morbidityStream(),
           builder: (context, snapshot) {
@@ -878,7 +870,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
       child: Text(
         label,
         style: TextStyle(
-          color: _lightOffWhite.withValues(alpha: 0.9),
+          color: Colors.white,
           fontSize: 12,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.2,
@@ -893,7 +885,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
     return Container(
       width: 1,
       height: 18,
-      color: _lightOffWhite.withValues(alpha: 0.2),
+      color: Colors.white.withValues(alpha: 0.28),
     );
   }
 
@@ -902,7 +894,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF123942),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.25),
@@ -926,7 +918,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
             child: Text(
               'Actions',
               style: TextStyle(
-                color: _lightOffWhite,
+                color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,
@@ -1007,7 +999,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: _darkDeepTeal,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: _primaryAqua.withValues(alpha: 0.25),
@@ -1015,14 +1007,14 @@ class _MorbidityPageState extends State<MorbidityPage> {
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<int>(
-                      dropdownColor: _darkDeepTeal,
+                      dropdownColor: Colors.white,
                       value: effectiveRowsPerPage,
                       style: const TextStyle(
                         color: _lightOffWhite,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
-                      iconEnabledColor: _lightOffWhite,
+                      iconEnabledColor: _primaryAqua,
                       items: const [
                         DropdownMenuItem(value: 10, child: Text('10 / page')),
                         DropdownMenuItem(value: 20, child: Text('20 / page')),
@@ -1057,7 +1049,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: _darkDeepTeal,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: _primaryAqua.withValues(alpha: 0.25),
@@ -1128,7 +1120,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                   color: _primaryAqua,
                 ),
                 filled: true,
-                fillColor: Colors.black.withValues(alpha: 0.16),
+                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide(
@@ -2516,7 +2508,7 @@ class _MorbidityRecordCard extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 74, color: const Color(0xFF214047));
+    return Container(width: 1, height: 74, color: const Color(0xFFD9E5F2));
   }
 
   Widget _buildActionButton({
@@ -2528,11 +2520,11 @@ class _MorbidityRecordCard extends StatelessWidget {
       message: tooltip,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF003B5C),
+          color: _primaryAqua,
           borderRadius: BorderRadius.circular(7),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF003B5C).withValues(alpha: 0.28),
+              color: const Color(0xFF163B66).withValues(alpha: 0.28),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -2568,15 +2560,15 @@ class _MorbidityRecordCard extends StatelessWidget {
     final status = _safe(record['status'], 'Pending');
     final remarks = _safe(record['remarks'], 'No remarks recorded');
     final reportDateText = _formatReportedDate(record['reportedDate']);
-    const rowText = Color(0xFFF3F8FC);
-    const mutedText = Color(0xFFB1C4D5);
+    const rowText = Color(0xFF0B1F3A);
+    const mutedText = Color(0xFF4B6075);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: _darkDeepTeal.withValues(alpha: 0.96),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF214047), width: 1),
+        border: Border.all(color: const Color(0xFFD9E5F2), width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -2806,15 +2798,15 @@ class _FilterDropdown extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
+        color: const Color(0xFFF7FAFD),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFD9E5F2)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          dropdownColor: _panelTeal,
+          dropdownColor: Colors.white,
           style: const TextStyle(color: _lightOffWhite),
           iconEnabledColor: _primaryAqua,
           items: options

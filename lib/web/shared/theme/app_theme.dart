@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Centralized color palette for the Smart Health Integration web app.
 ///
@@ -19,35 +20,35 @@ class AppColors {
   // Brand
   /// Canonical brand teal. Matches the `_primaryAqua` constant already
   /// redeclared in the large majority of `lib/web/*` screens.
-  static const Color primary = Color(0xFF00A8B5);
+  static const Color primary = Color(0xFF2F80ED);
 
   /// Canonical secondary blue-teal. Matches the `_secondaryIceBlue` value
   /// used in login/signup/landing screens (18 files), not the lighter
   /// `0xFFC6D4E1` used only by the unused `lib/web/shell/main.dart`.
-  static const Color secondary = Color(0xFF1E5A7A);
+  static const Color secondary = Color(0xFF163B66);
 
   // Dark surfaces (used across dozens of dark-themed auth/portal screens)
   /// Deepest dark teal — page/backdrop background on dark screens.
   /// Matches `_darkDeepTeal` as declared in the majority of `lib/web/*`
   /// files (~30 occurrences).
-  static const Color backgroundDark = Color(0xFF0A1F24);
+  static const Color backgroundDark = Color(0xFF071A33);
 
   /// Slightly lighter dark teal — raised surfaces/panels/sidebars on top of
   /// [backgroundDark]. Matches `_sidebarDark` in `landing.dart` and
   /// `_darkDeepTeal` as declared in `lib/main.dart` itself (~29
   /// occurrences).
-  static const Color surfaceDark = Color(0xFF0E2F34);
+  static const Color surfaceDark = Color(0xFF0D274D);
 
   // Light surfaces
   /// Canonical light background. Matches `_lightOffWhite` (most common
   /// value across `lib/web/*`, 20+ occurrences).
-  static const Color backgroundLight = Color(0xFFF5F5F5);
+  static const Color backgroundLight = Color(0xFFF4F7FB);
   static const Color surfaceLight = Colors.white;
 
   // Text
-  static const Color textPrimary = Color(0xFF0A1F24);
-  static const Color textSecondary = Color(0xFF546E7A);
-  static const Color textOnDark = Color(0xFFF5F5F5);
+  static const Color textPrimary = Color(0xFF0B1F3A);
+  static const Color textSecondary = Color(0xFF4B6075);
+  static const Color textOnDark = Color(0xFFF8FBFF);
 
   // Status — formalized from the hex values already used consistently for
   // snackbars/validation across auth screens (forgot.dart, signup.dart,
@@ -78,7 +79,7 @@ class AppTheme {
   static ThemeData light({bool isWeb = false}) {
     final colorScheme = ColorScheme.light(
       primary: AppColors.primary,
-      onPrimary: AppColors.textPrimary,
+      onPrimary: Colors.white,
       secondary: AppColors.secondary,
       onSecondary: AppColors.textOnDark,
       surface: AppColors.backgroundLight,
@@ -89,7 +90,7 @@ class AppTheme {
       onError: Colors.white,
     );
 
-    const textTheme = TextTheme(
+    final textTheme = GoogleFonts.interTextTheme(const TextTheme(
       // Hero / display — large marketing-style headings.
       displayLarge: TextStyle(
         fontSize: 40,
@@ -158,7 +159,7 @@ class AppTheme {
         fontWeight: FontWeight.w500,
         color: AppColors.textSecondary,
       ),
-    );
+    ));
 
     return ThemeData(
       useMaterial3: true,
@@ -170,7 +171,7 @@ class AppTheme {
         foregroundColor: AppColors.textOnDark,
         elevation: 0,
         centerTitle: false,
-        toolbarHeight: isWeb ? 70 : null,
+        toolbarHeight: isWeb ? 72 : null,
         iconTheme: const IconThemeData(color: AppColors.textOnDark),
         titleTextStyle: TextStyle(
           color: AppColors.textOnDark,
@@ -180,8 +181,9 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: AppColors.surfaceLight,
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 1,
+        shadowColor: AppColors.secondary.withValues(alpha: 0.12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: const EdgeInsets.symmetric(
           vertical: AppSpacing.sm,
           horizontal: 0,
@@ -190,14 +192,14 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.textPrimary,
+          foregroundColor: Colors.white,
           elevation: 2,
           padding: const EdgeInsets.symmetric(
             vertical: AppSpacing.md,
             horizontal: AppSpacing.lg,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
@@ -232,13 +234,17 @@ class AppTheme {
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textPrimary,
+        foregroundColor: Colors.white,
         elevation: 4,
       ),
       dividerTheme: DividerThemeData(
         color: AppColors.textSecondary.withValues(alpha: 0.2),
         thickness: 1,
         space: 1,
+      ),
+      drawerTheme: const DrawerThemeData(
+        backgroundColor: AppColors.surfaceDark,
+        scrimColor: Color(0x66071A33),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.secondary.withValues(alpha: 0.15),

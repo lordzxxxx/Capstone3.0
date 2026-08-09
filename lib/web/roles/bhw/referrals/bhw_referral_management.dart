@@ -16,12 +16,12 @@ import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:universal_html/html.dart' as html;
 
-const _aqua = Color(0xFF00A8B5);
-const _background = Color(0xFF071B20);
-const _surface = Color(0xFF0E2F34);
-const _surfaceAlt = Color(0xFF123B46);
+const _aqua = Color(0xFF2F80ED);
+const _background = Color(0xFF071A33);
+const _surface = Color(0xFF0D274D);
+const _surfaceAlt = Color(0xFF163B66);
 const _text = Color(0xFFF5F7FA);
-const _muted = Color(0xFF9CB0B7);
+const _muted = Color(0xFFB8C9DB);
 const _lightField = Color(0xFFF7FAFC);
 const _darkFieldText = Color(0xFF12252B);
 
@@ -132,13 +132,13 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
         : user?.email?.split('@').first ?? 'BHW';
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _background,
+      backgroundColor: const Color(0xFFF5F7FA),
       drawer: WebAppSidebar(
         userName: userName,
         activeItem: WebSidebarItem.referrals,
       ),
       appBar: AppBar(
-        backgroundColor: _background,
+        backgroundColor: const Color(0xFF071A33),
         title: const Text('BHW Referral Management'),
         leading: IconButton(
           icon: const Icon(Icons.menu),

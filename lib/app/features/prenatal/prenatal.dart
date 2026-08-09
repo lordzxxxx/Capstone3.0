@@ -7,6 +7,7 @@ import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls
 import 'package:mycapstone_project/app/features/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
+import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 
 const Color _primaryAqua = Color(0xFF00A8B5);
 const Color _secondaryIceBlue = Color(0xFF1E5A7A);
@@ -292,14 +293,10 @@ class _PrenatalPageState extends State<PrenatalPage> {
           (_isDeleteDialogShowing ||
               (_isSelectionMode && _selectedIndices.isNotEmpty))
           ? null
-          : FloatingActionButton.extended(
-              backgroundColor: _primaryAqua,
-              foregroundColor: _darkDeepTeal,
-              icon: const Icon(Icons.add),
-              label: const Text('New Prenatal'),
-              onPressed: () {
-                _showNewPrenatalModal(context);
-              },
+          : RecordCreationFabGroup(
+              moduleLabel: 'Prenatal',
+              manualLabel: 'New Prenatal',
+              onManualCreate: () => _showNewPrenatalModal(context),
             ),
     );
   }

@@ -21,14 +21,14 @@ import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart'
 import 'package:mycapstone_project/web/shared/widgets/login_success_sweet_alert.dart';
 import 'package:mycapstone_project/web/shared/services/firestore_rest_reader.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _primaryAquaBright = Color(0xFF29C7D1);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _sidebarDark = Color(0xFF0E2F34);
-const Color _panelSurface = Color(0xFF061920);
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _primaryAquaBright = Color(0xFF4EA1FF);
+const Color _secondaryIceBlue = Color(0xFF163B66);
+const Color _darkDeepTeal = Color(0xFF071A33);
+const Color _mutedCoolGray = Color(0xFF4B6075);
+const Color _lightOffWhite = Color(0xFFF8FBFF);
+const Color _sidebarDark = Color(0xFF0D274D);
+const Color _panelSurface = Color(0xFF0D274D);
 
 class _RoleCheckResult {
   final bool hasAccess;
@@ -270,6 +270,7 @@ class _LoginState extends State<Login> {
         : 'Dashboard';
 
     final proceedToDashboard = await showLoginSuccessSweetAlert(
+      context: context,
       title: 'Login successful',
       message: isSuperAdmin
           ? 'Your CHO Super Admin account is verified. Continue to the governance center.'
@@ -976,7 +977,7 @@ class _LoginState extends State<Login> {
               Text(
                 'AI-DSUHIS',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
+                  fontFamily: 'Inter',
                   fontSize: isCompact ? 32 : 52,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -987,7 +988,7 @@ class _LoginState extends State<Login> {
               Text(
                 'Secure access to unified city and barangay health information.',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
+                  fontFamily: 'Inter',
                   fontSize: isCompact ? 15 : 20,
                   color: Colors.white.withValues(alpha: 0.88),
                   height: 1.45,
@@ -997,7 +998,7 @@ class _LoginState extends State<Login> {
               Text(
                 'A trusted workspace for patient records, referrals, analytics, and community health operations.',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
+                  fontFamily: 'Inter',
                   fontSize: isCompact ? 13 : 15,
                   color: Colors.white.withValues(alpha: 0.72),
                   height: 1.55,
@@ -1049,7 +1050,7 @@ class _LoginState extends State<Login> {
 
     return Theme(
       data: Theme.of(context).copyWith(
-        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Manrope'),
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Inter'),
       ),
       child: Scaffold(
         backgroundColor: _darkDeepTeal,
@@ -1062,32 +1063,12 @@ class _LoginState extends State<Login> {
                 'assets/bg2.2.png',
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  return const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [_secondaryIceBlue, _darkDeepTeal],
-                      ),
-                    ),
-                  );
+                  return const ColoredBox(color: _darkDeepTeal);
                 },
               ),
             ),
             Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      _darkDeepTeal.withValues(alpha: 0.48),
-                      _secondaryIceBlue.withValues(alpha: 0.62),
-                      _darkDeepTeal.withValues(alpha: 0.72),
-                    ],
-                  ),
-                ),
-              ),
+              child: ColoredBox(color: Color(0xD9071A33)),
             ),
 
             SafeArea(
@@ -1225,10 +1206,10 @@ class _LoginState extends State<Login> {
   // Login card widget
   Widget _buildLoginCard(BuildContext context, {required bool isCompact}) {
     return Container(
-      padding: EdgeInsets.all(isCompact ? 24 : 34),
+      padding: EdgeInsets.all(isCompact ? 20 : 28),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFE5EEF0)),
         boxShadow: [
           BoxShadow(
@@ -1246,7 +1227,7 @@ class _LoginState extends State<Login> {
             Text(
               'Welcome back',
               style: TextStyle(
-                fontFamily: 'Manrope',
+                fontFamily: 'Inter',
                 fontSize: isCompact ? 28 : 34,
                 fontWeight: FontWeight.w800,
                 color: _darkDeepTeal,
@@ -1262,7 +1243,7 @@ class _LoginState extends State<Login> {
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 26),
+            const SizedBox(height: 22),
             _buildFieldLabel(context, 'Email address'),
             const SizedBox(height: 8),
             _buildTextField(
@@ -1286,7 +1267,7 @@ class _LoginState extends State<Login> {
             _buildPasswordField(),
             const SizedBox(height: 22),
             SizedBox(
-              height: 54,
+              height: 50,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : signIn,
                 style: ElevatedButton.styleFrom(

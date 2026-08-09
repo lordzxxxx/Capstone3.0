@@ -3,11 +3,12 @@ import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-const _accent = Color(0xFF00A8B5);
-const _panel = Color(0xFF0E2F34);
-const _foreground = Color(0xFFF5F5F5);
+const _accent = Color(0xFF2F80ED);
+const _panel = Colors.white;
+const _foreground = Color(0xFF0B1F3A);
+const _muted = Color(0xFF4B6075);
 const _palette = <Color>[
-  Color(0xFF00A8B5),
+  Color(0xFF2F80ED),
   Color(0xFF5EC7FF),
   Color(0xFFFFB74D),
   Color(0xFF66BB6A),
@@ -195,7 +196,7 @@ class CommunicableInsights extends StatelessWidget {
                               Text(
                                 item.label,
                                 style: TextStyle(
-                                  color: _foreground.withValues(alpha: 0.62),
+                                  color: _muted,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -282,10 +283,7 @@ class CommunicableInsights extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        color: _foreground.withValues(alpha: 0.58),
-                        fontSize: 11.5,
-                      ),
+                      style: TextStyle(color: _muted, fontSize: 11.5),
                     ),
                   ],
                 ),
@@ -313,10 +311,8 @@ class CommunicableInsights extends StatelessWidget {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: interval,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: Colors.white.withValues(alpha: 0.08),
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (_) =>
+              FlLine(color: const Color(0xFFD9E5F2), strokeWidth: 1),
         ),
         titlesData: _titles(
           entries.map((entry) => entry.key).toList(growable: false),
@@ -324,7 +320,7 @@ class CommunicableInsights extends StatelessWidget {
         ),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => const Color(0xFF173C43),
+            getTooltipColor: (_) => const Color(0xFF163B66),
             getTooltipItems: (spots) => spots
                 .map(
                   (spot) => LineTooltipItem(
@@ -379,7 +375,7 @@ class CommunicableInsights extends StatelessWidget {
           drawVerticalLine: false,
           horizontalInterval: interval,
           getDrawingHorizontalLine: (_) =>
-              FlLine(color: Colors.white.withValues(alpha: 0.08)),
+              FlLine(color: const Color(0xFFD9E5F2)),
         ),
         titlesData: _titles(
           visible
@@ -390,7 +386,7 @@ class CommunicableInsights extends StatelessWidget {
         ),
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => const Color(0xFF173C43),
+            getTooltipColor: (_) => const Color(0xFF163B66),
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final entry = visible[group.x];
               return BarTooltipItem(
@@ -482,7 +478,7 @@ class CommunicableInsights extends StatelessWidget {
                 Text(
                   '${visible[index].key}: ${visible[index].value}',
                   style: TextStyle(
-                    color: _foreground.withValues(alpha: 0.75),
+                    color: _muted,
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -510,10 +506,7 @@ class CommunicableInsights extends StatelessWidget {
           interval: interval,
           getTitlesWidget: (value, meta) => Text(
             '${value.toInt()}',
-            style: TextStyle(
-              color: _foreground.withValues(alpha: 0.55),
-              fontSize: 9,
-            ),
+            style: TextStyle(color: _muted, fontSize: 9),
           ),
         ),
       ),
@@ -539,10 +532,7 @@ class CommunicableInsights extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: _foreground.withValues(alpha: 0.65),
-                    fontSize: 9,
-                  ),
+                  style: TextStyle(color: _muted, fontSize: 9),
                 ),
               ),
             );

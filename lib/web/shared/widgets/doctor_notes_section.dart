@@ -138,7 +138,7 @@ class _DoctorNotesSectionState extends State<DoctorNotesSection> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
@@ -149,14 +149,14 @@ class _DoctorNotesSectionState extends State<DoctorNotesSection> {
             children: [
               Icon(
                 Icons.sticky_note_2_outlined,
-                color: AppColors.textOnDark,
+                color: AppColors.textPrimary,
                 size: 20,
               ),
               SizedBox(width: 8),
               Text(
                 'Doctor Notes',
                 style: TextStyle(
-                  color: AppColors.textOnDark,
+                  color: AppColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
@@ -167,24 +167,24 @@ class _DoctorNotesSectionState extends State<DoctorNotesSection> {
           const Text(
             'Continuity-of-care notes for this patient\'s check-ups. '
             'Notes cannot be edited or deleted once saved.',
-            style: TextStyle(color: Colors.white60, fontSize: 12.5),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
           ),
           const SizedBox(height: 14),
           if (widget.checkupOptions.isEmpty)
             const Text(
               'No check-up records yet. A note can be added once a '
               'check-up has been recorded for this patient.',
-              style: TextStyle(color: Colors.white60),
+              style: TextStyle(color: AppColors.textSecondary),
             )
           else ...[
             if (widget.checkupOptions.length > 1) ...[
               DropdownButtonFormField<String>(
                 initialValue: _selectedCheckupId,
-                dropdownColor: AppColors.surfaceDark,
-                style: const TextStyle(color: AppColors.textOnDark),
+                dropdownColor: AppColors.surfaceLight,
+                style: const TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(
                   labelText: 'Check-up',
-                  labelStyle: TextStyle(color: Colors.white60),
+                  labelStyle: TextStyle(color: AppColors.textSecondary),
                   isDense: true,
                 ),
                 items: widget.checkupOptions
@@ -223,12 +223,15 @@ class _DoctorNotesSectionState extends State<DoctorNotesSection> {
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline, color: Colors.white60),
+                        Icon(
+                          Icons.error_outline,
+                          color: AppColors.textSecondary,
+                        ),
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Unable to load doctor notes.',
-                            style: TextStyle(color: Colors.white60),
+                            style: TextStyle(color: AppColors.textSecondary),
                           ),
                         ),
                       ],
@@ -241,7 +244,7 @@ class _DoctorNotesSectionState extends State<DoctorNotesSection> {
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Text(
                       'No previous doctor notes for this check-up.',
-                      style: TextStyle(color: Colors.white60),
+                      style: TextStyle(color: AppColors.textSecondary),
                     ),
                   );
                 }
@@ -253,7 +256,7 @@ class _DoctorNotesSectionState extends State<DoctorNotesSection> {
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.04),
+                            color: AppColors.backgroundLight,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: AppColors.primary.withValues(alpha: 0.18),
@@ -276,7 +279,7 @@ class _DoctorNotesSectionState extends State<DoctorNotesSection> {
                                           ? 'Unknown author'
                                           : note.authorName,
                                       style: const TextStyle(
-                                        color: AppColors.textOnDark,
+                                        color: AppColors.textPrimary,
                                         fontWeight: FontWeight.w700,
                                         fontSize: 12.5,
                                       ),
@@ -309,7 +312,7 @@ class _DoctorNotesSectionState extends State<DoctorNotesSection> {
                               Text(
                                 note.note,
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: AppColors.textPrimary,
                                   fontSize: 12.5,
                                   height: 1.4,
                                 ),
@@ -318,7 +321,7 @@ class _DoctorNotesSectionState extends State<DoctorNotesSection> {
                               Text(
                                 _formatTimestamp(note.createdAt),
                                 style: const TextStyle(
-                                  color: Colors.white38,
+                                  color: AppColors.textSecondary,
                                   fontSize: 10.5,
                                 ),
                               ),
@@ -343,12 +346,15 @@ class _DoctorNotesSectionState extends State<DoctorNotesSection> {
                         Icon(
                           Icons.info_outline,
                           size: 14,
-                          color: Colors.white38,
+                          color: AppColors.textSecondary,
                         ),
                         SizedBox(width: 6),
                         Text(
                           'Only doctors and CHO staff can add notes.',
-                          style: TextStyle(color: Colors.white38, fontSize: 11),
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
@@ -361,12 +367,14 @@ class _DoctorNotesSectionState extends State<DoctorNotesSection> {
                       controller: _noteController,
                       minLines: 2,
                       maxLines: 4,
-                      style: const TextStyle(color: AppColors.textOnDark),
+                      style: const TextStyle(color: AppColors.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'Add a note for the next attending doctor…',
-                        hintStyle: const TextStyle(color: Colors.white38),
+                        hintStyle: const TextStyle(
+                          color: AppColors.textSecondary,
+                        ),
                         filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.04),
+                        fillColor: AppColors.backgroundLight,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide.none,

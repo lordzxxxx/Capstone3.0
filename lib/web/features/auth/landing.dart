@@ -5,17 +5,17 @@ import 'package:mycapstone_project/web/features/auth/bhw_registration.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _primaryAquaBright = Color(0xFF29C7D1);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
+const Color _primaryAqua = AppColors.primary;
+const Color _primaryAquaBright = Color(0xFF4EA1FF);
+const Color _secondaryIceBlue = AppColors.secondary;
 // Clean solid navy used for the access panel's buttons — flatter and more
 // restrained than the teal gradient, per request.
 const Color _darkBlue = Color(0xFF123A5C);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
+const Color _darkDeepTeal = AppColors.backgroundDark;
 const Color _mutedCoolGray = Color(0xFF546E7A);
 const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _sidebarDark = Color(0xFF0E2F34);
-const Color _panelSurface = Color(0xFF061920);
+const Color _sidebarDark = AppColors.surfaceDark;
+const Color _panelSurface = Color(0xFF0B1F3A);
 
 // Manrope is the established typeface for the auth flow (login.dart,
 // signup.dart, bhw_registration.dart) — applied here too so the landing
@@ -133,43 +133,276 @@ class _LandingPageState extends State<LandingPage>
   Future<String?> _showRoleSelectionDialog(BuildContext context) {
     return showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: _sidebarDark,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Register As', style: _display(size: 20)),
-        content: Text(
-          'Choose your account type. BHW requests require City Health Office approval. Administrator accounts are not available through public registration.',
-          style: _body(size: 14, color: _lightOffWhite.withValues(alpha: 0.85)),
+      barrierColor: Colors.black.withValues(alpha: 0.68),
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(28, 26, 28, 22),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFD9E5F2)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x66000000),
+                  blurRadius: 32,
+                  offset: Offset(0, 18),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: _primaryAqua.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _primaryAqua.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: _buildSystemLogo(size: 28),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Create your AI-DSUHIS account',
+                        style: _display(
+                          size: 19,
+                          letterSpacing: 0.1,
+                          color: _darkDeepTeal,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Close',
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                      color: _darkDeepTeal.withValues(alpha: 0.64),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Choose your access role',
+                  style: _display(size: 25, color: _darkDeepTeal),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  'Select the workspace that matches your responsibilities. Public BHW requests are reviewed by the City Health Office before activation.',
+                  style: _body(size: 13.5, color: _mutedCoolGray, height: 1.45),
+                ),
+                const SizedBox(height: 18),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _primaryAqua.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _primaryAqua.withValues(alpha: 0.18),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.verified_user_outlined,
+                        size: 18,
+                        color: _primaryAquaBright,
+                      ),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Text(
+                          'Your role controls the forms, approvals, and portal features available after sign-in.',
+                          style: _body(
+                            size: 12.5,
+                            color: _darkDeepTeal.withValues(alpha: 0.82),
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final cardWidth = constraints.maxWidth >= 500
+                        ? (constraints.maxWidth - 12) / 2
+                        : constraints.maxWidth;
+                    return Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        _buildRoleOption(
+                          width: cardWidth,
+                          icon: Icons.account_balance_outlined,
+                          title: 'City Health Office',
+                          label: 'CHO',
+                          description:
+                              'City-wide operations, oversight, and health administration.',
+                          accent: _primaryAquaBright,
+                          onTap: () => Navigator.of(dialogContext).pop('CHO'),
+                        ),
+                        _buildRoleOption(
+                          width: cardWidth,
+                          icon: Icons.groups_outlined,
+                          title: 'Barangay Health Worker',
+                          label: 'BHW',
+                          description:
+                              'Barangay-level care delivery and patient follow-up.',
+                          accent: _primaryAqua,
+                          badge: 'Approval required',
+                          onTap: () => Navigator.of(dialogContext).pop('BHW'),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 18),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    style: TextButton.styleFrom(
+                      foregroundColor: _darkDeepTeal.withValues(alpha: 0.72),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Cancel',
-              style: _body(
-                size: 14,
-                weight: FontWeight.w600,
-                color: _lightOffWhite.withValues(alpha: 0.8),
-              ),
+      ),
+    );
+  }
+
+  Widget _buildRoleOption({
+    required double width,
+    required IconData icon,
+    required String title,
+    required String label,
+    required String description,
+    required Color accent,
+    required VoidCallback onTap,
+    String? badge,
+  }) {
+    return SizedBox(
+      width: width,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Ink(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7FAFC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: accent.withValues(alpha: 0.34)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: accent, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: _body(
+                                size: 14,
+                                weight: FontWeight.w800,
+                                color: _darkDeepTeal,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            label,
+                            style: _body(
+                              size: 11,
+                              weight: FontWeight.w800,
+                              color: accent,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        description,
+                        style: _body(
+                          size: 12,
+                          color: _mutedCoolGray,
+                          height: 1.35,
+                        ),
+                      ),
+                      if (badge != null) ...[
+                        const SizedBox(height: 9),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: accent.withValues(alpha: 0.13),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: Text(
+                            badge,
+                            style: _body(
+                              size: 10.5,
+                              weight: FontWeight.w700,
+                              color: accent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 18,
+                    color: accent.withValues(alpha: 0.9),
+                  ),
+                ),
+              ],
             ),
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop('CHO'),
-            style: FilledButton.styleFrom(
-              backgroundColor: _panelSurface,
-              foregroundColor: _lightOffWhite,
-            ),
-            child: const Text('City Health Office (CHO)'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop('BHW'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryAqua,
-              foregroundColor: _darkDeepTeal,
-            ),
-            child: const Text('Barangay Health Worker (BHW)'),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -396,8 +629,8 @@ class _LandingPageState extends State<LandingPage>
         final height = constraints.maxHeight;
         final isDesktop = constraints.maxWidth >= 980;
         final logoSize = isDesktop
-            ? _responsive(height, 0.24, 190, 260)
-            : _responsive(height, 0.19, 140, 190);
+            ? _responsive(height, 0.27, 220, 300)
+            : _responsive(height, 0.22, 160, 220);
         final titleSize = isDesktop
             ? _responsive(height, 0.086, 56, 96)
             : _responsive(height, 0.064, 40, 60);
@@ -496,7 +729,7 @@ class _LandingPageState extends State<LandingPage>
     required EdgeInsets contentPadding,
     required bool isDesktop,
   }) {
-    final partnerLogoSize = _responsive(logoSize, 0.42, 55, 70);
+    final partnerLogoSize = _responsive(logoSize, 0.46, 70, 96);
 
     final heroContent = Column(
       mainAxisSize: MainAxisSize.min,
@@ -520,26 +753,19 @@ class _LandingPageState extends State<LandingPage>
         SizedBox(height: _responsive(logoSize, 0.14, 10, 20)),
         _buildPartnerLogos(partnerLogoSize),
         SizedBox(height: _responsive(logoSize, 0.16, 12, 22)),
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [_lightOffWhite, _primaryAquaBright],
-          ).createShader(bounds),
-          // A dedicated display face for the wordmark — Manrope (used for
-          // all body/UI text) reads as too generic at this size; Space
-          // Grotesk's more geometric, tighter-set letterforms give the
-          // brand name actual presence.
-          child: Text(
-            'AI-DSUHIS',
-            style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
-              fontSize: titleSize,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.5,
-              height: 1.05,
-              color: _lightOffWhite,
-            ),
-            textAlign: TextAlign.center,
+        // Keep the wordmark a crisp solid white so it remains readable over
+        // every part of the photographic backdrop.
+        Text(
+          'AI-DSUHIS',
+          style: TextStyle(
+            fontFamily: 'SpaceGrotesk',
+            fontSize: titleSize,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.5,
+            height: 1.05,
+            color: Colors.white,
           ),
+          textAlign: TextAlign.center,
         ),
         SizedBox(height: _responsive(titleSize, 0.24, 8, 16)),
         Text(
@@ -547,7 +773,7 @@ class _LandingPageState extends State<LandingPage>
           style: _body(
             size: subtitleSize,
             weight: FontWeight.w400,
-            color: _lightOffWhite.withValues(alpha: 0.78),
+            color: Colors.white.withValues(alpha: 0.90),
             height: 1.4,
           ),
           textAlign: TextAlign.center,
@@ -706,28 +932,16 @@ class _LandingPageState extends State<LandingPage>
     }
 
     if (desktop) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
+      return Row(
+        mainAxisSize: MainAxisSize.max,
         children: [
-          Row(
-            children: [
-              Expanded(child: cell(features[0])),
-              SizedBox(width: gap),
-              Expanded(child: cell(features[1])),
-              SizedBox(width: gap),
-              Expanded(child: cell(features[2])),
-            ],
-          ),
-          SizedBox(height: gap),
-          Row(
-            children: [
-              const Expanded(child: SizedBox()),
-              SizedBox(width: gap),
-              Expanded(child: cell(features[3])),
-              SizedBox(width: gap),
-              const Expanded(child: SizedBox()),
-            ],
-          ),
+          Expanded(child: cell(features[0])),
+          SizedBox(width: gap),
+          Expanded(child: cell(features[1])),
+          SizedBox(width: gap),
+          Expanded(child: cell(features[2])),
+          SizedBox(width: gap),
+          Expanded(child: cell(features[3])),
         ],
       );
     }
@@ -761,13 +975,13 @@ class _LandingPageState extends State<LandingPage>
     required bool compact,
     bool stretch = false,
   }) {
-    final iconSize = compact ? 28.0 : 34.0;
-    final textSize = compact ? 11.5 : 13.5;
+    final iconSize = compact ? 28.0 : 30.0;
+    final textSize = compact ? 11.5 : 12.0;
     final badge = Container(
       height: compact ? 44 : 52,
       width: stretch ? double.infinity : null,
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 10,
+        horizontal: compact ? 8 : 7,
         vertical: compact ? 7 : 9,
       ),
       decoration: BoxDecoration(
@@ -810,7 +1024,11 @@ class _LandingPageState extends State<LandingPage>
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               softWrap: false,
-              style: _body(size: textSize, weight: FontWeight.w600),
+              style: _body(
+                size: textSize,
+                weight: FontWeight.w700,
+                color: Colors.white,
+              ),
             ),
           ),
         ],

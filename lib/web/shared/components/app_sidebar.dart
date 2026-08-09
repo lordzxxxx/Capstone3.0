@@ -17,12 +17,13 @@ import 'package:mycapstone_project/web/shared/services/user_access_scope_service
 import 'package:mycapstone_project/web/shared/widgets/sidebar_page_transition.dart';
 
 abstract final class _BhwDrawerColors {
-  static const background = Color(0xFF071B20);
-  static const surface = Color(0xFF0E2F34);
-  static const surfaceAlt = Color(0xFF123B46);
-  static const aqua = Color(0xFF00A8B5);
-  static const text = Color(0xFFF5F7FA);
-  static const muted = Color(0xFF9CB0B7);
+  static const background = Color(0xFF071A33);
+  static const surface = Color(0xFF0D274D);
+  static const surfaceAlt = Color(0xFF163B66);
+  static const border = Color(0xFF1C3D66);
+  static const aqua = Color(0xFF4EA1FF);
+  static const text = Color(0xFFF8FBFF);
+  static const muted = Color(0xFFE3EDF8);
 }
 
 enum WebSidebarItem {
@@ -256,12 +257,23 @@ class WebAppSidebar extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: _BhwDrawerColors.aqua.withValues(alpha: 0.14),
+            color: _BhwDrawerColors.aqua.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(13),
           ),
-          child: const Icon(
-            Icons.health_and_safety_rounded,
-            color: _BhwDrawerColors.aqua,
+          padding: const EdgeInsets.all(7),
+          child: Image.asset(
+            'assets/newlogo_white.png',
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const Center(
+              child: Text(
+                'AI',
+                style: TextStyle(
+                  color: _BhwDrawerColors.text,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(width: 12),
@@ -272,6 +284,7 @@ class WebAppSidebar extends StatelessWidget {
               Text(
                 'AI-DSUHIS',
                 style: TextStyle(
+                  fontFamily: 'Inter',
                   color: _BhwDrawerColors.text,
                   fontWeight: FontWeight.w900,
                   fontSize: 18,
@@ -279,7 +292,11 @@ class WebAppSidebar extends StatelessWidget {
               ),
               Text(
                 'Barangay Health Worker Portal',
-                style: TextStyle(color: _BhwDrawerColors.muted, fontSize: 11),
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  color: _BhwDrawerColors.muted,
+                  fontSize: 11,
+                ),
               ),
             ],
           ),
@@ -311,6 +328,7 @@ class WebAppSidebar extends StatelessWidget {
                   userName,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
+                    fontFamily: 'Inter',
                     color: _BhwDrawerColors.text,
                     fontWeight: FontWeight.w700,
                   ),
@@ -320,6 +338,7 @@ class WebAppSidebar extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
+                    fontFamily: 'Inter',
                     color: _BhwDrawerColors.muted,
                     fontSize: 10,
                     height: 1.3,
@@ -339,6 +358,7 @@ class WebAppSidebar extends StatelessWidget {
       child: Text(
         title,
         style: const TextStyle(
+          fontFamily: 'Manrope',
           color: _BhwDrawerColors.muted,
           fontSize: 9,
           fontWeight: FontWeight.w800,
@@ -361,21 +381,22 @@ class WebAppSidebar extends StatelessWidget {
       child: ListTile(
         selected: isActive,
         selectedColor: _BhwDrawerColors.text,
-        textColor: _BhwDrawerColors.muted,
-        iconColor: isActive ? _BhwDrawerColors.aqua : _BhwDrawerColors.muted,
+        textColor: _BhwDrawerColors.text,
+        iconColor: isActive ? _BhwDrawerColors.aqua : _BhwDrawerColors.text,
         leading: Icon(icon, size: 20),
         title: Text(
           label,
           style: TextStyle(
+            fontFamily: 'Manrope',
             fontSize: 13,
             fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
           ),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
         tileColor: isActive
-            ? _BhwDrawerColors.aqua.withValues(alpha: 0.13)
+            ? _BhwDrawerColors.aqua.withValues(alpha: 0.24)
             : null,
-        hoverColor: Colors.white.withValues(alpha: 0.05),
+        hoverColor: _BhwDrawerColors.aqua.withValues(alpha: 0.12),
         onTap: onTap,
       ),
     );
@@ -384,10 +405,8 @@ class WebAppSidebar extends StatelessWidget {
   Widget _buildLogoutButton(BuildContext drawerContext) {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-        ),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: _BhwDrawerColors.border)),
       ),
       child: Semantics(
         button: true,
@@ -399,14 +418,17 @@ class WebAppSidebar extends StatelessWidget {
             icon: const Icon(Icons.logout_rounded, size: 19),
             label: const Text('Logout'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.redAccent.shade100,
-              side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.45)),
-              backgroundColor: Colors.redAccent.withValues(alpha: 0.08),
+              foregroundColor: Colors.red.shade700,
+              side: BorderSide(color: Colors.red.withValues(alpha: 0.35)),
+              backgroundColor: Colors.red.withValues(alpha: 0.06),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(11),
               ),
-              textStyle: const TextStyle(fontWeight: FontWeight.w800),
+              textStyle: const TextStyle(
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ),
@@ -428,12 +450,16 @@ class WebAppSidebar extends StatelessWidget {
         ),
         title: const Text(
           'Logout from BHW Portal?',
-          style: TextStyle(color: _BhwDrawerColors.text),
+          style: TextStyle(fontFamily: 'Inter', color: _BhwDrawerColors.text),
         ),
         content: const Text(
           'You will need to sign in again to access your assigned barangay records.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: _BhwDrawerColors.muted, height: 1.4),
+          style: TextStyle(
+            fontFamily: 'Inter',
+            color: _BhwDrawerColors.muted,
+            height: 1.4,
+          ),
         ),
         actions: [
           TextButton(

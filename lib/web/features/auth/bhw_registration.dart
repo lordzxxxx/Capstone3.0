@@ -12,14 +12,14 @@ import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 
-const _blue = Color(0xFF00A8B5);
-const _aqua = Color(0xFF00A8B5);
-const _ink = Color(0xFF0A1F24);
-const _muted = Color(0xFF546E7A);
-const _page = Color(0xFF0A1F24);
+const _blue = Color(0xFF2F80ED);
+const _aqua = Color(0xFF2F80ED);
+const _ink = Color(0xFF0B1F3A);
+const _muted = Color(0xFF4B6075);
+const _page = Color(0xFFF5F7FA);
 const _surface = Colors.white;
-const _surfaceAlt = Color(0xFFF1F5F7);
-const _border = Color(0xFFE5EEF0);
+const _surfaceAlt = Color(0xFFF4F7FB);
+const _border = Color(0xFFD9E5F2);
 
 class BhwRegistrationPage extends StatefulWidget {
   const BhwRegistrationPage({super.key});
@@ -498,35 +498,10 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
         backgroundColor: _page,
         body: Stack(
           children: [
-            // Same bg2.2.png hero photo + navy/teal scrim as the rest of the
-            // auth flow, so this page reads as part of one application
-            // instead of a separate admin form bolted onto the side.
-            Positioned.fill(
-              child: Image.asset(
-                'assets/bg2.2.png',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const DecoratedBox(
-                    decoration: BoxDecoration(color: _page),
-                  );
-                },
-              ),
-            ),
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      _page.withValues(alpha: 0.86),
-                      const Color(0xFF1E5A7A).withValues(alpha: 0.68),
-                      _page.withValues(alpha: 0.92),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            // Registration is a task-focused workflow. Keep the page white
+            // like the CHO form instead of placing a dark photographic scrim
+            // behind every field and card.
+            const Positioned.fill(child: ColoredBox(color: _page)),
             SafeArea(
               child: Form(
                 key: _formKey,
@@ -779,10 +754,8 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      // Kept dark (matches the floating back button on every
-                      // other auth page) even though the form content below
-                      // switches to a white surface.
-                      color: _page,
+                      color: _surface,
+                      border: Border.all(color: _border),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -792,11 +765,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.white,
-                      size: 24,
-                    ),
+                    child: const Icon(Icons.arrow_back, color: _ink, size: 24),
                   ),
                   onPressed: () =>
                       replaceWithAuthPage(context, const LandingPage()),
@@ -811,10 +780,10 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
 
   Widget _pageHeader() => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(36),
+    padding: const EdgeInsets.all(28),
     decoration: BoxDecoration(
       color: _surface,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(20),
       border: Border.all(color: _border),
       boxShadow: [
         BoxShadow(
@@ -848,7 +817,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
         const Text(
           'Create BHW Account',
           style: TextStyle(
-            fontFamily: 'Manrope',
+            fontFamily: 'Inter',
             color: _ink,
             fontSize: 30,
             fontWeight: FontWeight.w800,
@@ -878,11 +847,11 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
     required List<Widget> children,
   }) => Container(
     width: double.infinity,
-    margin: const EdgeInsets.only(bottom: 24),
-    padding: const EdgeInsets.all(32),
+    margin: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
       color: _surface,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(18),
       border: Border.all(color: _border),
       boxShadow: [
         BoxShadow(
@@ -902,7 +871,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
             Text(
               number,
               style: const TextStyle(
-                fontFamily: 'Manrope',
+                fontFamily: 'Inter',
                 color: _aqua,
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
@@ -912,7 +881,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
             Text(
               title,
               style: const TextStyle(
-                fontFamily: 'Manrope',
+                fontFamily: 'Inter',
                 color: _ink,
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
@@ -1164,10 +1133,10 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       color: score == 5
-                          ? Colors.greenAccent.shade400
+                          ? Colors.green.shade700
                           : score <= 2
-                          ? Colors.redAccent.shade100
-                          : Colors.orangeAccent.shade200,
+                          ? Colors.red.shade700
+                          : Colors.orange.shade800,
                     ),
                   ),
                 ],
@@ -1332,7 +1301,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
                   'Registration submitted',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontFamily: 'Manrope',
+                    fontFamily: 'Inter',
                     color: _ink,
                     fontSize: 27,
                     fontWeight: FontWeight.w800,

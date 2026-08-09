@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 
 abstract final class ChoColors {
-  static const background = Color(0xFF071B20);
-  static const surface = Color(0xFF0E2F34);
-  static const surfaceAlt = Color(0xFF123B46);
-  static const aqua = Color(0xFF00A8B5);
-  static const ice = Color(0xFF1E5A7A);
-  static const text = Color(0xFFF5F7FA);
-  static const muted = Color(0xFF9CB0B7);
+  static const background = Color(0xFFF5F7FA);
+  static const surface = Colors.white;
+  static const surfaceAlt = Color(0xFFEDF3FA);
+  static const border = Color(0xFFD9E5F2);
+  static const aqua = Color(0xFF2F80ED);
+  static const ice = Color(0xFF163B66);
+  static const text = Color(0xFF0B1F3A);
+  static const muted = Color(0xFF4B6075);
+  static const navBackground = Color(0xFF071A33);
+  static const navSurface = Color(0xFF0D274D);
+  static const navText = Color(0xFFF8FBFF);
+  static const navMuted = Color(0xFFE3EDF8);
+  static const navBorder = Color(0xFF1C3D66);
 }
 
 class ChoPageHeader extends StatelessWidget {
@@ -36,11 +42,16 @@ class ChoPageHeader extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF123B46), Color(0xFF0A2830)],
-          ),
+          color: ChoColors.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: ChoColors.aqua.withValues(alpha: 0.22)),
+          border: Border.all(color: ChoColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -49,14 +60,14 @@ class ChoPageHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  width: 5,
+                  height: 58,
                   decoration: BoxDecoration(
-                    color: ChoColors.aqua.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(14),
+                    color: ChoColors.aqua,
+                    borderRadius: BorderRadius.circular(99),
                   ),
-                  child: Icon(icon, color: ChoColors.aqua, size: 26),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,6 +75,7 @@ class ChoPageHeader extends StatelessWidget {
                       Text(
                         '$breadcrumb / $title',
                         style: const TextStyle(
+                          fontFamily: 'Manrope',
                           color: ChoColors.aqua,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -73,6 +85,7 @@ class ChoPageHeader extends StatelessWidget {
                       Text(
                         title,
                         style: TextStyle(
+                          fontFamily: 'Manrope',
                           color: ChoColors.text,
                           fontSize: compact ? 23 : 28,
                           fontWeight: FontWeight.w800,
@@ -82,6 +95,7 @@ class ChoPageHeader extends StatelessWidget {
                       Text(
                         description,
                         style: const TextStyle(
+                          fontFamily: 'Manrope',
                           color: ChoColors.muted,
                           height: 1.45,
                         ),
@@ -144,8 +158,9 @@ class ChoViewTabs extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.22),
+            color: ChoColors.surfaceAlt,
             borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: ChoColors.border),
           ),
           child: Row(
             children: List.generate(tabs.length, (index) {
@@ -157,7 +172,7 @@ class ChoViewTabs extends StatelessWidget {
                 child: TextButton(
                   onPressed: () => onChanged(index),
                   style: TextButton.styleFrom(
-                    foregroundColor: selected ? Colors.white : Colors.white70,
+                    foregroundColor: selected ? Colors.white : ChoColors.muted,
                     backgroundColor: selected
                         ? ChoColors.aqua
                         : Colors.transparent,
@@ -168,7 +183,10 @@ class ChoViewTabs extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                    textStyle: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   child: Text(tabs[index]),
                 ),
@@ -208,37 +226,48 @@ class ChoKpiCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          height: 165,
-          padding: const EdgeInsets.all(18),
+          height: 132,
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: ChoColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: 0.2)),
+            color: ChoColors.navSurface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: ChoColors.navBorder),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.12),
-                blurRadius: 16,
-                offset: const Offset(0, 7),
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: color, size: 24),
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(color: color.withValues(alpha: 0.35)),
+                ),
+                child: Icon(icon, color: Colors.white, size: 20),
+              ),
               const Spacer(),
               Text(
                 value,
                 style: const TextStyle(
-                  color: ChoColors.text,
-                  fontSize: 28,
+                  fontFamily: 'Inter',
+                  color: ChoColors.navText,
+                  fontSize: 23,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               Text(
                 label,
                 style: const TextStyle(
-                  color: ChoColors.text,
+                  fontFamily: 'Inter',
+                  color: ChoColors.navMuted,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -248,7 +277,11 @@ class ChoKpiCard extends StatelessWidget {
                   supportingText,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: ChoColors.muted, fontSize: 11),
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    color: ChoColors.navMuted,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ],
@@ -300,20 +333,20 @@ class ChoStatusBadge extends StatelessWidget {
     if (normalized.contains('approv') ||
         normalized.contains('complete') ||
         normalized.contains('active')) {
-      color = Colors.greenAccent;
+      color = Colors.green.shade700;
       icon = Icons.check_circle_outline;
     } else if (normalized.contains('reject') ||
         normalized.contains('critical') ||
         normalized.contains('urgent')) {
-      color = Colors.redAccent;
+      color = Colors.red.shade700;
       icon = Icons.error_outline;
     } else if (normalized.contains('pending') ||
         normalized.contains('return') ||
         normalized.contains('high')) {
-      color = Colors.orangeAccent;
+      color = Colors.orange.shade800;
       icon = Icons.schedule_outlined;
     } else {
-      color = Colors.lightBlueAccent;
+      color = Colors.blue.shade700;
       icon = Icons.info_outline;
     }
     return Semantics(
@@ -340,6 +373,7 @@ class ChoStatusBadge extends StatelessWidget {
                   softWrap: false,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
+                    fontFamily: 'Manrope',
                     color: color,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -383,6 +417,7 @@ class ChoEmptyState extends StatelessWidget {
             Text(
               title,
               style: const TextStyle(
+                fontFamily: 'Manrope',
                 color: ChoColors.text,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -392,7 +427,10 @@ class ChoEmptyState extends StatelessWidget {
             Text(
               displayMessage,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: ChoColors.muted),
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                color: ChoColors.muted,
+              ),
             ),
           ],
         ),
@@ -419,15 +457,16 @@ class ChoErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.cloud_off_outlined,
-              color: Colors.orangeAccent,
+              color: Colors.orange.shade800,
               size: 48,
             ),
             const SizedBox(height: 14),
             const Text(
               'Data could not be loaded',
               style: TextStyle(
+                fontFamily: 'Manrope',
                 color: ChoColors.text,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -437,7 +476,10 @@ class ChoErrorState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: ChoColors.muted),
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                color: ChoColors.muted,
+              ),
             ),
             const SizedBox(height: 16),
             OutlinedButton.icon(

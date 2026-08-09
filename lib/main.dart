@@ -21,6 +21,7 @@ import 'package:mycapstone_project/app/features/analytics/analytics.dart'
     as app_analytics;
 import 'package:mycapstone_project/app/features/referrals/referrals.dart'
     as app_referrals;
+import 'package:mycapstone_project/app/theme/app_theme.dart' as app_theme;
 import 'package:mycapstone_project/web/features/auth/landing.dart' as web;
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart'
@@ -118,7 +119,7 @@ class MyApp extends StatelessWidget {
       // app_theme.dart) so the app follows the same canonical teal branding
       // (0xFF00A8B5) already used across lib/web/*, instead of the one-off
       // 0xFF8ED7DA that only this file previously used.
-      theme: AppTheme.light(isWeb: kIsWeb),
+      theme: kIsWeb ? AppTheme.light(isWeb: true) : app_theme.AppDesign.theme(),
       debugShowCheckedModeBanner: false,
       // Platform-specific routing
       getPages: kIsWeb

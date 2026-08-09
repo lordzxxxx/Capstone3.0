@@ -29,11 +29,12 @@ import 'package:mycapstone_project/web/roles/bhw/patients/shared_patient_search_
 import 'package:mycapstone_project/web/shared/utils/report_generation.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _sidebarDark = Color(0xFF0E2F34);
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _secondaryIceBlue = Color(0xFF163B66);
+const Color _darkDeepTeal = Color(0xFF071A33);
+const Color _lightOffWhite = Color(0xFF0B1F3A);
+const Color _mutedCoolGray = Color(0xFF4B6075);
+const Color _sidebarDark = Color(0xFF0D274D);
 
 class MortalityPage extends StatefulWidget {
   const MortalityPage({super.key, this.initialPatient});
@@ -447,7 +448,7 @@ class _MortalityPageState extends State<MortalityPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: const Color(0xFFF5F7FA),
       drawer: WebAppSidebar(
         userName: userName,
         activeItem: WebSidebarItem.mortality,
@@ -1457,11 +1458,7 @@ class _MortalityPageState extends State<MortalityPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_darkDeepTeal, _secondaryIceBlue],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Colors.white,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24),
@@ -1488,7 +1485,7 @@ class _MortalityPageState extends State<MortalityPage> {
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: _lightOffWhite,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -1513,7 +1510,7 @@ class _MortalityPageState extends State<MortalityPage> {
                       const Text(
                         'Real-time Data',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: _lightOffWhite,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1528,7 +1525,7 @@ class _MortalityPageState extends State<MortalityPage> {
               const Center(
                 child: Padding(
                   padding: EdgeInsets.all(20),
-                  child: CircularProgressIndicator(color: Colors.white),
+                  child: CircularProgressIndicator(color: _primaryAqua),
                 ),
               )
             else
@@ -1663,7 +1660,7 @@ class _MortalityPageState extends State<MortalityPage> {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
       decoration: BoxDecoration(
-        color: backgroundColor.withValues(alpha: 0.5),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accentColor.withValues(alpha: 0.3), width: 2),
         boxShadow: [
@@ -1693,7 +1690,7 @@ class _MortalityPageState extends State<MortalityPage> {
             style: TextStyle(
               fontSize: isSmallText ? 14 : 24,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: _darkDeepTeal,
               letterSpacing: 0.5,
             ),
             maxLines: isSmallText ? 2 : 1,
@@ -1704,7 +1701,7 @@ class _MortalityPageState extends State<MortalityPage> {
             title,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.7),
+              color: _mutedCoolGray,
               fontWeight: FontWeight.w500,
               letterSpacing: 0.3,
             ),
@@ -2610,7 +2607,7 @@ class _MortalityPageState extends State<MortalityPage> {
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
-                color: _sidebarDark,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: _primaryAqua.withValues(alpha: 0.3),
@@ -2626,20 +2623,21 @@ class _MortalityPageState extends State<MortalityPage> {
               ),
               child: TextField(
                 controller: _searchController,
+                style: const TextStyle(color: _lightOffWhite),
                 onChanged: (value) {
                   _filterRecords(value);
                   _scheduleSharedPatientSearch(value);
                 },
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: _sidebarDark,
+                  fillColor: Colors.white,
                   hintText:
                       'Search by name, cause, place, or verification status...',
-                  hintStyle: TextStyle(color: Colors.white),
-                  prefixIcon: Icon(Icons.search, color: Colors.white),
+                  hintStyle: const TextStyle(color: _mutedCoolGray),
+                  prefixIcon: const Icon(Icons.search, color: _primaryAqua),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: Icon(Icons.clear, color: Colors.white),
+                          icon: const Icon(Icons.clear, color: _mutedCoolGray),
                           onPressed: () {
                             _searchController.clear();
                             _filterRecords('');
@@ -2653,7 +2651,6 @@ class _MortalityPageState extends State<MortalityPage> {
                     vertical: 14,
                   ),
                 ),
-                style: const TextStyle(color: Colors.white),
               ),
             ),
             if (_searchQuery.trim().isNotEmpty ||
@@ -2697,7 +2694,7 @@ class _MortalityPageState extends State<MortalityPage> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF00E5FF), Color(0xFF00A8B5)],
+              colors: [Color(0xFF00E5FF), Color(0xFF2F80ED)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -2998,7 +2995,7 @@ class _MortalityPageState extends State<MortalityPage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF123942),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.25),
@@ -3057,7 +3054,7 @@ class _MortalityPageState extends State<MortalityPage> {
   }
 
   Widget _buildRowDivider() {
-    return Container(width: 1, height: 70, color: const Color(0xFF214047));
+    return Container(width: 1, height: 70, color: const Color(0xFF26476B));
   }
 
   Widget _buildRowActionButton({
@@ -3066,11 +3063,11 @@ class _MortalityPageState extends State<MortalityPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF003B5C),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(7),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF003B5C).withValues(alpha: 0.28),
+            color: const Color(0xFF163B66).withValues(alpha: 0.28),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -3109,7 +3106,7 @@ class _MortalityPageState extends State<MortalityPage> {
       decoration: BoxDecoration(
         color: _darkDeepTeal.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF214047), width: 1),
+        border: Border.all(color: const Color(0xFF26476B), width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -3219,7 +3216,7 @@ class _MortalityPageState extends State<MortalityPage> {
                     child: Text(
                       verification,
                       style: const TextStyle(
-                        color: Color(0xFF003B5C),
+                        color: Color(0xFF163B66),
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
@@ -4741,7 +4738,7 @@ class _MortalityPageState extends State<MortalityPage> {
                         padding: EdgeInsets.all(isCompact ? 20 : 24),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF123942), Color(0xFF0A1F24)],
+                            colors: [Color(0xFF163B66), Color(0xFF0D274D)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -4765,7 +4762,7 @@ class _MortalityPageState extends State<MortalityPage> {
                                     gradient: const LinearGradient(
                                       colors: [
                                         Color(0xFF00E5FF),
-                                        Color(0xFF00A8B5),
+                                        Color(0xFF2F80ED),
                                       ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
@@ -5363,7 +5360,7 @@ class _MortalityPageState extends State<MortalityPage> {
                       gradient: LinearGradient(
                         colors: alreadyVerified
                             ? const [Color(0xFF23443A), Color(0xFF10261F)]
-                            : const [Color(0xFF1A4A38), Color(0xFF0A1F24)],
+                            : const [Color(0xFF1A4A38), Color(0xFF0D274D)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),

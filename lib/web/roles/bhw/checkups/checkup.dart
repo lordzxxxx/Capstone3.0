@@ -31,22 +31,25 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _sidebarDark = Color(0xFF0E2F34);
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _secondaryIceBlue = Color(0xFF163B66);
+const Color _darkDeepTeal = Color(0xFF071A33);
+const Color _mutedCoolGray = Color(0xFF4B6075);
+const Color _lightOffWhite = Color(0xFF0B1F3A);
+const Color _sidebarDark = Colors.white;
 
 ThemeData _buildDarkDatePickerTheme(BuildContext context) {
   return Theme.of(context).copyWith(
-    colorScheme: const ColorScheme.dark(
+    // The rest of the module uses the light, high-contrast records surface.
+    // Keep the picker on that same surface so dates and controls never become
+    // white-on-white or inherit the old teal dark theme.
+    colorScheme: const ColorScheme.light(
       primary: _primaryAqua,
       onPrimary: Colors.white,
-      surface: _sidebarDark,
-      onSurface: Colors.white,
+      surface: Colors.white,
+      onSurface: _lightOffWhite,
     ),
-    dialogTheme: DialogThemeData(backgroundColor: _sidebarDark),
+    dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
   );
 }
 
@@ -251,7 +254,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                 'Check-up records could not be loaded.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: _lightOffWhite,
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                 ),
@@ -262,7 +265,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                     'The signed-in account may still be syncing its barangay scope. Try signing out and signing in again.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: Colors.white70,
+                  color: _mutedCoolGray,
                   fontSize: 14,
                   height: 1.45,
                 ),
@@ -662,7 +665,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: const Color(0xFFF5F7FA),
       drawer: WebAppSidebar(
         userName: userName,
         activeItem: WebSidebarItem.checkups,
@@ -691,7 +694,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                               Text(
                                 'Loading check-up records...',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: _lightOffWhite,
                                   fontSize: 16,
                                 ),
                               ),
@@ -846,8 +849,8 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                               Icon(
                                                                 Icons
                                                                     .check_circle_outline,
-                                                                color: Colors
-                                                                    .white,
+                                                                color:
+                                                                    _primaryAqua,
                                                                 size: 18,
                                                               ),
                                                               const SizedBox(
@@ -856,8 +859,8 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                               const Text(
                                                                 'Select',
                                                                 style: TextStyle(
-                                                                  color: Colors
-                                                                      .white,
+                                                                  color:
+                                                                      _lightOffWhite,
                                                                   fontSize: 13,
                                                                   fontWeight:
                                                                       FontWeight
@@ -969,7 +972,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                       ),
                                                       child: Icon(
                                                         Icons.inbox_rounded,
-                                                        color: Colors.white,
+                                                        color: _primaryAqua,
                                                         size: 48,
                                                       ),
                                                     ),
@@ -977,7 +980,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                     Text(
                                                       'No records found',
                                                       style: TextStyle(
-                                                        color: Colors.white,
+                                                        color: _lightOffWhite,
                                                         fontSize: 18,
                                                         fontWeight:
                                                             FontWeight.bold,
@@ -987,10 +990,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                     Text(
                                                       'Try adjusting your filters or add a new check-up record',
                                                       style: TextStyle(
-                                                        color: Colors.white
-                                                            .withValues(
-                                                              alpha: 0.7,
-                                                            ),
+                                                        color: _mutedCoolGray,
                                                         fontSize: 14,
                                                       ),
                                                     ),
@@ -1059,10 +1059,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                         'Showing ${pageStartIndex + 1}-$pageEndIndex of ${filteredRecords.length} records',
                                                         style: TextStyle(
                                                           fontSize: 12,
-                                                          color: Colors.white
-                                                              .withValues(
-                                                                alpha: 0.72,
-                                                              ),
+                                                          color: _mutedCoolGray,
                                                           fontWeight:
                                                               FontWeight.w500,
                                                         ),
@@ -1075,7 +1072,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                             vertical: 2,
                                                           ),
                                                       decoration: BoxDecoration(
-                                                        color: _darkDeepTeal,
+                                                        color: Colors.white,
                                                         borderRadius:
                                                             BorderRadius.circular(
                                                               8,
@@ -1090,20 +1087,18 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                       child: DropdownButtonHideUnderline(
                                                         child: DropdownButton<int>(
                                                           dropdownColor:
-                                                              _darkDeepTeal,
+                                                              Colors.white,
                                                           value:
                                                               effectiveRowsPerPage,
-                                                          style:
-                                                              const TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontSize: 12,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                              ),
+                                                          style: const TextStyle(
+                                                            color:
+                                                                _lightOffWhite,
+                                                            fontSize: 12,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
                                                           iconEnabledColor:
-                                                              Colors.white,
+                                                              _primaryAqua,
                                                           items: const [
                                                             DropdownMenuItem(
                                                               value: 10,
@@ -1154,7 +1149,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                       icon: const Icon(
                                                         Icons.chevron_left,
                                                       ),
-                                                      color: Colors.white,
+                                                      color: _mutedCoolGray,
                                                     ),
                                                     Container(
                                                       padding:
@@ -1163,7 +1158,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                             vertical: 6,
                                                           ),
                                                       decoration: BoxDecoration(
-                                                        color: _darkDeepTeal,
+                                                        color: Colors.white,
                                                         borderRadius:
                                                             BorderRadius.circular(
                                                               8,
@@ -1178,7 +1173,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                       child: Text(
                                                         '$currentPage / $totalPages',
                                                         style: const TextStyle(
-                                                          color: Colors.white,
+                                                          color: _lightOffWhite,
                                                           fontSize: 12,
                                                           fontWeight:
                                                               FontWeight.w600,
@@ -1201,7 +1196,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                       icon: const Icon(
                                                         Icons.chevron_right,
                                                       ),
-                                                      color: Colors.white,
+                                                      color: _lightOffWhite,
                                                     ),
                                                   ],
                                                 ),
@@ -1282,7 +1277,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
-                            color: Colors.white,
+                            color: _mutedCoolGray,
                             child: Icon(
                               Icons.person,
                               size: 35,
@@ -1759,7 +1754,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF00E5FF), Color(0xFF00A8B5)],
+              colors: [Color(0xFF00E5FF), Color(0xFF2F80ED)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -1865,7 +1860,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF123942),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.25),
@@ -1920,7 +1915,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: const Color(0xFF0A2228),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.18),
@@ -1945,23 +1940,20 @@ class _CheckUpPageState extends State<CheckUpPage> {
           });
           _scheduleSharedPatientSearch(value);
         },
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(color: _lightOffWhite),
         decoration: InputDecoration(
           hintText:
               'Search by patient name, address, age, symptoms, or status...',
-          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.52)),
+          hintStyle: const TextStyle(color: _mutedCoolGray),
           filled: true,
-          fillColor: const Color(0xFF10343C),
+          fillColor: Colors.white,
           prefixIcon: Icon(
             Icons.search_rounded,
             color: _primaryAqua.withValues(alpha: 0.88),
           ),
           suffixIcon: _effectiveSearchQuery.isNotEmpty
               ? IconButton(
-                  icon: Icon(
-                    Icons.clear_rounded,
-                    color: Colors.white.withValues(alpha: 0.84),
-                  ),
+                  icon: Icon(Icons.clear_rounded, color: _mutedCoolGray),
                   onPressed: () {
                     _effectiveSearchController.clear();
                     setState(() {
@@ -1975,10 +1967,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
               : null,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(
-              color: Colors.white.withValues(alpha: 0.04),
-              width: 1,
-            ),
+            borderSide: BorderSide(color: const Color(0xFFD9E5F2), width: 1),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
@@ -2018,279 +2007,284 @@ class _CheckUpPageState extends State<CheckUpPage> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          // Title Section
-          Icon(Icons.tune_rounded, color: Colors.white, size: 20),
-          const SizedBox(width: 12),
-          Text(
-            'Filter Results',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
-            ),
-          ),
-          const SizedBox(width: 32),
-
-          // Date Range Picker (From - To)
-          Expanded(
-            flex: 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Date Range',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.3,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final dateWidth = math.min(
+            440.0,
+            math.max(260.0, constraints.maxWidth - 40),
+          );
+          return Wrap(
+            spacing: 20,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              // Title Section
+              Icon(Icons.tune_rounded, color: _primaryAqua, size: 20),
+              const SizedBox(width: 12),
+              Text(
+                'Filter Results',
+                style: TextStyle(
+                  color: _lightOffWhite,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
                 ),
-                const SizedBox(height: 6),
-                Row(
+              ),
+              const SizedBox(width: 8),
+
+              // Date Range Picker (From - To)
+              SizedBox(
+                width: dateWidth,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // From Date Picker
-                    Expanded(
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: _fromDate ?? DateTime.now(),
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime.now(),
-                              builder: (context, child) {
-                                return Theme(
-                                  data: _buildDarkDatePickerTheme(context),
-                                  child: child!,
-                                );
-                              },
-                            );
-                            if (picked != null) {
-                              setState(() {
-                                _fromDate = picked;
-                                // Ensure toDate is not before fromDate
-                                if (_toDate != null &&
-                                    _toDate!.isBefore(picked)) {
-                                  _toDate = picked;
-                                }
-                                _currentPage = 1;
-                              });
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: _primaryAqua.withValues(alpha: 0.2),
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                              color: _darkDeepTeal,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.calendar_today_rounded,
-                                  color: Colors.white,
-                                  size: 12,
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    _fromDate != null
-                                        ? "${_fromDate!.year}-${_fromDate!.month.toString().padLeft(2, '0')}-${_fromDate!.day.toString().padLeft(2, '0')}"
-                                        : 'From',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 12,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     Text(
-                      '-',
+                      'Date Range',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 11,
+                        color: _mutedCoolGray,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    // To Date Picker
-                    Expanded(
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: _toDate ?? DateTime.now(),
-                              firstDate: _fromDate ?? DateTime(2020),
-                              lastDate: DateTime.now(),
-                              builder: (context, child) {
-                                return Theme(
-                                  data: _buildDarkDatePickerTheme(context),
-                                  child: child!,
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        // From Date Picker
+                        Expanded(
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: _fromDate ?? DateTime.now(),
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime.now(),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: _buildDarkDatePickerTheme(context),
+                                      child: child!,
+                                    );
+                                  },
                                 );
+                                if (picked != null) {
+                                  setState(() {
+                                    _fromDate = picked;
+                                    // Ensure toDate is not before fromDate
+                                    if (_toDate != null &&
+                                        _toDate!.isBefore(picked)) {
+                                      _toDate = picked;
+                                    }
+                                    _currentPage = 1;
+                                  });
+                                }
                               },
-                            );
-                            if (picked != null) {
-                              setState(() {
-                                _toDate = picked;
-                                _currentPage = 1;
-                              });
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: _primaryAqua.withValues(alpha: 0.2),
-                                width: 1,
-                              ),
                               borderRadius: BorderRadius.circular(8),
-                              color: _darkDeepTeal,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.calendar_today_rounded,
-                                  color: Colors.white,
-                                  size: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
                                 ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    _toDate != null
-                                        ? "${_toDate!.year}-${_toDate!.month.toString().padLeft(2, '0')}-${_toDate!.day.toString().padLeft(2, '0')}"
-                                        : 'To',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 12,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: _primaryAqua.withValues(alpha: 0.2),
+                                    width: 1,
                                   ),
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: const Color(0xFFF7FAFD),
                                 ),
-                              ],
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_rounded,
+                                      color: _primaryAqua,
+                                      size: 12,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        _fromDate != null
+                                            ? "${_fromDate!.year}-${_fromDate!.month.toString().padLeft(2, '0')}-${_fromDate!.day.toString().padLeft(2, '0')}"
+                                            : 'From',
+                                        style: TextStyle(
+                                          color: _lightOffWhite,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        Text('-', style: TextStyle(color: _mutedCoolGray)),
+                        const SizedBox(width: 8),
+                        // To Date Picker
+                        Expanded(
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: _toDate ?? DateTime.now(),
+                                  firstDate: _fromDate ?? DateTime(2020),
+                                  lastDate: DateTime.now(),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: _buildDarkDatePickerTheme(context),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    _toDate = picked;
+                                    _currentPage = 1;
+                                  });
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: _primaryAqua.withValues(alpha: 0.2),
+                                    width: 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: const Color(0xFFF7FAFD),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_rounded,
+                                      color: _primaryAqua,
+                                      size: 12,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        _toDate != null
+                                            ? "${_toDate!.year}-${_toDate!.month.toString().padLeft(2, '0')}-${_toDate!.day.toString().padLeft(2, '0')}"
+                                            : 'To',
+                                        style: TextStyle(
+                                          color: _lightOffWhite,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Status Filter
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: _primaryAqua.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFFF7FAFD),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.flag_outlined, color: _primaryAqua, size: 12),
+                    const SizedBox(width: 6),
+                    DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _statusFilter,
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        isDense: true,
+                        iconSize: 18,
+                        style: const TextStyle(
+                          color: _lightOffWhite,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        iconEnabledColor: _primaryAqua,
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'All',
+                            child: Text('All Status'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Pending',
+                            child: Text('Pending'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Completed',
+                            child: Text('Completed'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setState(() {
+                            _statusFilter = value;
+                            _currentPage = 1;
+                          });
+                        },
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 24),
-
-          // Status Filter
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: _primaryAqua.withValues(alpha: 0.2),
-                width: 1,
               ),
-              borderRadius: BorderRadius.circular(8),
-              color: _darkDeepTeal,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.flag_outlined,
-                  color: Colors.white.withValues(alpha: 0.85),
-                  size: 12,
-                ),
-                const SizedBox(width: 6),
-                DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _statusFilter,
-                    dropdownColor: _darkDeepTeal,
-                    borderRadius: BorderRadius.circular(10),
-                    isDense: true,
+              const SizedBox(width: 20),
+
+              // Clear Filter Button
+              if (_fromDate != null ||
+                  _toDate != null ||
+                  _statusFilter != 'All' ||
+                  _effectiveSearchQuery.isNotEmpty)
+                Container(
+                  decoration: BoxDecoration(
+                    color: _primaryAqua.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.close_rounded, color: _primaryAqua),
                     iconSize: 18,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    iconEnabledColor: Colors.white,
-                    items: const [
-                      DropdownMenuItem(value: 'All', child: Text('All Status')),
-                      DropdownMenuItem(
-                        value: 'Pending',
-                        child: Text('Pending'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'Completed',
-                        child: Text('Completed'),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
+                    onPressed: () {
                       setState(() {
-                        _statusFilter = value;
+                        _fromDate = null;
+                        _toDate = null;
+                        _statusFilter = 'All';
+                        _effectiveSearchController.clear();
+                        _searchQuery = '';
                         _currentPage = 1;
                       });
                     },
+                    tooltip: 'Clear filters',
                   ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 20),
-
-          // Clear Filter Button
-          if (_fromDate != null ||
-              _toDate != null ||
-              _statusFilter != 'All' ||
-              _effectiveSearchQuery.isNotEmpty)
-            Container(
-              decoration: BoxDecoration(
-                color: _primaryAqua.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.close_rounded, color: Colors.white),
-                iconSize: 18,
-                onPressed: () {
-                  setState(() {
-                    _fromDate = null;
-                    _toDate = null;
-                    _statusFilter = 'All';
-                    _effectiveSearchController.clear();
-                    _searchQuery = '';
-                    _currentPage = 1;
-                  });
-                },
-                tooltip: 'Clear filters',
-              ),
-            ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -2691,17 +2685,33 @@ class _CheckUpDashboardHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Metrics Grid - 4 columns for web with better spacing
-        Row(
-          children: [
-            Expanded(child: _buildTotalCheckupsCard(totalCheckups)),
-            const SizedBox(width: 20),
-            Expanded(child: _buildThisMonthCard(thisMonthCheckups)),
-            const SizedBox(width: 20),
-            Expanded(child: _buildWithVitalsCard(vitalRecordsCount)),
-            const SizedBox(width: 20),
-            Expanded(child: _buildStatusCard(vitalRecordsCount, totalCheckups)),
-          ],
+        // Metrics stay in one row on wide screens and become a compact,
+        // evenly spaced grid on tablets and phones.
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 1100
+                ? 4
+                : constraints.maxWidth >= 680
+                ? 2
+                : 1;
+            const spacing = 16.0;
+            final cardWidth = columns == 1
+                ? constraints.maxWidth
+                : (constraints.maxWidth - spacing * (columns - 1)) / columns;
+            final cards = <Widget>[
+              _buildTotalCheckupsCard(totalCheckups),
+              _buildThisMonthCard(thisMonthCheckups),
+              _buildWithVitalsCard(vitalRecordsCount),
+              _buildStatusCard(vitalRecordsCount, totalCheckups),
+            ];
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: cards
+                  .map((card) => SizedBox(width: cardWidth, child: card))
+                  .toList(growable: false),
+            );
+          },
         ),
         const SizedBox(height: 20),
         LayoutBuilder(
@@ -2992,7 +3002,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: _lightOffWhite,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
@@ -3000,10 +3010,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.58),
-                        fontSize: 11.5,
-                      ),
+                      style: TextStyle(color: _mutedCoolGray, fontSize: 11.5),
                     ),
                   ],
                 ),
@@ -3038,10 +3045,8 @@ class _CheckUpDashboardHeader extends StatelessWidget {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: interval,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: Colors.white.withValues(alpha: 0.08),
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (_) =>
+              FlLine(color: const Color(0xFFD9E5F2), strokeWidth: 1),
         ),
         titlesData: _chartTitles(
           labels: trend.map((entry) => entry.key).toList(growable: false),
@@ -3049,7 +3054,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
         ),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => const Color(0xFF173C43),
+            getTooltipColor: (_) => const Color(0xFF163B66),
             getTooltipItems: (spots) => spots
                 .map(
                   (spot) => LineTooltipItem(
@@ -3102,7 +3107,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
         child: Text(
           emptyMessage,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white54, fontSize: 13),
+          style: const TextStyle(color: _mutedCoolGray, fontSize: 13),
         ),
       );
     }
@@ -3118,10 +3123,8 @@ class _CheckUpDashboardHeader extends StatelessWidget {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: interval,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: Colors.white.withValues(alpha: 0.08),
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (_) =>
+              FlLine(color: const Color(0xFFD9E5F2), strokeWidth: 1),
         ),
         titlesData: _chartTitles(
           labels: entries.map((entry) => _shortLabel(entry.key)).toList(),
@@ -3129,7 +3132,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
         ),
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => const Color(0xFF173C43),
+            getTooltipColor: (_) => const Color(0xFF163B66),
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final item = entries[group.x];
               return BarTooltipItem(
@@ -3179,7 +3182,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
           interval: interval,
           getTitlesWidget: (value, _) => Text(
             value.toInt().toString(),
-            style: const TextStyle(color: Colors.white54, fontSize: 10),
+            style: const TextStyle(color: _mutedCoolGray, fontSize: 10),
           ),
         ),
       ),
@@ -3198,7 +3201,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
                 labels[index],
                 textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white60, fontSize: 10),
+                style: const TextStyle(color: _mutedCoolGray, fontSize: 10),
               ),
             );
           },
@@ -3230,7 +3233,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 160),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: _sidebarDark,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: _primaryAqua.withValues(alpha: 0.15),
@@ -3270,7 +3273,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: _darkDeepTeal,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -3278,7 +3281,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     fontSize: 13,
-                    color: Colors.white,
+                    color: Color(0xFF4B6075),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -3364,7 +3367,7 @@ class _CheckUpTable extends StatelessWidget {
       return Center(
         child: Text(
           'No records found.',
-          style: TextStyle(color: Colors.white, fontSize: 16),
+          style: TextStyle(color: _lightOffWhite, fontSize: 16),
         ),
       );
     }
@@ -3457,7 +3460,7 @@ void _showCheckUpDetails(BuildContext context, Map<String, dynamic> record) {
         icon: Icons.favorite_outline_rounded,
         label: 'Vital Signs',
         value: vitalSigns,
-        labelColor: const Color(0xFF00E5F7),
+        labelColor: const Color(0xFF60A5FA),
       ),
       DetailTableItem(
         icon: Icons.sick_outlined,
@@ -3937,7 +3940,7 @@ Widget _buildHighlightedVitalSignsWeb(String vitalsString) {
           text: vitalLabel,
           style: const TextStyle(
             fontSize: 10.5,
-            color: Color(0xFF00E5F7),
+            color: Color(0xFF60A5FA),
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -4055,7 +4058,7 @@ class _CheckUpCard extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 70, color: const Color(0xFF214047));
+    return Container(width: 1, height: 70, color: const Color(0xFFD9E5F2));
   }
 
   Widget _buildActionButton({
@@ -4064,11 +4067,11 @@ class _CheckUpCard extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF003B5C),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(7),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF003B5C).withValues(alpha: 0.28),
+            color: const Color(0xFF163B66).withValues(alpha: 0.28),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -4102,28 +4105,28 @@ class _CheckUpCard extends StatelessWidget {
     final symptoms = _safe(record['symptoms'], 'No symptoms recorded');
     final vitals = _safe(record['vitalsigns'], 'No vitals recorded');
 
-    final rowBg = _darkDeepTeal.withValues(alpha: 0.96);
-    const rowText = Color(0xFFF3F8FC);
-    const mutedText = Color(0xFFB1C4D5);
+    const rowBg = Colors.white;
+    const rowText = Color(0xFF0B1F3A);
+    const mutedText = Color(0xFF546E7A);
 
     return GestureDetector(
       onTap: isSelectionMode
           ? () => onSelectionChanged(index, !isSelected)
           : () => onViewHistory(record),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
+        margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: rowBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
                 ? _primaryAqua.withValues(alpha: 0.85)
-                : const Color(0xFF214047),
+                : const Color(0xFFD9E5F2),
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -4313,8 +4316,8 @@ class _NewCheckUpFullScreenModalState
   final String _recordType = 'General';
   final String _diseaseType = 'General';
   bool _isSaving = false;
-  static const Color _panelSurface = Color(0xFF123942);
-  static const Color _fieldSurface = Color(0xFF061920);
+  static const Color _panelSurface = Color(0xFF163B66);
+  static const Color _fieldSurface = Color(0xFF0B1F3A);
 
   @override
   void initState() {
@@ -5336,7 +5339,7 @@ class _NewCheckUpFullScreenModalState
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF0A1F24), Color(0xFF1E5A7A)],
+                  colors: [Color(0xFF0D274D), Color(0xFF163B66)],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -5409,7 +5412,7 @@ class _NewCheckUpFullScreenModalState
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF0A1F24), Color(0xFF1E5A7A)],
+              colors: [Color(0xFF0D274D), Color(0xFF163B66)],
             ),
           ),
           child: Column(
@@ -6765,7 +6768,7 @@ class _EditCheckUpFullScreenModalState
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       filled: true,
-      fillColor: const Color(0xFF061920),
+      fillColor: const Color(0xFF0B1F3A),
       hintStyle: const TextStyle(color: Colors.white54),
     );
   }
@@ -6792,7 +6795,7 @@ class _EditCheckUpFullScreenModalState
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF0A1F24), Color(0xFF1E5A7A)],
+                  colors: [Color(0xFF0D274D), Color(0xFF163B66)],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -6863,7 +6866,7 @@ class _EditCheckUpFullScreenModalState
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF0A1F24), Color(0xFF1E5A7A)],
+              colors: [Color(0xFF0D274D), Color(0xFF163B66)],
             ),
           ),
           child: Column(

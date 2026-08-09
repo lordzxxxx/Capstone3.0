@@ -23,7 +23,7 @@ class ChoNavigationDrawer extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
     return Drawer(
       width: 310,
-      backgroundColor: ChoColors.background,
+      backgroundColor: ChoColors.navBackground,
       child: SafeArea(
         child: Column(
           children: [
@@ -35,12 +35,24 @@ class ChoNavigationDrawer extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: ChoColors.aqua.withValues(alpha: 0.14),
+                      color: ChoColors.aqua.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(13),
                     ),
-                    child: const Icon(
-                      Icons.health_and_safety_rounded,
-                      color: ChoColors.aqua,
+                    padding: const EdgeInsets.all(7),
+                    child: Image.asset(
+                      'assets/newlogo_white.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Center(
+                            child: Text(
+                              'AI',
+                              style: TextStyle(
+                                color: ChoColors.navText,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -51,7 +63,8 @@ class ChoNavigationDrawer extends StatelessWidget {
                         Text(
                           'AI-DSUHIS',
                           style: TextStyle(
-                            color: ChoColors.text,
+                            fontFamily: 'Inter',
+                            color: ChoColors.navText,
                             fontWeight: FontWeight.w900,
                             fontSize: 18,
                           ),
@@ -59,7 +72,8 @@ class ChoNavigationDrawer extends StatelessWidget {
                         Text(
                           'City Health Office Portal',
                           style: TextStyle(
-                            color: ChoColors.muted,
+                            fontFamily: 'Inter',
+                            color: ChoColors.navMuted,
                             fontSize: 11,
                           ),
                         ),
@@ -74,13 +88,13 @@ class ChoNavigationDrawer extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: ChoColors.surface,
+                  color: ChoColors.navSurface,
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: Row(
                   children: [
                     const CircleAvatar(
-                      backgroundColor: ChoColors.surfaceAlt,
+                      backgroundColor: ChoColors.navBackground,
                       child: Icon(Icons.person, color: ChoColors.aqua),
                     ),
                     const SizedBox(width: 10),
@@ -92,14 +106,16 @@ class ChoNavigationDrawer extends StatelessWidget {
                             user?.email?.split('@').first ?? 'CHO Staff',
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: ChoColors.text,
+                              fontFamily: 'Inter',
+                              color: ChoColors.navText,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           const Text(
                             'CHO • City-wide operations',
                             style: TextStyle(
-                              color: ChoColors.muted,
+                              fontFamily: 'Inter',
+                              color: ChoColors.navMuted,
                               fontSize: 10,
                             ),
                           ),
@@ -209,7 +225,8 @@ class ChoNavigationDrawer extends StatelessWidget {
     child: Text(
       label,
       style: const TextStyle(
-        color: ChoColors.muted,
+        fontFamily: 'Manrope',
+        color: ChoColors.navMuted,
         fontSize: 9,
         fontWeight: FontWeight.w800,
         letterSpacing: 1.1,
@@ -219,10 +236,8 @@ class ChoNavigationDrawer extends StatelessWidget {
 
   Widget _logoutButton(BuildContext drawerContext) => Container(
     padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
-    decoration: BoxDecoration(
-      border: Border(
-        top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-      ),
+    decoration: const BoxDecoration(
+      border: Border(top: BorderSide(color: ChoColors.navBorder)),
     ),
     child: Semantics(
       button: true,
@@ -234,14 +249,17 @@ class ChoNavigationDrawer extends StatelessWidget {
           icon: const Icon(Icons.logout_rounded, size: 19),
           label: const Text('Logout'),
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.redAccent.shade100,
-            side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.45)),
-            backgroundColor: Colors.redAccent.withValues(alpha: 0.08),
+            foregroundColor: Colors.red.shade700,
+            side: BorderSide(color: Colors.red.withValues(alpha: 0.35)),
+            backgroundColor: Colors.red.withValues(alpha: 0.06),
             padding: const EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(11),
             ),
-            textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            textStyle: const TextStyle(
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
       ),
@@ -262,12 +280,16 @@ class ChoNavigationDrawer extends StatelessWidget {
         ),
         title: const Text(
           'Logout from CHO Portal?',
-          style: TextStyle(color: ChoColors.text),
+          style: TextStyle(fontFamily: 'Inter', color: ChoColors.text),
         ),
         content: const Text(
           'You will need to sign in again to access city-wide health records.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: ChoColors.muted, height: 1.4),
+          style: TextStyle(
+            fontFamily: 'Inter',
+            color: ChoColors.muted,
+            height: 1.4,
+          ),
         ),
         actions: [
           TextButton(
@@ -328,13 +350,14 @@ class ChoNavigationDrawer extends StatelessWidget {
       child: Builder(
         builder: (itemContext) => ListTile(
           selected: selected,
-          selectedColor: ChoColors.text,
-          textColor: ChoColors.muted,
-          iconColor: selected ? ChoColors.aqua : ChoColors.muted,
+          selectedColor: ChoColors.navText,
+          textColor: ChoColors.navText,
+          iconColor: selected ? ChoColors.aqua : ChoColors.navText,
           leading: Icon(icon, size: 20),
           title: Text(
             label,
             style: TextStyle(
+              fontFamily: 'Manrope',
               fontSize: 13,
               fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
             ),
@@ -342,7 +365,8 @@ class ChoNavigationDrawer extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(11),
           ),
-          tileColor: selected ? ChoColors.aqua.withValues(alpha: 0.13) : null,
+          tileColor: selected ? ChoColors.aqua.withValues(alpha: 0.24) : null,
+          hoverColor: ChoColors.aqua.withValues(alpha: 0.12),
           onTap: () =>
               _navigateFromDrawer(itemContext, destination, selected: selected),
         ),

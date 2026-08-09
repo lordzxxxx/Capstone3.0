@@ -726,5 +726,13 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create, update, delete: if isChoRole();
     }
+
+    // System audit trail. Read-only for CHO in the client; entries are
+    // written by trusted backend processes (Cloud Functions using the
+    // Admin SDK, which bypass these rules), never by client writes.
+    match /audit_logs/{logId} {
+      allow read: if isChoRole();
+      allow write: if false;
+    }
   }
 }

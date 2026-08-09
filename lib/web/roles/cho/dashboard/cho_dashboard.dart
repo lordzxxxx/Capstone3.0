@@ -19,14 +19,19 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
+import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _panelTeal = Color(0xFF102E38);
-const Color _panelTealAlt = Color(0xFF123B46);
+// Names are historical (dashboard was dark-themed); values now point at the
+// white-card system used across the rest of the app. _darkDeepTeal/_panelTeal/
+// _panelTealAlt were background/surface roles (now light); _lightOffWhite was
+// the near-white text-on-dark color (now dark navy text-on-light).
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _secondaryIceBlue = Color(0xFF163B66);
+const Color _darkDeepTeal = Color(0xFFF5F7FA);
+const Color _panelTeal = Colors.white;
+const Color _panelTealAlt = Color(0xFFF1F5F7);
 const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
+const Color _lightOffWhite = Color(0xFF0A1F24);
 
 class _ChartLegendDot extends StatelessWidget {
   final String label;
@@ -2258,26 +2263,14 @@ class _ChoDashboardState extends State<ChoDashboard> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[
-            Color(0xFF123B46),
-            Color(0xFF0A2830),
-            Color(0xFF07191E),
-          ],
-        ),
+        color: _panelTeal,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.22)),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.30),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
-          ),
-          BoxShadow(
-            color: _primaryAqua.withValues(alpha: 0.06),
-            blurRadius: 34,
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -2324,7 +2317,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               const Text(
                 'City Health Operations\nCommand Center',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: _lightOffWhite,
                   fontSize: 30,
                   height: 1.08,
                   fontWeight: FontWeight.w800,
@@ -2370,9 +2363,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
             constraints: const BoxConstraints(maxWidth: 420),
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.055),
+              color: Colors.black.withValues(alpha: 0.055),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+              border: Border.all(color: Colors.black.withValues(alpha: 0.10)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2393,7 +2386,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                             ? 'All data sources synchronized'
                             : 'Synchronizing health data sources',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: _lightOffWhite,
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
                         ),
@@ -2462,7 +2455,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       style: FilledButton.styleFrom(
         backgroundColor: primary
             ? _primaryAqua
-            : Colors.white.withValues(alpha: 0.08),
+            : Colors.black.withValues(alpha: 0.08),
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         shape: RoundedRectangleBorder(
@@ -2470,7 +2463,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
           side: BorderSide(
             color: primary
                 ? _primaryAqua
-                : Colors.white.withValues(alpha: 0.12),
+                : Colors.black.withValues(alpha: 0.12),
           ),
         ),
       ),
@@ -2512,7 +2505,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   Text(
                     value,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: _lightOffWhite,
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
                     ),
@@ -2839,16 +2832,16 @@ class _ChoDashboardState extends State<ChoDashboard> {
   }) {
     return Container(
       width: width,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: _panelTeal,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+        color: ChoColors.navSurface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: ChoColors.navBorder),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -2858,8 +2851,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(15),
+              color: color.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: color.withValues(alpha: 0.26)),
             ),
             child: Icon(icon, color: color, size: 22),
           ),
@@ -2874,7 +2868,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       child: Text(
                         title,
                         style: TextStyle(
-                          color: _lightOffWhite.withValues(alpha: 0.72),
+                          color: ChoColors.navMuted,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -2883,7 +2877,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     Text(
                       value,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: ChoColors.navText,
                         fontSize: 21,
                         fontWeight: FontWeight.w800,
                       ),
@@ -2896,7 +2890,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: _lightOffWhite.withValues(alpha: 0.52),
+                    color: ChoColors.navMuted,
                     fontSize: 9.5,
                     height: 1.3,
                   ),
@@ -2955,16 +2949,12 @@ class _ChoDashboardState extends State<ChoDashboard> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[_panelTealAlt, _panelTeal, _darkDeepTeal],
-        ),
+        color: ChoColors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.20)),
+        border: Border.all(color: ChoColors.border),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.24),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -2982,9 +2972,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: <Color>[_primaryAqua, _secondaryIceBlue],
-                      ),
+                      color: _primaryAqua,
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: const Icon(
@@ -3000,7 +2988,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         const Text(
                           'Barangay Demographic Explorer',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: ChoColors.text,
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                           ),
@@ -3009,7 +2997,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         Text(
                           'Select one barangay first to reveal its population profile and health-program activity.',
                           style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.62),
+                            color: ChoColors.muted,
                             fontSize: 11,
                             height: 1.35,
                           ),
@@ -3024,17 +3012,15 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 child: DropdownButtonFormField<String>(
                   initialValue: _selectedDemographicBarangayCode,
                   isExpanded: true,
-                  dropdownColor: _panelTealAlt,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                  dropdownColor: ChoColors.surface,
+                  style: const TextStyle(color: ChoColors.text, fontSize: 12),
                   decoration: _availabilityInputDecoration(
                     'Choose barangay first',
                     Icons.location_on_outlined,
                   ),
                   hint: Text(
                     'Select barangay',
-                    style: TextStyle(
-                      color: _lightOffWhite.withValues(alpha: 0.55),
-                    ),
+                    style: TextStyle(color: ChoColors.muted),
                   ),
                   items: MalaybalayBarangays.all
                       .map(
@@ -3077,9 +3063,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 38, horizontal: 20),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.035),
+                color: ChoColors.surfaceAlt,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+                border: Border.all(color: ChoColors.border),
               ),
               child: Column(
                 children: <Widget>[
@@ -3101,7 +3087,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     'Choose a barangay to view demographics',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: ChoColors.text,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
@@ -3111,7 +3097,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     'No city-wide totals are shown here. This explorer intentionally requires a barangay selection before displaying health records.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: _lightOffWhite.withValues(alpha: 0.52),
+                      color: ChoColors.muted,
                       fontSize: 10.5,
                       height: 1.4,
                     ),
@@ -3129,7 +3115,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       Text(
                         selectedBarangay.name,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: ChoColors.text,
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                         ),
@@ -3137,10 +3123,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       const SizedBox(height: 3),
                       Text(
                         '${selectedBarangay.district} • ${selectedBarangay.code}',
-                        style: TextStyle(
-                          color: _lightOffWhite.withValues(alpha: 0.55),
-                          fontSize: 10,
-                        ),
+                        style: TextStyle(color: ChoColors.muted, fontSize: 10),
                       ),
                     ],
                   ),
@@ -3173,11 +3156,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
                           width: width,
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.045),
+                            color: ChoColors.surfaceAlt,
                             borderRadius: BorderRadius.circular(15),
                             border: Border.all(
                               color: (moduleColors[entry.key] ?? _primaryAqua)
-                                  .withValues(alpha: 0.18),
+                                  .withValues(alpha: 0.24),
                             ),
                           ),
                           child: Row(
@@ -3205,9 +3188,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    color: _lightOffWhite.withValues(
-                                      alpha: 0.72,
-                                    ),
+                                    color: ChoColors.text,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -3216,7 +3197,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                               Text(
                                 entry.value.length.toString(),
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: ChoColors.text,
                                   fontSize: 21,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -3270,7 +3251,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             Text(
               'Communicable and non-communicable totals are derived from explicit case classification first, then recognized condition keywords when classification is missing.',
               style: TextStyle(
-                color: _lightOffWhite.withValues(alpha: 0.46),
+                color: ChoColors.muted,
                 fontSize: 9.5,
                 height: 1.35,
               ),
@@ -3290,9 +3271,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
       height: 300,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: ChoColors.surfaceAlt,
         borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+        border: Border.all(color: ChoColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3300,7 +3281,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
           Text(
             title,
             style: const TextStyle(
-              color: Colors.white,
+              color: ChoColors.text,
               fontSize: 13,
               fontWeight: FontWeight.w700,
             ),
@@ -3308,10 +3289,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
           const SizedBox(height: 3),
           Text(
             subtitle,
-            style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.50),
-              fontSize: 9.5,
-            ),
+            style: TextStyle(color: ChoColors.muted, fontSize: 9.5),
           ),
           const SizedBox(height: 12),
           Expanded(child: child),
@@ -3333,10 +3311,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       return Center(
         child: Text(
           'No age data recorded for this barangay.',
-          style: TextStyle(
-            color: _lightOffWhite.withValues(alpha: 0.55),
-            fontSize: 10.5,
-          ),
+          style: TextStyle(color: ChoColors.muted, fontSize: 10.5),
         ),
       );
     }
@@ -3349,7 +3324,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         gridData: FlGridData(
           drawVerticalLine: false,
           getDrawingHorizontalLine: (_) => FlLine(
-            color: Colors.white.withValues(alpha: 0.07),
+            color: Colors.black.withValues(alpha: 0.07),
             strokeWidth: 1,
           ),
         ),
@@ -3366,10 +3341,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               reservedSize: 28,
               getTitlesWidget: (value, _) => Text(
                 value.toInt().toString(),
-                style: TextStyle(
-                  color: _lightOffWhite.withValues(alpha: 0.48),
-                  fontSize: 8,
-                ),
+                style: TextStyle(color: ChoColors.muted, fontSize: 8),
               ),
             ),
           ),
@@ -3386,10 +3358,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   padding: const EdgeInsets.only(top: 5),
                   child: Text(
                     entries[index].key,
-                    style: TextStyle(
-                      color: _lightOffWhite.withValues(alpha: 0.62),
-                      fontSize: 8,
-                    ),
+                    style: TextStyle(color: ChoColors.muted, fontSize: 8),
                   ),
                 );
               },
@@ -3424,10 +3393,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       return Center(
         child: Text(
           'No sex data recorded for this barangay.',
-          style: TextStyle(
-            color: _lightOffWhite.withValues(alpha: 0.55),
-            fontSize: 10.5,
-          ),
+          style: TextStyle(color: ChoColors.muted, fontSize: 10.5),
         ),
       );
     }
@@ -3448,7 +3414,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       radius: 48,
                       title: '${(entry.value / total * 100).round()}%',
                       titleStyle: const TextStyle(
-                        color: Colors.white,
+                        color: ChoColors.text,
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
                       ),
@@ -3482,7 +3448,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                           child: Text(
                             entry.key,
                             style: TextStyle(
-                              color: _lightOffWhite.withValues(alpha: 0.65),
+                              color: ChoColors.muted,
                               fontSize: 9.5,
                             ),
                           ),
@@ -3490,7 +3456,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         Text(
                           entry.value.toString(),
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: ChoColors.text,
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                           ),
@@ -3533,22 +3499,14 @@ class _ChoDashboardState extends State<ChoDashboard> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[
-            Color(0xFF123B46),
-            Color(0xFF0D2A32),
-            Color(0xFF081C21),
-          ],
-        ),
+        color: _panelTeal,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.20)),
+        border: Border.all(color: ChoColors.border),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.24),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -3564,9 +3522,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: <Color>[_primaryAqua, _secondaryIceBlue],
-                      ),
+                      color: _primaryAqua,
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: const Icon(
@@ -3582,7 +3538,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         const Text(
                           'Referral Doctor Availability',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: ChoColors.text,
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                           ),
@@ -3591,7 +3547,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         Text(
                           'Check directory status, published working hours, and referral conflicts before assigning a patient.',
                           style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.62),
+                            color: ChoColors.muted,
                             fontSize: 11,
                             height: 1.35,
                           ),
@@ -3608,13 +3564,13 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 ),
                 decoration: BoxDecoration(
                   color: availableCount > 0
-                      ? Colors.greenAccent.withValues(alpha: 0.10)
-                      : Colors.white.withValues(alpha: 0.06),
+                      ? const Color(0xFFE9F8EF)
+                      : ChoColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
                     color: availableCount > 0
-                        ? Colors.greenAccent.withValues(alpha: 0.28)
-                        : Colors.white.withValues(alpha: 0.10),
+                        ? const Color(0xFF9AD8B0)
+                        : ChoColors.border,
                   ),
                 ),
                 child: Text(
@@ -3623,8 +3579,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       : '$availableCount available',
                   style: TextStyle(
                     color: availableCount > 0
-                        ? Colors.greenAccent
-                        : _lightOffWhite.withValues(alpha: 0.72),
+                        ? const Color(0xFF16803A)
+                        : ChoColors.muted,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
@@ -3715,8 +3671,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     width: fieldWidth,
                     child: DropdownButtonFormField<int>(
                       initialValue: _doctorAvailabilityDuration,
-                      dropdownColor: _panelTealAlt,
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      dropdownColor: ChoColors.surface,
+                      style: const TextStyle(
+                        color: ChoColors.text,
+                        fontSize: 12,
+                      ),
                       decoration: _availabilityInputDecoration(
                         'Duration',
                         Icons.timelapse_rounded,
@@ -3742,8 +3701,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     width: fieldWidth,
                     child: DropdownButtonFormField<String>(
                       initialValue: _doctorSpecialtyFilter,
-                      dropdownColor: _panelTealAlt,
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      dropdownColor: ChoColors.surface,
+                      style: const TextStyle(
+                        color: ChoColors.text,
+                        fontSize: 12,
+                      ),
                       decoration: _availabilityInputDecoration(
                         'Specialty',
                         Icons.medical_information_outlined,
@@ -3781,7 +3743,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                               height: 17,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: _lightOffWhite,
                               ),
                             )
                           : const Icon(Icons.manage_search_rounded),
@@ -3832,7 +3794,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   child: Text(
                     'Availability for ${_dateLabel(requestedDateTime)} at ${_timeLabel(_doctorAvailabilityTime)}',
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: ChoColors.text,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                     ),
@@ -3873,7 +3835,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
           Text(
             'Availability is planning guidance. A result based only on directory status must be confirmed with the doctor before final referral assignment.',
             style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.50),
+              color: ChoColors.muted,
               fontSize: 9.5,
               height: 1.35,
             ),
@@ -3886,17 +3848,14 @@ class _ChoDashboardState extends State<ChoDashboard> {
   InputDecoration _availabilityInputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(
-        color: _lightOffWhite.withValues(alpha: 0.58),
-        fontSize: 11,
-      ),
+      labelStyle: TextStyle(color: ChoColors.muted, fontSize: 11),
       prefixIcon: Icon(icon, color: _primaryAqua, size: 19),
       filled: true,
-      fillColor: Colors.white.withValues(alpha: 0.055),
+      fillColor: ChoColors.surfaceAlt,
       contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 16),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
+        borderSide: const BorderSide(color: ChoColors.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
@@ -3919,7 +3878,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         child: Text(
           value,
           style: const TextStyle(
-            color: Colors.white,
+            color: ChoColors.text,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -3936,7 +3895,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: ChoColors.surfaceAlt,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accent.withValues(alpha: 0.20)),
       ),
@@ -3970,7 +3929,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: ChoColors.text,
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
                       ),
@@ -3980,10 +3939,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       _doctorSpecialty(doctor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.58),
-                        fontSize: 10,
-                      ),
+                      style: TextStyle(color: ChoColors.muted, fontSize: 10),
                     ),
                   ],
                 ),
@@ -4010,7 +3966,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
           Text(
             reason,
             style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.74),
+              color: ChoColors.text,
               fontSize: 10.5,
               height: 1.35,
             ),
@@ -4031,14 +3987,14 @@ class _ChoDashboardState extends State<ChoDashboard> {
               Icon(
                 Icons.calendar_today_outlined,
                 size: 12,
-                color: _lightOffWhite.withValues(alpha: 0.55),
+                color: ChoColors.muted,
               ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   _doctorScheduleSummary(doctor),
                   style: TextStyle(
-                    color: _lightOffWhite.withValues(alpha: 0.55),
+                    color: ChoColors.muted,
                     fontSize: 9.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -4055,13 +4011,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[_panelTealAlt, _panelTeal, _darkDeepTeal],
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
+        color: ChoColors.navBackground,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: ChoColors.navBorder),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.18),
@@ -4080,7 +4032,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               borderRadius: BorderRadius.circular(15),
               border: Border.all(color: color.withValues(alpha: 0.18)),
             ),
-            child: Icon(icon, color: color),
+            child: Icon(icon, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -4092,7 +4044,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: _lightOffWhite.withValues(alpha: 0.68),
+                    color: ChoColors.navMuted,
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -4101,7 +4053,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 Text(
                   value,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: ChoColors.navText,
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                   ),
@@ -4240,22 +4192,14 @@ class _ChoDashboardState extends State<ChoDashboard> {
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF13242A),
-                _darkDeepTeal,
-                const Color(0xFF061419),
-              ],
-            ),
+            color: _panelTeal,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: filterBorderColor),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.22),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
@@ -4305,35 +4249,23 @@ class _ChoDashboardState extends State<ChoDashboard> {
                                 ),
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: isSelected
-                                        ? <Color>[
-                                            const Color(0xFF24353A),
-                                            const Color(0xFF17262B),
-                                          ]
-                                        : <Color>[
-                                            const Color(0xFF13242A),
-                                            _darkDeepTeal.withValues(
-                                              alpha: 0.96,
-                                            ),
-                                          ],
-                                  ),
+                                  color: isSelected
+                                      ? _primaryAqua.withValues(alpha: 0.10)
+                                      : _panelTeal,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: isSelected
-                                        ? _lightOffWhite.withValues(alpha: 0.24)
+                                        ? _primaryAqua.withValues(alpha: 0.35)
                                         : filterBorderColor,
                                   ),
                                   boxShadow: isSelected
                                       ? [
                                           BoxShadow(
                                             color: Colors.black.withValues(
-                                              alpha: 0.24,
+                                              alpha: 0.06,
                                             ),
-                                            blurRadius: 14,
-                                            offset: const Offset(0, 6),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 4),
                                           ),
                                         ]
                                       : null,
@@ -4548,7 +4480,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             colors: <Color>[_panelTealAlt, _panelTeal, _darkDeepTeal],
           ),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.07)),
           boxShadow: <BoxShadow>[
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.18),
@@ -4625,14 +4557,14 @@ class _ChoDashboardState extends State<ChoDashboard> {
 
   Widget _buildPatientQueueSection() {
     return SizedBox(
-      height: 360,
+      height: 282,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: _darkDeepTeal,
-            border: Border.all(color: _primaryAqua.withValues(alpha: 0.06)),
+            color: ChoColors.surfaceAlt,
+            border: Border.all(color: ChoColors.border),
           ),
           child: _rows.isEmpty && _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -4641,7 +4573,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   child: Text(
                     'No patient records available yet.',
                     style: TextStyle(
-                      color: _lightOffWhite.withValues(alpha: 0.78),
+                      color: ChoColors.muted,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
@@ -4649,7 +4581,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 )
               : ListView.separated(
                   itemCount: _rows.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 7),
                   itemBuilder: (context, i) {
                     final r = _rows[i];
                     final name = _patientName(r);
@@ -4661,32 +4593,37 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     return Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
-                        vertical: 12,
+                        vertical: 9,
                       ),
                       decoration: BoxDecoration(
-                        color: _secondaryIceBlue.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: _primaryAqua.withValues(alpha: 0.10),
-                        ),
+                        color: ChoColors.surface,
+                        borderRadius: BorderRadius.circular(11),
+                        border: Border.all(color: ChoColors.border),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x0D0B1F3A),
+                            blurRadius: 8,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
                           CircleAvatar(
-                            radius: 25,
-                            backgroundColor: _primaryAqua.withValues(
-                              alpha: 0.45,
+                            radius: 20,
+                            backgroundColor: ChoColors.aqua.withValues(
+                              alpha: 0.86,
                             ),
                             child: Text(
                               (i + 1).toString(),
                               style: const TextStyle(
-                                color: _darkDeepTeal,
-                                fontSize: 14,
+                                color: Colors.white,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 11),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -4696,8 +4633,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    color: _lightOffWhite,
-                                    fontSize: 15,
+                                    color: ChoColors.text,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -4707,10 +4644,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    color: _lightOffWhite.withValues(
-                                      alpha: 0.72,
-                                    ),
-                                    fontSize: 12,
+                                    color: ChoColors.muted,
+                                    fontSize: 11,
                                     height: 1.35,
                                   ),
                                 ),
@@ -5578,7 +5513,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   radius: 46,
                   title: '$pct%',
                   titleStyle: const TextStyle(
-                    color: Colors.white,
+                    color: _lightOffWhite,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -6112,27 +6047,21 @@ class _ChoDashboardState extends State<ChoDashboard> {
   Widget build(BuildContext context) {
     if (!_authorized) {
       return Scaffold(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: ChoColors.navBackground,
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: ChoColors.background,
       drawer: const ChoNavigationDrawer(current: ChoDestination.dashboard),
       appBar: AppBar(
-        title: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(Icons.health_and_safety_rounded, color: _primaryAqua),
-            SizedBox(width: 10),
-            Text(
-              'CHO Intelligence Center',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ],
+        title: const Text(
+          'CHO Intelligence Center',
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: ChoColors.navBackground,
+        foregroundColor: ChoColors.navText,
         elevation: 0,
       ),
       body: Padding(
@@ -6148,24 +6077,28 @@ class _ChoDashboardState extends State<ChoDashboard> {
               padding: const EdgeInsets.all(14),
               margin: const EdgeInsets.only(bottom: 14),
               decoration: BoxDecoration(
-                color: _secondaryIceBlue.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _primaryAqua.withValues(alpha: 0.15)),
+                color: ChoColors.navSurface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: ChoColors.navBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     'CHO Dashboard: Firestore-powered patient monitoring, service delivery tracking, and public health risk surveillance.',
-                    style: TextStyle(color: _lightOffWhite, fontSize: 13),
+                    style: TextStyle(
+                      color: ChoColors.navText,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   // Sync status indicator
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: _darkDeepTeal.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(8),
+                      color: ChoColors.navBackground,
+                      borderRadius: BorderRadius.circular(9),
                     ),
                     child: Row(
                       children: [
@@ -6174,8 +6107,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                               ? Icons.cloud_done
                               : Icons.cloud_sync,
                           color: _syncStatus.values.every((v) => v)
-                              ? Colors.greenAccent
-                              : _primaryAqua,
+                              ? const Color(0xFF65E6B0)
+                              : ChoColors.aqua,
                           size: 16,
                         ),
                         const SizedBox(width: 8),
@@ -6185,8 +6118,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                               : 'Syncing Firestore collections...',
                           style: TextStyle(
                             color: _syncStatus.values.every((v) => v)
-                                ? Colors.greenAccent
-                                : _primaryAqua,
+                                ? const Color(0xFF65E6B0)
+                                : ChoColors.aqua,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -6202,7 +6135,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             const Text(
               'Program Performance Snapshot',
               style: TextStyle(
-                color: Colors.white,
+                color: _lightOffWhite,
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
               ),
@@ -6216,142 +6149,85 @@ class _ChoDashboardState extends State<ChoDashboard> {
               ),
             ),
             const SizedBox(height: 12),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                SizedBox(
-                  width: 280,
-                  child: _summaryCard(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const gap = 10.0;
+                final columns = constraints.maxWidth >= 1700
+                    ? 7
+                    : constraints.maxWidth >= 1320
+                    ? 6
+                    : constraints.maxWidth >= 980
+                    ? 4
+                    : constraints.maxWidth >= 620
+                    ? 2
+                    : 1;
+                final cardWidth = columns == 1
+                    ? constraints.maxWidth
+                    : (constraints.maxWidth - (gap * (columns - 1))) / columns;
+                final cards = <Widget>[
+                  _summaryCard(
                     'Patient Records',
                     _safeMetricText(_totalPatients),
                     Icons.people,
                     _primaryAqua,
                   ),
-                ),
-                SizedBox(
-                  width: 280,
-                  child: _summaryCard(
+                  _summaryCard(
                     'Checkup Records',
                     _safeMetricText(_checkupsThisMonth),
                     Icons.medical_services,
                     _secondaryIceBlue,
                   ),
-                ),
-                SizedBox(
-                  width: 280,
-                  child: _summaryCard(
+                  _summaryCard(
                     'Active Prenatal Cases',
                     _safeMetricText(_activePrenatal),
                     Icons.pregnant_woman,
                     Colors.pinkAccent,
                   ),
-                ),
-                SizedBox(
-                  width: 280,
-                  child: _summaryCard(
+                  _summaryCard(
                     'Immunization Records',
                     _safeMetricText(_immunizationRecords),
                     Icons.vaccines,
                     Colors.greenAccent,
                   ),
-                ),
-                SizedBox(
-                  width: 280,
-                  child: _summaryCard(
+                  _summaryCard(
                     'Morbidity Reports',
                     _safeMetricText(_morbidityReports),
                     Icons.monitor_heart,
                     Colors.orangeAccent,
                   ),
-                ),
-                SizedBox(
-                  width: 280,
-                  child: _summaryCard(
+                  _summaryCard(
                     'Mortality Reports',
                     _safeMetricText(_mortalityReports),
                     Icons.heart_broken,
                     Colors.redAccent,
                   ),
-                ),
-                SizedBox(
-                  width: 280,
-                  child: _summaryCard(
+                  _summaryCard(
                     'Referral Reports',
                     _safeMetricText(_referralReports),
                     Icons.assignment_ind_outlined,
                     Colors.cyanAccent,
                   ),
-                ),
-              ],
+                ];
+                return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: cards
+                      .map((card) => SizedBox(width: cardWidth, child: card))
+                      .toList(growable: false),
+                );
+              },
             ),
             const SizedBox(height: 20),
             _buildBarangayDemographicsExplorer(),
             const SizedBox(height: 20),
             _buildDoctorAvailabilityPlanner(),
             const SizedBox(height: 20),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: <Color>[
-                    _primaryAqua.withValues(alpha: 0.15),
-                    _secondaryIceBlue.withValues(alpha: 0.10),
-                    Colors.transparent,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
-              ),
-              child: Row(
-                children: <Widget>[
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: _primaryAqua.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(13),
-                    ),
-                    child: const Icon(
-                      Icons.stacked_line_chart_rounded,
-                      color: _primaryAqua,
-                    ),
-                  ),
-                  const SizedBox(width: 13),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        const Text(
-                          'Power BI-Style Health Analytics',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          'Interactive trend, distribution, forecast, workload, and coverage visuals for ${_analyticsWindowLabel().toLowerCase()}.',
-                          style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.60),
-                            fontSize: 10.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
             _buildPowerBiCharts(),
             const SizedBox(height: 20),
             const Text(
               'Population Follow-up Queue',
               style: TextStyle(
-                color: Colors.white,
+                color: _lightOffWhite,
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
               ),

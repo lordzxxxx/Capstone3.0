@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
+const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF0A1F24);
 const Color _lightOffWhite = Color(0xFFF5F5F5);
 

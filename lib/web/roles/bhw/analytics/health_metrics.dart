@@ -6,16 +6,17 @@ import 'package:intl/intl.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
-import 'package:mycapstone_project/web/roles/bhw/analytics/ai_summary.dart' as ai;
+import 'package:mycapstone_project/web/roles/bhw/analytics/ai_summary.dart'
+    as ai;
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
-const Color _primaryAqua = Color(0xFF8ED7DA);
-const Color _darkDeepTeal = Color(0xFF0C252A);
-const Color _panelTeal = Color(0xFF123A41);
-const Color _panelTealSoft = Color(0xFF1A4C54);
-const Color _lightOffWhite = Color(0xFFF3F5F1);
-const Color _mutedCoolGray = Color(0xFF9DB3B6);
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _darkDeepTeal = Color(0xFF071A33);
+const Color _panelTeal = Colors.white;
+const Color _panelTealSoft = Color(0xFFEDF3FA);
+const Color _lightOffWhite = Color(0xFF0B1F3A);
+const Color _mutedCoolGray = Color(0xFF4B6075);
 const Color _signalGreen = Color(0xFF74D7A7);
 const Color _signalAmber = Color(0xFFFFC86B);
 
@@ -371,10 +372,11 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
   ) {
     final firestore = getFirestoreInstance();
 
-    return buildScopedRecordQuery(firestore, 'summary_records', accessScope)
-        .orderBy('generatedAt', descending: true)
-        .limit(24)
-        .snapshots();
+    return buildScopedRecordQuery(
+      firestore,
+      'summary_records',
+      accessScope,
+    ).orderBy('generatedAt', descending: true).limit(24).snapshots();
   }
 
   void _copySummaryToClipboard() {
@@ -415,7 +417,7 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: const Color(0xFFF5F7FA),
       drawer: WebAppSidebar(
         userName: userName,
         activeItem: WebSidebarItem.summaryGeneration,
@@ -424,7 +426,7 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
         backgroundColor: _darkDeepTeal,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: _lightOffWhite),
+          icon: const Icon(Icons.menu_rounded, color: Colors.white),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         title: Column(
@@ -433,7 +435,7 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
             Text(
               'Summary Generation',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: _lightOffWhite,
+                color: Colors.white,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -441,19 +443,13 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
               'Operational reporting workspace',
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: _mutedCoolGray),
+              ).textTheme.bodySmall?.copyWith(color: Colors.white70),
             ),
           ],
         ),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_darkDeepTeal, Color(0xFF08191C)],
-          ),
-        ),
+      body: ColoredBox(
+        color: Color(0xFFF5F7FA),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Center(
@@ -506,11 +502,7 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [_panelTealSoft, _panelTeal, _darkDeepTeal],
-        ),
+        color: _panelTeal,
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.22)),
         boxShadow: [
           BoxShadow(
@@ -633,11 +625,11 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
           spacing: 10,
           runSpacing: 10,
           children: [
-                                _PillTag(
-                                  icon: _currentPeriodIcon,
-                                  label: _effectivePeriod,
-                                  accent: _primaryAqua,
-                                ),
+            _PillTag(
+              icon: _currentPeriodIcon,
+              label: _effectivePeriod,
+              accent: _primaryAqua,
+            ),
             _PillTag(
               icon: Icons.event_available_rounded,
               label: _currentPeriodLabel,
@@ -1196,7 +1188,9 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                       decoration: BoxDecoration(
                         color: _panelTealSoft.withValues(alpha: 0.20),
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+                        border: Border.all(
+                          color: _primaryAqua.withValues(alpha: 0.16),
+                        ),
                       ),
                       child: Text(
                         'No saved summaries for $_currentPeriodLabel yet.',
@@ -1212,7 +1206,9 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                       final data = doc.data();
                       final generatedAt = data['generatedAt'];
                       final when = generatedAt is Timestamp
-                          ? DateFormat.yMMMd().add_jm().format(generatedAt.toDate())
+                          ? DateFormat.yMMMd().add_jm().format(
+                              generatedAt.toDate(),
+                            )
                           : 'Recent';
 
                       return Padding(
@@ -1537,7 +1533,9 @@ class _PeriodOptionButton extends StatelessWidget {
               : Colors.black.withValues(alpha: 0.14),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isSelected ? _primaryAqua : _primaryAqua.withValues(alpha: 0.18),
+            color: isSelected
+                ? _primaryAqua
+                : _primaryAqua.withValues(alpha: 0.18),
           ),
         ),
         child: Row(

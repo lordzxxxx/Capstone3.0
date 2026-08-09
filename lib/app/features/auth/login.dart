@@ -10,14 +10,15 @@ import 'package:flutter/gestures.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mycapstone_project/app/features/auth/signup.dart';
 import 'package:mycapstone_project/app/features/auth/forgot.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _sidebarDark = Color(0xFF0E2F34);
-const Color _panelSurface = Color(0xFF061920);
+const Color _primaryAqua = AppDesign.blue;
+const Color _secondaryIceBlue = AppDesign.navySoft;
+const Color _darkDeepTeal = AppDesign.ink;
+const Color _mutedCoolGray = AppDesign.subtle;
+const Color _lightOffWhite = AppDesign.ink;
+const Color _sidebarDark = Colors.white;
+const Color _panelSurface = AppDesign.page;
 
 class Login extends StatefulWidget {
   final bool syncOfflineAfterLogin;
@@ -163,7 +164,8 @@ class _LoginState extends State<Login> {
         'Google Sign-In Failed',
         configurationError
             ? 'Google authentication is not configured for this Android build. Add its SHA-1 in Firebase and download the updated google-services.json.'
-            : (gse.description ?? 'Google authentication could not be completed.'),
+            : (gse.description ??
+                  'Google authentication could not be completed.'),
         backgroundColor: const Color(0xFFD32F2F),
         colorText: Colors.white,
         duration: const Duration(seconds: 6),
@@ -275,12 +277,12 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: AppDesign.page,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppDesign.navy,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: _lightOffWhite, size: 24),
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
           onPressed: () {
             final navigator = Navigator.of(context);
             if (navigator.canPop()) {
@@ -295,31 +297,21 @@ class _LoginState extends State<Login> {
         title: Text(
           'Sign In',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _lightOffWhite,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _darkDeepTeal,
-              _secondaryIceBlue.withValues(alpha: 0.28),
-              _sidebarDark,
-            ],
-          ),
-        ),
+        color: AppDesign.page,
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
             child: Container(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
               decoration: BoxDecoration(
-                color: _sidebarDark.withValues(alpha: 0.94),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: _primaryAqua.withValues(alpha: 0.16),
@@ -366,6 +358,7 @@ class _LoginState extends State<Login> {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
+                        color: AppDesign.navy,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -377,7 +370,7 @@ class _LoginState extends State<Login> {
                       ),
                       child: ClipOval(
                         child: Image.asset(
-                          'assets/bg3.png',
+                          'assets/newlogo.png',
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
                             return const Icon(
@@ -400,7 +393,7 @@ class _LoginState extends State<Login> {
                         'Welcome Back',
                         style: Theme.of(context).textTheme.displaySmall
                             ?.copyWith(
-                              color: _lightOffWhite,
+                              color: _darkDeepTeal,
                               fontWeight: FontWeight.bold,
                             ),
                       ),
@@ -408,7 +401,7 @@ class _LoginState extends State<Login> {
                       Text(
                         'Sign in to access your health monitoring dashboard',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: _lightOffWhite.withValues(alpha: 0.72),
+                          color: AppDesign.muted,
                           height: 1.4,
                         ),
                       ),
@@ -443,7 +436,7 @@ class _LoginState extends State<Login> {
                       child: Text(
                         'Forgot Password?',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: _lightOffWhite,
+                          color: _darkDeepTeal,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -459,7 +452,7 @@ class _LoginState extends State<Login> {
                       onPressed: _isLoading ? null : signIn,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primaryAqua,
-                        foregroundColor: _darkDeepTeal,
+                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -472,7 +465,7 @@ class _LoginState extends State<Login> {
                               width: 20,
                               child: CircularProgressIndicator(
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  _darkDeepTeal,
+                                  Colors.white,
                                 ),
                                 strokeWidth: 2.5,
                               ),
@@ -482,7 +475,7 @@ class _LoginState extends State<Login> {
                         _isLoading ? 'Signing In...' : 'Sign In',
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
-                              color: _darkDeepTeal,
+                              color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),
                       ),
@@ -494,26 +487,20 @@ class _LoginState extends State<Login> {
                   Row(
                     children: [
                       Expanded(
-                        child: Divider(
-                          color: _lightOffWhite.withValues(alpha: 0.2),
-                          thickness: 1,
-                        ),
+                        child: Divider(color: AppDesign.border, thickness: 1),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           'OR',
                           style: TextStyle(
-                            color: _lightOffWhite,
+                            color: _darkDeepTeal,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                       Expanded(
-                        child: Divider(
-                          color: _lightOffWhite.withValues(alpha: 0.2),
-                          thickness: 1,
-                        ),
+                        child: Divider(color: AppDesign.border, thickness: 1),
                       ),
                     ],
                   ),
@@ -533,13 +520,13 @@ class _LoginState extends State<Login> {
                       const SizedBox(width: 16),
                       _buildSocialButton(
                         icon: Icons.g_mobiledata,
-                        color: _lightOffWhite,
+                        color: _darkDeepTeal,
                         onTap: _isLoading ? null : signInWithGoogle,
                       ),
                       const SizedBox(width: 16),
                       _buildSocialButton(
                         icon: Icons.apple,
-                        color: _lightOffWhite,
+                        color: _darkDeepTeal,
                         onTap: () {
                           // TODO: Implement Apple sign-in
                         },
@@ -554,9 +541,9 @@ class _LoginState extends State<Login> {
                   Center(
                     child: RichText(
                       text: TextSpan(
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(color: _lightOffWhite),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppDesign.muted,
+                        ),
                         children: [
                           const TextSpan(text: "Don't have an account? "),
                           TextSpan(
@@ -590,7 +577,7 @@ class _LoginState extends State<Login> {
     return Text(
       label,
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        color: _lightOffWhite,
+        color: _darkDeepTeal,
         fontWeight: FontWeight.bold,
       ),
     );
@@ -606,13 +593,10 @@ class _LoginState extends State<Login> {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
-      style: const TextStyle(
-        color: _lightOffWhite,
-        fontWeight: FontWeight.w500,
-      ),
+      style: const TextStyle(color: _darkDeepTeal, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: TextStyle(color: _lightOffWhite.withValues(alpha: 0.42)),
+        hintStyle: const TextStyle(color: AppDesign.subtle),
         prefixIcon: Icon(icon, color: _primaryAqua, size: 20),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -647,13 +631,10 @@ class _LoginState extends State<Login> {
     return TextField(
       controller: passwordController,
       obscureText: _obscurePassword,
-      style: const TextStyle(
-        color: _lightOffWhite,
-        fontWeight: FontWeight.w500,
-      ),
+      style: const TextStyle(color: _darkDeepTeal, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: 'Enter your password',
-        hintStyle: TextStyle(color: _lightOffWhite.withValues(alpha: 0.42)),
+        hintStyle: const TextStyle(color: AppDesign.subtle),
         prefixIcon: const Icon(
           Icons.lock_outline,
           color: _primaryAqua,
@@ -662,7 +643,7 @@ class _LoginState extends State<Login> {
         suffixIcon: IconButton(
           icon: Icon(
             _obscurePassword ? Icons.visibility_off : Icons.visibility,
-            color: _mutedCoolGray,
+            color: AppDesign.subtle,
             size: 20,
           ),
           onPressed: () {
@@ -712,7 +693,7 @@ class _LoginState extends State<Login> {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: _panelSurface,
+            color: AppDesign.page,
             border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [

@@ -19,12 +19,12 @@ import 'package:mycapstone_project/web/shared/services/user_access_scope_service
 import 'package:mycapstone_project/web/shared/utils/referral_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/report_print.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _panelSurface = Color(0xFF102E38);
-const Color _panelAlt = Color(0xFF123B46);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _mutedCoolGray = Color(0xFF8EA5AE);
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _darkDeepTeal = Color(0xFF071A33);
+const Color _panelSurface = Colors.white;
+const Color _panelAlt = Color(0xFFEDF3FA);
+const Color _lightOffWhite = Color(0xFF0B1F3A);
+const Color _mutedCoolGray = Color(0xFF4B6075);
 
 class ReferralsPage extends StatefulWidget {
   const ReferralsPage({super.key, this.initialPatient});
@@ -1328,12 +1328,20 @@ class _ReferralsPageState extends State<ReferralsPage> {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: _lightOffWhite),
+      labelStyle: const TextStyle(color: _mutedCoolGray),
       filled: true,
-      fillColor: _darkDeepTeal,
+      fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(color: Color(0xFFD9E5F2)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFD9E5F2)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _primaryAqua, width: 2),
       ),
     );
   }
@@ -2586,7 +2594,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: const Color(0xFFF5F7FA),
       drawer: _isDoctor
           ? null
           : WebAppSidebar(

@@ -41,12 +41,12 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // Color scheme
-  static const Color _primaryAqua = Color(0xFF00A8B5);
-  static const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-  static const Color _darkDeepTeal = Color(0xFF0A1F24);
-  static const Color _mutedCoolGray = Color(0xFF546E7A);
+  static const Color _primaryAqua = Color(0xFF2F80ED);
+  static const Color _secondaryIceBlue = Color(0xFF163B66);
+  static const Color _darkDeepTeal = Color(0xFF071A33);
+  static const Color _mutedCoolGray = Color(0xFF4B6075);
   static const Color _lightOffWhite = Color(0xFFF5F5F5);
-  static const Color _sidebarDark = Color(0xFF0E2F34);
+  static const Color _sidebarDark = Color(0xFF0D274D);
 
   // Filter state
   String _selectedStatus = 'All';
@@ -286,7 +286,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: const Color(0xFFF5F7FA),
       drawer: WebAppSidebar(
         userName: userName,
         activeItem: WebSidebarItem.patientRecords,
@@ -949,7 +949,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: _sidebarDark,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _primaryAqua.withValues(alpha: 0.15),
@@ -989,7 +989,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                   style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: _darkDeepTeal,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -997,7 +997,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                   title,
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Colors.white,
+                    color: _mutedCoolGray,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -1016,7 +1016,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
           decoration: BoxDecoration(
-            color: _sidebarDark,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _primaryAqua.withValues(alpha: 0.2),
@@ -1100,7 +1100,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                   const Text(
                     'Date Range',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: _darkDeepTeal,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1183,7 +1183,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: _sidebarDark,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: _primaryAqua.withValues(alpha: 0.2),
@@ -1196,7 +1196,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
             Text(
               date != null ? '${date.day}/${date.month}' : label,
               style: TextStyle(
-                color: _lightOffWhite,
+                color: _darkDeepTeal,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),
@@ -1252,7 +1252,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
-        color: _darkDeepTeal,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.2),
@@ -1278,16 +1278,16 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
             });
           });
         },
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(color: Color(0xFF0B1F3A)),
         cursorColor: _primaryAqua,
         decoration: InputDecoration(
           hintText:
               'Search by name, Patient ID, barangay, household, or contact...',
-          hintStyle: const TextStyle(color: Colors.white),
-          prefixIcon: const Icon(Icons.search, color: Colors.white),
+          hintStyle: const TextStyle(color: Color(0xFF4B6075)),
+          prefixIcon: const Icon(Icons.search, color: _primaryAqua),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.white),
+                  icon: const Icon(Icons.clear, color: Color(0xFF4B6075)),
                   onPressed: () {
                     _searchDebounce?.cancel();
                     setState(() {
@@ -1299,8 +1299,19 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                 )
               : null,
           filled: true,
-          fillColor: Colors.transparent,
-          border: InputBorder.none,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Color(0xFFD9E5F2)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Color(0xFFD9E5F2)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: _primaryAqua, width: 2),
+          ),
           contentPadding: const EdgeInsets.all(16),
         ),
       ),
@@ -1643,7 +1654,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     FontWeight valueWeight = FontWeight.w600,
     String separator = '   ',
   }) {
-    const labelBlue = Color(0xFF00E5F7);
+    const labelBlue = Color(0xFF60A5FA);
     const valueWhite = Color(0xFFF3F8FC);
     final spans = <TextSpan>[];
 
@@ -1696,7 +1707,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF123942),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.25),
@@ -1763,11 +1774,11 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF003B5C),
+        color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(7),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF003B5C).withValues(alpha: 0.28),
+            color: const Color(0xFF163B66).withValues(alpha: 0.28),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -1802,7 +1813,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: const Color(0xFFF3F8FC),
+            color: _darkDeepTeal,
             fontSize: 12,
             height: 1.25,
             fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
@@ -1861,7 +1872,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: _sidebarDark,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _primaryAqua.withValues(alpha: 0.3),
@@ -1892,7 +1903,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: _darkDeepTeal,
+                              color: const Color(0xFFEDF3FA),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: _primaryAqua.withValues(alpha: 0.3),
@@ -1912,7 +1923,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                                     child: DropdownButton<String>(
                                       value: _selectedStatus,
                                       isExpanded: true,
-                                      dropdownColor: _darkDeepTeal,
+                                      dropdownColor: Colors.white,
                                       isDense: true,
                                       iconSize: 18,
                                       icon: Icon(
@@ -1921,7 +1932,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                                         size: 18,
                                       ),
                                       style: const TextStyle(
-                                        color: Colors.white,
+                                        color: _darkDeepTeal,
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -2302,7 +2313,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     );
 
     final statusColor = _getPatientStatusColor(status);
-    final rowBg = _darkDeepTeal.withValues(alpha: 0.96);
+    const rowBg = Colors.white;
 
     return GestureDetector(
       onTap: _isSelectionMode
@@ -2322,7 +2333,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           border: Border.all(
             color: isSelected
                 ? _primaryAqua.withValues(alpha: 0.85)
-                : const Color(0xFF214047),
+                : Color(0xFFD9E5F2),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -4369,7 +4380,7 @@ Future<void> _downloadPatientRecordPdf(
   BuildContext context,
   Map<String, dynamic> patient,
 ) async {
-  const pdfActionColor = Color(0xFF00A8B5);
+  const pdfActionColor = Color(0xFF2F80ED);
   final messenger = ScaffoldMessenger.maybeOf(context);
   final patientName =
       '${patient['firstName'] ?? ''} ${patient['surname'] ?? ''}'.trim();
@@ -4435,11 +4446,11 @@ class _AddPatientModalState extends State<AddPatientModal> {
   final int _totalPages = 10;
 
   // Color scheme
-  static const Color _primaryAqua = Color(0xFF00A8B5);
-  static const Color _darkDeepTeal = Color(0xFF0A1F24);
-  static const Color _sidebarDark = Color(0xFF0E2F34);
-  static const Color _panelSurface = Color(0xFF123942);
-  static const Color _fieldSurface = Color(0xFF061920);
+  static const Color _primaryAqua = Color(0xFF2F80ED);
+  static const Color _darkDeepTeal = Color(0xFF0D274D);
+  static const Color _sidebarDark = Color(0xFF0D274D);
+  static const Color _panelSurface = Color(0xFF163B66);
+  static const Color _fieldSurface = Color(0xFF0B1F3A);
   static const Color _lightOffWhite = Color(0xFFF5F7FA);
 
   // Personal Details Controllers
@@ -4698,7 +4709,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
                   DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF00E5FF), Color(0xFF00A8B5)],
+                        colors: [Color(0xFF00E5FF), Color(0xFF2F80ED)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -4882,10 +4893,10 @@ class _AddPatientModalState extends State<AddPatientModal> {
           if (_currentPage > 0)
             Expanded(
               child: OutlinedButton.icon(
-                icon: const Icon(Icons.arrow_back, color: Color(0xFF00A8B5)),
+                icon: const Icon(Icons.arrow_back, color: Color(0xFF2F80ED)),
                 label: const Text(
                   'Previous',
-                  style: TextStyle(color: Color(0xFF00A8B5)),
+                  style: TextStyle(color: Color(0xFF2F80ED)),
                 ),
                 onPressed: () {
                   _pageController.previousPage(
@@ -4894,7 +4905,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
                   );
                 },
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF00A8B5),
+                  foregroundColor: const Color(0xFF2F80ED),
                   side: BorderSide(
                     color: _primaryAqua.withValues(alpha: 0.5),
                     width: 1.2,
@@ -6061,9 +6072,9 @@ class _EditPatientModalState extends State<EditPatientModal> {
   ];
 
   // Color scheme
-  static const Color _primaryAqua = Color(0xFF00A8B5);
-  static const Color _darkDeepTeal = Color(0xFF003D40);
-  static const Color _mutedCoolGray = Color(0xFF6B7280);
+  static const Color _primaryAqua = Color(0xFF2F80ED);
+  static const Color _darkDeepTeal = Color(0xFF071A33);
+  static const Color _mutedCoolGray = Color(0xFFB8C9DB);
   static const Color _lightOffWhite = Color(0xFFF7F9FC);
 
   // Controllers - will be initialized with existing data

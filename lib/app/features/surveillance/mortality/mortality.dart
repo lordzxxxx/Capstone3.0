@@ -8,6 +8,7 @@ import 'package:mycapstone_project/app/features/surveillance/mortality/mortality
 import 'package:mycapstone_project/app/features/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
+import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 
 const Color _primaryAqua = Color(0xFF00A8B5);
 const Color _secondaryIceBlue = Color(0xFF1E5A7A);
@@ -513,18 +514,10 @@ class _MortalityPageState extends State<MortalityPage>
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddRecordDialog,
-        backgroundColor: _primaryAqua,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'New Record',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
+      floatingActionButton: RecordCreationFabGroup(
+        moduleLabel: 'Mortality',
+        manualLabel: 'New Record',
+        onManualCreate: _showAddRecordDialog,
       ),
     );
   }
@@ -633,7 +626,10 @@ class _MortalityPageState extends State<MortalityPage>
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.5), width: 1.5),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -721,8 +717,7 @@ class _MortalityPageState extends State<MortalityPage>
                 [
                   charts.Series<MonthlyTrend, int>(
                     id: 'Deaths',
-                    colorFn: (_, _) =>
-                        charts.MaterialPalette.blue.shadeDefault,
+                    colorFn: (_, _) => charts.MaterialPalette.blue.shadeDefault,
                     domainFn: (MonthlyTrend trend, int? index) => index ?? 0,
                     measureFn: (MonthlyTrend trend, _) => trend.deaths,
                     data: _monthlyTrends,
@@ -959,7 +954,10 @@ class _MortalityPageState extends State<MortalityPage>
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.5), width: 1.5),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -1053,7 +1051,10 @@ class _MortalityPageState extends State<MortalityPage>
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.5), width: 1.5),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -1190,7 +1191,10 @@ class _MortalityPageState extends State<MortalityPage>
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.5), width: 1.5),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -1338,7 +1342,9 @@ class _MortalityPageState extends State<MortalityPage>
             decoration: InputDecoration(
               hintText:
                   'Search by name, cause, place, or verification status...',
-              hintStyle: TextStyle(color: _mutedCoolGray.withValues(alpha: 0.7)),
+              hintStyle: TextStyle(
+                color: _mutedCoolGray.withValues(alpha: 0.7),
+              ),
               prefixIcon: Icon(Icons.search, color: _primaryAqua),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
@@ -1394,7 +1400,10 @@ class _MortalityPageState extends State<MortalityPage>
           decoration: BoxDecoration(
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _primaryAqua.withValues(alpha: 0.5), width: 1.5),
+            border: Border.all(
+              color: _primaryAqua.withValues(alpha: 0.5),
+              width: 1.5,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.08),
@@ -1411,29 +1420,89 @@ class _MortalityPageState extends State<MortalityPage>
               ),
               dataRowColor: WidgetStateProperty.all(Colors.transparent),
               columns: const [
-                DataColumn(label: Text('Name', style: TextStyle(fontWeight: FontWeight.bold, color: _lightOffWhite))),
-                DataColumn(label: Text('Age / Gender', style: TextStyle(fontWeight: FontWeight.bold, color: _lightOffWhite))),
-                DataColumn(label: Text('Cause', style: TextStyle(fontWeight: FontWeight.bold, color: _lightOffWhite))),
-                DataColumn(label: Text('Place', style: TextStyle(fontWeight: FontWeight.bold, color: _lightOffWhite))),
-                DataColumn(label: Text('Date', style: TextStyle(fontWeight: FontWeight.bold, color: _lightOffWhite))),
-                DataColumn(label: Text('Verification', style: TextStyle(fontWeight: FontWeight.bold, color: _lightOffWhite))),
-                DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold, color: _lightOffWhite))),
+                DataColumn(
+                  label: Text(
+                    'Name',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _lightOffWhite,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Age / Gender',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _lightOffWhite,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Cause',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _lightOffWhite,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Place',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _lightOffWhite,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Date',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _lightOffWhite,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Verification',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _lightOffWhite,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Actions',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _lightOffWhite,
+                    ),
+                  ),
+                ),
               ],
               rows: _pagedFilteredRecords.map((record) {
                 final nameValue = record['name']?.toString().trim() ?? '';
                 final name = nameValue.isEmpty ? 'Unknown' : nameValue;
                 final age = record['age']?.toString() ?? 'N/A';
                 final gender = record['gender']?.toString() ?? 'N/A';
-                final causeValue = record['causeOfDeath']?.toString().trim() ?? '';
+                final causeValue =
+                    record['causeOfDeath']?.toString().trim() ?? '';
                 final cause = causeValue.isEmpty
                     ? 'No cause recorded'
                     : causeValue;
                 final placeValue = record['place']?.toString().trim() ?? '';
-                final place = placeValue.isEmpty ? 'No place recorded' : placeValue;
+                final place = placeValue.isEmpty
+                    ? 'No place recorded'
+                    : placeValue;
                 final date = _formatDate(
                   (record['date'] ?? record['dateReported'] ?? '').toString(),
                 );
-                final verification = record['verification']?.toString() ?? 'Pending';
+                final verification =
+                    record['verification']?.toString() ?? 'Pending';
                 final verificationColor = _getVerificationColor(verification);
 
                 return DataRow(
@@ -1487,7 +1556,9 @@ class _MortalityPageState extends State<MortalityPage>
                         decoration: BoxDecoration(
                           color: verificationColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: verificationColor.withValues(alpha: 0.35)),
+                          border: Border.all(
+                            color: verificationColor.withValues(alpha: 0.35),
+                          ),
                         ),
                         child: Text(
                           verification,
@@ -1504,22 +1575,39 @@ class _MortalityPageState extends State<MortalityPage>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.history, color: _primaryAqua, size: 20),
+                            icon: const Icon(
+                              Icons.history,
+                              color: _primaryAqua,
+                              size: 20,
+                            ),
                             tooltip: 'History',
-                            onPressed: () => _showMortalityHistory(context, record),
+                            onPressed: () =>
+                                _showMortalityHistory(context, record),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.orange, size: 20),
+                            icon: const Icon(
+                              Icons.edit,
+                              color: Colors.orange,
+                              size: 20,
+                            ),
                             tooltip: 'Edit',
                             onPressed: () => _editRecord(record),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.verified, color: Color(0xFF4CAF50), size: 20),
+                            icon: const Icon(
+                              Icons.verified,
+                              color: Color(0xFF4CAF50),
+                              size: 20,
+                            ),
                             tooltip: 'Verify',
                             onPressed: () => _verifyRecord(record),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.print, color: Color(0xFF607D8B), size: 20),
+                            icon: const Icon(
+                              Icons.print,
+                              color: Color(0xFF607D8B),
+                              size: 20,
+                            ),
                             tooltip: 'Print',
                             onPressed: () => _printRecord(record),
                           ),
@@ -1569,7 +1657,6 @@ class _MortalityPageState extends State<MortalityPage>
     );
   }
 
-
   String _formatDate(String dateString) {
     try {
       final date = DateTime.parse(dateString);
@@ -1591,9 +1678,10 @@ class _MortalityPageState extends State<MortalityPage>
   }
 
   Map<String, dynamic> _buildPatientHistorySeed(Map<String, dynamic> record) {
-    final patientName = (record['patientName'] ?? record['name'] ?? record['patient'] ?? '')
-        .toString()
-        .trim();
+    final patientName =
+        (record['patientName'] ?? record['name'] ?? record['patient'] ?? '')
+            .toString()
+            .trim();
     final nameParts = patientName.isEmpty
         ? <String>[]
         : patientName.split(RegExp(r'\s+'));
@@ -1625,7 +1713,10 @@ class _MortalityPageState extends State<MortalityPage>
     );
   }
 
-  void _showMortalityHistory(BuildContext context, Map<String, dynamic> record) {
+  void _showMortalityHistory(
+    BuildContext context,
+    Map<String, dynamic> record,
+  ) {
     final history = _getMortalityHistory(record);
     PatientHistoryDialogs.showModuleHistoryDialog(
       context: context,
@@ -1644,8 +1735,9 @@ class _MortalityPageState extends State<MortalityPage>
       dateKeys: const ['dateReported', 'date'],
       secondaryActionLabel: 'Medical History',
       onSecondaryAction: () => _showPatientMedicalHistory(context, record),
-      onAddAnother: () =>
-          _showAddRecordDialog(patientSeed: history.isNotEmpty ? history.first : record),
+      onAddAnother: () => _showAddRecordDialog(
+        patientSeed: history.isNotEmpty ? history.first : record,
+      ),
       onOpenRecord: (entry) => _viewRecordDetails(entry),
     );
   }
@@ -1806,7 +1898,9 @@ class _MortalityPageState extends State<MortalityPage>
                     _verifyRecord(record);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.1),
+                    backgroundColor: const Color(
+                      0xFF4CAF50,
+                    ).withValues(alpha: 0.1),
                     side: const BorderSide(color: Color(0xFF4CAF50), width: 2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1839,7 +1933,9 @@ class _MortalityPageState extends State<MortalityPage>
                     _printRecord(record);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF607D8B).withValues(alpha: 0.1),
+                    backgroundColor: const Color(
+                      0xFF607D8B,
+                    ).withValues(alpha: 0.1),
                     side: const BorderSide(color: Color(0xFF607D8B), width: 2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1872,7 +1968,8 @@ class _MortalityPageState extends State<MortalityPage>
 
   void _showAddRecordDialog({Map<String, dynamic>? patientSeed}) {
     final nameController = TextEditingController(
-      text: (patientSeed?['name'] ?? patientSeed?['patientName'] ?? '').toString(),
+      text: (patientSeed?['name'] ?? patientSeed?['patientName'] ?? '')
+          .toString(),
     );
     final ageController = TextEditingController(
       text: (patientSeed?['age'] ?? '').toString(),
@@ -1914,11 +2011,15 @@ class _MortalityPageState extends State<MortalityPage>
               fillColor: Colors.transparent,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+                borderSide: BorderSide(
+                  color: _lightOffWhite.withValues(alpha: 0.3),
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+                borderSide: BorderSide(
+                  color: _lightOffWhite.withValues(alpha: 0.3),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -1935,7 +2036,10 @@ class _MortalityPageState extends State<MortalityPage>
             backgroundColor: _darkDeepTeal,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3), width: 1.5),
+              side: BorderSide(
+                color: _lightOffWhite.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
             ),
             title: Row(
               children: [
@@ -1955,9 +2059,7 @@ class _MortalityPageState extends State<MortalityPage>
             ),
             content: SingleChildScrollView(
               child: Theme(
-                data: Theme.of(context).copyWith(
-                  canvasColor: _darkDeepTeal,
-                ),
+                data: Theme.of(context).copyWith(canvasColor: _darkDeepTeal),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2031,16 +2133,18 @@ class _MortalityPageState extends State<MortalityPage>
                                       ),
                                     )
                                     .toList(),
-                                decoration: buildDialogInputDecoration(
-                                  hint: 'Select gender',
-                                  icon: Icons.wc,
-                                ).copyWith(
-                                  prefixIcon: null,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 12,
-                                  ),
-                                ),
+                                decoration:
+                                    buildDialogInputDecoration(
+                                      hint: 'Select gender',
+                                      icon: Icons.wc,
+                                    ).copyWith(
+                                      prefixIcon: null,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 12,
+                                          ),
+                                    ),
                               ),
                             ],
                           ),
@@ -2106,9 +2210,7 @@ class _MortalityPageState extends State<MortalityPage>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                style: TextButton.styleFrom(
-                  foregroundColor: _lightOffWhite,
-                ),
+                style: TextButton.styleFrom(foregroundColor: _lightOffWhite),
                 child: const Text('Cancel', style: TextStyle(fontSize: 14)),
               ),
               ElevatedButton.icon(

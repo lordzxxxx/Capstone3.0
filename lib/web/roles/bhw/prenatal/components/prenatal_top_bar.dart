@@ -4,10 +4,7 @@ import 'prenatal_constants.dart';
 class PrenatalTopBar extends StatelessWidget {
   final VoidCallback onRefresh;
 
-  const PrenatalTopBar({
-    super.key,
-    required this.onRefresh,
-  });
+  const PrenatalTopBar({super.key, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -106,10 +103,7 @@ class PrenatalTopBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: lightOffWhite,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: primaryAqua.withValues(alpha: 0.2),
-          width: 1,
-        ),
+        border: Border.all(color: primaryAqua.withValues(alpha: 0.2), width: 1),
       ),
       child: TextField(
         decoration: InputDecoration(

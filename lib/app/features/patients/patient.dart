@@ -4,6 +4,7 @@ import 'package:mycapstone_project/app/features/patients/patient_database_helper
 import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls.dart';
 import 'package:mycapstone_project/app/features/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
+import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 
 class PatientRecordPage extends StatefulWidget {
@@ -94,7 +95,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
 
     try {
       await _dbHelper.seedSamplePatientData();
-      
+
       // Close loading dialog
       Navigator.of(context).pop();
 
@@ -183,7 +184,8 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     if (filteredCount == 0) {
       return 1;
     }
-    return ((filteredCount + _effectiveRowsPerPage - 1) ~/ _effectiveRowsPerPage);
+    return ((filteredCount + _effectiveRowsPerPage - 1) ~/
+        _effectiveRowsPerPage);
   }
 
   int get _safeCurrentPage {
@@ -204,7 +206,10 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     if (_filteredPatients.isEmpty) {
       return 0;
     }
-    return math.min(_pageStartIndex + _effectiveRowsPerPage, _filteredPatients.length);
+    return math.min(
+      _pageStartIndex + _effectiveRowsPerPage,
+      _filteredPatients.length,
+    );
   }
 
   List<Map<String, dynamic>> get _pagedPatients {
@@ -257,9 +262,9 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         title: Text(
           'Patient Records',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: _lightOffWhite,
-                fontWeight: FontWeight.bold,
-              ),
+            color: _lightOffWhite,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         iconTheme: const IconThemeData(color: _lightOffWhite),
         actions: [
@@ -270,10 +275,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                 child: const Text('Seed Sample Data'),
                 onTap: () => _seedSampleData(),
               ),
-              PopupMenuItem(
-                child: const Text('Settings'),
-                onTap: () {},
-              ),
+              PopupMenuItem(child: const Text('Settings'), onTap: () {}),
             ],
           ),
         ],
@@ -309,9 +311,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildSearchBar(),
-                        ),
+                        Expanded(child: _buildSearchBar()),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -332,14 +332,10 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           _buildSelectionActionCard(),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: _primaryAqua,
-        foregroundColor: _darkDeepTeal,
-        icon: const Icon(Icons.add),
-        label: const Text('New Patient'),
-        onPressed: () {
-          _showAddPatientModal();
-        },
+      floatingActionButton: RecordCreationFabGroup(
+        moduleLabel: 'Patient',
+        manualLabel: 'New Patient',
+        onManualCreate: _showAddPatientModal,
       ),
     );
   }
@@ -368,10 +364,8 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           ),
           items: ['All', 'Active', 'Follow-up', 'Inactive']
               .map(
-                (status) => DropdownMenuItem(
-                  value: status,
-                  child: Text(status),
-                ),
+                (status) =>
+                    DropdownMenuItem(value: status, child: Text(status)),
               )
               .toList(),
           onChanged: (value) {
@@ -491,7 +485,10 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.2), width: 1.5),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: _mutedCoolGray.withValues(alpha: 0.08),
@@ -532,7 +529,9 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                   decoration: BoxDecoration(
                     color: _lightOffWhite,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: _mutedCoolGray.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: _mutedCoolGray.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
@@ -769,10 +768,8 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       children: [
         ...List.generate(
           _pagedPatients.length,
-          (index) => _buildPatientCard(
-            _pagedPatients[index],
-            _pageStartIndex + index,
-          ),
+          (index) =>
+              _buildPatientCard(_pagedPatients[index], _pageStartIndex + index),
         ),
         MobilePaginationControls(
           currentPage: _safeCurrentPage,
@@ -814,7 +811,8 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     final firstName = patient['firstName'] ?? 'P';
     final surname = patient['surname'] ?? '';
     final initials =
-        '${firstName.toString().substring(0, 1)}${surname.toString().substring(0, 1)}'.toUpperCase();
+        '${firstName.toString().substring(0, 1)}${surname.toString().substring(0, 1)}'
+            .toUpperCase();
 
     Color avatarColor;
     switch (index % 5) {
@@ -889,7 +887,9 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? _primaryAqua : _primaryAqua.withValues(alpha: 0.3),
+            color: isSelected
+                ? _primaryAqua
+                : _primaryAqua.withValues(alpha: 0.3),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -993,43 +993,43 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                 ),
                 // Status Badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: statusColor,
-                      width: 1,
-                    ),
+                    border: Border.all(color: statusColor, width: 1),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        shape: BoxShape.circle,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      statusLabel,
-                      style: TextStyle(
-                        color: statusColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(width: 4),
+                      Text(
+                        statusLabel,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 
@@ -1668,7 +1668,10 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.2), width: 1.5),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: _mutedCoolGray.withValues(alpha: 0.08),
@@ -1753,7 +1756,10 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 2),
+          border: Border.all(
+            color: _primaryAqua.withValues(alpha: 0.3),
+            width: 2,
+          ),
           boxShadow: [
             BoxShadow(
               color: _darkDeepTeal.withValues(alpha: 0.2),
@@ -1980,7 +1986,11 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     }
   }
 
-  void _showRecordActionModal(BuildContext context, Map<String, dynamic> patient, int index) {
+  void _showRecordActionModal(
+    BuildContext context,
+    Map<String, dynamic> patient,
+    int index,
+  ) {
     final patientName = '${patient['firstName']} ${patient['surname']}';
 
     showModalBottomSheet(
@@ -2102,7 +2112,9 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                     });
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4ECDC4).withValues(alpha: 0.1),
+                    backgroundColor: const Color(
+                      0xFF4ECDC4,
+                    ).withValues(alpha: 0.1),
                     side: const BorderSide(color: Color(0xFF4ECDC4), width: 2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -2209,15 +2221,16 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     );
   }
 
-  void _showDeletePatientConfirmation(BuildContext context, Map<String, dynamic> patient) {
+  void _showDeletePatientConfirmation(
+    BuildContext context,
+    Map<String, dynamic> patient,
+  ) {
     final patientName = '${patient['firstName']} ${patient['surname']}';
 
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
             Icon(Icons.warning, color: Colors.red),
@@ -3331,7 +3344,10 @@ class _AddPatientModalState extends State<AddPatientModal> {
                     Expanded(
                       child: Text(
                         'I consent to the collection, storage, and processing of my personal and medical information for healthcare purposes in accordance with data privacy laws.',
-                        style: const TextStyle(fontSize: 13, color: Colors.white),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ],
@@ -3414,16 +3430,22 @@ class _AddPatientModalState extends State<AddPatientModal> {
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(color: _lightOffWhite.withValues(alpha: 0.5)),
+              hintStyle: TextStyle(
+                color: _lightOffWhite.withValues(alpha: 0.5),
+              ),
               filled: true,
               fillColor: Colors.transparent,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+                borderSide: BorderSide(
+                  color: _lightOffWhite.withValues(alpha: 0.3),
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+                borderSide: BorderSide(
+                  color: _lightOffWhite.withValues(alpha: 0.3),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -3487,7 +3509,10 @@ class _AddPatientModalState extends State<AddPatientModal> {
               items: items.map((item) {
                 return DropdownMenuItem(
                   value: item,
-                  child: Text(item, style: const TextStyle(color: Colors.white)),
+                  child: Text(
+                    item,
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 );
               }).toList(),
               onChanged: onChanged,
@@ -3532,17 +3557,26 @@ class _AddPatientModalState extends State<AddPatientModal> {
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: 'mm/dd/yyyy',
-              hintStyle: TextStyle(color: _lightOffWhite.withValues(alpha: 0.5)),
+              hintStyle: TextStyle(
+                color: _lightOffWhite.withValues(alpha: 0.5),
+              ),
               filled: true,
               fillColor: Colors.transparent,
-              suffixIcon: Icon(Icons.calendar_today, color: _lightOffWhite.withValues(alpha: 0.7)),
+              suffixIcon: Icon(
+                Icons.calendar_today,
+                color: _lightOffWhite.withValues(alpha: 0.7),
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+                borderSide: BorderSide(
+                  color: _lightOffWhite.withValues(alpha: 0.3),
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+                borderSide: BorderSide(
+                  color: _lightOffWhite.withValues(alpha: 0.3),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -3584,10 +3618,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: _primaryAqua),
-            ),
+            child: const Text('Cancel', style: TextStyle(color: _primaryAqua)),
           ),
           TextButton(
             onPressed: () {
@@ -4294,19 +4325,80 @@ class _EditPatientModalState extends State<EditPatientModal> {
         children: [
           _buildSectionTitle('Personal Details'),
           const SizedBox(height: 16),
-          _buildTextField('First Name', _firstNameController, required: true, hint: 'Enter first name'),
-          _buildTextField('Surname', _surnameController, required: true, hint: 'Enter surname/last name'),
-          _buildTextField('Mothers Maiden Name', _mothersMaidenNameController, hint: 'Enter mother\'s maiden name'),
+          _buildTextField(
+            'First Name',
+            _firstNameController,
+            required: true,
+            hint: 'Enter first name',
+          ),
+          _buildTextField(
+            'Surname',
+            _surnameController,
+            required: true,
+            hint: 'Enter surname/last name',
+          ),
+          _buildTextField(
+            'Mothers Maiden Name',
+            _mothersMaidenNameController,
+            hint: 'Enter mother\'s maiden name',
+          ),
           _buildDateField('Date of Birth', _dobController, required: true),
-          _buildTextField('Age', _ageController, keyboardType: TextInputType.number, hint: 'e.g., 25'),
-          _buildTextField('Place of Birth', _placeOfBirthController, hint: 'City/Municipality of birth'),
-          _buildTextField('Nationality', _nationalityController, hint: 'e.g., Filipino'),
-          _buildDropdownField('Civil Status', _civilStatus, ['Single', 'Married', 'Widowed', 'Separated', 'Divorced'], (value) => setState(() => _civilStatus = value!)),
-          _buildDropdownField('Gender', _gender, ['Male', 'Female', 'Other'], (value) => setState(() => _gender = value!)),
-          _buildTextField('Religion', _religionController, hint: 'e.g., Catholic, Islam, Protestant'),
-          _buildTextField('Occupation', _occupationController, hint: 'Current occupation or job title'),
-          _buildDropdownField('Educational Attainment', _educationalAttainment, ['Elementary', 'High School', 'College', 'Vocational', 'Graduate', 'Post-Graduate'], (value) => setState(() => _educationalAttainment = value!)),
-          _buildDropdownField('Employee Status', _employeeStatus, ['Employed', 'Unemployed', 'Self-Employed', 'Retired', 'Student'], (value) => setState(() => _employeeStatus = value!)),
+          _buildTextField(
+            'Age',
+            _ageController,
+            keyboardType: TextInputType.number,
+            hint: 'e.g., 25',
+          ),
+          _buildTextField(
+            'Place of Birth',
+            _placeOfBirthController,
+            hint: 'City/Municipality of birth',
+          ),
+          _buildTextField(
+            'Nationality',
+            _nationalityController,
+            hint: 'e.g., Filipino',
+          ),
+          _buildDropdownField(
+            'Civil Status',
+            _civilStatus,
+            ['Single', 'Married', 'Widowed', 'Separated', 'Divorced'],
+            (value) => setState(() => _civilStatus = value!),
+          ),
+          _buildDropdownField('Gender', _gender, [
+            'Male',
+            'Female',
+            'Other',
+          ], (value) => setState(() => _gender = value!)),
+          _buildTextField(
+            'Religion',
+            _religionController,
+            hint: 'e.g., Catholic, Islam, Protestant',
+          ),
+          _buildTextField(
+            'Occupation',
+            _occupationController,
+            hint: 'Current occupation or job title',
+          ),
+          _buildDropdownField(
+            'Educational Attainment',
+            _educationalAttainment,
+            [
+              'Elementary',
+              'High School',
+              'College',
+              'Vocational',
+              'Graduate',
+              'Post-Graduate',
+            ],
+            (value) => setState(() => _educationalAttainment = value!),
+          ),
+          _buildDropdownField(
+            'Employee Status',
+            _employeeStatus,
+            ['Employed', 'Unemployed', 'Self-Employed', 'Retired', 'Student'],
+            (value) => setState(() => _employeeStatus = value!),
+          ),
         ],
       ),
     );
@@ -4321,17 +4413,63 @@ class _EditPatientModalState extends State<EditPatientModal> {
         children: [
           _buildSectionTitle('Contact Information'),
           const SizedBox(height: 16),
-          _buildTextField('Phone Number', _phoneController, keyboardType: TextInputType.phone, required: true, hint: '0912-345-6789'),
-          _buildTextField('Email Address', _emailController, keyboardType: TextInputType.emailAddress, hint: 'example@email.com'),
-          _buildTextField('Alternative Phone Number', _altPhoneController, keyboardType: TextInputType.phone, hint: 'Optional contact number'),
-          _buildTextField('Guardian', _guardianController, hint: 'Guardian or next of kin name'),
+          _buildTextField(
+            'Phone Number',
+            _phoneController,
+            keyboardType: TextInputType.phone,
+            required: true,
+            hint: '0912-345-6789',
+          ),
+          _buildTextField(
+            'Email Address',
+            _emailController,
+            keyboardType: TextInputType.emailAddress,
+            hint: 'example@email.com',
+          ),
+          _buildTextField(
+            'Alternative Phone Number',
+            _altPhoneController,
+            keyboardType: TextInputType.phone,
+            hint: 'Optional contact number',
+          ),
+          _buildTextField(
+            'Guardian',
+            _guardianController,
+            hint: 'Guardian or next of kin name',
+          ),
           const SizedBox(height: 16),
-          Text('Address', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _darkDeepTeal)),
+          Text(
+            'Address',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: _darkDeepTeal,
+            ),
+          ),
           const SizedBox(height: 8),
-          _buildTextField('Street of Address', _streetController, hint: 'House number, street name'),
-          _buildTextField('Barangay', _barangayController, required: true, hint: 'Barangay name'),
-          _buildTextField('Municipality', _municipalityController, required: true, hint: 'City/Municipality'),
-          _buildTextField('Province', _provinceController, required: true, hint: 'Province name'),
+          _buildTextField(
+            'Street of Address',
+            _streetController,
+            hint: 'House number, street name',
+          ),
+          _buildTextField(
+            'Barangay',
+            _barangayController,
+            required: true,
+            hint: 'Barangay name',
+          ),
+          _buildTextField(
+            'Municipality',
+            _municipalityController,
+            required: true,
+            hint: 'City/Municipality',
+          ),
+          _buildTextField(
+            'Province',
+            _provinceController,
+            required: true,
+            hint: 'Province name',
+          ),
         ],
       ),
     );
@@ -4346,18 +4484,83 @@ class _EditPatientModalState extends State<EditPatientModal> {
         children: [
           _buildSectionTitle('Medical Details'),
           const SizedBox(height: 16),
-          _buildTextField('Height (cm)', _heightController, keyboardType: TextInputType.number, hint: 'e.g., 165'),
-          _buildTextField('Weight (kg)', _weightController, keyboardType: TextInputType.number, hint: 'e.g., 60'),
-          _buildTextField('BMI', _bmiController, keyboardType: TextInputType.number, hint: 'Body Mass Index'),
-          _buildDropdownField('Blood Type', _bloodType, ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'], (value) => setState(() => _bloodType = value!)),
-          _buildTextField('Allergies', _allergiesController, maxLines: 2, hint: 'List any known allergies'),
-          _buildTextField('Immunization Status', _immunizationStatusController, maxLines: 2, hint: 'Vaccination history'),
-          _buildTextField('Family Medical History', _familyMedicalHistoryController, maxLines: 3, hint: 'Hereditary conditions'),
-          _buildTextField('Past Medical History', _pastMedicalHistoryController, maxLines: 3, hint: 'Previous illnesses, surgeries'),
-          _buildTextField('Current Medications', _currentMedicationsController, maxLines: 2, hint: 'Medications currently taking'),
-          _buildTextField('Chronic Conditions', _chronicConditionsController, maxLines: 2, hint: 'Long-term health conditions'),
-          _buildTextField('Chief Complaint', _chiefComplaintController, maxLines: 2, hint: 'Primary reason for visit'),
-          _buildTextField('Current Symptoms', _currentSymptomsController, maxLines: 3, hint: 'Current symptoms'),
+          _buildTextField(
+            'Height (cm)',
+            _heightController,
+            keyboardType: TextInputType.number,
+            hint: 'e.g., 165',
+          ),
+          _buildTextField(
+            'Weight (kg)',
+            _weightController,
+            keyboardType: TextInputType.number,
+            hint: 'e.g., 60',
+          ),
+          _buildTextField(
+            'BMI',
+            _bmiController,
+            keyboardType: TextInputType.number,
+            hint: 'Body Mass Index',
+          ),
+          _buildDropdownField('Blood Type', _bloodType, [
+            'A+',
+            'A-',
+            'B+',
+            'B-',
+            'AB+',
+            'AB-',
+            'O+',
+            'O-',
+            'Unknown',
+          ], (value) => setState(() => _bloodType = value!)),
+          _buildTextField(
+            'Allergies',
+            _allergiesController,
+            maxLines: 2,
+            hint: 'List any known allergies',
+          ),
+          _buildTextField(
+            'Immunization Status',
+            _immunizationStatusController,
+            maxLines: 2,
+            hint: 'Vaccination history',
+          ),
+          _buildTextField(
+            'Family Medical History',
+            _familyMedicalHistoryController,
+            maxLines: 3,
+            hint: 'Hereditary conditions',
+          ),
+          _buildTextField(
+            'Past Medical History',
+            _pastMedicalHistoryController,
+            maxLines: 3,
+            hint: 'Previous illnesses, surgeries',
+          ),
+          _buildTextField(
+            'Current Medications',
+            _currentMedicationsController,
+            maxLines: 2,
+            hint: 'Medications currently taking',
+          ),
+          _buildTextField(
+            'Chronic Conditions',
+            _chronicConditionsController,
+            maxLines: 2,
+            hint: 'Long-term health conditions',
+          ),
+          _buildTextField(
+            'Chief Complaint',
+            _chiefComplaintController,
+            maxLines: 2,
+            hint: 'Primary reason for visit',
+          ),
+          _buildTextField(
+            'Current Symptoms',
+            _currentSymptomsController,
+            maxLines: 3,
+            hint: 'Current symptoms',
+          ),
         ],
       ),
     );
@@ -4374,27 +4577,91 @@ class _EditPatientModalState extends State<EditPatientModal> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(flex: 2, child: _buildTextField('Body Temperature', _bodyTempController, keyboardType: TextInputType.number, hint: 'e.g., 36.5')),
+              Expanded(
+                flex: 2,
+                child: _buildTextField(
+                  'Body Temperature',
+                  _bodyTempController,
+                  keyboardType: TextInputType.number,
+                  hint: 'e.g., 36.5',
+                ),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: _buildDropdownField('Unit', _tempUnit, ['°C', '°F'], (value) => setState(() => _tempUnit = value!))),
+              Expanded(
+                child: _buildDropdownField('Unit', _tempUnit, [
+                  '°C',
+                  '°F',
+                ], (value) => setState(() => _tempUnit = value!)),
+              ),
             ],
           ),
           const SizedBox(height: 8),
-          Text('Blood Pressure', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+          Text(
+            'Blood Pressure',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
           Row(
             children: [
-              Expanded(child: _buildTextField('Systolic', _bpSystolicController, keyboardType: TextInputType.number, hint: '120')),
+              Expanded(
+                child: _buildTextField(
+                  'Systolic',
+                  _bpSystolicController,
+                  keyboardType: TextInputType.number,
+                  hint: '120',
+                ),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: _buildTextField('Diastolic', _bpDiastolicController, keyboardType: TextInputType.number, hint: '80')),
+              Expanded(
+                child: _buildTextField(
+                  'Diastolic',
+                  _bpDiastolicController,
+                  keyboardType: TextInputType.number,
+                  hint: '80',
+                ),
+              ),
             ],
           ),
-          _buildTextField('Heart Rate', _heartRateController, keyboardType: TextInputType.number, hint: 'e.g., 72 bpm'),
-          _buildTextField('Respiratory Rate', _respiratoryRateController, keyboardType: TextInputType.number, hint: 'breaths per minute'),
-          _buildTextField('Oxygen Saturation', _oxygenSaturationController, keyboardType: TextInputType.number, hint: 'e.g., 98%'),
+          _buildTextField(
+            'Heart Rate',
+            _heartRateController,
+            keyboardType: TextInputType.number,
+            hint: 'e.g., 72 bpm',
+          ),
+          _buildTextField(
+            'Respiratory Rate',
+            _respiratoryRateController,
+            keyboardType: TextInputType.number,
+            hint: 'breaths per minute',
+          ),
+          _buildTextField(
+            'Oxygen Saturation',
+            _oxygenSaturationController,
+            keyboardType: TextInputType.number,
+            hint: 'e.g., 98%',
+          ),
           const SizedBox(height: 16),
-          _buildTextField('Disability/Impairment', _disabilityController, maxLines: 2, hint: 'Any physical or cognitive disabilities'),
-          _buildDropdownField('Mental Health Status', _mentalHealthStatus, ['Excellent', 'Good', 'Fair', 'Poor', 'Critical'], (value) => setState(() => _mentalHealthStatus = value!)),
-          _buildTextField('Substance Use History', _substanceUseController, maxLines: 2, hint: 'Tobacco, alcohol, drug use'),
+          _buildTextField(
+            'Disability/Impairment',
+            _disabilityController,
+            maxLines: 2,
+            hint: 'Any physical or cognitive disabilities',
+          ),
+          _buildDropdownField(
+            'Mental Health Status',
+            _mentalHealthStatus,
+            ['Excellent', 'Good', 'Fair', 'Poor', 'Critical'],
+            (value) => setState(() => _mentalHealthStatus = value!),
+          ),
+          _buildTextField(
+            'Substance Use History',
+            _substanceUseController,
+            maxLines: 2,
+            hint: 'Tobacco, alcohol, drug use',
+          ),
           _buildDateField('Last Medical Check Up', _lastCheckupController),
           _buildDateField('Next Check Up', _nextCheckupController),
         ],
@@ -4416,10 +4683,31 @@ class _EditPatientModalState extends State<EditPatientModal> {
         children: [
           _buildSectionTitle('Emergency Contact'),
           const SizedBox(height: 16),
-          _buildTextField('Emergency Contact Name', _emergencyNameController, required: true, hint: 'Full name'),
-          _buildTextField('Relationship', _emergencyRelationshipController, required: true, hint: 'e.g., Spouse, Parent'),
-          _buildTextField('Emergency Phone', _emergencyPhoneController, keyboardType: TextInputType.phone, required: true, hint: '0912-345-6789'),
-          _buildTextField('Emergency Address', _emergencyAddressController, maxLines: 2, hint: 'Complete address'),
+          _buildTextField(
+            'Emergency Contact Name',
+            _emergencyNameController,
+            required: true,
+            hint: 'Full name',
+          ),
+          _buildTextField(
+            'Relationship',
+            _emergencyRelationshipController,
+            required: true,
+            hint: 'e.g., Spouse, Parent',
+          ),
+          _buildTextField(
+            'Emergency Phone',
+            _emergencyPhoneController,
+            keyboardType: TextInputType.phone,
+            required: true,
+            hint: '0912-345-6789',
+          ),
+          _buildTextField(
+            'Emergency Address',
+            _emergencyAddressController,
+            maxLines: 2,
+            hint: 'Complete address',
+          ),
         ],
       ),
     );
@@ -4434,12 +4722,48 @@ class _EditPatientModalState extends State<EditPatientModal> {
         children: [
           _buildSectionTitle('Lifestyle & Habits'),
           const SizedBox(height: 16),
-          _buildDropdownField('Smoking Status', _smokingStatus, ['Never', 'Former', 'Current - Light', 'Current - Moderate', 'Current - Heavy'], (value) => setState(() => _smokingStatus = value!)),
-          _buildDropdownField('Exercise Frequency', _exerciseFrequency, ['Daily', '3-5 times/week', '1-2 times/week', 'Rarely', 'Never'], (value) => setState(() => _exerciseFrequency = value!)),
-          _buildDropdownField('Alcohol Consumption', _alcoholConsumption, ['Never', 'Rarely', 'Socially', 'Moderate', 'Heavy'], (value) => setState(() => _alcoholConsumption = value!)),
-          _buildTextField('Dietary Restrictions', _dietaryRestrictionsController, maxLines: 2, hint: 'Vegetarian, allergies, etc.'),
-          _buildDropdownField('Mental Health', _mentalHealthStatusLifestyle, ['Excellent', 'Good', 'Fair', 'Poor'], (value) => setState(() => _mentalHealthStatusLifestyle = value!)),
-          _buildDropdownField('Sleep Quality', _sleepQuality, ['Excellent', 'Good', 'Fair', 'Poor', 'Very Poor'], (value) => setState(() => _sleepQuality = value!)),
+          _buildDropdownField(
+            'Smoking Status',
+            _smokingStatus,
+            [
+              'Never',
+              'Former',
+              'Current - Light',
+              'Current - Moderate',
+              'Current - Heavy',
+            ],
+            (value) => setState(() => _smokingStatus = value!),
+          ),
+          _buildDropdownField(
+            'Exercise Frequency',
+            _exerciseFrequency,
+            ['Daily', '3-5 times/week', '1-2 times/week', 'Rarely', 'Never'],
+            (value) => setState(() => _exerciseFrequency = value!),
+          ),
+          _buildDropdownField(
+            'Alcohol Consumption',
+            _alcoholConsumption,
+            ['Never', 'Rarely', 'Socially', 'Moderate', 'Heavy'],
+            (value) => setState(() => _alcoholConsumption = value!),
+          ),
+          _buildTextField(
+            'Dietary Restrictions',
+            _dietaryRestrictionsController,
+            maxLines: 2,
+            hint: 'Vegetarian, allergies, etc.',
+          ),
+          _buildDropdownField(
+            'Mental Health',
+            _mentalHealthStatusLifestyle,
+            ['Excellent', 'Good', 'Fair', 'Poor'],
+            (value) => setState(() => _mentalHealthStatusLifestyle = value!),
+          ),
+          _buildDropdownField(
+            'Sleep Quality',
+            _sleepQuality,
+            ['Excellent', 'Good', 'Fair', 'Poor', 'Very Poor'],
+            (value) => setState(() => _sleepQuality = value!),
+          ),
         ],
       ),
     );
@@ -4454,17 +4778,77 @@ class _EditPatientModalState extends State<EditPatientModal> {
         children: [
           _buildSectionTitle('Morbidity Assessment'),
           const SizedBox(height: 16),
-          _buildDropdownField('Risk Level', _morbidityRiskLevel, ['Low', 'Moderate', 'High', 'Very High'], (value) => setState(() => _morbidityRiskLevel = value!)),
-          _buildTextField('Number of Comorbidities', _numberOfComorbiditiesController, keyboardType: TextInputType.number, hint: 'e.g., 2'),
-          _buildDropdownField('Functional Status', _functionalStatus, ['Independent', 'Partially Dependent', 'Fully Dependent'], (value) => setState(() => _functionalStatus = value!)),
-          _buildDropdownField('Mobility Status', _mobilityStatus, ['Fully Mobile', 'Assisted Walking', 'Wheelchair Bound', 'Bedridden'], (value) => setState(() => _mobilityStatus = value!)),
-          _buildTextField('Frailty Index', _frailtyIndexController, keyboardType: TextInputType.number, hint: '0.0 = Robust, 1.0 = Frail'),
-          _buildDropdownField('Polypharmacy Risk', _polypharmacyRisk, ['Low', 'Moderate', 'High'], (value) => setState(() => _polypharmacyRisk = value!)),
-          _buildDropdownField('Preventive Care Compliance', _preventiveCareCompliance, ['Full Compliance', 'Partial Compliance', 'Non-Compliant'], (value) => setState(() => _preventiveCareCompliance = value!)),
-          _buildDropdownField('Health Literacy', _healthLiteracyLevel, ['High', 'Moderate', 'Low'], (value) => setState(() => _healthLiteracyLevel = value!)),
-          _buildDropdownField('Social Support', _socialSupportLevel, ['Strong', 'Moderate', 'Weak', 'None'], (value) => setState(() => _socialSupportLevel = value!)),
-          _buildDropdownField('Economic Impact', _economicStatusImpact, ['Minimal', 'Moderate', 'Significant', 'Severe'], (value) => setState(() => _economicStatusImpact = value!)),
-          _buildTextField('Notes', _morbidityNotesController, maxLines: 4, hint: 'Assessment notes'),
+          _buildDropdownField(
+            'Risk Level',
+            _morbidityRiskLevel,
+            ['Low', 'Moderate', 'High', 'Very High'],
+            (value) => setState(() => _morbidityRiskLevel = value!),
+          ),
+          _buildTextField(
+            'Number of Comorbidities',
+            _numberOfComorbiditiesController,
+            keyboardType: TextInputType.number,
+            hint: 'e.g., 2',
+          ),
+          _buildDropdownField(
+            'Functional Status',
+            _functionalStatus,
+            ['Independent', 'Partially Dependent', 'Fully Dependent'],
+            (value) => setState(() => _functionalStatus = value!),
+          ),
+          _buildDropdownField(
+            'Mobility Status',
+            _mobilityStatus,
+            [
+              'Fully Mobile',
+              'Assisted Walking',
+              'Wheelchair Bound',
+              'Bedridden',
+            ],
+            (value) => setState(() => _mobilityStatus = value!),
+          ),
+          _buildTextField(
+            'Frailty Index',
+            _frailtyIndexController,
+            keyboardType: TextInputType.number,
+            hint: '0.0 = Robust, 1.0 = Frail',
+          ),
+          _buildDropdownField(
+            'Polypharmacy Risk',
+            _polypharmacyRisk,
+            ['Low', 'Moderate', 'High'],
+            (value) => setState(() => _polypharmacyRisk = value!),
+          ),
+          _buildDropdownField(
+            'Preventive Care Compliance',
+            _preventiveCareCompliance,
+            ['Full Compliance', 'Partial Compliance', 'Non-Compliant'],
+            (value) => setState(() => _preventiveCareCompliance = value!),
+          ),
+          _buildDropdownField(
+            'Health Literacy',
+            _healthLiteracyLevel,
+            ['High', 'Moderate', 'Low'],
+            (value) => setState(() => _healthLiteracyLevel = value!),
+          ),
+          _buildDropdownField(
+            'Social Support',
+            _socialSupportLevel,
+            ['Strong', 'Moderate', 'Weak', 'None'],
+            (value) => setState(() => _socialSupportLevel = value!),
+          ),
+          _buildDropdownField(
+            'Economic Impact',
+            _economicStatusImpact,
+            ['Minimal', 'Moderate', 'Significant', 'Severe'],
+            (value) => setState(() => _economicStatusImpact = value!),
+          ),
+          _buildTextField(
+            'Notes',
+            _morbidityNotesController,
+            maxLines: 4,
+            hint: 'Assessment notes',
+          ),
         ],
       ),
     );
@@ -4479,16 +4863,74 @@ class _EditPatientModalState extends State<EditPatientModal> {
         children: [
           _buildSectionTitle('Insurance & Coverage'),
           const SizedBox(height: 16),
-          _buildTextField('Insurance Provider', _insuranceProviderController, hint: 'e.g., PhilHealth'),
-          _buildTextField('Insurance Number', _insuranceNumberController, hint: 'Policy number'),
+          _buildTextField(
+            'Insurance Provider',
+            _insuranceProviderController,
+            hint: 'e.g., PhilHealth',
+          ),
+          _buildTextField(
+            'Insurance Number',
+            _insuranceNumberController,
+            hint: 'Policy number',
+          ),
           _buildDateField('Insurance Expiry', _insuranceExpiryController),
-          _buildTextField('Monthly Income', _monthlyIncomeController, keyboardType: TextInputType.number, hint: 'PHP'),
+          _buildTextField(
+            'Monthly Income',
+            _monthlyIncomeController,
+            keyboardType: TextInputType.number,
+            hint: 'PHP',
+          ),
           const SizedBox(height: 16),
-          _buildTextField('Additional Info', _additionalInfoController, maxLines: 3, hint: 'Other relevant information'),
-          _buildDropdownField('Education Level', _educationLevel, ['Elementary', 'High School', 'Vocational', 'College', 'Graduate', 'Post-Graduate'], (value) => setState(() => _educationLevel = value!)),
-          _buildDropdownField('Preferred Language', _preferredLanguage, ['Filipino', 'English', 'Cebuano', 'Ilocano', 'Hiligaynon', 'Other'], (value) => setState(() => _preferredLanguage = value!)),
-          _buildDropdownField('Referral Source', _referralSource, ['Walk-in', 'Referral', 'Social Media', 'Community Event', 'Website', 'Other'], (value) => setState(() => _referralSource = value!)),
-          _buildTextField('Transportation', _transportationController, hint: 'e.g., Tricycle, Jeepney'),
+          _buildTextField(
+            'Additional Info',
+            _additionalInfoController,
+            maxLines: 3,
+            hint: 'Other relevant information',
+          ),
+          _buildDropdownField(
+            'Education Level',
+            _educationLevel,
+            [
+              'Elementary',
+              'High School',
+              'Vocational',
+              'College',
+              'Graduate',
+              'Post-Graduate',
+            ],
+            (value) => setState(() => _educationLevel = value!),
+          ),
+          _buildDropdownField(
+            'Preferred Language',
+            _preferredLanguage,
+            [
+              'Filipino',
+              'English',
+              'Cebuano',
+              'Ilocano',
+              'Hiligaynon',
+              'Other',
+            ],
+            (value) => setState(() => _preferredLanguage = value!),
+          ),
+          _buildDropdownField(
+            'Referral Source',
+            _referralSource,
+            [
+              'Walk-in',
+              'Referral',
+              'Social Media',
+              'Community Event',
+              'Website',
+              'Other',
+            ],
+            (value) => setState(() => _referralSource = value!),
+          ),
+          _buildTextField(
+            'Transportation',
+            _transportationController,
+            hint: 'e.g., Tricycle, Jeepney',
+          ),
         ],
       ),
     );
@@ -4529,9 +4971,23 @@ class _EditPatientModalState extends State<EditPatientModal> {
           const SizedBox(height: 24),
           _buildSectionTitle('Registration Details'),
           const SizedBox(height: 16),
-          _buildDateField('Registration Date', _registrationDateController, required: true),
-          _buildTextField('Registered By', _registeredByController, hint: 'Health Worker Name', required: true),
-          _buildTextField('Additional Notes', _additionalNotesController, maxLines: 3, hint: 'Any additional notes'),
+          _buildDateField(
+            'Registration Date',
+            _registrationDateController,
+            required: true,
+          ),
+          _buildTextField(
+            'Registered By',
+            _registeredByController,
+            hint: 'Health Worker Name',
+            required: true,
+          ),
+          _buildTextField(
+            'Additional Notes',
+            _additionalNotesController,
+            maxLines: 3,
+            hint: 'Any additional notes',
+          ),
         ],
       ),
     );
@@ -4539,10 +4995,24 @@ class _EditPatientModalState extends State<EditPatientModal> {
 
   // Helper Methods
   Widget _buildSectionTitle(String title) {
-    return Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _darkDeepTeal));
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: _darkDeepTeal,
+      ),
+    );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {bool required = false, int maxLines = 1, TextInputType keyboardType = TextInputType.text, String? hint}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool required = false,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+    String? hint,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -4550,8 +5020,19 @@ class _EditPatientModalState extends State<EditPatientModal> {
         children: [
           Row(
             children: [
-              Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _darkDeepTeal)),
-              if (required) const Text(' *', style: TextStyle(color: Colors.red, fontSize: 14)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: _darkDeepTeal,
+                ),
+              ),
+              if (required)
+                const Text(
+                  ' *',
+                  style: TextStyle(color: Colors.red, fontSize: 14),
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -4563,9 +5044,18 @@ class _EditPatientModalState extends State<EditPatientModal> {
               hintText: hint,
               filled: true,
               fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _primaryAqua, width: 2)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: _primaryAqua, width: 2),
+              ),
             ),
           ),
         ],
@@ -4573,7 +5063,13 @@ class _EditPatientModalState extends State<EditPatientModal> {
     );
   }
 
-  Widget _buildDropdownField(String label, String value, List<String> items, ValueChanged<String?> onChanged, {bool required = false}) {
+  Widget _buildDropdownField(
+    String label,
+    String value,
+    List<String> items,
+    ValueChanged<String?> onChanged, {
+    bool required = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -4581,8 +5077,19 @@ class _EditPatientModalState extends State<EditPatientModal> {
         children: [
           Row(
             children: [
-              Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _darkDeepTeal)),
-              if (required) const Text(' *', style: TextStyle(color: Colors.red, fontSize: 14)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: _darkDeepTeal,
+                ),
+              ),
+              if (required)
+                const Text(
+                  ' *',
+                  style: TextStyle(color: Colors.red, fontSize: 14),
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -4594,8 +5101,18 @@ class _EditPatientModalState extends State<EditPatientModal> {
             ),
             child: DropdownButtonFormField<String>(
               initialValue: value,
-              decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
-              items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+              ),
+              items: items
+                  .map(
+                    (item) => DropdownMenuItem(value: item, child: Text(item)),
+                  )
+                  .toList(),
               onChanged: onChanged,
             ),
           ),
@@ -4604,7 +5121,11 @@ class _EditPatientModalState extends State<EditPatientModal> {
     );
   }
 
-  Widget _buildDateField(String label, TextEditingController controller, {bool required = false}) {
+  Widget _buildDateField(
+    String label,
+    TextEditingController controller, {
+    bool required = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -4612,8 +5133,19 @@ class _EditPatientModalState extends State<EditPatientModal> {
         children: [
           Row(
             children: [
-              Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _darkDeepTeal)),
-              if (required) const Text(' *', style: TextStyle(color: Colors.red, fontSize: 14)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: _darkDeepTeal,
+                ),
+              ),
+              if (required)
+                const Text(
+                  ' *',
+                  style: TextStyle(color: Colors.red, fontSize: 14),
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -4625,14 +5157,29 @@ class _EditPatientModalState extends State<EditPatientModal> {
               filled: true,
               fillColor: Colors.white,
               suffixIcon: const Icon(Icons.calendar_today),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _primaryAqua, width: 2)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: _primaryAqua, width: 2),
+              ),
             ),
             onTap: () async {
-              final date = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(1900), lastDate: DateTime(2100));
+              final date = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(1900),
+                lastDate: DateTime(2100),
+              );
               if (date != null) {
-                controller.text = '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
+                controller.text =
+                    '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
               }
             },
           ),
@@ -4658,10 +5205,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: _primaryAqua),
-            ),
+            child: const Text('Cancel', style: TextStyle(color: _primaryAqua)),
           ),
           TextButton(
             onPressed: () {

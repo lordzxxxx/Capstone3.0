@@ -11,19 +11,22 @@ import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
+import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 import 'package:mycapstone_project/web/shared/utils/report_download.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _panelSurface = Color(0xFF102E38);
-const Color _panelAlt = Color(0xFF123B46);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _mutedCoolGray = Color(0xFF8EA5AE);
+// Names are historical (page was dark-themed); values now point at the
+// white-card system used across the rest of the app.
+const Color _primaryAqua = Color(0xFF2F80ED);
+const Color _secondaryIceBlue = Color(0xFF163B66);
+const Color _darkDeepTeal = Color(0xFFF4F7FB);
+const Color _panelSurface = Colors.white;
+const Color _panelAlt = Color(0xFFF1F5F7);
+const Color _lightOffWhite = Color(0xFF0A1F24);
+const Color _mutedCoolGray = Color(0xFF546E7A);
 
 class AnalyticsPage extends StatefulWidget {
   const AnalyticsPage({super.key});
@@ -587,8 +590,19 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       backgroundColor: _darkDeepTeal,
       drawer: const ChoNavigationDrawer(current: ChoDestination.reports),
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
-        title: const Text('CHO Reports and Analytics'),
+        // Keep reports aligned with the CHO portal shell. The page content is
+        // intentionally light, but the navigation bar stays the shared navy
+        // surface so its title and controls remain legible.
+        backgroundColor: ChoColors.navBackground,
+        foregroundColor: ChoColors.navText,
+        title: const Text(
+          'CHO Reports and Analytics',
+          style: TextStyle(
+            fontFamily: 'Manrope',
+            color: ChoColors.navText,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
@@ -853,27 +867,35 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _panelSurface,
+        color: const Color(0xFF0D274D),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+        border: Border.all(color: const Color(0xFF1C3D66)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: _primaryAqua),
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: _primaryAqua.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
           const SizedBox(height: 12),
           Text(
             value,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: _lightOffWhite,
+              color: Colors.white,
               fontSize: 22,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 6),
-          Text(label, style: const TextStyle(color: _mutedCoolGray)),
+          Text(label, style: const TextStyle(color: Color(0xFFB8C9DB))),
         ],
       ),
     );
@@ -1281,11 +1303,11 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             scrollDirection: Axis.horizontal,
             child: DataTable(
               headingTextStyle: const TextStyle(
-                color: Colors.white,
+                color: _lightOffWhite,
                 fontWeight: FontWeight.w800,
               ),
               dataTextStyle: const TextStyle(
-                color: Colors.white,
+                color: _lightOffWhite,
                 fontWeight: FontWeight.w500,
               ),
               headingRowColor: WidgetStatePropertyAll(
@@ -1325,7 +1347,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               final summary = Text(
                 'Showing $firstVisible–$lastVisible of ${_records.length} activities',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: _lightOffWhite,
                   fontWeight: FontWeight.w600,
                 ),
               );
@@ -1339,7 +1361,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     icon: const Icon(Icons.chevron_left_rounded, size: 18),
                     label: const Text('Previous'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
+                      foregroundColor: _lightOffWhite,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1358,7 +1380,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     child: Text(
                       'Page $page of $pageCount',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: _lightOffWhite,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1372,7 +1394,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     label: const Text('Next'),
                     iconAlignment: IconAlignment.end,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
+                      foregroundColor: _lightOffWhite,
                     ),
                   ),
                 ],
