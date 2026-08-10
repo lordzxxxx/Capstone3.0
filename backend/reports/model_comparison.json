@@ -1,0 +1,45 @@
+{
+  "note": "Bounded comparison on the identical group-safe (leakage-free) split; theoretical ceiling on this feature set is 94.58% (see leakage_report.json / MODEL_EVALUATION_REPORT.md).",
+  "testSamples": 18800,
+  "results": [
+    {
+      "model": "RandomForest_tuned",
+      "accuracy": 0.8927,
+      "precisionWeighted": 0.8967,
+      "recallWeighted": 0.8927,
+      "f1Weighted": 0.8928,
+      "f1Macro": 0.8906,
+      "balancedAccuracy": 0.8946,
+      "top3Accuracy": 0.9843,
+      "trainingSeconds": 2.77,
+      "inferenceSecondsFor18800Rows": 0.374,
+      "modelSizeMB": 111.3
+    },
+    {
+      "model": "ExtraTrees",
+      "accuracy": 0.8896,
+      "precisionWeighted": 0.8998,
+      "recallWeighted": 0.8896,
+      "f1Weighted": 0.8917,
+      "f1Macro": 0.889,
+      "balancedAccuracy": 0.8907,
+      "top3Accuracy": 0.9785,
+      "trainingSeconds": 2.23,
+      "inferenceSecondsFor18800Rows": 0.279,
+      "modelSizeMB": 40.9
+    },
+    {
+      "model": "HistGradientBoosting",
+      "accuracy": 0.8763,
+      "precisionWeighted": 0.8783,
+      "recallWeighted": 0.8763,
+      "f1Weighted": 0.8766,
+      "f1Macro": 0.874,
+      "balancedAccuracy": 0.874,
+      "top3Accuracy": 0.9761,
+      "trainingSeconds": 31.25,
+      "inferenceSecondsFor18800Rows": 0.296,
+      "modelSizeMB": 1.6
+    }
+  ]
+}

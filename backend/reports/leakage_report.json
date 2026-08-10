@@ -1,0 +1,127 @@
+{
+  "totalRows": 93993,
+  "uniqueFeatureVectorGroups": 88894,
+  "rowsSharingAVectorWithAnotherRow": 9226,
+  "vectorGroupsWithMultipleDiseaseLabels": 4127,
+  "rowsInvolvedInLabelConflicts": 9226,
+  "labelConflictExamples": [
+    {
+      "sharedSymptomVectorGroup": "0003f04bdd69994915c99b74fe4a85fe",
+      "diseases": [
+        "cholecystitis",
+        "esophagitis"
+      ]
+    },
+    {
+      "sharedSymptomVectorGroup": "00090bfe3453e37228b1989ba0c644a4",
+      "diseases": [
+        "skin pigmentation disorder",
+        "skin polyp"
+      ]
+    },
+    {
+      "sharedSymptomVectorGroup": "0015eb0ef35fbafe52d5d747b84ed59f",
+      "diseases": [
+        "spontaneous abortion",
+        "threatened pregnancy"
+      ]
+    },
+    {
+      "sharedSymptomVectorGroup": "00399c60adf57f9e27ee61f1142db1ea",
+      "diseases": [
+        "acute sinusitis",
+        "nose disorder"
+      ]
+    },
+    {
+      "sharedSymptomVectorGroup": "003d46e23628b91011bb458cb697983c",
+      "diseases": [
+        "fungal infection of the hair",
+        "skin pigmentation disorder"
+      ]
+    },
+    {
+      "sharedSymptomVectorGroup": "00406ed461adea292e66c2374281e5dd",
+      "diseases": [
+        "acute bronchitis",
+        "asthma"
+      ]
+    },
+    {
+      "sharedSymptomVectorGroup": "006bae5ba52126d49b897b9e7c4136a1",
+      "diseases": [
+        "diverticulitis",
+        "rectal disorder"
+      ]
+    },
+    {
+      "sharedSymptomVectorGroup": "006bb22579d542fa8d85dea9eb92be94",
+      "diseases": [
+        "asthma",
+        "chronic obstructive pulmonary disease (copd)"
+      ]
+    },
+    {
+      "sharedSymptomVectorGroup": "007944c0a1b350c1c4e69723a7ae9a7c",
+      "diseases": [
+        "acute bronchitis",
+        "chronic obstructive pulmonary disease (copd)"
+      ]
+    },
+    {
+      "sharedSymptomVectorGroup": "0083c322cac0d076adc8a32eb7dbd03c",
+      "diseases": [
+        "herniated disk",
+        "spinal stenosis",
+        "spondylosis"
+      ]
+    },
+    {
+      "sharedSymptomVectorGroup": "008cbcccc15c3ae0d7cba4bc3493ab52",
+      "diseases": [
+        "acute pancreatitis",
+        "gallstone"
+      ]
+    },
+    {
+      "sharedSymptomVectorGroup": "00a3d1626c59b0ee0c1a642340f11f13",
+      "diseases": [
+        "infectious gastroenteritis",
+        "noninfectious gastroenteritis"
+      ]
+    },
+    {
+      "sharedSymptomVectorGroup": "00dda432c93617db1039e0d1aeff511e",
+      "diseases": [
+        "skin pigmentation disorder",
+        "skin polyp"
+      ]
+    },
+    {
+      "sharedSymptomVectorGroup": "00ddb0eaea873c9963bd1cc165d1f9b0",
+      "diseases": [
+        "cystitis",
+        "temporary or benign blood in urine"
+      ]
+    },
+    {
+      "sharedSymptomVectorGroup": "00f4c776251da350a24819ae6c5293c1",
+      "diseases": [
+        "appendicitis",
+        "diverticulitis"
+      ]
+    }
+  ],
+  "productionSplitVectorOverlapRows": 1485,
+  "groupSafeSplitVectorOverlapRows": 0,
+  "groupSafeSplit": {
+    "trainRecords": 75193,
+    "testRecords": 18800,
+    "trainPercent": 80.0,
+    "testPercent": 20.0,
+    "minClassCountTrain": 454,
+    "minClassCountTest": 113,
+    "classesInTrain": 100,
+    "classesInTest": 100
+  }
+}

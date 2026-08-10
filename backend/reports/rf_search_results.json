@@ -1,0 +1,169 @@
+{
+  "searchSeconds": 246.4,
+  "nIter": 15,
+  "cv": "StratifiedGroupKFold(n_splits=3, shuffle=True, random_state=42)",
+  "searchSpaceNote": "Bounded to n_estimators<=400, max_depth<=32 after an initial 40-candidate x 5-fold sweep (incl. up to 600 trees/depth 40) exceeded 55 minutes without completing on this machine. See MODEL_EVALUATION_REPORT.md for the disclosed methodology.",
+  "scoring": "f1_weighted",
+  "bestParams": {
+    "n_estimators": 200,
+    "min_samples_split": 4,
+    "min_samples_leaf": 1,
+    "max_features": "log2",
+    "max_depth": 28,
+    "criterion": "entropy",
+    "class_weight": "balanced_subsample"
+  },
+  "bestCvScore": 0.8894235750926812,
+  "top10CvResults": [
+    {
+      "rank_test_score": 1,
+      "mean_test_score": 0.8894235750926812,
+      "std_test_score": 0.0009288741909242819,
+      "mean_fit_time": 14.300676743189493,
+      "params": {
+        "n_estimators": 200,
+        "min_samples_split": 4,
+        "min_samples_leaf": 1,
+        "max_features": "log2",
+        "max_depth": 28,
+        "criterion": "entropy",
+        "class_weight": "balanced_subsample"
+      }
+    },
+    {
+      "rank_test_score": 2,
+      "mean_test_score": 0.8867164896430274,
+      "std_test_score": 0.00045998707183677326,
+      "mean_fit_time": 18.055559714635212,
+      "params": {
+        "n_estimators": 400,
+        "min_samples_split": 6,
+        "min_samples_leaf": 4,
+        "max_features": "log2",
+        "max_depth": 32,
+        "criterion": "gini",
+        "class_weight": null
+      }
+    },
+    {
+      "rank_test_score": 3,
+      "mean_test_score": 0.8858320786195429,
+      "std_test_score": 0.0005828495997724888,
+      "mean_fit_time": 9.720385392506918,
+      "params": {
+        "n_estimators": 200,
+        "min_samples_split": 10,
+        "min_samples_leaf": 1,
+        "max_features": "log2",
+        "max_depth": 20,
+        "criterion": "gini",
+        "class_weight": "balanced_subsample"
+      }
+    },
+    {
+      "rank_test_score": 4,
+      "mean_test_score": 0.8857958446618653,
+      "std_test_score": 0.0008484800385655494,
+      "mean_fit_time": 33.31207227706909,
+      "params": {
+        "n_estimators": 400,
+        "min_samples_split": 6,
+        "min_samples_leaf": 2,
+        "max_features": "sqrt",
+        "max_depth": 20,
+        "criterion": "entropy",
+        "class_weight": "balanced_subsample"
+      }
+    },
+    {
+      "rank_test_score": 5,
+      "mean_test_score": 0.8833699818693991,
+      "std_test_score": 0.0006570257443872213,
+      "mean_fit_time": 16.881051858266193,
+      "params": {
+        "n_estimators": 400,
+        "min_samples_split": 2,
+        "min_samples_leaf": 4,
+        "max_features": "log2",
+        "max_depth": 20,
+        "criterion": "entropy",
+        "class_weight": null
+      }
+    },
+    {
+      "rank_test_score": 6,
+      "mean_test_score": 0.8816327354345231,
+      "std_test_score": 0.0008537307167416369,
+      "mean_fit_time": 11.674759467442831,
+      "params": {
+        "n_estimators": 300,
+        "min_samples_split": 10,
+        "min_samples_leaf": 3,
+        "max_features": "log2",
+        "max_depth": 24,
+        "criterion": "gini",
+        "class_weight": null
+      }
+    },
+    {
+      "rank_test_score": 7,
+      "mean_test_score": 0.8671356587616907,
+      "std_test_score": 0.0016723340430826296,
+      "mean_fit_time": 25.506256182988484,
+      "params": {
+        "n_estimators": 400,
+        "min_samples_split": 10,
+        "min_samples_leaf": 2,
+        "max_features": "sqrt",
+        "max_depth": 20,
+        "criterion": "gini",
+        "class_weight": "balanced_subsample"
+      }
+    },
+    {
+      "rank_test_score": 8,
+      "mean_test_score": 0.8656503033321034,
+      "std_test_score": 0.0013224474856264427,
+      "mean_fit_time": 72.23567295074463,
+      "params": {
+        "n_estimators": 300,
+        "min_samples_split": 4,
+        "min_samples_leaf": 3,
+        "max_features": 0.3,
+        "max_depth": 32,
+        "criterion": "entropy",
+        "class_weight": "balanced_subsample"
+      }
+    },
+    {
+      "rank_test_score": 9,
+      "mean_test_score": 0.8647668193017729,
+      "std_test_score": 0.0005138073072143406,
+      "mean_fit_time": 48.59546740849813,
+      "params": {
+        "n_estimators": 200,
+        "min_samples_split": 6,
+        "min_samples_leaf": 1,
+        "max_features": 0.3,
+        "max_depth": 28,
+        "criterion": "entropy",
+        "class_weight": null
+      }
+    },
+    {
+      "rank_test_score": 10,
+      "mean_test_score": 0.8503065071859098,
+      "std_test_score": 0.0007962548516923146,
+      "mean_fit_time": 41.27590219179789,
+      "params": {
+        "n_estimators": 200,
+        "min_samples_split": 6,
+        "min_samples_leaf": 4,
+        "max_features": 0.3,
+        "max_depth": 24,
+        "criterion": "entropy",
+        "class_weight": null
+      }
+    }
+  ]
+}

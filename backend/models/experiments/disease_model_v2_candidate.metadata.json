@@ -1,0 +1,97 @@
+{
+  "modelName": "disease_model_v2_candidate",
+  "modelVersion": "2.0.0-candidate",
+  "modelType": "classifier",
+  "algorithm": "RandomForestClassifier (scikit-learn 1.9.0)",
+  "productionStatus": "EXPERIMENTAL — NOT deployed. backend/models/disease_model.pkl (v1) remains the only artifact referenced by backend/app/config.py. POST /predict remains unregistered and returns 404 regardless of this artifact's existence.",
+  "trainingDate": "2026-08-10",
+  "datasetVersion": "merged_dataset v1 (backend/dataset/processed/merged_dataset.csv, unchanged — no legitimate expansion found; see DATASET_QUALITY_REPORT.md)",
+  "datasetRecordCount": 93993,
+  "trainingRecordCount": 75193,
+  "testRecordCount": 18800,
+  "splitMethod": "StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42), fold 0 held out as test. Groups = identical 229-feature symptom vectors, so no exact symptom presentation appears in both train and test (0 rows overlap, vs. 1,485 rows of overlap under the production model's plain train_test_split).",
+  "featureCount": 229,
+  "targetColumn": "diseases",
+  "classCount": 100,
+  "hyperparameters": {
+    "n_estimators": 200,
+    "criterion": "entropy",
+    "max_depth": 28,
+    "min_samples_split": 4,
+    "min_samples_leaf": 1,
+    "max_features": "log2",
+    "bootstrap": true,
+    "class_weight": "balanced_subsample",
+    "random_state": 42,
+    "n_jobs": -1
+  },
+  "hyperparameterSelection": {
+    "method": "RandomizedSearchCV, scoring=f1_weighted",
+    "cv": "StratifiedGroupKFold(n_splits=3, shuffle=True, random_state=42), training data only",
+    "nCandidatesSearched": 15,
+    "totalFits": 45,
+    "searchSpaceNote": "Deliberately bounded to n_estimators<=400, max_depth<=32 for wall-clock feasibility, after an initial 40-candidate x 5-fold sweep (including configs up to 600 trees / depth 40) exceeded 55 minutes without completing on the development machine. Disclosed as a compute-bounded search, not an exhaustive one.",
+    "bestCvF1Weighted": 0.8894235750926812
+  },
+  "validationMethod": "5-fold StratifiedGroupKFold cross-validation of the chosen hyperparameters on the training set (robustness check), plus one final untouched-test-set evaluation",
+  "crossValidation": {
+    "folds": 5,
+    "meanAccuracy": 0.8913063637061706,
+    "stdAccuracy": 0.0012351607155262584,
+    "meanF1Weighted": 0.8909543045774484,
+    "stdF1Weighted": 0.0013978336613419133,
+    "meanF1Macro": 0.8887766870276398,
+    "stdF1Macro": 0.0012893531714408273
+  },
+  "finalTestMetrics": {
+    "testSamples": 18800,
+    "accuracy": 0.8927127659574469,
+    "balancedAccuracy": 0.8946106249825705,
+    "precisionWeighted": 0.8967421978855501,
+    "recallWeighted": 0.8927127659574469,
+    "f1Weighted": 0.8928247889220234,
+    "precisionMacro": 0.8903250702139183,
+    "recallMacro": 0.8946106249825705,
+    "f1Macro": 0.8906038995753908,
+    "top3Accuracy": 0.9843085106382978
+  },
+  "comparisonBaseline": {
+    "description": "Production hyperparameters (n_estimators=300, max_depth=24, max_leaf_nodes=4096, min_samples_leaf=2), re-evaluated on this same leakage-safe split for a fair comparison",
+    "accuracy": 0.8629255319148936,
+    "f1Weighted": 0.8700120552449551,
+    "top3Accuracy": 0.9536170212765958
+  },
+  "theoreticalAccuracyCeiling": {
+    "value": 0.9458,
+    "explanation": "93,993 rows / 88,894 unique 229-feature symptom vectors. 4,127 vector groups (9,226 rows) map to more than one disease label because the exact same symptom presentation is genuinely shared by different diseases in this dataset. No classifier using only these 229 features can exceed 88,894/93,993 = 94.58% accuracy on this exact dataset, because at most one row per ambiguous group can ever be correctly labeled by any function of the input alone. The tuned model's 89.27% test accuracy captures ~94.4% of this theoretical maximum.",
+    "source": "backend/reports/leakage_report.json, computed during this review"
+  },
+  "modelComparison": {
+    "note": "Bounded comparison on the identical group-safe split; see backend/reports/model_comparison.json",
+    "randomForestTuned": {"accuracy": 0.8927, "f1Weighted": 0.8928, "modelSizeMB": 111.3},
+    "extraTrees": {"accuracy": 0.8896, "f1Weighted": 0.8917, "modelSizeMB": 40.9},
+    "histGradientBoosting": {"accuracy": 0.8763, "f1Weighted": 0.8766, "modelSizeMB": 1.6},
+    "selected": "randomForestTuned — highest accuracy, F1 (weighted/macro), balanced accuracy, and top-3 accuracy of the three candidates evaluated"
+  },
+  "modelFile": "backend/models/experiments/disease_model_v2_candidate.pkl",
+  "modelFileNote": "NOT committed to git — 111.3 MB, exceeds GitHub's 100 MB hard file-size limit. Excluded via .gitignore, consistent with this repository's existing convention for other oversized backend/models/experiments/*.pkl artifacts. Fully reproducible: rerunning backend/scripts/optimize_random_forest.py against the unchanged dataset with the fixed random_state=42 throughout regenerates this exact model.",
+  "modelChecksumSha256": "c5cbaac1e1d631ced2e0e697801aa3064d286d941c65d64174c682893dc65a65",
+  "productionModelChecksumSha256ForComparison": "3e2f7f052c8fbd2463470fe07d85052d80359097f307996a7d0c73d68f3694db",
+  "reproductionCommand": "cd backend/scripts && ../.venv/bin/python3 optimize_random_forest.py",
+  "generatedReports": [
+    "backend/reports/leakage_report.json",
+    "backend/reports/rf_search_results.json",
+    "backend/reports/rf_optimization_final_report.json",
+    "backend/reports/rf_baseline_group_safe_confusion_matrix.csv",
+    "backend/reports/rf_tuned_confusion_matrix.csv",
+    "backend/reports/rf_tuned_per_class_report.csv",
+    "backend/reports/model_comparison.json"
+  ],
+  "knownLimitations": [
+    "Below the 95% accuracy target; see theoreticalAccuracyCeiling — the gap is a dataset-ambiguity ceiling, not primarily a tuning or algorithm deficiency (ExtraTrees and HistGradientBoosting were also evaluated and did not exceed this model).",
+    "Worst-performing classes (recall < 65%): chronic obstructive pulmonary disease (COPD) 58.9%, skin polyp 60.9%, skin pigmentation disorder 61.5%, acute bronchospasm 68.6% — see backend/reports/rf_tuned_per_class_report.csv for all 100 classes.",
+    "Dataset provenance for the sole training source remains unverified (see DATASET_QUALITY_REPORT.md).",
+    "Not clinically validated. Not connected to any active route — POST /predict remains disabled.",
+    "This experimental model file is not committed to version control due to size; only its checksum, hyperparameters, and reproduction command are versioned."
+  ]
+}

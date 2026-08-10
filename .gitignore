@@ -72,3 +72,4 @@ backend/models/experiments/raw_baseline.pkl
 backend/models/experiments/kaggle_100k.pkl
 backend/models/experiments/merged_union.pkl
 backend/models/experiments/merged_common_features.pkl
+backend/models/experiments/disease_model_v2_candidate.pkl
