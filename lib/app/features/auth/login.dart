@@ -184,6 +184,69 @@ class _LoginState extends State<Login> {
     }
   }
 
+  /// Sign in with a Firebase-configured OAuth provider.  The provider is
+  /// deliberately created through FirebaseAuth rather than a platform
+  /// package so the same callback works on web (popup) and native (native
+  /// provider flow).  Firebase remains the source of truth for provider
+  /// enablement and account linking.
+  Future<void> _signInWithOAuthProvider({
+    required String providerId,
+    required String providerName,
+    List<String> scopes = const [],
+  }) async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      final provider = OAuthProvider(providerId)..addScope('email');
+      for (final scope in scopes) {
+        provider.addScope(scope);
+      }
+
+      final credential = kIsWeb
+          ? await FirebaseAuth.instance.signInWithPopup(provider)
+          : await FirebaseAuth.instance.signInWithProvider(provider);
+      final user = credential.user;
+      if (user == null) {
+        throw FirebaseAuthException(
+          code: 'user-not-found',
+          message: 'Sign in succeeded but no user session found.',
+        );
+      }
+      await _finalizeAuthenticatedLogin(user);
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
+      final message = switch (error.code) {
+        'popup-closed-by-user' ||
+        'canceled' => 'The $providerName sign-in window was closed.',
+        'operation-not-allowed' || 'provider-already-linked' =>
+          '$providerName sign-in is not enabled for this Firebase project.',
+        'account-exists-with-different-credential' =>
+          'This email already uses another sign-in method. Sign in with that method first.',
+        'network-request-failed' => 'Network error. Check your connection.',
+        _ => error.message ?? '$providerName sign-in could not be completed.',
+      };
+      Get.snackbar(
+        '$providerName Sign-In Failed',
+        kDebugMode ? '$message (${error.code})' : message,
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 6),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      Get.snackbar(
+        '$providerName Sign-In Failed',
+        kDebugMode ? '$error' : 'The sign-in could not be completed.',
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -513,9 +576,13 @@ class _LoginState extends State<Login> {
                       _buildSocialButton(
                         icon: Icons.facebook,
                         color: const Color(0xFF1877F3),
-                        onTap: () {
-                          // TODO: Implement Facebook sign-in
-                        },
+                        onTap: _isLoading
+                            ? null
+                            : () => _signInWithOAuthProvider(
+                                providerId: 'facebook.com',
+                                providerName: 'Facebook',
+                                scopes: const ['public_profile'],
+                              ),
                       ),
                       const SizedBox(width: 16),
                       _buildSocialButton(
@@ -527,9 +594,12 @@ class _LoginState extends State<Login> {
                       _buildSocialButton(
                         icon: Icons.apple,
                         color: _darkDeepTeal,
-                        onTap: () {
-                          // TODO: Implement Apple sign-in
-                        },
+                        onTap: _isLoading
+                            ? null
+                            : () => _signInWithOAuthProvider(
+                                providerId: 'apple.com',
+                                providerName: 'Apple',
+                              ),
                       ),
                     ],
                   ),

@@ -4060,14 +4060,11 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     BuildContext context,
     Map<String, dynamic> record,
   ) {
-    // Placeholder for edit modal - would implement full form similar to _showNewImmunizationModal
-    // For now, show a simple message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Edit functionality coming soon'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    // Keep the records-table and compact/mobile entry points on the same
+    // validated edit flow.  The full form below pre-fills every field and
+    // persists through ImmunizationDatabaseHelper, so this entry point must
+    // not show a placeholder or maintain a second, divergent form.
+    _showEditDialog(context, record);
   }
 
   void _showDeleteConfirmationForSelected(BuildContext context) {

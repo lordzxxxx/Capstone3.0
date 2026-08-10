@@ -9,6 +9,8 @@ import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 
@@ -35,6 +37,8 @@ class CHOPreferralPage extends StatefulWidget {
 
 class _CHOPreferralPageState extends State<CHOPreferralPage> {
   final FirebaseFirestore _firestore = getFirestoreInstance();
+  final PatientCenteredHistoryService _patientHistoryService =
+      PatientCenteredHistoryService();
   int _view = 0;
   bool _loadingScope = true;
   String? _accessError;
@@ -666,6 +670,14 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           ),
         ),
         actions: [
+          TextButton.icon(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _showPatientHistory(record);
+            },
+            icon: const Icon(Icons.history),
+            label: const Text('Patient history'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
@@ -673,6 +685,38 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _showPatientHistory(_ReferralRecord record) async {
+    final patientId = _s(record.data, [
+      'patientId',
+      'linkedPatientId',
+      'patientRecordId',
+    ]);
+    final patient = <String, dynamic>{
+      ...record.data,
+      'id': patientId.isEmpty ? record.id : patientId,
+      'patientId': patientId.isEmpty ? record.id : patientId,
+      'patientName': record.patientName,
+      'fullName': record.patientName,
+      'barangay': record.barangay,
+      'barangayCode': record.barangayCode,
+    };
+
+    try {
+      final snapshot = await _patientHistoryService.loadPatientHistory(patient);
+      if (!mounted) return;
+      await PatientHistoryDialogs.showPatientTimelineDialog(
+        context: context,
+        patient: patient,
+        snapshot: snapshot,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unable to load patient history: $error')),
+      );
+    }
   }
 
   Widget _permissionNotice() => Container(
