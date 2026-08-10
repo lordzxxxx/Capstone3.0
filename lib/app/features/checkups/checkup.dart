@@ -1184,6 +1184,12 @@ class _CheckUpPageState extends State<CheckUpPage> {
               moduleLabel: 'Check-up',
               manualLabel: 'New Check Up',
               onManualCreate: () => _showNewCheckUpModal(context),
+              onOcrReady: (extraction) async {
+                _showNewCheckUpModal(
+                  context,
+                  patientSeed: extraction.toFormSeed(),
+                );
+              },
             ),
       bottomNavigationBar: (_isSelectionMode && _selectedIndices.isNotEmpty)
           ? BottomAppBar(
@@ -3550,6 +3556,18 @@ class _NewCheckUpFullScreenModalState
         : '';
     _ageController.text = (patientSeed['age'] ?? '').toString();
     _addressController.text = (patientSeed['address'] ?? '').toString();
+    _symptomsController.text =
+        (patientSeed['symptoms'] ?? patientSeed['disease'] ?? '').toString();
+    _bloodPressureController.text =
+        (patientSeed['bloodPressure'] ?? '').toString();
+    _temperatureController.text = (patientSeed['temperature'] ?? '').toString();
+    _heartRateController.text = (patientSeed['heartRate'] ?? '').toString();
+    _respiratoryRateController.text =
+        (patientSeed['respiratoryRate'] ?? '').toString();
+    _oxygenSaturationController.text =
+        (patientSeed['oxygenSaturation'] ?? '').toString();
+    _weightController.text = (patientSeed['weight'] ?? '').toString();
+    _heightController.text = (patientSeed['height'] ?? '').toString();
   }
 
   // Helper method to build section cards

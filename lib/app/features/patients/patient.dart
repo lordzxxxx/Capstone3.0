@@ -347,6 +347,9 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         moduleLabel: 'Patient',
         manualLabel: 'New Patient',
         onManualCreate: _showAddPatientModal,
+        onOcrReady: (extraction) async {
+          _showAddPatientModal(initialValues: extraction.toFormSeed());
+        },
       ),
     );
   }
@@ -2307,18 +2310,20 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   }
 
   // Add Patient Modal
-  void _showAddPatientModal() {
+  void _showAddPatientModal({Map<String, dynamic>? initialValues}) {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AddPatientModal(),
+      builder: (context) => AddPatientModal(initialValues: initialValues),
     );
   }
 }
 
 // Add Patient Modal Widget
 class AddPatientModal extends StatefulWidget {
-  const AddPatientModal({super.key});
+  const AddPatientModal({super.key, this.initialValues});
+
+  final Map<String, dynamic>? initialValues;
 
   @override
   State<AddPatientModal> createState() => _AddPatientModalState();
@@ -2442,6 +2447,45 @@ class _AddPatientModalState extends State<AddPatientModal> {
   void initState() {
     super.initState();
     _registrationDateController.text = '01/29/2026';
+    final values = widget.initialValues;
+    if (values != null) {
+      final name = (values['patientName'] ?? values['fullName'] ?? '')
+          .toString()
+          .trim();
+      final parts = name
+          .split(RegExp(r'\s+'))
+          .where((part) => part.isNotEmpty)
+          .toList(growable: false);
+      _firstNameController.text =
+          (values['firstName'] ?? (parts.isNotEmpty ? parts.first : ''))
+              .toString();
+      _surnameController.text =
+          (values['surname'] ??
+                  (parts.length > 1 ? parts.sublist(1).join(' ') : ''))
+              .toString();
+      _dobController.text = (values['dateOfBirth'] ?? '').toString();
+      _ageController.text = (values['age'] ?? '').toString();
+      _phoneController.text =
+          (values['contactNumber'] ?? values['phoneNumber'] ?? '').toString();
+      _emailController.text =
+          (values['email'] ?? values['emailAddress'] ?? '').toString();
+      _streetController.text =
+          (values['address'] ?? values['street'] ?? '').toString();
+      _barangayController.text = (values['barangay'] ?? '').toString();
+      _municipalityController.text = (values['municipality'] ?? '').toString();
+      _provinceController.text = (values['province'] ?? '').toString();
+      _chiefComplaintController.text = (values['symptoms'] ?? '').toString();
+      _currentSymptomsController.text =
+          (values['symptoms'] ?? '').toString();
+      _bodyTempController.text = (values['temperature'] ?? '').toString();
+      _heartRateController.text = (values['heartRate'] ?? '').toString();
+      _respiratoryRateController.text =
+          (values['respiratoryRate'] ?? '').toString();
+      _oxygenSaturationController.text =
+          (values['oxygenSaturation'] ?? '').toString();
+      _weightController.text = (values['weight'] ?? '').toString();
+      _heightController.text = (values['height'] ?? '').toString();
+    }
   }
 
   @override

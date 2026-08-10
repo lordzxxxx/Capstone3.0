@@ -672,6 +672,12 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
               moduleLabel: 'Immunization',
               manualLabel: 'New Immunization',
               onManualCreate: () => _showNewImmunizationModal(context),
+              onOcrReady: (extraction) async {
+                _showNewImmunizationModal(
+                  context,
+                  patientSeed: extraction.toFormSeed(),
+                );
+              },
             ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: _primaryAqua))

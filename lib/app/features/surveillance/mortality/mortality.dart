@@ -518,6 +518,9 @@ class _MortalityPageState extends State<MortalityPage>
         moduleLabel: 'Mortality',
         manualLabel: 'New Record',
         onManualCreate: _showAddRecordDialog,
+        onOcrReady: (extraction) async {
+          _showAddRecordDialog(patientSeed: extraction.toFormSeed());
+        },
       ),
     );
   }

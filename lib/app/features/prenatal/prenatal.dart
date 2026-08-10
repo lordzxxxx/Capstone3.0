@@ -297,6 +297,12 @@ class _PrenatalPageState extends State<PrenatalPage> {
               moduleLabel: 'Prenatal',
               manualLabel: 'New Prenatal',
               onManualCreate: () => _showNewPrenatalModal(context),
+              onOcrReady: (extraction) async {
+                _showNewPrenatalModal(
+                  context,
+                  patientSeed: extraction.toFormSeed(),
+                );
+              },
             ),
     );
   }

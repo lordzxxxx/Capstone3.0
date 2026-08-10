@@ -255,6 +255,12 @@ class _MorbidityPageState extends State<MorbidityPage> {
               moduleLabel: 'Morbidity',
               manualLabel: 'New Record',
               onManualCreate: () => _showNewMorbidityModal(context),
+              onOcrReady: (extraction) async {
+                _showNewMorbidityModal(
+                  context,
+                  patientSeed: extraction.toFormSeed(),
+                );
+              },
             ),
       body: _isLoadingMetrics
           ? const Center(child: CircularProgressIndicator(color: _primaryAqua))
@@ -1831,7 +1837,22 @@ class AgeDistribution {
 }
 
 // Modal Functions
-void _showNewMorbidityModal(BuildContext context) {
+void _showNewMorbidityModal(
+  BuildContext context, {
+  Map<String, dynamic>? patientSeed,
+}) {
+  final patientNameController = TextEditingController(
+    text: (patientSeed?['patientName'] ?? '').toString(),
+  );
+  final ageController = TextEditingController(
+    text: (patientSeed?['age'] ?? '').toString(),
+  );
+  final diseaseController = TextEditingController(
+    text: (patientSeed?['disease'] ?? '').toString(),
+  );
+  final facilityController = TextEditingController(
+    text: (patientSeed?['place'] ?? patientSeed?['address'] ?? '').toString(),
+  );
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -1852,13 +1873,13 @@ void _showNewMorbidityModal(BuildContext context) {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildModalTextField('Patient Name'),
+              _buildModalTextField('Patient Name', patientNameController),
               const SizedBox(height: 12),
-              _buildModalTextField('Age'),
+              _buildModalTextField('Age', ageController),
               const SizedBox(height: 12),
-              _buildModalTextField('Disease'),
+              _buildModalTextField('Disease', diseaseController),
               const SizedBox(height: 12),
-              _buildModalTextField('Health Facility'),
+              _buildModalTextField('Health Facility', facilityController),
             ],
           ),
         ),
@@ -1884,8 +1905,12 @@ void _showNewMorbidityModal(BuildContext context) {
   );
 }
 
-Widget _buildModalTextField(String label) {
+Widget _buildModalTextField(
+  String label,
+  TextEditingController controller,
+) {
   return TextField(
+    controller: controller,
     style: const TextStyle(
       color: _lightOffWhite,
       fontSize: 14,
