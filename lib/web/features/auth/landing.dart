@@ -1,8 +1,11 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/features/auth/signup.dart';
 import 'package:mycapstone_project/web/features/auth/bhw_registration.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
+import 'package:mycapstone_project/web/shared/widgets/liquid_glass_navbar.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
 const Color _primaryAqua = AppColors.primary;
@@ -60,6 +63,7 @@ class _LandingPageState extends State<LandingPage>
 
   bool _showIntroLoader = !_hasShownIntroLoader;
   bool _didPrecacheLogo = false;
+  final ScrollController _landingScrollController = ScrollController();
 
   // Slow, continuous "Ken Burns" breathing zoom on the backdrop photo.
   late final AnimationController _bgController;
@@ -103,7 +107,17 @@ class _LandingPageState extends State<LandingPage>
   void dispose() {
     _bgController.dispose();
     _contentController.dispose();
+    _landingScrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollToTop() {
+    if (!_landingScrollController.hasClients) return;
+    _landingScrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
@@ -543,7 +557,210 @@ class _LandingPageState extends State<LandingPage>
                 ),
               ),
             ),
+            // Fixed floating glass navbar — sits in the outer stack (not the
+            // scroll view) so it stays pinned while the page scrolls beneath
+            // it, and never shifts hero/footer layout.
+            if (!_showIntroLoader)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: FadeTransition(
+                    opacity: _heroEntrance,
+                    child: _buildLandingNavbar(context),
+                  ),
+                ),
+              ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLandingNavbar(BuildContext context) {
+    return LiquidGlassNavbar(
+      logo: _buildSystemLogo(size: 28),
+      brandLabel: 'AI-DSUHIS',
+      onBrandTap: _scrollToTop,
+      items: [
+        LiquidGlassNavItem(label: 'Home', active: true, onTap: _scrollToTop),
+        LiquidGlassNavItem(
+          label: 'About',
+          onTap: () => _showGlassInfoDialog(
+            context,
+            icon: Icons.info_outline_rounded,
+            title: 'About AI-DSUHIS',
+            body: const [
+              'AI-DSUHIS (AI-Driven Solution For Unified Health Information '
+                  'System) unifies patient records, check-ups, immunization, '
+                  'prenatal care, and disease surveillance for Barangay Health '
+                  'Workers and the Malaybalay City Health Office in one '
+                  'coordinated platform.',
+              'It brings together health monitoring, advanced analytics, '
+                  'secure and private access, and cloud sync so every '
+                  "barangay's data stays connected, current, and protected.",
+            ],
+          ),
+        ),
+        LiquidGlassNavItem(
+          label: 'Mission & Vision',
+          onTap: () => _showGlassInfoDialog(
+            context,
+            icon: Icons.flag_outlined,
+            title: 'Mission & Vision',
+            body: const [
+              'Mission: To equip Barangay Health Workers and the City Health '
+                  'Office with a unified, AI-assisted platform that makes '
+                  'health-service work faster, better coordinated, and '
+                  'centered on the people it serves.',
+              'Vision: A city where every barangay\'s health data is '
+                  'centralized, secure, and instantly accessible — enabling '
+                  'coordinated, human-led care across Malaybalay.',
+            ],
+          ),
+        ),
+        LiquidGlassNavItem(
+          label: 'Team Members',
+          onTap: () => _showGlassInfoDialog(
+            context,
+            icon: Icons.groups_outlined,
+            title: 'Team Members',
+            body: const [
+              'TEAM LEADER\nTRISHA JEANNE ALSOLA',
+              'MAIN DEVELOPERS\nATHEO JESSAR CALIAO\nLORD LYLE KIMPERT AGREDA\nDHARRYL DAVE CLERIGO',
+              'CAPSTONE ADVISER\nDR. MARILOU O. ESPINA\nDEAN, COLLEGE OF TECHNOLOGIES',
+            ],
+          ),
+        ),
+        LiquidGlassNavItem(
+          label: 'Terms and Conditions',
+          onTap: () => _showGlassInfoDialog(
+            context,
+            icon: Icons.gavel_outlined,
+            title: 'Terms and Conditions',
+            body: const [
+              'Use AI-DSUHIS only for authorized health-service work. AI '
+                  'guidance is supportive information; clinical decisions, '
+                  'referrals, and prescriptions remain the responsibility of '
+                  'qualified health professionals.',
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showGlassInfoDialog(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required List<String> body,
+  }) {
+    return showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(26, 24, 26, 22),
+                decoration: BoxDecoration(
+                  color: _sidebarDark.withValues(alpha: 0.62),
+                  borderRadius: BorderRadius.circular(26),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.18),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: _primaryAqua.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _primaryAqua.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Icon(icon, color: Colors.white, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: _display(size: 19, letterSpacing: 0.1),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Close',
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          icon: const Icon(Icons.close_rounded),
+                          color: Colors.white.withValues(alpha: 0.72),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.5,
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (final paragraph in body) ...[
+                              Text(
+                                paragraph,
+                                style: _body(
+                                  size: 13.5,
+                                  weight: FontWeight.w400,
+                                  color: Colors.white.withValues(alpha: 0.88),
+                                  height: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        child: const Text('Close'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -627,6 +844,7 @@ class _LandingPageState extends State<LandingPage>
       key: const ValueKey('landing_scroll'),
       builder: (context, constraints) {
         return SingleChildScrollView(
+          controller: _landingScrollController,
           physics: const ClampingScrollPhysics(),
           child: Column(
             children: [
