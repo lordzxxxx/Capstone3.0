@@ -622,19 +622,6 @@ class _LandingPageState extends State<LandingPage>
           ),
         ),
         LiquidGlassNavItem(
-          label: 'Team Members',
-          onTap: () => _showGlassInfoDialog(
-            context,
-            icon: Icons.groups_outlined,
-            title: 'Team Members',
-            body: const [
-              'TEAM LEADER\nTRISHA JEANNE ALSOLA',
-              'MAIN DEVELOPERS\nATHEO JESSAR CALIAO\nLORD LYLE KIMPERT AGREDA\nDHARRYL DAVE CLERIGO',
-              'CAPSTONE ADVISER\nDR. MARILOU O. ESPINA\nDEAN, COLLEGE OF TECHNOLOGIES',
-            ],
-          ),
-        ),
-        LiquidGlassNavItem(
           label: 'Terms and Conditions',
           onTap: () => _showGlassInfoDialog(
             context,
@@ -666,109 +653,122 @@ class _LandingPageState extends State<LandingPage>
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 680),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: BackdropFilter(
-              // Blurs the page behind the dialog for the glass backdrop feel;
-              // the card itself is opaque white to match this app's existing
-              // white-card pattern (see _showRoleSelectionDialog).
-              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(32, 30, 32, 26),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: const Color(0xFFD9E5F2)),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x33123A5C),
-                      blurRadius: 36,
-                      offset: Offset(0, 18),
-                    ),
-                  ],
+          // The shadow lives on this outer, unclipped box. Putting it on the
+          // same decoration as the ClipRRect'd card below caused the blurred
+          // shadow to be sliced off right at the rounded corner, reading as
+          // a stray second line above the card's real border.
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33123A5C),
+                  blurRadius: 36,
+                  offset: Offset(0, 18),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 46,
-                          height: 46,
-                          decoration: BoxDecoration(
-                            color: _primaryAqua.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: _primaryAqua.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Icon(icon, color: _primaryAquaBright, size: 22),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: _display(
-                              size: 23,
-                              letterSpacing: 0.1,
-                              color: _darkDeepTeal,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: 'Close',
-                          onPressed: () => Navigator.of(dialogContext).pop(),
-                          icon: const Icon(Icons.close_rounded),
-                          color: _darkDeepTeal.withValues(alpha: 0.6),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 0.65,
-                      ),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            for (final paragraph in body) ...[
-                              Text(
-                                paragraph,
-                                style: _body(
-                                  size: 15,
-                                  weight: FontWeight.w400,
-                                  color: _mutedCoolGray,
-                                  height: 1.55,
-                                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: BackdropFilter(
+                // Blurs the page behind the dialog for the glass backdrop
+                // feel; the card itself is opaque white to match this app's
+                // existing white-card pattern (see _showRoleSelectionDialog).
+                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(32, 30, 32, 26),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: const Color(0xFFD9E5F2)),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              color: _primaryAqua.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: _primaryAqua.withValues(alpha: 0.3),
                               ),
-                              const SizedBox(height: 16),
+                            ),
+                            child: Icon(
+                              icon,
+                              color: _primaryAquaBright,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: _display(
+                                size: 23,
+                                letterSpacing: 0.1,
+                                color: _darkDeepTeal,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Close',
+                            onPressed: () => Navigator.of(dialogContext).pop(),
+                            icon: const Icon(Icons.close_rounded),
+                            color: _darkDeepTeal.withValues(alpha: 0.6),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height * 0.65,
+                        ),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (final paragraph in body) ...[
+                                Text(
+                                  paragraph,
+                                  style: _body(
+                                    size: 15,
+                                    weight: FontWeight.w400,
+                                    color: _mutedCoolGray,
+                                    height: 1.55,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                              ],
                             ],
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: _primaryAqua,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 22,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(999),
                           ),
                         ),
-                        child: const Text('Close'),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: _primaryAqua,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 22,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                          child: const Text('Close'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
