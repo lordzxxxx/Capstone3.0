@@ -5619,7 +5619,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           _buildSectionTitle('Registration Details'),
           const SizedBox(height: 16),
           _buildDateField(
@@ -5691,7 +5691,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
         color: _primaryAqua.withValues(alpha: 0.2),
       ),
       focusedBorder: _buildFieldBorder(color: _primaryAqua, width: 1.6),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
     );
   }
 
@@ -6599,7 +6599,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Personal Information'),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildTextField(
             'First Name',
@@ -6619,7 +6619,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             hint: 'Optional',
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildTextField('Date of Birth', _dobController, hint: 'YYYY-MM-DD'),
           _buildTextField('Age', _ageController, hint: 'Auto-calculated'),
@@ -6629,7 +6629,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             hint: 'Enter place',
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildTextField(
             'Nationality',
@@ -6648,7 +6648,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             'Other',
           ], (value) => setState(() => _gender = value!)),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildTextField(
             'Religion',
@@ -6667,7 +6667,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             (value) => setState(() => _educationalAttainment = value!),
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildDropdownField(
           'Employee Status',
           _employeeStatus,
@@ -6684,7 +6684,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Contact Information'),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildTextField(
             'Phone Number',
@@ -6705,7 +6705,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             hint: 'XXX-XXX-XXXX',
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildSectionTitle('Address Information'),
         const SizedBox(height: 16),
         _buildTextField(
@@ -6735,7 +6735,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Anthropometric Measurements'),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildTextField(
             'Height (cm)',
@@ -6756,7 +6756,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             hint: 'Auto-calculated',
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildSectionTitle('Blood & Allergies'),
         const SizedBox(height: 16),
         _buildFormGrid([
@@ -6776,7 +6776,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             hint: 'List any allergies',
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildSectionTitle('Medical History'),
         const SizedBox(height: 16),
         _buildTextField(
@@ -6823,7 +6823,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Vital Signs'),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildTextField(
             'Body Temperature',
@@ -6836,7 +6836,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             'Â°F',
           ], (value) => setState(() => _tempUnit = value!)),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildSectionTitle('Blood Pressure'),
         const SizedBox(height: 16),
         _buildFormGrid([
@@ -6853,7 +6853,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             hint: 'e.g., 80',
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildTextField(
             'Heart Rate (bpm)',
@@ -6874,7 +6874,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             hint: 'e.g., 98',
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildSectionTitle('Chief Complaint & Symptoms'),
         const SizedBox(height: 16),
         _buildTextField(
@@ -6899,7 +6899,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Health Assessment'),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildTextField(
             'Disability',
@@ -6913,14 +6913,14 @@ class _EditPatientModalState extends State<EditPatientModal> {
             (value) => setState(() => _mentalHealthStatus = value!),
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildTextField(
           'Substance Use History',
           _substanceUseController,
           maxLines: 3,
           hint: 'Describe substance use',
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildSectionTitle('Check-up Schedule'),
         const SizedBox(height: 16),
         _buildFormGrid([
@@ -6945,7 +6945,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Emergency Contact Information'),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildTextField(
             'Contact Name',
@@ -6960,7 +6960,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             hint: 'e.g., Spouse, Parent',
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildTextField(
             'Phone Number',
@@ -6984,7 +6984,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Lifestyle Factors'),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildDropdownField(
             'Smoking Status',
@@ -7005,14 +7005,14 @@ class _EditPatientModalState extends State<EditPatientModal> {
             (value) => setState(() => _alcoholConsumption = value!),
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildTextField(
           'Dietary Restrictions',
           _dietaryRestrictionsController,
           maxLines: 3,
           hint: 'List any dietary restrictions',
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildDropdownField(
             'Mental Health (Lifestyle)',
@@ -7037,7 +7037,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Morbidity Assessment'),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildDropdownField(
             'Risk Level',
@@ -7058,7 +7058,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             (value) => setState(() => _functionalStatus = value!),
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildDropdownField(
             'Mobility Status',
@@ -7084,7 +7084,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             (value) => setState(() => _polypharmacyRisk = value!),
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildDropdownField(
             'Preventive Care Compliance',
@@ -7105,7 +7105,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             (value) => setState(() => _socialSupportLevel = value!),
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildDropdownField(
           'Economic Impact',
           _economicStatusImpact,
@@ -7129,7 +7129,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Insurance & Financial Information'),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildTextField(
           'Insurance Provider',
           _insuranceProviderController,
@@ -7164,14 +7164,14 @@ class _EditPatientModalState extends State<EditPatientModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Additional Information'),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildTextField(
           'Additional Notes',
           _additionalInfoController,
           maxLines: 4,
           hint: 'Any additional information',
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildDropdownField(
             'Education Level',
@@ -7186,7 +7186,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             (value) => setState(() => _preferredLanguage = value!),
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildFormGrid([
           _buildDropdownField(
             'Referral Source',
@@ -7200,7 +7200,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             hint: 'Mode of transportation',
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildSectionTitle('Registration Details'),
         const SizedBox(height: 16),
         _buildFormGrid([
@@ -7215,7 +7215,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             hint: 'Staff name',
           ),
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         _buildTextField(
           'Additional Notes',
           _additionalNotesController,
@@ -7644,7 +7644,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           _buildSectionTitle('Registration Details'),
           const SizedBox(height: 16),
           _buildDateField(

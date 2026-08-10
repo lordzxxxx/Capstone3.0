@@ -4451,7 +4451,7 @@ class _NewCheckUpFullScreenModalState
             // Content Area
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.all(isWeb ? 24 : 18),
+                padding: EdgeInsets.all(isWeb ? 16 : 14),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -4541,7 +4541,7 @@ class _NewCheckUpFullScreenModalState
                               ],
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
 
                           // Vital Signs Section (Separated)
                           _buildSectionCard(
@@ -4673,7 +4673,7 @@ class _NewCheckUpFullScreenModalState
                               ],
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
 
                           // Clinical Details Section
                           _buildSectionCard(
@@ -4696,7 +4696,7 @@ class _NewCheckUpFullScreenModalState
                               ],
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
 
                           // Follow-up Section
                           _buildSectionCard(
@@ -4764,7 +4764,7 @@ class _NewCheckUpFullScreenModalState
                               ],
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 16),
 
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
@@ -5820,7 +5820,7 @@ class _NewCheckUpFullScreenModalState
     required Widget child,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _sidebarDark,
         borderRadius: BorderRadius.circular(16),
@@ -5842,14 +5842,14 @@ class _NewCheckUpFullScreenModalState
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: _primaryAqua.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: Colors.white, size: 20),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -5859,7 +5859,7 @@ class _NewCheckUpFullScreenModalState
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           child,
         ],
       ),
@@ -5883,7 +5883,7 @@ class _NewCheckUpFullScreenModalState
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: _primaryAqua, width: 2),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       filled: true,
       fillColor: _darkDeepTeal,
       hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
@@ -6440,7 +6440,7 @@ class _EditCheckUpFullScreenModalState
                               ],
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
 
                           // Follow-up Section
                           _buildSectionCard(

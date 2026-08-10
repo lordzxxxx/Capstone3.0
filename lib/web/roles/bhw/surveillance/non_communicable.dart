@@ -2272,7 +2272,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
             children: [
               // Header with title and close button
               Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -2312,7 +2312,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
               // Content with 2-column layout
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -2534,7 +2534,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
-              vertical: 12,
+              vertical: 10,
             ),
             hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
           ),

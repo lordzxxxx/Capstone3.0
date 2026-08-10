@@ -1746,7 +1746,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 // Form Content
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1861,7 +1861,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             ],
                           ),
                         ]),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 14),
 
                         // Pregnancy Detail Area
                         _buildSectionHeader(
@@ -1954,7 +1954,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             dark: true,
                           ),
                         ]),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 14),
 
                         // Medical History Area
                         _buildSectionHeader(
@@ -2089,7 +2089,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             hintText: 'e.g., 0.8 mg/dL',
                           ),
                         ]),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 14),
 
                         // Registration Details Area
                         _buildSectionHeader(
@@ -2277,7 +2277,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
@@ -2992,7 +2992,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
@@ -3037,18 +3037,18 @@ class _PrenatalPageState extends State<PrenatalPage> {
 
   Widget _buildSectionHeader(String title, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: _primaryAqua.withValues(alpha: 0.25),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: Colors.white, size: 20),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Text(
             title,
             style: TextStyle(
@@ -3168,8 +3168,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
               borderSide: const BorderSide(color: _primaryAqua, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
+              horizontal: 14,
+              vertical: 10,
             ),
           ),
         ),
@@ -3201,7 +3201,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: dark ? _darkDeepTeal : _lightOffWhite,
               borderRadius: BorderRadius.circular(12),
@@ -5327,18 +5327,18 @@ class _PrenatalPageState extends State<PrenatalPage> {
 
   Widget _buildSectionHeaderDark(String title, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: _primaryAqua.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: _primaryAqua, size: 20),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Text(
             title,
             style: const TextStyle(
