@@ -6533,8 +6533,8 @@ class _EditPatientModalState extends State<EditPatientModal> {
                     constraints: BoxConstraints(maxWidth: maxWidth),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 32,
+                        horizontal: 16,
+                        vertical: 20,
                       ),
                       child: _buildTabContent(),
                     ),
@@ -7229,8 +7229,8 @@ class _EditPatientModalState extends State<EditPatientModal> {
   // Helper to build multi-column form grid
   Widget _buildFormGrid(List<Widget> children, {int columns = 3}) {
     return Wrap(
-      spacing: 16,
-      runSpacing: 16,
+      spacing: 12,
+      runSpacing: 12,
       children: children
           .map(
             (child) => SizedBox(
@@ -7690,7 +7690,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
     String? hint,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -7711,7 +7711,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
                 ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           TextFormField(
             controller: controller,
             maxLines: maxLines,

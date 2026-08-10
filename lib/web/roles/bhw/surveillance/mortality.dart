@@ -4175,7 +4175,7 @@ class _MortalityPageState extends State<MortalityPage> {
     required List<Widget> children,
   }) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _sidebarDark,
         borderRadius: BorderRadius.circular(16),
@@ -4233,7 +4233,7 @@ class _MortalityPageState extends State<MortalityPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           ...children,
         ],
       ),

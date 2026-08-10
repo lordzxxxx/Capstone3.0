@@ -2457,7 +2457,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 // Form Content - Complete form with ALL fields
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -2572,7 +2572,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             ],
                           ),
                         ]),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 14),
 
                         // Pregnancy Detail Section
                         _buildSectionHeaderDark(
@@ -2661,7 +2661,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             },
                           ),
                         ]),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 14),
 
                         // Medical History Section
                         _buildSectionHeaderDark(
@@ -2796,7 +2796,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             hintText: 'e.g., 0.8 mg/dL',
                           ),
                         ]),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 14),
 
                         // Registration Details Section
                         _buildSectionHeaderDark(
@@ -3091,10 +3091,10 @@ class _PrenatalPageState extends State<PrenatalPage> {
   Widget _buildDarkFormCard(List<Widget> children) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _sidebarDark,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
       ),
       child: Column(

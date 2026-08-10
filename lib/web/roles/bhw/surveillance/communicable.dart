@@ -1401,7 +1401,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
             children: [
               // Header with title and close button
               Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1441,7 +1441,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
               // Content
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -1642,7 +1642,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       // Row 2: Gender and Condition
                       Row(
                         children: [
@@ -1661,7 +1661,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       // Row 3: Status and Treatment
                       Row(
                         children: [
@@ -1680,7 +1680,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       // Row 4: Blood Pressure and Blood Sugar
                       Row(
                         children: [
@@ -1699,7 +1699,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       // Row 5: Last Visit and Next Visit
                       Row(
                         children: [
@@ -1730,7 +1730,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
               ),
               // Action buttons
               Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [

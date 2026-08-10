@@ -1698,7 +1698,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                     ],
                   ),
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1736,7 +1736,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 12),
                         _buildEditTextField(
                           controller: diseaseController,
                           label: 'Symptoms',
@@ -1787,7 +1787,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                           label: 'Remarks',
                           maxLines: 4,
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 12),
                         Align(
                           alignment: Alignment.centerRight,
                           child: Wrap(

@@ -2095,7 +2095,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
             children: [
               // Header with title and close button
               Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -2135,7 +2135,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
               // Content
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -2331,7 +2331,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       // Row 2: Gender and Condition
                       Row(
                         children: [
@@ -2350,7 +2350,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       // Row 3: Status and Treatment
                       Row(
                         children: [
@@ -2369,7 +2369,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       // Row 4: Blood Pressure and Blood Sugar
                       Row(
                         children: [
@@ -2388,7 +2388,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       // Row 5: Last Visit and Next Visit
                       Row(
                         children: [
@@ -2419,7 +2419,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
               ),
               // Action buttons
               Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [

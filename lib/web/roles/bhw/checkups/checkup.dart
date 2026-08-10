@@ -6194,7 +6194,8 @@ class _EditCheckUpFullScreenModalState
             // Content Area
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                // Dense editor spacing keeps every section easy to scan.
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -6284,7 +6285,7 @@ class _EditCheckUpFullScreenModalState
                               ],
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
 
                           // Vital Signs Section
                           _buildSectionCard(
@@ -6416,7 +6417,7 @@ class _EditCheckUpFullScreenModalState
                               ],
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
 
                           // Clinical Details Section
                           _buildSectionCard(
@@ -6505,7 +6506,7 @@ class _EditCheckUpFullScreenModalState
                               ],
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 16),
 
                           Offstage(
                             offstage: true,
@@ -6711,7 +6712,7 @@ class _EditCheckUpFullScreenModalState
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _sidebarDark,
         borderRadius: BorderRadius.circular(18),
@@ -6723,14 +6724,14 @@ class _EditCheckUpFullScreenModalState
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: _primaryAqua.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: _primaryAqua, size: 20),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -6740,7 +6741,7 @@ class _EditCheckUpFullScreenModalState
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           child,
         ],
       ),
@@ -6766,7 +6767,7 @@ class _EditCheckUpFullScreenModalState
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: _primaryAqua, width: 2),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       filled: true,
       fillColor: const Color(0xFF0B1F3A),
       hintStyle: const TextStyle(color: Colors.white54),

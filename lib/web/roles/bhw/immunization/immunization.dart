@@ -2640,7 +2640,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
 
   Widget _buildFormCard(List<Widget> children) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _sidebarDark,
         borderRadius: BorderRadius.circular(16),
@@ -4260,7 +4260,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             children: [
               // Modal Header
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [_primaryAqua, _secondaryIceBlue],
@@ -4300,7 +4300,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                 child: StatefulBuilder(
                   builder: (context, setModalState) {
                     return SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -4360,7 +4360,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                               keyboardType: TextInputType.phone,
                             ),
                           ]),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 14),
 
                           // Vaccine Details
                           _buildSectionHeader(
@@ -4411,7 +4411,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                               },
                             ),
                           ]),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 14),
 
                           // Administration Details
                           _buildSectionHeader(
@@ -4510,7 +4510,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                               hintText: 'Name of healthcare provider',
                             ),
                           ]),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 14),
 
                           // Additional Information
                           _buildSectionHeader(
@@ -4541,7 +4541,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                               },
                             ),
                           ]),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 14),
 
                           // Save Button
                           SizedBox(
