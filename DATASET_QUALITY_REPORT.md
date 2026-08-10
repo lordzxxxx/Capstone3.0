@@ -20,8 +20,7 @@ from its filename or folder.
 | Field | Value |
 |---|---|
 | Local path | `backend/dataset/raw/Diseases_and_Symptoms_dataset.csv` |
-| Source/provider | **SOURCE REQUIRES VERIFICATION.** No license file, dataset card, README, or checksum accompanies this file in the repository, and the commit history was squashed into one baseline commit (`04a7b0a`, "Baseline before August 10 panel revisions") with no earlier acquisition record. |
-| Structural candidates (unverified) | Column structure (target column literally named `diseases`, ~229–230 binary human-readable symptom columns, ~96k rows, ~100 disease classes after filtering) is consistent with the public Kaggle "Diseases and Symptoms" dataset family (candidates found via web search: `kaggle.com/datasets/dhivyeshrk/diseases-and-symptoms-dataset`, `kaggle.com/datasets/choongqianzheng/disease-and-symptoms-dataset`, `kaggle.com/datasets/aadyasingh55/disease-and-symptoms`). This is a **structural resemblance only** — no checksum or explicit attribution in-repo confirms which exact upload/version/license applies. **Do not cite a specific URL as confirmed provenance without verifying it directly against Kaggle.** |
+| Source/provider | **Strongly corroborated candidate identified (update, follow-up review):** [Kaggle — "SympScan - Symptomps to Disease"](https://www.kaggle.com/datasets/behzadhassan/sympscan-symptomps-to-disease), uploaded by Kaggle user `behzadhassan`. Evidence: (1) the exact filename `Diseases_and_Symptoms_dataset.csv` is present in that dataset's file list; (2) the same GitHub user (`BehzadHassan/SympScan`, matching Kaggle username — first-party project showcase, not a third party) documents this dataset as "~96,000 patient records," "200+ binary-encoded symptoms," and "~100 disease classes" — all three figures match this repository's file exactly (96,088 rows, 230 raw symptom columns, 100 disease classes); (3) two independent public GitHub repos (`sandeep-panchal-fl/AI-Medical-Assistant-Hackathon`, `BehzadHassan/SympScan`) cite this same Kaggle URL as the source of a file with this exact name. **License terms could not be retrieved** — Kaggle's dataset page is JavaScript-rendered and returned no license metadata to either `WebFetch` or a direct `curl` request during this review. **Before formal citation (thesis, publication, external audit), the project team should open the Kaggle URL directly in a browser and record the stated license.** No checksum match was possible (Kaggle does not expose one without downloading via authenticated API, which this review does not have credentials for), so this remains corroborated-but-not-cryptographically-verified. |
 | Country/geographic coverage | Unknown / unverifiable from the file itself. No demographic or geographic column exists. Should **not** be described as Philippine-sourced. |
 | Original record count | **96,088 data rows** (96,089 lines including header), 231 columns (`diseases` + 230 raw symptom columns) |
 | Usable record count after pipeline | **93,993 rows**, 229 features, 100 disease classes (2,095 exact-duplicate rows removed; 2 raw columns dropped as non-numeric or reduced during normalization/collapsing — see §5) |
@@ -42,7 +41,7 @@ from its filename or folder.
 | Field | Value |
 |---|---|
 | Local path | `backend/dataset/excluded/main.csv` |
-| Source/provider | **SOURCE REQUIRES VERIFICATION.** Column names use a `UMLS:Cxxxxxxx_<name>` prefix pattern (e.g. `UMLS:C0457096_yellow sputum`), suggesting derivation from a UMLS-concept-coded medical dataset, but no exact match was confirmed via web search within this review. |
+| Source/provider | **Verified academic source (update, follow-up review):** the `UMLS:Cxxxxxxx_<name>` column pattern (e.g. `UMLS:C0457096_yellow sputum`) was traced via GitHub code search to the **Columbia University Disease-Symptom Knowledge Database** — Wang X, Chused A, Elhadad N, Friedman C, Markatou M, *"Automated knowledge acquisition from clinical reports,"* AMIA Annu Symp Proc. 2008:783-7, PMCID: [PMC2656103](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2656103/). Source page: `people.dbmi.columbia.edu/~friedma/Projects/DiseaseSymptomKB/` (confirmed reachable and matching during this review). Built via MedLEE NLP extraction of UMLS-coded disease/symptom mentions from New York-Presbyterian Hospital discharge summaries, covering the 150 most frequent diseases from 2004 admissions. **No explicit license is stated on the source page** — usage requires contacting the corresponding author (`friedman@dbmi.columbia.edu`) per the page itself. This does not change the file's exclusion status (still correctly excluded, see below) but resolves what was previously an open provenance question. |
 | Original record count | 134 rows, 409 columns (`label` target + `frequency` + 407 UMLS-coded binary symptom columns) |
 | Usable record count | **0** |
 | Reason excluded | Every one of the 134 disease labels has **exactly 1 row** (`value_counts()` confirms `min == max == 1.0`). The pipeline's own quality gate, `merge_datasets.has_enough_class_samples()`, requires a **median of ≥20 rows per class** before a source file is accepted — this file's median is 1, so it fails outright and cannot be used for supervised training (a class with one example cannot be split into train/test, let alone learned robustly). |
@@ -280,23 +279,28 @@ features (`X`), one categorical target column `diseases` with 100 classes
 
 | Dataset | Provenance status |
 |---|---|
-| `Diseases_and_Symptoms_dataset.csv` | **SOURCE REQUIRES VERIFICATION** (structural candidates identified, not confirmed) |
-| `main.csv` | **SOURCE REQUIRES VERIFICATION** (correctly unused regardless) |
-| `Symptom2Disease.csv` | Structurally consistent with a named public Kaggle dataset (candidate identified), not cryptographically confirmed |
+| `Diseases_and_Symptoms_dataset.csv` | **Strongly corroborated** — Kaggle `behzadhassan/sympscan-symptomps-to-disease` (exact filename, exact 100-class count, exact ~96k row count, corroborated by the dataset author's own GitHub repo and one independent third-party repo). **License terms not yet retrieved** — Kaggle's page would not render its metadata to this review's tools. |
+| `main.csv` | **Verified** — Columbia University Disease-Symptom Knowledge Database (Wang, Chused, Elhadad, Friedman, Markatou; AMIA 2008; PMCID PMC2656103). Correctly unused regardless (1 record/class). |
+| `Symptom2Disease.csv` | Structurally consistent with a named public Kaggle dataset (`niyarrbarman/symptom2disease`, candidate identified), not cryptographically confirmed |
 | `AI_DSUHIS_Disease_Self_Care_Knowledge_Base.csv` | **Verified** — project-authored, traced to `generate_disease_seed.py` |
 | `Diseases_Symptoms.csv`, `Home Remedies.csv` | Unused; provenance not investigated further as they do not affect training |
 
-**Recommendation for the project team:** record the exact source URL,
-version/snapshot date, and license of `Diseases_and_Symptoms_dataset.csv`
-before any future publication, thesis defense, or external audit of this
-system — this is the one piece of provenance this review could not
-close out from repository evidence alone.
+**Recommendation for the project team:** open
+`kaggle.com/datasets/behzadhassan/sympscan-symptomps-to-disease`
+directly in a browser (this review's tools could not render Kaggle's
+JavaScript-based metadata panel) and record the exact license shown
+there before citing it formally in a thesis, publication, or external
+audit. Everything else needed to identify the dataset — filename, class
+count, row count, and two independent corroborating citations — is
+already documented above.
 
 ---
 
 ## 9. Known limitations (dataset-level)
 
-- Provenance of the sole training source is unverified (§1.1, §8).
+- Provenance of the sole training source is strongly corroborated but not
+  cryptographically confirmed, and its license terms are not yet on
+  record (§1.1, §8).
 - 9.8% of records share a symptom presentation with a different disease
   label elsewhere in the dataset — an inherent ambiguity ceiling, not a
   bug (§4).
