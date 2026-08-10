@@ -665,19 +665,27 @@ class _LandingPageState extends State<LandingPage>
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
+          constraints: const BoxConstraints(maxWidth: 680),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(28),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+              // Blurs the page behind the dialog for the glass backdrop feel;
+              // the card itself is opaque white to match this app's existing
+              // white-card pattern (see _showRoleSelectionDialog).
+              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
               child: Container(
-                padding: const EdgeInsets.fromLTRB(26, 24, 26, 22),
+                padding: const EdgeInsets.fromLTRB(32, 30, 32, 26),
                 decoration: BoxDecoration(
-                  color: _sidebarDark.withValues(alpha: 0.62),
-                  borderRadius: BorderRadius.circular(26),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.18),
-                  ),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: const Color(0xFFD9E5F2)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x33123A5C),
+                      blurRadius: 36,
+                      offset: Offset(0, 18),
+                    ),
+                  ],
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -686,36 +694,40 @@ class _LandingPageState extends State<LandingPage>
                     Row(
                       children: [
                         Container(
-                          width: 40,
-                          height: 40,
+                          width: 46,
+                          height: 46,
                           decoration: BoxDecoration(
-                            color: _primaryAqua.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(12),
+                            color: _primaryAqua.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: _primaryAqua.withValues(alpha: 0.3),
                             ),
                           ),
-                          child: Icon(icon, color: Colors.white, size: 20),
+                          child: Icon(icon, color: _primaryAquaBright, size: 22),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 14),
                         Expanded(
                           child: Text(
                             title,
-                            style: _display(size: 19, letterSpacing: 0.1),
+                            style: _display(
+                              size: 23,
+                              letterSpacing: 0.1,
+                              color: _darkDeepTeal,
+                            ),
                           ),
                         ),
                         IconButton(
                           tooltip: 'Close',
                           onPressed: () => Navigator.of(dialogContext).pop(),
                           icon: const Icon(Icons.close_rounded),
-                          color: Colors.white.withValues(alpha: 0.72),
+                          color: _darkDeepTeal.withValues(alpha: 0.6),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     ConstrainedBox(
                       constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 0.5,
+                        maxHeight: MediaQuery.of(context).size.height * 0.65,
                       ),
                       child: SingleChildScrollView(
                         child: Column(
@@ -725,29 +737,29 @@ class _LandingPageState extends State<LandingPage>
                               Text(
                                 paragraph,
                                 style: _body(
-                                  size: 13.5,
+                                  size: 15,
                                   weight: FontWeight.w400,
-                                  color: Colors.white.withValues(alpha: 0.88),
-                                  height: 1.5,
+                                  color: _mutedCoolGray,
+                                  height: 1.55,
                                 ),
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 16),
                             ],
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () => Navigator.of(dialogContext).pop(),
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.white,
-                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                          backgroundColor: _primaryAqua,
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 10,
+                            horizontal: 22,
+                            vertical: 12,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(999),
