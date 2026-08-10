@@ -1182,8 +1182,8 @@ class _LandingPageState extends State<LandingPage>
         _buildFooterName('DHARRYL DAVE CLERIGO'),
         const SizedBox(height: 14),
         _buildFooterLabel('CAPSTONE ADVISER'),
-        _buildFooterName('Dr. Marilou O. Espina'),
-        _buildFooterName('Dean, College of Technologies'),
+        _buildFooterName('DR. MARILOU O. ESPINA'),
+        _buildFooterName('DEAN, COLLEGE OF TECHNOLOGIES'),
       ],
     );
 
