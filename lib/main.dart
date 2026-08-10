@@ -38,6 +38,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/morbidity.dart'
     as web_morbidity;
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart'
     as web_mortality;
+import 'package:mycapstone_project/web/shared/utils/auth_guard_middleware.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -128,30 +129,37 @@ class MyApp extends StatelessWidget {
               GetPage(
                 name: '/CommunicablePage',
                 page: () => const web_communicable.CommunicablePage(),
+                middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: '/NonCommunicablePage',
                 page: () => const web_noncommunicable.NonCommunicablePage(),
+                middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: '/ReferralsPage',
                 page: () => const web_referrals.BhwReferralPage(),
+                middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: '/checkups',
                 page: () => const web_checkup.CheckUpPage(),
+                middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: '/prenatal',
                 page: () => const web_prenatal.PrenatalPage(),
+                middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: '/morbidity',
                 page: () => const web_morbidity.MorbidityPage(),
+                middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: '/mortality',
                 page: () => const web_mortality.MortalityPage(),
+                middlewares: [AuthGuardMiddleware()],
               ),
             ]
           : [
@@ -161,10 +169,12 @@ class MyApp extends StatelessWidget {
               GetPage(
                 name: '/AnalyticsPage',
                 page: () => const app_analytics.AnalyticsPage(),
+                middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: '/ReferralsPage',
                 page: () => const app_referrals.ReferralsPage(),
+                middlewares: [AuthGuardMiddleware()],
               ),
             ],
       home: kIsWeb ? const web.LandingPage() : const app.LandingPage(),

@@ -254,7 +254,13 @@ service cloud.firestore {
 
     function canCreateDoctorNote(data) {
       return (isChoRole() || isDoctorRole()) &&
-        data.authorUid == request.auth.uid;
+        data.authorUid == request.auth.uid &&
+        // Require the actual server-resolved write time, not a
+        // client-supplied literal timestamp, so a note's recorded time
+        // can't be backdated/postdated by a caller who bypasses the app
+        // UI (e.g. driving the SDK directly) and skips
+        // FieldValue.serverTimestamp().
+        data.createdAt == request.time;
     }
 
     function canReadReferral(data) {
@@ -690,10 +696,26 @@ service cloud.firestore {
       allow create, update, delete: if isSuperAdmin();
     }
 
-    // Password reset collection - allows unauthenticated password reset creation
+    // Password reset collection. Written and read exclusively by the
+    // sendPasswordResetEmail / verifyResetCode / completePasswordReset
+    // Cloud Functions via the Admin SDK, which bypasses these rules — the
+    // Flutter client never touches this collection through the Firestore
+    // SDK (it only calls those HTTP endpoints). A prior "allow create: if
+    // request.size < 2048" rule let ANY unauthenticated client write a
+    // document here directly; since Firestore treats a set() on a
+    // not-yet-existing document as a create, an attacker could forge
+    // {verified: true, sessionToken: <their own value>} for any victim
+    // email with no code, then call completePasswordReset with that
+    // self-chosen token to take over the account. Deny all client access.
     match /password_resets/{document=**} {
-      allow create: if request.size < 2048;
-      allow read, update, delete: if false;
+      allow read, write: if false;
+    }
+
+    // Server-only rate-limit counters for the password-reset Cloud
+    // Functions (send_password_reset.js). Written exclusively via the
+    // Admin SDK; never exposed to the client.
+    match /password_reset_rate_limits/{document=**} {
+      allow read, write: if false;
     }
 
     // Doctor notes: append-only continuity-of-care log tied to a check-up.

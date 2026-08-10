@@ -8,7 +8,7 @@ import re
 import time
 from typing import Any
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -225,6 +225,29 @@ def create_app() -> FastAPI:
             "X-Firebase-AppCheck",
         ],
     )
+
+    @application.middleware("http")
+    async def _security_headers(request: Request, call_next):
+        """Baseline hardening headers for every response.
+
+        This API only ever returns JSON, so a Content-Security-Policy
+        (which primarily governs HTML/script/resource loading) is not
+        applicable here and is intentionally omitted rather than added
+        as an untested, possibly-wrong default. Strict-Transport-Security
+        is a no-op over plain HTTP (browsers only honor it on HTTPS
+        responses), so it is safe to always send.
+        """
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Permissions-Policy"] = (
+            "geolocation=(), camera=(), microphone=(), payment=()"
+        )
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=63072000; includeSubDomains"
+        )
+        return response
 
     @application.get(
         "/",

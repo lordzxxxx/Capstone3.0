@@ -2,10 +2,78 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
-const cors = require('cors')({ origin: true });
+
+// Restrict to the deployed app origins plus localhost for development,
+// matching the CORS policy already used by the FastAPI backend
+// (backend/app/api.py). "origin: true" previously reflected any caller's
+// Origin header, which is inappropriate for an unauthenticated endpoint
+// that triggers account-recovery emails.
+const ALLOWED_ORIGINS = new Set([
+  'https://capstone-c98f9.web.app',
+  'https://capstone-c98f9.firebaseapp.com',
+]);
+const LOCALHOST_ORIGIN_PATTERN = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+const cors = require('cors')({
+  origin: (origin, callback) => {
+    if (!origin || ALLOWED_ORIGINS.has(origin) || LOCALHOST_ORIGIN_PATTERN.test(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Origin not allowed'));
+    }
+  },
+});
 
 if (!admin.apps.length) {
   admin.initializeApp();
+}
+
+// Server-side rate limiting for the password-reset flow. Firestore-backed
+// (not in-memory) so the limit holds across concurrent/cold-started
+// function instances. Password reset gets a much stricter budget than
+// ordinary API endpoints because it is an unauthenticated, account-
+// recovery-sensitive surface.
+const RESET_REQUEST_COOLDOWN_MS = 60 * 1000; // min gap between codes for one email
+const RESET_REQUEST_MAX_PER_WINDOW = 5; // max sends per email per window
+const RESET_REQUEST_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+/**
+ * Returns null if the request is allowed, or a retry-after-seconds number
+ * if the caller must wait. Uses a Firestore transaction so concurrent
+ * requests for the same email can't race past the limit.
+ */
+async function checkAndRecordResetRequestRate(email) {
+  const limitRef = admin.firestore().collection('password_reset_rate_limits').doc(email);
+  const now = Date.now();
+
+  return admin.firestore().runTransaction(async (transaction) => {
+    const snap = await transaction.get(limitRef);
+    const data = snap.exists ? snap.data() : null;
+
+    if (data && data.lastRequestAt && now - data.lastRequestAt < RESET_REQUEST_COOLDOWN_MS) {
+      return Math.ceil((RESET_REQUEST_COOLDOWN_MS - (now - data.lastRequestAt)) / 1000);
+    }
+
+    let windowStart = data && data.windowStart ? data.windowStart : now;
+    let windowCount = data && data.windowStart && now - data.windowStart < RESET_REQUEST_WINDOW_MS
+      ? (data.windowCount || 0)
+      : 0;
+
+    if (windowCount >= RESET_REQUEST_MAX_PER_WINDOW) {
+      return Math.ceil((windowStart + RESET_REQUEST_WINDOW_MS - now) / 1000);
+    }
+
+    if (windowCount === 0) {
+      windowStart = now;
+    }
+
+    transaction.set(limitRef, {
+      lastRequestAt: now,
+      windowStart,
+      windowCount: windowCount + 1,
+    });
+
+    return null;
+  });
 }
 
 // Get SMTP configuration from Firebase functions config
@@ -69,8 +137,19 @@ exports.sendPasswordResetEmail = functions.https.onRequest((req, res) => {
         });
       }
 
-      // Generate verification code (6 digits)
-      const code = String(Math.floor(100000 + Math.random() * 900000));
+      // Server-side rate limit: strict cooldown + hourly cap per email.
+      const retryAfterSeconds = await checkAndRecordResetRequestRate(email);
+      if (retryAfterSeconds !== null) {
+        res.set('Retry-After', String(retryAfterSeconds));
+        return res.status(429).json({
+          error: 'Too many reset requests. Please try again later.',
+        });
+      }
+
+      // Generate verification code (6 digits) using a cryptographically
+      // secure generator -- Math.random() is not suitable for a security
+      // token, as it is not guaranteed to be a CSPRNG.
+      const code = String(crypto.randomInt(100000, 1000000));
       const salt = crypto.randomBytes(16).toString('hex');
       const hash = crypto
         .createHash('sha256')
@@ -164,13 +243,12 @@ exports.sendPasswordResetEmail = functions.https.onRequest((req, res) => {
           email: email,
         });
       } catch (emailErr) {
-        console.error('Error sending email via nodemailer:', emailErr);
-        // Still return success but log the code for debugging
-        console.log(`[DEBUG] Password reset code for ${email}: ${code}`);
-        return res.status(200).json({
-          success: true,
-          message: 'If email fails, check with admin for reset code',
-          debug: process.env.NODE_ENV === 'development' ? code : undefined,
+        // Never log the raw code -- only the failure itself. The account
+        // existence check above already ran, so an honest failure response
+        // here does not create a new enumeration signal.
+        console.error('Error sending password reset email:', emailErr.message || emailErr);
+        return res.status(502).json({
+          error: 'Could not send the reset email right now. Please try again shortly.',
         });
       }
     } catch (error) {
@@ -312,6 +390,12 @@ exports.completePasswordReset = functions.https.onRequest((req, res) => {
       const { email, sessionToken, newPassword } = req.body || {};
       if (!email || !sessionToken || !newPassword) {
         return res.status(400).json({ error: 'Missing required parameters' });
+      }
+
+      if (typeof newPassword !== 'string' || newPassword.length < 8) {
+        return res.status(400).json({
+          error: 'Password must be at least 8 characters long.',
+        });
       }
 
       const resetDoc = await admin
