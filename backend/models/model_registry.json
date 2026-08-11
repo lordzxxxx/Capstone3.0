@@ -1,12 +1,18 @@
 {
-  "current_model_version": "disease_model_v3",
+  "current_model_version": "disease_model_v4",
   "current_artifact": "/Users/lylesmac/capstone2-modify/backend/models/disease_model.pkl",
   "versions": [
     {
-      "model_version": "disease_model_v3",
+      "model_version": "disease_model_v4",
       "artifact": "/Users/lylesmac/capstone2-modify/backend/models/disease_model.pkl",
-      "metadata": "/Users/lylesmac/capstone2-modify/backend/models/disease_model_v3.metadata.json",
+      "metadata": "/Users/lylesmac/capstone2-modify/backend/models/disease_model_v4.metadata.json",
       "status": "current offline evaluation artifact"
+    },
+    {
+      "model_version": "disease_model_v3",
+      "artifact": "backend/models/disease_model.pkl at commit 7011a10",
+      "metadata": "backend/models/disease_model_v3.metadata.json",
+      "status": "historical validated artifact; 89.3138% held-out accuracy, 229 features (merged_dataset_v2). Superseded by v4 after a duplicate-column preprocessing fix (regurgitation/regurgitation.1 collapsed into one feature) reduced the feature count to 228; see DATASET_QUALITY_REPORT.md."
     },
     {
       "model_version": "disease_model_v2",

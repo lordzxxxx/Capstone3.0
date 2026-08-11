@@ -28,10 +28,10 @@ MODEL_PATH = MODEL_DIR / "disease_model.pkl"
 TEMP_MODEL_PATH = MODEL_DIR / ".disease_model.pkl.tmp"
 FEATURES_PATH = MODEL_DIR / "disease_model_features.json"
 METRICS_PATH = MODEL_DIR / "training_metrics.json"
-MODEL_METADATA_PATH = MODEL_DIR / "disease_model_v3.metadata.json"
+MODEL_METADATA_PATH = MODEL_DIR / "disease_model_v4.metadata.json"
 MODEL_REGISTRY_PATH = MODEL_DIR / "model_registry.json"
-MODEL_VERSION = "disease_model_v3"
-DATASET_VERSION = "merged_dataset_v2"
+MODEL_VERSION = "disease_model_v4"
+DATASET_VERSION = "merged_dataset_v3"
 REPORTS_DIR = BACKEND_DIR / "reports"
 CONFUSION_MATRIX_PATH = REPORTS_DIR / "disease_model_confusion_matrix.csv"
 CLASS_REPORT_PATH = REPORTS_DIR / "disease_model_per_class_report.csv"
@@ -358,6 +358,18 @@ def train_model() -> RandomForestClassifier:
                 "artifact": str(MODEL_PATH),
                 "metadata": str(MODEL_METADATA_PATH),
                 "status": "current offline evaluation artifact",
+            },
+            {
+                "model_version": "disease_model_v3",
+                "artifact": "backend/models/disease_model.pkl at commit 7011a10",
+                "metadata": "backend/models/disease_model_v3.metadata.json",
+                "status": (
+                    "historical validated artifact; 89.3138% held-out accuracy, "
+                    "229 features (merged_dataset_v2). Superseded by v4 after a "
+                    "duplicate-column preprocessing fix (regurgitation/"
+                    "regurgitation.1 collapsed into one feature) reduced the "
+                    "feature count to 228; see DATASET_QUALITY_REPORT.md."
+                ),
             },
             {
                 "model_version": "disease_model_v2",

@@ -1,12 +1,11 @@
 # AI-DSUHIS — Dataset Quality Report
 
-Dataset version documented here: **`merged_dataset_v2`**. The row values and
-229-feature schema are unchanged after the reproducibility rerun, but the
-pipeline now emits a source-row provenance sidecar and the verifier records
-near-duplicate diagnostics. Generated `2026-08-11`, last updated `2026-08-11`
-with a confirmed source license and a further dataset-acquisition search
-(§1.1, §10a). All figures were computed directly against the files in
-this repository, not estimated.
+Dataset version documented here: **`merged_dataset_v3`** (228 features).
+Generated `2026-08-11`, last updated `2026-08-11` with a confirmed source
+license, a further dataset-acquisition search (§1.1, §10a), and a verified
+preprocessing fix that collapsed one duplicate raw column (§1.1a). All
+figures were computed directly against the files in this repository, not
+estimated.
 
 ---
 
@@ -25,8 +24,8 @@ from its filename or folder.
 | Source/provider | **Strongly corroborated candidate identified, license now confirmed (follow-up review, 2026-08-11):** [Kaggle — "SympScan - Symptomps to Disease"](https://www.kaggle.com/datasets/behzadhassan/sympscan-symptomps-to-disease), uploaded by Kaggle user `behzadhassan`. Evidence: (1) the exact filename `Diseases_and_Symptoms_dataset.csv` is present in that dataset's file list; (2) the same GitHub user (`BehzadHassan/SympScan`, matching Kaggle username — first-party project showcase, not a third party) documents this dataset as "~96,000 patient records," "200+ binary-encoded symptoms," and "~100 disease classes" — all three figures match this repository's file exactly (96,088 rows, 230 raw symptom columns, 100 disease classes); (3) two independent public GitHub repos (`sandeep-panchal-fl/AI-Medical-Assistant-Hackathon`, `BehzadHassan/SympScan`) cite this same Kaggle URL as the source of a file with this exact name. **License confirmed this session: `CC0: Public Domain`**, retrieved directly from Kaggle's unauthenticated public metadata endpoint (`https://www.kaggle.com/api/v1/datasets/view/behzadhassan/sympscan-symptomps-to-disease`, `licenseNameNullable: "CC0: Public Domain"`) — the dataset's HTML page is JavaScript-rendered and hid this from a plain `WebFetch`/`curl` of the page itself, but the JSON metadata API is reachable without authentication and returns it directly. The same endpoint's `descriptionNullable` field independently confirms the file list, including `Diseases_and_Symptoms_dataset.csv` described as "Main dataset with binary symptom indicators (1 = present, 0 = absent) and target disease label," creator `Behzad hassan`, `usabilityRatingNullable: 0.94`, last updated 2025-05-22. No checksum match was possible (the endpoint's `files` list was empty in this response; a full authenticated download would be needed for a byte-level hash match), so this remains corroborated-and-license-confirmed but not cryptographically hash-verified against this repo's copy. |
 | Country/geographic coverage | Unknown / unverifiable from the file itself. No demographic or geographic column exists. Should **not** be described as Philippine-sourced. |
 | Original record count | **96,088 data rows** (96,089 lines including header), 231 columns (`diseases` + 230 raw symptom columns) |
-| Usable record count after pipeline | **93,993 rows**, 229 features, 100 disease classes (2,095 exact-duplicate rows removed; 2 raw columns dropped as non-numeric or reduced during normalization/collapsing — see §5) |
-| Column count | 231 raw → 230 after preprocessing (229 features + `diseases`) |
+| Usable record count after pipeline | **93,993 rows**, 228 features, 100 disease classes (2,095 exact-duplicate rows removed; the raw file's two `regurgitation`/`regurgitation.1` columns are collapsed into one feature by the mapping fix in §1.1a, plus 1 other raw column dropped as non-numeric — see §5) |
+| Column count | 231 raw → 229 after preprocessing (228 features + `diseases`) |
 | Target column | `diseases` |
 | Target classes | 100 (after dropping any disease with fewer than 20 rows — none were dropped at this threshold; see `merge_datasets.py` output) |
 | Provenance sidecar | `backend/dataset/processed/row_provenance.csv`, 93,993 rows, source file and original source CSV row number for every retained row |
@@ -37,7 +36,47 @@ from its filename or folder.
 | How the system uses it | Input to `backend/scripts/merge_datasets.py` → `dataset/processed/merged_dataset.csv` → `backend/app/train.py` → `disease_model.pkl` |
 | Philippine-specific | **NO** |
 | Status | **Training** |
-| Known limitations | Unverified provenance/license; 9,226 rows (9.8%) share an identical 229-symptom vector with a different disease label elsewhere in the dataset (§4); no patient demographics, vitals, or lab data |
+| Known limitations | Unverified provenance/license; 9,255 rows (9.8%) share an identical 228-symptom vector with a different disease label elsewhere in the dataset (§4); no patient demographics, vitals, or lab data |
+
+### 1.1a Preprocessing fix: duplicate `regurgitation` column (2026-08-11, this session)
+
+The raw source file's own header row contains **two** columns for the same
+symptom: `regurgitation` and `regurgitation.1` (verified directly in the
+raw CSV header text, not a `pandas`-loading artifact — the `.1` suffix is
+literally present in the file). `regurgitation` is a strict subset of
+`regurgitation.1` (every row with `regurgitation=1` also has
+`regurgitation.1=1`; 816 such rows; `regurgitation.1` additionally marks
+1,121 more rows as positive that `regurgitation` misses). Because
+`.1` is not a recognized alias, the pipeline's normalization step
+(`pipeline_utils.normalize_symptom`) treated these as two distinct
+features, so the shared symptom's signal was split across two noisy,
+disagreeing columns instead of one clean one — a genuine, technically
+justified preprocessing defect, not a stylistic choice.
+
+**Fix:** added `"regurgitation.1": "regurgitation"` to
+`backend/dataset/mappings/symptom_mapping.json`, so
+`merge_datasets.py`'s existing logical-OR column-merge logic now
+correctly unifies them. This is a mapping-table fix, not a manual CSV
+edit — the pipeline remains fully reproducible from the raw source.
+
+**Effect (measured, not estimated):**
+
+| | Before (229 features) | After (228 features) |
+|---|---:|---:|
+| Unique feature-vector groups | 88,894 | 88,878 |
+| Exact-vector majority-label ceiling | 94.5751% | 94.5581% |
+| Conflict groups / rows in conflict | 4,127 / 9,226 | 4,140 / 9,255 |
+| RF held-out Top-1 (same hyperparameters, same split methodology) | 89.3138% | **89.3399%** |
+| RF Top-2 / Top-3 | 96.4043% / 98.3936% | **96.5424% / 98.5052%** |
+
+The theoretical ceiling moved down by a negligible 0.017 points (removing
+one noisy, disagreeing column very slightly increases how often two
+different diseases now share one merged vector), but the *actual trained
+model* improved by +0.026 points Top-1 and +0.11 points Top-3 on the exact
+same leakage-safe split and hyperparameters — a small, real, honestly
+measured gain from removing a redundant/noisy feature, not from adding
+information. This is not the primary lever on the 89% plateau (see §3),
+but it is a legitimate, verified correctness fix and is kept.
 
 ### 1.2 `main.csv` — CORRECTLY EXCLUDED (not usable)
 
@@ -180,9 +219,9 @@ review).
 | Check | Result |
 |---|---|
 | Exact full-row duplicates remaining in `merged_dataset.csv` | **0** (2,095 were already removed by `merge_datasets.py`'s `remove_duplicates()` step) |
-| Unique 229-feature symptom-vector groups | 88,894 (out of 93,993 rows) |
-| Rows sharing an identical feature vector with ≥1 other row | 9,226 (9.8%) |
-| Feature-vector groups where the *same* vector maps to *different* disease labels | **4,127 groups, 9,226 rows** |
+| Unique 228-feature symptom-vector groups | 88,878 (out of 93,993 rows) |
+| Rows sharing an identical feature vector with ≥1 other row | 9,255 (9.8%) |
+| Feature-vector groups where the *same* vector maps to *different* disease labels | **4,140 groups, 9,255 rows** |
 | Train/test feature-vector overlap under the current **group-safe** split (`StratifiedGroupKFold` keyed on feature-vector identity) | **0 groups** (verified; this is the only current model evaluation split) |
 | Missing values across all cells | 0 |
 | Constant (zero-variance) features | 0 |
@@ -199,7 +238,7 @@ bronchitis* vs. *asthma*, *cholecystitis* vs. *esophagitis*,
 *diverticulitis*. These are diseases that genuinely can present with
 identical symptom checklists when no vitals, labs, or exam findings are
 available — a real, inherent ceiling on any classifier using only this
-229-symptom feature set, independent of algorithm choice or tuning (see
+228-symptom feature set, independent of algorithm choice or tuning (see
 `MODEL_EVALUATION_REPORT.md` for how this bounds achievable accuracy).
 
 The production train/test leakage (1,485 rows) does not mean the
@@ -218,7 +257,7 @@ gives a cleaner, leakage-free comparison point.
 |---|---|---|
 | Schema validation | Yes | `detect_disease_column()`, `is_binary_feature_dataset()` reject files without a valid target or non-binary features |
 | Column-name normalization | Yes | `basic_normalize()` — lowercase, underscore→space, strip `"symptom "` prefix, collapse whitespace |
-| Symptom alias resolution | Yes | `dataset/mappings/symptom_mapping.json` (11 entries) |
+| Symptom alias resolution | Yes | `dataset/mappings/symptom_mapping.json` (12 entries, including the `regurgitation.1`→`regurgitation` duplicate-column fix from §1.1a) |
 | Disease label normalization/aliasing | Yes | `dataset/mappings/disease_mapping.json` (15 entries) |
 | Missing-value handling | Yes | `pd.to_numeric(...).fillna(0)` — missing = absent |
 | Invalid-record removal | Yes | `remove_empty_labels()` drops `""`/`"nan"`/`"none"`/`"null"` labels |
@@ -273,25 +312,36 @@ after the ≥20-row filter remain in the dataset.
 The reproducible follow-up report is
 `backend/reports/accuracy_gap_analysis.json`, documented in
 `docs/AI_ACCURACY_GAP_ANALYSIS.md`. It found **0** current raw-label changes
-from the configured disease alias map, so no new label merge was made. It
-confirmed 4,127 exact-vector label-conflict groups and a majority-per-vector
-ceiling of 94.5751%.
+from the configured disease alias map, so no new label merge was made. On the
+current 228-feature dataset (after the §1.1a duplicate-column fix) it confirms
+4,140 exact-vector label-conflict groups and a majority-per-vector ceiling of
+94.5581%.
 
 The application has age, duration/severity context, vital signs, medical
 history, and prenatal fields in its workflows, but the current labeled RF
 source has none of those columns. They remain unavailable for RF training;
 the project does not fill them with defaults or values copied from unrelated
-records.
+records. This was re-checked in this session (2026-08-11) against the current
+FastAPI schemas and Firestore checkup/prenatal fields; the conclusion is
+unchanged — no new paired (clinical variable + `diseases` label) source exists.
 
-Two conservative transformations were tested using training-partition
-cross-validation only: a total symptom-count feature and the configured
-constant/near-zero-variance filter. The count variant improved its bounded
-three-fold CV weighted F1 from 0.88942 to 0.89064, but it is not promoted to
-the production artifact because it adds no new clinical information and the
-current production feature contract remains the verified 229 symptom inputs.
-The quality filter produced the same result as the baseline because no
-features met the removal threshold. Full output:
-`backend/reports/feature_variant_evaluation.json`.
+Two conservative transformations were tested (on the prior 229-feature
+dataset) using training-partition cross-validation only: a total
+symptom-count feature and the configured constant/near-zero-variance
+filter. The count variant improved its bounded three-fold CV weighted F1
+from 0.88942 to 0.89064, but it is not promoted to the production artifact
+because it adds no new clinical information and the current production
+feature contract is the verified 228 symptom inputs (§1.1a). The quality
+filter produced the same result as the baseline because no features met
+the removal threshold. Full output:
+`backend/reports/feature_variant_evaluation.json` (historical, from the
+229-feature run; not re-run since the 228-feature dedup fix does not
+change this experiment's conclusion — it removed a redundant *symptom*
+column, not a candidate *clinical-variable* addition).
+
+A hierarchical (category → disease) classifier was also tested this
+session using the project-authored 12-category grouping in
+`AI_DSUHIS_Disease_Self_Care_Knowledge_Base.csv` and rejected — see §11.
 
 ---
 
@@ -299,7 +349,7 @@ features met the removal threshold. Full output:
 
 See `AI_VARIABLE_DICTIONARY.md` for the complete `X`/`y` definitions
 across all four classification components in this system. Summary for
-the Random Forest specifically: 229 independent binary symptom-presence
+the Random Forest specifically: 228 independent binary symptom-presence
 features (`X`), one categorical target column `diseases` with 100 classes
 (`y`).
 
@@ -374,7 +424,40 @@ taxonomy student dataset, or an inaccessible aggregate/portal resource.
   clinical presentation patterns (§2).
 - No demographic, vital-sign, or lab-result features exist in the
   training data — see `AI_VARIABLE_DICTIONARY.md`.
-- Mild class imbalance (2.15×) is present and uncorrected
-  (`class_weight=None`).
+- Mild class imbalance (2.15×) is present; the production RF uses
+  `class_weight=balanced_subsample` to account for it (§6).
 - Dataset scale (93,993 records) is well short of the 150k–200k target;
   no legitimate path to close that gap was found within this review.
+
+---
+
+## 11. Hierarchical (category → disease) classification — tested and rejected
+
+Tested this session (2026-08-11) per the task's request to check whether a
+two-stage `symptoms → category → disease` pipeline beats the flat 100-class
+model. The category grouping used is the existing, project-authored,
+medically-reviewed 12-category taxonomy in
+`AI_DSUHIS_Disease_Self_Care_Knowledge_Base.csv` (all 100 disease labels
+matched exactly; no ad hoc grouping was invented).
+
+**Quantified before training anything:** of the 4,140 label-conflict groups
+(§4), 90.1% (3,730) have every conflicting disease inside the *same*
+category — i.e., the diseases that already share a symptom presentation are
+usually in the same body-system category, so splitting by category mostly
+cannot separate them. A perfect-category-oracle upper bound (majority label
+per vector, computed *within* category instead of globally) is 95.02% — only
++0.46 points above the flat model's 94.56% ceiling.
+
+**Actual experiment** (same group-safe split, same RF hyperparameters for
+both stages): a stage-1 category classifier reached 98.69% category
+accuracy — but the full two-stage pipeline's disease-level Top-1 accuracy
+was **88.96%**, *below* the flat model's 89.34%, because stage-1's small
+error rate still compounds into stage-2 errors the flat model never makes.
+Even feeding stage 2 the ground-truth category directly (an unrealistic
+oracle) only reached 90.12% — a marginal, not decisive, gain that a real
+category classifier cannot actually deliver.
+
+**Decision: hierarchical classification is not adopted.** The flat
+100-class `disease_model_v4` remains the better, simpler, single-stage
+model. This negative result is reported per this task's requirement to
+disclose unsuccessful experiments as evidence, not just successes.

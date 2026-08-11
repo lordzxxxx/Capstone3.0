@@ -71,7 +71,7 @@ def variants(features: pd.DataFrame) -> dict[str, pd.DataFrame]:
     ]
     quality_filtered = base[variable_columns].copy()
     return {
-        "baseline_229_binary_symptoms": base,
+        "baseline_228_binary_symptoms": base,
         "baseline_plus_derived_symptom_count": count_variant,
         "quality_filtered_features": quality_filtered,
     }
@@ -163,7 +163,7 @@ def main() -> int:
         "train_records": int(len(train_idx)),
         "locked_test_records": int(len(test_idx)),
         "selected_by_training_cv": selected["variant"],
-        "adoption_status": "not_promoted; production remains the validated 229-feature artifact",
+        "adoption_status": "not_promoted; production remains the validated 228-feature artifact",
         "variants": candidates,
         "interpretation": "Derived symptom count adds no new clinical information and cannot raise the exact-vector theoretical ceiling; it was tested only as a possible tree-model representation improvement. Quality filtering is expected to be identical because no constant/near-zero-variance features were found.",
     }

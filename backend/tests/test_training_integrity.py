@@ -30,13 +30,13 @@ def test_saved_metrics_record_actual_quality_gate_and_artifacts() -> None:
     )
 
     assert metrics["dataset_records"] == 93993
-    assert metrics["features"] == 229
+    assert metrics["features"] == 228
     assert metrics["diseases"] == 100
     assert metrics["train_test_feature_vector_overlap_groups"] == 0
-    assert metrics["model_version"] == "disease_model_v3"
-    assert metrics["accuracy"] == 0.8931382978723404
-    assert metrics["top2_accuracy"] == 0.9640425531914893
-    assert metrics["top3_accuracy"] == 0.9839361702127659
+    assert metrics["model_version"] == "disease_model_v4"
+    assert metrics["accuracy"] == 0.8933985850311187
+    assert metrics["top2_accuracy"] == 0.9654236927496144
+    assert metrics["top3_accuracy"] == 0.9850523964040641
     assert metrics["model_parameters"]["min_samples_leaf"] == 2
     assert metrics["cross_validation"]["folds"] == 5
     assert (

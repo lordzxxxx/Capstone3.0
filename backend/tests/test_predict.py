@@ -26,7 +26,7 @@ def test_production_model_and_features_load_once() -> None:
     second_model, second_features = load_artifacts()
     assert first_model is second_model
     assert first_features is second_features
-    assert len(first_features) == 229
+    assert len(first_features) == 228
     assert int(first_model.n_features_in_) == len(first_features)
     assert len(first_features) == len(set(first_features))
     assert all(feature.strip() for feature in first_features)

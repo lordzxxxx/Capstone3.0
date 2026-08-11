@@ -156,7 +156,7 @@ def variable_inventory() -> list[dict[str, Any]]:
             "available_in_training_data": True,
             "source": "Application checkup/prenatal text fields; normalized wide symptom columns in the RF source",
             "can_be_used_for_training": True,
-            "current_role": "229 binary symptom-presence inputs after normalization",
+            "current_role": "228 binary symptom-presence inputs after normalization",
             "reason": "The current RF source contains the paired binary representation and disease label.",
         },
         {
@@ -294,13 +294,13 @@ def main() -> int:
         "variable_inventory": variable_inventory(),
         "interpretation": {
             "largest_observed_causes": [
-                "Identical 229-symptom vectors occur with different disease labels; the majority-per-vector ceiling is below 95%.",
+                "Identical 228-symptom vectors occur with different disease labels; the majority-per-vector ceiling is below 95%.",
                 "Near-identical vectors are widespread, so one symptom difference often separates neighboring classes without enough clinical context.",
                 "The weakest held-out recalls cluster in clinically overlapping classes, including COPD, skin polyp, skin pigmentation disorder, and noninfectious gastroenteritis.",
                 "The current training source has no age, duration, severity, vital-sign, laboratory, history, or pregnancy-context columns paired with the 100-class target.",
                 "No additional label aliases were observed in the current raw source beyond the configured mapping file; medically distinct overlapping classes were retained.",
             ],
-            "accuracy_ceiling_definition": "Sum of the majority label count within every exact feature-vector group divided by usable records; this is an upper bound for any classifier using only the current 229 binary inputs on these records.",
+            "accuracy_ceiling_definition": "Sum of the majority label count within every exact feature-vector group divided by usable records; this is an upper bound for any classifier using only the current 228 binary inputs on these records.",
         },
     }
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)

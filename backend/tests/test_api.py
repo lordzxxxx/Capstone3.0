@@ -15,9 +15,9 @@ def test_symptom_catalog_returns_valid_unique_features() -> None:
     response = TestClient(api.app).get("/symptoms")
     assert response.status_code == 200
     payload = response.json()
-    assert payload["total"] == 229
-    assert len(payload["symptoms"]) == 229
-    assert len(set(payload["symptoms"])) == 229
+    assert payload["total"] == 228
+    assert len(payload["symptoms"]) == 228
+    assert len(set(payload["symptoms"])) == 228
     assert "fever" in payload["symptoms"]
 
 

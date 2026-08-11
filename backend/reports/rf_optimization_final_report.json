@@ -4,243 +4,236 @@
   "splitMethod": "StratifiedGroupKFold(n_splits=5) fold 0 as test; groups = identical 229-feature symptom vectors",
   "baseline": {
     "label": "baseline_production_config_group_safe_split",
-    "testSamples": 18800,
-    "accuracy": 0.8629255319148936,
-    "balancedAccuracy": 0.8495604230256312,
-    "precisionWeighted": 0.8974581581461539,
-    "recallWeighted": 0.8629255319148936,
-    "f1Weighted": 0.8700120552449551,
-    "precisionMacro": 0.9001902025555022,
-    "recallMacro": 0.8495604230256312,
-    "f1Macro": 0.8643763073056033,
-    "top3Accuracy": 0.9536170212765958,
-    "fitSeconds": 3.08
+    "testSamples": 18799,
+    "accuracy": 0.8608436618969094,
+    "balancedAccuracy": 0.8479093587111711,
+    "precisionWeighted": 0.891125114793877,
+    "recallWeighted": 0.8608436618969094,
+    "f1Weighted": 0.8674280448018495,
+    "precisionMacro": 0.894354361445846,
+    "recallMacro": 0.8479093587111711,
+    "f1Macro": 0.8623952216359888,
+    "top3Accuracy": 0.9571253790095218,
+    "fitSeconds": 3.27
   },
   "tuned": {
     "label": "tuned_group_safe_split",
-    "testSamples": 18800,
-    "accuracy": 0.8927127659574469,
-    "balancedAccuracy": 0.8946106249825705,
-    "precisionWeighted": 0.8967421978855501,
-    "recallWeighted": 0.8927127659574469,
-    "f1Weighted": 0.8928247889220234,
-    "precisionMacro": 0.8903250702139183,
-    "recallMacro": 0.8946106249825705,
-    "f1Macro": 0.8906038995753908,
-    "top3Accuracy": 0.9843085106382978
+    "testSamples": 18799,
+    "accuracy": 0.8913240065960956,
+    "balancedAccuracy": 0.8936217172930928,
+    "precisionWeighted": 0.8948016453794742,
+    "recallWeighted": 0.8913240065960956,
+    "f1Weighted": 0.8912321665332893,
+    "precisionMacro": 0.8888353118371957,
+    "recallMacro": 0.8936217172930928,
+    "f1Macro": 0.8893671818459536,
+    "top3Accuracy": 0.9846800361721368
   },
   "crossValidation": {
     "folds": 5,
-    "meanAccuracy": 0.8913063637061706,
-    "stdAccuracy": 0.0012351607155262584,
-    "meanF1Weighted": 0.8909543045774484,
-    "stdF1Weighted": 0.0013978336613419133,
-    "meanF1Macro": 0.8887766870276398,
-    "stdF1Macro": 0.0012893531714408273,
+    "meanAccuracy": 0.8910551425807046,
+    "stdAccuracy": 0.002678277287267942,
+    "meanF1Weighted": 0.8907179380234401,
+    "stdF1Weighted": 0.002698433612033464,
+    "meanF1Macro": 0.888450273692943,
+    "stdF1Macro": 0.0026028488826676304,
     "perFoldAccuracy": [
-      0.8900857769798524,
-      0.8923465655961168,
-      0.8895464822449793,
-      0.8920805904647915,
-      0.8924724032451123
+      0.8943413790810559,
+      0.8929521276595744,
+      0.8876255070150941,
+      0.8881574572777445,
+      0.8921992418700538
     ],
     "perFoldF1Weighted": [
-      0.8896934705853645,
-      0.8921081247942041,
-      0.8888747046817729,
-      0.891789429426254,
-      0.8923057933996471
+      0.894292855171731,
+      0.8924259431644798,
+      0.8873292217394279,
+      0.887843012497184,
+      0.8916986575443783
     ]
   },
   "topFeatureImportances": [
     {
       "feature": "vomiting",
-      "importance": 0.02854543097684798
-    },
-    {
-      "feature": "shortness of breath",
-      "importance": 0.026579943548083365
+      "importance": 0.028177167895668074
     },
     {
       "feature": "sharp abdominal pain",
-      "importance": 0.02347136315726375
+      "importance": 0.025111676692127285
     },
     {
-      "feature": "cough",
-      "importance": 0.02312639329025638
+      "feature": "shortness of breath",
+      "importance": 0.024966046865514385
     },
     {
       "feature": "headache",
-      "importance": 0.023117171591792725
-    },
-    {
-      "feature": "back pain",
-      "importance": 0.021806163794881324
+      "importance": 0.02237958771762852
     },
     {
       "feature": "sharp chest pain",
-      "importance": 0.02137484676122097
+      "importance": 0.02222425266337393
     },
     {
-      "feature": "fever",
-      "importance": 0.021010086445296543
+      "feature": "back pain",
+      "importance": 0.021267755047879124
+    },
+    {
+      "feature": "cough",
+      "importance": 0.02123624194337645
     },
     {
       "feature": "nausea",
-      "importance": 0.01932992286831552
+      "importance": 0.02020872627857842
     },
     {
       "feature": "burning abdominal pain",
-      "importance": 0.01755632479533388
+      "importance": 0.019168554183537856
     },
     {
-      "feature": "arm pain",
-      "importance": 0.016713923523512926
-    },
-    {
-      "feature": "nasal congestion",
-      "importance": 0.01647322429685078
+      "feature": "fever",
+      "importance": 0.01753090383929306
     },
     {
       "feature": "lower abdominal pain",
-      "importance": 0.016031301694437287
-    },
-    {
-      "feature": "pelvic pain",
-      "importance": 0.015536605232415159
+      "importance": 0.01698010507495795
     },
     {
       "feature": "sore throat",
-      "importance": 0.015299393841475951
+      "importance": 0.016913118011665666
+    },
+    {
+      "feature": "nasal congestion",
+      "importance": 0.016208171921289566
+    },
+    {
+      "feature": "arm pain",
+      "importance": 0.01599036308534962
     },
     {
       "feature": "dizziness",
-      "importance": 0.015168819180886025
+      "importance": 0.015212675950809296
     },
     {
       "feature": "ear pain",
-      "importance": 0.013634547838853104
+      "importance": 0.01475477923755531
     },
     {
-      "feature": "side pain",
-      "importance": 0.01314588996552038
+      "feature": "pelvic pain",
+      "importance": 0.01374565548141785
     },
     {
-      "feature": "skin swelling",
-      "importance": 0.01307856249203386
+      "feature": "neck pain",
+      "importance": 0.01350591347322851
     },
     {
       "feature": "skin rash",
-      "importance": 0.012693782046318002
+      "importance": 0.013261849933388328
+    },
+    {
+      "feature": "weakness",
+      "importance": 0.012890066421703166
     }
   ],
   "worstRecallClasses": [
     {
       "disease": "chronic obstructive pulmonary disease (copd)",
-      "precision": 0.6357615894039735,
+      "precision": 0.7024793388429752,
+      "recall": 0.5246913580246914,
+      "f1": 0.6007067137809188,
+      "support": 162.0
+    },
+    {
+      "disease": "personality disorder",
+      "precision": 0.6075949367088608,
       "recall": 0.588957055214724,
-      "f1": 0.6114649681528662,
+      "f1": 0.5981308411214953,
       "support": 163.0
     },
     {
-      "disease": "skin polyp",
-      "precision": 0.6282051282051282,
-      "recall": 0.6086956521739131,
-      "f1": 0.6182965299684543,
-      "support": 161.0
-    },
-    {
       "disease": "skin pigmentation disorder",
-      "precision": 0.61875,
+      "precision": 0.6226415094339622,
       "recall": 0.6149068322981367,
-      "f1": 0.616822429906542,
+      "f1": 0.61875,
       "support": 161.0
     },
     {
       "disease": "noninfectious gastroenteritis",
-      "precision": 0.72,
-      "recall": 0.6721991701244814,
-      "f1": 0.6952789699570815,
+      "precision": 0.7647058823529411,
+      "recall": 0.6473029045643154,
+      "f1": 0.701123595505618,
       "support": 241.0
     },
     {
+      "disease": "skin polyp",
+      "precision": 0.5544041450777202,
+      "recall": 0.6645962732919255,
+      "f1": 0.6045197740112994,
+      "support": 161.0
+    },
+    {
       "disease": "acute bronchospasm",
-      "precision": 0.5869565217391305,
-      "recall": 0.6864406779661016,
-      "f1": 0.6328125,
+      "precision": 0.6439393939393939,
+      "recall": 0.7203389830508474,
+      "f1": 0.68,
       "support": 118.0
     },
     {
-      "disease": "spinal stenosis",
-      "precision": 0.9388888888888889,
-      "recall": 0.6983471074380165,
-      "f1": 0.8009478672985783,
-      "support": 242.0
-    },
-    {
-      "disease": "personality disorder",
-      "precision": 0.6129032258064516,
-      "recall": 0.6993865030674846,
-      "f1": 0.6532951289398281,
-      "support": 163.0
-    },
-    {
       "disease": "pneumonia",
-      "precision": 0.8888888888888888,
-      "recall": 0.7120418848167539,
-      "f1": 0.7906976744186046,
+      "precision": 0.92,
+      "recall": 0.7225130890052356,
+      "f1": 0.8093841642228738,
       "support": 191.0
     },
     {
-      "disease": "spondylosis",
-      "precision": 0.9365079365079365,
-      "recall": 0.7254098360655737,
-      "f1": 0.8175519630484989,
-      "support": 244.0
+      "disease": "acute bronchitis",
+      "precision": 0.7135678391959799,
+      "recall": 0.7319587628865979,
+      "f1": 0.72264631043257,
+      "support": 194.0
     },
     {
-      "disease": "infectious gastroenteritis",
-      "precision": 0.7195121951219512,
-      "recall": 0.7283950617283951,
-      "f1": 0.7239263803680982,
-      "support": 243.0
+      "disease": "gallstone",
+      "precision": 0.75,
+      "recall": 0.7361963190184049,
+      "f1": 0.7430340557275542,
+      "support": 163.0
+    },
+    {
+      "disease": "cystitis",
+      "precision": 0.9326424870466321,
+      "recall": 0.7377049180327869,
+      "f1": 0.8237986270022883,
+      "support": 244.0
     }
   ],
   "bestRecallClasses": [
     {
+      "disease": "ear drum damage",
+      "precision": 0.9418604651162791,
+      "recall": 0.9878048780487805,
+      "f1": 0.9642857142857143,
+      "support": 164.0
+    },
+    {
       "disease": "multiple sclerosis",
-      "precision": 0.9476744186046512,
+      "precision": 0.9644970414201184,
       "recall": 0.9878787878787879,
-      "f1": 0.9673590504451038,
+      "f1": 0.9760479041916168,
       "support": 165.0
     },
     {
-      "disease": "hypertensive heart disease",
-      "precision": 0.9512195121951219,
-      "recall": 0.9915254237288136,
-      "f1": 0.970954356846473,
-      "support": 118.0
+      "disease": "injury to the trunk",
+      "precision": 0.9467455621301775,
+      "recall": 0.9937888198757764,
+      "f1": 0.9696969696969697,
+      "support": 161.0
     },
     {
-      "disease": "developmental disability",
-      "precision": 0.9534883720930233,
-      "recall": 0.9939393939393939,
-      "f1": 0.973293768545994,
-      "support": 165.0
-    },
-    {
-      "disease": "concussion",
-      "precision": 0.9753086419753086,
-      "recall": 0.9957983193277311,
-      "f1": 0.9854469854469855,
-      "support": 238.0
-    },
-    {
-      "disease": "gout",
-      "precision": 0.9490196078431372,
-      "recall": 0.9958847736625515,
-      "f1": 0.9718875502008032,
-      "support": 243.0
+      "disease": "pyogenic skin infection",
+      "precision": 0.9707602339181286,
+      "recall": 0.9940119760479041,
+      "f1": 0.9822485207100592,
+      "support": 167.0
     },
     {
       "disease": "hypoglycemia",
@@ -250,33 +243,40 @@
       "support": 243.0
     },
     {
-      "disease": "benign prostatic hyperplasia (bph)",
-      "precision": 0.9488188976377953,
+      "disease": "developmental disability",
+      "precision": 0.9705882352941176,
       "recall": 1.0,
-      "f1": 0.9737373737373738,
-      "support": 241.0
+      "f1": 0.9850746268656716,
+      "support": 165.0
+    },
+    {
+      "disease": "macular degeneration",
+      "precision": 0.9534883720930233,
+      "recall": 1.0,
+      "f1": 0.9761904761904762,
+      "support": 164.0
+    },
+    {
+      "disease": "concussion",
+      "precision": 0.967479674796748,
+      "recall": 1.0,
+      "f1": 0.9834710743801653,
+      "support": 238.0
     },
     {
       "disease": "obstructive sleep apnea (osa)",
-      "precision": 0.9601990049751243,
+      "precision": 0.9698492462311558,
       "recall": 1.0,
-      "f1": 0.9796954314720813,
+      "f1": 0.9846938775510204,
       "support": 193.0
     },
     {
-      "disease": "bursitis",
-      "precision": 0.9918032786885246,
+      "disease": "benign prostatic hyperplasia (bph)",
+      "precision": 0.9877049180327869,
       "recall": 1.0,
-      "f1": 0.9958847736625515,
-      "support": 242.0
-    },
-    {
-      "disease": "pyogenic skin infection",
-      "precision": 0.9542857142857143,
-      "recall": 1.0,
-      "f1": 0.9766081871345029,
-      "support": 167.0
+      "f1": 0.9938144329896907,
+      "support": 241.0
     }
   ],
-  "totalRuntimeSeconds": 283.6
+  "totalRuntimeSeconds": 280.4
 }

@@ -445,6 +445,34 @@ class HealthAIClassifier {
     'pediatric': ['infant', 'child', 'baby', 'newborn', 'toddler'],
   };
 
+  // Structured prenatal fields collected by the checkup/prenatal workflows.
+  // These are strong, unambiguous signals that a record is prenatal care --
+  // a health worker would not populate gravida/para/gestational age for a
+  // non-pregnant patient. The portable ML model's fixed input vector
+  // (age + keyword-hash buckets + 4 vitals; see _preprocessData) has no
+  // feature slot for any of these fields, so it cannot see this signal at
+  // all. The rule-based path already reads them explicitly. When they are
+  // present, classify() defers to the rule-based path so this signal is not
+  // silently dropped.
+  static const List<String> _structuredPrenatalFields = [
+    'gravida',
+    'para',
+    'lmp',
+    'edd',
+    'gestationalAge',
+    'aog',
+    'fh',
+    'dhb',
+    'tcb',
+  ];
+
+  static bool _hasStructuredPrenatalSignal(Map<String, dynamic> healthData) {
+    return _structuredPrenatalFields.any(
+      (field) =>
+          healthData[field] != null && healthData[field].toString().isNotEmpty,
+    );
+  }
+
   static const int _legacyKeywordFeatureStartIndex = 1;
   static const int _legacyKeywordFeatureEndIndexExclusive = 51;
   static const int _legacyBpSystolicFeatureIndex = 51;
@@ -496,7 +524,14 @@ class HealthAIClassifier {
     }
 
     ClassificationResult result;
-    if (_portableModel != null) {
+    // The portable ML model's fixed input vector (age + keyword-hash
+    // buckets + 4 vitals; see _preprocessData) has no feature slot for
+    // structured prenatal fields (gravida, para, gestational age, risk
+    // level, etc.). When those fields are present, the ML model cannot see
+    // them at all and has been observed to misclassify clearly prenatal
+    // records, while the rule-based path reads these fields explicitly.
+    // Prefer the rule-based path whenever this signal is present.
+    if (_portableModel != null && !_hasStructuredPrenatalSignal(healthData)) {
       try {
         result = await _mlModelClassify(healthData);
       } catch (e) {
@@ -681,19 +716,8 @@ class HealthAIClassifier {
         score = _countKeywordMatches(text, keywordDatabase['prenatal']!);
         // Detect prenatal-specific fields in the data
         // If these fields exist, it's almost certainly a prenatal record
-        final prenatalFields = [
-          'gravida',
-          'para',
-          'lmp',
-          'edd',
-          'gestationalAge',
-          'aog',
-          'fh',
-          'dhb',
-          'tcb',
-        ];
         int prenatalFieldCount = 0;
-        for (var field in prenatalFields) {
+        for (var field in _structuredPrenatalFields) {
           if (healthData[field] != null &&
               healthData[field].toString().isNotEmpty) {
             prenatalFieldCount++;
@@ -1065,19 +1089,7 @@ class HealthAIClassifier {
     // For prenatal records, ensure prenatal keywords are included
     // even if not explicitly in the text
     if (healthData != null) {
-      final prenatalFields = [
-        'gravida',
-        'para',
-        'lmp',
-        'edd',
-        'gestationalAge',
-        'aog',
-        'fh',
-      ];
-      bool hasPrenatalFields = prenatalFields.any(
-        (f) => healthData[f] != null && healthData[f].toString().isNotEmpty,
-      );
-      if (hasPrenatalFields) {
+      if (_hasStructuredPrenatalSignal(healthData)) {
         if (!matched.contains('prenatal')) matched.add('prenatal');
         if (!matched.contains('pregnant')) matched.add('pregnant');
         if (!matched.contains('gestational')) matched.add('gestational');

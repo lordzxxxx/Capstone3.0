@@ -3,7 +3,7 @@
 > Accuracy ranges in this historical checklist are planning estimates, not
 > verified results. Use `docs/AI_REQUIREMENTS_STATUS.md` and
 > `backend/reports/ai_requirements_verification.json` for actual counts and
-> held-out metrics. The current verified disease model result is 89.31% on
+> held-out metrics. The current verified disease model result is 89.34% on
 > 18,800 group-safe held-out records; the 95% acceptance target is not met.
 
 ## Installation Status

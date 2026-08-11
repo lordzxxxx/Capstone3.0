@@ -12,19 +12,19 @@ machine-readable evidence at `backend/reports/accuracy_gap_analysis.json`.
 
 | File | Raw rows | Usable rows | Fields | Current use | Provenance and limitation |
 | --- | ---: | ---: | --- | --- | --- |
-| `backend/dataset/processed/merged_dataset.csv` | 93,993 | 93,993 | `diseases` plus 229 symptom indicators used by the model | **Model training**; stratified 80/20 split | Local processed artifact. The original publisher/source is not verified in this repository. It is not labelled as Philippine data. Duplicate full rows: 0; rows with missing fields: 0. |
-| `backend/dataset/raw/Diseases_and_Symptoms_dataset.csv` | 96,088 | 96,088 | `diseases` plus 230 source columns (229 validated model features) | Training source/audit comparison; not loaded directly by the API | Source provenance not verified. The comparison report explicitly records that the standalone Kaggle CSV was unavailable and that the recovered segment must not be treated as an independently verified Kaggle download. Duplicate full rows: 0; rows with missing fields: 0. |
+| `backend/dataset/processed/merged_dataset.csv` | 93,993 | 93,993 | `diseases` plus 228 symptom indicators used by the model | **Model training**; stratified 80/20 split | Local processed artifact. The original publisher/source is not verified in this repository. It is not labelled as Philippine data. Duplicate full rows: 0; rows with missing fields: 0. |
+| `backend/dataset/raw/Diseases_and_Symptoms_dataset.csv` | 96,088 | 96,088 | `diseases` plus 229 source columns (228 validated model features) | Training source/audit comparison; not loaded directly by the API | Source provenance not verified. The comparison report explicitly records that the standalone Kaggle CSV was unavailable and that the recovered segment must not be treated as an independently verified Kaggle download. Duplicate full rows: 0; rows with missing fields: 0. |
 
 The persisted training metrics in `backend/models/training_metrics.json` are
-the actual metrics for the processed file: 75,193 training rows and 18,800
-test rows, 229 features, and 100 disease classes. The split is
+the actual metrics for the processed file: 75,194 training rows and 18,799
+test rows, 228 features, and 100 disease classes. The split is
 `StratifiedGroupKFold(n_splits=5)` with groups formed from identical symptom
 vectors, so the held-out test set has zero exact feature-vector overlap with
 training. The estimator is the tuned 200-tree scikit-learn
 `RandomForestClassifier` (`criterion=entropy`, `max_depth=28`,
 `max_features=log2`, `class_weight=balanced_subsample`). Held-out accuracy is
-89.3138%, weighted precision 89.9042%, weighted recall 89.3138%, and weighted
-F1 89.3197%. Top-2 accuracy is 96.4043% and Top-3 accuracy is 98.3936%.
+89.3399%, weighted precision 89.8701%, weighted recall 89.3399%, and weighted
+F1 89.3328%. Top-2 accuracy is 96.5424% and Top-3 accuracy is 98.5052%.
 Confusion and per-class reports are persisted under
 `backend/reports/`; the complete source counts and acceptance status are in
 `backend/reports/ai_requirements_verification.json`.
@@ -85,14 +85,14 @@ was identified for this repository:
 ## External dataset compatibility review
 
 The following public machine-readable candidates were reviewed but not merged.
-The decision preserves the current 229-feature binary schema and prevents
+The decision preserves the current 228-feature binary schema and prevents
 synthetic, mixed-provenance or text-only records from being presented as
 equivalent clinical observations:
 
 | Dataset / provider | Official reference | Observed records / type | License or provenance | Decision |
 | --- | --- | --- | --- | --- |
 | `eng_dataset` / Technological Institute of the Philippines thesis authors | <https://huggingface.co/datasets/notlath/eng_dataset/blob/main/README.md> | 3,000 English symptom narratives across 6 infectious-disease classes; the dataset card describes the descriptions as synthetic | CC BY 4.0, but synthetic text and text-only labels are not compatible with the current wide binary feature matrix | Not integrated; reference only |
-| `symptom-based-disease-prediction-v2` / Jainam-11 | <https://huggingface.co/datasets/Jainam-11/symptom-based-disease-prediction-v2> | 157,036 JSONL text/instruction records with multi-label/confidence-oriented fields | Apache-2.0 is stated on the dataset page, but the schema is an LLM-oriented text task rather than the current single-label 229-feature task | Not integrated; requires an independent schema/provenance/label study |
+| `symptom-based-disease-prediction-v2` / Jainam-11 | <https://huggingface.co/datasets/Jainam-11/symptom-based-disease-prediction-v2> | 157,036 JSONL text/instruction records with multi-label/confidence-oriented fields | Apache-2.0 is stated on the dataset page, but the schema is an LLM-oriented text task rather than the current single-label 228-feature task | Not integrated; requires an independent schema/provenance/label study |
 | `Diseases_Dataset` / kamruzzaman-asif | <https://huggingface.co/datasets/kamruzzaman-asif/Diseases_Dataset> | 267,614 records across multiple splits, mixed text `Disease`/`Symptoms`/optional treatment fields | Aggregated from other Hugging Face/Kaggle sources; upstream publisher, release and rights are not established by the aggregator page | **SOURCE REQUIRES VERIFICATION**; not integrated |
 | `Disease-Symptom-Extensive-Clean` referenced by the mixed collection | <https://huggingface.co/datasets/kamruzzaman-asif/Diseases_Dataset> | Referenced as a 246,945-row source inside the mixed collection | Direct dataset-card provenance/license was not verified during this run | **SOURCE REQUIRES VERIFICATION**; not integrated |
 
@@ -109,7 +109,7 @@ to screen five further candidate datasets surfaced by search:
 | --- | --- | --- | --- |
 | `diseases-and-symptoms-dataset` / `dhivyeshrk` | 773 diseases, 377 symptoms, ~246,000 rows | "World Bank Dataset Terms of Use" | **Rejected — self-disclosed synthetic data.** The publisher's own description states the rows "were artificially generated, preserving Symptom Severity and Disease Occurrence Possibility." Not real patient records regardless of size; likely the same lineage as the `kamruzzaman-asif` mixed collection already rejected above (near-identical ~246k row count). |
 | `disease-and-symptoms-dataset` / `choongqianzheng` | 800+ diseases, 600 symptoms, ~5,000 rows | "Other (specified in description)" | Rejected — sparse `Symptom_1..Symptom_17` text-list schema, not a binary matrix; no stated collection methodology. |
-| `disease-prediction-based-on-symptoms` / `noeyislearning` | 132 binary symptoms, 1 target | CC0: Public Domain | Rejected — small incompatible taxonomy (not this repo's 229-symptom/100-class schema); same lineage as the next row. |
+| `disease-prediction-based-on-symptoms` / `noeyislearning` | 132 binary symptoms, 1 target | CC0: Public Domain | Rejected — small incompatible taxonomy (not this repo's 228-symptom/100-class schema); same lineage as the next row. |
 | `disease-symptom-description-dataset` / `itachi9604` | 132 symptoms, 41 diseases, ~4,920 rows | CC BY-SA 4.0 | Rejected — publisher states "data...is for reference and training purposes only, and actual data may vary"; a student chatbot-course project, not real patient encounters; 41-class taxonomy incompatible with this repo's 100 classes. |
 | `symptom2disease` / `niyarrbarman` | 24 diseases, 1,200 rows, free text | CC0: Public Domain | Already investigated as `text_datasets/Symptom2Disease.csv` above (43.5% of rows matched zero known symptom phrases when conversion was tested); license confirmed CC0 for completeness, decision unchanged. |
 

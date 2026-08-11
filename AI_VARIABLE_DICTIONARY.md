@@ -25,11 +25,11 @@ fixed feature vector. All four are documented below.
 model is trained and evaluated but not currently reachable by any active
 route.
 
-### Independent Variables — `X` (229 features)
+### Independent Variables — `X` (228 features)
 
 | Property | Value |
 |---|---|
-| Count | **229** (`model.n_features_in_ == 229`) |
+| Count | **228** (`model.n_features_in_ == 228`) |
 | Data type | `uint8`, values restricted to `{0, 1}` (verified: `pd.unique()` over every feature cell returns exactly `[0, 1]`) |
 | Encoding | Binary presence/absence indicator — no one-hot, no scaling |
 | Possible values | `1` = symptom present in this record; `0` = symptom absent or not reported |
@@ -37,17 +37,17 @@ route.
 | Source | `backend/dataset/processed/merged_dataset.csv`, produced by `backend/scripts/merge_datasets.py` from `backend/dataset/raw/Diseases_and_Symptoms_dataset.csv` |
 | Missing-value rule | Any missing/non-numeric cell is coerced to `0` (absent) during preprocessing — `pd.to_numeric(...).fillna(0)` in `pipeline_utils.prepare_wide_dataset()` |
 | Component using it | `backend/app/train.py` (training), `backend/app/predict.py` (inference, currently unreachable via `/predict`) |
-| Role | Predictor — each column is one symptom name; the full 229-length vector for one patient/record is the model's input row |
+| Role | Predictor — each column is one symptom name; the full 228-length vector for one patient/record is the model's input row |
 
 Every feature is a distinct named symptom (e.g. `fever`, `headache`,
-`back pain`, `nosebleed`, `difficulty in swallowing`). All 229 share this
+`back pain`, `nosebleed`, `difficulty in swallowing`). All 228 share this
 same type/encoding/role, so they are documented once here as a class
-rather than repeated 229 times. The complete, ordered list of all 229
+rather than repeated 228 times. The complete, ordered list of all 228
 names is the source of truth at
 [`backend/models/disease_model_features.json`](backend/models/disease_model_features.json)
 (also mirrored at `backend/models/feature_columns.json`, verified
 byte-identical). A representative sample, grouped by theme for
-readability (grouping is descriptive only — the model treats all 229
+readability (grouping is descriptive only — the model treats all 228
 as an unordered flat vector, with no theme metadata):
 
 **Symptoms — general/constitutional:** `fever`, `chills`, `ache all over`,
@@ -88,9 +88,9 @@ this model — see the "Only symptoms" limitation in `AI_ALGORITHM_QA.md`
 | Example values | `asthma`, `sepsis`, `heart failure`, `cystitis`, `spondylosis`, `hypertensive heart disease` (full list: 100 entries, in `model.classes_` / derivable from `merged_dataset.csv`'s `diseases` column) |
 | Source | Same `merged_dataset.csv`, `diseases` column |
 | Missing-value rule | Rows with an empty/`"nan"`/`"none"`/`"null"` label are dropped entirely before training (`pipeline_utils.remove_empty_labels()`) |
-| Role | **Target/output** — the disease the 229-symptom vector is associated with |
+| Role | **Target/output** — the disease the 228-symptom vector is associated with |
 
-`X = 229 binary symptom-presence features`. `y = "diseases"`, a 100-class
+`X = 228 binary symptom-presence features`. `y = "diseases"`, a 100-class
 categorical column.
 
 ---
@@ -171,7 +171,7 @@ every variable actually used in classification to be documented.
 | Variable | Type | Source | Role |
 |---|---|---|---|
 | `recognized_conditions` | `list[str]` | Explicit condition names a BHW typed, matched against the RF's 100-class disease vocabulary (`predict.recognize_diseases()`) | Primary classification input |
-| `recognized_symptoms` | `list[str]` | Symptom names matched against the RF's 229-feature vocabulary (`predict.recognize_symptoms()`) | Secondary classification input, used only if no condition matched |
+| `recognized_symptoms` | `list[str]` | Symptom names matched against the RF's 228-feature vocabulary (`predict.recognize_symptoms()`) | Secondary classification input, used only if no condition matched |
 
 ### `HealthAIClassifier._determineSeverity()` (rule-based fallback path only)
 
@@ -212,6 +212,6 @@ Final mapping: score `≥4 → Critical`, `≥2 → High`, `≥1 → Medium`, el
 
 | | Random Forest | On-device neural net | Rule engines |
 |---|---|---|---|
-| `X` | 229 binary symptom features | 200-length vector (age, 50 hashed keyword buckets, 4 vitals) | `recognized_conditions`/`recognized_symptoms` (guidance); vitals/riskLevel/keywords (severity) |
+| `X` | 228 binary symptom features | 200-length vector (age, 50 hashed keyword buckets, 4 vitals) | `recognized_conditions`/`recognized_symptoms` (guidance); vitals/riskLevel/keywords (severity) |
 | `y` | `diseases` (100 classes) | `category` (6 classes) + `severity` (4 classes) | `suggestedHealthCategory` (4 values) / `severity` (4 values) — computed, not learned |
 | Learned from data? | Yes | Yes | No — fixed rules |

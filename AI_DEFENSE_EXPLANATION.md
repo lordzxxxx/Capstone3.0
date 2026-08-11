@@ -17,7 +17,7 @@
 > contain an 87%/50-case figure for the rule-based/on-device path. That is not
 > a current executed held-out dataset evaluation and must not be presented as
 > verified model accuracy. The current verified backend Random Forest result
-> is 89.31% on 18,800 group-safe held-out records; the 95% target is not met.
+> is 89.34% on 18,799 group-safe held-out records; the 95% target is not met.
 > The checked-in on-device weights have no traceable training manifest or
 > held-out metrics, so no accuracy claim is made for them. See
 > `backend/reports/ai_requirements_verification.json`.
@@ -318,7 +318,7 @@ classification and diagnosis decisions require professional medical judgment.
 1. The earlier 50 hand-written cases were functional checks, not a held-out
    dataset.
 2. The current verified backend model was evaluated on 18,800 untouched,
-   group-safe records at 89.31% accuracy.
+   group-safe records at 89.34% accuracy.
 3. The 95% acceptance target remains unmet, and the on-device model has no
    committed traceable training/evaluation manifest.
 
@@ -408,7 +408,7 @@ Our AI classification system demonstrates:
 **Total AI Code:** 774 lines of custom logic
 **Development Time:** 3 weeks (research, implementation, testing)
 **Test Coverage:** Functional checks exist; no verified on-device accuracy
-claim. Current backend evaluation: 89.31% on 18,800 held-out records.
+claim. Current backend evaluation: 89.34% on 18,799 held-out records.
 **Medical Database:** 200+ keywords, 50+ treatment protocols
 **Performance:** <100ms classification time
 **Accessibility:** 100% offline capability
