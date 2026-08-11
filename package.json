@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "test:firestore-rules": "firebase emulators:exec --only firestore --project demo-capstone-security \"mocha --timeout 60000 tests/firestore.rules.test.cjs\""
+    "test:firestore-rules": "firebase emulators:exec --only firestore --project demo-capstone-security \"mocha --timeout 60000 tests/firestore.rules.test.cjs\"",
+    "test:workflow-persistence": "firebase emulators:exec --only firestore --project demo-capstone-workflow \"mocha --timeout 60000 tests/workflow.persistence.test.cjs\""
   },
   "dependencies": {
     "firebase": "^12.8.0"

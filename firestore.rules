@@ -302,13 +302,27 @@ service cloud.firestore {
           'followUps', 'latestFollowUpNotes', 'homeVisitCompleted',
           'homeVisitCompletedAt', 'updatedAt'
         ]);
+      // Mirrors the app's own doctor-consultation update payload exactly
+      // (lib/app/features/referrals/referrals.dart: doctorDiagnosis,
+      // doctorTreatment, doctorMedication, doctorNotes, status,
+      // doctorUpdatedAt, updatedAt). Without this allowlist, the earlier
+      // rule let any doctor already assigned to a referral rewrite *any*
+      // field on it (e.g. assignedHospital, priority, patientName) as long
+      // as assignedDoctorUid stayed the same -- verified with
+      // tests/firestore.rules.test.cjs's "doctor scope" case before this
+      // fix, which found the over-broad update succeeding.
+      let recordsConsultation = changed.hasOnly([
+        'doctorDiagnosis', 'doctorTreatment', 'doctorMedication',
+        'doctorNotes', 'status', 'doctorUpdatedAt', 'updatedAt'
+      ]);
       return role in [
           'CHO', 'cho', 'CHO_SUPER_ADMIN', 'cho_super_admin',
           'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
         ] ||
         (role in ['DOCTOR', 'doctor'] &&
           existingData.assignedDoctorUid == request.auth.uid &&
-          newData.assignedDoctorUid == request.auth.uid) ||
+          newData.assignedDoctorUid == request.auth.uid &&
+          recordsConsultation) ||
         (role in ['BHW', 'bhw'] &&
           bhwOwnsRecord &&
           (correctsReturned || recordsFollowUp));

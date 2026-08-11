@@ -348,6 +348,28 @@ class HealthAIClassifier {
       'emergency',
       'critical',
       'life-threatening',
+      // Added 2026-08-11, found via an independent clinical validation set
+      // (test/app/health_ai_classifier_clinical_validation_test.dart)
+      // grounded in cited external references, not this file's own
+      // keyword list. Real, safety-relevant gaps: "stroke" alone was
+      // already a keyword, but the AHA/ASA FAST warning-sign language a
+      // BHW would actually hear/type ("face drooping", "arm weakness",
+      // "slurred speech") was not recognized at all, so a textbook stroke
+      // presentation was classified Routine/Low instead of
+      // Emergency/Critical. Likewise, WHO IMCI's core pediatric danger
+      // signs (a lethargic child unable to drink/breastfeed, vomiting
+      // everything) are themselves emergencies regardless of the
+      // "Pediatric Care" category label, and were not recognized as such.
+      'face drooping',
+      'facial drooping',
+      'arm weakness',
+      'slurred speech',
+      'difficulty speaking',
+      'unable to drink',
+      'unable to breastfeed',
+      'vomiting everything',
+      'lethargic',
+      'lethargy',
     ],
     'non_communicable': [
       'diabetes',
@@ -1001,6 +1023,26 @@ class HealthAIClassifier {
           .toLowerCase();
       if (complications.isNotEmpty || preExisting.isNotEmpty) {
         severityScore += 1;
+      }
+      // WHO antenatal danger signs (added 2026-08-11, found via an
+      // independent clinical validation set grounded in WHO antenatal
+      // danger-sign guidance): vaginal bleeding, convulsions, and reduced
+      // fetal movement are recognized obstetric emergency warning signs on
+      // their own, even without an explicit riskLevel field or a generic
+      // "severe" keyword elsewhere in the text. Before this fix, a record
+      // reporting "vaginal bleeding, severe abdominal pain" with no
+      // riskLevel set only scored Medium, not the Critical this warning
+      // sign warrants.
+      const prenatalDangerSigns = [
+        'vaginal bleeding',
+        'bleeding',
+        'convulsions',
+        'reduced fetal movement',
+        'decreased fetal movement',
+        'no fetal movement',
+      ];
+      if (prenatalDangerSigns.any((sign) => symptoms.contains(sign))) {
+        severityScore += 3;
       }
     }
 
