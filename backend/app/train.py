@@ -28,9 +28,9 @@ MODEL_PATH = MODEL_DIR / "disease_model.pkl"
 TEMP_MODEL_PATH = MODEL_DIR / ".disease_model.pkl.tmp"
 FEATURES_PATH = MODEL_DIR / "disease_model_features.json"
 METRICS_PATH = MODEL_DIR / "training_metrics.json"
-MODEL_METADATA_PATH = MODEL_DIR / "disease_model_v2.metadata.json"
+MODEL_METADATA_PATH = MODEL_DIR / "disease_model_v3.metadata.json"
 MODEL_REGISTRY_PATH = MODEL_DIR / "model_registry.json"
-MODEL_VERSION = "disease_model_v2"
+MODEL_VERSION = "disease_model_v3"
 DATASET_VERSION = "merged_dataset_v2"
 REPORTS_DIR = BACKEND_DIR / "reports"
 CONFUSION_MATRIX_PATH = REPORTS_DIR / "disease_model_confusion_matrix.csv"
@@ -128,7 +128,7 @@ def build_estimator() -> RandomForestClassifier:
         criterion="entropy",
         max_depth=28,
         min_samples_split=4,
-        min_samples_leaf=1,
+        min_samples_leaf=2,
         max_features="log2",
         class_weight="balanced_subsample",
         bootstrap=True,
@@ -183,6 +183,12 @@ def train_model() -> RandomForestClassifier:
         k=min(3, probabilities.shape[1]),
         labels=model.classes_,
     )
+    top2_accuracy = top_k_accuracy_score(
+        y_test,
+        probabilities,
+        k=min(2, probabilities.shape[1]),
+        labels=model.classes_,
+    )
     matrix = confusion_matrix(y_test, predictions, labels=model.classes_)
     report = classification_report(
         y_test,
@@ -226,6 +232,7 @@ def train_model() -> RandomForestClassifier:
     print(f"Precision: {precision:.4f}")
     print(f"Recall:    {recall:.4f}")
     print(f"F1-score:  {f1:.4f}")
+    print(f"Top-2 accuracy: {top2_accuracy:.4f}")
     print(f"Top-3 accuracy: {top3_accuracy:.4f}")
 
     LOGGER.info("Saving trained model to %s", MODEL_PATH)
@@ -262,6 +269,7 @@ def train_model() -> RandomForestClassifier:
         "precision_macro": float(macro_precision),
         "recall_macro": float(macro_recall),
         "f1_macro": float(macro_f1),
+        "top2_accuracy": float(top2_accuracy),
         "top3_accuracy": float(top3_accuracy),
         "training_records": int(len(x_train)),
         "test_records": int(len(x_test)),
@@ -328,6 +336,8 @@ def train_model() -> RandomForestClassifier:
                     "precision_weighted",
                     "recall_weighted",
                     "f1_weighted",
+                    "top2_accuracy",
+                    "top3_accuracy",
                 )
             },
             "cross_validation": metrics["cross_validation"],
@@ -350,9 +360,15 @@ def train_model() -> RandomForestClassifier:
                 "status": "current offline evaluation artifact",
             },
             {
+                "model_version": "disease_model_v2",
+                "artifact": "backend/models/disease_model.pkl at commit bddde4c",
+                "metadata": "backend/models/disease_model_v2.metadata.json",
+                "status": "historical validated artifact; 89.2713% held-out accuracy with min_samples_leaf=1",
+            },
+            {
                 "model_version": "disease_model_v1_historical",
                 "artifact": "backend/models/disease_model.pkl before 2026-08-11",
-                "status": "historical metrics retained in MODEL_EVALUATION_REPORT.md; binary not overwritten in place without metadata",
+                "status": "historical metrics retained in MODEL_EVALUATION_REPORT.md",
             },
         ],
     }

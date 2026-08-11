@@ -44,7 +44,7 @@ visible until legitimate additional data and/or additional discriminating
 clinical variables are available.
 
 Current verified result: 93,993 usable records, 229 Random Forest inputs,
-100 classes, 89.2713% held-out accuracy, 89.1306% five-fold training-only CV
-mean accuracy with 0.1235 percentage-point standard deviation, and zero
+100 classes, 89.3138% held-out accuracy, 89.2025% five-fold training-only CV
+mean accuracy with 0.1136 percentage-point standard deviation, and zero
 train/test exact feature-vector overlap. The 150,000-record and 95% gates
 remain `not_met`.

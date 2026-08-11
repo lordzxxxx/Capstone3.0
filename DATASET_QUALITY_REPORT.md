@@ -262,14 +262,39 @@ gives a cleaner, leakage-free comparison point.
 **Imbalance assessment:** the ratio between the largest and smallest
 class is **≈2.15×** (1,219 vs. 567). This is a **mild-to-moderate**
 imbalance — not severe (no class is a rare edge case with a handful of
-rows; every class has hundreds). `class_weight=None` in the production
-model, meaning this mild imbalance is currently uncorrected. No class was
+rows; every class has hundreds). The v3 Random Forest uses
+`class_weight=balanced_subsample` to account for this mild imbalance. No class was
 removed to inflate accuracy; all 100 classes present in the source file
 after the ≥20-row filter remain in the dataset.
 
+## 7. Accuracy-gap follow-up and supported feature review
+
+The reproducible follow-up report is
+`backend/reports/accuracy_gap_analysis.json`, documented in
+`docs/AI_ACCURACY_GAP_ANALYSIS.md`. It found **0** current raw-label changes
+from the configured disease alias map, so no new label merge was made. It
+confirmed 4,127 exact-vector label-conflict groups and a majority-per-vector
+ceiling of 94.5751%.
+
+The application has age, duration/severity context, vital signs, medical
+history, and prenatal fields in its workflows, but the current labeled RF
+source has none of those columns. They remain unavailable for RF training;
+the project does not fill them with defaults or values copied from unrelated
+records.
+
+Two conservative transformations were tested using training-partition
+cross-validation only: a total symptom-count feature and the configured
+constant/near-zero-variance filter. The count variant improved its bounded
+three-fold CV weighted F1 from 0.88942 to 0.89064, but it is not promoted to
+the production artifact because it adds no new clinical information and the
+current production feature contract remains the verified 229 symptom inputs.
+The quality filter produced the same result as the baseline because no
+features met the removal threshold. Full output:
+`backend/reports/feature_variant_evaluation.json`.
+
 ---
 
-## 7. Variable definitions and encoding
+## 8. Variable definitions and encoding
 
 See `AI_VARIABLE_DICTIONARY.md` for the complete `X`/`y` definitions
 across all four classification components in this system. Summary for
@@ -279,7 +304,7 @@ features (`X`), one categorical target column `diseases` with 100 classes
 
 ---
 
-## 8. Provenance status summary
+## 9. Provenance status summary
 
 | Dataset | Provenance status |
 |---|---|
@@ -300,7 +325,7 @@ already documented above.
 
 ---
 
-## 9. Known limitations (dataset-level)
+## 10. Known limitations (dataset-level)
 
 - Provenance of the sole training source is strongly corroborated but not
   cryptographically confirmed, and its license terms are not yet on

@@ -510,6 +510,7 @@ def _evaluate_saved_model(
         "precision_macro": float(precision_score(y_test, predictions, average="macro", zero_division=0)),
         "recall_macro": float(recall_score(y_test, predictions, average="macro", zero_division=0)),
         "f1_macro": float(f1_score(y_test, predictions, average="macro", zero_division=0)),
+        "top2_accuracy": float(top_k_accuracy_score(y_test, probabilities, k=2, labels=model.classes_)),
         "top3_accuracy": float(top_k_accuracy_score(y_test, probabilities, k=3, labels=model.classes_)),
         "diagnostics": _model_diagnostics(
             x_test,

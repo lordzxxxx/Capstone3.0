@@ -6,7 +6,9 @@ The complete current status is in `docs/AI_REQUIREMENTS_STATUS.md` and
 `backend/reports/ai_requirements_verification.json`. `POST /predict` remains
 unregistered (returns 404), so this artifact is not an active public disease
 prediction route. Historical baseline/optimization results below are retained
-for traceability; all current claims must use the generated report.
+for traceability; all current claims must use the generated report. The current
+error, label, and variable analysis is summarized in
+`docs/AI_ACCURACY_GAP_ANALYSIS.md`.
 
 ---
 
@@ -15,18 +17,19 @@ for traceability; all current claims must use the generated report.
 | | |
 |---|---|
 | Algorithm | RandomForestClassifier |
-| Model/dataset version | `disease_model_v2` / `merged_dataset_v2` |
-| Hyperparameters | `n_estimators=200`, `criterion=entropy`, `max_depth=28`, `min_samples_split=4`, `min_samples_leaf=1`, `max_features=log2`, `class_weight=balanced_subsample`, `random_state=42`, `n_jobs=-1` |
+| Model/dataset version | `disease_model_v3` / `merged_dataset_v2` |
+| Hyperparameters | `n_estimators=200`, `criterion=entropy`, `max_depth=28`, `min_samples_split=4`, `min_samples_leaf=2`, `max_features=log2`, `class_weight=balanced_subsample`, `random_state=42`, `n_jobs=-1` |
 | Train/test split | Group-safe `StratifiedGroupKFold(n_splits=5)` first fold, grouped by identical feature vector — 75,193 train / 18,800 test |
-| Accuracy | 89.2713% |
-| Precision (weighted) | 89.6742% |
-| Recall (weighted) | 89.2713% |
-| F1 (weighted) | 89.2825% |
-| Precision (macro) | 89.0325% |
-| Recall (macro) | 89.4611% |
-| F1 (macro) | 89.0604% |
-| Balanced accuracy | 89.4611% |
-| Top-3 accuracy | 98.4309% |
+| Accuracy | 89.3138% |
+| Precision (weighted) | 89.9042% |
+| Recall (weighted) | 89.3138% |
+| F1 (weighted) | 89.3197% |
+| Precision (macro) | 89.1138% |
+| Recall (macro) | 89.6309% |
+| F1 (macro) | 89.0925% |
+| Balanced accuracy | 89.6309% |
+| Top-2 accuracy | 96.4043% |
+| Top-3 accuracy | 98.3936% |
 
 Source: `backend/models/training_metrics.json` and
 `backend/reports/ai_requirements_verification.json`.
@@ -38,7 +41,8 @@ zero train/test feature-vector overlap.
 
 Checksums, class distribution, and version metadata are persisted in
 `backend/models/training_metrics.json`,
-`backend/models/disease_model_v2.metadata.json`, and
+`backend/models/disease_model_v3.metadata.json`,
+`backend/models/disease_model_v2.metadata.json` (historical), and
 `backend/models/model_registry.json`. The row-level source mapping is
 `backend/dataset/processed/row_provenance.csv`.
 
@@ -78,6 +82,13 @@ search than originally planned, not a lower-integrity one — it completed
 in 246 seconds, and its result was still cross-validated and evaluated
 on a completely untouched test set exactly once.
 
+After that search, a targeted eight-candidate RF search scored **accuracy**
+instead of only weighted F1, using the same three-fold group-safe CV on the
+training partition. It selected `min_samples_leaf=2`; the selected candidate
+was then evaluated once on the locked test partition and became version
+`disease_model_v3`. The prior version `disease_model_v2` remains recorded in
+the model registry and its 89.2713% result is retained as the direct baseline.
+
 ---
 
 ## 3. Leakage finding and fix
@@ -99,21 +110,21 @@ Full detail: `backend/reports/leakage_report.json`.
 
 | Metric | Baseline (production config, group-safe split) | Tuned (this review) | Δ |
 |---|---:|---:|---:|
-| Accuracy | 86.29% | **89.27%** | +2.98 pts |
-| Balanced accuracy | 84.96% | **89.46%** | +4.50 pts |
-| Precision (weighted) | 89.75% | 89.67% | −0.07 pts |
-| Recall (weighted) | 86.29% | 89.27% | +2.98 pts |
-| F1 (weighted) | 87.00% | **89.28%** | +2.28 pts |
-| Precision (macro) | 90.02% | 89.03% | −0.98 pts |
-| Recall (macro) | 84.96% | **89.46%** | +4.50 pts |
-| F1 (macro) | 86.44% | **89.06%** | +2.62 pts |
-| Top-3 accuracy | 95.36% | **98.43%** | +3.07 pts |
+| Accuracy | 86.29% | **89.31%** | +3.02 pts |
+| Balanced accuracy | 84.96% | **89.63%** | +4.67 pts |
+| Precision (weighted) | 89.75% | **89.90%** | +0.15 pts |
+| Recall (weighted) | 86.29% | **89.31%** | +3.02 pts |
+| F1 (weighted) | 87.00% | **89.32%** | +2.32 pts |
+| Precision (macro) | 90.02% | 89.11% | −0.91 pts |
+| Recall (macro) | 84.96% | **89.63%** | +4.67 pts |
+| F1 (macro) | 86.44% | **89.09%** | +2.65 pts |
+| Top-3 accuracy | 95.36% | **98.39%** | +3.03 pts |
 
 **Tuned hyperparameters (winner of the search):**
 
 ```
 n_estimators=200, criterion="entropy", max_depth=28,
-min_samples_split=4, min_samples_leaf=1, max_features="log2",
+min_samples_split=4, min_samples_leaf=2, max_features="log2",
 bootstrap=True, class_weight="balanced_subsample", random_state=42
 ```
 
@@ -131,11 +142,11 @@ training set:
 
 | | Mean | Std. dev |
 |---|---:|---:|
-| Accuracy | 89.13% | 0.12% |
-| F1 (weighted) | 89.10% | 0.14% |
-| F1 (macro) | 88.88% | 0.13% |
+| Accuracy | 89.20% | 0.11% |
+| F1 (weighted) | 89.18% | 0.13% |
+| F1 (macro) | 88.95% | 0.12% |
 
-Per-fold accuracy: 89.01%, 89.23%, 88.95%, 89.21%, 89.25%. The very low
+Per-fold accuracy: 89.08%, 89.39%, 89.12%, 89.15%, 89.27%. The very low
 standard deviation (~0.12 points) indicates the tuned result is stable
 across different data splits, not a lucky single split.
 
@@ -151,7 +162,7 @@ set is not used for model selection.
 |---|---|
 | Target | 95%–98% |
 | Minimum target | 95% |
-| **ACTUAL ACCURACY** | **89.27%** (tuned candidate, leakage-safe, untouched test set) |
+| **ACTUAL ACCURACY** | **89.31%** (v3 candidate, leakage-safe, locked test set) |
 | **STATUS** | **TARGET NOT ACHIEVED** |
 
 ### Technical reason (computed, not assumed)
@@ -179,8 +190,8 @@ each such group has, by construction, no repeated (vector, label) pair
 group can ever be correctly labeled by any function of the input alone —
 the rest are mathematically guaranteed misses.
 
-**The tuned model's 89.27% captures 94.4% of this theoretical ceiling**
-(89.27 / 94.58). Reaching 95%+ overall accuracy is not achievable with
+**The v3 model's 89.31% captures 94.4% of this theoretical ceiling**
+(89.31 / 94.58). Reaching 95%+ overall accuracy is not achievable with
 this feature set — it would require additional discriminating
 information not present in binary symptom presence alone (vitals, labs,
 exam findings, symptom duration/severity, or patient history), or a
@@ -196,22 +207,22 @@ evaluated on the same group-safe split and held-out test set. Their bounded
 three-fold training-only CV is included in the generated comparison report;
 the production RF's authoritative five-fold CV remains the result in §5:
 
-| Model | Accuracy | Precision (W) | Recall (W) | F1 (W) | F1 (Macro) | Balanced Acc. | Top-3 Acc. | Train Time | Inference (18.8k rows) | Model Size | CV mean / std* |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RandomForest (tuned)** | **89.27%** | 89.67% | 89.27% | **89.28%** | **89.06%** | **89.46%** | **98.43%** | 10.3s | 0.62s | 111.3 MB | 88.90% / 0.09% |
-| ExtraTrees | 88.96% | 89.98% | 88.96% | 89.17% | 88.90% | 89.07% | 97.85% | 9.1s | 0.42s | 40.9 MB | 87.73% / 0.26% |
-| HistGradientBoosting | 87.63% | 87.83% | 87.63% | 87.66% | 87.40% | 87.40% | 97.61% | 31.3s | 0.30s | **1.6 MB** | deferred in current bounded rerun |
+| Model | Accuracy | Precision (W) | Recall (W) | F1 (W) | F1 (Macro) | Balanced Acc. | Top-2 Acc. | Top-3 Acc. | Train Time | Inference (18.8k rows) | Model Size | CV mean / std* |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| **RandomForest (v3 tuned)** | **89.31%** | **89.90%** | **89.31%** | **89.32%** | **89.09%** | **89.63%** | **96.40%** | **98.39%** | 10.2s | 0.63s | 111.3 MB | 89.08% / 0.03% |
+| ExtraTrees | 88.96% | 89.98% | 88.96% | 89.17% | 88.90% | 89.07% | 95.89% | 97.85% | 9.5s | 0.47s | 40.9 MB | 87.73% / 0.26% |
+| HistGradientBoosting | 87.63% | 87.83% | 87.63% | 87.66% | 87.40% | 87.40% | not retained | 97.61% | 31.3s | 0.30s | **1.6 MB** | deferred in current bounded rerun |
 
 \* Secondary comparison CV is bounded to three folds and 50 trees to keep
 the experiment runnable. The authoritative production RF result is the
-200-tree five-fold CV in §5: 89.13% ± 0.12% accuracy. The historical
+200-tree five-fold CV in §5: 89.20% ± 0.11% accuracy. The historical
 HistGradientBoosting held-out result is retained for traceability; its
 secondary CV was deferred in the current bounded rerun.
 
 Raw output: `backend/reports/model_comparison.json`.
 
 **Selection: RandomForest (tuned).** It wins on every accuracy-family
-metric (accuracy, weighted/macro F1, balanced accuracy, top-3 accuracy),
+metric (accuracy, weighted/macro F1, balanced accuracy, top-2 and top-3 accuracy),
 trains fast, and is the algorithm already integrated throughout this
 codebase (`predict.py`, `train.py`, Firestore document ID mapping via
 `model.classes_`), so switching would add integration risk for no
@@ -237,11 +248,11 @@ performs well — reviewed specifically, per this task's requirement):
 
 | Disease | Precision | Recall | F1 | Support |
 |---|---:|---:|---:|---:|
-| Chronic obstructive pulmonary disease (COPD) | 63.6% | **58.9%** | 61.1% | 163 |
-| Skin polyp | 62.8% | **60.9%** | 61.8% | 161 |
-| Skin pigmentation disorder | 61.9% | **61.5%** | 61.7% | 161 |
-| Noninfectious gastroenteritis | 72.0% | 67.2% | 69.5% | 241 |
-| Acute bronchospasm | 58.7% | 68.6% | 63.3% | 118 |
+| Chronic obstructive pulmonary disease (COPD) | 61.6% | **62.0%** | 61.8% | 163 |
+| Skin polyp | 65.2% | **64.0%** | 64.6% | 161 |
+| Acute bronchospasm | 60.3% | **64.4%** | 62.3% | 118 |
+| Skin pigmentation disorder | 61.2% | **64.6%** | 62.8% | 161 |
+| Noninfectious gastroenteritis | 76.3% | 66.8% | 71.2% | 241 |
 
 **Best 5 by recall:**
 
@@ -267,16 +278,16 @@ The current verifier's top off-diagonal pairs are:
 
 | Actual | Predicted | Held-out count |
 |---|---|---:|
-| Noninfectious gastroenteritis | Infectious gastroenteritis | 64 |
-| Infectious gastroenteritis | Noninfectious gastroenteritis | 56 |
-| Cystitis | Temporary or benign blood in urine | 42 |
-| Cholecystitis | Gallstone | 34 |
-| Marijuana abuse | Personality disorder | 33 |
-| Personality disorder | Schizophrenia | 33 |
-| Skin polyp | Skin pigmentation disorder | 31 |
-| Nose disorder | Acute sinusitis | 30 |
-| Spinal stenosis | Degenerative disc disease | 29 |
-| Acute bronchitis | COPD | 28 |
+| Noninfectious gastroenteritis | Infectious gastroenteritis | 61 |
+| Cystitis | Temporary or benign blood in urine | 49 |
+| Infectious gastroenteritis | Noninfectious gastroenteritis | 47 |
+| Cholecystitis | Gallstone | 41 |
+| Personality disorder | Schizophrenia | 38 |
+| Marijuana abuse | Personality disorder | 37 |
+| Acute bronchitis | COPD | 35 |
+| Nose disorder | Acute sinusitis | 33 |
+| Skin polyp | Skin pigmentation disorder | 32 |
+| Spondylosis | Degenerative disc disease | 30 |
 
 These are error-analysis findings, not claims that the classes are medically
 equivalent. The complete matrix and machine-readable diagnostic list are
@@ -293,26 +304,26 @@ Computed on the saved model's actual held-out test-set probability outputs
 
 | Top-class probability | % of test cases at/above this confidence | Accuracy among those cases |
 |---:|---:|---:|
-| ≥ 0.80 | 17.1% | 100.00% |
-| ≥ 0.70 | 33.0% | 100.00% |
-| ≥ 0.60 | 48.6% | 99.95% |
-| ≥ 0.50 | 62.3% | 99.42% |
-| ≥ 0.40 | 74.9% | 97.72% |
-| ≥ 0.30 | 85.9% | 95.11% |
+| ≥ 0.80 | 12.7% | 100.00% |
+| ≥ 0.70 | 26.9% | 100.00% |
+| ≥ 0.60 | 42.7% | 99.96% |
+| ≥ 0.50 | 57.8% | 99.65% |
+| ≥ 0.40 | 71.9% | 98.22% |
+| ≥ 0.30 | 84.0% | 95.57% |
 
 | Top-class probability | % of test cases below this confidence | Accuracy among those cases |
 |---:|---:|---:|
-| < 0.30 | 14.1% | 53.85% |
-| < 0.40 | 25.1% | 64.08% |
-| < 0.50 | 37.7% | 72.53% |
+| < 0.30 | 16.0% | 56.41% |
+| < 0.40 | 28.1% | 66.53% |
+| < 0.50 | 42.2% | 75.18% |
 
-Median confidence across all test predictions: 0.590. Mean: 0.570.
+Median confidence across all test predictions: 0.552. Mean: 0.542.
 
 ### Derived confidence policy (data-driven, not arbitrary)
 
 The data shows a clear, usable split: predictions at **≥0.50 confidence
-are correct 99.4%+ of the time** (covering 62% of cases), while
-predictions **below 0.30 confidence are correct only ~54% of the time**
+are correct 99.6%+ of the time** (covering 58% of cases), while
+predictions **below 0.30 confidence are correct only ~55% of the time**
 (barely better than chance across 100 classes) and should not be
 presented as reliable.
 
@@ -344,26 +355,26 @@ identical column order to the training `X`). Top 20:
 
 | Rank | Feature | Importance |
 |---:|---|---:|
-| 1 | vomiting | 0.0285 |
-| 2 | shortness of breath | 0.0266 |
-| 3 | sharp abdominal pain | 0.0235 |
-| 4 | cough | 0.0231 |
-| 5 | headache | 0.0231 |
-| 6 | back pain | 0.0218 |
-| 7 | sharp chest pain | 0.0214 |
-| 8 | fever | 0.0210 |
-| 9 | nausea | 0.0193 |
-| 10 | burning abdominal pain | 0.0176 |
-| 11 | arm pain | 0.0167 |
-| 12 | nasal congestion | 0.0165 |
-| 13 | lower abdominal pain | 0.0160 |
-| 14 | pelvic pain | 0.0155 |
-| 15 | sore throat | 0.0153 |
-| 16 | dizziness | 0.0152 |
-| 17 | ear pain | 0.0136 |
-| 18 | side pain | 0.0131 |
-| 19 | skin swelling | 0.0131 |
-| 20 | skin rash | 0.0127 |
+| 1 | vomiting | 0.0282 |
+| 2 | shortness of breath | 0.0268 |
+| 3 | sharp abdominal pain | 0.0238 |
+| 4 | headache | 0.0235 |
+| 5 | cough | 0.0234 |
+| 6 | back pain | 0.0222 |
+| 7 | sharp chest pain | 0.0218 |
+| 8 | fever | 0.0212 |
+| 9 | nausea | 0.0199 |
+| 10 | burning abdominal pain | 0.0178 |
+| 11 | arm pain | 0.0168 |
+| 12 | lower abdominal pain | 0.0164 |
+| 13 | nasal congestion | 0.0164 |
+| 14 | dizziness | 0.0156 |
+| 15 | sore throat | 0.0154 |
+| 16 | pelvic pain | 0.0154 |
+| 17 | ear pain | 0.0142 |
+| 18 | side pain | 0.0134 |
+| 19 | skin swelling | 0.0132 |
+| 20 | neck pain | 0.0130 |
 
 **This ranking reflects influence on this trained classifier's split
 decisions only — it is not evidence of medical causation.** These are
@@ -376,15 +387,15 @@ anything.
 
 ## 11. Known limitations (this evaluation, specifically)
 
-- 89.27% accuracy is below the 95% target; §6 shows this is bounded by
+- 89.31% accuracy is below the 95% target; §6 shows this is bounded by
   an inherent 94.58% ceiling in the dataset itself, not primarily an
   algorithm/tuning deficiency.
 - The hyperparameter search was intentionally bounded (15 candidates ×
   3-fold, capped parameter ranges) after a larger search proved
   infeasible in this environment — a wider search might find a
   marginally better configuration, but cannot exceed the 94.58% ceiling.
-- Several classes (COPD, skin polyp, skin pigmentation disorder, acute
-  bronchospasm) have recall below 70% and would need additional
+- Several classes (COPD, skin polyp, acute bronchospasm, skin pigmentation
+  disorder) have recall below 70% and would need additional
   distinguishing features, not just tuning, to improve meaningfully.
 - This evaluation, like the production model's, is not a clinical
   validation — see `AI_ALGORITHM_QA.md` §12 for that distinction.

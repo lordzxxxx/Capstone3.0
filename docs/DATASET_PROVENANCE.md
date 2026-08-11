@@ -4,6 +4,9 @@ This inventory is generated from the files currently committed in this
 repository (11 August 2026). Counts below are non-empty data rows, not line
 counts. No record in this inventory is asserted to be Philippine-specific
 unless the publisher and geographic coverage are independently identified.
+The latest error-gap, label-normalization, and application-variable inventory
+is in [`docs/AI_ACCURACY_GAP_ANALYSIS.md`](AI_ACCURACY_GAP_ANALYSIS.md), with
+machine-readable evidence at `backend/reports/accuracy_gap_analysis.json`.
 
 ## Current classifier training data
 
@@ -20,8 +23,9 @@ vectors, so the held-out test set has zero exact feature-vector overlap with
 training. The estimator is the tuned 200-tree scikit-learn
 `RandomForestClassifier` (`criterion=entropy`, `max_depth=28`,
 `max_features=log2`, `class_weight=balanced_subsample`). Held-out accuracy is
-89.2713%, weighted precision 89.6742%, weighted recall 89.2713%, and weighted
-F1 89.2825%. Confusion and per-class reports are persisted under
+89.3138%, weighted precision 89.9042%, weighted recall 89.3138%, and weighted
+F1 89.3197%. Top-2 accuracy is 96.4043% and Top-3 accuracy is 98.3936%.
+Confusion and per-class reports are persisted under
 `backend/reports/`; the complete source counts and acceptance status are in
 `backend/reports/ai_requirements_verification.json`.
 

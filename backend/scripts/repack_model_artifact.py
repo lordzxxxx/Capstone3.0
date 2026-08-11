@@ -20,8 +20,8 @@ import joblib
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 MODEL_PATH = BACKEND_DIR / "models" / "disease_model.pkl"
 METRICS_PATH = BACKEND_DIR / "models" / "training_metrics.json"
-METADATA_PATH = BACKEND_DIR / "models" / "disease_model_v2.metadata.json"
-TEMP_PATH = Path("/private/tmp") / f"disease_model_v2_repack_{os.getpid()}.pkl"
+METADATA_PATH = BACKEND_DIR / "models" / "disease_model_v3.metadata.json"
+TEMP_PATH = Path("/private/tmp") / f"disease_model_v3_repack_{os.getpid()}.pkl"
 
 
 def sha256_file(path: Path) -> str:

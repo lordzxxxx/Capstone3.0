@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-11T01:03:29.282324+00:00",
+  "generated_at": "2026-08-11T01:40:37.282054+00:00",
   "report_purpose": "Actual repository evidence for additional AI system requirements",
   "integrity_statement": "No records were duplicated, synthetically padded, relabeled, or fabricated by this verifier.",
   "dataset_scale": {
@@ -7136,155 +7136,156 @@
     "train_records": 75193,
     "test_records": 18800,
     "train_test_feature_vector_overlap_groups": 0,
-    "accuracy": 0.8927127659574469,
-    "balanced_accuracy": 0.8946106249825705,
-    "precision_weighted": 0.8967421978855501,
-    "recall_weighted": 0.8927127659574469,
-    "f1_weighted": 0.8928247889220234,
-    "precision_macro": 0.8903250702139183,
-    "recall_macro": 0.8946106249825705,
-    "f1_macro": 0.8906038995753908,
-    "top3_accuracy": 0.9843085106382978,
+    "accuracy": 0.8931382978723404,
+    "balanced_accuracy": 0.8963087992851745,
+    "precision_weighted": 0.8990419074958073,
+    "recall_weighted": 0.8931382978723404,
+    "f1_weighted": 0.8931965699810474,
+    "precision_macro": 0.8911376415007127,
+    "recall_macro": 0.8963087992851745,
+    "f1_macro": 0.8909246969459689,
+    "top2_accuracy": 0.9640425531914893,
+    "top3_accuracy": 0.9839361702127659,
     "diagnostics": {
       "lowest_recall_classes": [
         {
           "disease": "chronic obstructive pulmonary disease (copd)",
-          "precision": 0.6357615894039735,
-          "recall": 0.588957055214724,
-          "f1": 0.6114649681528662,
+          "precision": 0.6158536585365854,
+          "recall": 0.6196319018404908,
+          "f1": 0.617737003058104,
           "support": 163
         },
         {
           "disease": "skin polyp",
-          "precision": 0.6282051282051282,
-          "recall": 0.6086956521739131,
-          "f1": 0.6182965299684543,
+          "precision": 0.6518987341772152,
+          "recall": 0.639751552795031,
+          "f1": 0.64576802507837,
           "support": 161
         },
         {
+          "disease": "acute bronchospasm",
+          "precision": 0.6031746031746031,
+          "recall": 0.6440677966101694,
+          "f1": 0.6229508196721312,
+          "support": 118
+        },
+        {
           "disease": "skin pigmentation disorder",
-          "precision": 0.61875,
-          "recall": 0.6149068322981367,
-          "f1": 0.616822429906542,
+          "precision": 0.611764705882353,
+          "recall": 0.6459627329192547,
+          "f1": 0.6283987915407855,
           "support": 161
         },
         {
           "disease": "noninfectious gastroenteritis",
-          "precision": 0.72,
-          "recall": 0.6721991701244814,
-          "f1": 0.6952789699570815,
+          "precision": 0.7630331753554502,
+          "recall": 0.6680497925311203,
+          "f1": 0.7123893805309734,
           "support": 241
         },
         {
-          "disease": "acute bronchospasm",
-          "precision": 0.5869565217391305,
-          "recall": 0.6864406779661016,
-          "f1": 0.6328125,
-          "support": 118
-        },
-        {
-          "disease": "spinal stenosis",
-          "precision": 0.9388888888888889,
-          "recall": 0.6983471074380165,
-          "f1": 0.8009478672985783,
-          "support": 242
-        },
-        {
-          "disease": "personality disorder",
-          "precision": 0.6129032258064516,
-          "recall": 0.6993865030674846,
-          "f1": 0.6532951289398281,
-          "support": 163
-        },
-        {
-          "disease": "pneumonia",
-          "precision": 0.8888888888888888,
-          "recall": 0.7120418848167539,
-          "f1": 0.7906976744186046,
-          "support": 191
-        },
-        {
-          "disease": "spondylosis",
-          "precision": 0.9365079365079365,
-          "recall": 0.7254098360655737,
-          "f1": 0.8175519630484989,
-          "support": 244
-        },
-        {
-          "disease": "infectious gastroenteritis",
-          "precision": 0.7195121951219512,
-          "recall": 0.7283950617283951,
-          "f1": 0.7239263803680982,
-          "support": 243
-        },
-        {
           "disease": "acute bronchitis",
-          "precision": 0.7553191489361702,
-          "recall": 0.7357512953367875,
-          "f1": 0.7454068241469817,
+          "precision": 0.8176100628930818,
+          "recall": 0.6735751295336787,
+          "f1": 0.7386363636363636,
           "support": 193
         },
         {
+          "disease": "personality disorder",
+          "precision": 0.578125,
+          "recall": 0.6809815950920245,
+          "f1": 0.6253521126760564,
+          "support": 163
+        },
+        {
+          "disease": "spinal stenosis",
+          "precision": 0.9595375722543352,
+          "recall": 0.6859504132231405,
+          "f1": 0.8,
+          "support": 242
+        },
+        {
+          "disease": "pneumonia",
+          "precision": 0.9006622516556292,
+          "recall": 0.7120418848167539,
+          "f1": 0.7953216374269005,
+          "support": 191
+        },
+        {
           "disease": "fungal infection of the hair",
-          "precision": 0.9040404040404041,
-          "recall": 0.7396694214876033,
-          "f1": 0.8136363636363636,
+          "precision": 0.9157894736842105,
+          "recall": 0.71900826446281,
+          "f1": 0.8055555555555556,
+          "support": 242
+        },
+        {
+          "disease": "spondylosis",
+          "precision": 0.9312169312169312,
+          "recall": 0.7213114754098361,
+          "f1": 0.812933025404157,
+          "support": 244
+        },
+        {
+          "disease": "marijuana abuse",
+          "precision": 0.9312169312169312,
+          "recall": 0.7272727272727273,
+          "f1": 0.8167053364269141,
           "support": 242
         },
         {
           "disease": "eczema",
-          "precision": 0.8878048780487805,
-          "recall": 0.7520661157024794,
-          "f1": 0.814317673378076,
+          "precision": 0.917098445595855,
+          "recall": 0.731404958677686,
+          "f1": 0.8137931034482758,
           "support": 242
         },
         {
-          "disease": "marijuana abuse",
-          "precision": 0.8975609756097561,
-          "recall": 0.7603305785123967,
-          "f1": 0.8232662192393736,
-          "support": 242
+          "disease": "cholecystitis",
+          "precision": 0.93717277486911,
+          "recall": 0.7427385892116183,
+          "f1": 0.8287037037037037,
+          "support": 241
+        },
+        {
+          "disease": "infectious gastroenteritis",
+          "precision": 0.7387755102040816,
+          "recall": 0.7448559670781894,
+          "f1": 0.7418032786885246,
+          "support": 243
+        },
+        {
+          "disease": "cystitis",
+          "precision": 0.91,
+          "recall": 0.7459016393442623,
+          "f1": 0.8198198198198198,
+          "support": 244
         },
         {
           "disease": "actinic keratosis",
-          "precision": 0.8689655172413793,
-          "recall": 0.7777777777777778,
-          "f1": 0.8208469055374593,
+          "precision": 0.8620689655172413,
+          "recall": 0.7716049382716049,
+          "f1": 0.8143322475570033,
           "support": 162
         },
         {
           "disease": "vaginal cyst",
-          "precision": 0.8755760368663594,
-          "recall": 0.7818930041152263,
-          "f1": 0.8260869565217391,
+          "precision": 0.8909952606635071,
+          "recall": 0.7736625514403292,
+          "f1": 0.8281938325991189,
           "support": 243
         },
         {
           "disease": "degenerative disc disease",
-          "precision": 0.6135265700483091,
+          "precision": 0.6287128712871287,
           "recall": 0.7839506172839507,
-          "f1": 0.6883468834688347,
+          "f1": 0.6978021978021978,
           "support": 162
         },
         {
-          "disease": "cholecystitis",
-          "precision": 0.867579908675799,
-          "recall": 0.7883817427385892,
-          "f1": 0.8260869565217391,
-          "support": 241
-        },
-        {
-          "disease": "cystitis",
-          "precision": 0.8693693693693694,
-          "recall": 0.7909836065573771,
-          "f1": 0.8283261802575107,
-          "support": 244
-        },
-        {
-          "disease": "gallstone",
-          "precision": 0.7247191011235955,
-          "recall": 0.7962962962962963,
-          "f1": 0.7588235294117647,
+          "disease": "schizophrenia",
+          "precision": 0.7318435754189944,
+          "recall": 0.808641975308642,
+          "f1": 0.7683284457478006,
           "support": 162
         }
       ],
@@ -7292,62 +7293,57 @@
         {
           "actual": "noninfectious gastroenteritis",
           "predicted": "infectious gastroenteritis",
-          "count": 64
-        },
-        {
-          "actual": "infectious gastroenteritis",
-          "predicted": "noninfectious gastroenteritis",
-          "count": 56
+          "count": 61
         },
         {
           "actual": "cystitis",
           "predicted": "temporary or benign blood in urine",
-          "count": 42
+          "count": 49
+        },
+        {
+          "actual": "infectious gastroenteritis",
+          "predicted": "noninfectious gastroenteritis",
+          "count": 47
         },
         {
           "actual": "cholecystitis",
           "predicted": "gallstone",
-          "count": 34
-        },
-        {
-          "actual": "marijuana abuse",
-          "predicted": "personality disorder",
-          "count": 33
+          "count": 41
         },
         {
           "actual": "personality disorder",
           "predicted": "schizophrenia",
+          "count": 38
+        },
+        {
+          "actual": "marijuana abuse",
+          "predicted": "personality disorder",
+          "count": 37
+        },
+        {
+          "actual": "acute bronchitis",
+          "predicted": "chronic obstructive pulmonary disease (copd)",
+          "count": 35
+        },
+        {
+          "actual": "nose disorder",
+          "predicted": "acute sinusitis",
           "count": 33
         },
         {
           "actual": "skin polyp",
           "predicted": "skin pigmentation disorder",
-          "count": 31
+          "count": 32
         },
         {
-          "actual": "nose disorder",
-          "predicted": "acute sinusitis",
+          "actual": "spondylosis",
+          "predicted": "degenerative disc disease",
           "count": 30
         },
         {
           "actual": "spinal stenosis",
           "predicted": "degenerative disc disease",
-          "count": 29
-        },
-        {
-          "actual": "acute bronchitis",
-          "predicted": "chronic obstructive pulmonary disease (copd)",
           "count": 28
-        },
-        {
-          "actual": "spondylosis",
-          "predicted": "degenerative disc disease",
-          "count": 27
-        },
-        {
-          "actual": "chronic obstructive pulmonary disease (copd)",
-          "predicted": "acute bronchitis",
-          "count": 26
         },
         {
           "actual": "eczema",
@@ -7360,185 +7356,190 @@
           "count": 24
         },
         {
-          "actual": "fungal infection of the hair",
-          "predicted": "psoriasis",
-          "count": 23
-        },
-        {
-          "actual": "pneumonia",
-          "predicted": "acute bronchospasm",
-          "count": 23
+          "actual": "vaginal cyst",
+          "predicted": "threatened pregnancy",
+          "count": 24
         },
         {
           "actual": "chronic obstructive pulmonary disease (copd)",
           "predicted": "asthma",
+          "count": 23
+        },
+        {
+          "actual": "degenerative disc disease",
+          "predicted": "herniated disk",
+          "count": 23
+        },
+        {
+          "actual": "fungal infection of the hair",
+          "predicted": "psoriasis",
+          "count": 22
+        },
+        {
+          "actual": "pneumonia",
+          "predicted": "acute bronchospasm",
+          "count": 22
+        },
+        {
+          "actual": "diverticulitis",
+          "predicted": "appendicitis",
           "count": 21
         },
         {
-          "actual": "vaginal cyst",
-          "predicted": "threatened pregnancy",
-          "count": 21
-        },
-        {
-          "actual": "skin pigmentation disorder",
-          "predicted": "skin polyp",
-          "count": 20
-        },
-        {
-          "actual": "temporary or benign blood in urine",
-          "predicted": "cystitis",
+          "actual": "chronic obstructive pulmonary disease (copd)",
+          "predicted": "acute bronchitis",
           "count": 20
         }
       ],
       "feature_importance": [
         {
           "feature": "vomiting",
-          "importance": 0.02854543097684798,
+          "importance": 0.028235792773483735,
           "definition": "Presence or absence of normalized symptom 'vomiting'"
         },
         {
           "feature": "shortness of breath",
-          "importance": 0.026579943548083365,
+          "importance": 0.026754414582000206,
           "definition": "Presence or absence of normalized symptom 'shortness of breath'"
         },
         {
           "feature": "sharp abdominal pain",
-          "importance": 0.02347136315726375,
+          "importance": 0.02379938293302329,
           "definition": "Presence or absence of normalized symptom 'sharp abdominal pain'"
         },
         {
-          "feature": "cough",
-          "importance": 0.02312639329025638,
-          "definition": "Presence or absence of normalized symptom 'cough'"
-        },
-        {
           "feature": "headache",
-          "importance": 0.023117171591792725,
+          "importance": 0.023548415423448786,
           "definition": "Presence or absence of normalized symptom 'headache'"
         },
         {
+          "feature": "cough",
+          "importance": 0.023427561966516734,
+          "definition": "Presence or absence of normalized symptom 'cough'"
+        },
+        {
           "feature": "back pain",
-          "importance": 0.021806163794881324,
+          "importance": 0.02216565114469275,
           "definition": "Presence or absence of normalized symptom 'back pain'"
         },
         {
           "feature": "sharp chest pain",
-          "importance": 0.02137484676122097,
+          "importance": 0.021828783626651915,
           "definition": "Presence or absence of normalized symptom 'sharp chest pain'"
         },
         {
           "feature": "fever",
-          "importance": 0.021010086445296543,
+          "importance": 0.021184024884711983,
           "definition": "Presence or absence of normalized symptom 'fever'"
         },
         {
           "feature": "nausea",
-          "importance": 0.01932992286831552,
+          "importance": 0.01986190786748729,
           "definition": "Presence or absence of normalized symptom 'nausea'"
         },
         {
           "feature": "burning abdominal pain",
-          "importance": 0.01755632479533388,
+          "importance": 0.017755914438105515,
           "definition": "Presence or absence of normalized symptom 'burning abdominal pain'"
         },
         {
           "feature": "arm pain",
-          "importance": 0.016713923523512926,
+          "importance": 0.01684586272415846,
           "definition": "Presence or absence of normalized symptom 'arm pain'"
         },
         {
-          "feature": "nasal congestion",
-          "importance": 0.01647322429685078,
-          "definition": "Presence or absence of normalized symptom 'nasal congestion'"
-        },
-        {
           "feature": "lower abdominal pain",
-          "importance": 0.016031301694437287,
+          "importance": 0.01641455585691322,
           "definition": "Presence or absence of normalized symptom 'lower abdominal pain'"
         },
         {
-          "feature": "pelvic pain",
-          "importance": 0.015536605232415159,
-          "definition": "Presence or absence of normalized symptom 'pelvic pain'"
-        },
-        {
-          "feature": "sore throat",
-          "importance": 0.015299393841475951,
-          "definition": "Presence or absence of normalized symptom 'sore throat'"
+          "feature": "nasal congestion",
+          "importance": 0.01639596552322432,
+          "definition": "Presence or absence of normalized symptom 'nasal congestion'"
         },
         {
           "feature": "dizziness",
-          "importance": 0.015168819180886025,
+          "importance": 0.015561540609017004,
           "definition": "Presence or absence of normalized symptom 'dizziness'"
         },
         {
+          "feature": "sore throat",
+          "importance": 0.015378827083188535,
+          "definition": "Presence or absence of normalized symptom 'sore throat'"
+        },
+        {
+          "feature": "pelvic pain",
+          "importance": 0.015359988776945225,
+          "definition": "Presence or absence of normalized symptom 'pelvic pain'"
+        },
+        {
           "feature": "ear pain",
-          "importance": 0.013634547838853104,
+          "importance": 0.014180259396717472,
           "definition": "Presence or absence of normalized symptom 'ear pain'"
         },
         {
           "feature": "side pain",
-          "importance": 0.01314588996552038,
+          "importance": 0.013386486981593452,
           "definition": "Presence or absence of normalized symptom 'side pain'"
         },
         {
           "feature": "skin swelling",
-          "importance": 0.01307856249203386,
+          "importance": 0.013173731603742848,
           "definition": "Presence or absence of normalized symptom 'skin swelling'"
         },
         {
-          "feature": "skin rash",
-          "importance": 0.012693782046318002,
-          "definition": "Presence or absence of normalized symptom 'skin rash'"
+          "feature": "neck pain",
+          "importance": 0.01296504525796091,
+          "definition": "Presence or absence of normalized symptom 'neck pain'"
         }
       ],
       "confidence": {
-        "mean_max_probability": 0.5701948192713772,
-        "median_max_probability": 0.589776539559919,
-        "p05_max_probability": 0.19085094911674855,
-        "p95_max_probability": 0.9007086119531152,
-        "overall_correct_rate": 0.8927127659574469,
+        "mean_max_probability": 0.5418053725223893,
+        "median_max_probability": 0.5522190337209192,
+        "p05_max_probability": 0.183193099618801,
+        "p95_max_probability": 0.8742554287692051,
+        "overall_correct_rate": 0.8931382978723404,
         "threshold_analysis": [
           {
             "threshold": 0.3,
-            "accepted_records": 16141,
-            "coverage": 0.858563829787234,
-            "accuracy_when_accepted": 0.9510563162133697
+            "accepted_records": 15795,
+            "coverage": 0.8401595744680851,
+            "accuracy_when_accepted": 0.9557454890788224
           },
           {
             "threshold": 0.4,
-            "accepted_records": 14078,
-            "coverage": 0.7488297872340426,
-            "accuracy_when_accepted": 0.9771984656911493
+            "accepted_records": 13514,
+            "coverage": 0.7188297872340426,
+            "accuracy_when_accepted": 0.9822406393369839
           },
           {
             "threshold": 0.5,
-            "accepted_records": 11704,
-            "coverage": 0.6225531914893617,
-            "accuracy_when_accepted": 0.99419002050581
+            "accepted_records": 10859,
+            "coverage": 0.5776063829787234,
+            "accuracy_when_accepted": 0.9965005985818215
           },
           {
             "threshold": 0.6,
-            "accepted_records": 9128,
-            "coverage": 0.485531914893617,
-            "accuracy_when_accepted": 0.9994522348816828
+            "accepted_records": 8034,
+            "coverage": 0.42734042553191487,
+            "accuracy_when_accepted": 0.9996265870052278
           },
           {
             "threshold": 0.7,
-            "accepted_records": 6207,
-            "coverage": 0.3301595744680851,
+            "accepted_records": 5050,
+            "coverage": 0.26861702127659576,
             "accuracy_when_accepted": 1.0
           },
           {
             "threshold": 0.8,
-            "accepted_records": 3214,
-            "coverage": 0.17095744680851063,
+            "accepted_records": 2395,
+            "coverage": 0.1273936170212766,
             "accuracy_when_accepted": 1.0
           },
           {
             "threshold": 0.9,
-            "accepted_records": 955,
-            "coverage": 0.05079787234042553,
+            "accepted_records": 575,
+            "coverage": 0.030585106382978722,
             "accuracy_when_accepted": 1.0
           }
         ],
@@ -7551,32 +7552,32 @@
       "folds": 5,
       "scope": "training_partition_only",
       "accuracy": [
-        0.8900857769798524,
-        0.8923465655961168,
-        0.8895464822449793,
-        0.8920805904647915,
-        0.8924724032451123
+        0.8907507148081655,
+        0.8938759226012368,
+        0.8912089373586913,
+        0.8915486402021411,
+        0.8927383960633063
       ],
       "f1_weighted": [
-        0.8896934705853645,
-        0.8921081247942041,
-        0.8888747046817729,
-        0.891789429426254,
-        0.8923057933996471
+        0.8903487077254768,
+        0.8938401378276989,
+        0.8907196960666586,
+        0.8914293433697696,
+        0.8926400640784175
       ],
       "f1_macro": [
-        0.887606702172942,
-        0.8898567279184791,
-        0.8869382540533871,
-        0.889222391886117,
-        0.8902593591072736
+        0.8883834980627774,
+        0.8914441666626375,
+        0.8887687567869199,
+        0.8886771934081866,
+        0.890327385169282
       ],
-      "mean_accuracy": 0.8913063637061706,
-      "std_accuracy": 0.0012351607155262584,
-      "mean_f1_weighted": 0.8909543045774484,
-      "std_f1_weighted": 0.0013978336613419133,
-      "mean_f1_macro": 0.8887766870276398,
-      "std_f1_macro": 0.0012893531714408273
+      "mean_accuracy": 0.8920245222067082,
+      "std_accuracy": 0.0011359160989406465,
+      "mean_f1_weighted": 0.8917955898136043,
+      "std_f1_weighted": 0.0012867373434506718,
+      "mean_f1_macro": 0.8895202000179607,
+      "std_f1_macro": 0.0011764874777794954
     },
     "accuracy_target_minimum": 0.95,
     "accuracy_target_range": [

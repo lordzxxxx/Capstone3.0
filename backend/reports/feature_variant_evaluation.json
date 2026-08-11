@@ -1,0 +1,48 @@
+{
+  "generated_at": "2026-08-11T01:29:38.895271+00:00",
+  "purpose": "Training-only CV selection of conservative feature transformations; no production artifact changed.",
+  "dataset_records": 93993,
+  "base_feature_count": 229,
+  "train_records": 75193,
+  "locked_test_records": 18800,
+  "selected_by_training_cv": "baseline_plus_derived_symptom_count",
+  "adoption_status": "not_promoted; production remains the validated 229-feature artifact",
+  "variants": [
+    {
+      "variant": "baseline_229_binary_symptoms",
+      "feature_count": 229,
+      "cv_scope": "training partition only; 3-fold StratifiedGroupKFold grouped by exact input vector",
+      "cv_mean_accuracy": 0.8897370639932304,
+      "cv_std_accuracy": 0.0010171604638313826,
+      "cv_mean_f1_macro": 0.8873266131600003,
+      "cv_mean_f1_weighted": 0.8894235750926812
+    },
+    {
+      "variant": "baseline_plus_derived_symptom_count",
+      "feature_count": 230,
+      "cv_scope": "training partition only; 3-fold StratifiedGroupKFold grouped by exact input vector",
+      "cv_mean_accuracy": 0.8908276028872436,
+      "cv_std_accuracy": 0.0005877166629007668,
+      "cv_mean_f1_macro": 0.8883116979638143,
+      "cv_mean_f1_weighted": 0.8906365001215971,
+      "locked_test_evaluation_after_cv_selection": {
+        "accuracy": 0.893031914893617,
+        "balanced_accuracy": 0.8951577077354894,
+        "f1_macro": 0.8909592485678551,
+        "f1_weighted": 0.8933098793252485,
+        "top2_accuracy": 0.9647340425531915,
+        "top3_accuracy": 0.9844148936170213
+      }
+    },
+    {
+      "variant": "quality_filtered_features",
+      "feature_count": 229,
+      "cv_scope": "training partition only; 3-fold StratifiedGroupKFold grouped by exact input vector",
+      "cv_mean_accuracy": 0.8897370639932304,
+      "cv_std_accuracy": 0.0010171604638313826,
+      "cv_mean_f1_macro": 0.8873266131600003,
+      "cv_mean_f1_weighted": 0.8894235750926812
+    }
+  ],
+  "interpretation": "Derived symptom count adds no new clinical information and cannot raise the exact-vector theoretical ceiling; it was tested only as a possible tree-model representation improvement. Quality filtering is expected to be identical because no constant/near-zero-variance features were found."
+}

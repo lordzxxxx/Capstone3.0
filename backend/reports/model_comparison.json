@@ -12,94 +12,95 @@
   "results": [
     {
       "model": "RandomForest_tuned",
-      "accuracy": 0.8927,
-      "precisionWeighted": 0.8967,
-      "recallWeighted": 0.8927,
-      "f1Weighted": 0.8928,
-      "f1Macro": 0.8906,
-      "balancedAccuracy": 0.8946,
-      "top3Accuracy": 0.9843,
-      "trainingSeconds": 10.26,
-      "inferenceSecondsFor18800Rows": 0.621,
+      "accuracy": 0.8931,
+      "precisionWeighted": 0.899,
+      "recallWeighted": 0.8931,
+      "f1Weighted": 0.8932,
+      "f1Macro": 0.8909,
+      "balancedAccuracy": 0.8963,
+      "top2Accuracy": 0.964,
+      "top3Accuracy": 0.9839,
+      "trainingSeconds": 10.23,
+      "inferenceSecondsFor18800Rows": 0.63,
       "modelSizeMB": 111.3,
-      "cvMeanAccuracy": 0.8889524278051658,
-      "cvStdAccuracy": 0.0008659437367068599,
-      "cvMeanF1Macro": 0.8864110083508184,
-      "cvStdF1Macro": 0.001079900915622632,
-      "cvMeanF1Weighted": 0.888575818143987,
-      "cvStdF1Weighted": 0.0009444212518596349,
+      "cvMeanAccuracy": 0.8907877023728092,
+      "cvStdAccuracy": 0.00030928093927104445,
+      "cvMeanF1Macro": 0.8881434645249727,
+      "cvStdF1Macro": 0.0003836007010932331,
+      "cvMeanF1Weighted": 0.8904400914945928,
+      "cvStdF1Weighted": 0.00033183416124673816,
       "modelSizeBasis": "serialized size reused from prior completed comparison; candidate artifact is not persisted by this script",
       "cvEstimator": "same candidate family/configuration with n_estimators capped at 50 for bounded 3-fold training-only CV",
       "perClassWorstRecall": [
         {
           "disease": "chronic obstructive pulmonary disease (copd)",
-          "precision": 0.6357615894039735,
-          "recall": 0.588957055214724,
-          "f1": 0.6114649681528662,
+          "precision": 0.6158536585365854,
+          "recall": 0.6196319018404908,
+          "f1": 0.617737003058104,
           "support": 163
         },
         {
           "disease": "skin polyp",
-          "precision": 0.6282051282051282,
-          "recall": 0.6086956521739131,
-          "f1": 0.6182965299684543,
+          "precision": 0.6518987341772152,
+          "recall": 0.639751552795031,
+          "f1": 0.64576802507837,
           "support": 161
         },
         {
+          "disease": "acute bronchospasm",
+          "precision": 0.6031746031746031,
+          "recall": 0.6440677966101694,
+          "f1": 0.6229508196721312,
+          "support": 118
+        },
+        {
           "disease": "skin pigmentation disorder",
-          "precision": 0.61875,
-          "recall": 0.6149068322981367,
-          "f1": 0.616822429906542,
+          "precision": 0.611764705882353,
+          "recall": 0.6459627329192547,
+          "f1": 0.6283987915407855,
           "support": 161
         },
         {
           "disease": "noninfectious gastroenteritis",
-          "precision": 0.72,
-          "recall": 0.6721991701244814,
-          "f1": 0.6952789699570815,
+          "precision": 0.7630331753554502,
+          "recall": 0.6680497925311203,
+          "f1": 0.7123893805309734,
           "support": 241
         },
         {
-          "disease": "acute bronchospasm",
-          "precision": 0.5869565217391305,
-          "recall": 0.6864406779661016,
-          "f1": 0.6328125,
-          "support": 118
-        },
-        {
-          "disease": "spinal stenosis",
-          "precision": 0.9388888888888889,
-          "recall": 0.6983471074380165,
-          "f1": 0.8009478672985783,
-          "support": 242
+          "disease": "acute bronchitis",
+          "precision": 0.8176100628930818,
+          "recall": 0.6735751295336787,
+          "f1": 0.7386363636363636,
+          "support": 193
         },
         {
           "disease": "personality disorder",
-          "precision": 0.6129032258064516,
-          "recall": 0.6993865030674846,
-          "f1": 0.6532951289398281,
+          "precision": 0.578125,
+          "recall": 0.6809815950920245,
+          "f1": 0.6253521126760564,
           "support": 163
         },
         {
+          "disease": "spinal stenosis",
+          "precision": 0.9595375722543352,
+          "recall": 0.6859504132231405,
+          "f1": 0.8,
+          "support": 242
+        },
+        {
           "disease": "pneumonia",
-          "precision": 0.8888888888888888,
+          "precision": 0.9006622516556292,
           "recall": 0.7120418848167539,
-          "f1": 0.7906976744186046,
+          "f1": 0.7953216374269005,
           "support": 191
         },
         {
-          "disease": "spondylosis",
-          "precision": 0.9365079365079365,
-          "recall": 0.7254098360655737,
-          "f1": 0.8175519630484989,
-          "support": 244
-        },
-        {
-          "disease": "infectious gastroenteritis",
-          "precision": 0.7195121951219512,
-          "recall": 0.7283950617283951,
-          "f1": 0.7239263803680982,
-          "support": 243
+          "disease": "fungal infection of the hair",
+          "precision": 0.9157894736842105,
+          "recall": 0.71900826446281,
+          "f1": 0.8055555555555556,
+          "support": 242
         }
       ]
     },
@@ -111,9 +112,10 @@
       "f1Weighted": 0.8917,
       "f1Macro": 0.889,
       "balancedAccuracy": 0.8907,
+      "top2Accuracy": 0.9589,
       "top3Accuracy": 0.9785,
-      "trainingSeconds": 9.08,
-      "inferenceSecondsFor18800Rows": 0.418,
+      "trainingSeconds": 9.5,
+      "inferenceSecondsFor18800Rows": 0.467,
       "modelSizeMB": 40.9,
       "cvMeanAccuracy": 0.877262532141403,
       "cvStdAccuracy": 0.002553755546672458,

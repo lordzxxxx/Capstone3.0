@@ -1,0 +1,950 @@
+{
+  "generated_at": "2026-08-11T01:34:30.039619+00:00",
+  "purpose": "Actual error-gap, label, variable, and ambiguity analysis; no records or labels changed.",
+  "dataset": {
+    "raw_path": "backend/dataset/raw/Diseases_and_Symptoms_dataset.csv",
+    "processed_path": "backend/dataset/processed/merged_dataset.csv",
+    "raw_records": 96088,
+    "usable_records": 93993,
+    "feature_count": 229,
+    "class_count": 100,
+    "class_size_min": 567,
+    "class_size_max": 1219,
+    "class_distribution": {
+      "actinic keratosis": 808,
+      "acute bronchiolitis": 966,
+      "acute bronchitis": 966,
+      "acute bronchospasm": 591,
+      "acute kidney injury": 808,
+      "acute pancreatitis": 1207,
+      "acute sinusitis": 828,
+      "allergy": 803,
+      "angina": 826,
+      "anxiety": 1198,
+      "appendicitis": 808,
+      "arthritis of the hip": 1210,
+      "asthma": 604,
+      "benign prostatic hyperplasia (bph)": 1206,
+      "brachial neuritis": 824,
+      "bursitis": 1208,
+      "carpal tunnel syndrome": 819,
+      "cholecystitis": 1204,
+      "chronic back pain": 805,
+      "chronic constipation": 827,
+      "chronic obstructive pulmonary disease (copd)": 812,
+      "common cold": 813,
+      "complex regional pain syndrome": 1217,
+      "concussion": 1191,
+      "conjunctivitis": 825,
+      "conjunctivitis due to allergy": 1215,
+      "contact dermatitis": 823,
+      "cornea infection": 816,
+      "croup": 807,
+      "cystitis": 1219,
+      "degenerative disc disease": 810,
+      "dental caries": 1185,
+      "depression": 830,
+      "developmental disability": 825,
+      "diaper rash": 809,
+      "diverticulitis": 1214,
+      "drug reaction": 811,
+      "ear drum damage": 819,
+      "eczema": 1207,
+      "esophagitis": 1215,
+      "eustachian tube dysfunction (ear disorder)": 810,
+      "fungal infection of the hair": 1212,
+      "gallstone": 812,
+      "gastrointestinal hemorrhage": 1214,
+      "gout": 1211,
+      "gum disease": 803,
+      "heart attack": 810,
+      "heart failure": 590,
+      "hemorrhoids": 818,
+      "herniated disk": 828,
+      "hiatal hernia": 815,
+      "hyperemesis gravidarum": 815,
+      "hypertensive heart disease": 592,
+      "hypoglycemia": 1215,
+      "idiopathic excessive menstruation": 832,
+      "idiopathic irregular menstrual cycle": 815,
+      "idiopathic painful menstruation": 805,
+      "infectious gastroenteritis": 1212,
+      "injury to the arm": 1209,
+      "injury to the leg": 1206,
+      "injury to the trunk": 803,
+      "liver disease": 1209,
+      "macular degeneration": 817,
+      "marijuana abuse": 1210,
+      "multiple sclerosis": 825,
+      "noninfectious gastroenteritis": 1206,
+      "nose disorder": 1218,
+      "obstructive sleep apnea (osa)": 965,
+      "otitis externa (swimmer's ear)": 808,
+      "otitis media": 807,
+      "pain after an operation": 806,
+      "panic disorder": 810,
+      "pelvic inflammatory disease": 804,
+      "peripheral nerve disorder": 1215,
+      "personality disorder": 816,
+      "pneumonia": 956,
+      "problem during pregnancy": 820,
+      "psoriasis": 825,
+      "pyogenic skin infection": 834,
+      "rectal disorder": 808,
+      "schizophrenia": 811,
+      "seasonal allergies (hay fever)": 816,
+      "sebaceous cyst": 821,
+      "sepsis": 567,
+      "sickle cell crisis": 808,
+      "sinus bradycardia": 814,
+      "skin pigmentation disorder": 805,
+      "skin polyp": 807,
+      "spinal stenosis": 1207,
+      "spondylosis": 1216,
+      "spontaneous abortion": 1212,
+      "sprain or strain": 1212,
+      "strep throat": 1210,
+      "stye": 832,
+      "temporary or benign blood in urine": 803,
+      "threatened pregnancy": 818,
+      "urinary tract infection": 815,
+      "vaginal cyst": 1215,
+      "vaginitis": 821,
+      "vulvodynia": 1218
+    }
+  },
+  "label_audit": {
+    "mapping_file": "backend/dataset/mappings/disease_mapping.json",
+    "raw_label_count": 100,
+    "processed_label_count": 100,
+    "raw_records": 96088,
+    "records_changed_by_configured_mapping": 0,
+    "normalizations_applied_in_current_raw_source": [],
+    "reviewed_configured_mappings": [
+      {
+        "source_label": "chronic obstructive pulmonary disease",
+        "canonical_label": "chronic obstructive pulmonary disease (copd)",
+        "present_in_current_raw_source": false,
+        "raw_record_count": 0
+      },
+      {
+        "source_label": "copd",
+        "canonical_label": "chronic obstructive pulmonary disease (copd)",
+        "present_in_current_raw_source": false,
+        "raw_record_count": 0
+      },
+      {
+        "source_label": "covid 19",
+        "canonical_label": "covid-19",
+        "present_in_current_raw_source": false,
+        "raw_record_count": 0
+      },
+      {
+        "source_label": "covid-19",
+        "canonical_label": "covid-19",
+        "present_in_current_raw_source": false,
+        "raw_record_count": 0
+      },
+      {
+        "source_label": "covid19",
+        "canonical_label": "covid-19",
+        "present_in_current_raw_source": false,
+        "raw_record_count": 0
+      },
+      {
+        "source_label": "flu",
+        "canonical_label": "influenza",
+        "present_in_current_raw_source": false,
+        "raw_record_count": 0
+      },
+      {
+        "source_label": "high blood pressure",
+        "canonical_label": "hypertension",
+        "present_in_current_raw_source": false,
+        "raw_record_count": 0
+      },
+      {
+        "source_label": "htn",
+        "canonical_label": "hypertension",
+        "present_in_current_raw_source": false,
+        "raw_record_count": 0
+      },
+      {
+        "source_label": "hypertensive disease",
+        "canonical_label": "hypertension",
+        "present_in_current_raw_source": false,
+        "raw_record_count": 0
+      },
+      {
+        "source_label": "influenza (flu)",
+        "canonical_label": "influenza",
+        "present_in_current_raw_source": false,
+        "raw_record_count": 0
+      },
+      {
+        "source_label": "type 2 diabetes mellitus",
+        "canonical_label": "type 2 diabetes",
+        "present_in_current_raw_source": false,
+        "raw_record_count": 0
+      },
+      {
+        "source_label": "type ii diabetes",
+        "canonical_label": "type 2 diabetes",
+        "present_in_current_raw_source": false,
+        "raw_record_count": 0
+      },
+      {
+        "source_label": "urinary tract infection (uti)",
+        "canonical_label": "urinary tract infection",
+        "present_in_current_raw_source": false,
+        "raw_record_count": 0
+      },
+      {
+        "source_label": "uti",
+        "canonical_label": "urinary tract infection",
+        "present_in_current_raw_source": false,
+        "raw_record_count": 0
+      }
+    ],
+    "equivalent_label_groups_in_mapping": [
+      {
+        "canonical_label": "chronic obstructive pulmonary disease (copd)",
+        "source_labels": [
+          "chronic obstructive pulmonary disease",
+          "copd"
+        ]
+      },
+      {
+        "canonical_label": "covid-19",
+        "source_labels": [
+          "covid 19",
+          "covid-19",
+          "covid19"
+        ]
+      },
+      {
+        "canonical_label": "hypertension",
+        "source_labels": [
+          "high blood pressure",
+          "htn",
+          "hypertensive disease"
+        ]
+      },
+      {
+        "canonical_label": "influenza",
+        "source_labels": [
+          "flu",
+          "influenza (flu)"
+        ]
+      },
+      {
+        "canonical_label": "type 2 diabetes",
+        "source_labels": [
+          "type 2 diabetes mellitus",
+          "type ii diabetes"
+        ]
+      },
+      {
+        "canonical_label": "urinary tract infection",
+        "source_labels": [
+          "urinary tract infection (uti)",
+          "uti"
+        ]
+      }
+    ],
+    "medical_distinction_policy": "Only configured spelling, abbreviation, or synonym mappings are eligible. Overlapping symptoms do not justify merging medically different disease classes.",
+    "current_result": "The current raw source already uses the canonical labels; no new label normalization was applied in this run."
+  },
+  "ambiguity_analysis": {
+    "unique_feature_vector_groups": 88894,
+    "rows_sharing_feature_vector": 9226,
+    "label_conflict_groups": 4127,
+    "rows_in_label_conflict_groups": 9226,
+    "largest_feature_vector_group_rows": 12,
+    "majority_per_vector_upper_bound": 88894,
+    "majority_per_vector_theoretical_ceiling": 0.9457512793505899,
+    "most_common_conflicting_label_pairs": [
+      {
+        "labels": [
+          "infectious gastroenteritis",
+          "noninfectious gastroenteritis"
+        ],
+        "conflicting_vector_groups": 268,
+        "rows_in_those_groups": 571
+      },
+      {
+        "labels": [
+          "acute bronchitis",
+          "chronic obstructive pulmonary disease (copd)"
+        ],
+        "conflicting_vector_groups": 198,
+        "rows_in_those_groups": 519
+      },
+      {
+        "labels": [
+          "skin pigmentation disorder",
+          "skin polyp"
+        ],
+        "conflicting_vector_groups": 167,
+        "rows_in_those_groups": 400
+      },
+      {
+        "labels": [
+          "personality disorder",
+          "schizophrenia"
+        ],
+        "conflicting_vector_groups": 167,
+        "rows_in_those_groups": 362
+      },
+      {
+        "labels": [
+          "acute bronchospasm",
+          "pneumonia"
+        ],
+        "conflicting_vector_groups": 148,
+        "rows_in_those_groups": 449
+      },
+      {
+        "labels": [
+          "cystitis",
+          "temporary or benign blood in urine"
+        ],
+        "conflicting_vector_groups": 135,
+        "rows_in_those_groups": 282
+      },
+      {
+        "labels": [
+          "asthma",
+          "chronic obstructive pulmonary disease (copd)"
+        ],
+        "conflicting_vector_groups": 119,
+        "rows_in_those_groups": 343
+      },
+      {
+        "labels": [
+          "degenerative disc disease",
+          "spinal stenosis"
+        ],
+        "conflicting_vector_groups": 113,
+        "rows_in_those_groups": 294
+      },
+      {
+        "labels": [
+          "marijuana abuse",
+          "personality disorder"
+        ],
+        "conflicting_vector_groups": 112,
+        "rows_in_those_groups": 250
+      },
+      {
+        "labels": [
+          "cholecystitis",
+          "gallstone"
+        ],
+        "conflicting_vector_groups": 112,
+        "rows_in_those_groups": 251
+      },
+      {
+        "labels": [
+          "degenerative disc disease",
+          "spondylosis"
+        ],
+        "conflicting_vector_groups": 111,
+        "rows_in_those_groups": 285
+      },
+      {
+        "labels": [
+          "spinal stenosis",
+          "spondylosis"
+        ],
+        "conflicting_vector_groups": 88,
+        "rows_in_those_groups": 236
+      },
+      {
+        "labels": [
+          "degenerative disc disease",
+          "herniated disk"
+        ],
+        "conflicting_vector_groups": 84,
+        "rows_in_those_groups": 241
+      },
+      {
+        "labels": [
+          "acute bronchospasm",
+          "chronic obstructive pulmonary disease (copd)"
+        ],
+        "conflicting_vector_groups": 80,
+        "rows_in_those_groups": 247
+      },
+      {
+        "labels": [
+          "acute bronchitis",
+          "asthma"
+        ],
+        "conflicting_vector_groups": 78,
+        "rows_in_those_groups": 264
+      },
+      {
+        "labels": [
+          "spontaneous abortion",
+          "vaginal cyst"
+        ],
+        "conflicting_vector_groups": 77,
+        "rows_in_those_groups": 185
+      },
+      {
+        "labels": [
+          "psoriasis",
+          "skin pigmentation disorder"
+        ],
+        "conflicting_vector_groups": 76,
+        "rows_in_those_groups": 216
+      },
+      {
+        "labels": [
+          "threatened pregnancy",
+          "vaginal cyst"
+        ],
+        "conflicting_vector_groups": 72,
+        "rows_in_those_groups": 173
+      },
+      {
+        "labels": [
+          "acute bronchitis",
+          "pneumonia"
+        ],
+        "conflicting_vector_groups": 69,
+        "rows_in_those_groups": 272
+      },
+      {
+        "labels": [
+          "herniated disk",
+          "spinal stenosis"
+        ],
+        "conflicting_vector_groups": 65,
+        "rows_in_those_groups": 193
+      }
+    ]
+  },
+  "held_out_error_diagnostics": {
+    "lowest_recall_classes": [
+      {
+        "disease": "chronic obstructive pulmonary disease (copd)",
+        "precision": 0.6158536585365854,
+        "recall": 0.6196319018404908,
+        "f1": 0.617737003058104,
+        "support": 163
+      },
+      {
+        "disease": "skin polyp",
+        "precision": 0.6518987341772152,
+        "recall": 0.639751552795031,
+        "f1": 0.64576802507837,
+        "support": 161
+      },
+      {
+        "disease": "acute bronchospasm",
+        "precision": 0.6031746031746031,
+        "recall": 0.6440677966101694,
+        "f1": 0.6229508196721312,
+        "support": 118
+      },
+      {
+        "disease": "skin pigmentation disorder",
+        "precision": 0.611764705882353,
+        "recall": 0.6459627329192547,
+        "f1": 0.6283987915407855,
+        "support": 161
+      },
+      {
+        "disease": "noninfectious gastroenteritis",
+        "precision": 0.7630331753554502,
+        "recall": 0.6680497925311203,
+        "f1": 0.7123893805309734,
+        "support": 241
+      },
+      {
+        "disease": "acute bronchitis",
+        "precision": 0.8176100628930818,
+        "recall": 0.6735751295336787,
+        "f1": 0.7386363636363636,
+        "support": 193
+      },
+      {
+        "disease": "personality disorder",
+        "precision": 0.578125,
+        "recall": 0.6809815950920245,
+        "f1": 0.6253521126760564,
+        "support": 163
+      },
+      {
+        "disease": "spinal stenosis",
+        "precision": 0.9595375722543352,
+        "recall": 0.6859504132231405,
+        "f1": 0.8,
+        "support": 242
+      },
+      {
+        "disease": "pneumonia",
+        "precision": 0.9006622516556292,
+        "recall": 0.7120418848167539,
+        "f1": 0.7953216374269005,
+        "support": 191
+      },
+      {
+        "disease": "fungal infection of the hair",
+        "precision": 0.9157894736842105,
+        "recall": 0.71900826446281,
+        "f1": 0.8055555555555556,
+        "support": 242
+      },
+      {
+        "disease": "spondylosis",
+        "precision": 0.9312169312169312,
+        "recall": 0.7213114754098361,
+        "f1": 0.812933025404157,
+        "support": 244
+      },
+      {
+        "disease": "marijuana abuse",
+        "precision": 0.9312169312169312,
+        "recall": 0.7272727272727273,
+        "f1": 0.8167053364269141,
+        "support": 242
+      },
+      {
+        "disease": "eczema",
+        "precision": 0.917098445595855,
+        "recall": 0.731404958677686,
+        "f1": 0.8137931034482758,
+        "support": 242
+      },
+      {
+        "disease": "cholecystitis",
+        "precision": 0.93717277486911,
+        "recall": 0.7427385892116183,
+        "f1": 0.8287037037037037,
+        "support": 241
+      },
+      {
+        "disease": "infectious gastroenteritis",
+        "precision": 0.7387755102040816,
+        "recall": 0.7448559670781894,
+        "f1": 0.7418032786885246,
+        "support": 243
+      },
+      {
+        "disease": "cystitis",
+        "precision": 0.91,
+        "recall": 0.7459016393442623,
+        "f1": 0.8198198198198198,
+        "support": 244
+      },
+      {
+        "disease": "actinic keratosis",
+        "precision": 0.8620689655172413,
+        "recall": 0.7716049382716049,
+        "f1": 0.8143322475570033,
+        "support": 162
+      },
+      {
+        "disease": "vaginal cyst",
+        "precision": 0.8909952606635071,
+        "recall": 0.7736625514403292,
+        "f1": 0.8281938325991189,
+        "support": 243
+      },
+      {
+        "disease": "degenerative disc disease",
+        "precision": 0.6287128712871287,
+        "recall": 0.7839506172839507,
+        "f1": 0.6978021978021978,
+        "support": 162
+      },
+      {
+        "disease": "schizophrenia",
+        "precision": 0.7318435754189944,
+        "recall": 0.808641975308642,
+        "f1": 0.7683284457478006,
+        "support": 162
+      }
+    ],
+    "top_confusion_pairs": [
+      {
+        "actual": "noninfectious gastroenteritis",
+        "predicted": "infectious gastroenteritis",
+        "count": 61
+      },
+      {
+        "actual": "cystitis",
+        "predicted": "temporary or benign blood in urine",
+        "count": 49
+      },
+      {
+        "actual": "infectious gastroenteritis",
+        "predicted": "noninfectious gastroenteritis",
+        "count": 47
+      },
+      {
+        "actual": "cholecystitis",
+        "predicted": "gallstone",
+        "count": 41
+      },
+      {
+        "actual": "personality disorder",
+        "predicted": "schizophrenia",
+        "count": 38
+      },
+      {
+        "actual": "marijuana abuse",
+        "predicted": "personality disorder",
+        "count": 37
+      },
+      {
+        "actual": "acute bronchitis",
+        "predicted": "chronic obstructive pulmonary disease (copd)",
+        "count": 35
+      },
+      {
+        "actual": "nose disorder",
+        "predicted": "acute sinusitis",
+        "count": 33
+      },
+      {
+        "actual": "skin polyp",
+        "predicted": "skin pigmentation disorder",
+        "count": 32
+      },
+      {
+        "actual": "spondylosis",
+        "predicted": "degenerative disc disease",
+        "count": 30
+      },
+      {
+        "actual": "spinal stenosis",
+        "predicted": "degenerative disc disease",
+        "count": 28
+      },
+      {
+        "actual": "eczema",
+        "predicted": "contact dermatitis",
+        "count": 24
+      },
+      {
+        "actual": "schizophrenia",
+        "predicted": "personality disorder",
+        "count": 24
+      },
+      {
+        "actual": "vaginal cyst",
+        "predicted": "threatened pregnancy",
+        "count": 24
+      },
+      {
+        "actual": "chronic obstructive pulmonary disease (copd)",
+        "predicted": "asthma",
+        "count": 23
+      },
+      {
+        "actual": "degenerative disc disease",
+        "predicted": "herniated disk",
+        "count": 23
+      },
+      {
+        "actual": "fungal infection of the hair",
+        "predicted": "psoriasis",
+        "count": 22
+      },
+      {
+        "actual": "pneumonia",
+        "predicted": "acute bronchospasm",
+        "count": 22
+      },
+      {
+        "actual": "diverticulitis",
+        "predicted": "appendicitis",
+        "count": 21
+      },
+      {
+        "actual": "chronic obstructive pulmonary disease (copd)",
+        "predicted": "acute bronchitis",
+        "count": 20
+      }
+    ],
+    "feature_importance": [
+      {
+        "feature": "vomiting",
+        "importance": 0.028235792773483735,
+        "definition": "Presence or absence of normalized symptom 'vomiting'"
+      },
+      {
+        "feature": "shortness of breath",
+        "importance": 0.026754414582000206,
+        "definition": "Presence or absence of normalized symptom 'shortness of breath'"
+      },
+      {
+        "feature": "sharp abdominal pain",
+        "importance": 0.02379938293302329,
+        "definition": "Presence or absence of normalized symptom 'sharp abdominal pain'"
+      },
+      {
+        "feature": "headache",
+        "importance": 0.023548415423448786,
+        "definition": "Presence or absence of normalized symptom 'headache'"
+      },
+      {
+        "feature": "cough",
+        "importance": 0.023427561966516734,
+        "definition": "Presence or absence of normalized symptom 'cough'"
+      },
+      {
+        "feature": "back pain",
+        "importance": 0.02216565114469275,
+        "definition": "Presence or absence of normalized symptom 'back pain'"
+      },
+      {
+        "feature": "sharp chest pain",
+        "importance": 0.021828783626651915,
+        "definition": "Presence or absence of normalized symptom 'sharp chest pain'"
+      },
+      {
+        "feature": "fever",
+        "importance": 0.021184024884711983,
+        "definition": "Presence or absence of normalized symptom 'fever'"
+      },
+      {
+        "feature": "nausea",
+        "importance": 0.01986190786748729,
+        "definition": "Presence or absence of normalized symptom 'nausea'"
+      },
+      {
+        "feature": "burning abdominal pain",
+        "importance": 0.017755914438105515,
+        "definition": "Presence or absence of normalized symptom 'burning abdominal pain'"
+      },
+      {
+        "feature": "arm pain",
+        "importance": 0.01684586272415846,
+        "definition": "Presence or absence of normalized symptom 'arm pain'"
+      },
+      {
+        "feature": "lower abdominal pain",
+        "importance": 0.01641455585691322,
+        "definition": "Presence or absence of normalized symptom 'lower abdominal pain'"
+      },
+      {
+        "feature": "nasal congestion",
+        "importance": 0.01639596552322432,
+        "definition": "Presence or absence of normalized symptom 'nasal congestion'"
+      },
+      {
+        "feature": "dizziness",
+        "importance": 0.015561540609017004,
+        "definition": "Presence or absence of normalized symptom 'dizziness'"
+      },
+      {
+        "feature": "sore throat",
+        "importance": 0.015378827083188535,
+        "definition": "Presence or absence of normalized symptom 'sore throat'"
+      },
+      {
+        "feature": "pelvic pain",
+        "importance": 0.015359988776945225,
+        "definition": "Presence or absence of normalized symptom 'pelvic pain'"
+      },
+      {
+        "feature": "ear pain",
+        "importance": 0.014180259396717472,
+        "definition": "Presence or absence of normalized symptom 'ear pain'"
+      },
+      {
+        "feature": "side pain",
+        "importance": 0.013386486981593452,
+        "definition": "Presence or absence of normalized symptom 'side pain'"
+      },
+      {
+        "feature": "skin swelling",
+        "importance": 0.013173731603742848,
+        "definition": "Presence or absence of normalized symptom 'skin swelling'"
+      },
+      {
+        "feature": "neck pain",
+        "importance": 0.01296504525796091,
+        "definition": "Presence or absence of normalized symptom 'neck pain'"
+      }
+    ],
+    "confidence": {
+      "mean_max_probability": 0.5418053725223893,
+      "median_max_probability": 0.5522190337209192,
+      "p05_max_probability": 0.183193099618801,
+      "p95_max_probability": 0.8742554287692051,
+      "overall_correct_rate": 0.8931382978723404,
+      "threshold_analysis": [
+        {
+          "threshold": 0.3,
+          "accepted_records": 15795,
+          "coverage": 0.8401595744680851,
+          "accuracy_when_accepted": 0.9557454890788224
+        },
+        {
+          "threshold": 0.4,
+          "accepted_records": 13514,
+          "coverage": 0.7188297872340426,
+          "accuracy_when_accepted": 0.9822406393369839
+        },
+        {
+          "threshold": 0.5,
+          "accepted_records": 10859,
+          "coverage": 0.5776063829787234,
+          "accuracy_when_accepted": 0.9965005985818215
+        },
+        {
+          "threshold": 0.6,
+          "accepted_records": 8034,
+          "coverage": 0.42734042553191487,
+          "accuracy_when_accepted": 0.9996265870052278
+        },
+        {
+          "threshold": 0.7,
+          "accepted_records": 5050,
+          "coverage": 0.26861702127659576,
+          "accuracy_when_accepted": 1.0
+        },
+        {
+          "threshold": 0.8,
+          "accepted_records": 2395,
+          "coverage": 0.1273936170212766,
+          "accuracy_when_accepted": 1.0
+        },
+        {
+          "threshold": 0.9,
+          "accepted_records": 575,
+          "coverage": 0.030585106382978722,
+          "accuracy_when_accepted": 1.0
+        }
+      ],
+      "policy_status": "evidence_only; no confidence threshold is activated in production",
+      "safety_interpretation": "A probability score is not medical certainty; lower-confidence cases require professional review."
+    }
+  },
+  "variable_inventory": [
+    {
+      "variable": "symptoms",
+      "available_in_system": true,
+      "available_in_training_data": true,
+      "source": "Application checkup/prenatal text fields; normalized wide symptom columns in the RF source",
+      "can_be_used_for_training": true,
+      "current_role": "229 binary symptom-presence inputs after normalization",
+      "reason": "The current RF source contains the paired binary representation and disease label."
+    },
+    {
+      "variable": "age",
+      "available_in_system": true,
+      "available_in_training_data": false,
+      "source": "Checkup/prenatal records and HealthAIClassifier; no age column in Diseases_and_Symptoms_dataset.csv",
+      "can_be_used_for_training": false,
+      "current_role": "On-device category/severity input only; not an RF disease input",
+      "reason": "No real age value is paired with the 100-class RF target in the current training source."
+    },
+    {
+      "variable": "symptom_duration",
+      "available_in_system": true,
+      "available_in_training_data": false,
+      "source": "DOH/RITM case-form templates and possible narrative details; no duration field in the local RF source",
+      "can_be_used_for_training": false,
+      "current_role": "Not used",
+      "reason": "A duration feature requires real labeled records containing duration; no such paired field is present locally."
+    },
+    {
+      "variable": "symptom_severity",
+      "available_in_system": true,
+      "available_in_training_data": false,
+      "source": "Application severity workflow and free-text details; not a labeled RF training column",
+      "can_be_used_for_training": false,
+      "current_role": "On-device severity output/rule input, not RF disease input",
+      "reason": "The current RF dataset has no severity measurement paired with disease labels."
+    },
+    {
+      "variable": "temperature",
+      "available_in_system": true,
+      "available_in_training_data": false,
+      "source": "Checkup form/details and on-device classifier; absent from RF source",
+      "can_be_used_for_training": false,
+      "current_role": "On-device severity input only",
+      "reason": "No paired temperature and 100-class disease target exists in the current training data."
+    },
+    {
+      "variable": "blood_pressure",
+      "available_in_system": true,
+      "available_in_training_data": false,
+      "source": "Checkup and prenatal forms/details; absent from RF source",
+      "can_be_used_for_training": false,
+      "current_role": "On-device severity input only",
+      "reason": "No paired blood-pressure measurement and 100-class disease target exists in the current training data."
+    },
+    {
+      "variable": "heart_rate",
+      "available_in_system": true,
+      "available_in_training_data": false,
+      "source": "Checkup form/details and on-device classifier; absent from RF source",
+      "can_be_used_for_training": false,
+      "current_role": "On-device severity input only",
+      "reason": "No paired heart-rate measurement and 100-class disease target exists in the current training data."
+    },
+    {
+      "variable": "respiratory_rate",
+      "available_in_system": true,
+      "available_in_training_data": false,
+      "source": "Checkup form/details; absent from RF source",
+      "can_be_used_for_training": false,
+      "current_role": "Captured for records; not an RF input",
+      "reason": "No paired respiratory-rate measurement and 100-class disease target exists in the current training data."
+    },
+    {
+      "variable": "oxygen_saturation",
+      "available_in_system": true,
+      "available_in_training_data": false,
+      "source": "Checkup form/details; absent from RF source",
+      "can_be_used_for_training": false,
+      "current_role": "Captured for records; not an RF input",
+      "reason": "No paired oxygen-saturation measurement and 100-class disease target exists in the current training data."
+    },
+    {
+      "variable": "medical_history",
+      "available_in_system": true,
+      "available_in_training_data": false,
+      "source": "Prenatal preExistingConditions/previousComplications fields; absent from RF source",
+      "can_be_used_for_training": false,
+      "current_role": "On-device/rule-based context only",
+      "reason": "No paired history field and 100-class disease target exists in the current training data."
+    },
+    {
+      "variable": "pregnancy_context",
+      "available_in_system": true,
+      "available_in_training_data": false,
+      "source": "Prenatal fields including gestationalAge, gravida, para, and riskLevel; absent from RF source",
+      "can_be_used_for_training": false,
+      "current_role": "Prenatal workflow context only",
+      "reason": "No paired pregnancy context and 100-class disease target exists in the current training data."
+    },
+    {
+      "variable": "diseases",
+      "available_in_system": true,
+      "available_in_training_data": true,
+      "source": "Checkup diseaseType/AI category fields are not the same as the RF target; RF source diseases column is authoritative",
+      "can_be_used_for_training": false,
+      "current_role": "y target: 100-class categorical disease label",
+      "reason": "The disease label is the dependent variable, not an independent input."
+    }
+  ],
+  "interpretation": {
+    "largest_observed_causes": [
+      "Identical 229-symptom vectors occur with different disease labels; the majority-per-vector ceiling is below 95%.",
+      "Near-identical vectors are widespread, so one symptom difference often separates neighboring classes without enough clinical context.",
+      "The weakest held-out recalls cluster in clinically overlapping classes, including COPD, skin polyp, skin pigmentation disorder, and noninfectious gastroenteritis.",
+      "The current training source has no age, duration, severity, vital-sign, laboratory, history, or pregnancy-context columns paired with the 100-class target.",
+      "No additional label aliases were observed in the current raw source beyond the configured mapping file; medically distinct overlapping classes were retained."
+    ],
+    "accuracy_ceiling_definition": "Sum of the majority label count within every exact feature-vector group divided by usable records; this is an upper bound for any classifier using only the current 229 binary inputs on these records."
+  }
+}

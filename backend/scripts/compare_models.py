@@ -72,7 +72,7 @@ def main() -> None:
     tuned_rf_params = {
         "n_estimators": 200,
         "min_samples_split": 4,
-        "min_samples_leaf": 1,
+        "min_samples_leaf": 2,
         "max_features": "log2",
         "max_depth": 28,
         "criterion": "entropy",
@@ -115,6 +115,9 @@ def main() -> None:
         top3 = top_k_accuracy_score(
             y_test, probabilities, k=min(3, probabilities.shape[1]), labels=model.classes_
         )
+        top2 = top_k_accuracy_score(
+            y_test, probabilities, k=min(2, probabilities.shape[1]), labels=model.classes_
+        )
 
         # Full candidate models are evaluated on the locked held-out split.
         # The secondary CV is deliberately bounded to three folds and 50
@@ -154,6 +157,7 @@ def main() -> None:
             "f1Weighted": round(float(f1_w), 4),
             "f1Macro": round(float(f1_m), 4),
             "balancedAccuracy": round(float(balanced_acc), 4),
+            "top2Accuracy": round(float(top2), 4),
             "top3Accuracy": round(float(top3), 4),
             "trainingSeconds": round(fit_seconds, 2),
             "inferenceSecondsFor18800Rows": round(predict_seconds, 3),
