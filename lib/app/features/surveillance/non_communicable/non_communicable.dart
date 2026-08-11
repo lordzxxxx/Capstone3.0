@@ -5,12 +5,14 @@ import 'package:mycapstone_project/app/features/patients/patient.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
+const Color _primaryAqua = AppDesign.blue;
+const Color _secondaryIceBlue = AppDesign.blueSoft;
+const Color _darkDeepTeal = AppDesign.page;
+const Color _mutedCoolGray = AppDesign.muted;
+const Color _lightOffWhite = AppDesign.ink;
 
 final RegExp _vitalLabelPattern = RegExp(
   r'\b(?:BP|Temp|HR|Bpm|bprm|O2|Weight|Height):',
@@ -25,12 +27,7 @@ Widget _buildHighlightedVitalLabelText(
 }) {
   final matches = _vitalLabelPattern.allMatches(text).toList();
   if (matches.isEmpty) {
-    return Text(
-      text,
-      style: baseStyle,
-      maxLines: maxLines,
-      overflow: overflow,
-    );
+    return Text(text, style: baseStyle, maxLines: maxLines, overflow: overflow);
   }
 
   final spans = <TextSpan>[];
@@ -39,10 +36,7 @@ Widget _buildHighlightedVitalLabelText(
   for (final match in matches) {
     if (match.start > start) {
       spans.add(
-        TextSpan(
-          text: text.substring(start, match.start),
-          style: baseStyle,
-        ),
+        TextSpan(text: text.substring(start, match.start), style: baseStyle),
       );
     }
 
@@ -162,7 +156,8 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
 
     return collapsed.map((patient) {
       final current = Map<String, dynamic>.from(patient);
-      current['totalVisits'] = patient['tableHistoryCount'] ?? patient['totalVisits'] ?? 1;
+      current['totalVisits'] =
+          patient['tableHistoryCount'] ?? patient['totalVisits'] ?? 1;
       return current;
     }).toList();
   }
@@ -171,10 +166,10 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     try {
       // Sync from Firebase first
       await _dbHelper.syncFromFirebase();
-      
+
       // Load non-communicable disease records from check-up database
       final allRecords = await _dbHelper.getAllRecords();
-      
+
       // Filter for non-communicable diseases only
       final nonCommunicableRecords = allRecords.where((record) {
         return record['diseaseType'] == 'Non-Communicable';
@@ -185,14 +180,21 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
           return {
             'id': record['id'] ?? '',
             'patientId': record['linkedPatientId'] ?? record['patientId'] ?? '',
-            'patientName': record['patientName'] ?? record['patient'] ?? 'Unknown',
+            'patientName':
+                record['patientName'] ?? record['patient'] ?? 'Unknown',
             'age': record['age'] ?? _extractAge(record['details'] ?? ''),
             'gender': record['gender'] ?? 'N/A',
-            'condition': record['condition'] ?? record['details'] ?? 'No details',
-            'lastVisit': record['lastVisit'] ?? record['datetime']?.split(' ')[0] ?? 'N/A',
+            'condition':
+                record['condition'] ?? record['details'] ?? 'No details',
+            'lastVisit':
+                record['lastVisit'] ??
+                record['datetime']?.split(' ')[0] ??
+                'N/A',
             'nextVisit': record['nextVisit'] ?? 'N/A',
-            'currentStatus': record['currentStatus'] ?? record['status'] ?? 'Pending',
-            'treatment': record['treatment'] ?? record['plan'] ?? 'No treatment plan',
+            'currentStatus':
+                record['currentStatus'] ?? record['status'] ?? 'Pending',
+            'treatment':
+                record['treatment'] ?? record['plan'] ?? 'No treatment plan',
             'bloodPressure': record['bloodPressure'] ?? 'N/A',
             'bloodSugar': record['bloodSugar'] ?? 'N/A',
             'totalVisits': record['totalVisits'] ?? 0,
@@ -219,14 +221,14 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
 
     _filteredPatients = _patients.where((patient) {
       return patient['patientName'].toString().toLowerCase().contains(
-                _searchQuery,
-              ) ||
+            _searchQuery,
+          ) ||
           patient['condition'].toString().toLowerCase().contains(
-                _searchQuery,
-              ) ||
+            _searchQuery,
+          ) ||
           patient['currentStatus'].toString().toLowerCase().contains(
-                _searchQuery,
-              );
+            _searchQuery,
+          );
     }).toList();
   }
 
@@ -361,10 +363,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       appBar: AppBar(
         title: const Text(
           'Non-Communicable Disease Management',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: _darkDeepTeal,
         elevation: 0,
@@ -430,7 +429,10 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
             children: [
               // Search Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
                 child: _buildSearchBar(),
               ),
 
@@ -438,7 +440,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
 
               // Dashboard Overview
               _buildOverviewDashboard(),
-              
+
               const SizedBox(height: 20),
 
               // Patient Table
@@ -622,14 +624,18 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(16),
-        border: color == Colors.transparent ? Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 1) : null,
-        boxShadow: color == Colors.transparent ? [] : [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: color == Colors.transparent
+            ? Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 1)
+            : null,
+        boxShadow: color == Colors.transparent
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -669,7 +675,10 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 1),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.3),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -704,13 +713,13 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                 children: [
                   Text(
                     entry.key,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.white),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
@@ -739,7 +748,10 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       decoration: BoxDecoration(
         color: _darkDeepTeal,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
       ),
       child: TextField(
         controller: _searchController,
@@ -758,10 +770,18 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
             fontSize: 15,
             fontWeight: FontWeight.w400,
           ),
-          prefixIcon: Icon(Icons.search, color: Colors.white.withValues(alpha: 0.9), size: 22),
+          prefixIcon: Icon(
+            Icons.search,
+            color: Colors.white.withValues(alpha: 0.9),
+            size: 22,
+          ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: Icon(Icons.clear, color: Colors.white.withValues(alpha: 0.9), size: 20),
+                  icon: Icon(
+                    Icons.clear,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    size: 20,
+                  ),
                   onPressed: () {
                     _searchController.clear();
                     _filterPatients('');
@@ -772,7 +792,10 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
           filled: false,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 16,
+          ),
         ),
       ),
     );
@@ -786,14 +809,17 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
           padding: const EdgeInsets.all(40),
           child: Column(
             children: [
-              Icon(Icons.search_off, size: 64, color: _mutedCoolGray.withValues(alpha: 0.5)),
+              Icon(
+                Icons.search_off,
+                size: 64,
+                color: _mutedCoolGray.withValues(alpha: 0.5),
+              ),
               const SizedBox(height: 16),
               Text(
-                _searchQuery.isEmpty ? 'No patients found' : 'No results for "$_searchQuery"',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: _mutedCoolGray,
-                ),
+                _searchQuery.isEmpty
+                    ? 'No patients found'
+                    : 'No results for "$_searchQuery"',
+                style: TextStyle(fontSize: 16, color: _mutedCoolGray),
               ),
             ],
           ),
@@ -831,168 +857,186 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
           ],
         ),
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Patient Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Patient Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: _getStatusColor(patient['currentStatus']).withValues(alpha: 0.3),
-                  child: Text(
-                    patient['patientName'].toString().substring(0, 1).toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: _getStatusColor(
+                      patient['currentStatus'],
+                    ).withValues(alpha: 0.3),
+                    child: Text(
+                      patient['patientName']
+                          .toString()
+                          .substring(0, 1)
+                          .toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          patient['patientName'],
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${patient['age']} years • ${patient['gender']}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(patient['currentStatus']),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      patient['currentStatus'],
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Patient Details
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _buildDetailRow(
+                    icon: Icons.medical_information,
+                    label: 'Condition',
+                    value: patient['condition'],
+                    color: Colors.white,
+                  ),
+                  Divider(
+                    height: 20,
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
+                  _buildDetailRow(
+                    icon: Icons.medication,
+                    label: 'Treatment',
+                    value: patient['treatment'],
+                    color: Colors.white,
+                  ),
+                  Divider(
+                    height: 20,
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
+                  Row(
                     children: [
-                      Text(
-                        patient['patientName'],
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: _buildDetailRow(
+                          icon: Icons.calendar_today,
+                          label: 'Last Visit',
+                          value: _formatDate(patient['lastVisit']),
                           color: Colors.white,
+                          isCompact: true,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${patient['age']} years • ${patient['gender']}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.7),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildDetailRow(
+                          icon: Icons.event,
+                          label: 'Next Visit',
+                          value: _formatDate(patient['nextVisit']),
+                          color: Colors.white,
+                          isCompact: true,
                         ),
                       ),
                     ],
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(patient['currentStatus']),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    patient['currentStatus'],
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                  if (patient['notes'] != null &&
+                      patient['notes'].toString().isNotEmpty) ...[
+                    Divider(
+                      height: 20,
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                    _buildDetailRow(
+                      icon: Icons.note,
+                      label: 'Notes',
+                      value: patient['notes'],
                       color: Colors.white,
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Patient Details
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _buildDetailRow(
-                  icon: Icons.medical_information,
-                  label: 'Condition',
-                  value: patient['condition'],
-                  color: Colors.white,
-                ),
-                Divider(height: 20, color: Colors.white.withValues(alpha: 0.2)),
-                _buildDetailRow(
-                  icon: Icons.medication,
-                  label: 'Treatment',
-                  value: patient['treatment'],
-                  color: Colors.white,
-                ),
-                Divider(height: 20, color: Colors.white.withValues(alpha: 0.2)),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildDetailRow(
-                        icon: Icons.calendar_today,
-                        label: 'Last Visit',
-                        value: _formatDate(patient['lastVisit']),
-                        color: Colors.white,
-                        isCompact: true,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildDetailRow(
-                        icon: Icons.event,
-                        label: 'Next Visit',
-                        value: _formatDate(patient['nextVisit']),
-                        color: Colors.white,
-                        isCompact: true,
-                      ),
-                    ),
                   ],
-                ),
-                if (patient['notes'] != null && patient['notes'].toString().isNotEmpty) ...[
-                  Divider(height: 20, color: Colors.white.withValues(alpha: 0.2)),
-                  _buildDetailRow(
-                    icon: Icons.note,
-                    label: 'Notes',
-                    value: patient['notes'],
-                    color: Colors.white,
-                  ),
                 ],
-              ],
-            ),
-          ),
-
-          // Actions
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(16),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildActionButton(
-                  icon: Icons.visibility,
-                  label: 'View',
-                  onTap: () => _viewPatientDetails(patient),
+
+            // Actions
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
                 ),
-                _buildActionButton(
-                  icon: Icons.edit,
-                  label: 'Edit',
-                  onTap: () => _editPatient(patient),
-                ),
-                _buildActionButton(
-                  icon: Icons.medical_services,
-                  label: 'Treatment',
-                  onTap: () => _manageTreatment(patient),
-                ),
-                _buildActionButton(
-                  icon: Icons.history,
-                  label: 'History',
-                  onTap: () => _viewHistory(patient),
-                ),
-              ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildActionButton(
+                    icon: Icons.visibility,
+                    label: 'View',
+                    onTap: () => _viewPatientDetails(patient),
+                  ),
+                  _buildActionButton(
+                    icon: Icons.edit,
+                    label: 'Edit',
+                    onTap: () => _editPatient(patient),
+                  ),
+                  _buildActionButton(
+                    icon: Icons.medical_services,
+                    label: 'Treatment',
+                    onTap: () => _manageTreatment(patient),
+                  ),
+                  _buildActionButton(
+                    icon: Icons.history,
+                    label: 'History',
+                    onTap: () => _viewHistory(patient),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -1076,14 +1120,11 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
 
   // Action Methods
   Future<void> _showAddPatientDialog() async {
-    await Get.to(
-      () => const PatientRecordPage(openRegistrationOnLoad: true),
-    );
+    await Get.to(() => const PatientRecordPage(openRegistrationOnLoad: true));
   }
 
   void _showRecordActionModal(Map<String, dynamic> patient) {
-    final patientName =
-        (patient['patientName'] ?? '').toString().trim().isEmpty
+    final patientName = (patient['patientName'] ?? '').toString().trim().isEmpty
         ? 'Record Details'
         : patient['patientName'].toString();
 
@@ -1203,7 +1244,9 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                     _manageTreatment(patient);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.1),
+                    backgroundColor: const Color(
+                      0xFF4CAF50,
+                    ).withValues(alpha: 0.1),
                     side: const BorderSide(color: Color(0xFF4CAF50), width: 2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1283,16 +1326,11 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
           backgroundColor: _darkDeepTeal,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: _lightOffWhite.withValues(alpha: 0.2),
-            ),
+            side: BorderSide(color: _lightOffWhite.withValues(alpha: 0.2)),
           ),
           title: const Text(
             'Delete Selected Records?',
-            style: TextStyle(
-              color: Colors.red,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
           ),
           content: Text(
             'Are you sure you want to delete ${_selectedIndices.length} selected non-communicable record(s)?',
@@ -1377,7 +1415,8 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
 
   void _viewPatientDetails(Map<String, dynamic> patient) {
     final patientName = (patient['patientName'] ?? 'Unknown').toString();
-    final patientId = (patient['patientId'] ?? patient['id'] ?? 'N/A').toString();
+    final patientId = (patient['patientId'] ?? patient['id'] ?? 'N/A')
+        .toString();
     final age = '${patient['age'] ?? 'N/A'} years';
     final gender = (patient['gender'] ?? 'N/A').toString();
     final condition = (patient['condition'] ?? 'No details').toString();
@@ -1394,7 +1433,9 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       builder: (dialogContext) {
         return Dialog(
           backgroundColor: _darkDeepTeal,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Container(
             decoration: BoxDecoration(
               color: _darkDeepTeal,
@@ -1443,7 +1484,10 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                   ]),
                   const SizedBox(height: 16),
                   _buildCheckupStyleDetailSection('Monitoring', [
-                    _buildCheckupStyleDetailRow('Blood Pressure', bloodPressure),
+                    _buildCheckupStyleDetailRow(
+                      'Blood Pressure',
+                      bloodPressure,
+                    ),
                     _buildCheckupStyleDetailRow('Blood Sugar', bloodSugar),
                     _buildCheckupStyleDetailRow('Last Visit', lastVisit),
                     _buildCheckupStyleDetailRow('Next Visit', nextVisit),
@@ -1614,9 +1658,11 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   Future<void> _viewHistory(Map<String, dynamic> patient) async {
     final allRecords = await _dbHelper.getAllRecords();
     final moduleRecords = allRecords
-        .where((record) =>
-            (record['diseaseType'] ?? '').toString().toLowerCase() ==
-            'non-communicable')
+        .where(
+          (record) =>
+              (record['diseaseType'] ?? '').toString().toLowerCase() ==
+              'non-communicable',
+        )
         .map((record) => Map<String, dynamic>.from(record))
         .toList();
 
@@ -1640,7 +1686,8 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       description:
           'Review earlier non-communicable visits for this patient before creating or updating the next case record.',
       titleBuilder: (entry) =>
-          (entry['condition'] ?? entry['type'] ?? entry['symptoms'] ?? 'Visit').toString(),
+          (entry['condition'] ?? entry['type'] ?? entry['symptoms'] ?? 'Visit')
+              .toString(),
       subtitleBuilder: (entry) =>
           (entry['status'] ?? entry['currentStatus'] ?? 'Pending').toString(),
       metaBuilder: (entry) =>
@@ -1689,7 +1736,7 @@ class _NonCommunicableTable extends StatelessWidget {
 
   Color _getAvatarColor(int index) {
     final colors = [
-      const Color(0xFF00A8B5),
+      AppDesign.nonCommunicable,
       const Color(0xFF1E5A7A),
       const Color(0xFFFF6B6B),
       const Color(0xFF4ECDC4),
@@ -1762,6 +1809,72 @@ class _NonCommunicableTable extends StatelessWidget {
         final statusColor = _getStatusColor(status);
         final isSelected = selectedIndices.contains(absoluteIndex);
 
+        return HealthRecordCard(
+          recordLabel: 'Non-communicable disease',
+          patientName: patientName,
+          location:
+              record['barangay']?.toString() ??
+              record['address']?.toString() ??
+              'Location not recorded',
+          accentColor: AppDesign.nonCommunicable,
+          status: status,
+          secondaryStatus:
+              record['referralStatus']?.toString() ??
+              record['referral_status']?.toString(),
+          isSelected: isSelected,
+          showSelection: isSelectionMode,
+          onSelectionChanged: (selected) =>
+              onSelectionChanged(absoluteIndex, selected),
+          onTap: () {
+            if (isSelectionMode) {
+              onSelectionChanged(absoluteIndex, !isSelected);
+            } else {
+              onTap(record);
+            }
+          },
+          onLongPress: () => onLongPress(record),
+          onAction: () => onEdit(record),
+          metadata: [
+            RecordMetadata(label: 'Age', value: age, icon: Icons.cake_outlined),
+            RecordMetadata(
+              label: 'Recorded condition',
+              value: condition,
+              icon: Icons.biotech_outlined,
+              emphasize: true,
+            ),
+            RecordMetadata(
+              label: 'Date recorded',
+              value: HealthRecordDate.format(
+                record['dateReported'] ?? record['date'],
+              ),
+              icon: Icons.event_outlined,
+            ),
+            RecordMetadata(
+              label: 'Monitoring status',
+              value: record['monitoringStatus']?.toString() ?? status,
+              icon: Icons.monitor_heart_outlined,
+            ),
+            RecordMetadata(
+              label: 'Last check-up',
+              value: HealthRecordDate.format(lastVisit),
+              icon: Icons.history_rounded,
+            ),
+            RecordMetadata(
+              label: 'Next follow-up',
+              value: HealthRecordDate.format(
+                record['nextFollowUp'] ?? record['followUpDate'],
+              ),
+              icon: Icons.event_repeat_outlined,
+            ),
+            RecordMetadata(
+              label: 'Risk level',
+              value: record['riskLevel']?.toString() ?? 'Not recorded',
+              icon: Icons.warning_amber_rounded,
+            ),
+          ],
+        );
+
+        // ignore: dead_code
         return GestureDetector(
           onTap: () {
             if (isSelectionMode) {
@@ -1874,7 +1987,9 @@ class _NonCommunicableTable extends StatelessWidget {
                                         text: 'Age: ',
                                         style: TextStyle(
                                           fontSize: 13,
-                                          color: _lightOffWhite.withValues(alpha: 0.7),
+                                          color: _lightOffWhite.withValues(
+                                            alpha: 0.7,
+                                          ),
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -1898,7 +2013,9 @@ class _NonCommunicableTable extends StatelessWidget {
                                         text: 'Visit: ',
                                         style: TextStyle(
                                           fontSize: 13,
-                                          color: _lightOffWhite.withValues(alpha: 0.7),
+                                          color: _lightOffWhite.withValues(
+                                            alpha: 0.7,
+                                          ),
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),

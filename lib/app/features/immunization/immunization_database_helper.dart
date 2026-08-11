@@ -391,7 +391,8 @@ class ImmunizationDatabaseHelper {
         return;
       }
 
-      final accessScope = await UserAccessScopeService.instance.loadCurrentScope();
+      final accessScope = await UserAccessScopeService.instance
+          .loadCurrentScope();
       if (!accessScope.isAuthenticated) {
         print(
           'No authenticated access scope. Skipping immunization Firebase sync.',
@@ -468,9 +469,7 @@ class ImmunizationDatabaseHelper {
         );
       }
 
-      print(
-        'Synced ${records.length} immunization records from Firebase',
-      );
+      print('Synced ${records.length} immunization records from Firebase');
     } catch (e) {
       print('Error syncing immunization records from Firebase: $e');
     }

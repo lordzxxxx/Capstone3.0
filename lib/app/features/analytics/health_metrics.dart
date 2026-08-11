@@ -8,10 +8,11 @@ import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/roles/bhw/analytics/ai_summary.dart' as ai;
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
 
-const Color _primaryAqua = Color(0xFF8ED7DA);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _lightOffWhite = Color(0xFFF1F1EE);
+const Color _primaryAqua = AppDesign.blue;
+const Color _darkDeepTeal = AppDesign.page;
+const Color _lightOffWhite = AppDesign.ink;
 
 class HealthMetricsPage extends StatefulWidget {
   const HealthMetricsPage({super.key});

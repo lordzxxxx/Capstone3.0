@@ -11,13 +11,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mycapstone_project/app/features/auth/signup.dart';
 import 'package:mycapstone_project/app/features/auth/forgot.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/features/auth/widgets/mobile_auth_shell.dart';
 
 const Color _primaryAqua = AppDesign.blue;
-const Color _secondaryIceBlue = AppDesign.navySoft;
 const Color _darkDeepTeal = AppDesign.ink;
-const Color _mutedCoolGray = AppDesign.subtle;
-const Color _lightOffWhite = AppDesign.ink;
-const Color _sidebarDark = Colors.white;
 const Color _panelSurface = AppDesign.page;
 
 class Login extends StatefulWidget {
@@ -339,316 +336,133 @@ class _LoginState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppDesign.page,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppDesign.navy,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
-          onPressed: () {
-            final navigator = Navigator.of(context);
-            if (navigator.canPop()) {
-              navigator.pop();
-              return;
-            }
-            navigator.pushReplacement(
-              MaterialPageRoute(builder: (context) => const LandingPage()),
-            );
-          },
-        ),
-        title: Text(
-          'Sign In',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+    return MobileAuthShell(
+      pageTitle: 'Sign in',
+      heading: 'Welcome back',
+      description: 'Sign in to securely access the AI-DSUHIS mobile workspace.',
+      onBack: () {
+        final navigator = Navigator.of(context);
+        if (navigator.canPop()) {
+          navigator.pop();
+        } else {
+          navigator.pushReplacement(
+            MaterialPageRoute(builder: (_) => const LandingPage()),
+          );
+        }
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const AuthFieldLabel('Email address'),
+          const SizedBox(height: 8),
+          _buildTextField(
+            controller: emailController,
+            hintText: 'you@example.com',
+            icon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
           ),
-        ),
-        centerTitle: true,
-      ),
-      body: Container(
-        color: AppDesign.page,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: _primaryAqua.withValues(alpha: 0.16),
-                  width: 1.4,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.22),
-                    blurRadius: 24,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const AuthFieldLabel('Password'),
+              TextButton(
+                onPressed: () => Get.to(() => const ForgotPassword()),
+                child: const Text('Forgot password?'),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            ],
+          ),
+          _buildPasswordField(),
+          const SizedBox(height: 22),
+          SizedBox(
+            height: 52,
+            child: FilledButton(
+              onPressed: _isLoading ? null : signIn,
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        color: AppDesign.surface,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : const Text('Sign in'),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const AuthDivider(),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 50,
+            child: OutlinedButton.icon(
+              onPressed: _isLoading ? null : signInWithGoogle,
+              icon: const Icon(Icons.g_mobiledata_rounded, size: 27),
+              label: const Text('Continue with Google'),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: _isLoading
+                        ? null
+                        : () => _signInWithOAuthProvider(
+                            providerId: 'facebook.com',
+                            providerName: 'Facebook',
+                            scopes: const ['public_profile'],
+                          ),
+                    icon: const Icon(
+                      Icons.facebook_rounded,
+                      color: Color(0xFF1877F3),
+                    ),
+                    label: const Text('Facebook'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: _isLoading
+                        ? null
+                        : () => _signInWithOAuthProvider(
+                            providerId: 'apple.com',
+                            providerName: 'Apple',
+                          ),
+                    icon: const Icon(Icons.apple_rounded),
+                    label: const Text('Apple'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          Center(
+            child: RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodyMedium,
                 children: [
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _panelSurface,
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: _primaryAqua.withValues(alpha: 0.18),
-                        ),
-                      ),
-                      child: Text(
-                        'Smart Health Access',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: _primaryAqua,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
+                  const TextSpan(text: "Don't have an account? "),
+                  TextSpan(
+                    text: 'Create one',
+                    style: const TextStyle(
+                      color: AppDesign.blue,
+                      fontWeight: FontWeight.w800,
                     ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () => Get.to(() => const Signup()),
                   ),
-                  const SizedBox(height: 20),
-                  // Logo/Icon Section with gradient
-                  Center(
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: AppDesign.navy,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: _primaryAqua.withValues(alpha: 0.28),
-                            blurRadius: 28,
-                            offset: const Offset(0, 12),
-                          ),
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/newlogo.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(
-                              Icons.medical_services_rounded,
-                              size: 100,
-                              color: _primaryAqua,
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-
-                  // Heading Section
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome Back',
-                        style: Theme.of(context).textTheme.displaySmall
-                            ?.copyWith(
-                              color: _darkDeepTeal,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Sign in to access your health monitoring dashboard',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppDesign.muted,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 40),
-
-                  // Email Field
-                  _buildFieldLabel(context, 'Email Address'),
-                  const SizedBox(height: 10),
-                  _buildTextField(
-                    controller: emailController,
-                    hintText: 'you@example.com',
-                    icon: Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Password Field
-                  _buildFieldLabel(context, 'Password'),
-                  const SizedBox(height: 10),
-                  _buildPasswordField(),
-                  const SizedBox(height: 12),
-
-                  // Forgot Password
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        Get.to(() => const ForgotPassword());
-                      },
-                      child: Text(
-                        'Forgot Password?',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: _darkDeepTeal,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Sign In Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : signIn,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryAqua,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        elevation: 6,
-                        shadowColor: _primaryAqua.withValues(alpha: 0.4),
-                      ),
-                      icon: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                                strokeWidth: 2.5,
-                              ),
-                            )
-                          : const Icon(Icons.login, size: 20),
-                      label: Text(
-                        _isLoading ? 'Signing In...' : 'Sign In',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Divider with text
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(color: AppDesign.border, thickness: 1),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'OR',
-                          style: TextStyle(
-                            color: _darkDeepTeal,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Divider(color: AppDesign.border, thickness: 1),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Social Login Buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildSocialButton(
-                        icon: Icons.facebook,
-                        color: const Color(0xFF1877F3),
-                        onTap: _isLoading
-                            ? null
-                            : () => _signInWithOAuthProvider(
-                                providerId: 'facebook.com',
-                                providerName: 'Facebook',
-                                scopes: const ['public_profile'],
-                              ),
-                      ),
-                      const SizedBox(width: 16),
-                      _buildSocialButton(
-                        icon: Icons.g_mobiledata,
-                        color: _darkDeepTeal,
-                        onTap: _isLoading ? null : signInWithGoogle,
-                      ),
-                      const SizedBox(width: 16),
-                      _buildSocialButton(
-                        icon: Icons.apple,
-                        color: _darkDeepTeal,
-                        onTap: _isLoading
-                            ? null
-                            : () => _signInWithOAuthProvider(
-                                providerId: 'apple.com',
-                                providerName: 'Apple',
-                              ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-
-                  const SizedBox(height: 24),
-
-                  // Sign Up Link
-                  Center(
-                    child: RichText(
-                      text: TextSpan(
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppDesign.muted,
-                        ),
-                        children: [
-                          const TextSpan(text: "Don't have an account? "),
-                          TextSpan(
-                            text: 'Sign Up',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  color: _primaryAqua,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                Get.to(() => const Signup());
-                              },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  // Helper method for field labels
-  Widget _buildFieldLabel(BuildContext context, String label) {
-    return Text(
-      label,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        color: _darkDeepTeal,
-        fontWeight: FontWeight.bold,
+        ],
       ),
     );
   }
@@ -663,6 +477,9 @@ class _LoginState extends State<Login> {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      textInputAction: TextInputAction.next,
+      autofillHints: const [AutofillHints.email, AutofillHints.username],
+      onSubmitted: (_) => FocusScope.of(context).nextFocus(),
       style: const TextStyle(color: _darkDeepTeal, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: hintText,
@@ -701,6 +518,11 @@ class _LoginState extends State<Login> {
     return TextField(
       controller: passwordController,
       obscureText: _obscurePassword,
+      textInputAction: TextInputAction.done,
+      autofillHints: const [AutofillHints.password],
+      onSubmitted: (_) {
+        if (!_isLoading) signIn();
+      },
       style: const TextStyle(color: _darkDeepTeal, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: 'Enter your password',
@@ -743,38 +565,6 @@ class _LoginState extends State<Login> {
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
-        ),
-      ),
-    );
-  }
-
-  // Helper method for social buttons
-  Widget _buildSocialButton({
-    required IconData icon,
-    required Color color,
-    required VoidCallback? onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: AppDesign.page,
-            border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.16),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Icon(icon, color: color, size: 28),
         ),
       ),
     );

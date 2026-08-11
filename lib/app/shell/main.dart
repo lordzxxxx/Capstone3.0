@@ -57,6 +57,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Health Monitoring System',
       theme: AppDesign.theme(),
+      themeMode: ThemeMode.light,
       home: const LandingPage(),
     );
   }

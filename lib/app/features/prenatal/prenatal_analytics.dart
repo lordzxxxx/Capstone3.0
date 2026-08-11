@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helper.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
 
-const Color _primaryAqua = Color(0xFF8ED7DA);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _panelColor = Color(0xFF102A31);
-const Color _lightOffWhite = Color(0xFFF1F1EE);
+const Color _primaryAqua = AppDesign.blue;
+const Color _darkDeepTeal = AppDesign.page;
+const Color _panelColor = AppDesign.surface;
+const Color _lightOffWhite = AppDesign.ink;
 
 class PrenatalAnalyticsPage extends StatefulWidget {
   const PrenatalAnalyticsPage({super.key});
@@ -50,8 +51,18 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
 
   String _monthLabel(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.year.toString().substring(2)}';
   }
@@ -78,11 +89,15 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
   }
 
   String _riskLabel(Map<String, dynamic> record, {bool aiFirst = false}) {
-    final raw = (aiFirst
-            ? [_value(record, 'ai_severity'), _value(record, 'riskLevel')]
-            : [_value(record, 'riskLevel'), _value(record, 'ai_severity')])
-        .firstWhere((value) => value.isNotEmpty, orElse: () => 'Not specified')
-        .toLowerCase();
+    final raw =
+        (aiFirst
+                ? [_value(record, 'ai_severity'), _value(record, 'riskLevel')]
+                : [_value(record, 'riskLevel'), _value(record, 'ai_severity')])
+            .firstWhere(
+              (value) => value.isNotEmpty,
+              orElse: () => 'Not specified',
+            )
+            .toLowerCase();
     if (raw.contains('critical') || raw.contains('high')) return 'High Risk';
     if (raw.contains('moderate') || raw.contains('medium')) {
       return 'Moderate Risk';
@@ -204,7 +219,8 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
         _value(record, 'ai_category'),
       ].join(' ').toLowerCase();
       for (final entry in terms.entries) {
-        if (entry.value.any(text.contains)) result[entry.key] = result[entry.key]! + 1;
+        if (entry.value.any(text.contains))
+          result[entry.key] = result[entry.key]! + 1;
       }
     }
     return result;
@@ -213,11 +229,14 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
   Map<String, int> _referralCounts() {
     final result = <String, int>{'Referred': 0, 'Pending': 0, 'Completed': 0};
     for (final record in _records) {
-      final raw = [
-        _value(record, 'referralStatus'),
-        _value(record, 'referral_status'),
-        _value(record, 'referred'),
-      ].firstWhere((value) => value.isNotEmpty, orElse: () => 'Pending').toLowerCase();
+      final raw =
+          [
+                _value(record, 'referralStatus'),
+                _value(record, 'referral_status'),
+                _value(record, 'referred'),
+              ]
+              .firstWhere((value) => value.isNotEmpty, orElse: () => 'Pending')
+              .toLowerCase();
       final label = raw.contains('complete') || raw.contains('accepted')
           ? 'Completed'
           : raw.contains('refer') || raw == 'yes' || raw == 'true'
@@ -229,79 +248,79 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
   }
 
   Widget _monthlyVisitsChart() => _lineChartPanel(
-        title: 'Monthly Prenatal Visits',
-        subtitle: 'Attendance trend across the last six months',
-        icon: Icons.show_chart_rounded,
-        data: _monthlyCounts(
-          const ['registrationDate', 'date', 'datetime', 'createdAt'],
-        ),
-      );
+    title: 'Monthly Prenatal Visits',
+    subtitle: 'Attendance trend across the last six months',
+    icon: Icons.show_chart_rounded,
+    data: _monthlyCounts(const [
+      'registrationDate',
+      'date',
+      'datetime',
+      'createdAt',
+    ]),
+  );
 
   Widget _pregnancyRiskPieChart() => _pieChartPanel(
-        title: 'Pregnancy Risk Distribution',
-        subtitle: 'Percentage of mothers by risk category',
-        icon: Icons.pie_chart_rounded,
-        data: _riskCounts(),
-      );
+    title: 'Pregnancy Risk Distribution',
+    subtitle: 'Percentage of mothers by risk category',
+    icon: Icons.pie_chart_rounded,
+    data: _riskCounts(),
+  );
 
   Widget _highRiskByBarangayChart() => _barChartPanel(
-        title: 'High-Risk Pregnancies by Barangay',
-        subtitle: 'Areas requiring priority maternal-health resources',
-        icon: Icons.location_city_rounded,
-        data: _highRiskBarangays(),
-      );
+    title: 'High-Risk Pregnancies by Barangay',
+    subtitle: 'Areas requiring priority maternal-health resources',
+    icon: Icons.location_city_rounded,
+    data: _highRiskBarangays(),
+  );
 
   Widget _gestationalAgeChart() => _barChartPanel(
-        title: 'Gestational Age Distribution',
-        subtitle: 'Mothers grouped by pregnancy trimester',
-        icon: Icons.pregnant_woman_rounded,
-        data: _trimesterCounts(),
-      );
+    title: 'Gestational Age Distribution',
+    subtitle: 'Mothers grouped by pregnancy trimester',
+    icon: Icons.pregnant_woman_rounded,
+    data: _trimesterCounts(),
+  );
 
   Widget _expectedDeliveryChart() => _lineChartPanel(
-        title: 'Expected Delivery by Month',
-        subtitle: 'Expected births during the next six months',
-        icon: Icons.event_available_rounded,
-        data: _monthlyCounts(
-          const ['eddDate', 'dueDate'],
-          future: true,
-        ),
-      );
+    title: 'Expected Delivery by Month',
+    subtitle: 'Expected births during the next six months',
+    icon: Icons.event_available_rounded,
+    data: _monthlyCounts(const ['eddDate', 'dueDate'], future: true),
+  );
 
   Widget _completionRateChart() => _pieChartPanel(
-        title: 'Prenatal Completion Rate',
-        subtitle: 'Completed, ongoing, and missed prenatal care',
-        icon: Icons.task_alt_rounded,
-        data: _completionCounts(),
-      );
+    title: 'Prenatal Completion Rate',
+    subtitle: 'Completed, ongoing, and missed prenatal care',
+    icon: Icons.task_alt_rounded,
+    data: _completionCounts(),
+  );
 
   Widget _maternalAgeChart() => _barChartPanel(
-        title: 'Maternal Age Distribution',
-        subtitle: 'Teenage and advanced maternal-age visibility',
-        icon: Icons.groups_2_rounded,
-        data: _ageCounts(),
-      );
+    title: 'Maternal Age Distribution',
+    subtitle: 'Teenage and advanced maternal-age visibility',
+    icon: Icons.groups_2_rounded,
+    data: _ageCounts(),
+  );
 
   Widget _complicationsChart() => _barChartPanel(
-        title: 'Pregnancy Complications',
-        subtitle: 'Most common recorded maternal complications',
-        icon: Icons.medical_information_rounded,
-        data: _complicationCounts(),
-      );
+    title: 'Pregnancy Complications',
+    subtitle: 'Most common recorded maternal complications',
+    icon: Icons.medical_information_rounded,
+    data: _complicationCounts(),
+  );
 
   Widget _aiRiskChart() => _barChartPanel(
-        title: 'AI Risk Prediction Dashboard',
-        subtitle: 'AI-generated and clinical pregnancy risk levels',
-        icon: Icons.psychology_rounded,
-        data: _riskCounts(aiFirst: true),
-      );
+    title: 'AI Risk Prediction Dashboard',
+    subtitle: 'AI-generated and clinical pregnancy risk levels',
+    icon: Icons.psychology_rounded,
+    data: _riskCounts(aiFirst: true),
+  );
 
   Widget _referralStatusChart() => _pieChartPanel(
-        title: 'Referral Status',
-        subtitle: 'Follow-through for higher-level maternal care',
-        icon: Icons.forward_to_inbox_rounded,
-        data: _referralCounts(),
-      );
+    title: 'Referral Status',
+    subtitle: 'Follow-through for higher-level maternal care',
+    icon: Icons.forward_to_inbox_rounded,
+    data: _referralCounts(),
+  );
 
   Widget _geographicRiskPanel() {
     final entries = _highRiskBarangays().entries.toList()
@@ -329,7 +348,10 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
               )!;
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(10),
@@ -339,8 +361,19 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                   children: [
                     Icon(Icons.location_on_rounded, color: color, size: 18),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(entry.key, style: const TextStyle(color: _lightOffWhite))),
-                    Text('${entry.value}', style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+                    Expanded(
+                      child: Text(
+                        entry.key,
+                        style: const TextStyle(color: _lightOffWhite),
+                      ),
+                    ),
+                    Text(
+                      '${entry.value}',
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -391,8 +424,16 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
     const referrals = ['Pending', 'Referred', 'Completed'];
 
     return List.generate(36, (index) {
-      final visitDate = DateTime(now.year, now.month - (index % 6), 2 + index % 24);
-      final dueDate = DateTime(now.year, now.month + (index % 6), 5 + index % 22);
+      final visitDate = DateTime(
+        now.year,
+        now.month - (index % 6),
+        2 + index % 24,
+      );
+      final dueDate = DateTime(
+        now.year,
+        now.month + (index % 6),
+        5 + index % 22,
+      );
       final risk = risks[index % risks.length];
       final weeks = 7 + (index * 3) % 33;
       return <String, dynamic>{
@@ -469,10 +510,7 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
         iconTheme: const IconThemeData(color: _lightOffWhite),
         title: const Text(
           'Prenatal Analytics',
-          style: TextStyle(
-            color: _lightOffWhite,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: _lightOffWhite, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
@@ -518,7 +556,9 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                         color: const Color(0xFFFFB74D).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: const Color(0xFFFFB74D).withValues(alpha: 0.35),
+                          color: const Color(
+                            0xFFFFB74D,
+                          ).withValues(alpha: 0.35),
                         ),
                       ),
                       child: const Row(
@@ -552,10 +592,26 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                     mainAxisSpacing: 12,
                     childAspectRatio: 1.35,
                     children: [
-                      _metric('Total Patients', '${_records.length}', Icons.groups_rounded),
-                      _metric('Active Cases', '$_activeCount', Icons.favorite_rounded),
-                      _metric('High Risk', '$_highRiskCount', Icons.warning_rounded),
-                      _metric('Due in 30 Days', '$_dueSoonCount', Icons.event_rounded),
+                      _metric(
+                        'Total Patients',
+                        '${_records.length}',
+                        Icons.groups_rounded,
+                      ),
+                      _metric(
+                        'Active Cases',
+                        '$_activeCount',
+                        Icons.favorite_rounded,
+                      ),
+                      _metric(
+                        'High Risk',
+                        '$_highRiskCount',
+                        Icons.warning_rounded,
+                      ),
+                      _metric(
+                        'Due in 30 Days',
+                        '$_dueSoonCount',
+                        Icons.event_rounded,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 18),
@@ -605,7 +661,7 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
         ? 1.0
         : entries.map((e) => e.value).reduce((a, b) => a > b ? a : b) + 1.0;
     const palette = [
-      Color(0xFF8ED7DA),
+      AppDesign.skyBlue,
       Color(0xFF5EC7FF),
       Color(0xFFFFB74D),
       Color(0xFFEC407A),
@@ -632,15 +688,17 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    getDrawingHorizontalLine: (_) => FlLine(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      strokeWidth: 1,
-                    ),
+                    getDrawingHorizontalLine: (_) =>
+                        FlLine(color: AppDesign.border, strokeWidth: 1),
                   ),
                   borderData: FlBorderData(show: false),
                   titlesData: FlTitlesData(
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
@@ -648,7 +706,10 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                         interval: maxValue <= 5 ? 1 : null,
                         getTitlesWidget: (value, meta) => Text(
                           '${value.toInt()}',
-                          style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.55), fontSize: 9),
+                          style: TextStyle(
+                            color: _lightOffWhite.withValues(alpha: 0.55),
+                            fontSize: 9,
+                          ),
                         ),
                       ),
                     ),
@@ -658,7 +719,8 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                         reservedSize: 52,
                         getTitlesWidget: (value, meta) {
                           final index = value.toInt();
-                          if (index < 0 || index >= entries.length) return const SizedBox.shrink();
+                          if (index < 0 || index >= entries.length)
+                            return const SizedBox.shrink();
                           return SideTitleWidget(
                             meta: meta,
                             space: 8,
@@ -669,7 +731,10 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                                 textAlign: TextAlign.center,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.68), fontSize: 8.5),
+                                style: TextStyle(
+                                  color: _lightOffWhite.withValues(alpha: 0.68),
+                                  fontSize: 8.5,
+                                ),
                               ),
                             ),
                           );
@@ -680,12 +745,15 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                   barTouchData: BarTouchData(
                     enabled: true,
                     touchTooltipData: BarTouchTooltipData(
-                      getTooltipColor: (_) => const Color(0xFF071A1F),
+                      getTooltipColor: (_) => AppDesign.surface,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final entry = entries[group.x.toInt()];
                         return BarTooltipItem(
                           '${entry.key}\n${entry.value}',
-                          const TextStyle(color: _lightOffWhite, fontWeight: FontWeight.bold),
+                          const TextStyle(
+                            color: _lightOffWhite,
+                            fontWeight: FontWeight.bold,
+                          ),
                         );
                       },
                     ),
@@ -698,11 +766,13 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                           toY: entries[index].value.toDouble(),
                           width: entries.length > 5 ? 16 : 24,
                           color: palette[index % palette.length],
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6),
+                          ),
                           backDrawRodData: BackgroundBarChartRodData(
                             show: true,
                             toY: maxValue,
-                            color: Colors.white.withValues(alpha: 0.03),
+                            color: AppDesign.blueSoft.withValues(alpha: 0.45),
                           ),
                         ),
                       ],
@@ -752,15 +822,17 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    getDrawingHorizontalLine: (_) => FlLine(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      strokeWidth: 1,
-                    ),
+                    getDrawingHorizontalLine: (_) =>
+                        FlLine(color: AppDesign.border, strokeWidth: 1),
                   ),
                   borderData: FlBorderData(show: false),
                   titlesData: FlTitlesData(
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
@@ -768,7 +840,10 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                         interval: maxValue <= 5 ? 1 : null,
                         getTitlesWidget: (value, meta) => Text(
                           '${value.toInt()}',
-                          style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.55), fontSize: 9),
+                          style: TextStyle(
+                            color: _lightOffWhite.withValues(alpha: 0.55),
+                            fontSize: 9,
+                          ),
                         ),
                       ),
                     ),
@@ -778,7 +853,9 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                         reservedSize: 34,
                         getTitlesWidget: (value, meta) {
                           final index = value.toInt();
-                          if (index < 0 || index >= entries.length || value != index.toDouble()) {
+                          if (index < 0 ||
+                              index >= entries.length ||
+                              value != index.toDouble()) {
                             return const SizedBox.shrink();
                           }
                           return SideTitleWidget(
@@ -786,7 +863,10 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                             space: 8,
                             child: Text(
                               entries[index].key,
-                              style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.68), fontSize: 8.5),
+                              style: TextStyle(
+                                color: _lightOffWhite.withValues(alpha: 0.68),
+                                fontSize: 8.5,
+                              ),
                             ),
                           );
                         },
@@ -796,12 +876,15 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                   lineTouchData: LineTouchData(
                     enabled: true,
                     touchTooltipData: LineTouchTooltipData(
-                      getTooltipColor: (_) => const Color(0xFF071A1F),
+                      getTooltipColor: (_) => AppDesign.surface,
                       getTooltipItems: (spots) => spots.map((spot) {
                         final entry = entries[spot.x.toInt()];
                         return LineTooltipItem(
                           '${entry.key}\n${entry.value}',
-                          const TextStyle(color: _lightOffWhite, fontWeight: FontWeight.bold),
+                          const TextStyle(
+                            color: _lightOffWhite,
+                            fontWeight: FontWeight.bold,
+                          ),
                         );
                       }).toList(),
                     ),
@@ -893,9 +976,14 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
               children: List.generate(entries.length, (index) {
                 final entry = entries[index];
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: palette[index % palette.length].withValues(alpha: 0.11),
+                    color: palette[index % palette.length].withValues(
+                      alpha: 0.11,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -910,7 +998,13 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Text('${entry.key}: ${entry.value}', style: const TextStyle(color: _lightOffWhite, fontSize: 11)),
+                      Text(
+                        '${entry.key}: ${entry.value}',
+                        style: const TextStyle(
+                          color: _lightOffWhite,
+                          fontSize: 11,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -934,7 +1028,7 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                   .toDouble() +
               1;
     const colors = <Color>[
-      Color(0xFF8ED7DA),
+      AppDesign.skyBlue,
       Color(0xFF5EC7FF),
       Color(0xFFFFB74D),
       Color(0xFFEC407A),
@@ -964,10 +1058,8 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    getDrawingHorizontalLine: (_) => FlLine(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      strokeWidth: 1,
-                    ),
+                    getDrawingHorizontalLine: (_) =>
+                        FlLine(color: AppDesign.border, strokeWidth: 1),
                   ),
                   borderData: FlBorderData(show: false),
                   titlesData: FlTitlesData(
@@ -1026,7 +1118,7 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                   barTouchData: BarTouchData(
                     enabled: true,
                     touchTooltipData: BarTouchTooltipData(
-                      getTooltipColor: (_) => const Color(0xFF071A1F),
+                      getTooltipColor: (_) => AppDesign.surface,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final entry = visibleEntries[group.x.toInt()];
                         return BarTooltipItem(
@@ -1054,7 +1146,7 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                           backDrawRodData: BackgroundBarChartRodData(
                             show: true,
                             toY: highest,
-                            color: Colors.white.withValues(alpha: 0.035),
+                            color: AppDesign.blueSoft.withValues(alpha: 0.45),
                           ),
                         ),
                       ],
@@ -1155,7 +1247,7 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                       child: LinearProgressIndicator(
                         value: ratio,
                         minHeight: 8,
-                        backgroundColor: Colors.white.withValues(alpha: 0.07),
+                        backgroundColor: AppDesign.blueSoft,
                         color: _primaryAqua,
                       ),
                     ),
@@ -1169,7 +1261,9 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
   }
 
   Widget _insightsPanel() {
-    final completed = _records.where((r) => _matches(r, 'status', 'Completed')).length;
+    final completed = _records
+        .where((r) => _matches(r, 'status', 'Completed'))
+        .length;
     final coverage = _records.isEmpty ? 0.0 : completed / _records.length * 100;
     return _panel(
       child: Column(
@@ -1181,62 +1275,89 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
             Icons.lightbulb_rounded,
           ),
           const SizedBox(height: 16),
-          _insight(Icons.warning_amber_rounded, '$_highRiskCount high-risk patients need close monitoring.'),
-          _insight(Icons.calendar_month_rounded, '$_dueSoonCount patients have an expected delivery within 30 days.'),
-          _insight(Icons.task_alt_rounded, '${coverage.toStringAsFixed(1)}% of records are marked completed.'),
+          _insight(
+            Icons.warning_amber_rounded,
+            '$_highRiskCount high-risk patients need close monitoring.',
+          ),
+          _insight(
+            Icons.calendar_month_rounded,
+            '$_dueSoonCount patients have an expected delivery within 30 days.',
+          ),
+          _insight(
+            Icons.task_alt_rounded,
+            '${coverage.toStringAsFixed(1)}% of records are marked completed.',
+          ),
         ],
       ),
     );
   }
 
   Widget _insight(IconData icon, String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: _primaryAqua, size: 19),
-            const SizedBox(width: 10),
-            Expanded(child: Text(text, style: const TextStyle(color: _lightOffWhite, height: 1.35))),
-          ],
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: _primaryAqua, size: 19),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(color: _lightOffWhite, height: 1.35),
+          ),
         ),
-      );
+      ],
+    ),
+  );
 
   Widget _panel({required Widget child}) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: _panelColor,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: _primaryAqua.withValues(alpha: 0.20)),
-        ),
-        child: child,
-      );
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: _panelColor,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: _primaryAqua.withValues(alpha: 0.20)),
+    ),
+    child: child,
+  );
 
   Widget _panelHeader(String title, String subtitle, IconData icon) => Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              color: _primaryAqua.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(11),
+    children: [
+      Container(
+        padding: const EdgeInsets.all(9),
+        decoration: BoxDecoration(
+          color: _primaryAqua.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(11),
+        ),
+        child: Icon(icon, color: _primaryAqua, size: 20),
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: _lightOffWhite,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            child: Icon(icon, color: _primaryAqua, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(color: _lightOffWhite, fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 3),
-                Text(subtitle, style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.58), fontSize: 11)),
-              ],
+            const SizedBox(height: 3),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: _lightOffWhite.withValues(alpha: 0.58),
+                fontSize: 11,
+              ),
             ),
-          ),
-        ],
-      );
+          ],
+        ),
+      ),
+    ],
+  );
 
   Widget _emptyState() => Text(
-        'No prenatal data available yet.',
-        style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.6)),
-      );
+    'No prenatal data available yet.',
+    style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.6)),
+  );
 }

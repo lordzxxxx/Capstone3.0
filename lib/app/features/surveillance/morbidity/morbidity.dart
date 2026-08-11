@@ -5,12 +5,14 @@ import 'package:mycapstone_project/app/features/surveillance/morbidity/morbidity
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
+const Color _primaryAqua = AppDesign.blue;
+const Color _secondaryIceBlue = AppDesign.blueSoft;
+const Color _darkDeepTeal = AppDesign.page;
+const Color _mutedCoolGray = AppDesign.muted;
+const Color _lightOffWhite = AppDesign.ink;
 
 class MorbidityPage extends StatefulWidget {
   final bool? analyticsOnly;
@@ -1493,7 +1495,7 @@ class _MorbidityTableState extends State<_MorbidityTable> {
 
   Color _getAvatarColor(int index) {
     final colors = [
-      const Color(0xFF00A8B5),
+      AppDesign.morbidity,
       const Color(0xFF1E5A7A),
       const Color(0xFFFF6B6B),
       const Color(0xFF4ECDC4),
@@ -1596,6 +1598,48 @@ class _MorbidityTableState extends State<_MorbidityTable> {
             );
             final severityColor = _getSeverityColor(severity);
 
+            return HealthRecordCard(
+              recordLabel: 'Morbidity record',
+              patientName: patientName,
+              location:
+                  record['barangay']?.toString() ??
+                  record['address']?.toString() ??
+                  record['healthFacility']?.toString() ??
+                  'Location not recorded',
+              accentColor: AppDesign.morbidity,
+              status: record['status']?.toString() ?? severity,
+              secondaryStatus:
+                  record['referralStatus']?.toString() ??
+                  record['referral_status']?.toString(),
+              onTap: () => widget.onView(record),
+              onLongPress: () => widget.onLongPress(record),
+              onAction: () => widget.onLongPress(record),
+              metadata: [
+                RecordMetadata(
+                  label: 'Age',
+                  value: age,
+                  icon: Icons.cake_outlined,
+                ),
+                RecordMetadata(
+                  label: 'Recorded condition',
+                  value: disease,
+                  icon: Icons.healing_outlined,
+                  emphasize: true,
+                ),
+                RecordMetadata(
+                  label: 'Classification',
+                  value: severity,
+                  icon: Icons.category_outlined,
+                ),
+                RecordMetadata(
+                  label: 'Date recorded',
+                  value: dateReported,
+                  icon: Icons.event_outlined,
+                ),
+              ],
+            );
+
+            // ignore: dead_code
             return GestureDetector(
               onTap: () => widget.onView(record),
               onLongPress: () => widget.onLongPress(record),
@@ -1905,10 +1949,7 @@ void _showNewMorbidityModal(
   );
 }
 
-Widget _buildModalTextField(
-  String label,
-  TextEditingController controller,
-) {
+Widget _buildModalTextField(String label, TextEditingController controller) {
   return TextField(
     controller: controller,
     style: const TextStyle(

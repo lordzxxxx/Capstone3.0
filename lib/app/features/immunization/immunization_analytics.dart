@@ -1,13 +1,14 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/app/features/immunization/immunization_database_helper.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
 
-const _aqua = Color(0xFF8ED7DA);
-const _background = Color(0xFF0A1F24);
-const _panel = Color(0xFF102A31);
-const _text = Color(0xFFF1F1EE);
+const _aqua = AppDesign.blue;
+const _background = AppDesign.page;
+const _panel = AppDesign.surface;
+const _text = AppDesign.ink;
 const _barPalette = <Color>[
-  Color(0xFF8ED7DA),
+  AppDesign.skyBlue,
   Color(0xFF5EC7FF),
   Color(0xFFFFB74D),
   Color(0xFFEC407A),
@@ -24,8 +25,7 @@ class ImmunizationAnalyticsPage extends StatefulWidget {
       _ImmunizationAnalyticsPageState();
 }
 
-class _ImmunizationAnalyticsPageState
-    extends State<ImmunizationAnalyticsPage> {
+class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
   final _database = ImmunizationDatabaseHelper.instance;
   List<Map<String, dynamic>> _records = [];
   List<Map<String, dynamic>> _realRecords = [];
@@ -82,8 +82,18 @@ class _ImmunizationAnalyticsPageState
 
   String _month(DateTime date) {
     const names = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return names[date.month - 1];
   }
@@ -219,7 +229,9 @@ class _ImmunizationAnalyticsPageState
     };
     for (final record in _records) {
       final raw = _v(record, 'age').toLowerCase();
-      final number = int.tryParse(RegExp(r'\d+').firstMatch(raw)?.group(0) ?? '');
+      final number = int.tryParse(
+        RegExp(r'\d+').firstMatch(raw)?.group(0) ?? '',
+      );
       final months = number == null
           ? null
           : raw.contains('year')
@@ -351,25 +363,66 @@ class _ImmunizationAnalyticsPageState
                     _monthly(),
                   ),
                   _gap(),
-                  _barPanel('Vaccine Coverage Rate', 'Relative coverage percentage by vaccine', _coverage(), suffix: '%'),
+                  _barPanel(
+                    'Vaccine Coverage Rate',
+                    'Relative coverage percentage by vaccine',
+                    _coverage(),
+                    suffix: '%',
+                  ),
                   _gap(),
-                  _piePanel('Fully vs Partially Immunized', 'Overall child immunization status', _status()),
+                  _piePanel(
+                    'Fully vs Partially Immunized',
+                    'Overall child immunization status',
+                    _status(),
+                  ),
                   _gap(),
-                  _barPanel('Missed Vaccinations', 'Vaccines most frequently overdue', _missedByVaccine()),
+                  _barPanel(
+                    'Missed Vaccinations',
+                    'Vaccines most frequently overdue',
+                    _missedByVaccine(),
+                  ),
                   _gap(),
-                  _barPanel('Immunization by Barangay', 'Vaccination records across communities', _barangays()),
+                  _barPanel(
+                    'Immunization by Barangay',
+                    'Vaccination records across communities',
+                    _barangays(),
+                  ),
                   _gap(),
-                  _barPanel('Age Distribution of Vaccinated Children', 'Vaccinated children grouped by age', _ages()),
+                  _barPanel(
+                    'Age Distribution of Vaccinated Children',
+                    'Vaccinated children grouped by age',
+                    _ages(),
+                  ),
                   _gap(),
-                  _linePanel('Upcoming Vaccination Schedule', 'Children due over the coming six months', _monthly(upcoming: true)),
+                  _linePanel(
+                    'Upcoming Vaccination Schedule',
+                    'Children due over the coming six months',
+                    _monthly(upcoming: true),
+                  ),
                   _gap(),
-                  _barPanel('Overdue Immunizations', 'Children requiring immediate follow-up', _overdue()),
+                  _barPanel(
+                    'Overdue Immunizations',
+                    'Children requiring immediate follow-up',
+                    _overdue(),
+                  ),
                   _gap(),
-                  _barPanel('AI Immunization Risk Prediction', 'Predicted incomplete-immunization risk', _risk()),
+                  _barPanel(
+                    'AI Immunization Risk Prediction',
+                    'Predicted incomplete-immunization risk',
+                    _risk(),
+                  ),
                   _gap(),
-                  _barPanel('Vaccine Stock Monitoring', 'Estimated remaining inventory by vaccine', _stock()),
+                  _barPanel(
+                    'Vaccine Stock Monitoring',
+                    'Estimated remaining inventory by vaccine',
+                    _stock(),
+                  ),
                   _gap(),
-                  _barPanel('Adverse Events Following Immunization', 'Reported AEFI cases', _aefi()),
+                  _barPanel(
+                    'Adverse Events Following Immunization',
+                    'Reported AEFI cases',
+                    _aefi(),
+                  ),
                 ],
               ),
             ),
@@ -379,18 +432,20 @@ class _ImmunizationAnalyticsPageState
   Widget _gap() => const SizedBox(height: 16);
 
   Widget _demoBanner() => Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFB74D).withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFFFB74D).withValues(alpha: 0.35)),
-        ),
-        child: const Text(
-          'Showing analytics demo data because no immunization records are available.',
-          style: TextStyle(color: _text, fontSize: 12, fontWeight: FontWeight.w600),
-        ),
-      );
+    margin: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFB74D).withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(
+        color: const Color(0xFFFFB74D).withValues(alpha: 0.35),
+      ),
+    ),
+    child: const Text(
+      'Showing analytics demo data because no immunization records are available.',
+      style: TextStyle(color: _text, fontSize: 12, fontWeight: FontWeight.w600),
+    ),
+  );
 
   List<MapEntry<String, int>> _entries(Map<String, int> data) {
     final values = data.entries.where((entry) => entry.value > 0).toList();
@@ -398,28 +453,44 @@ class _ImmunizationAnalyticsPageState
   }
 
   Widget _card(String title, String subtitle, Widget chart) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: _panel,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: _aqua.withValues(alpha: 0.20)),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: _panel,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: _aqua.withValues(alpha: 0.20)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: _text,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: const TextStyle(color: _text, fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(subtitle, style: TextStyle(color: _text.withValues(alpha: 0.58), fontSize: 11)),
-            const SizedBox(height: 18),
-            chart,
-          ],
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: TextStyle(color: _text.withValues(alpha: 0.58), fontSize: 11),
         ),
-      );
+        const SizedBox(height: 18),
+        chart,
+      ],
+    ),
+  );
 
-  Widget _barPanel(String title, String subtitle, Map<String, int> data, {String suffix = ''}) {
+  Widget _barPanel(
+    String title,
+    String subtitle,
+    Map<String, int> data, {
+    String suffix = '',
+  }) {
     final entries = _entries(data);
     if (entries.isEmpty) return _card(title, subtitle, _empty());
-    final maxY = entries.map((e) => e.value).reduce((a, b) => a > b ? a : b) + 1.0;
+    final maxY =
+        entries.map((e) => e.value).reduce((a, b) => a > b ? a : b) + 1.0;
     return _card(
       title,
       subtitle,
@@ -432,17 +503,28 @@ class _ImmunizationAnalyticsPageState
             gridData: FlGridData(
               show: true,
               drawVerticalLine: false,
-              getDrawingHorizontalLine: (_) => FlLine(color: Colors.white.withValues(alpha: 0.08)),
+              getDrawingHorizontalLine: (_) =>
+                  const FlLine(color: AppDesign.border),
             ),
             borderData: FlBorderData(show: false),
             titlesData: FlTitlesData(
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
               leftTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
                   reservedSize: 30,
-                  getTitlesWidget: (value, meta) => Text('${value.toInt()}$suffix', style: TextStyle(color: _text.withValues(alpha: 0.55), fontSize: 8)),
+                  getTitlesWidget: (value, meta) => Text(
+                    '${value.toInt()}$suffix',
+                    style: TextStyle(
+                      color: _text.withValues(alpha: 0.55),
+                      fontSize: 8,
+                    ),
+                  ),
                 ),
               ),
               bottomTitles: AxisTitles(
@@ -451,13 +533,23 @@ class _ImmunizationAnalyticsPageState
                   reservedSize: 52,
                   getTitlesWidget: (value, meta) {
                     final index = value.toInt();
-                    if (index < 0 || index >= entries.length) return const SizedBox();
+                    if (index < 0 || index >= entries.length)
+                      return const SizedBox();
                     return SideTitleWidget(
                       meta: meta,
                       space: 8,
                       child: SizedBox(
                         width: 52,
-                        child: Text(entries[index].key, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: TextStyle(color: _text.withValues(alpha: 0.70), fontSize: 8)),
+                        child: Text(
+                          entries[index].key,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: _text.withValues(alpha: 0.70),
+                            fontSize: 8,
+                          ),
+                        ),
                       ),
                     );
                   },
@@ -466,10 +558,13 @@ class _ImmunizationAnalyticsPageState
             ),
             barTouchData: BarTouchData(
               touchTooltipData: BarTouchTooltipData(
-                getTooltipColor: (_) => const Color(0xFF071A1F),
+                getTooltipColor: (_) => AppDesign.surface,
                 getTooltipItem: (group, groupIndex, rod, rodIndex) {
                   final entry = entries[group.x.toInt()];
-                  return BarTooltipItem('${entry.key}\n${entry.value}$suffix', const TextStyle(color: _text, fontWeight: FontWeight.bold));
+                  return BarTooltipItem(
+                    '${entry.key}\n${entry.value}$suffix',
+                    const TextStyle(color: _text, fontWeight: FontWeight.bold),
+                  );
                 },
               ),
             ),
@@ -498,7 +593,8 @@ class _ImmunizationAnalyticsPageState
 
   Widget _linePanel(String title, String subtitle, Map<String, int> data) {
     final entries = data.entries.toList();
-    final maxY = entries.map((e) => e.value).reduce((a, b) => a > b ? a : b) + 1.0;
+    final maxY =
+        entries.map((e) => e.value).reduce((a, b) => a > b ? a : b) + 1.0;
     return _card(
       title,
       subtitle,
@@ -508,26 +604,73 @@ class _ImmunizationAnalyticsPageState
           LineChartData(
             minY: 0,
             maxY: maxY,
-            gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (_) => FlLine(color: Colors.white.withValues(alpha: 0.08))),
+            gridData: FlGridData(
+              show: true,
+              drawVerticalLine: false,
+              getDrawingHorizontalLine: (_) =>
+                  const FlLine(color: AppDesign.border),
+            ),
             borderData: FlBorderData(show: false),
             titlesData: FlTitlesData(
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 28, getTitlesWidget: (value, meta) => Text('${value.toInt()}', style: TextStyle(color: _text.withValues(alpha: 0.55), fontSize: 9)))),
-              bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 30, getTitlesWidget: (value, meta) {
-                final index = value.toInt();
-                if (index < 0 || index >= entries.length || value != index.toDouble()) return const SizedBox();
-                return SideTitleWidget(meta: meta, child: Text(entries[index].key, style: TextStyle(color: _text.withValues(alpha: 0.70), fontSize: 9)));
-              })),
+              topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              leftTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 28,
+                  getTitlesWidget: (value, meta) => Text(
+                    '${value.toInt()}',
+                    style: TextStyle(
+                      color: _text.withValues(alpha: 0.55),
+                      fontSize: 9,
+                    ),
+                  ),
+                ),
+              ),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 30,
+                  getTitlesWidget: (value, meta) {
+                    final index = value.toInt();
+                    if (index < 0 ||
+                        index >= entries.length ||
+                        value != index.toDouble())
+                      return const SizedBox();
+                    return SideTitleWidget(
+                      meta: meta,
+                      child: Text(
+                        entries[index].key,
+                        style: TextStyle(
+                          color: _text.withValues(alpha: 0.70),
+                          fontSize: 9,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
-            lineBarsData: [LineChartBarData(
-              spots: List.generate(entries.length, (i) => FlSpot(i.toDouble(), entries[i].value.toDouble())),
-              isCurved: true,
-              color: _aqua,
-              barWidth: 3,
-              dotData: FlDotData(show: true),
-              belowBarData: BarAreaData(show: true, color: _aqua.withValues(alpha: 0.14)),
-            )],
+            lineBarsData: [
+              LineChartBarData(
+                spots: List.generate(
+                  entries.length,
+                  (i) => FlSpot(i.toDouble(), entries[i].value.toDouble()),
+                ),
+                isCurved: true,
+                color: _aqua,
+                barWidth: 3,
+                dotData: FlDotData(show: true),
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: _aqua.withValues(alpha: 0.14),
+                ),
+              ),
+            ],
           ),
           duration: const Duration(milliseconds: 600),
         ),
@@ -538,7 +681,12 @@ class _ImmunizationAnalyticsPageState
   Widget _piePanel(String title, String subtitle, Map<String, int> data) {
     final entries = _entries(data);
     final total = entries.fold<int>(0, (sum, entry) => sum + entry.value);
-    const colors = [Color(0xFF66BB6A), Color(0xFFFFB74D), Color(0xFFEF5350), Color(0xFF5EC7FF)];
+    const colors = [
+      Color(0xFF66BB6A),
+      Color(0xFFFFB74D),
+      Color(0xFFEF5350),
+      Color(0xFF5EC7FF),
+    ];
     return _card(
       title,
       subtitle,
@@ -546,30 +694,49 @@ class _ImmunizationAnalyticsPageState
         children: [
           SizedBox(
             height: 210,
-            child: PieChart(PieChartData(
-              centerSpaceRadius: 44,
-              sectionsSpace: 3,
-              sections: List.generate(entries.length, (index) {
-                final entry = entries[index];
-                return PieChartSectionData(
-                  value: entry.value.toDouble(),
-                  color: colors[index % colors.length],
-                  radius: 62,
-                  title: '${(entry.value / total * 100).toStringAsFixed(0)}%',
-                  titleStyle: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                );
-              }),
-            )),
+            child: PieChart(
+              PieChartData(
+                centerSpaceRadius: 44,
+                sectionsSpace: 3,
+                sections: List.generate(entries.length, (index) {
+                  final entry = entries[index];
+                  return PieChartSectionData(
+                    value: entry.value.toDouble(),
+                    color: colors[index % colors.length],
+                    radius: 62,
+                    title: '${(entry.value / total * 100).toStringAsFixed(0)}%',
+                    titleStyle: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  );
+                }),
+              ),
+            ),
           ),
           Wrap(
             spacing: 10,
             runSpacing: 8,
-            children: List.generate(entries.length, (index) => Text('● ${entries[index].key}: ${entries[index].value}', style: TextStyle(color: colors[index % colors.length], fontSize: 11, fontWeight: FontWeight.w600))),
+            children: List.generate(
+              entries.length,
+              (index) => Text(
+                '● ${entries[index].key}: ${entries[index].value}',
+                style: TextStyle(
+                  color: colors[index % colors.length],
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _empty() => Text('No data available.', style: TextStyle(color: _text.withValues(alpha: 0.60)));
+  Widget _empty() => Text(
+    'No data available.',
+    style: TextStyle(color: _text.withValues(alpha: 0.60)),
+  );
 }

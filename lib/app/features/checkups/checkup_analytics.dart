@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
 
-const Color _primaryAqua = Color(0xFF8ED7DA);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _lightOffWhite = Color(0xFFF1F1EE);
-const Color _panelTop = Color(0xFF12353C);
-const Color _panelBottom = Color(0xFF0E252B);
-const Color _panelStroke = Color(0xFF2A6168);
+const Color _primaryAqua = AppDesign.blue;
+const Color _darkDeepTeal = AppDesign.page;
+const Color _lightOffWhite = AppDesign.ink;
+const Color _panelTop = AppDesign.surface;
+const Color _panelBottom = AppDesign.surface;
+const Color _panelStroke = AppDesign.border;
 
 enum _VolumeTrendRange { last7Days, last30Days, last12Months }
 
@@ -30,7 +31,7 @@ const _monthLabels = [
 
 const _symptomLineColors = [
   Color(0xFF5E35B1),
-  Color(0xFF00A8B5),
+  AppDesign.teal,
   Color(0xFFE65100),
   Color(0xFF43A047),
   Color(0xFF1E88E5),
@@ -150,8 +151,9 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
     return sorted;
   }
 
-  Iterable<Map<String, dynamic>> get _recordsInSymptomRange =>
-      _records.where((record) => _isRecordInTrendRange(record, _symptomTrendRange));
+  Iterable<Map<String, dynamic>> get _recordsInSymptomRange => _records.where(
+    (record) => _isRecordInTrendRange(record, _symptomTrendRange),
+  );
 
   Iterable<Map<String, dynamic>> get _recordsInAgeRange =>
       _records.where((record) => _isRecordInAgePeriod(record, _ageRangePeriod));
@@ -243,7 +245,8 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
         return null;
       }
       final monthOffset =
-          (date.year - windowStart.year) * 12 + (date.month - windowStart.month);
+          (date.year - windowStart.year) * 12 +
+          (date.month - windowStart.month);
       return monthOffset.clamp(0, 11);
     }
 
@@ -481,7 +484,7 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                   title: 'Total Check-ups',
                   value: '$_totalCheckups',
                   icon: Icons.fact_check_rounded,
-                  color: const Color(0xFF00A8B5),
+                  color: AppDesign.teal,
                   subtitle: 'All records',
                 ),
               ],
@@ -552,7 +555,9 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
           child: Text(
             label,
             style: TextStyle(
-              color: selected ? _lightOffWhite : _lightOffWhite.withValues(alpha: 0.72),
+              color: selected
+                  ? _lightOffWhite
+                  : _lightOffWhite.withValues(alpha: 0.72),
               fontSize: 11,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             ),
@@ -724,17 +729,9 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
         const SizedBox(height: 10),
         Row(
           children: [
-            _buildSummaryChip(
-              'Total',
-              '$total',
-              Icons.summarize_rounded,
-            ),
+            _buildSummaryChip('Total', '$total', Icons.summarize_rounded),
             const SizedBox(width: 8),
-            _buildSummaryChip(
-              'Peak',
-              '$peak',
-              Icons.arrow_upward_rounded,
-            ),
+            _buildSummaryChip('Peak', '$peak', Icons.arrow_upward_rounded),
             const SizedBox(width: 8),
             _buildSummaryChip(
               'Average',
@@ -773,15 +770,19 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
               borderData: FlBorderData(
                 show: true,
                 border: Border(
-                  left: BorderSide(color: _lightOffWhite.withValues(alpha: 0.16)),
-                  bottom: BorderSide(color: _lightOffWhite.withValues(alpha: 0.16)),
+                  left: BorderSide(
+                    color: _lightOffWhite.withValues(alpha: 0.16),
+                  ),
+                  bottom: BorderSide(
+                    color: _lightOffWhite.withValues(alpha: 0.16),
+                  ),
                 ),
               ),
               extraLinesData: ExtraLinesData(
                 horizontalLines: [
                   HorizontalLine(
                     y: average,
-                    color: const Color(0xFF00A8B5).withValues(alpha: 0.45),
+                    color: AppDesign.teal.withValues(alpha: 0.45),
                     strokeWidth: 1.5,
                     dashArray: [6, 4],
                     label: HorizontalLineLabel(
@@ -789,12 +790,11 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                       alignment: Alignment.topRight,
                       padding: const EdgeInsets.only(right: 4, bottom: 4),
                       style: TextStyle(
-                        color: const Color(0xFF00A8B5).withValues(alpha: 0.85),
+                        color: AppDesign.teal.withValues(alpha: 0.85),
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
                       ),
-                      labelResolver: (_) =>
-                          'Avg ${average.toStringAsFixed(1)}',
+                      labelResolver: (_) => 'Avg ${average.toStringAsFixed(1)}',
                     ),
                   ),
                 ],
@@ -887,23 +887,26 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                   ),
                   getTooltipColor: (_) => _panelBottom.withValues(alpha: 0.96),
                   getTooltipItems: (touchedSpots) {
-                    return touchedSpots.map((spot) {
-                      final index = spot.x.toInt();
-                      if (index < 0 || index >= data.length) {
-                        return null;
-                      }
-                      final label = data[index].key;
-                      final count = spot.y.toInt();
-                      return LineTooltipItem(
-                        '$label\n$count check-up${count == 1 ? '' : 's'}',
-                        const TextStyle(
-                          color: _lightOffWhite,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                          height: 1.35,
-                        ),
-                      );
-                    }).whereType<LineTooltipItem>().toList();
+                    return touchedSpots
+                        .map((spot) {
+                          final index = spot.x.toInt();
+                          if (index < 0 || index >= data.length) {
+                            return null;
+                          }
+                          final label = data[index].key;
+                          final count = spot.y.toInt();
+                          return LineTooltipItem(
+                            '$label\n$count check-up${count == 1 ? '' : 's'}',
+                            const TextStyle(
+                              color: _lightOffWhite,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                              height: 1.35,
+                            ),
+                          );
+                        })
+                        .whereType<LineTooltipItem>()
+                        .toList();
                   },
                 ),
               ),
@@ -913,7 +916,7 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                   curveSmoothness: 0.22,
                   preventCurveOverShooting: true,
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF00A8B5), _primaryAqua],
+                    colors: [AppDesign.teal, _primaryAqua],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
@@ -964,7 +967,8 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
     final series = trendData.series;
     final totalReports = series.fold<int>(
       0,
-      (sum, entry) => sum + entry.value.fold<int>(0, (inner, value) => inner + value),
+      (sum, entry) =>
+          sum + entry.value.fold<int>(0, (inner, value) => inner + value),
     );
     final uniqueSymptoms = _symptomTrend.length;
     final topSymptom = series.isEmpty ? '—' : series.first.key;
@@ -1078,7 +1082,8 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
           spacing: 10,
           runSpacing: 8,
           children: series.asMap().entries.map((entry) {
-            final color = _symptomLineColors[entry.key % _symptomLineColors.length];
+            final color =
+                _symptomLineColors[entry.key % _symptomLineColors.length];
             return Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1137,8 +1142,12 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
               borderData: FlBorderData(
                 show: true,
                 border: Border(
-                  left: BorderSide(color: _lightOffWhite.withValues(alpha: 0.16)),
-                  bottom: BorderSide(color: _lightOffWhite.withValues(alpha: 0.16)),
+                  left: BorderSide(
+                    color: _lightOffWhite.withValues(alpha: 0.16),
+                  ),
+                  bottom: BorderSide(
+                    color: _lightOffWhite.withValues(alpha: 0.16),
+                  ),
                 ),
               ),
               titlesData: FlTitlesData(
@@ -1178,7 +1187,8 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                       if (index < 0 || index >= labels.length) {
                         return const SizedBox();
                       }
-                      if (index % labelStep != 0 && index != labels.length - 1) {
+                      if (index % labelStep != 0 &&
+                          index != labels.length - 1) {
                         return const SizedBox();
                       }
                       return SideTitleWidget(
@@ -1200,7 +1210,8 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                 enabled: true,
                 handleBuiltInTouches: true,
                 getTouchedSpotIndicator: (barData, spotIndexes) {
-                  final color = barData.gradient?.colors.first ??
+                  final color =
+                      barData.gradient?.colors.first ??
                       barData.color ??
                       _symptomLineColors.first;
                   return spotIndexes.map((index) {
@@ -1234,26 +1245,29 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                   getTooltipItems: (touchedSpots) {
                     if (touchedSpots.isEmpty) return [];
 
-                    return touchedSpots.map((spot) {
-                      final xIndex = spot.x.toInt();
-                      if (xIndex < 0 || xIndex >= labels.length) {
-                        return null;
-                      }
-                      final symptomName = spot.barIndex < series.length
-                          ? series[spot.barIndex].key
-                          : 'Symptom';
-                      final dateLabel = labels[xIndex];
-                      final count = spot.y.toInt();
-                      return LineTooltipItem(
-                        '$symptomName\n$dateLabel: $count',
-                        const TextStyle(
-                          color: _lightOffWhite,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                          height: 1.35,
-                        ),
-                      );
-                    }).whereType<LineTooltipItem>().toList();
+                    return touchedSpots
+                        .map((spot) {
+                          final xIndex = spot.x.toInt();
+                          if (xIndex < 0 || xIndex >= labels.length) {
+                            return null;
+                          }
+                          final symptomName = spot.barIndex < series.length
+                              ? series[spot.barIndex].key
+                              : 'Symptom';
+                          final dateLabel = labels[xIndex];
+                          final count = spot.y.toInt();
+                          return LineTooltipItem(
+                            '$symptomName\n$dateLabel: $count',
+                            const TextStyle(
+                              color: _lightOffWhite,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                              height: 1.35,
+                            ),
+                          );
+                        })
+                        .whereType<LineTooltipItem>()
+                        .toList();
                   },
                 ),
               ),
@@ -1439,8 +1453,9 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                horizontalInterval:
-                    maxValue <= 5 ? 1 : (maxValue / 4).ceilToDouble(),
+                horizontalInterval: maxValue <= 5
+                    ? 1
+                    : (maxValue / 4).ceilToDouble(),
                 getDrawingHorizontalLine: (value) {
                   return FlLine(
                     color: _lightOffWhite.withValues(alpha: 0.08),
@@ -1451,8 +1466,12 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
               borderData: FlBorderData(
                 show: true,
                 border: Border(
-                  left: BorderSide(color: _lightOffWhite.withValues(alpha: 0.16)),
-                  bottom: BorderSide(color: _lightOffWhite.withValues(alpha: 0.16)),
+                  left: BorderSide(
+                    color: _lightOffWhite.withValues(alpha: 0.16),
+                  ),
+                  bottom: BorderSide(
+                    color: _lightOffWhite.withValues(alpha: 0.16),
+                  ),
                 ),
               ),
               titlesData: FlTitlesData(
@@ -1590,7 +1609,9 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                 ),
                 decoration: BoxDecoration(
                   color: _primaryAqua.withValues(alpha: 0.14),
-                  border: Border.all(color: _primaryAqua.withValues(alpha: 0.24)),
+                  border: Border.all(
+                    color: _primaryAqua.withValues(alpha: 0.24),
+                  ),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -1628,7 +1649,10 @@ class _StatCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [_panelTop.withValues(alpha: 0.98), _panelBottom.withValues(alpha: 0.98)],
+          colors: [
+            _panelTop.withValues(alpha: 0.98),
+            _panelBottom.withValues(alpha: 0.98),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -1700,12 +1724,18 @@ class _AnalyticsCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [_panelTop.withValues(alpha: 0.98), _panelBottom.withValues(alpha: 0.98)],
+          colors: [
+            _panelTop.withValues(alpha: 0.98),
+            _panelBottom.withValues(alpha: 0.98),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _panelStroke.withValues(alpha: 0.7), width: 1.1),
+        border: Border.all(
+          color: _panelStroke.withValues(alpha: 0.7),
+          width: 1.1,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.16),
@@ -1762,7 +1792,9 @@ class _AnalyticsCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: _lightOffWhite.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: _lightOffWhite.withValues(alpha: 0.10)),
+                    border: Border.all(
+                      color: _lightOffWhite.withValues(alpha: 0.10),
+                    ),
                   ),
                   child: Text(
                     badge!,

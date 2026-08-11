@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/app/features/patients/patient_centered_history_service.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
 
 class PatientHistoryDialogs {
-  static const Color _primaryAqua = Color(0xFF00A8B5);
-  static const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-  static const Color _darkDeepTeal = Color(0xFF0A1F24);
-  static const Color _lightOffWhite = Color(0xFFF5F5F5);
-  static const Color _mutedCoolGray = Color(0xFF546E7A);
+  static const Color _primaryAqua = AppDesign.blue;
+  static const Color _secondaryIceBlue = AppDesign.blueSoft;
+  static const Color _darkDeepTeal = AppDesign.surface;
+  static const Color _lightOffWhite = AppDesign.ink;
+  static const Color _mutedCoolGray = AppDesign.muted;
 
   static List<Map<String, dynamic>> collectHistory({
     required Map<String, dynamic> seedRecord,
@@ -134,7 +135,7 @@ class PatientHistoryDialogs {
                         width: 46,
                         height: 46,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.12),
+                          color: AppDesign.ink.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: const Icon(
@@ -160,7 +161,7 @@ class PatientHistoryDialogs {
                             Text(
                               patientName,
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.92),
+                                color: AppDesign.ink.withValues(alpha: 0.92),
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -170,7 +171,7 @@ class PatientHistoryDialogs {
                               description ??
                                   'Review previous records first, then add the next visit for the same patient.',
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.72),
+                                color: AppDesign.ink.withValues(alpha: 0.72),
                                 fontSize: 12,
                                 height: 1.4,
                               ),
@@ -182,7 +183,7 @@ class PatientHistoryDialogs {
                         onPressed: () => Navigator.of(dialogContext).pop(),
                         icon: Icon(
                           Icons.close_rounded,
-                          color: Colors.white.withValues(alpha: 0.84),
+                          color: AppDesign.ink.withValues(alpha: 0.84),
                         ),
                       ),
                     ],
@@ -223,7 +224,7 @@ class PatientHistoryDialogs {
                                   'No previous records were found for this patient in this module.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.72),
+                                color: AppDesign.ink.withValues(alpha: 0.72),
                                 fontSize: 14,
                                 height: 1.4,
                               ),
@@ -244,7 +245,7 @@ class PatientHistoryDialogs {
                                 child: Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.04),
+                                    color: AppDesign.blueSoft,
                                     borderRadius: BorderRadius.circular(18),
                                     border: Border.all(
                                       color: _lightOffWhite.withValues(alpha: 0.08),
@@ -272,7 +273,7 @@ class PatientHistoryDialogs {
                                                 Text(
                                                   subtitle,
                                                   style: TextStyle(
-                                                    color: Colors.white.withValues(alpha: 0.76),
+                                                    color: AppDesign.ink.withValues(alpha: 0.76),
                                                     fontSize: 12.5,
                                                     fontWeight: FontWeight.w500,
                                                   ),
@@ -305,7 +306,7 @@ class PatientHistoryDialogs {
                                         Text(
                                           meta,
                                           style: TextStyle(
-                                            color: Colors.white.withValues(alpha: 0.66),
+                                            color: AppDesign.ink.withValues(alpha: 0.66),
                                             fontSize: 12.5,
                                             height: 1.4,
                                           ),
@@ -463,7 +464,7 @@ class PatientHistoryDialogs {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.12),
+                          color: AppDesign.ink.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: const Icon(
@@ -489,7 +490,7 @@ class PatientHistoryDialogs {
                             Text(
                               patientName,
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.94),
+                                color: AppDesign.ink.withValues(alpha: 0.94),
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -500,7 +501,7 @@ class PatientHistoryDialogs {
                                   ? 'Cross-module history overview'
                                   : 'Patient ID: $patientId',
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.72),
+                                color: AppDesign.ink.withValues(alpha: 0.72),
                                 fontSize: 12,
                               ),
                             ),
@@ -511,7 +512,7 @@ class PatientHistoryDialogs {
                         onPressed: () => Navigator.of(dialogContext).pop(),
                         icon: Icon(
                           Icons.close_rounded,
-                          color: Colors.white.withValues(alpha: 0.84),
+                          color: AppDesign.ink.withValues(alpha: 0.84),
                         ),
                       ),
                     ],
@@ -550,7 +551,7 @@ class PatientHistoryDialogs {
                         Text(
                           'History is grouped by category. Tap a timeline entry to open the complete record details for that visit.',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.68),
+                            color: AppDesign.ink.withValues(alpha: 0.68),
                             fontSize: 12.5,
                           ),
                         ),
@@ -560,14 +561,14 @@ class PatientHistoryDialogs {
                             width: double.infinity,
                             padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.04),
+                              color: AppDesign.blueSoft,
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(color: _lightOffWhite.withValues(alpha: 0.08)),
                             ),
                             child: Text(
                               'No linked module history was found for this patient yet.',
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.72),
+                                color: AppDesign.ink.withValues(alpha: 0.72),
                                 fontSize: 13,
                               ),
                             ),
@@ -659,7 +660,7 @@ class PatientHistoryDialogs {
                         width: 46,
                         height: 46,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.12),
+                          color: AppDesign.ink.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: const Icon(
@@ -685,7 +686,7 @@ class PatientHistoryDialogs {
                             Text(
                               event.title,
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.92),
+                                color: AppDesign.ink.withValues(alpha: 0.92),
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -695,7 +696,7 @@ class PatientHistoryDialogs {
                               Text(
                                 patientName,
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.72),
+                                  color: AppDesign.ink.withValues(alpha: 0.72),
                                   fontSize: 12,
                                 ),
                               ),
@@ -707,7 +708,7 @@ class PatientHistoryDialogs {
                         onPressed: () => Navigator.of(dialogContext).pop(),
                         icon: Icon(
                           Icons.close_rounded,
-                          color: Colors.white.withValues(alpha: 0.84),
+                          color: AppDesign.ink.withValues(alpha: 0.84),
                         ),
                       ),
                     ],
@@ -1104,7 +1105,7 @@ class PatientHistoryDialogs {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: AppDesign.blueSoft,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _lightOffWhite.withValues(alpha: 0.08)),
       ),
@@ -1120,7 +1121,7 @@ class PatientHistoryDialogs {
               Text(
                 label,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.62),
+                  color: AppDesign.ink.withValues(alpha: 0.62),
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1156,7 +1157,7 @@ class PatientHistoryDialogs {
           Text(
             label,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.64),
+              color: AppDesign.ink.withValues(alpha: 0.64),
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
             ),
@@ -1180,14 +1181,14 @@ class PatientHistoryDialogs {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: AppDesign.blueSoft,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: _lightOffWhite.withValues(alpha: 0.08)),
       ),
       child: Text(
         message,
         style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.72),
+          color: AppDesign.ink.withValues(alpha: 0.72),
           fontSize: 13,
         ),
       ),
@@ -1205,7 +1206,7 @@ class PatientHistoryDialogs {
         return Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
+            color: AppDesign.blueSoft.withValues(alpha: 0.65),
             borderRadius: BorderRadius.circular(22),
             border: Border.all(color: accentColor.withValues(alpha: 0.16)),
           ),
@@ -1222,7 +1223,7 @@ class PatientHistoryDialogs {
             defaultVerticalAlignment: TableCellVerticalAlignment.top,
             border: TableBorder(
               horizontalInside: BorderSide(
-                color: Colors.white.withValues(alpha: 0.07),
+                color: AppDesign.blueSoft,
               ),
             ),
             children: entries
@@ -1245,7 +1246,7 @@ class PatientHistoryDialogs {
                         child: Text(
                           entry.value,
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.86),
+                            color: AppDesign.ink.withValues(alpha: 0.86),
                             fontSize: 13,
                             height: 1.45,
                           ),
@@ -1308,7 +1309,7 @@ class PatientHistoryDialogs {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: AppDesign.blueSoft,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: accentColor.withValues(alpha: 0.18)),
       ),
@@ -1344,7 +1345,7 @@ class PatientHistoryDialogs {
                     Text(
                       '${events.length} ${events.length == 1 ? 'record' : 'records'}',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.66),
+                        color: AppDesign.ink.withValues(alpha: 0.66),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1388,7 +1389,7 @@ class PatientHistoryDialogs {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
+              color: AppDesign.blueSoft.withValues(alpha: 0.65),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: _lightOffWhite.withValues(alpha: 0.08)),
             ),
@@ -1426,7 +1427,7 @@ class PatientHistoryDialogs {
                                 ? 'No date'
                                 : _formatDate(event.eventDate!),
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.68),
+                              color: AppDesign.ink.withValues(alpha: 0.68),
                               fontSize: 11.5,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1450,7 +1451,7 @@ class PatientHistoryDialogs {
                           ),
                           Icon(
                             Icons.open_in_new_rounded,
-                            color: Colors.white.withValues(alpha: 0.55),
+                            color: AppDesign.ink.withValues(alpha: 0.55),
                             size: 16,
                           ),
                         ],
@@ -1459,7 +1460,7 @@ class PatientHistoryDialogs {
                       Text(
                         event.subtitle,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.74),
+                          color: AppDesign.ink.withValues(alpha: 0.74),
                           fontSize: 12.5,
                           height: 1.35,
                         ),

@@ -121,6 +121,7 @@ class MyApp extends StatelessWidget {
       // (0xFF00A8B5) already used across lib/web/*, instead of the one-off
       // 0xFF8ED7DA that only this file previously used.
       theme: kIsWeb ? AppTheme.light(isWeb: true) : app_theme.AppDesign.theme(),
+      themeMode: ThemeMode.light,
       debugShowCheckedModeBanner: false,
       // Platform-specific routing
       getPages: kIsWeb

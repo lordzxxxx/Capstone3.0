@@ -5,11 +5,13 @@ import 'package:mycapstone_project/app/features/patients/patient.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
+const Color _primaryAqua = AppDesign.blue;
+const Color _darkDeepTeal = AppDesign.page;
+const Color _mutedCoolGray = AppDesign.muted;
+const Color _lightOffWhite = AppDesign.ink;
 
 final RegExp _vitalLabelPattern = RegExp(
   r'\b(?:BP|Temp|HR|Bpm|bprm|O2|Weight|Height):',
@@ -24,12 +26,7 @@ Widget _buildHighlightedVitalLabelText(
 }) {
   final matches = _vitalLabelPattern.allMatches(text).toList();
   if (matches.isEmpty) {
-    return Text(
-      text,
-      style: baseStyle,
-      maxLines: maxLines,
-      overflow: overflow,
-    );
+    return Text(text, style: baseStyle, maxLines: maxLines, overflow: overflow);
   }
 
   final spans = <TextSpan>[];
@@ -38,10 +35,7 @@ Widget _buildHighlightedVitalLabelText(
   for (final match in matches) {
     if (match.start > start) {
       spans.add(
-        TextSpan(
-          text: text.substring(start, match.start),
-          style: baseStyle,
-        ),
+        TextSpan(text: text.substring(start, match.start), style: baseStyle),
       );
     }
 
@@ -75,7 +69,6 @@ class CommunicablePage extends StatefulWidget {
 }
 
 class _CommunicablePageState extends State<CommunicablePage> {
-
   // State variables for metrics
   int _activeCases = 0;
   Map<String, int> _diseaseTypes = {};
@@ -124,7 +117,9 @@ class _CommunicablePageState extends State<CommunicablePage> {
 
       // Calculate metrics
       final activeCases = communicableRecords.length;
-      final completedCases = communicableRecords.where((r) => r['status'] == 'Completed').length;
+      final completedCases = communicableRecords
+          .where((r) => r['status'] == 'Completed')
+          .length;
       final controlRate = _calculateControlRate(activeCases, completedCases);
 
       // Parse disease types from condition field
@@ -176,7 +171,8 @@ class _CommunicablePageState extends State<CommunicablePage> {
 
     return collapsed.map((patient) {
       final current = Map<String, dynamic>.from(patient);
-      current['totalVisits'] = patient['tableHistoryCount'] ?? patient['totalVisits'] ?? 1;
+      current['totalVisits'] =
+          patient['tableHistoryCount'] ?? patient['totalVisits'] ?? 1;
       return current;
     }).toList();
   }
@@ -185,10 +181,10 @@ class _CommunicablePageState extends State<CommunicablePage> {
     try {
       // Sync from Firebase first
       await _dbHelper.syncFromFirebase();
-      
+
       // Load communicable disease records from check-up database
       final allRecords = await _dbHelper.getAllRecords();
-      
+
       // Filter for communicable diseases only
       final communicableRecords = allRecords.where((record) {
         return record['diseaseType'] == 'Communicable';
@@ -199,16 +195,27 @@ class _CommunicablePageState extends State<CommunicablePage> {
           return {
             'id': record['id'] ?? '',
             'patientId': record['linkedPatientId'] ?? record['patientId'] ?? '',
-            'patientName': record['patientName'] ?? record['patient'] ?? 'Unknown',
+            'patientName':
+                record['patientName'] ?? record['patient'] ?? 'Unknown',
             'age': record['age'] ?? _extractAge(record['details'] ?? ''),
             'gender': record['gender'] ?? 'N/A',
-            'condition': record['condition'] ?? record['details'] ?? 'No details',
-            'lastVisit': record['lastVisit'] ?? record['datetime']?.split(' ')[0] ?? 'N/A',
+            'condition':
+                record['condition'] ?? record['details'] ?? 'No details',
+            'lastVisit':
+                record['lastVisit'] ??
+                record['datetime']?.split(' ')[0] ??
+                'N/A',
             'nextVisit': record['nextVisit'] ?? 'N/A',
-            'currentStatus': record['currentStatus'] ?? record['status'] ?? 'Pending',
-            'treatment': record['treatment'] ?? record['plan'] ?? 'No treatment plan',
-            'bloodSugar': record['bloodSugar'] ?? _extractVital(record['details'] ?? '', 'Temp'),
-            'bloodPressure': record['bloodPressure'] ?? _extractVital(record['details'] ?? '', 'BP'),
+            'currentStatus':
+                record['currentStatus'] ?? record['status'] ?? 'Pending',
+            'treatment':
+                record['treatment'] ?? record['plan'] ?? 'No treatment plan',
+            'bloodSugar':
+                record['bloodSugar'] ??
+                _extractVital(record['details'] ?? '', 'Temp'),
+            'bloodPressure':
+                record['bloodPressure'] ??
+                _extractVital(record['details'] ?? '', 'BP'),
             'totalVisits': record['totalVisits'] ?? 0,
           };
         }).toList(),
@@ -232,14 +239,14 @@ class _CommunicablePageState extends State<CommunicablePage> {
 
     _filteredPatients = _chronicCarePatients.where((patient) {
       return patient['patientName'].toString().toLowerCase().contains(
-                _searchQuery,
-              ) ||
+            _searchQuery,
+          ) ||
           patient['condition'].toString().toLowerCase().contains(
-                _searchQuery,
-              ) ||
+            _searchQuery,
+          ) ||
           patient['currentStatus'].toString().toLowerCase().contains(
-                _searchQuery,
-              );
+            _searchQuery,
+          );
     }).toList();
   }
 
@@ -318,7 +325,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
 
     try {
       await _dbHelper.seedSampleCommunicableData();
-      
+
       // Close loading dialog
       Navigator.of(context).pop();
 
@@ -330,7 +337,9 @@ class _CommunicablePageState extends State<CommunicablePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Successfully added 100 sample communicable disease records!'),
+            content: Text(
+              '✅ Successfully added 100 sample communicable disease records!',
+            ),
             backgroundColor: Color(0xFF27AE60),
             duration: Duration(seconds: 3),
           ),
@@ -375,10 +384,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
           widget.listOnly == true
               ? 'Communicable List'
               : 'Chronic Care Management',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: _darkDeepTeal,
         elevation: 0,
@@ -442,7 +448,10 @@ class _CommunicablePageState extends State<CommunicablePage> {
             children: [
               // Search Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
                 child: _buildSearchBar(),
               ),
 
@@ -631,7 +640,10 @@ class _CommunicablePageState extends State<CommunicablePage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.transparent,
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 2),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.3),
+          width: 2,
+        ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -678,7 +690,10 @@ class _CommunicablePageState extends State<CommunicablePage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.transparent,
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 2),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.3),
+          width: 2,
+        ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -714,13 +729,13 @@ class _CommunicablePageState extends State<CommunicablePage> {
                 children: [
                   Text(
                     entry.key,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.white),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: _primaryAqua.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
@@ -749,7 +764,10 @@ class _CommunicablePageState extends State<CommunicablePage> {
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 2),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.3),
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -776,7 +794,10 @@ class _CommunicablePageState extends State<CommunicablePage> {
               : null,
           border: InputBorder.none,
           filled: false,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
         ),
         style: const TextStyle(color: Colors.white),
       ),
@@ -791,14 +812,17 @@ class _CommunicablePageState extends State<CommunicablePage> {
           padding: const EdgeInsets.all(40),
           child: Column(
             children: [
-              Icon(Icons.search_off, size: 64, color: _mutedCoolGray.withValues(alpha: 0.5)),
+              Icon(
+                Icons.search_off,
+                size: 64,
+                color: _mutedCoolGray.withValues(alpha: 0.5),
+              ),
               const SizedBox(height: 16),
               Text(
-                _searchQuery.isEmpty ? 'No patients found' : 'No results for "$_searchQuery"',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: _mutedCoolGray,
-                ),
+                _searchQuery.isEmpty
+                    ? 'No patients found'
+                    : 'No results for "$_searchQuery"',
+                style: TextStyle(fontSize: 16, color: _mutedCoolGray),
               ),
             ],
           ),
@@ -822,7 +846,10 @@ class _CommunicablePageState extends State<CommunicablePage> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.transparent,
-          border: Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 2),
+          border: Border.all(
+            color: _primaryAqua.withValues(alpha: 0.3),
+            width: 2,
+          ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -833,183 +860,189 @@ class _CommunicablePageState extends State<CommunicablePage> {
           ],
         ),
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Patient Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Patient Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: _primaryAqua,
-                  child: Text(
-                    patient['patientName'].toString().substring(0, 1).toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: _primaryAqua,
+                    child: Text(
+                      patient['patientName']
+                          .toString()
+                          .substring(0, 1)
+                          .toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          patient['patientName'],
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${patient['age']} years • ${patient['gender']}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(patient['currentStatus']),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      patient['currentStatus'],
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Patient Details
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _buildDetailRow(
+                    icon: Icons.medical_information,
+                    label: 'Condition',
+                    value: patient['condition'],
+                    color: const Color(0xFFD84315),
+                  ),
+                  const Divider(height: 20),
+                  _buildDetailRow(
+                    icon: Icons.medication,
+                    label: 'Treatment',
+                    value: patient['treatment'],
+                    color: const Color(0xFF7B1FA2),
+                  ),
+                  const Divider(height: 20),
+                  Row(
                     children: [
-                      Text(
-                        patient['patientName'],
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      Expanded(
+                        child: _buildDetailRow(
+                          icon: Icons.calendar_today,
+                          label: 'Last Visit',
+                          value: _formatDate(patient['lastVisit']),
+                          color: _primaryAqua,
+                          isCompact: true,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${patient['age']} years • ${patient['gender']}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.7),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildDetailRow(
+                          icon: Icons.event,
+                          label: 'Next Visit',
+                          value: _formatDate(patient['nextVisit']),
+                          color: const Color(0xFF4CAF50),
+                          isCompact: true,
                         ),
                       ),
                     ],
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(patient['currentStatus']),
-                    borderRadius: BorderRadius.circular(20),
+                  const Divider(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildVitalSign(
+                          icon: Icons.favorite,
+                          label: 'Blood Pressure',
+                          value: patient['bloodPressure'],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildVitalSign(
+                          icon: Icons.water_drop,
+                          label: 'Blood Sugar',
+                          value: patient['bloodSugar'],
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    patient['currentStatus'],
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Patient Details
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _buildDetailRow(
-                  icon: Icons.medical_information,
-                  label: 'Condition',
-                  value: patient['condition'],
-                  color: const Color(0xFFD84315),
-                ),
-                const Divider(height: 20),
-                _buildDetailRow(
-                  icon: Icons.medication,
-                  label: 'Treatment',
-                  value: patient['treatment'],
-                  color: const Color(0xFF7B1FA2),
-                ),
-                const Divider(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildDetailRow(
-                        icon: Icons.calendar_today,
-                        label: 'Last Visit',
-                        value: _formatDate(patient['lastVisit']),
-                        color: _primaryAqua,
-                        isCompact: true,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildDetailRow(
-                        icon: Icons.event,
-                        label: 'Next Visit',
-                        value: _formatDate(patient['nextVisit']),
-                        color: const Color(0xFF4CAF50),
-                        isCompact: true,
-                      ),
-                    ),
-                  ],
-                ),
-                const Divider(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildVitalSign(
-                        icon: Icons.favorite,
-                        label: 'Blood Pressure',
-                        value: patient['bloodPressure'],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildVitalSign(
-                        icon: Icons.water_drop,
-                        label: 'Blood Sugar',
-                        value: patient['bloodSugar'],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Actions
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(16),
+                ],
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildActionButton(
-                  icon: Icons.visibility,
-                  label: 'View',
-                  color: Colors.white,
-                  onTap: () => _viewPatientDetails(patient),
+
+            // Actions
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
                 ),
-                _buildActionButton(
-                  icon: Icons.edit,
-                  label: 'Edit',
-                  color: Colors.white,
-                  onTap: () => _editPatient(patient),
-                ),
-                _buildActionButton(
-                  icon: Icons.medical_services,
-                  label: 'Treatment',
-                  color: Colors.white,
-                  onTap: () => _manageTreatment(patient),
-                ),
-                _buildActionButton(
-                  icon: Icons.history,
-                  label: 'History',
-                  color: Colors.white,
-                  onTap: () => _viewHistory(patient),
-                ),
-              ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildActionButton(
+                    icon: Icons.visibility,
+                    label: 'View',
+                    color: Colors.white,
+                    onTap: () => _viewPatientDetails(patient),
+                  ),
+                  _buildActionButton(
+                    icon: Icons.edit,
+                    label: 'Edit',
+                    color: Colors.white,
+                    onTap: () => _editPatient(patient),
+                  ),
+                  _buildActionButton(
+                    icon: Icons.medical_services,
+                    label: 'Treatment',
+                    color: Colors.white,
+                    onTap: () => _manageTreatment(patient),
+                  ),
+                  _buildActionButton(
+                    icon: Icons.history,
+                    label: 'History',
+                    color: Colors.white,
+                    onTap: () => _viewHistory(patient),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -1138,14 +1171,11 @@ class _CommunicablePageState extends State<CommunicablePage> {
 
   // Action Methods
   Future<void> _showAddPatientDialog() async {
-    await Get.to(
-      () => const PatientRecordPage(openRegistrationOnLoad: true),
-    );
+    await Get.to(() => const PatientRecordPage(openRegistrationOnLoad: true));
   }
 
   void _showRecordActionModal(Map<String, dynamic> patient) {
-    final patientName =
-        (patient['patientName'] ?? '').toString().trim().isEmpty
+    final patientName = (patient['patientName'] ?? '').toString().trim().isEmpty
         ? 'Record Details'
         : patient['patientName'].toString();
 
@@ -1265,7 +1295,9 @@ class _CommunicablePageState extends State<CommunicablePage> {
                     _manageTreatment(patient);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.1),
+                    backgroundColor: const Color(
+                      0xFF4CAF50,
+                    ).withValues(alpha: 0.1),
                     side: const BorderSide(color: Color(0xFF4CAF50), width: 2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1345,16 +1377,11 @@ class _CommunicablePageState extends State<CommunicablePage> {
           backgroundColor: _darkDeepTeal,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: _lightOffWhite.withValues(alpha: 0.2),
-            ),
+            side: BorderSide(color: _lightOffWhite.withValues(alpha: 0.2)),
           ),
           title: const Text(
             'Delete Selected Records?',
-            style: TextStyle(
-              color: Colors.red,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
           ),
           content: Text(
             'Are you sure you want to delete ${_selectedIndices.length} selected communicable record(s)?',
@@ -1439,7 +1466,8 @@ class _CommunicablePageState extends State<CommunicablePage> {
 
   void _viewPatientDetails(Map<String, dynamic> patient) {
     final patientName = (patient['patientName'] ?? 'Unknown').toString();
-    final patientId = (patient['patientId'] ?? patient['id'] ?? 'N/A').toString();
+    final patientId = (patient['patientId'] ?? patient['id'] ?? 'N/A')
+        .toString();
     final age = '${patient['age'] ?? 'N/A'} years';
     final gender = (patient['gender'] ?? 'N/A').toString();
     final condition = (patient['condition'] ?? 'No details').toString();
@@ -1455,7 +1483,9 @@ class _CommunicablePageState extends State<CommunicablePage> {
       builder: (dialogContext) {
         return Dialog(
           backgroundColor: _darkDeepTeal,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Container(
             decoration: BoxDecoration(
               color: _darkDeepTeal,
@@ -1504,7 +1534,10 @@ class _CommunicablePageState extends State<CommunicablePage> {
                   ]),
                   const SizedBox(height: 16),
                   _buildCheckupStyleDetailSection('Monitoring', [
-                    _buildCheckupStyleDetailRow('Blood Pressure', bloodPressure),
+                    _buildCheckupStyleDetailRow(
+                      'Blood Pressure',
+                      bloodPressure,
+                    ),
                     _buildCheckupStyleDetailRow('Blood Sugar', bloodSugar),
                     _buildCheckupStyleDetailRow('Last Visit', lastVisit),
                     _buildCheckupStyleDetailRow('Next Visit', nextVisit),
@@ -1673,9 +1706,11 @@ class _CommunicablePageState extends State<CommunicablePage> {
   Future<void> _viewHistory(Map<String, dynamic> patient) async {
     final allRecords = await _dbHelper.getAllRecords();
     final moduleRecords = allRecords
-        .where((record) =>
-            (record['diseaseType'] ?? '').toString().toLowerCase() ==
-            'communicable')
+        .where(
+          (record) =>
+              (record['diseaseType'] ?? '').toString().toLowerCase() ==
+              'communicable',
+        )
         .map((record) => Map<String, dynamic>.from(record))
         .toList();
 
@@ -1699,7 +1734,8 @@ class _CommunicablePageState extends State<CommunicablePage> {
       description:
           'Review earlier communicable visits for this patient before creating or updating the next case record.',
       titleBuilder: (entry) =>
-          (entry['condition'] ?? entry['type'] ?? entry['symptoms'] ?? 'Visit').toString(),
+          (entry['condition'] ?? entry['type'] ?? entry['symptoms'] ?? 'Visit')
+              .toString(),
       subtitleBuilder: (entry) =>
           (entry['status'] ?? entry['currentStatus'] ?? 'Pending').toString(),
       metaBuilder: (entry) =>
@@ -1748,7 +1784,7 @@ class _CommunicableTable extends StatelessWidget {
 
   Color _getAvatarColor(int index) {
     final colors = [
-      const Color(0xFF00A8B5),
+      AppDesign.communicable,
       const Color(0xFF1E5A7A),
       const Color(0xFFFF6B6B),
       const Color(0xFF4ECDC4),
@@ -1820,6 +1856,62 @@ class _CommunicableTable extends StatelessWidget {
         final statusColor = _getStatusColor(status);
         final isSelected = selectedIndices.contains(absoluteIndex);
 
+        return HealthRecordCard(
+          recordLabel: 'Communicable disease',
+          patientName: patientName,
+          location:
+              record['barangay']?.toString() ??
+              record['address']?.toString() ??
+              'Location not recorded',
+          accentColor: AppDesign.communicable,
+          status: status,
+          secondaryStatus:
+              record['referralStatus']?.toString() ??
+              record['referral_status']?.toString(),
+          isSelected: isSelected,
+          showSelection: isSelectionMode,
+          onSelectionChanged: (selected) =>
+              onSelectionChanged(absoluteIndex, selected),
+          onTap: () {
+            if (isSelectionMode) {
+              onSelectionChanged(absoluteIndex, !isSelected);
+            } else {
+              onTap(record);
+            }
+          },
+          onLongPress: () => onLongPress(record),
+          onAction: () => onEdit(record),
+          metadata: [
+            RecordMetadata(label: 'Age', value: age, icon: Icons.cake_outlined),
+            RecordMetadata(
+              label: 'Recorded disease',
+              value: condition,
+              icon: Icons.coronavirus_outlined,
+              emphasize: true,
+            ),
+            RecordMetadata(
+              label: 'Date recorded',
+              value: HealthRecordDate.format(
+                record['dateReported'] ?? record['date'] ?? lastVisit,
+              ),
+              icon: Icons.event_outlined,
+            ),
+            RecordMetadata(
+              label: 'Monitoring status',
+              value: record['monitoringStatus']?.toString() ?? status,
+              icon: Icons.monitor_heart_outlined,
+            ),
+            RecordMetadata(
+              label: 'Follow-up date',
+              value: HealthRecordDate.format(
+                record['followUpDate'] ?? record['nextFollowUp'],
+              ),
+              icon: Icons.event_repeat_outlined,
+            ),
+          ],
+        );
+
+        // ignore: dead_code
         return GestureDetector(
           onTap: () {
             if (isSelectionMode) {
@@ -1932,7 +2024,9 @@ class _CommunicableTable extends StatelessWidget {
                                         text: 'Age: ',
                                         style: TextStyle(
                                           fontSize: 13,
-                                          color: _lightOffWhite.withValues(alpha: 0.7),
+                                          color: _lightOffWhite.withValues(
+                                            alpha: 0.7,
+                                          ),
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -1956,7 +2050,9 @@ class _CommunicableTable extends StatelessWidget {
                                         text: 'Visit: ',
                                         style: TextStyle(
                                           fontSize: 13,
-                                          color: _lightOffWhite.withValues(alpha: 0.7),
+                                          color: _lightOffWhite.withValues(
+                                            alpha: 0.7,
+                                          ),
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),

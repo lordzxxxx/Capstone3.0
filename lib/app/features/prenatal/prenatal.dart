@@ -8,12 +8,14 @@ import 'package:mycapstone_project/app/features/patients/patient_centered_histor
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
+const Color _primaryAqua = AppDesign.blue;
+const Color _secondaryIceBlue = AppDesign.blueSoft;
+const Color _darkDeepTeal = AppDesign.page;
+const Color _mutedCoolGray = AppDesign.muted;
+const Color _lightOffWhite = AppDesign.ink;
 
 class PrenatalPage extends StatefulWidget {
   const PrenatalPage({super.key});
@@ -1242,7 +1244,7 @@ class _PrenatalTable extends StatelessWidget {
 
   Color _getAvatarColor(int index) {
     final colors = [
-      const Color(0xFF00A8B5), // Aqua
+      AppDesign.prenatal,
       const Color(0xFF1E5A7A), // Ice Blue
       const Color(0xFFFF6B6B), // Red
       const Color(0xFF4ECDC4), // Teal
@@ -1303,6 +1305,71 @@ class _PrenatalTable extends StatelessWidget {
         final gestationalAge = record['gestationalAge']?.toString() ?? 'N/A';
         final dueDate = record['dueDate']?.toString() ?? 'N/A';
 
+        return HealthRecordCard(
+          recordLabel: 'Prenatal care',
+          patientName: patientName.toString(),
+          location: address,
+          accentColor: AppDesign.prenatal,
+          status: status,
+          isSelected: selectedIndices.contains(absoluteIndex),
+          showSelection: isSelectionMode,
+          onSelectionChanged: (selected) =>
+              onSelectionChanged(absoluteIndex, selected),
+          onTap: () {
+            if (isSelectionMode) {
+              onSelectionChanged(
+                absoluteIndex,
+                !selectedIndices.contains(absoluteIndex),
+              );
+            } else {
+              onTap?.call(record);
+            }
+          },
+          onLongPress: () => onLongPress?.call(record),
+          onAction: () => onLongPress?.call(record),
+          metadata: [
+            RecordMetadata(label: 'Age', value: age, icon: Icons.cake_outlined),
+            RecordMetadata(
+              label: 'Gestational age',
+              value: gestationalAge,
+              icon: Icons.pregnant_woman_rounded,
+            ),
+            RecordMetadata(
+              label: 'Trimester',
+              value: record['trimester']?.toString() ?? 'Not recorded',
+              icon: Icons.timeline_rounded,
+            ),
+            RecordMetadata(
+              label: 'Blood pressure',
+              value: record['bp']?.toString() ?? 'Not recorded',
+              icon: Icons.monitor_heart_outlined,
+            ),
+            RecordMetadata(
+              label: 'Weight',
+              value: record['wt']?.toString() ?? 'Not recorded',
+              icon: Icons.monitor_weight_outlined,
+            ),
+            RecordMetadata(
+              label: 'Last visit',
+              value: HealthRecordDate.format(record['registrationDate']),
+              icon: Icons.event_available_outlined,
+            ),
+            RecordMetadata(
+              label: 'Next visit',
+              value: HealthRecordDate.format(record['nextVisit']),
+              icon: Icons.event_repeat_outlined,
+            ),
+            RecordMetadata(
+              label: 'Expected delivery',
+              value: HealthRecordDate.format(
+                record['eddDate'] ?? record['dueDate'],
+              ),
+              icon: Icons.child_friendly_outlined,
+            ),
+          ],
+        );
+
+        // ignore: dead_code
         return GestureDetector(
           onTap: () {
             if (isSelectionMode) {

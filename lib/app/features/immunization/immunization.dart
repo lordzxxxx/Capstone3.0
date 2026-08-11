@@ -4,12 +4,14 @@ import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls
 import 'dart:math' as math;
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
+const Color _primaryAqua = AppDesign.blue;
+const Color _secondaryIceBlue = AppDesign.blueSoft;
+const Color _darkDeepTeal = AppDesign.page;
+const Color _mutedCoolGray = AppDesign.muted;
+const Color _lightOffWhite = AppDesign.ink;
 
 class ImmunizationPage extends StatefulWidget {
   const ImmunizationPage({super.key});
@@ -2450,32 +2452,19 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
   }
 
   Widget _buildStatusChip(String status) {
-    Color statusColor;
-    switch (status) {
-      case 'Completed':
-        statusColor = Colors.green;
-        break;
-      case 'Scheduled':
-        statusColor = Colors.orange;
-        break;
-      case 'In Progress':
-        statusColor = Colors.blue;
-        break;
-      default:
-        statusColor = _mutedCoolGray;
-    }
+    final colors = AppDesign.statusColors(status);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: statusColor.withValues(alpha: 0.15),
+        color: colors.background,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: statusColor.withValues(alpha: 0.5), width: 1),
+        border: Border.all(color: colors.foreground.withValues(alpha: 0.25)),
       ),
       child: Text(
         status,
         style: TextStyle(
-          color: statusColor,
+          color: colors.foreground,
           fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
@@ -4185,7 +4174,7 @@ class _ImmunizationTable extends StatelessWidget {
 
   Color _getAvatarColor(int index) {
     final colors = [
-      const Color(0xFF00A8B5), // Aqua
+      AppDesign.immunization,
       const Color(0xFF1E5A7A), // Ice Blue
       const Color(0xFFFF6B6B), // Red
       const Color(0xFF4ECDC4), // Teal
@@ -4255,6 +4244,63 @@ class _ImmunizationTable extends StatelessWidget {
         final historyCount =
             int.tryParse(record['patientHistoryCount']?.toString() ?? '') ?? 1;
 
+        return HealthRecordCard(
+          recordLabel: 'Immunization',
+          patientName: patientName.toString(),
+          location:
+              record['barangay']?.toString() ??
+              record['address']?.toString() ??
+              'Location not recorded',
+          accentColor: AppDesign.immunization,
+          status: status,
+          isSelected: selectedIndices.contains(absoluteIndex),
+          showSelection: isSelectionMode,
+          onSelectionChanged: (selected) =>
+              onSelectionChanged(absoluteIndex, selected),
+          onTap: () {
+            if (isSelectionMode) {
+              onSelectionChanged(
+                absoluteIndex,
+                !selectedIndices.contains(absoluteIndex),
+              );
+            } else {
+              onTap?.call(record);
+            }
+          },
+          onLongPress: () => onLongPress?.call(record),
+          onAction: () => onLongPress?.call(record),
+          metadata: [
+            RecordMetadata(label: 'Age', value: age, icon: Icons.cake_outlined),
+            RecordMetadata(
+              label: 'Vaccine',
+              value: vaccine,
+              icon: Icons.vaccines_outlined,
+              emphasize: true,
+            ),
+            RecordMetadata(
+              label: 'Dose',
+              value: record['doseNumber']?.toString() ?? 'Not recorded',
+              icon: Icons.format_list_numbered_rounded,
+            ),
+            RecordMetadata(
+              label: 'Date given',
+              value: date,
+              icon: Icons.event_available_outlined,
+            ),
+            RecordMetadata(
+              label: 'Next schedule',
+              value: HealthRecordDate.format(record['nextDoseDueDate']),
+              icon: Icons.event_repeat_outlined,
+            ),
+            RecordMetadata(
+              label: 'Administered by',
+              value: record['administeredBy']?.toString() ?? 'Not recorded',
+              icon: Icons.medical_services_outlined,
+            ),
+          ],
+        );
+
+        // ignore: dead_code
         return GestureDetector(
           onTap: () {
             if (isSelectionMode) {

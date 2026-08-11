@@ -7,16 +7,18 @@ import 'package:mycapstone_project/app/features/checkups/checkup_database_helper
 import 'package:mycapstone_project/app/core/services/disease_prediction_api_service.dart';
 import 'package:mycapstone_project/app/core/services/health_ai_classifier.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls.dart';
+import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/features/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
+const Color _primaryAqua = AppDesign.blue;
+const Color _secondaryIceBlue = AppDesign.blueSoft;
+const Color _darkDeepTeal = AppDesign.page;
+const Color _mutedCoolGray = AppDesign.muted;
+const Color _lightOffWhite = AppDesign.ink;
 
 class CheckUpPage extends StatefulWidget {
   const CheckUpPage({super.key});
@@ -2167,7 +2169,7 @@ class _CheckUpTable extends StatelessWidget {
 
   Color _getAvatarColor(int index) {
     final colors = [
-      const Color(0xFF00A8B5), // Aqua
+      AppDesign.checkUp,
       const Color(0xFF1E5A7A), // Ice Blue
       const Color(0xFFFF6B6B), // Red
       const Color(0xFF4ECDC4), // Teal
@@ -2278,6 +2280,62 @@ class _CheckUpTable extends StatelessWidget {
             ? datetime.split('T').first
             : datetime.split(' ').first;
 
+        return HealthRecordCard(
+          recordLabel: 'Check-up record',
+          patientName: patientName,
+          location: address,
+          accentColor: AppDesign.checkUp,
+          status: record['status']?.toString() ?? 'Recorded',
+          secondaryStatus:
+              record['referralStatus']?.toString() ??
+              record['referral_status']?.toString(),
+          isSelected: selectedIndices.contains(absoluteIndex),
+          showSelection: isSelectionMode,
+          onSelectionChanged: (selected) =>
+              onSelectionChanged(absoluteIndex, selected),
+          onTap: () {
+            if (isSelectionMode) {
+              onSelectionChanged(
+                absoluteIndex,
+                !selectedIndices.contains(absoluteIndex),
+              );
+            } else {
+              onTap(context, record);
+            }
+          },
+          onLongPress: () => onLongPress(context, record),
+          onAction: () => onLongPress(context, record),
+          metadata: [
+            RecordMetadata(label: 'Age', value: age, icon: Icons.cake_outlined),
+            RecordMetadata(
+              label: 'Vital signs',
+              value: vitalSigns,
+              icon: Icons.monitor_heart_outlined,
+              emphasize: true,
+            ),
+            RecordMetadata(
+              label: 'Symptoms',
+              value: symptoms,
+              icon: Icons.sick_outlined,
+              emphasize: true,
+            ),
+            RecordMetadata(
+              label: 'Treatment / management',
+              value: treatmentPlan,
+              icon: Icons.medication_outlined,
+              emphasize: true,
+            ),
+            RecordMetadata(
+              label: 'Check-up date',
+              value: HealthRecordDate.format(datetime, includeTime: true),
+              icon: Icons.event_outlined,
+            ),
+          ],
+        );
+
+        // Retained legacy layout below is unreachable and will be removed once
+        // downstream forks no longer reference its private helper methods.
+        // ignore: dead_code
         return GestureDetector(
           onTap: () {
             if (isSelectionMode) {
@@ -3558,14 +3616,14 @@ class _NewCheckUpFullScreenModalState
     _addressController.text = (patientSeed['address'] ?? '').toString();
     _symptomsController.text =
         (patientSeed['symptoms'] ?? patientSeed['disease'] ?? '').toString();
-    _bloodPressureController.text =
-        (patientSeed['bloodPressure'] ?? '').toString();
+    _bloodPressureController.text = (patientSeed['bloodPressure'] ?? '')
+        .toString();
     _temperatureController.text = (patientSeed['temperature'] ?? '').toString();
     _heartRateController.text = (patientSeed['heartRate'] ?? '').toString();
-    _respiratoryRateController.text =
-        (patientSeed['respiratoryRate'] ?? '').toString();
-    _oxygenSaturationController.text =
-        (patientSeed['oxygenSaturation'] ?? '').toString();
+    _respiratoryRateController.text = (patientSeed['respiratoryRate'] ?? '')
+        .toString();
+    _oxygenSaturationController.text = (patientSeed['oxygenSaturation'] ?? '')
+        .toString();
     _weightController.text = (patientSeed['weight'] ?? '').toString();
     _heightController.text = (patientSeed['height'] ?? '').toString();
   }

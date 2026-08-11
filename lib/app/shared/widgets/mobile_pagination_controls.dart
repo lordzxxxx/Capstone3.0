@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
 
 class MobilePaginationControls extends StatelessWidget {
   const MobilePaginationControls({
@@ -43,7 +44,9 @@ class MobilePaginationControls extends StatelessWidget {
     final effectiveTotalPages = totalPages < 1 ? 1 : totalPages;
     final effectiveCurrentPage = currentPage < 1
         ? 1
-        : (currentPage > effectiveTotalPages ? effectiveTotalPages : currentPage);
+        : (currentPage > effectiveTotalPages
+              ? effectiveTotalPages
+              : currentPage);
     final dropdownValue = rowsPerPageOptions.contains(rowsPerPage)
         ? rowsPerPage
         : rowsPerPageOptions.first;
@@ -52,12 +55,9 @@ class MobilePaginationControls extends StatelessWidget {
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: surfaceColor,
+        color: AppDesign.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: accentColor.withValues(alpha: 0.22),
-          width: 1.2,
-        ),
+        border: Border.all(color: AppDesign.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,11 +76,9 @@ class MobilePaginationControls extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: surfaceColor.withValues(alpha: 0.92),
+                  color: AppDesign.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: textColor.withValues(alpha: 0.16),
-                  ),
+                  border: Border.all(color: AppDesign.borderStrong),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
@@ -129,11 +127,9 @@ class MobilePaginationControls extends StatelessWidget {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: surfaceColor.withValues(alpha: 0.92),
+                        color: AppDesign.surface,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: textColor.withValues(alpha: 0.16),
-                        ),
+                        border: Border.all(color: AppDesign.border),
                       ),
                       child: Text(
                         '$effectiveCurrentPage / $effectiveTotalPages',
@@ -187,10 +183,14 @@ class _PaginationIconButton extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isEnabled ? accentColor.withValues(alpha: 0.14) : surfaceColor.withValues(alpha: 0.75),
+        color: isEnabled
+            ? accentColor.withValues(alpha: 0.14)
+            : surfaceColor.withValues(alpha: 0.75),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isEnabled ? accentColor.withValues(alpha: 0.24) : textColor.withValues(alpha: 0.12),
+          color: isEnabled
+              ? accentColor.withValues(alpha: 0.24)
+              : textColor.withValues(alpha: 0.12),
         ),
       ),
       child: IconButton(

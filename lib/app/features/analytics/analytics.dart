@@ -13,7 +13,7 @@ import 'package:mycapstone_project/app/features/surveillance/mortality/mortality
 import 'package:mycapstone_project/app/features/surveillance/mortality/mortality_analytics.dart';
 import 'package:mycapstone_project/app/features/surveillance/non_communicable/non_communicable.dart';
 import 'package:mycapstone_project/app/features/surveillance/non_communicable/non_communicable_analytics.dart';
-import 'package:mycapstone_project/app/features/patients/patient.dart';
+import 'package:mycapstone_project/app/features/patients/patient_analytics.dart';
 import 'package:mycapstone_project/app/features/patients/patient_database_helper.dart';
 import 'package:mycapstone_project/app/features/prenatal/prenatal.dart';
 import 'package:mycapstone_project/app/features/prenatal/prenatal_analytics.dart';
@@ -21,17 +21,18 @@ import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helpe
 import 'package:mycapstone_project/app/features/immunization/immunization_database_helper.dart';
 import 'package:mycapstone_project/app/features/surveillance/morbidity/morbidity_database_helper.dart';
 import 'package:mycapstone_project/app/features/surveillance/mortality/mortality_database_helper.dart';
-import 'package:mycapstone_project/app/features/referrals/referrals.dart';
+import 'package:mycapstone_project/app/features/referrals/referral_analytics.dart';
 import 'dart:async';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
 
-const Color _primaryAqua = Color(0xFF8ED7DA);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF8A8FA3);
-const Color _lightOffWhite = Color(0xFFF1F1EE);
-const Color _panelTop = Color(0xFF12353C);
-const Color _panelBottom = Color(0xFF0E252B);
-const Color _panelStroke = Color(0xFF2A6168);
+const Color _primaryAqua = AppDesign.blue;
+const Color _secondaryIceBlue = AppDesign.blueSoft;
+const Color _darkDeepTeal = AppDesign.page;
+const Color _mutedCoolGray = AppDesign.muted;
+const Color _lightOffWhite = AppDesign.ink;
+const Color _panelTop = AppDesign.surface;
+const Color _panelBottom = AppDesign.surface;
+const Color _panelStroke = AppDesign.border;
 
 String _formatRelativeTime(DateTime dateTime) {
   final now = DateTime.now();
@@ -222,7 +223,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       {
         'label': 'Check Up',
         'icon': Icons.medical_services_outlined,
-        'color': const Color(0xFF5EC7FF),
+        'color': AppDesign.checkUp,
         'onTap': () => Navigator.of(
           context,
         ).push(MaterialPageRoute(builder: (_) => const CheckUpAnalyticsPage())),
@@ -230,7 +231,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       {
         'label': 'Morbidity',
         'icon': Icons.healing_outlined,
-        'color': const Color(0xFFFFA726),
+        'color': AppDesign.morbidity,
         'onTap': () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => const MorbidityPage(analyticsOnly: true),
@@ -240,7 +241,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       {
         'label': 'Prenatal Care',
         'icon': Icons.pregnant_woman_rounded,
-        'color': const Color(0xFFEC407A),
+        'color': AppDesign.prenatal,
         'onTap': () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const PrenatalAnalyticsPage()),
         ),
@@ -248,7 +249,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       {
         'label': 'Immunization',
         'icon': Icons.vaccines_rounded,
-        'color': const Color(0xFF7E57C2),
+        'color': AppDesign.immunization,
         'onTap': () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const ImmunizationAnalyticsPage()),
         ),
@@ -256,15 +257,15 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       {
         'label': 'Patient Records',
         'icon': Icons.folder_shared_rounded,
-        'color': const Color(0xFF26A69A),
+        'color': AppDesign.patientRecords,
         'onTap': () => Navigator.of(
           context,
-        ).push(MaterialPageRoute(builder: (_) => const PatientRecordPage())),
+        ).push(MaterialPageRoute(builder: (_) => const PatientAnalyticsPage())),
       },
       {
         'label': 'Communicable',
         'icon': Icons.coronavirus_rounded,
-        'color': const Color(0xFFE53935),
+        'color': AppDesign.communicable,
         'onTap': () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const CommunicableAnalyticsPage()),
         ),
@@ -272,7 +273,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       {
         'label': 'Non Communicable Disease',
         'icon': Icons.biotech_rounded,
-        'color': const Color(0xFF43A047),
+        'color': AppDesign.nonCommunicable,
         'onTap': () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => const NonCommunicableAnalyticsPage(),
@@ -282,7 +283,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       {
         'label': 'Mortality',
         'icon': Icons.sick_rounded,
-        'color': const Color(0xFF8D6E63),
+        'color': AppDesign.mortality,
         'onTap': () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const MortalityAnalyticsPage()),
         ),
@@ -290,10 +291,10 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       {
         'label': 'Referrals',
         'icon': Icons.call_split_rounded,
-        'color': const Color(0xFF039BE5),
-        'onTap': () => Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const ReferralsPage())),
+        'color': AppDesign.referrals,
+        'onTap': () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const ReferralAnalyticsPage()),
+        ),
       },
     ];
 
@@ -323,6 +324,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             return _buildHubStyleButton(
               icon: module['icon'] as IconData,
               label: module['label'] as String,
+              accent: _primaryAqua,
               onTap: module['onTap'] as void Function(),
             );
           },
@@ -366,7 +368,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
         'title': 'Key Statistics',
         'subtitle': 'Quick access to summary metrics and overview cards',
         'icon': Icons.insights_rounded,
-        'color': Colors.tealAccent,
+        'color': AppDesign.teal,
         'buttons': <Map<String, dynamic>>[
           {
             'label': 'Summary Overview',
@@ -476,6 +478,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                       return _buildHubStyleButton(
                         icon: button['icon'] as IconData,
                         label: button['label'] as String,
+                        accent: category['color'] as Color,
                         onTap: button['onTap'] as void Function(),
                       );
                     },
@@ -492,6 +495,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   Widget _buildHubStyleButton({
     required IconData icon,
     required String label,
+    Color accent = AppDesign.blue,
     required VoidCallback onTap,
   }) {
     return Material(
@@ -500,7 +504,18 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: Ink(
-          decoration: const BoxDecoration(color: Colors.transparent),
+          decoration: BoxDecoration(
+            color: AppDesign.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppDesign.border),
+            boxShadow: [
+              BoxShadow(
+                color: AppDesign.navy.withValues(alpha: 0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -513,21 +528,21 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                       width: 88,
                       height: 88,
                       decoration: BoxDecoration(
-                        color: _primaryAqua.withValues(alpha: 0.1),
+                        color: accent.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
-                          color: _primaryAqua.withValues(alpha: 0.45),
+                          color: accent.withValues(alpha: 0.45),
                           width: 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: _primaryAqua.withValues(alpha: 0.12),
+                            color: accent.withValues(alpha: 0.12),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
                         ],
                       ),
-                      child: Icon(icon, color: _primaryAqua, size: 48),
+                      child: Icon(icon, color: accent, size: 48),
                     ),
                   ),
                 ),

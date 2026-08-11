@@ -16,13 +16,12 @@ import 'package:mycapstone_project/web/shared/services/account_policy_service.da
 import 'package:mycapstone_project/web/shared/services/barangay_branding_service.dart';
 import 'package:mycapstone_project/web/shared/widgets/barangay_logo_image.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/features/auth/widgets/mobile_auth_shell.dart';
 
 const Color _primaryAqua = AppDesign.blue;
-const Color _secondaryIceBlue = AppDesign.navySoft;
 const Color _darkDeepTeal = AppDesign.ink;
 const Color _mutedCoolGray = AppDesign.subtle;
 const Color _lightOffWhite = AppDesign.ink;
-const Color _sidebarDark = Colors.white;
 const Color _panelSurface = AppDesign.page;
 
 class Signup extends StatefulWidget {
@@ -679,222 +678,123 @@ class _SignupState extends State<Signup> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppDesign.page,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppDesign.navy,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
-          onPressed: () {
-            final navigator = Navigator.of(context);
-            if (navigator.canPop()) {
-              navigator.pop();
-              return;
-            }
-            Get.offAll(() => Login());
-          },
-        ),
-        title: Text(
-          'Create Account',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: Container(
-        color: AppDesign.page,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: _primaryAqua.withValues(alpha: 0.16),
-                  width: 1.4,
+    return MobileAuthShell(
+      pageTitle: 'Register',
+      heading: 'Create your account',
+      description:
+          'Register your BHW access details and assigned barangay for the mobile health workspace.',
+      onBack: () {
+        final navigator = Navigator.of(context);
+        if (navigator.canPop()) {
+          navigator.pop();
+        } else {
+          Get.offAll(() => const Login());
+        }
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppDesign.informationBackground,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppDesign.blue.withValues(alpha: 0.20)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.badge_outlined, color: AppDesign.blue, size: 20),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Mobile registration creates a Barangay Health Worker account. Barangay availability and approval rules still apply.',
+                    style: TextStyle(
+                      color: AppDesign.navy,
+                      fontSize: 12.5,
+                      height: 1.4,
+                    ),
+                  ),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.22),
-                    blurRadius: 24,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          const AuthFieldLabel('Username'),
+          const SizedBox(height: 8),
+          _buildTextField(
+            controller: usernameController,
+            hintText: 'Enter your username',
+            icon: Icons.person_outline_rounded,
+          ),
+          const SizedBox(height: 16),
+          const AuthFieldLabel('Email address'),
+          const SizedBox(height: 8),
+          _buildTextField(
+            controller: emailController,
+            hintText: 'you@example.com',
+            icon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 16),
+          const AuthFieldLabel('Assigned barangay'),
+          const SizedBox(height: 8),
+          _buildBarangaySelector(),
+          const SizedBox(height: 16),
+          const AuthFieldLabel('Password'),
+          const SizedBox(height: 8),
+          _buildPasswordField(),
+          const SizedBox(height: 16),
+          const AuthFieldLabel('Confirm password'),
+          const SizedBox(height: 8),
+          _buildConfirmPasswordField(),
+          const SizedBox(height: 22),
+          SizedBox(
+            height: 52,
+            child: FilledButton.icon(
+              onPressed: _isLoading ? null : signup,
+              icon: _isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: AppDesign.surface,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : const Icon(Icons.person_add_alt_1_rounded),
+              label: Text(_isLoading ? 'Creating account…' : 'Create account'),
+            ),
+          ),
+          const SizedBox(height: 22),
+          Center(
+            child: RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodyMedium,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: AppDesign.navy,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: _primaryAqua.withValues(alpha: 0.28),
-                            blurRadius: 28,
-                            offset: const Offset(0, 12),
-                          ),
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/newlogo.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(
-                              Icons.medical_services_rounded,
-                              size: 100,
-                              color: _primaryAqua,
-                            );
-                          },
-                        ),
-                      ),
+                  const TextSpan(text: 'Already have an account? '),
+                  TextSpan(
+                    text: 'Sign in',
+                    style: const TextStyle(
+                      color: AppDesign.blue,
+                      fontWeight: FontWeight.w800,
                     ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        final navigator = Navigator.of(context);
+                        if (navigator.canPop()) {
+                          navigator.pop();
+                        } else {
+                          Get.offAll(() => const Login());
+                        }
+                      },
                   ),
-                  const SizedBox(height: 40),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Create Account',
-                        style: Theme.of(context).textTheme.displaySmall
-                            ?.copyWith(
-                              color: _darkDeepTeal,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Select your barangay and continue with account creation.',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppDesign.muted,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 40),
-                  _buildFieldLabel(context, 'Username'),
-                  const SizedBox(height: 10),
-                  _buildTextField(
-                    controller: usernameController,
-                    hintText: 'Enter your username',
-                    icon: Icons.person_outline,
-                    keyboardType: TextInputType.text,
-                  ),
-                  const SizedBox(height: 24),
-                  _buildFieldLabel(context, 'Email Address'),
-                  const SizedBox(height: 10),
-                  _buildTextField(
-                    controller: emailController,
-                    hintText: 'you@example.com',
-                    icon: Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 24),
-                  _buildFieldLabel(context, 'Select Barangay'),
-                  const SizedBox(height: 10),
-                  _buildBarangaySelector(),
-                  const SizedBox(height: 24),
-                  _buildFieldLabel(context, 'Password'),
-                  const SizedBox(height: 10),
-                  _buildPasswordField(),
-                  const SizedBox(height: 24),
-                  _buildFieldLabel(context, 'Confirm Password'),
-                  const SizedBox(height: 10),
-                  _buildConfirmPasswordField(),
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : signup,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryAqua,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        elevation: 6,
-                        shadowColor: _primaryAqua.withValues(alpha: 0.4),
-                      ),
-                      icon: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                                strokeWidth: 2.5,
-                              ),
-                            )
-                          : const Icon(Icons.person_add, size: 20),
-                      label: Text(
-                        _isLoading ? 'Creating Account...' : 'Create Account',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Center(
-                    child: RichText(
-                      text: TextSpan(
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppDesign.muted,
-                        ),
-                        children: [
-                          const TextSpan(text: 'Already have an account? '),
-                          TextSpan(
-                            text: 'Sign In',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  color: _primaryAqua,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                final navigator = Navigator.of(context);
-                                if (navigator.canPop()) {
-                                  navigator.pop();
-                                  return;
-                                }
-                                Get.offAll(() => Login());
-                              },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  // Helper method for field labels
-  Widget _buildFieldLabel(BuildContext context, String label) {
-    return Text(
-      label,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        color: _darkDeepTeal,
-        fontWeight: FontWeight.bold,
+        ],
       ),
     );
   }
@@ -909,6 +809,11 @@ class _SignupState extends State<Signup> {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      textInputAction: TextInputAction.next,
+      autofillHints: keyboardType == TextInputType.emailAddress
+          ? const [AutofillHints.email]
+          : const [AutofillHints.newUsername],
+      onSubmitted: (_) => FocusScope.of(context).nextFocus(),
       style: const TextStyle(color: _darkDeepTeal, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: hintText,
@@ -1184,6 +1089,9 @@ class _SignupState extends State<Signup> {
     return TextField(
       controller: passwordController,
       obscureText: _obscurePassword,
+      textInputAction: TextInputAction.next,
+      autofillHints: const [AutofillHints.newPassword],
+      onSubmitted: (_) => FocusScope.of(context).nextFocus(),
       style: const TextStyle(color: _darkDeepTeal, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: 'At least 6 characters',
@@ -1236,6 +1144,11 @@ class _SignupState extends State<Signup> {
     return TextField(
       controller: confirmPasswordController,
       obscureText: _obscureConfirmPassword,
+      textInputAction: TextInputAction.done,
+      autofillHints: const [AutofillHints.newPassword],
+      onSubmitted: (_) {
+        if (!_isLoading) signup();
+      },
       style: const TextStyle(color: _darkDeepTeal, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: 'Re-enter your password',

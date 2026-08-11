@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:mycapstone_project/app/features/patients/patient_database_helper.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls.dart';
+import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/features/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
 
 class PatientRecordPage extends StatefulWidget {
   const PatientRecordPage({super.key, this.openRegistrationOnLoad = false});
@@ -18,10 +20,10 @@ class PatientRecordPage extends StatefulWidget {
 
 class _PatientRecordPageState extends State<PatientRecordPage> {
   // Color scheme
-  static const Color _primaryAqua = Color(0xFF00A8B5);
-  static const Color _darkDeepTeal = Color(0xFF0A1F24);
-  static const Color _mutedCoolGray = Color(0xFF546E7A);
-  static const Color _lightOffWhite = Color(0xFFF5F5F5);
+  static const Color _primaryAqua = AppDesign.blue;
+  static const Color _darkDeepTeal = AppDesign.page;
+  static const Color _mutedCoolGray = AppDesign.muted;
+  static const Color _lightOffWhite = AppDesign.ink;
 
   // Filter state
   String _selectedStatus = 'All';
@@ -117,7 +119,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('✅ Successfully added 100 sample patient records!'),
-          backgroundColor: Color(0xFF00A8B5),
+          backgroundColor: AppDesign.patientRecords,
           duration: Duration(seconds: 3),
         ),
       );
@@ -822,228 +824,71 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   }
 
   Widget _buildPatientCard(Map<String, dynamic> patient, int index) {
-    final firstName = patient['firstName'] ?? 'P';
-    final surname = patient['surname'] ?? '';
-    final initials =
-        '${firstName.toString().substring(0, 1)}${surname.toString().substring(0, 1)}'
-            .toUpperCase();
-
-    Color avatarColor;
-    switch (index % 5) {
-      case 0:
-        avatarColor = const Color(0xFF00A8B5);
-        break;
-      case 1:
-        avatarColor = const Color(0xFF1E5A7A);
-        break;
-      case 2:
-        avatarColor = const Color(0xFFFF6B6B);
-        break;
-      case 3:
-        avatarColor = const Color(0xFFFFA940);
-        break;
-      default:
-        avatarColor = const Color(0xFF9575CD);
-    }
-
-    Color statusColor;
-    String statusLabel = patient['status'] ?? 'Active';
-    switch (statusLabel) {
-      case 'Active':
-        statusColor = const Color(0xFF4CAF50);
-        break;
-      case 'Follow-up':
-        statusColor = const Color(0xFFFFA940);
-        break;
-      case 'Inactive':
-        statusColor = _mutedCoolGray;
-        break;
-      default:
-        statusColor = _mutedCoolGray;
-    }
-
-    final location =
-        '${patient['barangay'] ?? ''}, ${patient['municipality'] ?? ''}'.trim();
-    final age = patient['age'] ?? 'N/A';
-    final registrationDate = patient['registrationDate'] ?? '';
-    final displayDate = registrationDate.isNotEmpty
-        ? registrationDate.split(' ')[0]
-        : DateTime.now().toString().split(' ')[0];
-
+    final firstName = patient['firstName']?.toString().trim() ?? '';
+    final surname = patient['surname']?.toString().trim() ?? '';
+    final patientName = '$firstName $surname'.trim();
+    final location = [
+      patient['barangay']?.toString().trim(),
+      patient['address']?.toString().trim(),
+      patient['municipality']?.toString().trim(),
+    ].whereType<String>().where((value) => value.isNotEmpty).toSet().join(', ');
+    final registrationDate =
+        patient['registrationDate'] ?? patient['createdAt'];
+    final statusLabel = patient['status']?.toString().trim().isNotEmpty == true
+        ? patient['status'].toString().trim()
+        : 'Active';
     final isSelected = _selectedIndices.contains(index);
-
-    return GestureDetector(
+    return HealthRecordCard(
+      recordLabel: 'Patient record',
+      patientName: patientName.isEmpty ? 'Unknown patient' : patientName,
+      location: location.isEmpty ? 'Location not recorded' : location,
+      accentColor: AppDesign.patientRecords,
+      status: statusLabel,
+      isSelected: isSelected,
+      showSelection: _isSelectionMode,
+      onSelectionChanged: (selected) {
+        setState(() {
+          if (selected) {
+            _selectedIndices.add(index);
+          } else {
+            _selectedIndices.remove(index);
+            if (_selectedIndices.isEmpty) _isSelectionMode = false;
+          }
+        });
+      },
       onTap: () {
         if (_isSelectionMode) {
-          // Toggle selection if already in selection mode
           setState(() {
             if (isSelected) {
               _selectedIndices.remove(index);
-              if (_selectedIndices.isEmpty) {
-                _isSelectionMode = false;
-              }
+              if (_selectedIndices.isEmpty) _isSelectionMode = false;
             } else {
               _selectedIndices.add(index);
             }
           });
         } else {
-          // Show patient details if not in selection mode
           _showPatientDetails(patient);
         }
       },
       onLongPress: () => _showRecordActionModal(context, patient, index),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? _primaryAqua.withValues(alpha: 0.15)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? _primaryAqua
-                : _primaryAqua.withValues(alpha: 0.3),
-            width: isSelected ? 2 : 1,
-          ),
+      onAction: () => _showRecordActionModal(context, patient, index),
+      metadata: [
+        RecordMetadata(
+          label: 'Age',
+          value: patient['age']?.toString() ?? 'Not recorded',
+          icon: Icons.cake_outlined,
         ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                // Checkbox (shown in selection mode)
-                if (_isSelectionMode)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Checkbox(
-                      value: isSelected,
-                      onChanged: (value) {
-                        setState(() {
-                          if (value == true) {
-                            _selectedIndices.add(index);
-                          } else {
-                            _selectedIndices.remove(index);
-                            if (_selectedIndices.isEmpty) {
-                              _isSelectionMode = false;
-                            }
-                          }
-                        });
-                      },
-                      activeColor: _primaryAqua,
-                      checkColor: Colors.white,
-                    ),
-                  ),
-                // Avatar Circle with Initials
-                CircleAvatar(
-                  radius: 36,
-                  backgroundColor: avatarColor,
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                // Patient Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Name
-                      Text(
-                        '$firstName $surname',
-                        style: const TextStyle(
-                          color: _lightOffWhite,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      // Location
-                      Text(
-                        location.isNotEmpty ? location : 'Location N/A',
-                        style: TextStyle(
-                          color: _mutedCoolGray,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      // Age and Date Row
-                      Row(
-                        children: [
-                          Text(
-                            'Age: $age',
-                            style: TextStyle(
-                              color: _mutedCoolGray,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              'Date: $displayDate',
-                              style: TextStyle(
-                                color: _mutedCoolGray,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // Status Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: statusColor, width: 1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: statusColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        statusLabel,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
+        RecordMetadata(
+          label: 'Date added',
+          value: HealthRecordDate.format(registrationDate),
+          icon: Icons.calendar_today_outlined,
         ),
-      ),
+        RecordMetadata(
+          label: 'Time added',
+          value: HealthRecordDate.time(registrationDate),
+          icon: Icons.schedule_outlined,
+        ),
+      ],
     );
   }
 
@@ -2336,10 +2181,10 @@ class _AddPatientModalState extends State<AddPatientModal> {
   final int _totalPages = 10;
 
   // Color scheme
-  static const Color _primaryAqua = Color(0xFF00A8B5);
-  static const Color _darkDeepTeal = Color(0xFF0A1F24);
-  static const Color _mutedCoolGray = Color(0xFF546E7A);
-  static const Color _lightOffWhite = Color(0xFFF5F5F5);
+  static const Color _primaryAqua = AppDesign.blue;
+  static const Color _darkDeepTeal = AppDesign.page;
+  static const Color _mutedCoolGray = AppDesign.muted;
+  static const Color _lightOffWhite = AppDesign.ink;
 
   // Personal Details Controllers
   final _firstNameController = TextEditingController();
@@ -2467,22 +2312,21 @@ class _AddPatientModalState extends State<AddPatientModal> {
       _ageController.text = (values['age'] ?? '').toString();
       _phoneController.text =
           (values['contactNumber'] ?? values['phoneNumber'] ?? '').toString();
-      _emailController.text =
-          (values['email'] ?? values['emailAddress'] ?? '').toString();
-      _streetController.text =
-          (values['address'] ?? values['street'] ?? '').toString();
+      _emailController.text = (values['email'] ?? values['emailAddress'] ?? '')
+          .toString();
+      _streetController.text = (values['address'] ?? values['street'] ?? '')
+          .toString();
       _barangayController.text = (values['barangay'] ?? '').toString();
       _municipalityController.text = (values['municipality'] ?? '').toString();
       _provinceController.text = (values['province'] ?? '').toString();
       _chiefComplaintController.text = (values['symptoms'] ?? '').toString();
-      _currentSymptomsController.text =
-          (values['symptoms'] ?? '').toString();
+      _currentSymptomsController.text = (values['symptoms'] ?? '').toString();
       _bodyTempController.text = (values['temperature'] ?? '').toString();
       _heartRateController.text = (values['heartRate'] ?? '').toString();
-      _respiratoryRateController.text =
-          (values['respiratoryRate'] ?? '').toString();
-      _oxygenSaturationController.text =
-          (values['oxygenSaturation'] ?? '').toString();
+      _respiratoryRateController.text = (values['respiratoryRate'] ?? '')
+          .toString();
+      _oxygenSaturationController.text = (values['oxygenSaturation'] ?? '')
+          .toString();
       _weightController.text = (values['weight'] ?? '').toString();
       _heightController.text = (values['height'] ?? '').toString();
     }
@@ -3854,10 +3698,10 @@ class _EditPatientModalState extends State<EditPatientModal> {
   final int _totalPages = 10;
 
   // Color scheme
-  static const Color _primaryAqua = Color(0xFF00A8B5);
-  static const Color _darkDeepTeal = Color(0xFF003D40);
-  static const Color _mutedCoolGray = Color(0xFF6B7280);
-  static const Color _lightOffWhite = Color(0xFFF7F9FC);
+  static const Color _primaryAqua = AppDesign.blue;
+  static const Color _darkDeepTeal = AppDesign.page;
+  static const Color _mutedCoolGray = AppDesign.muted;
+  static const Color _lightOffWhite = AppDesign.ink;
 
   // Controllers - will be initialized with existing data
   late TextEditingController _firstNameController;

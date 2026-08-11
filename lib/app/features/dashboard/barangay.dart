@@ -5,12 +5,13 @@ import 'package:mycapstone_project/app/features/checkups/checkup_database_helper
 import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helper.dart';
 import 'package:mycapstone_project/app/features/immunization/immunization_database_helper.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
 
-const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _secondaryIceBlue = Color(0xFF1E5A7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
+const Color _primaryAqua = AppDesign.blue;
+const Color _secondaryIceBlue = AppDesign.blueSoft;
+const Color _darkDeepTeal = AppDesign.page;
+const Color _mutedCoolGray = AppDesign.muted;
+const Color _lightOffWhite = AppDesign.ink;
 const Color _emergencyRed = Color(0xFFE74C3C);
 const Color _warningOrange = Color(0xFFF39C12);
 const Color _successGreen = Color(0xFF27AE60);

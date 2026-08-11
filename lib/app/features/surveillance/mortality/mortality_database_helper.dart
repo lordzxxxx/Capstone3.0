@@ -339,16 +339,40 @@ class MortalityDatabaseHelper {
     final now = DateTime.now();
     for (int i = 5; i >= 0; i--) {
       final date = DateTime(now.year, now.month - i, 1);
-      final monthKey =
-          ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.month - 1];
+      final monthKey = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ][date.month - 1];
       monthlyData[monthKey] = 0;
     }
 
     for (final record in records) {
       try {
         final recordDate = DateTime.parse(record['dateReported'] as String);
-        final monthKey =
-            ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][recordDate.month - 1];
+        final monthKey = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ][recordDate.month - 1];
 
         if (monthlyData.containsKey(monthKey)) {
           monthlyData[monthKey] = (monthlyData[monthKey] ?? 0) + 1;
@@ -460,9 +484,12 @@ class MortalityDatabaseHelper {
         return;
       }
 
-      final accessScope = await UserAccessScopeService.instance.loadCurrentScope();
+      final accessScope = await UserAccessScopeService.instance
+          .loadCurrentScope();
       if (!accessScope.isAuthenticated) {
-        print('No authenticated access scope. Skipping mortality Firebase sync.');
+        print(
+          'No authenticated access scope. Skipping mortality Firebase sync.',
+        );
         return;
       }
       if (!accessScope.canViewAllBarangays &&

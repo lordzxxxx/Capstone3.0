@@ -555,7 +555,7 @@ class _HomePageState extends State<HomePage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF102D34),
+        backgroundColor: AppDesign.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
@@ -565,7 +565,7 @@ class _HomePageState extends State<HomePage> {
             const Text(
               'Notifications',
               style: TextStyle(
-                color: _lightOffWhite,
+                color: AppDesign.ink,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -586,12 +586,12 @@ class _HomePageState extends State<HomePage> {
                       Icon(
                         Icons.notifications_off,
                         size: 64,
-                        color: _lightOffWhite.withValues(alpha: 0.35),
+                        color: AppDesign.subtle,
                       ),
                       const SizedBox(height: 16),
                       const Text(
                         'No notifications',
-                        style: TextStyle(color: _lightOffWhite),
+                        style: TextStyle(color: AppDesign.muted),
                       ),
                     ],
                   ),
@@ -612,7 +612,7 @@ class _HomePageState extends State<HomePage> {
                           width: 1,
                         ),
                         borderRadius: BorderRadius.circular(12),
-                        color: _darkDeepTeal.withValues(alpha: 0.72),
+                        color: AppDesign.page,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -638,7 +638,7 @@ class _HomePageState extends State<HomePage> {
                                 child: Text(
                                   notif['title'] as String,
                                   style: const TextStyle(
-                                    color: _lightOffWhite,
+                                    color: AppDesign.ink,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
                                   ),
@@ -651,7 +651,7 @@ class _HomePageState extends State<HomePage> {
                             notif['message'] as String,
                             style: TextStyle(
                               fontSize: 12,
-                              color: _lightOffWhite.withValues(alpha: 0.78),
+                              color: AppDesign.muted,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -661,7 +661,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             style: TextStyle(
                               fontSize: 10,
-                              color: _lightOffWhite.withValues(alpha: 0.55),
+                              color: AppDesign.subtle,
                             ),
                           ),
                         ],
@@ -673,7 +673,7 @@ class _HomePageState extends State<HomePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close', style: TextStyle(color: _lightOffWhite)),
+            child: const Text('Close'),
           ),
           ElevatedButton(
             onPressed: _generateNotificationsPanel,
@@ -906,27 +906,25 @@ class _HomePageState extends State<HomePage> {
             }
 
             final dialogTheme = Theme.of(context).copyWith(
-              brightness: Brightness.dark,
+              brightness: Brightness.light,
               dialogTheme: Theme.of(context).dialogTheme.copyWith(
-                backgroundColor: _darkDeepTeal,
+                backgroundColor: AppDesign.surface,
                 surfaceTintColor: Colors.transparent,
               ),
               colorScheme: Theme.of(context).colorScheme.copyWith(
-                brightness: Brightness.dark,
+                brightness: Brightness.light,
                 primary: _primaryAqua,
                 onPrimary: Colors.white,
-                surface: _darkDeepTeal,
-                onSurface: _lightOffWhite,
+                surface: AppDesign.surface,
+                onSurface: AppDesign.ink,
               ),
               inputDecorationTheme: Theme.of(context).inputDecorationTheme
                   .copyWith(
-                    labelStyle: const TextStyle(color: Colors.white70),
-                    hintStyle: const TextStyle(color: Colors.white60),
+                    labelStyle: const TextStyle(color: AppDesign.muted),
+                    hintStyle: const TextStyle(color: AppDesign.subtle),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.2),
-                      ),
+                      borderSide: BorderSide(color: AppDesign.border),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -936,9 +934,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.2),
-                      ),
+                      borderSide: BorderSide(color: AppDesign.border),
                     ),
                   ),
             );
@@ -946,10 +942,10 @@ class _HomePageState extends State<HomePage> {
             return Theme(
               data: dialogTheme,
               child: AlertDialog(
-                backgroundColor: _darkDeepTeal,
+                backgroundColor: AppDesign.surface,
                 title: Text(
                   helpText,
-                  style: const TextStyle(color: _lightOffWhite),
+                  style: const TextStyle(color: AppDesign.ink),
                 ),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -958,9 +954,9 @@ class _HomePageState extends State<HomePage> {
                       initialValue: tempMonth,
                       decoration: InputDecoration(
                         labelText: 'Month',
-                        labelStyle: const TextStyle(color: Colors.white70),
+                        labelStyle: const TextStyle(color: AppDesign.muted),
                         floatingLabelStyle: const TextStyle(
-                          color: Colors.white,
+                          color: AppDesign.blue,
                         ),
                         filled: true,
                         fillColor: _secondaryIceBlue.withValues(alpha: 0.22),
@@ -969,17 +965,17 @@ class _HomePageState extends State<HomePage> {
                           vertical: 14,
                         ),
                       ),
-                      dropdownColor: _darkDeepTeal,
-                      style: const TextStyle(color: Colors.white),
-                      iconEnabledColor: Colors.white70,
-                      iconDisabledColor: Colors.white54,
+                      dropdownColor: AppDesign.surface,
+                      style: const TextStyle(color: AppDesign.ink),
+                      iconEnabledColor: AppDesign.muted,
+                      iconDisabledColor: AppDesign.subtle,
                       items: availableMonths
                           .map(
                             (month) => DropdownMenuItem<int>(
                               value: month,
                               child: Text(
                                 _getMonthName(month),
-                                style: const TextStyle(color: Colors.white),
+                                style: const TextStyle(color: AppDesign.ink),
                               ),
                             ),
                           )
@@ -994,9 +990,9 @@ class _HomePageState extends State<HomePage> {
                       initialValue: tempYear,
                       decoration: InputDecoration(
                         labelText: 'Year',
-                        labelStyle: const TextStyle(color: Colors.white70),
+                        labelStyle: const TextStyle(color: AppDesign.muted),
                         floatingLabelStyle: const TextStyle(
-                          color: Colors.white,
+                          color: AppDesign.blue,
                         ),
                         filled: true,
                         fillColor: _secondaryIceBlue.withValues(alpha: 0.22),
@@ -1005,17 +1001,17 @@ class _HomePageState extends State<HomePage> {
                           vertical: 14,
                         ),
                       ),
-                      dropdownColor: _darkDeepTeal,
-                      style: const TextStyle(color: Colors.white),
-                      iconEnabledColor: Colors.white70,
-                      iconDisabledColor: Colors.white54,
+                      dropdownColor: AppDesign.surface,
+                      style: const TextStyle(color: AppDesign.ink),
+                      iconEnabledColor: AppDesign.muted,
+                      iconDisabledColor: AppDesign.subtle,
                       items: years
                           .map(
                             (year) => DropdownMenuItem<int>(
                               value: year,
                               child: Text(
                                 year.toString(),
-                                style: const TextStyle(color: Colors.white),
+                                style: const TextStyle(color: AppDesign.ink),
                               ),
                             ),
                           )
@@ -1036,7 +1032,7 @@ class _HomePageState extends State<HomePage> {
                 actions: [
                   TextButton(
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.white70,
+                      foregroundColor: AppDesign.muted,
                     ),
                     onPressed: () => Navigator.of(dialogContext).pop(),
                     child: const Text('Cancel'),
@@ -1076,9 +1072,9 @@ class _HomePageState extends State<HomePage> {
     return OutlinedButton.icon(
       onPressed: _pickKeyMetricsMonth,
       style: OutlinedButton.styleFrom(
-        foregroundColor: _lightOffWhite,
-        side: BorderSide(color: _primaryAqua.withValues(alpha: 0.25)),
-        backgroundColor: _primaryAqua.withValues(alpha: 0.08),
+        foregroundColor: AppDesign.navySoft,
+        side: const BorderSide(color: AppDesign.border),
+        backgroundColor: AppDesign.blueSoft,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -1309,7 +1305,7 @@ class _HomePageState extends State<HomePage> {
 
       // Generate color for each symptom
       final colors = [
-        const Color(0xFF00A8B5), // aqua
+        AppDesign.teal,
         const Color(0xFFFF6B6B), // red
         const Color(0xFF4ECDC4), // teal
         const Color(0xFFFFE66D), // yellow
@@ -1403,32 +1399,65 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBottomNavBar() {
-    return BottomNavigationBar(
-      currentIndex: _selectedBottomNavIndex,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: AppDesign.surface,
-      selectedItemColor: _primaryAqua,
-      unselectedItemColor: AppDesign.subtle,
-      onTap: (index) {
-        if (index == 1) {
-          Get.to(() => const AnalyticsPage());
-          return;
-        }
-        setState(() {
-          _selectedBottomNavIndex = index;
-        });
-      },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.dashboard_rounded),
-          label: 'Dashboard',
+    return Container(
+      decoration: BoxDecoration(
+        color: AppDesign.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+        border: Border.all(color: AppDesign.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppDesign.navy.withValues(alpha: 0.12),
+            blurRadius: 24,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: SafeArea(
+        top: false,
+        child: BottomNavigationBar(
+          currentIndex: _selectedBottomNavIndex,
+          type: BottomNavigationBarType.fixed,
+          elevation: 0,
+          backgroundColor: AppDesign.surface,
+          selectedItemColor: _primaryAqua,
+          unselectedItemColor: AppDesign.subtle,
+          selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 12,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 11,
+          ),
+          onTap: (index) {
+            if (index == 1) {
+              Get.to(() => const AnalyticsPage());
+              return;
+            }
+            setState(() {
+              _selectedBottomNavIndex = index;
+            });
+          },
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard_rounded),
+              activeIcon: _ActiveNavigationIcon(icon: Icons.dashboard_rounded),
+              label: 'Dashboard',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.analytics_rounded),
+              activeIcon: _ActiveNavigationIcon(icon: Icons.analytics_rounded),
+              label: 'Analytics',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.hub_rounded),
+              activeIcon: _ActiveNavigationIcon(icon: Icons.hub_rounded),
+              label: 'Hub',
+            ),
+          ],
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.analytics_rounded),
-          label: 'Analytics',
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.hub_rounded), label: 'Hub'),
-      ],
+      ),
     );
   }
 
@@ -1596,15 +1625,26 @@ class _HomePageState extends State<HomePage> {
               final category = hubCategories[index];
               final buttons = category['buttons'] as List<Map<String, dynamic>>;
               return Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                color: Colors.transparent,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppDesign.surface,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppDesign.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppDesign.navy.withValues(alpha: 0.05),
+                      blurRadius: 14,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       category['title'] as String,
-                      style: TextStyle(
-                        color: category['color'] as Color,
+                      style: const TextStyle(
+                        color: Colors.black,
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
                       ),
@@ -2119,7 +2159,7 @@ class _HomePageState extends State<HomePage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: _darkDeepTeal,
+        color: AppDesign.navy,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(20),
           bottomRight: Radius.circular(20),
@@ -2367,7 +2407,7 @@ class _HomePageState extends State<HomePage> {
                           Text(
                             'System Status: Online',
                             style: TextStyle(
-                              color: _darkDeepTeal,
+                              color: _lightOffWhite,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -2565,15 +2605,12 @@ class _HomePageState extends State<HomePage> {
         SizedBox(
           width: double.infinity,
           child: Card(
-            elevation: 8,
-            shadowColor: Colors.black.withValues(alpha: 0.35),
-            color: const Color(0xFF102A31),
+            elevation: 1,
+            shadowColor: AppDesign.navy.withValues(alpha: 0.08),
+            color: AppDesign.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: BorderSide(
-                color: _primaryAqua.withValues(alpha: 0.30),
-                width: 1.5,
-              ),
+              side: const BorderSide(color: AppDesign.border),
             ),
             child: Padding(
               padding: EdgeInsets.all(responsivePadding),
@@ -2631,7 +2668,7 @@ class _HomePageState extends State<HomePage> {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: isSmallScreen ? 12 : 15,
-                                color: _lightOffWhite.withValues(alpha: 0.7),
+                                color: AppDesign.muted,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -2670,18 +2707,15 @@ class _HomePageState extends State<HomePage> {
                       vertical: isSmallScreen ? 6 : 8,
                     ),
                     decoration: BoxDecoration(
-                      color: _lightOffWhite.withValues(alpha: 0.08),
+                      color: AppDesign.blueSoft,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _lightOffWhite.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
+                      border: Border.all(color: AppDesign.border),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           Icons.info_outline,
-                          color: _lightOffWhite,
+                          color: AppDesign.blue,
                           size: isSmallScreen ? 16 : 18,
                         ),
                         const SizedBox(width: 10),
@@ -2689,7 +2723,7 @@ class _HomePageState extends State<HomePage> {
                           child: Text(
                             'Pinch to zoom • Tap dots to see symptom details',
                             style: TextStyle(
-                              color: _lightOffWhite,
+                              color: AppDesign.ink,
                               fontSize: isSmallScreen ? 11 : 12,
                               fontWeight: FontWeight.w500,
                             ),
@@ -2712,7 +2746,7 @@ class _HomePageState extends State<HomePage> {
                             child: Text(
                               'No disease data available',
                               style: TextStyle(
-                                color: _lightOffWhite.withValues(alpha: 0.7),
+                                color: AppDesign.muted,
                                 fontSize: 14,
                               ),
                             ),
@@ -2733,17 +2767,13 @@ class _HomePageState extends State<HomePage> {
                                   verticalInterval: 1,
                                   getDrawingHorizontalLine: (value) {
                                     return FlLine(
-                                      color: _lightOffWhite.withValues(
-                                        alpha: 0.1,
-                                      ),
+                                      color: AppDesign.border,
                                       strokeWidth: 1,
                                     );
                                   },
                                   getDrawingVerticalLine: (value) {
                                     return FlLine(
-                                      color: _lightOffWhite.withValues(
-                                        alpha: 0.1,
-                                      ),
+                                      color: AppDesign.border,
                                       strokeWidth: 1,
                                     );
                                   },
@@ -2767,7 +2797,7 @@ class _HomePageState extends State<HomePage> {
                                               return Text(
                                                 _allDates[value.toInt()],
                                                 style: TextStyle(
-                                                  color: _lightOffWhite,
+                                                  color: AppDesign.muted,
                                                   fontSize: 9,
                                                   fontWeight: FontWeight.w500,
                                                 ),
@@ -2786,7 +2816,7 @@ class _HomePageState extends State<HomePage> {
                                             return Text(
                                               '${value.toInt()}',
                                               style: TextStyle(
-                                                color: _lightOffWhite,
+                                                color: AppDesign.muted,
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.w500,
                                               ),
@@ -2799,16 +2829,8 @@ class _HomePageState extends State<HomePage> {
                                 borderData: FlBorderData(
                                   show: true,
                                   border: Border(
-                                    bottom: BorderSide(
-                                      color: _lightOffWhite.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                    ),
-                                    left: BorderSide(
-                                      color: _lightOffWhite.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                    ),
+                                    bottom: BorderSide(color: AppDesign.border),
+                                    left: BorderSide(color: AppDesign.border),
                                   ),
                                 ),
                                 minX: 0,
@@ -2957,7 +2979,7 @@ class _HomePageState extends State<HomePage> {
                               Text(
                                 symptom,
                                 style: const TextStyle(
-                                  color: _lightOffWhite,
+                                  color: AppDesign.ink,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -2985,9 +3007,9 @@ class _HomePageState extends State<HomePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
-          color: _darkDeepTeal.withValues(alpha: 0.72),
+          color: AppDesign.blueSoft,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
+          border: Border.all(color: AppDesign.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3002,7 +3024,7 @@ class _HomePageState extends State<HomePage> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: _lightOffWhite.withValues(alpha: 0.58),
+                      color: AppDesign.muted,
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.5,
@@ -3015,7 +3037,7 @@ class _HomePageState extends State<HomePage> {
             Text(
               value,
               style: const TextStyle(
-                color: _lightOffWhite,
+                color: AppDesign.ink,
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
               ),
@@ -3039,26 +3061,23 @@ class _HomePageState extends State<HomePage> {
           width: double.infinity,
           child: Card(
             elevation: 0,
-            color: _darkDeepTeal,
+            color: AppDesign.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: BorderSide(
-                color: _darkDeepTeal.withValues(alpha: 0.12),
-                width: 1.5,
-              ),
+              side: const BorderSide(color: AppDesign.border),
             ),
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: _darkDeepTeal.withValues(alpha: 0.15),
+                    color: AppDesign.navy.withValues(alpha: 0.07),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                     spreadRadius: 0,
                   ),
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: AppDesign.navy.withValues(alpha: 0.04),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                     spreadRadius: 0,
@@ -3117,7 +3136,7 @@ class _HomePageState extends State<HomePage> {
                                       style: TextStyle(
                                         fontSize: kIsWeb ? 23 : 21,
                                         fontWeight: FontWeight.bold,
-                                        color: _lightOffWhite,
+                                        color: AppDesign.ink,
                                         letterSpacing: 0.3,
                                       ),
                                     ),
@@ -3128,9 +3147,7 @@ class _HomePageState extends State<HomePage> {
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontSize: 15,
-                                        color: _lightOffWhite.withValues(
-                                          alpha: 0.7,
-                                        ),
+                                        color: AppDesign.muted,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -3264,12 +3281,9 @@ class _HomePageState extends State<HomePage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: _primaryAqua.withValues(alpha: 0.12),
+        color: AppDesign.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.25),
-          width: 1.5,
-        ),
+        border: Border.all(color: AppDesign.border),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.08),
@@ -4242,6 +4256,24 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ActiveNavigationIcon extends StatelessWidget {
+  const _ActiveNavigationIcon({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: const BoxDecoration(
+        color: AppDesign.blueSoft,
+        borderRadius: BorderRadius.all(Radius.circular(18)),
+      ),
+      child: Icon(icon, color: AppDesign.blue, size: 24),
     );
   }
 }
