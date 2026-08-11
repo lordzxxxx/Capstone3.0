@@ -473,6 +473,25 @@ class HealthAIClassifier {
     );
   }
 
+  // Verified reliability gap (test/app/health_ai_classifier_test.dart,
+  // "Category classification accuracy" report): on a test set built only
+  // from this classifier's own keywordDatabase['emergency'] list, the
+  // portable ML model correctly labeled the category "Emergency" in only
+  // 2 of 5 unambiguous cases (e.g. "anaphylaxis, severe allergic reaction"
+  // and "seizure, convulsion" were routed to non-Emergency categories at
+  // "High" rather than "Critical" severity, which changes the recommended
+  // action from "seek immediate care" to "schedule within 24 hours" --
+  // a real, safety-relevant misclassification). The rule-based path's
+  // _calculateCategoryScore explicitly counts these same keywords and
+  // scored every one of them correctly in the same check. When an
+  // unambiguous emergency keyword is present, classify() defers to the
+  // rule-based path instead of trusting the ML model's category call.
+  static bool _hasUnambiguousEmergencyKeyword(String combinedText) {
+    return keywordDatabase['emergency']!.any(
+      (keyword) => combinedText.contains(keyword),
+    );
+  }
+
   static const int _legacyKeywordFeatureStartIndex = 1;
   static const int _legacyKeywordFeatureEndIndexExclusive = 51;
   static const int _legacyBpSystolicFeatureIndex = 51;
@@ -523,6 +542,10 @@ class HealthAIClassifier {
       await initialize();
     }
 
+    final symptomsText = (healthData['symptoms'] ?? '').toString().toLowerCase();
+    final detailsText = (healthData['details'] ?? '').toString().toLowerCase();
+    final combinedText = '$symptomsText $detailsText';
+
     ClassificationResult result;
     // The portable ML model's fixed input vector (age + keyword-hash
     // buckets + 4 vitals; see _preprocessData) has no feature slot for
@@ -530,8 +553,14 @@ class HealthAIClassifier {
     // level, etc.). When those fields are present, the ML model cannot see
     // them at all and has been observed to misclassify clearly prenatal
     // records, while the rule-based path reads these fields explicitly.
-    // Prefer the rule-based path whenever this signal is present.
-    if (_portableModel != null && !_hasStructuredPrenatalSignal(healthData)) {
+    // Likewise, the ML model has been empirically shown to be unreliable at
+    // recognizing unambiguous emergency keywords as "Emergency" (see
+    // _hasUnambiguousEmergencyKeyword). Prefer the rule-based path whenever
+    // either signal is present.
+    final preferRuleBased =
+        _hasStructuredPrenatalSignal(healthData) ||
+        _hasUnambiguousEmergencyKeyword(combinedText);
+    if (_portableModel != null && !preferRuleBased) {
       try {
         result = await _mlModelClassify(healthData);
       } catch (e) {
@@ -541,6 +570,8 @@ class HealthAIClassifier {
     } else {
       result = _ruleBasedClassify(healthData);
     }
+
+    result = _withLowConfidenceAdvisory(result);
 
     debugPrint('[AI] Classification complete:');
     debugPrint('  Category: ${result.category}');
@@ -552,6 +583,54 @@ class HealthAIClassifier {
     );
 
     return result;
+  }
+
+  // Derived from the empirical category-accuracy report in
+  // test/app/health_ai_classifier_test.dart: on a 24-case test set built
+  // from this classifier's own keywordDatabase taxonomy, every case with
+  // confidence below 0.30 was misclassified (3/3), while most correct
+  // classifications scored well above that. This is a directional signal
+  // from a modest sample, not a statistically rigorous cutoff (one
+  // misclassified case scored 0.85), so 0.35 is used as a deliberately
+  // conservative margin above the observed failure boundary rather than a
+  // precise threshold. Confidence is never a certainty either way -- this
+  // only prevents a low-confidence result from being presented as if it
+  // were reliable.
+  static const double _lowConfidenceReviewThreshold = 0.35;
+  static const String _lowConfidenceAdvisory =
+      'AI confidence for this classification is low -- treat the '
+      'suggested category/severity as uncertain and have a healthcare '
+      'professional review this record.';
+
+  static ClassificationResult _withLowConfidenceAdvisory(
+    ClassificationResult result,
+  ) {
+    if (result.confidence >= _lowConfidenceReviewThreshold) {
+      return result;
+    }
+    final plan = result.recoveryPlan;
+    final precautions = <String>[
+      _lowConfidenceAdvisory,
+      ...(plan?['precautions'] as List?)?.cast<String>() ?? const <String>[],
+    ];
+    final updatedPlan = <String, dynamic>{
+      ...?plan,
+      'precautions': precautions,
+    };
+    return ClassificationResult(
+      category: result.category,
+      severity: result.severity,
+      confidence: result.confidence,
+      categoryProbabilities: result.categoryProbabilities,
+      severityProbabilities: result.severityProbabilities,
+      method: result.method,
+      recommendedActions: [
+        'Low AI confidence -- professional review recommended',
+        ...result.recommendedActions,
+      ],
+      keywords: result.keywords,
+      recoveryPlan: updatedPlan,
+    );
   }
 
   /// Classify using portable ML model.
