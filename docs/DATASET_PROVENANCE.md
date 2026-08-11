@@ -96,6 +96,32 @@ equivalent clinical observations:
 | `Diseases_Dataset` / kamruzzaman-asif | <https://huggingface.co/datasets/kamruzzaman-asif/Diseases_Dataset> | 267,614 records across multiple splits, mixed text `Disease`/`Symptoms`/optional treatment fields | Aggregated from other Hugging Face/Kaggle sources; upstream publisher, release and rights are not established by the aggregator page | **SOURCE REQUIRES VERIFICATION**; not integrated |
 | `Disease-Symptom-Extensive-Clean` referenced by the mixed collection | <https://huggingface.co/datasets/kamruzzaman-asif/Diseases_Dataset> | Referenced as a 246,945-row source inside the mixed collection | Direct dataset-card provenance/license was not verified during this run | **SOURCE REQUIRES VERIFICATION**; not integrated |
 
+A further check (2026-08-11) used Kaggle's unauthenticated public metadata
+endpoint (`https://www.kaggle.com/api/v1/datasets/view/<owner>/<slug>`),
+which returns dataset license, size, and description JSON even when the
+dataset's own HTML page is JavaScript-rendered and unreadable to a plain
+page fetch. This resolved the open license question for this repository's
+actual training source (`behzadhassan/sympscan-symptomps-to-disease` is
+`CC0: Public Domain` — see `DATASET_QUALITY_REPORT.md` §1.1) and was used
+to screen five further candidate datasets surfaced by search:
+
+| Dataset / provider | Reported size | License (Kaggle-tagged) | Decision |
+| --- | --- | --- | --- |
+| `diseases-and-symptoms-dataset` / `dhivyeshrk` | 773 diseases, 377 symptoms, ~246,000 rows | "World Bank Dataset Terms of Use" | **Rejected — self-disclosed synthetic data.** The publisher's own description states the rows "were artificially generated, preserving Symptom Severity and Disease Occurrence Possibility." Not real patient records regardless of size; likely the same lineage as the `kamruzzaman-asif` mixed collection already rejected above (near-identical ~246k row count). |
+| `disease-and-symptoms-dataset` / `choongqianzheng` | 800+ diseases, 600 symptoms, ~5,000 rows | "Other (specified in description)" | Rejected — sparse `Symptom_1..Symptom_17` text-list schema, not a binary matrix; no stated collection methodology. |
+| `disease-prediction-based-on-symptoms` / `noeyislearning` | 132 binary symptoms, 1 target | CC0: Public Domain | Rejected — small incompatible taxonomy (not this repo's 229-symptom/100-class schema); same lineage as the next row. |
+| `disease-symptom-description-dataset` / `itachi9604` | 132 symptoms, 41 diseases, ~4,920 rows | CC BY-SA 4.0 | Rejected — publisher states "data...is for reference and training purposes only, and actual data may vary"; a student chatbot-course project, not real patient encounters; 41-class taxonomy incompatible with this repo's 100 classes. |
+| `symptom2disease` / `niyarrbarman` | 24 diseases, 1,200 rows, free text | CC0: Public Domain | Already investigated as `text_datasets/Symptom2Disease.csv` above (43.5% of rows matched zero known symptom phrases when conversion was tested); license confirmed CC0 for completeness, decision unchanged. |
+
+`data.gov.ph` (Philippine national open-data portal) was also checked
+directly: it serves a JavaScript single-page application with no reachable
+CKAN/REST API at the standard path, so it could not be queried
+programmatically in this environment. PhysioNet's non-credentialed
+disease/symptom resources found (e.g., a 34-patient endometriosis symptom
+diary) are single-condition datasets, incompatible with this repository's
+multi-disease 100-class task. Net result: 0 new training records from this
+follow-up search.
+
 The absence of a compatible imported source is an acquisition limitation, not
 an assertion that no Philippine health data exists. Aggregate statistics,
 surveys, forms and restricted microdata cannot be converted into fabricated

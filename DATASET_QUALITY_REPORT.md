@@ -3,8 +3,9 @@
 Dataset version documented here: **`merged_dataset_v2`**. The row values and
 229-feature schema are unchanged after the reproducibility rerun, but the
 pipeline now emits a source-row provenance sidecar and the verifier records
-near-duplicate diagnostics. Generated
-`2026-08-11`. All figures were computed directly against the files in
+near-duplicate diagnostics. Generated `2026-08-11`, last updated `2026-08-11`
+with a confirmed source license and a further dataset-acquisition search
+(§1.1, §10a). All figures were computed directly against the files in
 this repository, not estimated.
 
 ---
@@ -21,7 +22,7 @@ from its filename or folder.
 | Field | Value |
 |---|---|
 | Local path | `backend/dataset/raw/Diseases_and_Symptoms_dataset.csv` |
-| Source/provider | **Strongly corroborated candidate identified (update, follow-up review):** [Kaggle — "SympScan - Symptomps to Disease"](https://www.kaggle.com/datasets/behzadhassan/sympscan-symptomps-to-disease), uploaded by Kaggle user `behzadhassan`. Evidence: (1) the exact filename `Diseases_and_Symptoms_dataset.csv` is present in that dataset's file list; (2) the same GitHub user (`BehzadHassan/SympScan`, matching Kaggle username — first-party project showcase, not a third party) documents this dataset as "~96,000 patient records," "200+ binary-encoded symptoms," and "~100 disease classes" — all three figures match this repository's file exactly (96,088 rows, 230 raw symptom columns, 100 disease classes); (3) two independent public GitHub repos (`sandeep-panchal-fl/AI-Medical-Assistant-Hackathon`, `BehzadHassan/SympScan`) cite this same Kaggle URL as the source of a file with this exact name. **License terms could not be retrieved** — Kaggle's dataset page is JavaScript-rendered and returned no license metadata to either `WebFetch` or a direct `curl` request during this review. **Before formal citation (thesis, publication, external audit), the project team should open the Kaggle URL directly in a browser and record the stated license.** No checksum match was possible (Kaggle does not expose one without downloading via authenticated API, which this review does not have credentials for), so this remains corroborated-but-not-cryptographically-verified. |
+| Source/provider | **Strongly corroborated candidate identified, license now confirmed (follow-up review, 2026-08-11):** [Kaggle — "SympScan - Symptomps to Disease"](https://www.kaggle.com/datasets/behzadhassan/sympscan-symptomps-to-disease), uploaded by Kaggle user `behzadhassan`. Evidence: (1) the exact filename `Diseases_and_Symptoms_dataset.csv` is present in that dataset's file list; (2) the same GitHub user (`BehzadHassan/SympScan`, matching Kaggle username — first-party project showcase, not a third party) documents this dataset as "~96,000 patient records," "200+ binary-encoded symptoms," and "~100 disease classes" — all three figures match this repository's file exactly (96,088 rows, 230 raw symptom columns, 100 disease classes); (3) two independent public GitHub repos (`sandeep-panchal-fl/AI-Medical-Assistant-Hackathon`, `BehzadHassan/SympScan`) cite this same Kaggle URL as the source of a file with this exact name. **License confirmed this session: `CC0: Public Domain`**, retrieved directly from Kaggle's unauthenticated public metadata endpoint (`https://www.kaggle.com/api/v1/datasets/view/behzadhassan/sympscan-symptomps-to-disease`, `licenseNameNullable: "CC0: Public Domain"`) — the dataset's HTML page is JavaScript-rendered and hid this from a plain `WebFetch`/`curl` of the page itself, but the JSON metadata API is reachable without authentication and returns it directly. The same endpoint's `descriptionNullable` field independently confirms the file list, including `Diseases_and_Symptoms_dataset.csv` described as "Main dataset with binary symptom indicators (1 = present, 0 = absent) and target disease label," creator `Behzad hassan`, `usabilityRatingNullable: 0.94`, last updated 2025-05-22. No checksum match was possible (the endpoint's `files` list was empty in this response; a full authenticated download would be needed for a byte-level hash match), so this remains corroborated-and-license-confirmed but not cryptographically hash-verified against this repo's copy. |
 | Country/geographic coverage | Unknown / unverifiable from the file itself. No demographic or geographic column exists. Should **not** be described as Philippine-sourced. |
 | Original record count | **96,088 data rows** (96,089 lines including header), 231 columns (`diseases` + 230 raw symptom columns) |
 | Usable record count after pipeline | **93,993 rows**, 229 features, 100 disease classes (2,095 exact-duplicate rows removed; 2 raw columns dropped as non-numeric or reduced during normalization/collapsing — see §5) |
@@ -308,28 +309,63 @@ features (`X`), one categorical target column `diseases` with 100 classes
 
 | Dataset | Provenance status |
 |---|---|
-| `Diseases_and_Symptoms_dataset.csv` | **Strongly corroborated** — Kaggle `behzadhassan/sympscan-symptomps-to-disease` (exact filename, exact 100-class count, exact ~96k row count, corroborated by the dataset author's own GitHub repo and one independent third-party repo). **License terms not yet retrieved** — Kaggle's page would not render its metadata to this review's tools. |
+| `Diseases_and_Symptoms_dataset.csv` | **Strongly corroborated, license confirmed** — Kaggle `behzadhassan/sympscan-symptomps-to-disease` (exact filename, exact 100-class count, exact ~96k row count, corroborated by the dataset author's own GitHub repo and one independent third-party repo). **License: `CC0: Public Domain`**, confirmed 2026-08-11 via Kaggle's public unauthenticated metadata API (see §1.1). |
 | `main.csv` | **Verified** — Columbia University Disease-Symptom Knowledge Database (Wang, Chused, Elhadad, Friedman, Markatou; AMIA 2008; PMCID PMC2656103). Correctly unused regardless (1 record/class). |
 | `Symptom2Disease.csv` | Structurally consistent with a named public Kaggle dataset (`niyarrbarman/symptom2disease`, candidate identified), not cryptographically confirmed |
 | `AI_DSUHIS_Disease_Self_Care_Knowledge_Base.csv` | **Verified** — project-authored, traced to `generate_disease_seed.py` |
 | `Diseases_Symptoms.csv`, `Home Remedies.csv` | Unused; provenance not investigated further as they do not affect training |
 
-**Recommendation for the project team:** open
-`kaggle.com/datasets/behzadhassan/sympscan-symptomps-to-disease`
-directly in a browser (this review's tools could not render Kaggle's
-JavaScript-based metadata panel) and record the exact license shown
-there before citing it formally in a thesis, publication, or external
-audit. Everything else needed to identify the dataset — filename, class
-count, row count, and two independent corroborating citations — is
-already documented above.
+**Resolved this session:** the license question raised by the prior
+review is now closed — `CC0: Public Domain`, retrieved directly from
+Kaggle's public JSON metadata endpoint (§1.1). The remaining open item
+is a byte-level checksum match against an authenticated download, which
+is optional for citation purposes since CC0 places no attribution or
+usage restriction on the data.
+
+---
+
+## 10a. Additional dataset acquisition search (this session, 2026-08-11)
+
+A further good-faith search for legitimate expansion sources was run,
+using the same unauthenticated Kaggle metadata API technique that
+resolved §1.1's license question (`https://www.kaggle.com/api/v1/datasets/view/<owner>/<slug>`),
+since it succeeds where JS-rendered page fetches fail. Five additional
+candidate Kaggle datasets surfaced by search were checked; **none were
+integrated**:
+
+| Dataset | Owner | Reported size | License | Reason rejected |
+|---|---|---|---|---|
+| `diseases-and-symptoms-dataset` | `dhivyeshrk` | 773 diseases, 377 one-hot symptoms, ~246,000 rows | "World Bank Dataset Terms of Use" (as tagged on Kaggle) | **Publisher's own description states the data "was artificially generated, preserving Symptom Severity and Disease Occurrence Possibility."** This is self-disclosed synthetic data, not real patient records — excluded per this task's explicit prohibition on synthetic/fabricated patient-level records, regardless of row count or license. This is very likely the same or a sibling dataset to the `kamruzzaman-asif` mixed collection already rejected in `docs/DATASET_PROVENANCE.md` (near-identical ~246k/246,945-row figures). |
+| `disease-and-symptoms-dataset` | `choongqianzheng` | 800+ diseases, 600 symptoms, ~5,000 rows | "Other (specified in description)" | Different, incompatible schema — sparse `Symptom_1`...`Symptom_17` text-list columns, not a one-hot binary matrix. No stated original data source/collection methodology. Would require a lossy reformat with no provenance gain. |
+| `disease-prediction-based-on-symptoms` | `noeyislearning` | 132 binary symptoms, 1 prognosis column | CC0: Public Domain | Same 132-symptom signature as the well-known `itachi9604`/`kaushil268` student-project dataset family (see next row) — a different taxonomy (far fewer symptoms/diseases than this repo's 229/100) that would require a separate incompatible model, not an expansion of the current one. |
+| `disease-symptom-description-dataset` | `itachi9604` | 132 symptoms, 41 diseases, ~4,920 rows | CC BY-SA 4.0 | Publisher's own description: **"The data in this CSV sheet is for reference and training purposes only, and actual data may vary"** — a student class project (explicitly credited to two people, built for a chatbot course exercise), not sourced from real patient encounters. Also a 41-class taxonomy, incompatible with this repo's 100-class target without inventing label mappings for 59 missing classes. |
+| `symptom2disease` | `niyarrbarman` | 24 diseases, free-text descriptions, 1,200 rows | CC0: Public Domain | Same dataset already investigated and rejected in `DATASET_QUALITY_REPORT.md` §1.3 (`text_datasets/Symptom2Disease.csv`) — text-narrative format, 522/1,200 rows (43.5%) matched zero known symptom phrases when conversion was actually attempted. No new information from re-checking its license (now confirmed CC0, for completeness). |
+
+Two non-Kaggle avenues were also checked and found not programmatically
+accessible in this environment: **data.gov.ph** (the Philippine open-data
+portal) serves a JavaScript single-page app with no reachable CKAN/REST
+API at the standard path (`/api/3/action/package_search` returns the SPA
+shell, not JSON) — consistent with the JS-rendering limitation already
+documented for other Philippine sources in `docs/DATASET_PROVENANCE.md`.
+**PhysioNet**'s openly-accessible (non-credentialed) disease/symptom
+resources found were single-condition datasets (e.g., an endometriosis
+symptom diary covering 34 patients) — not compatible with this repo's
+multi-disease 100-class classification task.
+
+**Net result of this session's search: 0 new usable training records.**
+This reinforces, rather than contradicts, the prior review's conclusion
+in §3 below — every readily discoverable alternative to the current
+source is either self-disclosed synthetic data, a small incompatible-
+taxonomy student dataset, or an inaccessible aggregate/portal resource.
 
 ---
 
 ## 10. Known limitations (dataset-level)
 
-- Provenance of the sole training source is strongly corroborated but not
-  cryptographically confirmed, and its license terms are not yet on
-  record (§1.1, §8).
+- Provenance of the sole training source is strongly corroborated and its
+  license is now confirmed (`CC0: Public Domain`, §1.1); a byte-level
+  checksum match against an authenticated Kaggle download remains
+  unverified but is not required given the CC0 terms.
 - 9.8% of records share a symptom presentation with a different disease
   label elsewhere in the dataset — an inherent ambiguity ceiling, not a
   bug (§4).
