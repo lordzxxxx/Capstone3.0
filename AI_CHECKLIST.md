@@ -1,5 +1,11 @@
 # ✅ AI Integration Checklist
 
+> Accuracy ranges in this historical checklist are planning estimates, not
+> verified results. Use `docs/AI_REQUIREMENTS_STATUS.md` and
+> `backend/reports/ai_requirements_verification.json` for actual counts and
+> held-out metrics. The current verified disease model result is 89.27% on
+> 18,800 group-safe held-out records; the 95% acceptance target is not met.
+
 ## Installation Status
 
 ### ✅ Dependencies Installed
@@ -38,7 +44,7 @@
 ## Current Capabilities
 
 ### ✅ Working Right Now
-- [x] Rule-based classification (75-85% accuracy)
+- [x] Rule-based classification (no verified accuracy percentage claimed)
 - [x] Real-time symptom analysis
 - [x] Vital signs assessment
 - [x] 6 category classification
@@ -50,7 +56,7 @@
 - [x] Instant classification (<10ms)
 
 ### 📋 Optional Enhancements Available
-- [ ] Train custom ML model (85-95% accuracy)
+- [ ] Train custom ML model on traceable real data and verify its accuracy
 - [ ] Use your own Firebase data for training
 - [ ] Add region-specific keywords
 - [ ] Customize UI colors
@@ -185,13 +191,13 @@ In record details, you should see:
 
 ### Rule-Based Mode
 - ⚡ Speed: <10ms
-- 🎯 Accuracy: 75-85%
+- 🎯 Accuracy: no verified percentage claimed
 - 💾 Memory: ~1MB
 - 📱 Platforms: All (Android, iOS, Web, Desktop)
 
 ### ML Model Mode (After Training)
 - ⚡ Speed: 50-100ms
-- 🎯 Accuracy: 85-95%
+- 🎯 Accuracy: must be measured on held-out real data
 - 💾 Memory: ~5MB
 - 📱 Platforms: Android, iOS, Desktop (not Web)
 

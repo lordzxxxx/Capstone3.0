@@ -1,7 +1,7 @@
 # Dataset and health-reference provenance
 
 This inventory is generated from the files currently committed in this
-repository (10 August 2026). Counts below are non-empty data rows, not line
+repository (11 August 2026). Counts below are non-empty data rows, not line
 counts. No record in this inventory is asserted to be Philippine-specific
 unless the publisher and geographic coverage are independently identified.
 
@@ -13,14 +13,17 @@ unless the publisher and geographic coverage are independently identified.
 | `backend/dataset/raw/Diseases_and_Symptoms_dataset.csv` | 96,088 | 96,088 | `diseases` plus 230 source columns (229 validated model features) | Training source/audit comparison; not loaded directly by the API | Source provenance not verified. The comparison report explicitly records that the standalone Kaggle CSV was unavailable and that the recovered segment must not be treated as an independently verified Kaggle download. Duplicate full rows: 0; rows with missing fields: 0. |
 
 The persisted training metrics in `backend/models/training_metrics.json` are
-the actual metrics for the processed file: 75,194 training rows and 18,799
-test rows (80/20, stratified, random state 42), 229 features, and 100 disease
-classes. The estimator is a 300-tree scikit-learn `RandomForestClassifier`
-(`max_depth=24`, `max_leaf_nodes=4096`, `min_samples_leaf=2`). Recorded
-weighted metrics are accuracy 0.8495664663, precision 0.8838544897, recall
-0.8495664663, and F1 0.8559878323. A confusion matrix/per-class report was
-printed during training but is not persisted as a machine-readable artifact;
-therefore no matrix values are claimed here.
+the actual metrics for the processed file: 75,193 training rows and 18,800
+test rows, 229 features, and 100 disease classes. The split is
+`StratifiedGroupKFold(n_splits=5)` with groups formed from identical symptom
+vectors, so the held-out test set has zero exact feature-vector overlap with
+training. The estimator is the tuned 200-tree scikit-learn
+`RandomForestClassifier` (`criterion=entropy`, `max_depth=28`,
+`max_features=log2`, `class_weight=balanced_subsample`). Held-out accuracy is
+89.2713%, weighted precision 89.6742%, weighted recall 89.2713%, and weighted
+F1 89.2825%. Confusion and per-class reports are persisted under
+`backend/reports/`; the complete source counts and acceptance status are in
+`backend/reports/ai_requirements_verification.json`.
 
 ## Text and reference files
 
@@ -62,6 +65,39 @@ records:
 | Health database | Philippine Statistics Authority, Philippines | Official demographic, morbidity, mortality, utilization and health-service statistics | <https://openstat.psa.gov.ph/Database/Demographic-and-Social-Statistics/Health> | Reference-only; aggregate/statistical rather than patient-level symptom samples |
 | National Objectives for Health 2023–2028 | Department of Health, Philippines | Policy and indicator reference document | <https://doh.gov.ph/wp-content/uploads/2024/01/National-Objectives-for-Health-2023-2028.pdf> | Reference/rule-support only; document, not training rows |
 | 2022 National Demographic and Health Survey: Key Indicators | Philippine Statistics Authority, Philippines | Survey indicators for Philippine households/population | <https://www.psa.gov.ph/system/files/main-publication/2022%2520NDHS%2520Key%2520Indicators%2520Report.pdf> | Reference/validation-support only; survey aggregates, not symptom-level training rows |
+
+The following additional Philippine sources were checked during the current
+expansion review. They remain reference-only because no downloadable,
+patient-level, symptom-to-disease table with a verified release and license
+was identified for this repository:
+
+| Official source | Publisher / country | Data type and coverage | URL | Status |
+| --- | --- | --- | --- | --- |
+| National Health Data Repository framework | PhilHealth / Philippine Department of Health, Philippines | Health-sector repository framework covering administrative, public-health, clinical and financing data | <https://www.philhealth.gov.ph/about_us/NationalHealthDataRepositoryFramework03282022.pdf> | Reference-only; framework and submission standard, not a released compatible row dataset |
+| PSA Data Archive (PSADA) | Philippine Statistics Authority, Philippines | Catalog of Philippine microdata; access varies by public-use file, licensed file and data enclave | <https://psada.psa.gov.ph/helpcenter> | Candidate discovery source; no compatible release was downloaded or represented as training data; future access may require agreement/application |
+| WHO Philippines NCD surveillance | World Health Organization, Philippines coverage | Surveillance summaries and links to NCD survey/microdata resources | <https://www.who.int/teams/noncommunicable-diseases/surveillance/data/philippines> | Reference-only; no compatible symptom/disease matrix was imported |
+| Clinical and exposure assessment form | Philippine Department of Health, Philippines | Standardized form/template containing symptoms, age and clinical fields | <https://doh.gov.ph/wp-content/uploads/2023/08/dm2020-0512.pdf> | Reference/schema context only; a form is not patient-level records and was not converted into samples |
+
+## External dataset compatibility review
+
+The following public machine-readable candidates were reviewed but not merged.
+The decision preserves the current 229-feature binary schema and prevents
+synthetic, mixed-provenance or text-only records from being presented as
+equivalent clinical observations:
+
+| Dataset / provider | Official reference | Observed records / type | License or provenance | Decision |
+| --- | --- | --- | --- | --- |
+| `eng_dataset` / Technological Institute of the Philippines thesis authors | <https://huggingface.co/datasets/notlath/eng_dataset/blob/main/README.md> | 3,000 English symptom narratives across 6 infectious-disease classes; the dataset card describes the descriptions as synthetic | CC BY 4.0, but synthetic text and text-only labels are not compatible with the current wide binary feature matrix | Not integrated; reference only |
+| `symptom-based-disease-prediction-v2` / Jainam-11 | <https://huggingface.co/datasets/Jainam-11/symptom-based-disease-prediction-v2> | 157,036 JSONL text/instruction records with multi-label/confidence-oriented fields | Apache-2.0 is stated on the dataset page, but the schema is an LLM-oriented text task rather than the current single-label 229-feature task | Not integrated; requires an independent schema/provenance/label study |
+| `Diseases_Dataset` / kamruzzaman-asif | <https://huggingface.co/datasets/kamruzzaman-asif/Diseases_Dataset> | 267,614 records across multiple splits, mixed text `Disease`/`Symptoms`/optional treatment fields | Aggregated from other Hugging Face/Kaggle sources; upstream publisher, release and rights are not established by the aggregator page | **SOURCE REQUIRES VERIFICATION**; not integrated |
+| `Disease-Symptom-Extensive-Clean` referenced by the mixed collection | <https://huggingface.co/datasets/kamruzzaman-asif/Diseases_Dataset> | Referenced as a 246,945-row source inside the mixed collection | Direct dataset-card provenance/license was not verified during this run | **SOURCE REQUIRES VERIFICATION**; not integrated |
+
+The absence of a compatible imported source is an acquisition limitation, not
+an assertion that no Philippine health data exists. Aggregate statistics,
+surveys, forms and restricted microdata cannot be converted into fabricated
+patient-level symptom vectors. The current training source therefore remains
+the local file whose external publisher, country coverage, release and license
+are still marked unverified.
 
 For each source above, publication/update/version/license details must be
 recorded from the exact release chosen for a future import. Because no release

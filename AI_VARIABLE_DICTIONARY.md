@@ -8,6 +8,11 @@ files in this repository (`backend/models/disease_model.pkl`,
 `lib/app/core/services/health_ai_classifier.dart`) — no variable name or
 value set below is invented.
 
+For the complete machine-readable list of every input/output variable,
+measurement, possible value, encoding, unit, and current verification status,
+see `backend/reports/ai_requirements_verification.json`. That report is the
+current authority for record counts and evaluation metrics.
+
 This system has **two trained models** with formal `X`/`y` structure, plus
 two rule-based components that consume derived inputs rather than a
 fixed feature vector. All four are documented below.

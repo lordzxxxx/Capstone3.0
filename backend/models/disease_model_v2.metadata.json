@@ -1,0 +1,84 @@
+{
+  "model_version": "disease_model_v2",
+  "artifact": "/Users/lylesmac/capstone2-modify/backend/models/disease_model.pkl",
+  "artifact_sha256": "d9b390c660ac78474da8c741792d7eb7288368c384c371db0b2b13dc4879f41d",
+  "dataset_version": "merged_dataset_v2",
+  "dataset": {
+    "path": "/Users/lylesmac/capstone2-modify/backend/dataset/processed/merged_dataset.csv",
+    "sha256": "2c6bdff5df7898971509e2c66257981b8484c29f35ad3f1b43bfa7aa584a841f",
+    "records": 93993,
+    "features": 229,
+    "classes": 100,
+    "target": "diseases",
+    "provenance": "/Users/lylesmac/capstone2-modify/backend/dataset/processed/row_provenance.csv"
+  },
+  "training": {
+    "trained_at_utc": "2026-08-11T01:02:57.890691+00:00",
+    "hyperparameters": {
+      "bootstrap": true,
+      "ccp_alpha": 0.0,
+      "class_weight": "balanced_subsample",
+      "criterion": "entropy",
+      "max_depth": 28,
+      "max_features": "log2",
+      "max_leaf_nodes": null,
+      "max_samples": null,
+      "min_impurity_decrease": 0.0,
+      "min_samples_leaf": 1,
+      "min_samples_split": 4,
+      "min_weight_fraction_leaf": 0.0,
+      "monotonic_cst": null,
+      "n_estimators": 200,
+      "n_jobs": -1,
+      "oob_score": false,
+      "random_state": 42,
+      "verbose": 0,
+      "warm_start": false
+    },
+    "split_method": "StratifiedGroupKFold(n_splits=5) first fold; groups=identical_feature_vector",
+    "held_out_metrics": {
+      "accuracy": 0.8927127659574469,
+      "balanced_accuracy": 0.8946106249825705,
+      "precision_macro": 0.8903250702139183,
+      "recall_macro": 0.8946106249825705,
+      "f1_macro": 0.8906038995753908,
+      "precision_weighted": 0.8967421978855501,
+      "recall_weighted": 0.8927127659574469,
+      "f1_weighted": 0.8928247889220234
+    },
+    "cross_validation": {
+      "method": "StratifiedGroupKFold",
+      "folds": 5,
+      "scope": "training_partition_only",
+      "accuracy": [
+        0.8900857769798524,
+        0.8923465655961168,
+        0.8895464822449793,
+        0.8920805904647915,
+        0.8924724032451123
+      ],
+      "f1_weighted": [
+        0.8896934705853645,
+        0.8921081247942041,
+        0.8888747046817729,
+        0.891789429426254,
+        0.8923057933996471
+      ],
+      "f1_macro": [
+        0.887606702172942,
+        0.8898567279184791,
+        0.8869382540533871,
+        0.889222391886117,
+        0.8902593591072736
+      ],
+      "mean_accuracy": 0.8913063637061706,
+      "std_accuracy": 0.0012351607155262584,
+      "mean_f1_weighted": 0.8909543045774484,
+      "std_f1_weighted": 0.0013978336613419133,
+      "mean_f1_macro": 0.8887766870276398,
+      "std_f1_macro": 0.0012893531714408273
+    }
+  },
+  "production_status": "offline artifact; /predict remains disabled",
+  "certification_status": "No ISO certification claim"
+}

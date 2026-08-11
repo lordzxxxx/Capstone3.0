@@ -942,8 +942,14 @@ def train_model(
     batch_size=32,
     random_seed=42,
     verify_keywords=None,
+    allow_synthetic_demo=False,
 ):
-    """Main training function."""
+    """Main training function.
+
+    A real, traceable labeled export is required by default. Synthetic data
+    remains available only as an explicitly requested demonstration path and
+    must never be presented as production training evidence.
+    """
     print("=" * 60)
     print("Health Classification Model Training")
     print("=" * 60)
@@ -961,6 +967,11 @@ def train_model(
     if data_file:
         data = load_real_training_data(data_file)
         if augment_synthetic > 0:
+            if not allow_synthetic_demo:
+                raise ValueError(
+                    "Synthetic augmentation is disabled by default. "
+                    "Pass --allow-synthetic-demo only for a clearly labeled demo."
+                )
             synthetic_data = create_synthetic_training_data(
                 num_samples=augment_synthetic,
             )
@@ -970,6 +981,12 @@ def train_model(
                 f"Total training records: {len(data)}"
             )
     else:
+        if not allow_synthetic_demo:
+            raise ValueError(
+                "No real labeled dataset was supplied. Production training "
+                "requires --data-file with traceable records. Use "
+                "--allow-synthetic-demo only for non-production demonstrations."
+            )
         data = create_synthetic_training_data(num_samples=synthetic_samples)
 
     if len(data) < 20:
@@ -988,13 +1005,74 @@ def train_model(
     
     y_category = category_encoder.fit_transform([r['category'] for r in data])
     y_severity = severity_encoder.fit_transform([r['severity'] for r in data])
+
+    if set(category_encoder.classes_) != set(CATEGORIES):
+        raise ValueError(
+            "The labeled dataset must contain all six category classes; "
+            f"found {category_encoder.classes_.tolist()}"
+        )
+    if set(severity_encoder.classes_) != set(SEVERITY_LEVELS):
+        raise ValueError(
+            "The labeled dataset must contain all four severity classes; "
+            f"found {severity_encoder.classes_.tolist()}"
+        )
     
-    # Split data
-    X_train, X_test, y_cat_train, y_cat_test, y_sev_train, y_sev_test = train_test_split(
-        X, y_category, y_severity, test_size=0.2, random_state=random_seed
+    # Keep the final test partition untouched until the one-time evaluation.
+    # The combined label preserves both output distributions where possible.
+    combined_labels = np.array(
+        [f"{category}:{severity}" for category, severity in zip(y_category, y_severity)]
+    )
+    strata_counts = Counter(combined_labels.tolist())
+    split_strata = (
+        combined_labels
+        if min(strata_counts.values()) >= 2
+        else np.array([str(value) for value in y_category])
+    )
+    (
+        X_train_val,
+        X_test,
+        y_cat_train_val,
+        y_cat_test,
+        y_sev_train_val,
+        y_sev_test,
+        strata_train_val,
+        _,
+    ) = train_test_split(
+        X,
+        y_category,
+        y_severity,
+        split_strata,
+        test_size=0.2,
+        random_state=random_seed,
+        stratify=split_strata,
+    )
+    validation_strata_counts = Counter(strata_train_val.tolist())
+    validation_strata = (
+        strata_train_val
+        if min(validation_strata_counts.values()) >= 2
+        else np.array([str(value) for value in y_cat_train_val])
+    )
+    (
+        X_train,
+        X_validation,
+        y_cat_train,
+        y_cat_validation,
+        y_sev_train,
+        y_sev_validation,
+        _,
+        _,
+    ) = train_test_split(
+        X_train_val,
+        y_cat_train_val,
+        y_sev_train_val,
+        strata_train_val,
+        test_size=0.2,
+        random_state=random_seed,
+        stratify=validation_strata,
     )
     
     print(f"\nTraining set size: {len(X_train)}")
+    print(f"Validation set size: {len(X_validation)}")
     print(f"Test set size: {len(X_test)}")
     
     # Build model
@@ -1013,13 +1091,22 @@ def train_model(
         X_train,
         {'category_output': y_cat_train, 'severity_output': y_sev_train},
         validation_data=(
-            X_test,
-            {'category_output': y_cat_test, 'severity_output': y_sev_test}
+            X_validation,
+            {
+                'category_output': y_cat_validation,
+                'severity_output': y_sev_validation,
+            },
         ),
         epochs=epochs,
         batch_size=batch_size,
         verbose=1,
-        callbacks=[]
+        callbacks=[
+            tf.keras.callbacks.EarlyStopping(
+                monitor='val_loss',
+                patience=8,
+                restore_best_weights=True,
+            )
+        ],
     )
     
     # Evaluate
@@ -1037,6 +1124,34 @@ def train_model(
     
     # Ensure model output directory exists
     os.makedirs(MODELS_DIR, exist_ok=True)
+
+    metrics_path = os.path.join(MODELS_DIR, 'health_classifier_training_metrics.json')
+    metrics = {
+        'data_file': os.path.abspath(data_file) if data_file else None,
+        'synthetic_data_used': bool(not data_file or augment_synthetic > 0),
+        'production_eligible': bool(data_file and augment_synthetic == 0),
+        'record_count': len(data),
+        'training_records': len(X_train),
+        'validation_records': len(X_validation),
+        'test_records': len(X_test),
+        'test_evaluation_only': True,
+        'random_seed': random_seed,
+        'input_features': int(X.shape[1]),
+        'category_labels': category_encoder.classes_.tolist(),
+        'severity_labels': severity_encoder.classes_.tolist(),
+        'test_metrics': {
+            str(key): float(value) for key, value in results.items()
+        },
+        'target_minimum_accuracy': 0.95,
+        'evaluation_note': (
+            'These are held-out metrics for the supplied labeled dataset. '
+            'Synthetic-data runs are demonstrations only and are not evidence '
+            'of production model quality.'
+        ),
+    }
+    with open(metrics_path, 'w') as f:
+        json.dump(metrics, f, indent=2)
+    print(f"[OK] Training metrics saved to: {metrics_path}")
 
     # Save encoders
     encoders = {
@@ -1125,8 +1240,10 @@ def test_model():
         category_idx = np.argmax(category_probs)
         severity_idx = np.argmax(severity_probs)
         
-        print(f"Predicted Category: {CATEGORIES[category_idx]} ({category_probs[category_idx]*100:.1f}%)")
-        print(f"Predicted Severity: {SEVERITY_LEVELS[severity_idx]} ({severity_probs[severity_idx]*100:.1f}%)")
+        category_labels = sorted(CATEGORIES)
+        severity_labels = sorted(SEVERITY_LEVELS)
+        print(f"Predicted Category: {category_labels[category_idx]} ({category_probs[category_idx]*100:.1f}%)")
+        print(f"Predicted Severity: {severity_labels[severity_idx]} ({severity_probs[severity_idx]*100:.1f}%)")
 
 
 def parse_args():
@@ -1139,7 +1256,7 @@ def parse_args():
         default=None,
         help=(
             "Path to JSON file with real labeled records. "
-            "If omitted, synthetic data is used."
+            "Required for production training."
         ),
     )
     parser.add_argument(
@@ -1155,6 +1272,14 @@ def parse_args():
         help=(
             "Number of synthetic samples to add on top of real data. "
             "Useful when the real dataset is small."
+        ),
+    )
+    parser.add_argument(
+        '--allow-synthetic-demo',
+        action='store_true',
+        help=(
+            "Explicitly allow synthetic data for a non-production demo. "
+            "Synthetic records are not valid evidence of model quality."
         ),
     )
     parser.add_argument(
@@ -1199,6 +1324,7 @@ if __name__ == '__main__':
         batch_size=args.batch_size,
         random_seed=args.seed,
         verify_keywords=args.verify_keyword,
+        allow_synthetic_demo=args.allow_synthetic_demo,
     )
     
     # Test TensorFlow Lite model only when conversion succeeds

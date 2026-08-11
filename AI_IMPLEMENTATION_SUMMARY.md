@@ -13,6 +13,10 @@
 > of the AI system. Do not cite this file's medication examples as current
 > behavior.
 
+> Accuracy note: the ranges and example confidence values below are
+> historical/demo content, not verified production metrics. Current measured
+> results are maintained in `backend/reports/ai_requirements_verification.json`.
+
 # 🎉 AI Classification Integration - Complete!
 
 ## ✅ What Was Implemented
@@ -155,13 +159,13 @@ When viewing a record, you'll see:
 ## 📊 Accuracy
 
 ### Current Mode: Rule-Based
-- **Accuracy**: 75-85%
+- **Accuracy**: Not measured on a traceable held-out dataset
 - **Speed**: <10ms (instant)
 - **Offline**: ✅ Yes
 - **Setup**: ✅ None needed
 
 ### With Trained ML Model (Optional)
-- **Accuracy**: 85-95%
+- **Accuracy**: Must be measured from real labeled data; no range is claimed
 - **Speed**: 50-100ms
 - **Offline**: ✅ Yes
 - **Setup**: Train once, use forever
@@ -319,7 +323,8 @@ A: This is normal! The system uses rule-based classification (which works great)
 A: Yes! Everything works 100% offline.
 
 **Q: How accurate is it?**
-A: Rule-based: 75-85%. With trained model: 85-95%.
+A: No verified accuracy percentage is claimed for the rule-based/on-device
+path. Use the generated requirements report for the evaluated backend model.
 
 **Q: Does it work on web?**
 A: Yes, but only rule-based (TFLite doesn't support web).
@@ -334,7 +339,8 @@ Your healthcare system now has professional AI classification!
 The system is:
 - ✅ **Working** immediately with rule-based classification
 - ✅ **Offline-capable** - no API costs
-- ✅ **Accurate** - 75-85% (up to 95% with ML model)
+- ✅ **Measured honestly** - current verified backend accuracy is reported in
+  `backend/reports/ai_requirements_verification.json`
 - ✅ **Fast** - instant classification
 - ✅ **Beautiful** - color-coded UI with badges
 - ✅ **Extensible** - easy to add keywords/categories

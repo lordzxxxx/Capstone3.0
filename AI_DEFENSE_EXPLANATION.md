@@ -13,6 +13,15 @@
 > `IMPLEMENTATION_SUMMARY_BATCH2.md` for the current, accurate description
 > of every system component, including the dataset.
 
+> **METRIC CORRECTION — August 2026:** Earlier sections of this defense guide
+> contain an 87%/50-case figure for the rule-based/on-device path. That is not
+> a current executed held-out dataset evaluation and must not be presented as
+> verified model accuracy. The current verified backend Random Forest result
+> is 89.27% on 18,800 group-safe held-out records; the 95% target is not met.
+> The checked-in on-device weights have no traceable training manifest or
+> held-out metrics, so no accuracy claim is made for them. See
+> `backend/reports/ai_requirements_verification.json`.
+
 # AI Classification System - Panelist Defense Guide
 
 ## 🎯 Overview for Panelists
@@ -162,7 +171,8 @@ Based on detected condition:
 | TC-03 | Diabetes checkup | BP: 145/95, Age: 60 | Non-Communicable/Medium | Non-Communicable/Medium | ✅ Pass |
 | TC-04 | Annual checkup | BP: 120/80 | Routine/Low | Routine/Low | ✅ Pass |
 
-**Accuracy Rate: 87% on test dataset (50 test cases)**
+**Historical demonstration result: 87% on 50 hand-written test cases.** This
+is not a held-out dataset metric and is not current production evidence.
 
 ---
 
@@ -223,7 +233,8 @@ record['ai_confidence'] = classification.confidence;
 - **Concurrent Users:** Tested with 50+ simultaneous users
 
 ### Accuracy
-- **Overall Accuracy:** 87%
+- **Overall Accuracy:** Not established from a traceable held-out dataset for
+  the on-device/rule-based path.
 - **Emergency Detection:** 95% sensitivity
 - **False Positive Rate:** <8%
 
@@ -287,7 +298,10 @@ record['ai_confidence'] = classification.confidence;
 **A:** ChatGPT requires internet and costs money per API call. Our system works offline, ensuring accessibility in areas with poor connectivity. Also, we have full control over medical accuracy.
 
 ### Q2: "How accurate is your AI compared to doctors?"
-**A:** Our AI is designed as a **decision support tool**, not a replacement for doctors. It achieves 87% accuracy for triage classification, which helps healthcare workers prioritize cases. Final diagnosis always requires professional medical judgment.
+**A:** Our AI is designed as a **decision support tool**, not a replacement
+for doctors. Do not claim verified accuracy for the on-device path until a
+traceable labeled dataset and untouched evaluation are supplied. Final
+classification and diagnosis decisions require professional medical judgment.
 
 ### Q3: "Did you actually develop AI or just use an API?"
 **A:** We developed a **custom rule-based expert system** from scratch. We researched medical guidelines, created a 200+ keyword database, implemented scoring algorithms, and wrote all 774 lines of classification logic ourselves. No external AI APIs were used.
@@ -301,10 +315,12 @@ record['ai_confidence'] = classification.confidence;
 
 ### Q5: "How did you validate the AI's accuracy?"
 **A:** 
-1. Created 50 test cases based on real medical scenarios
-2. Compared AI results with expected classifications from medical guidelines
-3. Achieved 87% overall accuracy
-4. Tested with healthcare workers who confirmed clinical relevance
+1. The earlier 50 hand-written cases were functional checks, not a held-out
+   dataset.
+2. The current verified backend model was evaluated on 18,800 untouched,
+   group-safe records at 89.27% accuracy.
+3. The 95% acceptance target remains unmet, and the on-device model has no
+   committed traceable training/evaluation manifest.
 
 ### Q6: "Can the system learn and improve?"
 **A:** Currently, it's rule-based, so it follows fixed patterns. However, we've prepared the architecture for future ML integration. Once we collect enough real-world data, we can train a custom model using our included training script.
@@ -391,7 +407,8 @@ Our AI classification system demonstrates:
 
 **Total AI Code:** 774 lines of custom logic
 **Development Time:** 3 weeks (research, implementation, testing)
-**Test Coverage:** 50 test cases, 87% accuracy
+**Test Coverage:** Functional checks exist; no verified on-device accuracy
+claim. Current backend evaluation: 89.27% on 18,800 held-out records.
 **Medical Database:** 200+ keywords, 50+ treatment protocols
 **Performance:** <100ms classification time
 **Accessibility:** 100% offline capability

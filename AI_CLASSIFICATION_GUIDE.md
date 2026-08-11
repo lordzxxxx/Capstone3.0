@@ -1,5 +1,11 @@
 # AI Classification Integration Guide
 
+> This guide contains integration examples and historical planning ranges.
+> Do not treat its synthetic-data option or estimated accuracy ranges as
+> production evidence. Current verified dataset and model status is in
+> `docs/AI_REQUIREMENTS_STATUS.md` and
+> `backend/reports/ai_requirements_verification.json`.
+
 ## Overview
 
 Your healthcare system now includes AI-powered data classification using TensorFlow Lite. The system can automatically classify health records into categories and assess severity levels.
@@ -81,7 +87,7 @@ python train_health_classifier.py
 ```
 
 This will:
-- Generate synthetic training data (or use your Firebase data)
+- Require a traceable real labeled dataset for production training; synthetic data is allowed only for explicitly labeled demonstrations
 - Train a neural network
 - Create `health_classifier.tflite` model
 - Save to `assets/models/`
@@ -196,13 +202,13 @@ To add new categories:
 
 ### Rule-Based Classifier
 - **Speed**: Instant (<10ms)
-- **Accuracy**: ~75-85% (depends on keywords)
+- **Accuracy**: Not established from a traceable held-out dataset
 - **Offline**: Yes
 - **Memory**: Minimal (~1MB)
 
 ### ML Model Classifier
 - **Speed**: Fast (~50-100ms)
-- **Accuracy**: ~85-95% (with good training data)
+- **Accuracy**: Must be established by real held-out evaluation; no range is claimed
 - **Offline**: Yes
 - **Memory**: ~2-5MB
 - **Model Size**: ~50-100KB

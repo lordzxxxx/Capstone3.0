@@ -24,6 +24,7 @@ LOGGER = configure_logging(__name__)
 
 MIN_DISEASE_SAMPLES = 20
 OUTPUT_PATH = PROCESSED_DIR / "merged_dataset.csv"
+PROVENANCE_OUTPUT_PATH = PROCESSED_DIR / "row_provenance.csv"
 
 EXCLUDED_FILENAMES = {
     "merged_dataset.csv",
@@ -244,6 +245,15 @@ def load_compatible_datasets() -> list[pd.DataFrame]:
             )
             continue
 
+        # Keep source-row identity alongside the prepared frame.  This is
+        # deliberately metadata only; it never enters the model feature
+        # matrix.  The CSV row number includes the header row (row 1).
+        prepared.attrs["source_file"] = path.name
+        prepared.attrs["source_relative_path"] = str(path)
+        prepared.attrs["source_row_numbers"] = [
+            int(index) + 2 for index in prepared.index
+        ]
+
         datasets.append(prepared)
 
         LOGGER.info(
@@ -297,6 +307,14 @@ def build_master_dataset(
             .reset_index()
         )
 
+        aligned["__source_file"] = str(
+            frame.attrs.get("source_file", "SOURCE REQUIRES VERIFICATION")
+        )
+        aligned["__source_csv_row_number"] = frame.attrs.get(
+            "source_row_numbers",
+            [None] * len(aligned),
+        )
+
         aligned_frames.append(aligned)
 
     merged = pd.concat(
@@ -310,9 +328,17 @@ def build_master_dataset(
         .astype("uint8")
     )
 
+    model_columns = [DISEASE_COLUMN, *symptom_columns]
+    provenance = merged[
+        ["__source_file", "__source_csv_row_number"]
+    ].copy()
+    merged = merged[model_columns]
+
     rows_before_duplicates = len(merged)
 
+    duplicate_mask = ~merged.duplicated(keep="first")
     merged = remove_duplicates(merged)
+    provenance = provenance.loc[duplicate_mask].reset_index(drop=True)
 
     rows_after_duplicates = len(merged)
     duplicates_removed = (
@@ -342,9 +368,9 @@ def build_master_dataset(
         disease_counts >= min_samples
     ].index
 
-    merged = merged.loc[
-        merged[DISEASE_COLUMN].isin(valid_diseases)
-    ].reset_index(drop=True)
+    valid_mask = merged[DISEASE_COLUMN].isin(valid_diseases)
+    merged = merged.loc[valid_mask].reset_index(drop=True)
+    provenance = provenance.loc[valid_mask].reset_index(drop=True)
 
     print("\nRemoved diseases with too few records:")
 
@@ -375,9 +401,31 @@ def build_master_dataset(
         index=False,
     )
 
+    provenance_output = provenance.rename(
+        columns={
+            "__source_file": "source_file",
+            "__source_csv_row_number": "source_csv_row_number",
+        }
+    )
+    provenance_output.insert(
+        0,
+        "processed_row_index",
+        range(len(provenance_output)),
+    )
+    provenance_output.insert(
+        1,
+        "normalized_disease",
+        merged[DISEASE_COLUMN].to_numpy(),
+    )
+    provenance_output.to_csv(PROVENANCE_OUTPUT_PATH, index=False)
+
     LOGGER.info(
         "Saved master dataset to %s",
         OUTPUT_PATH,
+    )
+    LOGGER.info(
+        "Saved row provenance sidecar to %s",
+        PROVENANCE_OUTPUT_PATH,
     )
 
     return merged

@@ -1,5 +1,10 @@
 # 🤖 AI Classification - Quick Start Guide
 
+> The percentage ranges in this historical quick-start document are not
+> measured acceptance results. For actual dataset counts and executed model
+> evaluation, use `docs/AI_REQUIREMENTS_STATUS.md` and
+> `backend/reports/ai_requirements_verification.json`.
+
 ## ✅ What's Been Integrated
 
 Your healthcare system now has **AI-powered automatic classification** for health records!
@@ -106,11 +111,12 @@ Your system is currently using **rule-based classification**:
 - ✅ Works 100% offline
 - ✅ No model training needed
 - ✅ Instant classification
-- ✅ ~75-85% accuracy
+- ✅ Uses deterministic rules; no verified accuracy percentage is claimed
 
 ### Want ML Model Instead? (Optional)
 
-For higher accuracy (85-95%), you can train a custom TensorFlow Lite model:
+To train a custom TensorFlow Lite model, supply traceable real labeled data;
+do not use synthetic data to claim 85-95% accuracy:
 
 1. **Install Python requirements:**
    ```bash

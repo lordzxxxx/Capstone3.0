@@ -1,0 +1,17 @@
+{
+  "current_model_version": "disease_model_v2",
+  "current_artifact": "/Users/lylesmac/capstone2-modify/backend/models/disease_model.pkl",
+  "versions": [
+    {
+      "model_version": "disease_model_v2",
+      "artifact": "/Users/lylesmac/capstone2-modify/backend/models/disease_model.pkl",
+      "metadata": "/Users/lylesmac/capstone2-modify/backend/models/disease_model_v2.metadata.json",
+      "status": "current offline evaluation artifact"
+    },
+    {
+      "model_version": "disease_model_v1_historical",
+      "artifact": "backend/models/disease_model.pkl before 2026-08-11",
+      "status": "historical metrics retained in MODEL_EVALUATION_REPORT.md; binary not overwritten in place without metadata"
+    }
+  ]
+}

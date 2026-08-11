@@ -1,4 +1,11 @@
-# AI-DSUHIS — AI/ML Algorithm Verification & Q&A
+# AI-DSUHIS — AI/ML Algorithm Verification & Q&A (historical baseline)
+
+> Current status is maintained in `docs/AI_REQUIREMENTS_STATUS.md` and the
+> generated `backend/reports/ai_requirements_verification.json`. This file
+> preserves the earlier algorithm review for traceability; its old plain-split
+> 84.96% production metrics and 300-tree settings are historical and must not
+> be used as the current model result. The current saved artifact uses the
+> group-safe evaluation implemented in `backend/app/train.py`.
 
 This document explains, from the actual source code, datasets, and saved
 model artifacts in this repository, exactly what AI/ML is implemented, how

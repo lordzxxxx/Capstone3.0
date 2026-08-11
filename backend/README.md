@@ -9,7 +9,12 @@ binary datasets to `dataset/raw`, then run these commands from the project root:
 .\venv\Scripts\python.exe backend\scripts\inspect_dataset.py
 .\venv\Scripts\python.exe backend\scripts\merge_datasets.py
 .\venv\Scripts\python.exe backend\scripts\train_model.py
+python backend/scripts/verify_ai_requirements.py
 ```
+
+The verification command writes `reports/ai_requirements_verification.json`
+with actual source counts, feature/target definitions, quality checks, and a
+group-safe held-out evaluation. It does not generate or duplicate data.
 
 To compare the original, recovered 100,000-row Kaggle source, union merge, and
 common-feature merge without replacing the production baseline, run:

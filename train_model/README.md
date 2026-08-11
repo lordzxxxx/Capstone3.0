@@ -10,7 +10,7 @@ This directory contains scripts to train the health classifier and export model 
 pip install tensorflow numpy pandas scikit-learn
 ```
 
-2. Train with synthetic data (default):
+2. Train with a real labeled export (required for production):
 
 ```bash
 python train_health_classifier.py
@@ -29,10 +29,13 @@ python train_health_classifier.py --data-file health_data.json
 
 Reference format: `train_model/health_data.sample.json`
 
-If your real dataset is small, mix in synthetic samples:
+Synthetic data is not accepted as production evidence. A clearly labeled
+non-production demonstration may be run explicitly with
+`--allow-synthetic-demo`; synthetic samples must never be used to satisfy the
+dataset-size or accuracy requirements:
 
 ```bash
-python train_health_classifier.py --data-file health_data.json --augment-synthetic 1000
+python train_health_classifier.py --data-file health_data.json --augment-synthetic 1000 --allow-synthetic-demo
 ```
 
 You can also tune epochs/batch size:
