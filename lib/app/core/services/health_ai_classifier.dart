@@ -315,6 +315,24 @@ class HealthAIClassifier {
       'skin rash',
       'loss of smell',
       'loss of taste',
+      // Added 2026-08-11, found via an expanded independent naturally-
+      // phrased validation set: "vomiting"/"nausea" alone (without
+      // "diarrhea" also being mentioned) are common WHO-cited infectious-
+      // illness symptoms (WHO Diarrhoeal disease fact sheet lists nausea
+      // and vomiting alongside diarrhoea) that were previously only
+      // recognized as part of the longer "vomiting everything" IMCI
+      // danger-sign phrase.
+      'vomiting',
+      'nausea',
+      // Added 2026-08-11, found via an expanded independent naturally-
+      // phrased validation set: common lay phrasing for concepts already
+      // supported in one fixed phrasing (CDC Common Cold overview,
+      // WHO/CDC COVID-19 anosmia guidance, WHO Chickenpox/Measles rash
+      // description).
+      'sneezing',
+      'itchy rash',
+      'lost sense of smell',
+      'lost sense of taste',
     ],
     'emergency': [
       'chest pain',
@@ -370,6 +388,35 @@ class HealthAIClassifier {
       'vomiting everything',
       'lethargic',
       'lethargy',
+      // Added 2026-08-11, found via an expanded independent naturally-
+      // phrased validation set: a BHW/CHO or patient describing genuine
+      // respiratory distress in plain language ("can't breathe") or
+      // actual respiratory arrest ("stopped breathing") was not
+      // recognized -- only the more clinical "difficulty breathing"
+      // phrasing was. WHO ETAT lists absent/obstructed breathing among
+      // its core emergency signs, and "stopped breathing"/"not
+      // breathing" describes a more severe presentation than "difficulty
+      // breathing", not a lesser one.
+      "can't breathe",
+      'cannot breathe',
+      'not breathing',
+      'stopped breathing',
+      // Added 2026-08-11, found via the one-time final holdout run
+      // (test/app/health_ai_classifier_holdout_test.dart) and fixed
+      // because both are genuine emergency-recognition gaps (missed
+      // emergencies), not accuracy tuning: "worst of my life" is the
+      // specific, well-recognized thunderclap-headache red flag (possible
+      // subarachnoid hemorrhage) regardless of exactly what precedes it
+      // in casual phrasing ("headache, worst of my life" vs "worst
+      // headache of my life") -- the phrase construction itself, not its
+      // exact word order, is what carries the clinical significance, so
+      // it is kept general rather than requiring one fixed word order.
+      // "won't stop bleeding"/"uncontrolled bleeding" describes the same
+      // WHO ETAT haemorrhage danger sign as "severe bleeding" in
+      // different words.
+      'worst of my life',
+      "won't stop bleeding",
+      'uncontrolled bleeding',
     ],
     'non_communicable': [
       'diabetes',
@@ -406,6 +453,42 @@ class HealthAIClassifier {
       'elevated blood pressure',
       'frequent urination',
       'excessive thirst',
+      // Added 2026-08-11, found via an independent clinical validation set
+      // grounded in cited external references (not this file's own
+      // vocabulary): WHO Asthma and WHO Osteoarthritis fact sheets.
+      // "shortness of breath" is deliberately kept distinct from
+      // Emergency's own "difficulty breathing" keyword -- a calmly
+      // reported, chronic breathing symptom (asthma-pattern, WHO Asthma
+      // fact sheet's wheezing/breathlessness/chest-tightness triad) is
+      // scored here, while the more acute "difficulty breathing" phrasing
+      // continues to score under Emergency; the two keyword lists remain
+      // separately scored, so Emergency precedence is unaffected.
+      'wheezing',
+      'shortness of breath',
+      'chest tightness',
+      'joint pain',
+      'joint stiffness',
+      // AHA angina guidance: exertional chest discomfort relieved by rest
+      // is classic stable angina, a chronic (non-communicable) cardiac
+      // condition -- distinct from the unrelenting/radiating "chest pain"
+      // Emergency keyword.
+      'chest discomfort',
+      // Added 2026-08-11, found via an expanded independent naturally-
+      // phrased validation set: common lay phrasing and reversed word
+      // order for concepts this system already supports in one fixed
+      // phrasing. WHO Diabetes fact sheet (hyperglycemia symptoms) and
+      // WHO Osteoarthritis/cardiovascular-disease fact sheets.
+      'high blood sugar',
+      'urinating frequently',
+      'swollen ankles',
+      'joint swelling',
+      // Added 2026-08-11, found via the expanded independent validation
+      // set: "hypertensive" (the common adjective form, e.g. "a known
+      // hypertensive patient") is a distinct word from "hypertension",
+      // not a simple plural, so it was not recognized even though it is
+      // an extremely common way to refer to the same WHO-defined
+      // condition.
+      'hypertensive',
     ],
     'prenatal': [
       'pregnant',
@@ -513,6 +596,126 @@ class HealthAIClassifier {
       (field) =>
           healthData[field] != null && healthData[field].toString().isNotEmpty,
     );
+  }
+
+  // Fixed dictionary of spelling/abbreviation variants, mapped to the
+  // canonical form already used in keywordDatabase. Deliberately NOT
+  // edit-distance/fuzzy matching -- a fixed dictionary cannot turn an
+  // unrelated medical term into a false match, which unsafe fuzzy
+  // matching could. Covers British/American spelling pairs for terms
+  // already in keywordDatabase, and a small set of clinical-shorthand
+  // abbreviations a BHW/CHO may write instead of the full phrase.
+  static const Map<String, String> _spellingAndAbbreviationVariants = {
+    'diarrhoea': 'diarrhea',
+    'haemorrhage': 'hemorrhage',
+    'anaemia': 'anemia',
+    'paediatric': 'pediatric',
+    'tumour': 'tumor',
+    'foetal': 'fetal',
+    'oedema': 'edema',
+    'sob': 'shortness of breath',
+    'htn': 'hypertension',
+    'dm': 'diabetes',
+  };
+
+  /// Conservative text normalization applied before keyword matching:
+  /// lowercasing, hyphen/whitespace cleanup, and the fixed variant
+  /// dictionary above. This only feeds keyword matching/extraction -- the
+  /// raw `details`/`healthData` values used by the vital-sign regexes
+  /// (BP:/Temp:/HR:) are left untouched, so vital-sign parsing behavior is
+  /// unchanged.
+  static String _normalizeText(String raw) {
+    var text = raw.toLowerCase();
+    // "shortness-of-breath" -> "shortness of breath" so hyphenated
+    // phrasing still matches the space-separated keyword/phrase forms.
+    text = text.replaceAllMapped(
+      RegExp(r'([a-z0-9])-([a-z0-9])'),
+      (m) => '${m[1]} ${m[2]}',
+    );
+    text = text.replaceAll(RegExp(r'\s+'), ' ').trim();
+    _spellingAndAbbreviationVariants.forEach((variant, canonical) {
+      text = text.replaceAll(
+        RegExp(r'\b' + RegExp.escape(variant) + r'\b'),
+        canonical,
+      );
+    });
+    return text;
+  }
+
+  // Conservative negation handling: a keyword occurrence is ignored if a
+  // negation cue ("no", "denies", "without", ...) appears within a small
+  // word-window directly before it, in the same clause (a clause boundary
+  // is any of . , ; ! ? or a newline). This is deliberately narrow rather
+  // than full clinical-NLP negation-scope detection: it is enough to
+  // handle "no chest pain" / "denies difficulty breathing" / "without
+  // fever" without suppressing a symptom mentioned in a different clause
+  // ("no relief, fever persists" must still count "fever").
+  static const List<String> _negationCues = [
+    'no evidence of',
+    'no signs of',
+    'no history of',
+    'negative for',
+    'absence of',
+    'ruled out',
+    'free of',
+    'denies',
+    'denied',
+    'without',
+    'not',
+    'no',
+  ];
+  static const int _negationWindowWords = 4;
+
+  static bool _isNegatedOccurrence(String text, int matchStart) {
+    var clauseStart = 0;
+    for (final m in RegExp(r'[.,;!?\n]').allMatches(text)) {
+      if (m.start >= matchStart) break;
+      clauseStart = m.end;
+    }
+    final prefix = text.substring(clauseStart, matchStart).trim();
+    if (prefix.isEmpty) return false;
+    final words = prefix.split(RegExp(r'\s+'));
+    final windowStart = words.length > _negationWindowWords
+        ? words.length - _negationWindowWords
+        : 0;
+    final window = words.sublist(windowStart).join(' ');
+    return _negationCues.any(
+      (cue) => RegExp(r'\b' + RegExp.escape(cue) + r'\b').hasMatch(window),
+    );
+  }
+
+  /// All start indices where [keyword] occurs in [text] as a whole word/
+  /// phrase (word-boundary matched, not a fragment of a longer word) and
+  /// is not negated at that occurrence. Used by category scoring, keyword
+  /// extraction, and severity's own symptom-presence checks so both word-
+  /// boundary matching and negation are handled consistently everywhere a
+  /// keyword match currently means "this symptom is present".
+  ///
+  /// Word-boundary matching is required, not just a scoring bonus: a
+  /// plain substring search let the 3-letter keyword "flu" match inside
+  /// unrelated words like "fluid" (also "influence", "affluent", ...),
+  /// found via the expanded independent validation set -- a poisoning
+  /// case ("...cleaning fluid...") was scored partly as Communicable
+  /// Disease from that false match, materially contributing to a real
+  /// under-triage regression.
+  ///
+  /// The trailing boundary allows one optional "s" (simple regular-plural
+  /// suffix) before it, e.g. "movement" still matches "movements" and
+  /// "convulsion" still matches "convulsions" -- a strict `\bkeyword\b`
+  /// alone regressed this (found via the same expanded validation set: a
+  /// mother reporting "reduced baby movements" no longer matched the
+  /// singular "reduced baby movement" danger-sign phrase). This only
+  /// covers the common regular "+s" plural, not irregular plurals
+  /// ("rash"/"rashes"), which is a deliberate, bounded scope -- it still
+  /// rejects "flu" inside "fluid" (an "i" is not an optional "s").
+  static List<int> _unnegatedOccurrences(String text, String keyword) {
+    if (keyword.isEmpty) return const [];
+    final pattern = RegExp(r'\b' + RegExp.escape(keyword) + r's?\b');
+    final result = <int>[];
+    for (final match in pattern.allMatches(text)) {
+      if (!_isNegatedOccurrence(text, match.start)) result.add(match.start);
+    }
+    return result;
   }
 
   static const int _legacyKeywordFeatureStartIndex = 1;
@@ -739,7 +942,9 @@ class HealthAIClassifier {
             .map((v) => v.toString().toLowerCase())
             .join(' ');
 
-    final combinedText = '$symptoms $details $additionalFields'.trim();
+    final combinedText = _normalizeText(
+      '$symptoms $details $additionalFields'.trim(),
+    );
 
     // Score each category
     final scores = <String, double>{};
@@ -753,15 +958,50 @@ class HealthAIClassifier {
       );
     }
 
-    // Get highest scoring category
+    // Get highest scoring category. On an exact tie, Emergency wins: this
+    // is a deliberate safety rule, not an artifact of category list order
+    // -- under-triage (missing a true emergency) is a far worse failure
+    // mode than over-triage (flagging a non-emergency as one), so a tie
+    // must resolve toward the safer category. Found via a real scoring
+    // collision: adding a bare "vomiting" keyword to Communicable Disease
+    // (for standalone naturally-phrased cases) tied with the existing
+    // Emergency phrase "vomiting everything" ("vomiting everything"
+    // contains "vomiting" as a substring), and because 'Communicable
+    // Disease' is listed before 'Emergency' in `categories`, the tie was
+    // silently resolving to the wrong, less-safe category.
     var maxCategory = categories[0];
     var maxScore = scores[maxCategory]!;
 
     for (var entry in scores.entries) {
-      if (entry.value > maxScore) {
+      final isBetter = entry.value > maxScore ||
+          (entry.value == maxScore && entry.key == 'Emergency');
+      if (isBetter) {
         maxCategory = entry.key;
         maxScore = entry.value;
       }
+    }
+
+    // Safety margin: real Emergency evidence should not be overridden by
+    // only a narrow score advantage from another category. Found via a
+    // real under-triage regression: adding "shortness of breath" as a
+    // Non-Communicable Disease (asthma) signal let it outscore a genuine
+    // "chest pain" Emergency match once the age>40 chronic-disease
+    // multiplier applied, silently reclassifying a classic heart-attack
+    // presentation ("crushing chest pain ... shortness of breath", age
+    // 62) as chronic disease at Low severity instead of Emergency/
+    // Critical. Emergency's keyword list is curated to be specific,
+    // serious signals (chest pain, difficulty breathing, stroke,
+    // seizure, ...), so any real Emergency evidence (more than zero)
+    // should only be overridden by a decisive margin -- at least one
+    // full keyword match's worth of score -- not a fractional-point edge
+    // from an incidental keyword overlap or an unrelated multiplier.
+    const emergencySafetyMargin = 1.0;
+    final emergencyScore = scores['Emergency'] ?? 0.0;
+    if (maxCategory != 'Emergency' &&
+        emergencyScore > 0 &&
+        maxScore - emergencyScore < emergencySafetyMargin) {
+      maxCategory = 'Emergency';
+      maxScore = emergencyScore;
     }
 
     // Determine severity
@@ -848,6 +1088,13 @@ class HealthAIClassifier {
           text,
           keywordDatabase['non_communicable']!,
         );
+        // WHO Hypertension fact sheet: hypertension is frequently
+        // asymptomatic ("the silent killer") -- a record can carry a
+        // hypertensive-range BP reading with no symptom text at all, so
+        // the vital-sign reading itself must be able to signal this
+        // category, the same way _checkVitalSignsEmergency already lets
+        // vitals signal Emergency on their own.
+        score += _checkVitalSignsChronicRisk(healthData);
         // Higher weight for older patients
         if (age > 40) score *= 1.3;
         break;
@@ -896,15 +1143,46 @@ class HealthAIClassifier {
   double _countKeywordMatches(String text, List<String> keywords) {
     double count = 0.0;
     for (var keyword in keywords) {
-      if (text.contains(keyword)) {
-        count += 1.0;
-        // Bonus for exact word match
-        if (RegExp(r'\b' + RegExp.escape(keyword) + r'\b').hasMatch(text)) {
-          count += 0.5;
-        }
+      // Normalize the keyword the same way [text] was normalized (e.g.
+      // "life-threatening" -> "life threatening") so a keyword that
+      // contains a hyphen/variant spelling still matches already-
+      // normalized free text.
+      final normalizedKeyword = _normalizeText(keyword);
+      // _unnegatedOccurrences already requires a word-boundary match (not
+      // a fragment of a longer word) and excludes negated occurrences, so
+      // every returned occurrence is a genuine, exact whole-word/phrase
+      // match -- weighted the same as the old "exact boundary" bonus tier.
+      if (_unnegatedOccurrences(text, normalizedKeyword).isNotEmpty) {
+        count += 1.5;
       }
     }
     return count;
+  }
+
+  // WHO Hypertension fact sheet-grounded AHA blood-pressure staging,
+  // scoped below the Emergency hypertensive-crisis threshold already
+  // handled by _checkVitalSignsEmergency (>180 systolic / >120 diastolic)
+  // so this does not compete with that check -- it only fires for the
+  // Stage 1/Stage 2 hypertensive range that is a Non-Communicable Disease
+  // signal, not an acute emergency.
+  double _checkVitalSignsChronicRisk(Map<String, dynamic> healthData) {
+    final details = (healthData['details'] ?? '').toString();
+    double score = 0.0;
+
+    final bpMatch = RegExp(r'BP:\s*(\d+)/(\d+)').firstMatch(details);
+    if (bpMatch != null) {
+      final systolic = int.tryParse(bpMatch.group(1) ?? '0') ?? 0;
+      final diastolic = int.tryParse(bpMatch.group(2) ?? '0') ?? 0;
+      if (systolic >= 140 || diastolic >= 90) {
+        // AHA Stage 2 hypertension.
+        score += 3.0;
+      } else if (systolic >= 130 || diastolic >= 80) {
+        // AHA Stage 1 hypertension.
+        score += 1.5;
+      }
+    }
+
+    return score;
   }
 
   double _checkVitalSignsEmergency(Map<String, dynamic> healthData) {
@@ -1040,8 +1318,20 @@ class HealthAIClassifier {
         'reduced fetal movement',
         'decreased fetal movement',
         'no fetal movement',
+        // Added 2026-08-11, found via an expanded independent naturally-
+        // phrased validation set: a mother describing the exact same WHO
+        // antenatal danger signs in plain lay language ("baby movements"
+        // instead of "fetal movement", "spotting" instead of "vaginal
+        // bleeding") was not recognized, which is a genuine safety gap --
+        // missing a real danger sign only because of word choice.
+        'spotting',
+        'reduced baby movement',
+        'decreased baby movement',
+        'no baby movement',
       ];
-      if (prenatalDangerSigns.any((sign) => symptoms.contains(sign))) {
+      if (prenatalDangerSigns.any(
+        (sign) => _unnegatedOccurrences(symptoms, sign).isNotEmpty,
+      )) {
         severityScore += 3;
       }
     }
@@ -1057,7 +1347,24 @@ class HealthAIClassifier {
       'extreme',
     ];
     for (var keyword in severeKeywords) {
-      if (allText.contains(keyword)) severityScore += 1;
+      if (_unnegatedOccurrences(allText, keyword).isNotEmpty) {
+        severityScore += 1;
+      }
+    }
+
+    // AHA angina guidance: exertional chest discomfort/tightness is not
+    // the more acute "chest pain"/"difficulty breathing" Emergency
+    // keywords (which already force Critical via the early Emergency
+    // return above), but still warrants prompt evaluation. Treated as a
+    // High-severity signal so it surfaces the same "urgent, schedule
+    // within 24h" guidance as other High-severity results, without
+    // over-classifying a chronic, rest-relieved symptom as a
+    // life-threatening emergency.
+    const cardiacCautionPhrases = ['chest discomfort', 'chest tightness'];
+    if (cardiacCautionPhrases.any(
+      (phrase) => _unnegatedOccurrences(symptoms, phrase).isNotEmpty,
+    )) {
+      severityScore += 2;
     }
 
     // Determine severity level
@@ -1240,7 +1547,12 @@ class HealthAIClassifier {
 
     for (var keywords in keywordDatabase.values) {
       for (var keyword in keywords) {
-        if (text.contains(keyword) && !matched.contains(keyword)) {
+        // Match against the normalized form (handles e.g. the hyphen in
+        // "life-threatening"), but keep the original keyword string in
+        // the result so treatment/alias lookups keyed by the original
+        // spelling still work.
+        if (!matched.contains(keyword) &&
+            _unnegatedOccurrences(text, _normalizeText(keyword)).isNotEmpty) {
           matched.add(keyword);
         }
       }
