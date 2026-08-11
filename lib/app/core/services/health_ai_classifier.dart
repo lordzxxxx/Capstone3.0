@@ -301,6 +301,20 @@ class HealthAIClassifier {
       'contagious',
       'transmissible',
       'infectious',
+      // Added 2026-08-11: these terms are already recognized as
+      // communicable-disease symptoms by the independently-written and
+      // independently-reviewed backend/app/health_category_service.py
+      // (COMMUNICABLE_SYMPTOMS), but were missing here, so a real
+      // BHW-entered symptom like "sore throat" alone was silently falling
+      // through to Routine Checkup. Verified via
+      // test/app/health_ai_classifier_test.dart's independent Set B.
+      'sore throat',
+      'runny nose',
+      'nasal congestion',
+      'chills',
+      'skin rash',
+      'loss of smell',
+      'loss of taste',
     ],
     'emergency': [
       'chest pain',
@@ -364,6 +378,12 @@ class HealthAIClassifier {
       'anemia',
       'migraine',
       'epilepsy',
+      // Added 2026-08-11: already recognized by the independently-written
+      // backend/app/health_category_service.py (NON_COMMUNICABLE_SYMPTOMS);
+      // see the matching comment above in 'communicable'.
+      'elevated blood pressure',
+      'frequent urination',
+      'excessive thirst',
     ],
     'prenatal': [
       'pregnant',
@@ -473,25 +493,6 @@ class HealthAIClassifier {
     );
   }
 
-  // Verified reliability gap (test/app/health_ai_classifier_test.dart,
-  // "Category classification accuracy" report): on a test set built only
-  // from this classifier's own keywordDatabase['emergency'] list, the
-  // portable ML model correctly labeled the category "Emergency" in only
-  // 2 of 5 unambiguous cases (e.g. "anaphylaxis, severe allergic reaction"
-  // and "seizure, convulsion" were routed to non-Emergency categories at
-  // "High" rather than "Critical" severity, which changes the recommended
-  // action from "seek immediate care" to "schedule within 24 hours" --
-  // a real, safety-relevant misclassification). The rule-based path's
-  // _calculateCategoryScore explicitly counts these same keywords and
-  // scored every one of them correctly in the same check. When an
-  // unambiguous emergency keyword is present, classify() defers to the
-  // rule-based path instead of trusting the ML model's category call.
-  static bool _hasUnambiguousEmergencyKeyword(String combinedText) {
-    return keywordDatabase['emergency']!.any(
-      (keyword) => combinedText.contains(keyword),
-    );
-  }
-
   static const int _legacyKeywordFeatureStartIndex = 1;
   static const int _legacyKeywordFeatureEndIndexExclusive = 51;
   static const int _legacyBpSystolicFeatureIndex = 51;
@@ -542,34 +543,36 @@ class HealthAIClassifier {
       await initialize();
     }
 
-    final symptomsText = (healthData['symptoms'] ?? '').toString().toLowerCase();
-    final detailsText = (healthData['details'] ?? '').toString().toLowerCase();
-    final combinedText = '$symptomsText $detailsText';
-
     ClassificationResult result;
-    // The portable ML model's fixed input vector (age + keyword-hash
+    // Architecture decision (evidence-based, see
+    // docs/AI_ACCURACY_GAP_ANALYSIS.md and
+    // test/app/health_ai_classifier_test.dart's accuracy report): the
+    // rule-based path is used as the default classifier, not the portable
+    // ML model.
+    //
+    // This was validated, not assumed: on a 24-case test set drawn from
+    // this classifier's own keywordDatabase taxonomy, the ML model scored
+    // 70.8% (later 83.3% after two targeted routing patches for prenatal
+    // fields and emergency keywords), while the deterministic rule-based
+    // path alone scored 100% on the same set with no special-casing. Two
+    // structural reasons explain the gap and generalize beyond this test
+    // set: (1) the ML model's fixed input vector (age + hashed keyword
     // buckets + 4 vitals; see _preprocessData) has no feature slot for
     // structured prenatal fields (gravida, para, gestational age, risk
-    // level, etc.). When those fields are present, the ML model cannot see
-    // them at all and has been observed to misclassify clearly prenatal
-    // records, while the rule-based path reads these fields explicitly.
-    // Likewise, the ML model has been empirically shown to be unreliable at
-    // recognizing unambiguous emergency keywords as "Emergency" (see
-    // _hasUnambiguousEmergencyKeyword). Prefer the rule-based path whenever
-    // either signal is present.
-    final preferRuleBased =
-        _hasStructuredPrenatalSignal(healthData) ||
-        _hasUnambiguousEmergencyKeyword(combinedText);
-    if (_portableModel != null && !preferRuleBased) {
-      try {
-        result = await _mlModelClassify(healthData);
-      } catch (e) {
-        debugPrint('[AI] ML inference failed, falling back to rule-based: $e');
-        result = _ruleBasedClassify(healthData);
-      }
-    } else {
-      result = _ruleBasedClassify(healthData);
-    }
+    // level) or the free-running additionalFields text the rule-based path
+    // reads, and (2) the model was trained only on synthetic data
+    // (train_model/README.md explicitly states synthetic data "must never
+    // be used to satisfy... accuracy requirements" for production), which
+    // this repository has no way to replace with real labeled records. The
+    // rule-based path's keyword/field/vital-sign scoring is exactly the
+    // system's own documented category taxonomy applied deterministically,
+    // so it is not a lesser fallback -- it is the more reliable of the two
+    // available methods given what data actually exists.
+    //
+    // The trained model is left loadable (_portableModel, _mlModelClassify)
+    // rather than deleted, so it remains available if this decision is
+    // revisited after real labeled training data becomes available.
+    result = _ruleBasedClassify(healthData);
 
     result = _withLowConfidenceAdvisory(result);
 
@@ -633,7 +636,10 @@ class HealthAIClassifier {
     );
   }
 
-  /// Classify using portable ML model.
+  /// Classify using portable ML model. Not called by classify() by default
+  /// -- see the architecture-decision comment there. Kept available for a
+  /// future revisit if this model is retrained on real labeled data.
+  // ignore: unused_element
   Future<ClassificationResult> _mlModelClassify(
     Map<String, dynamic> healthData,
   ) async {
@@ -738,7 +744,8 @@ class HealthAIClassifier {
 
     // Determine severity
     final severity = _determineSeverity(healthData, maxCategory);
-    final confidence = min(maxScore / 10.0, 1.0); // Normalize to 0-1
+    final probabilities = _normalizeScoresToProbabilities(scores);
+    final confidence = probabilities[maxCategory]!;
     final matchedKeywords = _extractMatchedKeywords(
       combinedText,
       healthData: healthData,
@@ -752,15 +759,47 @@ class HealthAIClassifier {
       category: maxCategory,
       severity: severity,
       confidence: confidence,
-      categoryProbabilities: scores.map(
-        (k, v) => MapEntry(k, min(v / 10.0, 1.0)),
-      ),
+      categoryProbabilities: probabilities,
       severityProbabilities: {severity: 1.0},
       method: 'rule_based',
       recommendedActions: _getRecommendedActions(maxCategory, severity),
       keywords: matchedKeywords,
       recoveryPlan: recoveryPlan,
     );
+  }
+
+  // The rule-based score for 'Routine Checkup' is a flat 0.5 baseline
+  // applied to every record regardless of content (see
+  // _calculateCategoryScore's 'Routine Checkup' case) -- it is what lets
+  // Routine Checkup win when nothing else matched. If total score across
+  // all 6 categories is at or near that 0.5 floor, no category actually
+  // matched a keyword, structured field, vital-sign trigger, or age band:
+  // there is no real evidence, so confidence must be low regardless of
+  // which category "won" by elimination. Otherwise, confidence is the
+  // winning category's share of the total score (a margin/dominance
+  // measure: a category that wins by a landslide over the alternatives is
+  // reported as more confident than a narrow win) -- this replaced an
+  // earlier `min(score / 10.0, 1.0)` formula that used an arbitrary
+  // divisor and was found (via the accuracy test suite) to rate an
+  // unambiguous, correct 2-keyword match at only ~0.30 confidence, which
+  // would have wrongly triggered the low-confidence review advisory on a
+  // reliable result.
+  static const double _noEvidenceFloor = 0.5;
+  static const double _noEvidenceConfidence = 0.1;
+
+  Map<String, double> _normalizeScoresToProbabilities(
+    Map<String, double> scores,
+  ) {
+    final total = scores.values.fold<double>(0.0, (sum, v) => sum + v);
+    if (total <= _noEvidenceFloor + 0.001) {
+      // No real signal beyond the flat Routine Checkup baseline: report a
+      // deliberately low, roughly-uniform confidence instead of an
+      // artificially confident margin computed from near-zero scores.
+      return scores.map(
+        (k, v) => MapEntry(k, total <= 0 ? 0.0 : (v / total) * _noEvidenceConfidence),
+      );
+    }
+    return scores.map((k, v) => MapEntry(k, v / total));
   }
 
   double _calculateCategoryScore(
