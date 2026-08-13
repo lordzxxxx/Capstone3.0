@@ -1443,7 +1443,7 @@ pw.Widget _buildOverallPdfHeader(
               ),
               pw.SizedBox(height: 4),
               pw.Text(
-                'Barangay 3 $barangay',
+                'Barangay $barangay',
                 style: pw.TextStyle(fontSize: 11, color: PdfColors.black),
               ),
               pw.Text(

@@ -57,6 +57,8 @@ class _ReportDialogDefaults {
   final String barangayName;
   final String preparedBy;
   final String preparedByPosition;
+  final String bhwHead;
+  final String bhwHeadPosition;
   final String reviewedBy;
   final String reviewedByPosition;
   final String approvedBy;
@@ -67,6 +69,8 @@ class _ReportDialogDefaults {
     required this.barangayName,
     required this.preparedBy,
     required this.preparedByPosition,
+    required this.bhwHead,
+    required this.bhwHeadPosition,
     required this.reviewedBy,
     required this.reviewedByPosition,
     required this.approvedBy,
@@ -82,6 +86,8 @@ class _ReportSelection {
   final String barangayName;
   final String preparedBy;
   final String preparedByPosition;
+  final String bhwHead;
+  final String bhwHeadPosition;
   final String reviewedBy;
   final String reviewedByPosition;
   final String approvedBy;
@@ -96,6 +102,8 @@ class _ReportSelection {
     required this.barangayName,
     required this.preparedBy,
     required this.preparedByPosition,
+    required this.bhwHead,
+    required this.bhwHeadPosition,
     required this.reviewedBy,
     required this.reviewedByPosition,
     required this.approvedBy,
@@ -112,6 +120,8 @@ class _ReportSelection {
       barangayName: barangayName,
       preparedBy: preparedBy,
       preparedByPosition: preparedByPosition,
+      bhwHead: bhwHead,
+      bhwHeadPosition: bhwHeadPosition,
       reviewedBy: reviewedBy,
       reviewedByPosition: reviewedByPosition,
       approvedBy: approvedBy,
@@ -426,7 +436,7 @@ Future<_ReportDialogDefaults> _loadReportDialogDefaults(
   List<Map<String, dynamic>> records,
 ) async {
   String preparedBy = _defaultPreparedBy();
-  String preparedByPosition = 'Barangay Health Worker';
+  String preparedByPosition = 'BHW Assigned on Duty';
 
   final user = FirebaseAuth.instance.currentUser;
   if (user != null) {
@@ -454,10 +464,12 @@ Future<_ReportDialogDefaults> _loadReportDialogDefaults(
     barangayName: _deriveDefaultBarangayName(records),
     preparedBy: preparedBy,
     preparedByPosition: preparedByPosition,
+    bhwHead: '',
+    bhwHeadPosition: 'BHW Head',
     reviewedBy: '',
-    reviewedByPosition: 'Reviewing Officer',
+    reviewedByPosition: 'Barangay Kagawad in Health',
     approvedBy: '',
-    approvedByPosition: 'Approving Officer',
+    approvedByPosition: 'Barangay Captain',
     remarks:
         'This report was generated from encoded BHW records for official monitoring, submission, and filing.',
   );
@@ -486,6 +498,10 @@ Future<_ReportSelection?> _showReportGenerationDialog({
   final preparedByController = TextEditingController(text: defaults.preparedBy);
   final preparedByPositionController = TextEditingController(
     text: defaults.preparedByPosition,
+  );
+  final bhwHeadController = TextEditingController(text: defaults.bhwHead);
+  final bhwHeadPositionController = TextEditingController(
+    text: defaults.bhwHeadPosition,
   );
   final reviewedByController = TextEditingController(text: defaults.reviewedBy);
   final reviewedByPositionController = TextEditingController(
@@ -521,17 +537,22 @@ Future<_ReportSelection?> _showReportGenerationDialog({
               ),
               preparedByPosition: _cleanFieldValue(
                 preparedByPositionController.text,
-                fallback: 'Barangay Health Worker',
+                fallback: 'BHW Assigned on Duty',
+              ),
+              bhwHead: bhwHeadController.text.trim(),
+              bhwHeadPosition: _cleanFieldValue(
+                bhwHeadPositionController.text,
+                fallback: 'BHW Head',
               ),
               reviewedBy: reviewedByController.text.trim(),
               reviewedByPosition: _cleanFieldValue(
                 reviewedByPositionController.text,
-                fallback: 'Reviewing Officer',
+                fallback: 'Barangay Kagawad in Health',
               ),
               approvedBy: approvedByController.text.trim(),
               approvedByPosition: _cleanFieldValue(
                 approvedByPositionController.text,
-                fallback: 'Approving Officer',
+                fallback: 'Barangay Captain',
               ),
               remarks: _cleanFieldValue(
                 remarksController.text,
@@ -702,7 +723,7 @@ Future<_ReportSelection?> _showReportGenerationDialog({
                             ),
                             const SizedBox(height: 12),
                             _buildDialogTextField(
-                              label: 'Prepared By',
+                              label: 'BHW Assigned on Duty',
                               controller: preparedByController,
                               textColor: textColor,
                               mutedColor: mutedColor,
@@ -711,7 +732,7 @@ Future<_ReportSelection?> _showReportGenerationDialog({
                             ),
                             const SizedBox(height: 12),
                             _buildDialogTextField(
-                              label: 'Prepared By Position',
+                              label: 'BHW Assigned on Duty Position',
                               controller: preparedByPositionController,
                               textColor: textColor,
                               mutedColor: mutedColor,
@@ -742,25 +763,7 @@ Future<_ReportSelection?> _showReportGenerationDialog({
                         child: Column(
                           children: [
                             _buildDialogTextField(
-                              label: 'Reviewed By',
-                              controller: reviewedByController,
-                              textColor: textColor,
-                              mutedColor: mutedColor,
-                              accentColor: accentColor,
-                              isDarkSurface: isDarkSurface,
-                            ),
-                            const SizedBox(height: 12),
-                            _buildDialogTextField(
-                              label: 'Reviewed By Position',
-                              controller: reviewedByPositionController,
-                              textColor: textColor,
-                              mutedColor: mutedColor,
-                              accentColor: accentColor,
-                              isDarkSurface: isDarkSurface,
-                            ),
-                            const SizedBox(height: 12),
-                            _buildDialogTextField(
-                              label: 'Approved By',
+                              label: 'Barangay Captain',
                               controller: approvedByController,
                               textColor: textColor,
                               mutedColor: mutedColor,
@@ -769,8 +772,44 @@ Future<_ReportSelection?> _showReportGenerationDialog({
                             ),
                             const SizedBox(height: 12),
                             _buildDialogTextField(
-                              label: 'Approved By Position',
+                              label: 'Barangay Captain Position',
                               controller: approvedByPositionController,
+                              textColor: textColor,
+                              mutedColor: mutedColor,
+                              accentColor: accentColor,
+                              isDarkSurface: isDarkSurface,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildDialogTextField(
+                              label: 'Barangay Kagawad in Health',
+                              controller: reviewedByController,
+                              textColor: textColor,
+                              mutedColor: mutedColor,
+                              accentColor: accentColor,
+                              isDarkSurface: isDarkSurface,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildDialogTextField(
+                              label: 'Barangay Kagawad in Health Position',
+                              controller: reviewedByPositionController,
+                              textColor: textColor,
+                              mutedColor: mutedColor,
+                              accentColor: accentColor,
+                              isDarkSurface: isDarkSurface,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildDialogTextField(
+                              label: 'BHW Head',
+                              controller: bhwHeadController,
+                              textColor: textColor,
+                              mutedColor: mutedColor,
+                              accentColor: accentColor,
+                              isDarkSurface: isDarkSurface,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildDialogTextField(
+                              label: 'BHW Head Position',
+                              controller: bhwHeadPositionController,
                               textColor: textColor,
                               mutedColor: mutedColor,
                               accentColor: accentColor,
@@ -885,6 +924,8 @@ Future<_ReportSelection?> _showReportGenerationDialog({
     barangayController.dispose();
     preparedByController.dispose();
     preparedByPositionController.dispose();
+    bhwHeadController.dispose();
+    bhwHeadPositionController.dispose();
     reviewedByController.dispose();
     reviewedByPositionController.dispose();
     approvedByController.dispose();
@@ -1209,7 +1250,7 @@ Future<List<int>> _generatePdfBytesInBackground(
         pw.SizedBox(height: 14),
         _buildSectionHeading(
           'V. Signature Section',
-          'Print-ready signatory block for preparation, review, and approval.',
+          'Barangay council and BHW signatories for report certification.',
         ),
         pw.SizedBox(height: 8),
         _buildSignatureSection(params.selection),
@@ -1285,37 +1326,37 @@ List<int> _buildFormalBhwReportExcelBytes({
   <!-- Excel-compatible print settings: landscape, repeating table header. -->
   <style>
     @page { size: landscape; margin: 0.45in; }
-    body { font-family: Arial, sans-serif; color: #14212B; font-size: 10pt; }
+    body { font-family: Arial, sans-serif; color: #000000; font-size: 10pt; }
     table { border-collapse: collapse; width: 100%; }
     .header-table { border: 0; margin-bottom: 10px; }
     .header-table td { border: 0; vertical-align: middle; }
     .seal { width: 58px; height: 58px; object-fit: contain; }
     .seal-cell { width: 76px; text-align: center; }
-    .seal-label { display: block; font-size: 6pt; font-weight: bold; color: #52677D; }
+    .seal-label { display: block; font-size: 6pt; font-weight: bold; color: #000000; }
     .identity { text-align: center; }
-    .province { font-size: 8pt; font-weight: bold; color: #52677D; letter-spacing: 0.5px; }
-    .city { font-size: 16pt; font-weight: bold; color: #173F70; letter-spacing: 1px; }
-    .program { font-size: 9pt; font-weight: bold; color: #52677D; letter-spacing: 1px; }
-    .system { font-size: 8pt; font-weight: bold; color: #52677D; }
-    .control { border: 1px solid #CBD5E1; background: #F8FAFC; padding: 7px; font-size: 8pt; }
-    .title { font-size: 15pt; font-weight: bold; color: #173F70; border-top: 2px solid #173F70; padding-top: 8px; }
-    .subtitle { color: #52677D; padding: 3px 0 10px; }
-    .section { background: #173F70; color: white; font-weight: bold; padding: 6px 8px; }
+    .province { font-size: 8pt; font-weight: bold; color: #000000; letter-spacing: 0.5px; }
+    .city { font-size: 16pt; font-weight: bold; color: #000000; letter-spacing: 1px; }
+    .program { font-size: 9pt; font-weight: bold; color: #000000; letter-spacing: 1px; }
+    .system { font-size: 8pt; font-weight: bold; color: #000000; }
+    .control { border: 0; padding: 7px; font-size: 8pt; }
+    .title { font-size: 15pt; font-weight: bold; color: #000000; border-top: 1px solid #000000; padding-top: 8px; }
+    .subtitle { color: #000000; padding: 3px 0 10px; }
+    .section { background: #FFFFFF; color: #000000; font-weight: bold; padding: 6px 0; border-bottom: 1px solid #000000; }
     .summary { margin: 0 0 12px; }
-    .summary td, .summary th, .records td, .records th, .signatures td { border: 1px solid #CBD5E1; padding: 6px; vertical-align: top; }
-    .summary th { background: #EAF3FF; color: #173F70; text-align: left; width: 28%; }
+    .summary td, .summary th, .records td, .records th, .signatures td { border: 1px solid #000000; padding: 6px; vertical-align: top; }
+    .summary th { background: #FFFFFF; color: #000000; text-align: left; width: 28%; }
     .records { table-layout: fixed; page-break-inside: auto; }
     .records thead { display: table-header-group; }
     .records tr { page-break-inside: avoid; }
-    .records th { background: #173F70; color: white; font-weight: bold; text-align: left; }
+    .records th { background: #FFFFFF; color: #000000; font-weight: bold; text-align: left; border-bottom: 2px solid #000000; }
     .records td { word-wrap: break-word; white-space: normal; }
-    .records tr:nth-child(even) td { background: #F8FAFC; }
+    .records tr:nth-child(even) td { background: #FFFFFF; }
     .center { text-align: center; }
-    .notes { border: 1px solid #CBD5E1; background: #F8FAFC; padding: 8px; }
+    .notes { border: 1px solid #000000; background: #FFFFFF; padding: 8px; }
     .signatures { margin-top: 10px; table-layout: fixed; }
-    .signature-line { display: block; border-bottom: 1px solid #52677D; height: 22px; }
-    .signature-label { font-size: 8pt; color: #52677D; }
-    .footer { color: #52677D; font-size: 8pt; border-top: 1px solid #CBD5E1; padding-top: 6px; margin-top: 12px; }
+    .signature-line { display: block; border-bottom: 1px solid #000000; height: 22px; }
+    .signature-label { font-size: 8pt; color: #000000; }
+    .footer { color: #000000; font-size: 8pt; border-top: 1px solid #000000; padding-top: 6px; margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -1323,7 +1364,7 @@ List<int> _buildFormalBhwReportExcelBytes({
     <tr>
       <td class="seal-cell">${_excelImage(branding.cityLogo, 'Malaybalay City seal')}<span class="seal-label">MALAYBALAY CITY</span></td>
       <td class="seal-cell">${_excelImage(branding.healthOfficeLogo, 'City Health Office seal')}<span class="seal-label">CITY HEALTH OFFICE</span></td>
-      <td class="seal-cell">${_excelImage(branding.barangayLogo, 'Barangay seal')}<span class="seal-label">BARANGAY</span></td>
+      <td class="seal-cell">${_excelImage(branding.barangayLogo, 'Barangay seal')}<span class="seal-label">${_escapeHtml(selection.barangayName)}</span></td>
       <td class="identity">
         <div class="province">REPUBLIC OF THE PHILIPPINES • PROVINCE OF BUKIDNON</div>
         <div class="city">CITY OF MALAYBALAY</div>
@@ -1340,7 +1381,7 @@ List<int> _buildFormalBhwReportExcelBytes({
     <tr><td class="section" colspan="2">I. REPORT IDENTIFICATION AND SUMMARY</td></tr>
     <tr><th>Report Type</th><td>${_escapeHtml(selection.period.label)} Report</td></tr>
     <tr><th>Module</th><td>${_escapeHtml(moduleLabel)}</td></tr>
-    <tr><th>Prepared By</th><td>${_escapeHtml(selection.preparedBy)} (${_escapeHtml(selection.preparedByPosition)})</td></tr>
+    <tr><th>BHW Assigned on Duty</th><td>${_escapeHtml(selection.preparedBy)} (${_escapeHtml(selection.preparedByPosition)})</td></tr>
     <tr><th>Generated</th><td>${_escapeHtml(_formatFormalDateTime(generatedAt))}</td></tr>
     $summaryRows
   </table>
@@ -1356,9 +1397,10 @@ List<int> _buildFormalBhwReportExcelBytes({
   </table>
   <table class="signatures">
     <tr>
-      ${_excelSignatureCell('Prepared by', selection.preparedBy, selection.preparedByPosition)}
-      ${_excelSignatureCell('Reviewed by', selection.reviewedBy, selection.reviewedByPosition)}
-      ${_excelSignatureCell('Approved by', selection.approvedBy, selection.approvedByPosition)}
+      ${_excelSignatureCell('Barangay Captain', selection.approvedBy, selection.approvedByPosition)}
+      ${_excelSignatureCell('Barangay Kagawad in Health', selection.reviewedBy, selection.reviewedByPosition)}
+      ${_excelSignatureCell('BHW Head', selection.bhwHead, selection.bhwHeadPosition)}
+      ${_excelSignatureCell('BHW Assigned on Duty', selection.preparedBy, selection.preparedByPosition)}
     </tr>
   </table>
   <div class="footer">Generated by AI-DSUHIS • Confidential health information • Page headers repeat when printed</div>
@@ -1406,9 +1448,9 @@ pw.Widget _buildReportHeader({
   required pw.MemoryImage? healthOfficeLogo,
   required pw.MemoryImage? barangayLogo,
 }) {
-  final accent = PdfColor.fromHex('#173F70');
-  final border = PdfColor.fromHex('#CBD5E1');
-  final muted = PdfColor.fromHex('#52677D');
+  const accent = PdfColors.black;
+  const border = PdfColors.black;
+  const muted = PdfColors.black;
 
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -1430,7 +1472,7 @@ pw.Widget _buildReportHeader({
           pw.SizedBox(width: 6),
           _buildReportLogo(healthOfficeLogo, 'CITY HEALTH OFFICE'),
           pw.SizedBox(width: 6),
-          _buildReportLogo(barangayLogo, 'BARANGAY'),
+          _buildReportLogo(barangayLogo, selection.barangayName),
           pw.SizedBox(width: 12),
           pw.Expanded(
             child: pw.Column(
@@ -1473,9 +1515,7 @@ pw.Widget _buildReportHeader({
             width: 126,
             padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 7),
             decoration: pw.BoxDecoration(
-              color: PdfColor.fromHex('#F8FAFC'),
               border: pw.Border.all(color: border),
-              borderRadius: pw.BorderRadius.circular(6),
             ),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -1532,15 +1572,9 @@ pw.Widget _buildReportLogo(pw.MemoryImage? image, String label) {
   return pw.Column(
     mainAxisSize: pw.MainAxisSize.min,
     children: [
-      pw.Container(
+      pw.SizedBox(
         width: 48,
         height: 48,
-        padding: const pw.EdgeInsets.all(3),
-        decoration: pw.BoxDecoration(
-          color: PdfColors.white,
-          border: pw.Border.all(color: PdfColor.fromHex('#CBD5E1')),
-          borderRadius: pw.BorderRadius.circular(6),
-        ),
         child: image == null
             ? pw.Center(
                 child: pw.Text(
@@ -1548,7 +1582,7 @@ pw.Widget _buildReportLogo(pw.MemoryImage? image, String label) {
                   style: pw.TextStyle(
                     fontSize: 7,
                     fontWeight: pw.FontWeight.bold,
-                    color: PdfColor.fromHex('#52677D'),
+                    color: PdfColors.black,
                   ),
                 ),
               )
@@ -1560,7 +1594,7 @@ pw.Widget _buildReportLogo(pw.MemoryImage? image, String label) {
         style: pw.TextStyle(
           fontSize: 4.8,
           fontWeight: pw.FontWeight.bold,
-          color: PdfColor.fromHex('#52677D'),
+          color: PdfColors.black,
         ),
       ),
     ],
@@ -1618,17 +1652,18 @@ pw.Widget _buildReportIdentityBlock({
     MapEntry('Reporting Period', selection.scopeLabel),
     MapEntry('Barangay Name', selection.barangayName),
     MapEntry('Date Generated', _formatFormalDateTime(generatedAt)),
-    MapEntry('Prepared By', selection.preparedBy),
+    MapEntry('BHW Assigned on Duty', selection.preparedBy),
     MapEntry('Reference No.', reportReference),
   ];
 
   return pw.Container(
     width: double.infinity,
     padding: const pw.EdgeInsets.all(16),
-    decoration: pw.BoxDecoration(
-      color: PdfColor.fromHex('#F5FAFC'),
-      border: pw.Border.all(color: PdfColors.black),
-      borderRadius: pw.BorderRadius.circular(10),
+    decoration: const pw.BoxDecoration(
+      border: pw.Border(
+        top: pw.BorderSide(color: PdfColors.black),
+        bottom: pw.BorderSide(color: PdfColors.black),
+      ),
     ),
     child: pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -1663,10 +1698,8 @@ pw.Widget _buildMetaCard(String label, String value) {
   return pw.Container(
     width: 188,
     padding: const pw.EdgeInsets.all(10),
-    decoration: pw.BoxDecoration(
-      color: PdfColors.white,
-      border: pw.Border.all(color: PdfColors.black),
-      borderRadius: pw.BorderRadius.circular(8),
+    decoration: const pw.BoxDecoration(
+      border: pw.Border(bottom: pw.BorderSide(color: PdfColors.black)),
     ),
     child: pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -1714,9 +1747,7 @@ pw.Widget _buildSummarySection({
     width: double.infinity,
     padding: const pw.EdgeInsets.all(16),
     decoration: pw.BoxDecoration(
-      color: PdfColors.white,
       border: pw.Border.all(color: PdfColors.black),
-      borderRadius: pw.BorderRadius.circular(10),
     ),
     child: pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -1763,10 +1794,8 @@ pw.Widget _buildSummaryCard(String label, String value) {
   return pw.Container(
     width: 190,
     padding: const pw.EdgeInsets.all(10),
-    decoration: pw.BoxDecoration(
-      color: PdfColor.fromHex('#FAFCFD'),
-      border: pw.Border.all(color: PdfColors.black),
-      borderRadius: pw.BorderRadius.circular(8),
+    decoration: const pw.BoxDecoration(
+      border: pw.Border(bottom: pw.BorderSide(color: PdfColors.black)),
     ),
     child: pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -1856,13 +1885,9 @@ pw.Widget _buildRecordsTable(
     columnWidths: columnWidths,
     headerAlignments: alignments,
     cellAlignments: alignments,
-    headerDecoration: const pw.BoxDecoration(
-      color: PdfColor.fromInt(0xFFE6F1F4),
-    ),
+    headerDecoration: const pw.BoxDecoration(color: PdfColors.white),
     rowDecoration: const pw.BoxDecoration(color: PdfColors.white),
-    oddRowDecoration: const pw.BoxDecoration(
-      color: PdfColor.fromInt(0xFFF8FBFC),
-    ),
+    oddRowDecoration: const pw.BoxDecoration(color: PdfColors.white),
     border: pw.TableBorder(
       top: pw.BorderSide(color: PdfColors.black),
       bottom: pw.BorderSide(color: PdfColors.black),
@@ -1919,7 +1944,6 @@ pw.Widget _buildTotalsSection(_ReportAggregation aggregation) {
     width: double.infinity,
     decoration: pw.BoxDecoration(
       border: pw.Border.all(color: PdfColors.black),
-      borderRadius: pw.BorderRadius.circular(8),
     ),
     child: pw.Table(
       border: pw.TableBorder.symmetric(
@@ -1935,7 +1959,6 @@ pw.Widget _buildTotalsSection(_ReportAggregation aggregation) {
           children: [
             pw.Container(
               padding: const pw.EdgeInsets.all(9),
-              color: PdfColor.fromHex('#F6FAFB'),
               child: pw.Text(
                 entry.key,
                 style: pw.TextStyle(
@@ -1964,9 +1987,7 @@ pw.Widget _buildRemarksSection(String remarks) {
     width: double.infinity,
     padding: const pw.EdgeInsets.all(12),
     decoration: pw.BoxDecoration(
-      color: PdfColor.fromHex('#FAFCFD'),
       border: pw.Border.all(color: PdfColors.black),
-      borderRadius: pw.BorderRadius.circular(8),
     ),
     child: pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -1994,21 +2015,27 @@ pw.Widget _buildSignatureSection(_ReportSelection selection) {
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
       _buildSignatureCard(
-        label: 'Prepared by',
-        printedName: selection.preparedBy,
-        position: selection.preparedByPosition,
+        label: 'Barangay Captain',
+        printedName: selection.approvedBy,
+        position: selection.approvedByPosition,
       ),
       pw.SizedBox(width: 12),
       _buildSignatureCard(
-        label: 'Reviewed by',
+        label: 'Barangay Kagawad in Health',
         printedName: selection.reviewedBy,
         position: selection.reviewedByPosition,
       ),
       pw.SizedBox(width: 12),
       _buildSignatureCard(
-        label: 'Approved by',
-        printedName: selection.approvedBy,
-        position: selection.approvedByPosition,
+        label: 'BHW Head',
+        printedName: selection.bhwHead,
+        position: selection.bhwHeadPosition,
+      ),
+      pw.SizedBox(width: 12),
+      _buildSignatureCard(
+        label: 'BHW Assigned on Duty',
+        printedName: selection.preparedBy,
+        position: selection.preparedByPosition,
       ),
     ],
   );
@@ -2313,7 +2340,7 @@ String _deriveDefaultBarangayName(List<Map<String, dynamic>> records) {
   }
 
   if (counts.isEmpty) {
-    return 'Barangay Not Specified';
+    return 'Barangay 03';
   }
 
   final sorted = counts.entries.toList()
@@ -2405,7 +2432,7 @@ String _defaultPreparedBy() {
 String _roleToPosition(String role, {required String fallback}) {
   final normalized = role.trim().toLowerCase();
   if (normalized == 'cho') return 'City Health Office Staff';
-  if (normalized == 'bhw') return 'Barangay Health Worker';
+  if (normalized == 'bhw') return 'BHW Assigned on Duty';
   return fallback;
 }
 
