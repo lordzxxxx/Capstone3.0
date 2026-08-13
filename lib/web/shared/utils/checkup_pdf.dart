@@ -43,6 +43,7 @@ Future<List<int>> buildCheckupPdfBytes(Map<String, dynamic> record) async {
     title: 'Check-Up Record',
     subtitle: '',
     footerText: 'Generated from the Check-Up records module.',
+    barangayName: pdfText(record['barangay']),
     summaryFields: [],
     signatureSectionOnNewPage: true,
     signatureSectionAtPageBottom: true,

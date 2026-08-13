@@ -11,6 +11,7 @@ Future<List<int>> buildPatientPdfBytes(Map<String, dynamic> patient) {
     title: 'Patient Record',
     subtitle: patientName,
     footerText: 'Generated from the Patient records module.',
+    barangayName: pdfText(patient['barangay']),
     summaryFields: [],
     sections: [
       RecordPdfSection(

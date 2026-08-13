@@ -9,6 +9,7 @@ Future<List<int>> buildMortalityPdfBytes(Map<String, dynamic> record) {
 
   return buildRecordPdfBytes(
     title: 'Mortality Record',
+    barangayName: pdfText(record['barangay']),
     subtitle: '',
     footerText: 'Generated from the Mortality records module.',
     summaryFields: [],

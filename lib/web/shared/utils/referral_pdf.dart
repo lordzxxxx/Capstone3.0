@@ -95,13 +95,15 @@ Future<List<int>> buildReferralPdfBytes(Map<String, dynamic> record) async {
     subtitle: 'Complete Referral Details',
     systemName: 'AI-DSUHIS Referral Management',
     footerText: 'Generated from the CHO Referral page.',
+    barangayName: pdfText(record['barangay']),
     summaryFields: const [],
     signatureSectionOnNewPage: true,
     signatureSectionAtPageBottom: true,
     signatureLines: const [
-      RecordPdfSignatureLine(title: 'Prepared by (BHW)'),
-      RecordPdfSignatureLine(title: 'Reviewed by (CHO)'),
-      RecordPdfSignatureLine(title: 'Assigned Doctor'),
+      RecordPdfSignatureLine(title: 'Barangay Captain'),
+      RecordPdfSignatureLine(title: 'Barangay Kagawad in Health'),
+      RecordPdfSignatureLine(title: 'BHW Head'),
+      RecordPdfSignatureLine(title: 'BHW Assigned on Duty'),
     ],
     sections: [
       RecordPdfSection(

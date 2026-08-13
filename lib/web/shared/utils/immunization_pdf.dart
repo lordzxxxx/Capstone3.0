@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 Future<List<int>> buildImmunizationPdfBytes(Map<String, dynamic> record) {
   return buildRecordPdfBytes(
     title: 'Immunization Record',
+    barangayName: pdfText(record['barangay']),
     subtitle: '',
     footerText: 'Generated from the Immunization records module.',
     summaryFields: [],
