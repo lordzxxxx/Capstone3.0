@@ -350,6 +350,37 @@ class SymptomGuidanceResult {
         'missing_guidance_conditions': missingGuidanceConditions,
         'references': references,
         'disclaimer': disclaimer,
+        'decision_support': {
+          'explanation':
+              'This guidance was based on the symptoms and conditions recognized from the text entered for this request. It is educational decision support, not a final diagnosis or prescription.',
+          'influencing_information': [
+            if (recognizedSymptoms.isNotEmpty)
+              'Recognized symptoms: ${recognizedSymptoms.join(', ')}',
+            if (recognizedConditions.isNotEmpty)
+              'Recognized conditions: ${recognizedConditions.join(', ')}',
+          ],
+          'risk_factors': emergencyWarningSigns.isEmpty
+              ? [
+                  'No emergency warning sign was returned for the recognized text',
+                ]
+              : ['Emergency warning signs were returned and require escalation'],
+          'missing_information': [
+            if (ignoredSymptoms.isNotEmpty)
+              'Unrecognized or uncertain text: ${ignoredSymptoms.join(', ')}',
+            if (missingGuidanceSymptoms.isNotEmpty)
+              'No guidance was available for: ${missingGuidanceSymptoms.join(', ')}',
+            if (recognizedSymptoms.isEmpty && recognizedConditions.isEmpty)
+              'No recognized symptom or condition was available',
+          ],
+          'confidence': null,
+          'requires_human_review': true,
+          'next_action': emergencyWarningSigns.isEmpty
+              ? 'Verify the complete record and have authorized healthcare personnel review the guidance before acting.'
+              : 'Escalate possible emergency warning signs for urgent in-person assessment by authorized healthcare personnel.',
+          'review_status': 'Pending human review',
+          'final_human_decision': '',
+          'human_review_note': '',
+        },
       },
     };
   }
@@ -428,6 +459,31 @@ class DiseasePredictionResult {
         'top_predictions': topPredictions.map((item) => item.toJson()).toList(),
         'ignored_symptoms': ignoredSymptoms,
         'disclaimer': disclaimer,
+        'decision_support': {
+          'explanation':
+              'The prediction was based on the recognized symptoms and the returned model ranking. It is educational decision support, not a final diagnosis or prescription.',
+          'influencing_information': [
+            if (recognizedSymptoms.isNotEmpty)
+              'Recognized symptoms: ${recognizedSymptoms.join(', ')}',
+            'Top ranked result: ${prediction.disease}',
+          ],
+          'risk_factors': prediction.confidence < 70
+              ? ['The returned confidence is below 70%']
+              : ['No additional risk flag was returned by this model response'],
+          'missing_information': [
+            if (ignoredSymptoms.isNotEmpty)
+              'Unrecognized or uncertain text: ${ignoredSymptoms.join(', ')}',
+            if (!confidenceThresholdMet)
+              'The confidence threshold for educational content was not met',
+          ],
+          'confidence': prediction.confidence / 100,
+          'requires_human_review': true,
+          'next_action':
+              'Verify the complete record and have authorized healthcare personnel review, modify, accept, or reject this recommendation.',
+          'review_status': 'Pending human review',
+          'final_human_decision': '',
+          'human_review_note': '',
+        },
       },
     };
   }

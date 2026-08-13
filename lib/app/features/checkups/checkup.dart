@@ -3086,11 +3086,15 @@ Map<String, dynamic>? _parseAiRecoveryPlan(dynamic recoveryData) {
       plan['estimated_recovery'],
       fallback: '',
     );
+    final decisionSupport = plan['decision_support'] is Map
+        ? Map<String, dynamic>.from(plan['decision_support'] as Map)
+        : null;
 
     if (homeCare.isEmpty &&
         precautions.isEmpty &&
         generalAdvice.isEmpty &&
-        estimatedRecovery.isEmpty) {
+        estimatedRecovery.isEmpty &&
+        decisionSupport == null) {
       return null;
     }
 
@@ -3099,11 +3103,25 @@ Map<String, dynamic>? _parseAiRecoveryPlan(dynamic recoveryData) {
       'precautions': precautions,
       'general_advice': generalAdvice,
       'estimated_recovery': estimatedRecovery,
+      if (decisionSupport != null) 'decision_support': decisionSupport,
     };
   } catch (e) {
     debugPrint('Error parsing recovery plan: $e');
     return null;
   }
+}
+
+Map<String, dynamic> _rawAiRecoveryPlan(dynamic recoveryData) {
+  try {
+    if (recoveryData is Map) return Map<String, dynamic>.from(recoveryData);
+    if (recoveryData is String && !_isInvalidAiText(recoveryData)) {
+      final decoded = jsonDecode(recoveryData);
+      if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    }
+  } catch (_) {
+    // A malformed legacy plan should not prevent the record from being read.
+  }
+  return <String, dynamic>{};
 }
 
 Widget _buildAIClassificationSection(Map<String, dynamic> record) {
@@ -3269,6 +3287,14 @@ Widget _buildAIClassificationSection(Map<String, dynamic> record) {
           ],
         ),
       ),
+      if (recoveryPlan?['decision_support'] is Map) ...[
+        const SizedBox(height: 16),
+        _buildAiDecisionSupportSection(
+          Map<String, dynamic>.from(recoveryPlan!['decision_support'] as Map),
+        ),
+        const SizedBox(height: 12),
+        _AiHumanReviewPanel(record: record),
+      ],
       // Recovery Recommendations Section
       if (recoveryPlan != null) ...[
         const SizedBox(height: 16),
@@ -3276,6 +3302,276 @@ Widget _buildAIClassificationSection(Map<String, dynamic> record) {
       ],
     ],
   );
+}
+
+Widget _buildAiDecisionSupportSection(Map<String, dynamic> support) {
+  final explanation = _safeAiText(
+    support['explanation'],
+    fallback:
+        'This output is decision support based on the available record fields, not a final diagnosis or prescription.',
+  );
+  final influencing = _safeAiStringList(support['influencing_information']);
+  final risks = _safeAiStringList(support['risk_factors']);
+  final missing = _safeAiStringList(support['missing_information']);
+  final nextAction = _safeAiText(
+    support['next_action'],
+    fallback: 'Have authorized healthcare personnel review the result.',
+  );
+  final confidenceValue = support['confidence'];
+  final confidence = confidenceValue == null
+      ? null
+      : _safeAiConfidence(confidenceValue);
+  final requiresReview = support['requires_human_review'] == true;
+
+  Widget bulletList(List<String> items, String emptyText) {
+    final visible = items.isEmpty ? [emptyText] : items;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: visible
+          .map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('•  '),
+                  Expanded(child: Text(item)),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.indigo.shade50,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.indigo.shade200),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.visibility_outlined, color: Colors.indigo.shade700),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'AI Recommendation — explainability',
+                style: TextStyle(
+                  color: Colors.indigo.shade900,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            if (requiresReview)
+              const Chip(
+                label: Text('Review required'),
+                visualDensity: VisualDensity.compact,
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Text(explanation),
+        const SizedBox(height: 12),
+        Text(
+          'What influenced it',
+          style: TextStyle(
+            color: Colors.indigo.shade900,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        bulletList(influencing, 'No specific input was recognized.'),
+        const SizedBox(height: 8),
+        Text(
+          'Risk factors',
+          style: TextStyle(
+            color: Colors.indigo.shade900,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        bulletList(risks, 'No additional risk flag was returned.'),
+        const SizedBox(height: 8),
+        Text(
+          'Missing or uncertain information',
+          style: TextStyle(
+            color: Colors.indigo.shade900,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        bulletList(missing, 'None reported by this result.'),
+        if (confidence != null) ...[
+          const SizedBox(height: 8),
+          Text('Confidence: ${(confidence * 100).toStringAsFixed(0)}%'),
+        ],
+        const SizedBox(height: 8),
+        Text.rich(
+          TextSpan(
+            children: [
+              const TextSpan(
+                text: 'Recommended next action: ',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              TextSpan(text: nextAction),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _AiHumanReviewPanel extends StatefulWidget {
+  const _AiHumanReviewPanel({required this.record});
+
+  final Map<String, dynamic> record;
+
+  @override
+  State<_AiHumanReviewPanel> createState() => _AiHumanReviewPanelState();
+}
+
+class _AiHumanReviewPanelState extends State<_AiHumanReviewPanel> {
+  static const _decisions = <String>[
+    'Pending human review',
+    'Accepted',
+    'Modified',
+    'Rejected',
+  ];
+
+  late String _decision;
+  late final TextEditingController _noteController;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final support = _existingSupport();
+    final storedDecision = _safeAiText(
+      support['final_human_decision'],
+      fallback: '',
+    );
+    _decision = _decisions.contains(storedDecision)
+        ? storedDecision
+        : _safeAiText(support['review_status'], fallback: _decisions.first);
+    if (!_decisions.contains(_decision)) _decision = _decisions.first;
+    _noteController = TextEditingController(
+      text: _safeAiText(support['human_review_note'], fallback: ''),
+    );
+  }
+
+  Map<String, dynamic> _existingSupport() {
+    final plan = _rawAiRecoveryPlan(widget.record['ai_recovery_plan']);
+    final support = plan['decision_support'];
+    return support is Map ? Map<String, dynamic>.from(support) : {};
+  }
+
+  Future<void> _saveReview() async {
+    final id = widget.record['id']?.toString().trim() ?? '';
+    if (id.isEmpty) return;
+    setState(() => _saving = true);
+    try {
+      final plan = _rawAiRecoveryPlan(widget.record['ai_recovery_plan']);
+      final support = plan['decision_support'] is Map
+          ? Map<String, dynamic>.from(plan['decision_support'] as Map)
+          : <String, dynamic>{};
+      support['review_status'] = _decision;
+      support['final_human_decision'] = _decision == 'Pending human review'
+          ? ''
+          : _decision;
+      support['human_review_note'] = _noteController.text.trim();
+      plan['decision_support'] = support;
+      await DatabaseHelper.instance.updateRecord(id, {
+        'ai_recovery_plan': plan,
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Human review decision saved.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Human review could not be saved.')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blueGrey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Final Human Decision',
+            style: TextStyle(color: _darkDeepTeal, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'For authorized healthcare personnel. This decision is separate from the AI recommendation.',
+            style: TextStyle(color: _mutedCoolGray, fontSize: 12),
+          ),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<String>(
+            initialValue: _decision,
+            decoration: const InputDecoration(labelText: 'Review status'),
+            items: _decisions
+                .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+                .toList(),
+            onChanged: _saving
+                ? null
+                : (value) => setState(() => _decision = value!),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _noteController,
+            enabled: !_saving,
+            minLines: 2,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              labelText: 'Reviewer note',
+              hintText:
+                  'Add the reason for accepting, modifying, or rejecting the recommendation.',
+            ),
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.icon(
+              onPressed: _saving ? null : _saveReview,
+              icon: _saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined),
+              label: const Text('Save review'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
@@ -4663,6 +4959,14 @@ class _NewCheckUpFullScreenModalState
                         confidence,
                         keywords,
                       ),
+                      if (recoveryPlan?['decision_support'] is Map) ...[
+                        const SizedBox(height: 16),
+                        _buildAiDecisionSupportSection(
+                          Map<String, dynamic>.from(
+                            recoveryPlan!['decision_support'] as Map,
+                          ),
+                        ),
+                      ],
                       if (result.warning != null) ...[
                         const SizedBox(height: 12),
                         _buildPredictionNotice(
@@ -5771,10 +6075,14 @@ class _EditCheckUpFullScreenModalState
                                   .join(', ');
                             }
                             if (classification.recoveryPlan != null) {
-                              updatedRecord['ai_recovery_plan'] =
-                                  Map<String, dynamic>.from(
-                                    classification.recoveryPlan!,
-                                  );
+                              final recoveryPlan = Map<String, dynamic>.from(
+                                classification.recoveryPlan!,
+                              );
+                              if (classification.decisionSupport != null) {
+                                recoveryPlan['decision_support'] =
+                                    classification.decisionSupport!.toJson();
+                              }
+                              updatedRecord['ai_recovery_plan'] = recoveryPlan;
                             }
                           } catch (e) {
                             debugPrint('AI classification failed on edit: $e');

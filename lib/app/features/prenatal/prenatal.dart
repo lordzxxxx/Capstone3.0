@@ -2704,8 +2704,17 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                                       .join(', ');
                                 }
                                 if (classification.recoveryPlan != null) {
+                                  final recoveryPlan =
+                                      Map<String, dynamic>.from(
+                                        classification.recoveryPlan!,
+                                      );
+                                  if (classification.decisionSupport != null) {
+                                    recoveryPlan['decision_support'] =
+                                        classification.decisionSupport!
+                                            .toJson();
+                                  }
                                   newRecord['ai_recovery_plan'] = jsonEncode(
-                                    classification.recoveryPlan!,
+                                    recoveryPlan,
                                   );
                                 }
                               } catch (e) {

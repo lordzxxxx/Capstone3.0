@@ -388,9 +388,11 @@ class _HomePageState extends State<HomePage> {
 
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
-          requestAlertPermission: true,
-          requestBadgePermission: true,
-          requestSoundPermission: true,
+          // Notification permission is not requested during app startup.
+          // A future notification opt-in flow must request it in context.
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
         );
 
     Future<void> initializeWithIcon(String iconName) async {

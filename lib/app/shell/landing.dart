@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:mycapstone_project/app/features/auth/login.dart';
 import 'package:mycapstone_project/app/features/auth/signup.dart';
 import 'package:mycapstone_project/app/features/dashboard/homepage.dart';
+import 'package:mycapstone_project/app/shared/widgets/privacy_notice_button.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 
 /// Mobile entry screen that uses the same fixed two-part composition as the
@@ -172,6 +173,8 @@ class LandingPage extends StatelessWidget {
                 child: const Text('Continue offline'),
               ),
             ),
+            const SizedBox(height: 4),
+            const Center(child: PrivacyNoticeButton()),
           ],
         ),
       ),

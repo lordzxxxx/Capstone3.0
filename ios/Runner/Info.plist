@@ -27,9 +27,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Scan health-service forms and supporting documents for record entry.</string>
+	<string>AI-DSUHIS uses the camera only when you choose document scanning, OCR, or a supporting photo.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Select health-service forms and supporting documents for OCR.</string>
+	<string>AI-DSUHIS uses your photo library only when you choose an existing image for OCR or upload.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

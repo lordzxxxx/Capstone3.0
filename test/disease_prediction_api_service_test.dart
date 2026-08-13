@@ -82,6 +82,13 @@ void main() {
       expect(result.homeCare, ['Rest and drink fluids.']);
       expect(result.emergencyWarningSigns, ['Difficulty breathing.']);
       expect(result.toRecordFields().containsKey('ai_confidence'), isFalse);
+      final recordFields = result.toRecordFields();
+      final recoveryPlan = recordFields['ai_recovery_plan'] as Map;
+      expect(recoveryPlan['decision_support'], isA<Map>());
+      expect(
+        (recoveryPlan['decision_support'] as Map)['requires_human_review'],
+        isTrue,
+      );
       service.close();
     },
   );

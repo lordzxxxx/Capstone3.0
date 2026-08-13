@@ -7,6 +7,7 @@ import 'package:mycapstone_project/web/features/auth/bhw_registration.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 import 'package:mycapstone_project/web/shared/widgets/liquid_glass_navbar.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
+import 'package:mycapstone_project/shared/privacy_notice.dart';
 
 const Color _primaryAqua = AppColors.primary;
 const Color _primaryAquaBright = Color(0xFF4EA1FF);
@@ -1434,7 +1435,7 @@ class _LandingPageState extends State<LandingPage>
           context,
           'Privacy Policy',
           'AI-DSUHIS Privacy Policy',
-          'AI-DSUHIS uses role-based access to protect account and health information. Access is limited to authorized users and activity is recorded for accountability.',
+          PrivacyNoticeContent.dialogText,
         ),
         _buildFooterLink(
           context,
@@ -1611,7 +1612,7 @@ class _LandingPageState extends State<LandingPage>
           context,
           'Privacy Policy',
           'AI-DSUHIS Privacy Policy',
-          'AI-DSUHIS uses role-based access to protect account and health information. Access is limited to authorized users and activity is recorded for accountability.',
+          PrivacyNoticeContent.dialogText,
         ),
         _buildFooterLink(
           context,

@@ -800,6 +800,9 @@ class HealthAIClassifier {
     result = _ruleBasedClassify(healthData);
 
     result = _withLowConfidenceAdvisory(result);
+    result = result.withDecisionSupport(
+      AiDecisionSupport.fromClassification(result, healthData),
+    );
 
     debugPrint('[AI] Classification complete:');
     debugPrint('  Category: ${result.category}');
@@ -841,10 +844,7 @@ class HealthAIClassifier {
       _lowConfidenceAdvisory,
       ...(plan?['precautions'] as List?)?.cast<String>() ?? const <String>[],
     ];
-    final updatedPlan = <String, dynamic>{
-      ...?plan,
-      'precautions': precautions,
-    };
+    final updatedPlan = <String, dynamic>{...?plan, 'precautions': precautions};
     return ClassificationResult(
       category: result.category,
       severity: result.severity,
@@ -858,6 +858,7 @@ class HealthAIClassifier {
       ],
       keywords: result.keywords,
       recoveryPlan: updatedPlan,
+      decisionSupport: result.decisionSupport,
     );
   }
 
@@ -973,7 +974,8 @@ class HealthAIClassifier {
     var maxScore = scores[maxCategory]!;
 
     for (var entry in scores.entries) {
-      final isBetter = entry.value > maxScore ||
+      final isBetter =
+          entry.value > maxScore ||
           (entry.value == maxScore && entry.key == 'Emergency');
       if (isBetter) {
         maxCategory = entry.key;
@@ -1058,7 +1060,8 @@ class HealthAIClassifier {
       // deliberately low, roughly-uniform confidence instead of an
       // artificially confident margin computed from near-zero scores.
       return scores.map(
-        (k, v) => MapEntry(k, total <= 0 ? 0.0 : (v / total) * _noEvidenceConfidence),
+        (k, v) =>
+            MapEntry(k, total <= 0 ? 0.0 : (v / total) * _noEvidenceConfidence),
       );
     }
     return scores.map((k, v) => MapEntry(k, v / total));
@@ -1715,6 +1718,7 @@ class ClassificationResult {
   final List<String> recommendedActions;
   final List<String>? keywords;
   final Map<String, dynamic>? recoveryPlan;
+  final AiDecisionSupport? decisionSupport;
 
   ClassificationResult({
     required this.category,
@@ -1726,7 +1730,24 @@ class ClassificationResult {
     required this.recommendedActions,
     this.keywords,
     this.recoveryPlan,
+    this.decisionSupport,
   });
+
+  ClassificationResult withDecisionSupport(AiDecisionSupport support) {
+    final existingPlan = recoveryPlan ?? <String, dynamic>{};
+    return ClassificationResult(
+      category: category,
+      severity: severity,
+      confidence: confidence,
+      categoryProbabilities: categoryProbabilities,
+      severityProbabilities: severityProbabilities,
+      method: method,
+      recommendedActions: recommendedActions,
+      keywords: keywords,
+      recoveryPlan: {...existingPlan, 'decision_support': support.toJson()},
+      decisionSupport: support,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'category': category,
@@ -1738,6 +1759,7 @@ class ClassificationResult {
     'recommended_actions': recommendedActions,
     'keywords': keywords,
     'recovery_plan': recoveryPlan,
+    'decision_support': decisionSupport?.toJson(),
     'timestamp': DateTime.now().toIso8601String(),
   };
 
@@ -1745,6 +1767,146 @@ class ClassificationResult {
   String toString() {
     return 'ClassificationResult(category: $category, severity: $severity, '
         'confidence: ${(confidence * 100).toStringAsFixed(1)}%, method: $method)';
+  }
+}
+
+/// User-facing explanation for an AI result. It reports observable inputs and
+/// uncertainty, not internal reasoning or hidden chain-of-thought.
+class AiDecisionSupport {
+  const AiDecisionSupport({
+    required this.explanation,
+    required this.influencingInformation,
+    required this.riskFactors,
+    required this.missingInformation,
+    required this.confidence,
+    required this.requiresHumanReview,
+    required this.nextAction,
+    this.reviewStatus = 'Pending human review',
+    this.finalHumanDecision = '',
+    this.humanReviewNote = '',
+  });
+
+  final String explanation;
+  final List<String> influencingInformation;
+  final List<String> riskFactors;
+  final List<String> missingInformation;
+  final double confidence;
+  final bool requiresHumanReview;
+  final String nextAction;
+  final String reviewStatus;
+  final String finalHumanDecision;
+  final String humanReviewNote;
+
+  static AiDecisionSupport fromClassification(
+    ClassificationResult result,
+    Map<String, dynamic> healthData,
+  ) {
+    final keywords =
+        result.keywords
+            ?.map((value) => value.trim())
+            .where((value) => value.isNotEmpty)
+            .toList(growable: false) ??
+        const <String>[];
+    final influencing = <String>[];
+    if (keywords.isNotEmpty) {
+      influencing.add('Recognized terms: ${keywords.join(', ')}');
+    }
+    if (_hasValue(healthData['symptoms'])) {
+      influencing.add('Entered symptoms');
+    }
+    if (_hasValue(healthData['details'])) {
+      influencing.add('Entered clinical details');
+    }
+    if (_hasValue(healthData['vitalsigns'])) {
+      influencing.add('Available vital signs');
+    }
+    if (_hasValue(healthData['riskLevel']) ||
+        _hasValue(healthData['preExistingConditions']) ||
+        _hasValue(healthData['previousComplications'])) {
+      influencing.add('Available risk or history fields');
+    }
+    if (influencing.isEmpty) {
+      influencing.add(
+        'Available record fields only; no specific symptom term was recognized',
+      );
+    }
+
+    final missing = <String>[];
+    if (!_hasValue(healthData['symptoms']) &&
+        !_hasValue(healthData['details'])) {
+      missing.add('Symptoms or clinical details were not provided');
+    }
+    if (!_hasValue(healthData['age'])) missing.add('Age was not provided');
+    if (!_hasValue(healthData['vitalsigns'])) {
+      missing.add('Relevant vital signs were not provided');
+    }
+    if (keywords.isEmpty) {
+      missing.add('No specific recognized symptom term was available');
+    }
+
+    final risks = <String>[];
+    if (result.category == 'Emergency' || result.severity == 'Critical') {
+      risks.add('Emergency or critical-severity indicators were detected');
+    } else if (result.severity == 'High') {
+      risks.add('High-severity indicators were detected');
+    }
+    final age = int.tryParse(healthData['age']?.toString() ?? '');
+    if (age != null && (age < 5 || age >= 65)) {
+      risks.add('The recorded age may require additional clinical attention');
+    }
+    if (risks.isEmpty) {
+      risks.add(
+        'No additional risk flag was generated by the available fields',
+      );
+    }
+
+    final needsReview =
+        result.confidence < 0.75 ||
+        result.category == 'Emergency' ||
+        result.severity == 'High' ||
+        result.severity == 'Critical' ||
+        missing.isNotEmpty;
+    final explanation = keywords.isEmpty
+        ? 'The AI selected ${result.category} with ${result.severity} severity '
+              'from the available record fields, but no specific symptom term '
+              'was recognized.'
+        : 'The AI selected ${result.category} with ${result.severity} severity '
+              'based on the recognized terms and available structured fields '
+              'shown below.';
+    final nextAction =
+        result.category == 'Emergency' || result.severity == 'Critical'
+        ? 'Escalate for urgent in-person assessment now. An authorized healthcare professional must make the final decision.'
+        : needsReview
+        ? 'Verify the source record and have authorized healthcare personnel review, modify, accept, or reject this recommendation.'
+        : 'Use this as screening support and confirm it against the complete record with authorized healthcare personnel.';
+
+    return AiDecisionSupport(
+      explanation:
+          '$explanation This is decision support, not a final diagnosis or prescription.',
+      influencingInformation: List.unmodifiable(influencing),
+      riskFactors: List.unmodifiable(risks),
+      missingInformation: List.unmodifiable(missing),
+      confidence: result.confidence,
+      requiresHumanReview: needsReview,
+      nextAction: nextAction,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'explanation': explanation,
+    'influencing_information': influencingInformation,
+    'risk_factors': riskFactors,
+    'missing_information': missingInformation,
+    'confidence': confidence,
+    'requires_human_review': requiresHumanReview,
+    'next_action': nextAction,
+    'review_status': reviewStatus,
+    'final_human_decision': finalHumanDecision,
+    'human_review_note': humanReviewNote,
+  };
+
+  static bool _hasValue(Object? value) {
+    return value != null && value.toString().trim().isNotEmpty;
   }
 }
 

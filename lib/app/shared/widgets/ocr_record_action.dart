@@ -7,6 +7,43 @@ import 'package:mycapstone_project/app/theme/app_theme.dart';
 
 typedef OcrRecordCallback = Future<void> Function(OcrExtraction extraction);
 
+/// Platform-independent permission copy used by the contextual OCR flow and
+/// unit tests. The OS prompt itself remains owned by image_picker.
+class OcrPermissionPolicy {
+  OcrPermissionPolicy._();
+
+  static String rationale(ImageSource source, String moduleLabel) {
+    if (source == ImageSource.camera) {
+      return 'Allow camera access only for this $moduleLabel scan. The image '
+          'is used to read the document for OCR; the app does not use the '
+          'camera in the background.';
+    }
+    return 'Allow access to the photo you choose for this $moduleLabel OCR '
+        'task. AI-DSUHIS does not browse your gallery or access photos in the '
+        'background.';
+  }
+
+  static String deniedMessage(
+    ImageSource source, {
+    String code = '',
+    String message = '',
+  }) {
+    final details = '$code $message'.toLowerCase();
+    final permissionWasDenied =
+        details.contains('denied') ||
+        details.contains('permission') ||
+        details.contains('restricted') ||
+        details.contains('access_denied');
+    if (!permissionWasDenied) {
+      return 'OCR could not read this image. Please try again.';
+    }
+    final sourceName = source == ImageSource.camera ? 'Camera' : 'Photos';
+    return '$sourceName access was declined. OCR from this source is '
+        'unavailable until you enable it in device Settings. You can still '
+        'use manual entry or another available feature.';
+  }
+}
+
 /// A normalized OCR field with an explicit confidence value.
 ///
 /// Google ML Kit exposes line/element confidence on Android and may return
@@ -624,6 +661,33 @@ class OcrRecordCapture {
     );
     if (source == null || !context.mounted) return;
 
+    // image_picker delegates the actual OS prompt to the platform. This
+    // rationale is shown immediately before that request so the user knows
+    // why the selected source is needed. No camera/photo access is requested
+    // when the app opens, and this path never requests location access.
+    final continueToPermission = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          source == ImageSource.camera
+              ? 'Camera access for OCR'
+              : 'Photos access for OCR',
+        ),
+        content: Text(_permissionRationale(source, moduleLabel)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Not now'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+    if (continueToPermission != true || !context.mounted) return;
+
     var loadingDialogVisible = false;
     try {
       final image = await ImagePicker().pickImage(
@@ -666,6 +730,12 @@ class OcrRecordCapture {
         extraction: extraction,
         onOcrReady: onOcrReady,
       );
+    } on PlatformException catch (error) {
+      if (!context.mounted) return;
+      if (loadingDialogVisible) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+      _message(context, _permissionDeniedMessage(source, error));
     } catch (_) {
       if (!context.mounted) return;
       if (loadingDialogVisible) {
@@ -673,6 +743,21 @@ class OcrRecordCapture {
       }
       _message(context, 'OCR could not read this image. Please try again.');
     }
+  }
+
+  static String _permissionRationale(ImageSource source, String moduleLabel) {
+    return OcrPermissionPolicy.rationale(source, moduleLabel);
+  }
+
+  static String _permissionDeniedMessage(
+    ImageSource source,
+    PlatformException error,
+  ) {
+    return OcrPermissionPolicy.deniedMessage(
+      source,
+      code: error.code,
+      message: error.message ?? '',
+    );
   }
 
   static Future<void> _review({
