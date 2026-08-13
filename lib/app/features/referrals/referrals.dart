@@ -13,9 +13,8 @@ import 'package:mycapstone_project/app/theme/app_theme.dart';
 const Color _primaryAqua = AppDesign.blue;
 const Color _darkDeepTeal = AppDesign.page;
 const Color _panelSurface = AppDesign.surface;
-const Color _panelAlt = AppDesign.blueSoft;
+const Color _panelAlt = AppDesign.informationBackground;
 const Color _lightOffWhite = AppDesign.ink;
-const Color _mutedCoolGray = AppDesign.muted;
 
 class ReferralsPage extends StatefulWidget {
   const ReferralsPage({super.key});
@@ -1072,12 +1071,21 @@ class _ReferralsPageState extends State<ReferralsPage> {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: _lightOffWhite),
+      labelStyle: const TextStyle(color: AppDesign.muted, fontSize: 13),
       filled: true,
-      fillColor: _darkDeepTeal,
+      fillColor: AppDesign.surface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppDesign.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppDesign.blue, width: 1.5),
+      ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppDesign.border),
       ),
     );
   }
@@ -1093,15 +1101,15 @@ class _ReferralsPageState extends State<ReferralsPage> {
   Color _statusColor(String status) {
     switch (status) {
       case 'completed':
-        return Colors.greenAccent;
+        return const Color(0xFF059669); // Emerald Green
       case 'in_treatment':
-        return Colors.amberAccent;
+        return const Color(0xFF0D9488); // Teal
       case 'assigned':
-        return Colors.lightBlueAccent;
+        return AppDesign.blue; // Medical Blue
       case 'under_review':
-        return Colors.orangeAccent;
+        return const Color(0xFFD97706); // Amber
       default:
-        return Colors.redAccent;
+        return const Color(0xFF7C3AED); // Purple (Submitted)
     }
   }
 
@@ -1121,46 +1129,77 @@ class _ReferralsPageState extends State<ReferralsPage> {
 
   Widget _buildHeader() {
     final title = _isChoOperator
-        ? 'CHO Referral Command Center'
+        ? 'CHO Inter-Facility Referral & Doctor Triaging Command Center'
         : _isDoctor
-        ? 'Assigned Clinical Referrals'
-        : 'Barangay Referral Workflow';
+        ? 'Attending Physician Referral & Clinical Consultations Desk'
+        : 'Barangay Patient Referral & Clinical Intake System';
     final subtitle = _isChoOperator
-        ? 'Receive referrals in real time, review them centrally, and assign the right doctor for each patient.'
+        ? 'Real-time central dispatch, emergency triaging, and AI-assisted doctor matching connecting Barangay Health Centers to City Health Officers.'
         : _isDoctor
-        ? 'Manage assigned referrals, document diagnosis and treatment, and keep CHO and BHW teams synchronized.'
-        : 'Submit referrals to CHO, monitor doctor assignment, and follow the patient care lifecycle end to end.';
+        ? 'Manage assigned patient transfers, record diagnostic findings, prescribe treatment plans, and update referral care lifecycle status.'
+        : 'Submit patient referrals to CHO, record complete vital signs and chief complaints, and monitor doctor assignment in real time.';
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: <Color>[_panelSurface, _panelAlt],
+          colors: <Color>[AppDesign.navy, AppDesign.blue],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppDesign.navy.withValues(alpha: 0.12),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: _lightOffWhite,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            subtitle,
-            style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.76),
-              height: 1.45,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.local_hospital_rounded,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1526,7 +1565,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
               value: _autoAssignDoctor,
-              activeColor: _primaryAqua,
+              activeTrackColor: _primaryAqua,
               title: const Text(
                 'Use AI auto-assignment',
                 style: TextStyle(color: _lightOffWhite),
@@ -1606,17 +1645,16 @@ class _ReferralsPageState extends State<ReferralsPage> {
     return SizedBox(
       width: 170,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         onTap: () => onChanged(!selected),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: selected ? _primaryAqua.withValues(alpha: 0.14) : _darkDeepTeal,
-            borderRadius: BorderRadius.circular(14),
+            color: selected ? AppDesign.blue.withValues(alpha: 0.1) : AppDesign.surface,
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: selected
-                  ? _primaryAqua.withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.08),
+              color: selected ? AppDesign.blue : AppDesign.border,
+              width: selected ? 1.5 : 1,
             ),
           ),
           child: Row(
@@ -1624,14 +1662,18 @@ class _ReferralsPageState extends State<ReferralsPage> {
               Checkbox(
                 value: selected,
                 onChanged: (value) => onChanged(value ?? false),
-                activeColor: _primaryAqua,
-                checkColor: _darkDeepTeal,
-                side: BorderSide(color: _primaryAqua.withValues(alpha: 0.36)),
+                activeColor: AppDesign.blue,
+                checkColor: Colors.white,
+                side: const BorderSide(color: AppDesign.muted),
               ),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(color: _lightOffWhite),
+                  style: TextStyle(
+                    color: selected ? AppDesign.blue : AppDesign.ink,
+                    fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ],
@@ -1651,10 +1693,10 @@ class _ReferralsPageState extends State<ReferralsPage> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            color: _lightOffWhite.withValues(alpha: 0.9),
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
+          style: const TextStyle(
+            color: AppDesign.ink,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 10),
@@ -1676,10 +1718,6 @@ class _ReferralsPageState extends State<ReferralsPage> {
         ),
       ],
     );
-  }
-
-  Widget _buildSizedInput({required double width, required Widget child}) {
-    return SizedBox(width: width, child: child);
   }
 
   Widget _buildSummaryCards(
@@ -1715,17 +1753,17 @@ class _ReferralsPageState extends State<ReferralsPage> {
 
     final summaries = <({String label, String value, IconData icon})>[
       (
-        label: 'Visible referrals',
+        label: 'Total Referrals',
         value: '${docs.length}',
         icon: Icons.folder_shared_outlined,
       ),
-      (label: 'Submitted', value: '$submitted', icon: Icons.outbox_outlined),
+      (label: 'Submitted (Pending)', value: '$submitted', icon: Icons.outbox_outlined),
       (
         label: 'Assigned / Active',
         value: '${assigned + inTreatment}',
         icon: Icons.assignment_ind_outlined,
       ),
-      (label: 'Completed', value: '$completed', icon: Icons.verified_outlined),
+      (label: 'Completed Cases', value: '$completed', icon: Icons.verified_outlined),
     ];
 
     return GridView.builder(
@@ -1735,7 +1773,6 @@ class _ReferralsPageState extends State<ReferralsPage> {
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        // Keep enough vertical room to prevent label/value overflow on mobile.
         mainAxisExtent: 126,
       ),
       itemCount: summaries.length,
@@ -1750,33 +1787,59 @@ class _ReferralsPageState extends State<ReferralsPage> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _panelSurface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+        color: AppDesign.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppDesign.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppDesign.navy.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: _primaryAqua),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppDesign.blue.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: AppDesign.blue, size: 20),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           Text(
             value,
             style: const TextStyle(
-              color: _lightOffWhite,
-              fontSize: 24,
+              color: AppDesign.ink,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(label, style: const TextStyle(color: _mutedCoolGray)),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppDesign.muted,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
   }
-
   Widget _buildReferralCard(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     final status = (data['status'] ?? 'submitted').toString();
+    final patientName = (data['patientName'] ?? 'Unnamed patient').toString();
     final doctorName = (data['assignedDoctorName'] ?? 'Unassigned').toString();
     final doctorDiagnosis = (data['doctorDiagnosis'] ?? '').toString();
     final doctorTreatment = (data['doctorTreatment'] ?? '').toString();
@@ -1788,154 +1851,199 @@ class _ReferralsPageState extends State<ReferralsPage> {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _panelSurface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+        color: AppDesign.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppDesign.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppDesign.navy.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            crossAxisAlignment: WrapCrossAlignment.center,
+          Row(
             children: [
-              Text(
-                (data['patientName'] ?? 'Unnamed patient').toString(),
-                style: const TextStyle(
-                  color: _lightOffWhite,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              CircleAvatar(
+                backgroundColor: AppDesign.blue.withValues(alpha: 0.12),
+                radius: 20,
+                child: Text(
+                  patientName.isNotEmpty ? patientName[0].toUpperCase() : 'P',
+                  style: const TextStyle(
+                    color: AppDesign.blue,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      patientName,
+                      style: const TextStyle(
+                        color: AppDesign.ink,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${data['patientAge'] != null && data['patientAge'].toString().isNotEmpty ? '${data['patientAge']} yrs' : ''}${data['patientSex'] != null && data['patientSex'].toString().isNotEmpty ? ' • ${data['patientSex']}' : ''}${data['barangay'] != null && data['barangay'].toString().isNotEmpty ? ' • ${data['barangay']}' : ''}',
+                      style: const TextStyle(color: AppDesign.muted, fontSize: 12),
+                    ),
+                  ],
                 ),
               ),
               _buildStatusChip(status),
-              if ((data['barangay'] ?? '').toString().isNotEmpty)
-                _buildInfoChip((data['barangay'] ?? '').toString()),
-              _buildInfoChip('Doctor: $doctorName'),
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            'Complaint: ${(data['chiefComplaint'] ?? 'No complaint').toString()}',
-            style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.88)),
+          const Divider(height: 1, color: AppDesign.border),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.medical_information_outlined, color: AppDesign.blue, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Chief Complaint: ${(data['chiefComplaint'] ?? 'No complaint details').toString()}',
+                  style: const TextStyle(
+                    color: AppDesign.ink,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
-          Text(
-            'Referral reason: ${(data['referralReason'] ?? 'Not provided').toString()}',
-            style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72)),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 16,
-            runSpacing: 10,
+          Row(
             children: [
-              _buildMetaBlock(
-                'Current diagnosis',
-                (data['currentDiagnosis'] ?? 'Not recorded').toString(),
-              ),
-              _buildMetaBlock(
-                'Current treatment',
-                (data['currentTreatment'] ?? 'Not recorded').toString(),
-              ),
-              _buildMetaBlock(
-                'Current medication',
-                (data['currentMedication'] ?? 'Not recorded').toString(),
+              const Icon(Icons.transfer_within_a_station_rounded, color: AppDesign.muted, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Referral Reason: ${(data['referralReason'] ?? 'Not provided').toString()}',
+                  style: const TextStyle(color: AppDesign.muted, fontSize: 12),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          if (_hasDoctorUpdate(data))
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              _buildMetaBlock(
+                'Complete Vital Signs',
+                (data['vitalSigns'] ?? 'Not recorded').toString(),
+              ),
+              _buildMetaBlock(
+                'Clinical Impression',
+                (data['currentDiagnosis'] ?? data['impression'] ?? 'Not recorded').toString(),
+              ),
+              _buildMetaBlock(
+                'Assigned Specialist',
+                doctorName,
+              ),
+            ],
+          ),
+          if (_hasDoctorUpdate(data)) ...[
+            const SizedBox(height: 12),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: _darkDeepTeal,
-                borderRadius: BorderRadius.circular(14),
+                color: AppDesign.informationBackground,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppDesign.blue.withValues(alpha: 0.2)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Doctor update',
-                    style: TextStyle(
-                      color: _lightOffWhite,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: const [
+                      Icon(Icons.health_and_safety_outlined, color: AppDesign.blue, size: 16),
+                      SizedBox(width: 6),
+                      Text(
+                        'Attending Doctor Update & Care Plan',
+                        style: TextStyle(
+                          color: AppDesign.ink,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
-                    'Diagnosis: ${doctorDiagnosis.isEmpty ? 'Pending' : doctorDiagnosis}',
-                    style: const TextStyle(color: _lightOffWhite),
+                    'Diagnosis: ${doctorDiagnosis.isEmpty ? 'Pending evaluation' : doctorDiagnosis}',
+                    style: const TextStyle(color: AppDesign.ink, fontSize: 12, fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
-                    'Treatment: ${doctorTreatment.isEmpty ? 'Pending' : doctorTreatment}',
-                    style: const TextStyle(color: _lightOffWhite),
+                    'Treatment: ${doctorTreatment.isEmpty ? 'Pending treatment' : doctorTreatment}',
+                    style: const TextStyle(color: AppDesign.ink, fontSize: 12),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
-                    'Medication: ${doctorMedication.isEmpty ? 'Pending' : doctorMedication}',
-                    style: const TextStyle(color: _lightOffWhite),
+                    'Medication: ${doctorMedication.isEmpty ? 'None prescribed' : doctorMedication}',
+                    style: const TextStyle(color: AppDesign.ink, fontSize: 12),
                   ),
-                  if ((data['doctorNotes'] ?? '')
-                      .toString()
-                      .trim()
-                      .isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                  if ((data['doctorNotes'] ?? '').toString().trim().isNotEmpty) ...[
+                    const SizedBox(height: 2),
                     Text(
                       'Notes: ${(data['doctorNotes'] ?? '').toString()}',
-                      style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.78),
-                      ),
+                      style: const TextStyle(color: AppDesign.muted, fontSize: 12),
                     ),
                   ],
                 ],
               ),
             ),
-          const SizedBox(height: 12),
-          Text(
-            'Submitted by ${(data['createdByName'] ?? data['createdByEmail'] ?? 'Unknown').toString()} • ${_formatTimestamp(data['createdAt'])}',
-            style: const TextStyle(color: _mutedCoolGray),
-          ),
-          if ((data['choReviewNotes'] ?? '').toString().trim().isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              'CHO notes: ${(data['choReviewNotes'] ?? '').toString()}',
-              style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.76)),
-            ),
           ],
           if (assignmentRationale.trim().isNotEmpty) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
-              '${assignmentMode == 'smart' ? 'Smart assignment' : 'Manual assignment'}: $assignmentRationale',
-              style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72)),
+              '${assignmentMode == 'smart' ? 'Smart Assignment' : 'Manual Assignment'}: $assignmentRationale',
+              style: const TextStyle(color: AppDesign.muted, fontSize: 11),
             ),
           ],
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Expanded(
+                child: Text(
+                  'Submitted by ${(data['createdByName'] ?? data['createdByEmail'] ?? 'BHW').toString()} • ${_formatTimestamp(data['createdAt'])}',
+                  style: const TextStyle(color: AppDesign.muted, fontSize: 11),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
               if (_isChoOperator)
-                OutlinedButton.icon(
+                ElevatedButton.icon(
                   onPressed: () => _showAssignmentDialog(doc),
-                  icon: const Icon(Icons.assignment_ind_outlined),
-                  label: const Text('Assign doctor'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _primaryAqua,
-                    side: BorderSide(
-                      color: _primaryAqua.withValues(alpha: 0.32),
-                    ),
+                  icon: const Icon(Icons.assignment_ind_outlined, size: 16),
+                  label: const Text('Assign Doctor', style: TextStyle(fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppDesign.blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 ),
               if (_isDoctor)
-                OutlinedButton.icon(
+                ElevatedButton.icon(
                   onPressed: () => _showDoctorUpdateDialog(doc),
-                  icon: const Icon(Icons.medical_information_outlined),
-                  label: const Text('Update care'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.greenAccent,
-                    side: const BorderSide(color: Colors.greenAccent),
+                  icon: const Icon(Icons.medical_information_outlined, size: 16),
+                  label: const Text('Update Care Plan', style: TextStyle(fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF059669),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 ),
             ],
@@ -1954,13 +2062,13 @@ class _ReferralsPageState extends State<ReferralsPage> {
 
   Widget _buildMetaBlock(String label, String value) {
     return SizedBox(
-      width: 260,
+      width: 220,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: _mutedCoolGray)),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(color: _lightOffWhite)),
+          Text(label, style: const TextStyle(color: AppDesign.muted, fontSize: 11, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 2),
+          Text(value, style: const TextStyle(color: AppDesign.ink, fontSize: 12, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis),
         ],
       ),
     );
@@ -1968,18 +2076,18 @@ class _ReferralsPageState extends State<ReferralsPage> {
 
   Widget _buildStatusChip(String status) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: _statusColor(status).withValues(alpha: 0.18),
+        color: _statusColor(status).withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: _statusColor(status).withValues(alpha: 0.32)),
+        border: Border.all(color: _statusColor(status).withValues(alpha: 0.3)),
       ),
       child: Text(
         status.replaceAll('_', ' ').toUpperCase(),
         style: TextStyle(
           color: _statusColor(status),
           fontWeight: FontWeight.bold,
-          fontSize: 12,
+          fontSize: 11,
         ),
       ),
     );
@@ -1987,14 +2095,15 @@ class _ReferralsPageState extends State<ReferralsPage> {
 
   Widget _buildInfoChip(String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: _darkDeepTeal,
+        color: AppDesign.page,
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppDesign.border),
       ),
       child: Text(
         label,
-        style: const TextStyle(color: _lightOffWhite, fontSize: 12),
+        style: const TextStyle(color: AppDesign.ink, fontSize: 11),
       ),
     );
   }
@@ -2002,10 +2111,16 @@ class _ReferralsPageState extends State<ReferralsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: AppDesign.page,
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
-        title: const Text('Referral Management'),
+        backgroundColor: AppDesign.surface,
+        foregroundColor: AppDesign.ink,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        title: const Text(
+          'Inter-Facility Referral Management',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         actions: [
           IconButton(
             onPressed: _loadScope,
@@ -2015,7 +2130,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _primaryAqua))
+          ? const Center(child: CircularProgressIndicator(color: AppDesign.blue))
           : _loadErrorMessage != null
           ? Center(
               child: Padding(
@@ -2025,14 +2140,14 @@ class _ReferralsPageState extends State<ReferralsPage> {
                   children: [
                     const Icon(
                       Icons.error_outline_rounded,
-                      color: Colors.orangeAccent,
+                      color: Colors.orange,
                       size: 42,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       _loadErrorMessage!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: _lightOffWhite),
+                      style: const TextStyle(color: AppDesign.ink),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -2050,14 +2165,14 @@ class _ReferralsPageState extends State<ReferralsPage> {
                   return Center(
                     child: Text(
                       'Could not load referrals: ${snapshot.error}',
-                      style: const TextStyle(color: _lightOffWhite),
+                      style: const TextStyle(color: AppDesign.ink),
                     ),
                   );
                 }
 
                 if (!snapshot.hasData) {
                   return const Center(
-                    child: CircularProgressIndicator(color: _primaryAqua),
+                    child: CircularProgressIndicator(color: AppDesign.blue),
                   );
                 }
 
@@ -2076,40 +2191,50 @@ class _ReferralsPageState extends State<ReferralsPage> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: _panelSurface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: _primaryAqua.withValues(alpha: 0.16),
-                          ),
+                          color: AppDesign.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppDesign.border),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppDesign.navy.withValues(alpha: 0.04),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Live Referral Queue',
+                              'Live Patient Referral Queue',
                               style: TextStyle(
-                                color: _lightOffWhite,
-                                fontSize: 20,
+                                color: AppDesign.ink,
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 4),
                             Text(
                               _isChoOperator
-                                  ? 'CHO can review all referred patients and route them to doctors in real time.'
+                                  ? 'CHO central queue: Review referred patients and route them to doctors in real time.'
                                   : _isDoctor
-                                  ? 'Only referrals assigned to you appear here.'
-                                  : 'Your submitted referrals remain visible here as CHO and doctors update patient care.',
-                              style: TextStyle(
-                                color: _lightOffWhite.withValues(alpha: 0.72),
+                                  ? 'Doctor desk: Only referrals assigned to your care appear here.'
+                                  : 'Barangay queue: Track submitted referrals as CHO and doctors update patient care.',
+                              style: const TextStyle(
+                                color: AppDesign.muted,
+                                fontSize: 13,
                               ),
                             ),
                             const SizedBox(height: 18),
                             if (docs.isEmpty)
-                              Text(
-                                'No referrals available for your role yet.',
-                                style: TextStyle(
-                                  color: _lightOffWhite.withValues(alpha: 0.72),
+                              const Padding(
+                                padding: EdgeInsets.all(12),
+                                child: Text(
+                                  'No referrals available in queue yet.',
+                                  style: TextStyle(
+                                    color: AppDesign.muted,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               )
                             else
