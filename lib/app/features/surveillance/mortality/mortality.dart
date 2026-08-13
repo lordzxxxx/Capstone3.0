@@ -90,7 +90,12 @@ class _MortalityPageState extends State<MortalityPage>
 
     try {
       // Load mortality records from database
-      final recordsList = await _mortalityHelper.getAllRecords();
+      var recordsList = await _mortalityHelper.getAllRecords();
+
+      if (recordsList.isEmpty) {
+        await _mortalityHelper.seedSample100Records();
+        recordsList = await _mortalityHelper.getAllRecords();
+      }
 
       // Calculate metrics from records
       final totalDeaths = recordsList.length;
@@ -471,15 +476,15 @@ class _MortalityPageState extends State<MortalityPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: AppDesign.page,
       appBar: AppBar(
         title: const Text(
           'Mortality List',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: AppDesign.ink, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.surface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: AppDesign.ink),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -529,11 +534,11 @@ class _MortalityPageState extends State<MortalityPage>
   Widget _buildOverviewDashboard() {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: _darkDeepTeal,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+      decoration: const BoxDecoration(
+        color: AppDesign.surface,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
         ),
       ),
       child: Padding(
@@ -544,17 +549,17 @@ class _MortalityPageState extends State<MortalityPage>
             const Text(
               'Mortality Overview',
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: AppDesign.ink,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             if (_isLoadingMetrics)
-              const Center(
+              Center(
                 child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: CircularProgressIndicator(color: Colors.white),
+                  padding: const EdgeInsets.all(20),
+                  child: CircularProgressIndicator(color: _primaryAqua),
                 ),
               )
             else
@@ -567,7 +572,7 @@ class _MortalityPageState extends State<MortalityPage>
                           title: 'Total Deaths',
                           value: _totalDeaths.toString(),
                           icon: Icons.assignment,
-                          color: Colors.white,
+                          color: AppDesign.surface,
                           textColor: _primaryAqua,
                         ),
                       ),
@@ -577,7 +582,7 @@ class _MortalityPageState extends State<MortalityPage>
                           title: 'Elderly Deaths',
                           value: _elderlyDeaths.toString(),
                           icon: Icons.elderly,
-                          color: Colors.white,
+                          color: AppDesign.surface,
                           textColor: const Color(0xFFD84315),
                         ),
                       ),
@@ -591,7 +596,7 @@ class _MortalityPageState extends State<MortalityPage>
                           title: 'Leading Cause',
                           value: _leadingCause,
                           icon: Icons.warning,
-                          color: Colors.white,
+                          color: AppDesign.surface,
                           textColor: const Color(0xFF7B1FA2),
                           isSmallText: true,
                         ),
@@ -602,7 +607,7 @@ class _MortalityPageState extends State<MortalityPage>
                           title: 'Verification Rate',
                           value: '${_verificationRate.toStringAsFixed(1)}%',
                           icon: Icons.verified,
-                          color: Colors.white,
+                          color: AppDesign.surface,
                           textColor: const Color(0xFF4CAF50),
                         ),
                       ),
@@ -627,17 +632,17 @@ class _MortalityPageState extends State<MortalityPage>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: AppDesign.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.5),
+          color: _primaryAqua.withValues(alpha: 0.35),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -647,14 +652,14 @@ class _MortalityPageState extends State<MortalityPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: Colors.white, size: 28),
+              Icon(icon, color: textColor, size: 26),
               if (!isSmallText)
                 Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: 28,
+                  style: TextStyle(
+                    fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: textColor,
                   ),
                 ),
             ],
@@ -663,10 +668,10 @@ class _MortalityPageState extends State<MortalityPage>
           if (isSmallText)
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: textColor,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -675,7 +680,7 @@ class _MortalityPageState extends State<MortalityPage>
             title,
             style: const TextStyle(
               fontSize: 13,
-              color: Colors.white,
+              color: AppDesign.muted,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -698,12 +703,12 @@ class _MortalityPageState extends State<MortalityPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Statistical Analysis',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: AppDesign.ink,
           ),
         ),
         const SizedBox(height: 16),
@@ -955,15 +960,15 @@ class _MortalityPageState extends State<MortalityPage>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: AppDesign.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.5),
+          color: _primaryAqua.withValues(alpha: 0.35),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -978,7 +983,7 @@ class _MortalityPageState extends State<MortalityPage>
               Expanded(
                 child: Row(
                   children: [
-                    Icon(icon, color: Colors.white, size: 20),
+                    Icon(icon, color: _primaryAqua, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -986,7 +991,7 @@ class _MortalityPageState extends State<MortalityPage>
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: AppDesign.ink,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1029,12 +1034,12 @@ class _MortalityPageState extends State<MortalityPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Detailed Statistics',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: AppDesign.ink,
           ),
         ),
         const SizedBox(height: 16),
@@ -1047,20 +1052,18 @@ class _MortalityPageState extends State<MortalityPage>
         _buildAgeTable(),
       ],
     );
-  }
-
-  Widget _buildCauseTable() {
+  }  Widget _buildCauseTable() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: AppDesign.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.5),
+          color: _primaryAqua.withValues(alpha: 0.35),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1076,14 +1079,14 @@ class _MortalityPageState extends State<MortalityPage>
               children: [
                 Row(
                   children: [
-                    Icon(Icons.table_chart, color: _primaryAqua, size: 20),
+                    Icon(Icons.pie_chart, color: _primaryAqua, size: 20),
                     const SizedBox(width: 8),
-                    Text(
+                    const Text(
                       'Cause of Death Breakdown',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppDesign.ink,
                       ),
                     ),
                   ],
@@ -1108,13 +1111,13 @@ class _MortalityPageState extends State<MortalityPage>
               headingRowColor: WidgetStateProperty.all(
                 _primaryAqua.withValues(alpha: 0.1),
               ),
-              columns: [
+              columns: const [
                 DataColumn(
                   label: Text(
                     'Cause of Death',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ),
                 ),
@@ -1123,7 +1126,7 @@ class _MortalityPageState extends State<MortalityPage>
                     'Percentage',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ),
                 ),
@@ -1132,7 +1135,7 @@ class _MortalityPageState extends State<MortalityPage>
                     'Progress',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ),
                 ),
@@ -1141,7 +1144,7 @@ class _MortalityPageState extends State<MortalityPage>
                     'Death Count',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ),
                 ),
@@ -1152,13 +1155,13 @@ class _MortalityPageState extends State<MortalityPage>
                     DataCell(
                       Text(
                         cause.cause,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppDesign.ink),
                       ),
                     ),
                     DataCell(
                       Text(
                         '${cause.percentage.toStringAsFixed(1)}%',
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppDesign.ink),
                       ),
                     ),
                     DataCell(
@@ -1176,7 +1179,7 @@ class _MortalityPageState extends State<MortalityPage>
                     DataCell(
                       Text(
                         cause.count.toString(),
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppDesign.ink),
                       ),
                     ),
                   ],
@@ -1192,15 +1195,15 @@ class _MortalityPageState extends State<MortalityPage>
   Widget _buildAgeTable() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: AppDesign.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.5),
+          color: _primaryAqua.withValues(alpha: 0.35),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1218,12 +1221,12 @@ class _MortalityPageState extends State<MortalityPage>
                   children: [
                     Icon(Icons.table_rows, color: _primaryAqua, size: 20),
                     const SizedBox(width: 8),
-                    Text(
+                    const Text(
                       'Age Distribution',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppDesign.ink,
                       ),
                     ),
                   ],
@@ -1248,13 +1251,13 @@ class _MortalityPageState extends State<MortalityPage>
               headingRowColor: WidgetStateProperty.all(
                 _primaryAqua.withValues(alpha: 0.1),
               ),
-              columns: [
+              columns: const [
                 DataColumn(
                   label: Text(
                     'Age Range',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ),
                 ),
@@ -1263,7 +1266,7 @@ class _MortalityPageState extends State<MortalityPage>
                     'Death Count',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ),
                 ),
@@ -1272,7 +1275,7 @@ class _MortalityPageState extends State<MortalityPage>
                     'Percentage',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ),
                 ),
@@ -1283,19 +1286,19 @@ class _MortalityPageState extends State<MortalityPage>
                     DataCell(
                       Text(
                         age.ageRange,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppDesign.ink),
                       ),
                     ),
                     DataCell(
                       Text(
                         age.count.toString(),
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppDesign.ink),
                       ),
                     ),
                     DataCell(
                       Text(
                         '${age.percentage.toStringAsFixed(1)}%',
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppDesign.ink),
                       ),
                     ),
                   ],
@@ -1318,16 +1321,16 @@ class _MortalityPageState extends State<MortalityPage>
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: AppDesign.ink,
           ),
         ),
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
-            color: _darkDeepTeal,
+            color: AppDesign.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: _primaryAqua.withValues(alpha: 0.5),
+              color: _primaryAqua.withValues(alpha: 0.35),
               width: 1.5,
             ),
             boxShadow: [
@@ -1341,12 +1344,12 @@ class _MortalityPageState extends State<MortalityPage>
           child: TextField(
             controller: _searchController,
             onChanged: _filterRecords,
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(color: AppDesign.ink),
             decoration: InputDecoration(
               hintText:
                   'Search by name, cause, place, or verification status...',
-              hintStyle: TextStyle(
-                color: _mutedCoolGray.withValues(alpha: 0.7),
+              hintStyle: const TextStyle(
+                color: AppDesign.muted,
               ),
               prefixIcon: Icon(Icons.search, color: _primaryAqua),
               suffixIcon: _searchQuery.isNotEmpty
@@ -1378,17 +1381,17 @@ class _MortalityPageState extends State<MortalityPage>
           padding: const EdgeInsets.all(40),
           child: Column(
             children: [
-              Icon(
+              const Icon(
                 Icons.search_off,
                 size: 64,
-                color: Colors.white.withValues(alpha: 0.5),
+                color: AppDesign.muted,
               ),
               const SizedBox(height: 16),
               Text(
                 _searchQuery.isEmpty
                     ? 'No records found'
                     : 'No results for "$_searchQuery"',
-                style: const TextStyle(fontSize: 16, color: Colors.white),
+                style: const TextStyle(fontSize: 16, color: AppDesign.muted),
               ),
             ],
           ),
@@ -1705,8 +1708,8 @@ class _MortalityPageState extends State<MortalityPage>
           rowsPerPage: _effectiveRowsPerPage,
           itemLabel: 'records',
           accentColor: _primaryAqua,
-          textColor: _lightOffWhite,
-          surfaceColor: _darkDeepTeal.withValues(alpha: 0.55),
+          textColor: AppDesign.ink,
+          surfaceColor: AppDesign.surface,
           onRowsPerPageChanged: (value) {
             setState(() {
               _rowsPerPage = value > 0 ? value : _defaultRowsPerPage;

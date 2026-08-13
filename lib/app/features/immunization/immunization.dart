@@ -142,7 +142,12 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     await _dbHelper.syncFromFirebase();
 
     // Reload after sync
-    final updatedRecords = await _dbHelper.getAllRecords();
+    var updatedRecords = await _dbHelper.getAllRecords();
+
+    if (updatedRecords.isEmpty) {
+      await _dbHelper.seedSampleImmunizationData();
+      updatedRecords = await _dbHelper.getAllRecords();
+    }
 
     setState(() {
       _immunizationRecords = updatedRecords;
@@ -642,18 +647,18 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: AppDesign.page,
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.surface,
         elevation: 0,
         title: Text(
           'Immunization Records',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _lightOffWhite,
+            color: AppDesign.ink,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: _lightOffWhite),
+        iconTheme: const IconThemeData(color: AppDesign.ink),
         actions: [
           PopupMenuButton(
             icon: const Icon(Icons.more_vert),

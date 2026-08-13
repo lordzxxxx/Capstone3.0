@@ -168,12 +168,20 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       await _dbHelper.syncFromFirebase();
 
       // Load non-communicable disease records from check-up database
-      final allRecords = await _dbHelper.getAllRecords();
+      var allRecords = await _dbHelper.getAllRecords();
 
       // Filter for non-communicable diseases only
-      final nonCommunicableRecords = allRecords.where((record) {
+      var nonCommunicableRecords = allRecords.where((record) {
         return record['diseaseType'] == 'Non-Communicable';
       }).toList();
+
+      if (nonCommunicableRecords.isEmpty) {
+        await _dbHelper.seedSampleNonCommunicableData();
+        allRecords = await _dbHelper.getAllRecords();
+        nonCommunicableRecords = allRecords.where((record) {
+          return record['diseaseType'] == 'Non-Communicable';
+        }).toList();
+      }
 
       final currentPatients = _collapseCurrentPatients(
         nonCommunicableRecords.map((record) {
@@ -359,18 +367,18 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: AppDesign.page,
       appBar: AppBar(
         title: const Text(
           'Non-Communicable Disease Management',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: AppDesign.ink, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.surface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: AppDesign.ink),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add, color: AppDesign.blue),
             onPressed: () {
               _showAddPatientDialog();
             },
@@ -479,8 +487,8 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                   rowsPerPage: _effectiveRowsPerPage,
                   itemLabel: 'records',
                   accentColor: _primaryAqua,
-                  textColor: _lightOffWhite,
-                  surfaceColor: _darkDeepTeal.withValues(alpha: 0.55),
+                  textColor: AppDesign.ink,
+                  surfaceColor: AppDesign.surface,
                   onRowsPerPageChanged: (value) {
                     setState(() {
                       _rowsPerPage = value > 0 ? value : _defaultRowsPerPage;
@@ -511,7 +519,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       ),
       bottomNavigationBar: (_isSelectionMode && _selectedIndices.isNotEmpty)
           ? BottomAppBar(
-              color: _darkDeepTeal,
+              color: AppDesign.surface,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -523,7 +531,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                     Text(
                       '${_selectedIndices.length} selected',
                       style: const TextStyle(
-                        color: _lightOffWhite,
+                        color: AppDesign.ink,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -544,15 +552,14 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     );
   }
 
-  // Overview Dashboard Section
   Widget _buildOverviewDashboard() {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+      decoration: const BoxDecoration(
+        color: AppDesign.surface,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
         ),
       ),
       child: Padding(
@@ -563,17 +570,17 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
             const Text(
               'NCD Overview',
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: AppDesign.ink,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             if (_isLoadingMetrics)
-              const Center(
+              Center(
                 child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: CircularProgressIndicator(color: Colors.white),
+                  padding: const EdgeInsets.all(20),
+                  child: CircularProgressIndicator(color: _primaryAqua),
                 ),
               )
             else
@@ -586,8 +593,8 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                           title: 'Active Cases',
                           value: _activeCases.toString(),
                           icon: Icons.people,
-                          color: Colors.transparent,
-                          textColor: Colors.white,
+                          color: AppDesign.surface,
+                          textColor: AppDesign.ink,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -596,8 +603,8 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                           title: 'Control Rate',
                           value: '${_controlRate.toStringAsFixed(1)}%',
                           icon: Icons.trending_up,
-                          color: Colors.transparent,
-                          textColor: Colors.white,
+                          color: AppDesign.surface,
+                          textColor: AppDesign.ink,
                         ),
                       ),
                     ],
@@ -622,20 +629,19 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color,
+        color: AppDesign.surface,
         borderRadius: BorderRadius.circular(16),
-        border: color == Colors.transparent
-            ? Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 1)
-            : null,
-        boxShadow: color == Colors.transparent
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.35),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -643,13 +649,13 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: textColor, size: 28),
+              Icon(icon, color: _primaryAqua, size: 26),
               Text(
                 value,
-                style: TextStyle(
-                  fontSize: 28,
+                style: const TextStyle(
+                  fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: textColor,
+                  color: AppDesign.ink,
                 ),
               ),
             ],
@@ -657,9 +663,9 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
           const SizedBox(height: 8),
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
-              color: textColor.withValues(alpha: 0.8),
+              color: AppDesign.muted,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -673,15 +679,15 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: AppDesign.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.3),
-          width: 1,
+          color: _primaryAqua.withValues(alpha: 0.35),
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -692,14 +698,14 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
         children: [
           Row(
             children: [
-              Icon(Icons.local_hospital, color: Colors.white, size: 24),
+              Icon(Icons.local_hospital, color: _primaryAqua, size: 22),
               const SizedBox(width: 8),
-              Text(
+              const Text(
                 'Disease Types',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: AppDesign.ink,
                 ),
               ),
             ],
@@ -713,7 +719,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                 children: [
                   Text(
                     entry.key,
-                    style: TextStyle(fontSize: 14, color: Colors.white),
+                    style: const TextStyle(fontSize: 14, color: AppDesign.ink),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -721,7 +727,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: _primaryAqua.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -729,7 +735,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: _primaryAqua,
                       ),
                     ),
                   ),
@@ -746,40 +752,47 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
-        color: _darkDeepTeal,
+        color: AppDesign.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.3),
+          color: _primaryAqua.withValues(alpha: 0.35),
           width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: TextField(
         controller: _searchController,
         onChanged: _filterPatients,
-        cursorColor: Colors.white,
+        cursorColor: _primaryAqua,
         textInputAction: TextInputAction.search,
         style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
+          color: AppDesign.ink,
+          fontSize: 15,
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           hintText: 'Search by patient name, condition, or status...',
-          hintStyle: TextStyle(
-            color: Colors.white.withValues(alpha: 0.5),
+          hintStyle: const TextStyle(
+            color: AppDesign.muted,
             fontSize: 15,
             fontWeight: FontWeight.w400,
           ),
           prefixIcon: Icon(
             Icons.search,
-            color: Colors.white.withValues(alpha: 0.9),
+            color: _primaryAqua,
             size: 22,
           ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
                   icon: Icon(
                     Icons.clear,
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: _primaryAqua,
                     size: 20,
                   ),
                   onPressed: () {
@@ -838,204 +851,198 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   }
 
   Widget _buildPatientCard(Map<String, dynamic> patient) {
+    final statusColors = AppDesign.statusColors(
+      patient['currentStatus']?.toString() ?? '',
+    );
     return GestureDetector(
       onLongPress: () => _showRecordActionModal(patient),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.transparent,
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        elevation: 1,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: _primaryAqua.withValues(alpha: 0.3),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          side: BorderSide(color: AppDesign.border),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Patient Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: _getStatusColor(
-                      patient['currentStatus'],
-                    ).withValues(alpha: 0.3),
-                    child: Text(
-                      patient['patientName']
-                          .toString()
-                          .substring(0, 1)
-                          .toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          patient['patientName'],
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${patient['age']} years • ${patient['gender']}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(patient['currentStatus']),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      patient['currentStatus'],
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+        child: InkWell(
+          onTap: () => _viewPatientDetails(patient),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppDesign.surface,
+              borderRadius: BorderRadius.circular(16),
             ),
-
-            // Patient Details
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _buildDetailRow(
-                    icon: Icons.medical_information,
-                    label: 'Condition',
-                    value: patient['condition'],
-                    color: Colors.white,
-                  ),
-                  Divider(
-                    height: 20,
-                    color: Colors.white.withValues(alpha: 0.2),
-                  ),
-                  _buildDetailRow(
-                    icon: Icons.medication,
-                    label: 'Treatment',
-                    value: patient['treatment'],
-                    color: Colors.white,
-                  ),
-                  Divider(
-                    height: 20,
-                    color: Colors.white.withValues(alpha: 0.2),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildDetailRow(
-                          icon: Icons.calendar_today,
-                          label: 'Last Visit',
-                          value: _formatDate(patient['lastVisit']),
-                          color: Colors.white,
-                          isCompact: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Patient header ──────────────────────────────────
+                Row(
+                  children: [
+                    // Avatar
+                    Container(
+                      width: 52,
+                      height: 52,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: _primaryAqua.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _primaryAqua.withValues(alpha: 0.30),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildDetailRow(
-                          icon: Icons.event,
-                          label: 'Next Visit',
-                          value: _formatDate(patient['nextVisit']),
-                          color: Colors.white,
-                          isCompact: true,
+                      child: Text(
+                        patient['patientName']
+                            .toString()
+                            .substring(0, 1)
+                            .toUpperCase(),
+                        style: TextStyle(
+                          color: _primaryAqua,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ],
-                  ),
-                  if (patient['notes'] != null &&
-                      patient['notes'].toString().isNotEmpty) ...[
-                    Divider(
-                      height: 20,
-                      color: Colors.white.withValues(alpha: 0.2),
                     ),
-                    _buildDetailRow(
-                      icon: Icons.note,
-                      label: 'Notes',
-                      value: patient['notes'],
-                      color: Colors.white,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            patient['patientName'].toString(),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppDesign.ink,
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${patient['age']} yrs • ${patient['gender']}',
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              color: AppDesign.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Status badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColors.background,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: statusColors.foreground.withValues(alpha: 0.22),
+                        ),
+                      ),
+                      child: Text(
+                        patient['currentStatus'] ?? '',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: statusColors.foreground,
+                        ),
+                      ),
                     ),
                   ],
-                ],
-              ),
-            ),
-
-            // Actions
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
                 ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildActionButton(
-                    icon: Icons.visibility,
-                    label: 'View',
-                    onTap: () => _viewPatientDetails(patient),
-                  ),
-                  _buildActionButton(
-                    icon: Icons.edit,
-                    label: 'Edit',
-                    onTap: () => _editPatient(patient),
-                  ),
-                  _buildActionButton(
-                    icon: Icons.medical_services,
-                    label: 'Treatment',
-                    onTap: () => _manageTreatment(patient),
-                  ),
-                  _buildActionButton(
-                    icon: Icons.history,
-                    label: 'History',
-                    onTap: () => _viewHistory(patient),
+
+                const SizedBox(height: 14),
+                const Divider(),
+                const SizedBox(height: 12),
+
+                // ── Details grid ────────────────────────────────────
+                _buildDetailRow(
+                  icon: Icons.medical_information,
+                  label: 'Condition',
+                  value: patient['condition'],
+                  color: const Color(0xFFD84315),
+                ),
+                const SizedBox(height: 12),
+                _buildDetailRow(
+                  icon: Icons.medication,
+                  label: 'Treatment',
+                  value: patient['treatment'],
+                  color: const Color(0xFF7B1FA2),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildDetailRow(
+                        icon: Icons.calendar_today,
+                        label: 'Last Visit',
+                        value: _formatDate(patient['lastVisit']),
+                        color: _primaryAqua,
+                        isCompact: true,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildDetailRow(
+                        icon: Icons.event,
+                        label: 'Next Visit',
+                        value: _formatDate(patient['nextVisit']),
+                        color: const Color(0xFF059669),
+                        isCompact: true,
+                      ),
+                    ),
+                  ],
+                ),
+                if (patient['notes'] != null &&
+                    patient['notes'].toString().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _buildDetailRow(
+                    icon: Icons.note_outlined,
+                    label: 'Notes',
+                    value: patient['notes'],
+                    color: AppDesign.subtle,
                   ),
                 ],
-              ),
+
+                const SizedBox(height: 12),
+                const Divider(),
+
+                // ── Action buttons ───────────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildActionButton(
+                      icon: Icons.visibility,
+                      label: 'View',
+                      color: _primaryAqua,
+                      onTap: () => _viewPatientDetails(patient),
+                    ),
+                    _buildActionButton(
+                      icon: Icons.edit,
+                      label: 'Edit',
+                      color: const Color(0xFFF59E0B),
+                      onTap: () => _editPatient(patient),
+                    ),
+                    _buildActionButton(
+                      icon: Icons.medical_services,
+                      label: 'Treatment',
+                      color: const Color(0xFF7B1FA2),
+                      onTap: () => _manageTreatment(patient),
+                    ),
+                    _buildActionButton(
+                      icon: Icons.history,
+                      label: 'History',
+                      color: const Color(0xFF059669),
+                      onTap: () => _viewHistory(patient),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -1051,26 +1058,36 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: isCompact ? 18 : 20, color: Colors.white),
-        const SizedBox(width: 8),
+        Container(
+          width: isCompact ? 28 : 32,
+          height: isCompact ? 28 : 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Icon(icon, size: isCompact ? 15 : 17, color: color),
+        ),
+        const SizedBox(width: 9),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                label,
-                style: TextStyle(
-                  fontSize: isCompact ? 11 : 12,
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontWeight: FontWeight.w500,
+                label.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 9.5,
+                  color: AppDesign.subtle,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.45,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.white,
+                  fontSize: 13,
+                  color: AppDesign.ink,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1084,6 +1101,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   Widget _buildActionButton({
     required IconData icon,
     required String label,
+    required Color color,
     required VoidCallback onTap,
   }) {
     return InkWell(
@@ -1093,14 +1111,14 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Column(
           children: [
-            Icon(icon, color: Colors.white, size: 24),
+            Icon(icon, color: color, size: 22),
             const SizedBox(height: 4),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
+                color: color,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],

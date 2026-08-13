@@ -974,17 +974,17 @@ class _CheckUpPageState extends State<CheckUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: AppDesign.page,
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.surface,
         title: Text(
           'Check Up Dashboard',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _lightOffWhite,
+            color: AppDesign.ink,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: _lightOffWhite),
+        iconTheme: const IconThemeData(color: AppDesign.ink),
         elevation: 0,
         actions: [
           PopupMenuButton(

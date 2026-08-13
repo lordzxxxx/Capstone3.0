@@ -268,18 +268,18 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: AppDesign.page,
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.surface,
         elevation: 0,
         title: Text(
           'Patient Records',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _lightOffWhite,
+            color: AppDesign.ink,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: _lightOffWhite),
+        iconTheme: const IconThemeData(color: AppDesign.ink),
         actions: [
           PopupMenuButton(
             icon: const Icon(Icons.more_vert),
@@ -297,7 +297,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         children: [
           SingleChildScrollView(
             child: Container(
-              color: _darkDeepTeal,
+              color: AppDesign.page,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -1416,16 +1416,16 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: AppDesign.ink,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: _darkDeepTeal.withValues(alpha: 0.8),
+            color: AppDesign.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _primaryAqua.withValues(alpha: 0.4)),
+            border: Border.all(color: _primaryAqua.withValues(alpha: 0.3)),
           ),
           child: Column(children: children),
         ),
@@ -1439,14 +1439,14 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.white, size: 18),
+          Icon(icon, color: _primaryAqua, size: 18),
           const SizedBox(width: 12),
           Expanded(
             flex: 2,
             child: Text(
               label,
               style: const TextStyle(
-                color: Colors.white70,
+                color: AppDesign.muted,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -1458,7 +1458,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
             child: Text(
               value?.toString() ?? 'N/A',
               style: const TextStyle(
-                color: Colors.white,
+                color: AppDesign.ink,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),

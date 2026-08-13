@@ -57,6 +57,18 @@ class PatientHistoryDialogs {
     return history;
   }
 
+  // ─── Design tokens for the light-mode Check Up History screen ───────────
+  static const Color _histBg        = Color(0xFFF8FAFC); // page background
+  static const Color _histSurface   = Color(0xFFFFFFFF); // card surface
+  static const Color _histAccent    = Color(0xFF2563EB); // primary blue
+  static const Color _histText      = Color(0xFF0F172A); // navy dark
+  static const Color _histMuted     = Color(0xFF64748B); // slate muted
+  static const Color _histBorder    = Color(0xFFE2E8F0); // card border
+  static const Color _histGreenBg   = Color(0xFFD1FAE5); // completed badge bg
+  static const Color _histGreenFg   = Color(0xFF065F46); // completed badge text
+  static const Color _histBlueBg    = Color(0xFFDBEAFE); // scheduled badge bg
+  static const Color _histBlueFg    = Color(0xFF1D4ED8); // scheduled badge text
+
   static Future<void> showModuleHistoryDialog({
     required BuildContext context,
     required String moduleTitle,
@@ -76,9 +88,10 @@ class PatientHistoryDialogs {
     bool fullScreen = false,
   }) async {
     final latestRecord = history.isNotEmpty ? history.first : seedRecord;
-    final patientName = _patientName(latestRecord);
-    final patientId = _patientId(latestRecord);
-    final latestDate = _firstDate(latestRecord, dateKeys);
+    final patientName  = _patientName(latestRecord);
+    final patientId    = _patientId(latestRecord);
+    final latestDate   = _firstDate(latestRecord, dateKeys);
+    final initials     = _buildInitials(patientName);
 
     await showDialog<void>(
       context: context,
@@ -87,329 +100,552 @@ class PatientHistoryDialogs {
           backgroundColor: Colors.transparent,
           insetPadding: fullScreen
               ? EdgeInsets.zero
-              : const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              : const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           child: Container(
             constraints: BoxConstraints(
-              maxWidth: fullScreen ? double.infinity : 760,
+              maxWidth: fullScreen ? double.infinity : 480,
               maxHeight: fullScreen
                   ? MediaQuery.of(dialogContext).size.height
-                  : MediaQuery.of(dialogContext).size.height * 0.84,
+                  : MediaQuery.of(dialogContext).size.height * 0.92,
             ),
-            width: fullScreen ? double.infinity : null,
+            width:  fullScreen ? double.infinity : null,
             height: fullScreen ? double.infinity : null,
             decoration: BoxDecoration(
-              color: _darkDeepTeal,
-              borderRadius: BorderRadius.circular(fullScreen ? 0 : 24),
-              border: Border.all(color: _lightOffWhite.withValues(alpha: 0.14)),
+              color: _histBg,
+              borderRadius: BorderRadius.circular(fullScreen ? 0 : 20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.32),
-                  blurRadius: 24,
-                  offset: const Offset(0, 14),
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 32,
+                  offset: const Offset(0, 12),
                 ),
               ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+
+                // ── Zone 1 · Header bar ──────────────────────────────────────
                 Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [_darkDeepTeal, _secondaryIceBlue],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: _histSurface,
+                    border: Border(bottom: BorderSide(color: _histBorder)),
                     borderRadius: fullScreen
                         ? BorderRadius.zero
                         : const BorderRadius.only(
-                            topLeft: Radius.circular(24),
-                            topRight: Radius.circular(24),
+                            topLeft: Radius.circular(20),
+                            topRight: Radius.circular(20),
                           ),
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Accent top strip
                       Container(
-                        width: 46,
-                        height: 46,
+                        height: 3,
                         decoration: BoxDecoration(
-                          color: AppDesign.ink.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          Icons.history_rounded,
-                          color: _lightOffWhite,
-                          size: 22,
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF2563EB), Color(0xFF60A5FA)],
+                          ),
+                          borderRadius: fullScreen
+                              ? BorderRadius.zero
+                              : const BorderRadius.only(
+                                  topLeft: Radius.circular(20),
+                                  topRight: Radius.circular(20),
+                                ),
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+                        child: Row(
                           children: [
-                            Text(
-                              '$moduleTitle History',
-                              style: const TextStyle(
-                                color: _lightOffWhite,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
+                            IconButton(
+                              onPressed: () => Navigator.of(dialogContext).pop(),
+                              icon: const Icon(
+                                Icons.arrow_back_rounded,
+                                color: _histText,
+                                size: 22,
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              patientName,
-                              style: TextStyle(
-                                color: AppDesign.ink.withValues(alpha: 0.92),
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
+                            Expanded(
+                              child: Text(
+                                '$moduleTitle History',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: _histText,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.3,
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              description ??
-                                  'Review previous records first, then add the next visit for the same patient.',
-                              style: TextStyle(
-                                color: AppDesign.ink.withValues(alpha: 0.72),
-                                fontSize: 12,
-                                height: 1.4,
-                              ),
-                            ),
+                            // Spacer to balance the back button
+                            const SizedBox(width: 48),
                           ],
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(),
-                        icon: Icon(
-                          Icons.close_rounded,
-                          color: AppDesign.ink.withValues(alpha: 0.84),
-                        ),
-                      ),
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-                  child: Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      _buildSummaryChip(
-                        icon: Icons.badge_outlined,
-                        label: 'Patient ID',
-                        value: patientId.isEmpty ? 'Not linked' : patientId,
-                      ),
-                      _buildSummaryChip(
-                        icon: Icons.library_books_outlined,
-                        label: 'History Entries',
-                        value: '${history.length}',
-                      ),
-                      _buildSummaryChip(
-                        icon: Icons.event_outlined,
-                        label: 'Latest Update',
-                        value: latestDate == null ? 'No date' : _formatDate(latestDate),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
+
+                // ── Scrollable body ──────────────────────────────────────────
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: history.isEmpty
-                        ? Center(
-                            child: Text(
-                              emptyMessage ??
-                                  'No previous records were found for this patient in this module.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: AppDesign.ink.withValues(alpha: 0.72),
-                                fontSize: 14,
-                                height: 1.4,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+
+                        // ── Zone 2 · Patient profile header ─────────────────
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+                          color: _histSurface,
+                          child: Row(
+                            children: [
+                              // Avatar circle
+                              Container(
+                                width: 52,
+                                height: 52,
+                                decoration: BoxDecoration(
+                                  color: _histAccent,
+                                  shape: BoxShape.circle,
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  initials,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      patientName,
+                                      style: const TextStyle(
+                                        color: _histText,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    // Patient ID pill
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: _histBlueBg,
+                                        borderRadius: BorderRadius.circular(999),
+                                      ),
+                                      child: Text(
+                                        patientId.isEmpty
+                                            ? 'Patient ID: —'
+                                            : 'Patient ID: #$patientId',
+                                        style: const TextStyle(
+                                          color: _histBlueFg,
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // ── Zone 3 · Summary banner ──────────────────────────
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _histSurface,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: _histBorder),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: IntrinsicHeight(
+                              child: Row(
+                                children: [
+                                  _buildMetricCell(
+                                    label: 'Total Visits',
+                                    value: '${history.length}',
+                                    icon: Icons.favorite_border_rounded,
+                                    iconColor: _histAccent,
+                                  ),
+                                  VerticalDivider(
+                                    color: _histBorder,
+                                    width: 1,
+                                    thickness: 1,
+                                  ),
+                                  _buildMetricCell(
+                                    label: 'Last Update',
+                                    value: latestDate == null
+                                        ? 'No date'
+                                        : _formatHumanDate(latestDate),
+                                    icon: Icons.calendar_today_rounded,
+                                    iconColor: const Color(0xFF7C3AED),
+                                  ),
+                                  VerticalDivider(
+                                    color: _histBorder,
+                                    width: 1,
+                                    thickness: 1,
+                                  ),
+                                  _buildMetricCell(
+                                    label: 'Status',
+                                    value: 'Active Patient',
+                                    icon: Icons.verified_rounded,
+                                    iconColor: const Color(0xFF059669),
+                                  ),
+                                ],
                               ),
                             ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // ── Zone 4 · Timeline feed ───────────────────────────
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'Visit Timeline',
+                            style: TextStyle(
+                              color: _histText,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        if (history.isEmpty)
+                          _buildLightEmptyState(
+                            emptyMessage ??
+                                'No previous records were found for this patient.',
                           )
-                        : ListView.separated(
-                            itemCount: history.length,
-                            separatorBuilder: (_, _) => const SizedBox(height: 10),
-                            itemBuilder: (context, index) {
-                              final record = history[index];
-                              final title = titleBuilder?.call(record) ?? _patientName(record);
-                              final subtitle = subtitleBuilder?.call(record) ?? 'Record ${index + 1}';
-                              final meta = metaBuilder?.call(record) ?? '';
-                              final date = _firstDate(record, dateKeys);
-                              return InkWell(
-                                onTap: onOpenRecord == null ? null : () => onOpenRecord(record),
-                                borderRadius: BorderRadius.circular(18),
-                                child: Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: AppDesign.blueSoft,
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(
-                                      color: _lightOffWhite.withValues(alpha: 0.08),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                        else
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Column(
+                              children: List.generate(history.length, (index) {
+                                final record = history[index];
+                                final title    = titleBuilder?.call(record) ?? _patientName(record);
+                                final subtitle = subtitleBuilder?.call(record) ?? 'Visit ${index + 1}';
+                                final date     = _firstDate(record, dateKeys);
+                                final isLast   = index == history.length - 1;
+                                final statusRaw = (record['status'] ?? record['ai_category'] ?? '').toString().toLowerCase();
+                                final isCompleted = statusRaw.contains('complete');
+                                final rawSymptoms = record['symptoms']?.toString() ?? '';
+
+                                return IntrinsicHeight(
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
-                                      Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  title,
-                                                  style: const TextStyle(
-                                                    color: _lightOffWhite,
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.w700,
+
+                                      // Timeline spine
+                                      SizedBox(
+                                        width: 24,
+                                        child: Column(
+                                          children: [
+                                            // Status dot
+                                            Container(
+                                              width: 14,
+                                              height: 14,
+                                              margin: const EdgeInsets.only(top: 18),
+                                              decoration: BoxDecoration(
+                                                color: isCompleted
+                                                    ? const Color(0xFF059669)
+                                                    : _histAccent,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: Colors.white,
+                                                  width: 2,
+                                                ),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: (isCompleted
+                                                            ? const Color(0xFF059669)
+                                                            : _histAccent)
+                                                        .withValues(alpha: 0.35),
+                                                    blurRadius: 6,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            // Connector line
+                                            if (!isLast)
+                                              Expanded(
+                                                child: Container(
+                                                  width: 2,
+                                                  margin: const EdgeInsets.symmetric(
+                                                    vertical: 4,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    gradient: LinearGradient(
+                                                      colors: [
+                                                        _histBorder,
+                                                        _histBorder.withValues(alpha: 0.3),
+                                                      ],
+                                                      begin: Alignment.topCenter,
+                                                      end: Alignment.bottomCenter,
+                                                    ),
+                                                    borderRadius: BorderRadius.circular(1),
                                                   ),
                                                 ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  subtitle,
-                                                  style: TextStyle(
-                                                    color: AppDesign.ink.withValues(alpha: 0.76),
-                                                    fontSize: 12.5,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 10),
+
+                                      // Visit card
+                                      Expanded(
+                                        child: GestureDetector(
+                                          onTap: onOpenRecord == null
+                                              ? null
+                                              : () => onOpenRecord(record),
+                                          child: Container(
+                                            margin: EdgeInsets.only(
+                                              bottom: isLast ? 0 : 10,
+                                            ),
+                                            padding: const EdgeInsets.all(14),
+                                            decoration: BoxDecoration(
+                                              color: _histSurface,
+                                              borderRadius: BorderRadius.circular(14),
+                                              border: Border.all(color: _histBorder),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withValues(alpha: 0.04),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 2),
                                                 ),
                                               ],
                                             ),
-                                          ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 6,
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+
+                                                // Top row: timestamp + status badge
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        date == null
+                                                            ? 'No date'
+                                                            : _formatHumanTimestamp(date),
+                                                        style: TextStyle(
+                                                          color: _histMuted,
+                                                          fontSize: 11.5,
+                                                          fontWeight: FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    // Status badge
+                                                    Container(
+                                                      padding: const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 3,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: isCompleted
+                                                            ? _histGreenBg
+                                                            : _histBlueBg,
+                                                        borderRadius:
+                                                            BorderRadius.circular(999),
+                                                      ),
+                                                      child: Text(
+                                                        isCompleted
+                                                            ? 'Completed'
+                                                            : 'Scheduled',
+                                                        style: TextStyle(
+                                                          color: isCompleted
+                                                              ? _histGreenFg
+                                                              : _histBlueFg,
+                                                          fontSize: 10.5,
+                                                          fontWeight: FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+
+                                                const SizedBox(height: 8),
+
+                                                // Visit title (ai_category / status)
+                                                Text(
+                                                  title,
+                                                  style: const TextStyle(
+                                                    color: _histText,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+
+                                                const SizedBox(height: 4),
+
+                                                // Subtitle (symptoms label)
+                                                Text(
+                                                  subtitle,
+                                                  style: TextStyle(
+                                                    color: _histMuted,
+                                                    fontSize: 12,
+                                                    height: 1.4,
+                                                  ),
+                                                ),
+
+                                                // Symptom chips
+                                                if (rawSymptoms.isNotEmpty) ...[
+                                                  const SizedBox(height: 10),
+                                                  _buildSymptomChips(rawSymptoms),
+                                                ],
+
+                                                // View Details link
+                                                if (onOpenRecord != null) ...[
+                                                  const SizedBox(height: 10),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      Text(
+                                                        'View Details',
+                                                        style: const TextStyle(
+                                                          color: _histAccent,
+                                                          fontSize: 12,
+                                                          fontWeight: FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 2),
+                                                      const Icon(
+                                                        Icons.chevron_right_rounded,
+                                                        color: _histAccent,
+                                                        size: 16,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ],
                                             ),
-                                            decoration: BoxDecoration(
-                                              color: _primaryAqua.withValues(alpha: 0.14),
-                                              borderRadius: BorderRadius.circular(999),
-                                            ),
-                                            child: Text(
-                                              date == null ? 'No date' : _formatDate(date),
-                                              style: const TextStyle(
-                                                color: _primaryAqua,
-                                                fontSize: 11.5,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      if (meta.isNotEmpty) ...[
-                                        const SizedBox(height: 10),
-                                        Text(
-                                          meta,
-                                          style: TextStyle(
-                                            color: AppDesign.ink.withValues(alpha: 0.66),
-                                            fontSize: 12.5,
-                                            height: 1.4,
                                           ),
                                         ),
-                                      ],
+                                      ),
                                     ],
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              }),
+                            ),
                           ),
+
+                        const SizedBox(height: 8),
+                      ],
+                    ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final actionCount =
-                          1 +
-                          (onSecondaryAction == null ? 0 : 1) +
-                          (onAddAnother == null ? 0 : 1);
-                      final isStacked = constraints.maxWidth < 620;
-                      final buttonWidth = isStacked
-                          ? constraints.maxWidth
-                          : (constraints.maxWidth - (12 * (actionCount - 1))) /
-                                actionCount;
 
-                      return Wrap(
-                        spacing: 12,
-                        runSpacing: 10,
-                        children: [
-                          if (onAddAnother != null)
-                            SizedBox(
-                              width: buttonWidth,
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  Navigator.of(dialogContext).pop();
-                                  onAddAnother();
-                                },
-                                icon: const Icon(Icons.add_rounded),
-                                label: Text(
-                                  addButtonLabel ?? 'Add Another Record',
-                                  textAlign: TextAlign.center,
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _primaryAqua,
-                                  foregroundColor: _darkDeepTeal,
-                                  minimumSize: const Size.fromHeight(50),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 14,
-                                  ),
-                                ),
+                // ── Zone 5 · Sticky bottom action bar ───────────────────────
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  decoration: BoxDecoration(
+                    color: _histSurface,
+                    border: Border(top: BorderSide(color: _histBorder)),
+                    borderRadius: fullScreen
+                        ? BorderRadius.zero
+                        : const BorderRadius.only(
+                            bottomLeft: Radius.circular(20),
+                            bottomRight: Radius.circular(20),
+                          ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Primary CTA
+                      if (onAddAnother != null)
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.of(dialogContext).pop();
+                              onAddAnother();
+                            },
+                            icon: const Icon(Icons.add_rounded, size: 20),
+                            label: Text(
+                              addButtonLabel ?? 'Add Another Record',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                          if (onSecondaryAction != null)
-                            SizedBox(
-                              width: buttonWidth,
-                              child: OutlinedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _histAccent,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size.fromHeight(50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                          ),
+                        ),
+
+                      if (onAddAnother != null && onSecondaryAction != null)
+                        const SizedBox(height: 10),
+
+                      // Secondary outlined CTA
+                      if (onSecondaryAction != null)
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
                             onPressed: () {
                               Navigator.of(dialogContext).pop();
                               onSecondaryAction();
                             },
-                            icon: const Icon(Icons.timeline_rounded),
+                            icon: const Icon(Icons.timeline_rounded, size: 18),
                             label: Text(
-                              secondaryActionLabel ?? 'Open Medical History',
+                              secondaryActionLabel ?? 'Medical History Records',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: _primaryAqua,
-                              side: BorderSide(
-                                color: _primaryAqua.withValues(alpha: 0.35),
+                              foregroundColor: _histAccent,
+                              side: const BorderSide(
+                                color: Color(0xFF2563EB),
+                                width: 1.5,
                               ),
-                                  minimumSize: const Size.fromHeight(50),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 14,
-                                  ),
-                            ),
-                          ),
-                            ),
-                          SizedBox(
-                            width: buttonWidth,
-                            child: OutlinedButton.icon(
-                              onPressed: () =>
-                                  Navigator.of(dialogContext).pop(),
-                              icon: const Icon(Icons.close_rounded),
-                              label: const Text('Close'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: _lightOffWhite,
-                                side: BorderSide(
-                                  color: _lightOffWhite.withValues(alpha: 0.2),
-                                ),
-                                minimumSize: const Size.fromHeight(50),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 14,
-                                ),
+                              minimumSize: const Size.fromHeight(46),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                           ),
-                        ],
-                      );
-                    },
+                        ),
+                    ],
                   ),
                 ),
               ],
@@ -417,6 +653,81 @@ class PatientHistoryDialogs {
           ),
         );
       },
+    );
+  }
+
+  /// A single metric cell for the summary banner.
+  static Widget _buildMetricCell({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color iconColor,
+  }) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: iconColor, size: 18),
+            const SizedBox(height: 5),
+            Text(
+              value,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: _histText,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: _histMuted,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Light-mode empty state for the timeline.
+  static Widget _buildLightEmptyState(String message) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: _histSurface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _histBorder),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.inbox_rounded,
+              color: _histMuted,
+              size: 40,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: _histMuted,
+                fontSize: 13.5,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1560,6 +1871,69 @@ class PatientHistoryDialogs {
     final month = value.month.toString().padLeft(2, '0');
     final day = value.day.toString().padLeft(2, '0');
     return '${value.year}-$month-$day';
+  }
+
+  /// Returns a human-readable date string, e.g. "Aug 6, 2026".
+  static String _formatHumanDate(DateTime value) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${months[value.month - 1]} ${value.day}, ${value.year}';
+  }
+
+  /// Returns a human-readable timestamp, e.g. "Aug 6, 2026 • 5:00 PM".
+  static String _formatHumanTimestamp(DateTime value) {
+    final datePart = _formatHumanDate(value);
+    final hour12   = value.hour == 0
+        ? 12
+        : value.hour > 12
+            ? value.hour - 12
+            : value.hour;
+    final ampm   = value.hour < 12 ? 'AM' : 'PM';
+    final minute = value.minute.toString().padLeft(2, '0');
+    return '$datePart \u2022 $hour12:$minute $ampm';
+  }
+
+  /// Derives 1-2 uppercase initials from a patient name.
+  static String _buildInitials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
+
+  /// Renders symptom tokens as soft pill chips.
+  static Widget _buildSymptomChips(String rawSymptoms) {
+    final tokens = rawSymptoms
+        .split(RegExp(r'[,;|]+'))
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .take(6)
+        .toList();
+
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: tokens.map((token) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFFBFDBFE)),
+          ),
+          child: Text(
+            token,
+            style: const TextStyle(
+              color: Color(0xFF1D4ED8),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
 
   static String _formatTimestamp(DateTime value) {

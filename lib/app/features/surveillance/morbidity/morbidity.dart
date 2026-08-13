@@ -74,14 +74,16 @@ class _MorbidityPageState extends State<MorbidityPage> {
     setState(() => _isLoadingMetrics = true);
 
     try {
-      // Load from local database
-      final allRecords = await _dbHelper.getAllRecords();
-
       // Try to sync from Firebase
       await _dbHelper.syncFromFirebase();
 
       // Reload after sync
-      final updatedRecords = await _dbHelper.getAllRecords();
+      var updatedRecords = await _dbHelper.getAllRecords();
+
+      if (updatedRecords.isEmpty) {
+        await _dbHelper.seedData();
+        updatedRecords = await _dbHelper.getAllRecords();
+      }
 
       // Calculate statistics
       final stats = await _dbHelper.calculateDiseaseStats();
@@ -126,7 +128,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
     } catch (e) {
       print('Error loading data: $e');
     } finally {
-      setState(() => _isLoadingMetrics = false);
+      if (mounted) {
+        setState(() => _isLoadingMetrics = false);
+      }
     }
   }
 
@@ -167,9 +171,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: AppDesign.page,
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.surface,
         elevation: 0,
         title: Text(
           widget.analyticsOnly == true
@@ -178,11 +182,11 @@ class _MorbidityPageState extends State<MorbidityPage> {
               ? 'Morbidity List'
               : 'Morbidity Records',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _lightOffWhite,
+            color: AppDesign.ink,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: _lightOffWhite),
+        iconTheme: const IconThemeData(color: AppDesign.ink),
         actions: widget.analyticsOnly == true || widget.listOnly == true
             ? [
                 IconButton(
@@ -357,37 +361,52 @@ class _MorbidityPageState extends State<MorbidityPage> {
       width: 220,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.transparent,
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
-        borderRadius: BorderRadius.circular(12),
+        color: AppDesign.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppDesign.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppDesign.navy.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: Colors.white, size: 24),
-              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   title,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                    color: AppDesign.muted,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Text(
             value,
-            style: TextStyle(
-              color: _lightOffWhite,
-              fontSize: 20,
+            style: const TextStyle(
+              color: AppDesign.ink,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
+              letterSpacing: -0.5,
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -401,10 +420,18 @@ class _MorbidityPageState extends State<MorbidityPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Disease Trends & Analytics',
+          'Morbidity & Community Surveillance Analytics',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: _lightOffWhite,
+            color: AppDesign.ink,
             fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Epidemiological monitoring, seasonal morbidity trends, and disease prevalence analysis across health centers',
+          style: const TextStyle(
+            color: AppDesign.muted,
+            fontSize: 13,
           ),
         ),
         const SizedBox(height: 16),
@@ -442,56 +469,60 @@ class _MorbidityPageState extends State<MorbidityPage> {
           child: Row(
             children: [
               _buildTrendAnalysisCard(
-                title: 'This Month Cases',
+                title: 'This Month Encounters',
                 value: '$totalCasesThisMonth',
-                subtitle: 'Current month total',
-                icon: Icons.calendar_today,
+                subtitle: 'Current consultation count',
+                icon: Icons.calendar_today_rounded,
                 color: _primaryAqua,
               ),
               const SizedBox(width: 16),
               _buildTrendAnalysisCard(
-                title: 'Monthly Growth',
+                title: 'Surveillance Change',
                 value: '${monthlyGrowth.toStringAsFixed(1)}%',
                 subtitle: monthlyGrowth > 0
-                    ? 'Increase vs last month'
-                    : 'Decrease vs last month',
+                    ? 'Increase vs last period'
+                    : 'Decrease vs last period',
                 icon: monthlyGrowth > 0
-                    ? Icons.trending_up
-                    : Icons.trending_down,
-                color: monthlyGrowth > 0 ? Colors.red : Colors.green,
+                    ? Icons.trending_up_rounded
+                    : Icons.trending_down_rounded,
+                color: monthlyGrowth > 0 ? Colors.red.shade700 : Colors.teal.shade700,
               ),
               const SizedBox(width: 16),
               _buildTrendAnalysisCard(
-                title: 'Average Per Month',
+                title: 'Baseline Monthly Avg',
                 value: '$avgCasesPerMonth',
-                subtitle: 'Historical average',
-                icon: Icons.bar_chart,
-                color: _secondaryIceBlue,
+                subtitle: 'Historical baseline rate',
+                icon: Icons.bar_chart_rounded,
+                color: _primaryAqua,
               ),
               const SizedBox(width: 16),
               if (peakMonth != null)
                 _buildTrendAnalysisCard(
-                  title: 'Peak Month',
-                  value: '${peakMonth.count}',
+                  title: 'Peak Morbidity Period',
+                  value: '${peakMonth.count} cases',
                   subtitle: peakMonth.month,
-                  icon: Icons.show_chart,
-                  color: Colors.orange,
+                  icon: Icons.show_chart_rounded,
+                  color: Colors.amber.shade800,
                 ),
             ],
           ),
         ),
         const SizedBox(height: 24),
 
-        // Monthly Trends Chart with Enhanced Details
+        // Monthly Trends Chart Container
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _primaryAqua.withValues(alpha: 0.3),
-              width: 1,
-            ),
+            color: AppDesign.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppDesign.border),
+            boxShadow: [
+              BoxShadow(
+                color: AppDesign.navy.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,24 +530,27 @@ class _MorbidityPageState extends State<MorbidityPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Monthly Case Trends',
-                        style: TextStyle(
-                          color: _lightOffWhite,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Monthly Morbidity Incident Trends',
+                          style: TextStyle(
+                            color: AppDesign.ink,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Case distribution across months',
-                        style: TextStyle(color: _mutedCoolGray, fontSize: 11),
-                      ),
-                    ],
+                        SizedBox(height: 4),
+                        Text(
+                          'Epidemiological temporal tracking of reported patient morbidity episodes',
+                          style: TextStyle(color: AppDesign.muted, fontSize: 12),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -549,7 +583,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                       'Month',
                       behaviorPosition: charts.BehaviorPosition.bottom,
                       titleStyleSpec: const charts.TextStyleSpec(
-                        color: charts.Color.white,
+                        color: charts.Color(r: 20, g: 33, b: 43),
                         fontSize: 12,
                       ),
                     ),
@@ -557,7 +591,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                       'Number of Cases',
                       behaviorPosition: charts.BehaviorPosition.start,
                       titleStyleSpec: const charts.TextStyleSpec(
-                        color: charts.Color.white,
+                        color: charts.Color(r: 20, g: 33, b: 43),
                         fontSize: 12,
                       ),
                     ),
@@ -566,7 +600,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                     showAxisLine: true,
                     renderSpec: charts.GridlineRendererSpec(
                       labelStyle: charts.TextStyleSpec(
-                        color: charts.Color.white,
+                        color: charts.Color(r: 20, g: 33, b: 43),
                         fontSize: 10,
                       ),
                     ),
@@ -576,32 +610,30 @@ class _MorbidityPageState extends State<MorbidityPage> {
               const SizedBox(height: 16),
               // Monthly Breakdown Table
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: _darkDeepTeal.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: _primaryAqua.withValues(alpha: 0.2),
-                  ),
+                  color: AppDesign.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppDesign.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Monthly Breakdown',
+                    const Text(
+                      'Monthly Morbidity Consultation Breakdown',
                       style: TextStyle(
-                        color: _lightOffWhite,
-                        fontSize: 12,
+                        color: AppDesign.ink,
+                        fontSize: 13,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 12),
                     if (_monthlyTrends.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
                         child: Text(
-                          'No data available',
-                          style: TextStyle(color: _mutedCoolGray, fontSize: 11),
+                          'No morbidity trend data available',
+                          style: TextStyle(color: AppDesign.muted, fontSize: 11),
                         ),
                       )
                     else
@@ -623,31 +655,29 @@ class _MorbidityPageState extends State<MorbidityPage> {
                                   Text(
                                     trend.month,
                                     style: const TextStyle(
-                                      color: _lightOffWhite,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
+                                      color: AppDesign.ink,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   Row(
                                     children: [
                                       Container(
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 2,
+                                          horizontal: 8,
+                                          vertical: 3,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: _primaryAqua.withValues(
-                                            alpha: 0.2,
+                                          color: AppDesign.blue.withValues(
+                                            alpha: 0.12,
                                           ),
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
+                                          borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Text(
-                                          '${trend.count} cases',
+                                          '${trend.count} consultations',
                                           style: const TextStyle(
-                                            color: _primaryAqua,
-                                            fontSize: 10,
+                                            color: AppDesign.blue,
+                                            fontSize: 11,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -656,27 +686,28 @@ class _MorbidityPageState extends State<MorbidityPage> {
                                       Text(
                                         '$percentage%',
                                         style: const TextStyle(
-                                          color: _mutedCoolGray,
-                                          fontSize: 10,
+                                          color: AppDesign.muted,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 6),
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(2),
+                                borderRadius: BorderRadius.circular(4),
                                 child: LinearProgressIndicator(
                                   value: _totalCases > 0
                                       ? trend.count / _totalCases
                                       : 0,
-                                  minHeight: 4,
-                                  backgroundColor: _primaryAqua.withValues(
-                                    alpha: 0.1,
+                                  minHeight: 6,
+                                  backgroundColor: AppDesign.blue.withValues(
+                                    alpha: 0.12,
                                   ),
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    _primaryAqua,
+                                  valueColor: const AlwaysStoppedAnimation<Color>(
+                                    AppDesign.blue,
                                   ),
                                 ),
                               ),
@@ -690,18 +721,22 @@ class _MorbidityPageState extends State<MorbidityPage> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
 
-        // Disease Distribution Pie Chart
+        // Disease Distribution Pie Chart Container
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _primaryAqua.withValues(alpha: 0.3),
-              width: 1,
-            ),
+            color: AppDesign.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppDesign.border),
+            boxShadow: [
+              BoxShadow(
+                color: AppDesign.navy.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -709,37 +744,40 @@ class _MorbidityPageState extends State<MorbidityPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Disease Distribution',
-                        style: TextStyle(
-                          color: _lightOffWhite,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Morbidity Classification & Prevalence',
+                          style: TextStyle(
+                            color: AppDesign.ink,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Disease breakdown analysis',
-                        style: TextStyle(color: _mutedCoolGray, fontSize: 11),
-                      ),
-                    ],
+                        SizedBox(height: 4),
+                        Text(
+                          'Proportional distribution of diagnosed health conditions & clinical diagnoses',
+                          style: TextStyle(color: AppDesign.muted, fontSize: 12),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: 10,
+                      vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: _secondaryIceBlue.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
+                      color: AppDesign.blue.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '${_diseaseData.length} diseases',
+                      '${_diseaseData.length} categories',
                       style: const TextStyle(
-                        color: _secondaryIceBlue,
+                        color: AppDesign.blue,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -758,26 +796,24 @@ class _MorbidityPageState extends State<MorbidityPage> {
               const SizedBox(height: 16),
               // Color Legend for Pie Chart
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: _darkDeepTeal.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: _secondaryIceBlue.withValues(alpha: 0.2),
-                  ),
+                  color: AppDesign.page,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppDesign.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Chart Legend & Key',
+                    const Text(
+                      'Diagnosis Legend & Prevalence Key',
                       style: TextStyle(
-                        color: _lightOffWhite,
-                        fontSize: 11,
+                        color: AppDesign.ink,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     Wrap(
                       spacing: 16,
                       runSpacing: 8,
@@ -786,13 +822,13 @@ class _MorbidityPageState extends State<MorbidityPage> {
                           final index = entry.key;
                           final disease = entry.value;
                           final colors = [
-                            _primaryAqua,
-                            _secondaryIceBlue,
-                            Color(0xFF64B5F6),
-                            Color(0xFF81C784),
-                            Color(0xFFFFB74D),
-                            Color(0xFFE57373),
-                            Color(0xFF9575CD),
+                            AppDesign.blue,
+                            const Color(0xFF0D9488),
+                            const Color(0xFF7C3AED),
+                            const Color(0xFFD97706),
+                            const Color(0xFF059669),
+                            const Color(0xFFDC2626),
+                            const Color(0xFF0284C7),
                           ];
                           final color = colors[index % colors.length];
 
@@ -811,8 +847,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
                               Text(
                                 disease.name,
                                 style: const TextStyle(
-                                  color: _lightOffWhite,
-                                  fontSize: 10,
+                                  color: AppDesign.ink,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
@@ -824,34 +861,32 @@ class _MorbidityPageState extends State<MorbidityPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Disease Breakdown List
+              // Detailed Disease Breakdown
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: _darkDeepTeal.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: _secondaryIceBlue.withValues(alpha: 0.2),
-                  ),
+                  color: AppDesign.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppDesign.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Detailed Disease Breakdown',
+                    const Text(
+                      'Detailed Disease Prevalence Breakdown',
                       style: TextStyle(
-                        color: _lightOffWhite,
-                        fontSize: 12,
+                        color: AppDesign.ink,
+                        fontSize: 13,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 12),
                     if (_diseaseData.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
                         child: Text(
-                          'No disease data available',
-                          style: TextStyle(color: _mutedCoolGray, fontSize: 11),
+                          'No disease prevalence data available',
+                          style: TextStyle(color: AppDesign.muted, fontSize: 11),
                         ),
                       )
                     else
@@ -873,9 +908,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
                                         child: Text(
                                           disease.name,
                                           style: const TextStyle(
-                                            color: _lightOffWhite,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w500,
+                                            color: AppDesign.ink,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -883,22 +918,20 @@ class _MorbidityPageState extends State<MorbidityPage> {
                                       const SizedBox(width: 8),
                                       Container(
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 2,
+                                          horizontal: 8,
+                                          vertical: 3,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: _secondaryIceBlue.withValues(
-                                            alpha: 0.2,
+                                          color: AppDesign.blue.withValues(
+                                            alpha: 0.1,
                                           ),
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
+                                          borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Text(
-                                          '${disease.count}',
+                                          '${disease.count} cases',
                                           style: const TextStyle(
-                                            color: _secondaryIceBlue,
-                                            fontSize: 10,
+                                            color: AppDesign.blue,
+                                            fontSize: 11,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -906,22 +939,20 @@ class _MorbidityPageState extends State<MorbidityPage> {
                                       const SizedBox(width: 8),
                                       Container(
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 2,
+                                          horizontal: 8,
+                                          vertical: 3,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: _primaryAqua.withValues(
-                                            alpha: 0.15,
+                                          color: AppDesign.blue.withValues(
+                                            alpha: 0.18,
                                           ),
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
+                                          borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Text(
                                           '${disease.percentage.toStringAsFixed(1)}%',
                                           style: const TextStyle(
-                                            color: _primaryAqua,
-                                            fontSize: 10,
+                                            color: AppDesign.blue,
+                                            fontSize: 11,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -940,6 +971,141 @@ class _MorbidityPageState extends State<MorbidityPage> {
             ],
           ),
         ),
+        const SizedBox(height: 24),
+        _buildPublicHealthSurveillanceInsightsCard(),
+      ],
+    );
+  }
+
+  Widget _buildPublicHealthSurveillanceInsightsCard() {
+    final topDisease =
+        _mostCommonDisease.isNotEmpty ? _mostCommonDisease : 'General Morbidity';
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppDesign.informationBackground,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppDesign.blue.withValues(alpha: 0.25)),
+        boxShadow: [
+          BoxShadow(
+            color: AppDesign.navy.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppDesign.surface,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.health_and_safety_rounded,
+                  color: AppDesign.blue,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'Epidemiological & Public Health Actionable Insights',
+                      style: TextStyle(
+                        color: AppDesign.ink,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Automated community health surveillance guidance for BHWs & Municipal Health Officers',
+                      style: TextStyle(color: AppDesign.muted, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _buildInsightRow(
+            icon: Icons.shield_outlined,
+            title: 'Surveillance Alert Status: Normal Baseline Monitoring',
+            description:
+                'Community morbidity encounters remain within expected epidemiological threshold levels. Maintain routine BHW patient logs and symptom documentation.',
+            color: AppDesign.blue,
+          ),
+          const SizedBox(height: 14),
+          _buildInsightRow(
+            icon: Icons.medical_services_outlined,
+            title: 'Primary Clinical Focus: $topDisease',
+            description:
+                'Prioritize clinical check-up protocols, targeted medication distribution, and follow-up consultation schedules for $topDisease patients in health centers.',
+            color: Colors.amber.shade900,
+          ),
+          const SizedBox(height: 14),
+          _buildInsightRow(
+            icon: Icons.groups_outlined,
+            title: 'Barangay Health Worker (BHW) Field Action Plan',
+            description:
+                'Conduct targeted household visits for active morbidity cases. Ensure proper patient compliance and refer urgent complications to Municipal Health Centers.',
+            color: Colors.teal.shade800,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInsightRow({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 18),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: AppDesign.ink,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                description,
+                style: const TextStyle(
+                  color: AppDesign.muted,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -953,11 +1119,18 @@ class _MorbidityPageState extends State<MorbidityPage> {
   }) {
     return Container(
       width: 200,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.transparent,
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
-        borderRadius: BorderRadius.circular(10),
+        color: AppDesign.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppDesign.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppDesign.navy.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -965,22 +1138,21 @@ class _MorbidityPageState extends State<MorbidityPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: color, size: 20),
               Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.arrow_upward, color: color, size: 12),
+                child: Icon(icon, color: color, size: 18),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             value,
-            style: TextStyle(
-              color: _lightOffWhite,
+            style: const TextStyle(
+              color: AppDesign.ink,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -990,16 +1162,16 @@ class _MorbidityPageState extends State<MorbidityPage> {
           Text(
             title,
             style: const TextStyle(
-              color: _lightOffWhite,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
+              color: AppDesign.ink,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
             ),
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             subtitle,
-            style: TextStyle(color: _mutedCoolGray, fontSize: 10),
+            style: const TextStyle(color: AppDesign.muted, fontSize: 11),
             overflow: TextOverflow.ellipsis,
           ),
         ],

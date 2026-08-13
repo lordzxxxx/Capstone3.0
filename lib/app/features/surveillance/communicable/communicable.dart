@@ -183,12 +183,20 @@ class _CommunicablePageState extends State<CommunicablePage> {
       await _dbHelper.syncFromFirebase();
 
       // Load communicable disease records from check-up database
-      final allRecords = await _dbHelper.getAllRecords();
+      var allRecords = await _dbHelper.getAllRecords();
 
       // Filter for communicable diseases only
-      final communicableRecords = allRecords.where((record) {
+      var communicableRecords = allRecords.where((record) {
         return record['diseaseType'] == 'Communicable';
       }).toList();
+
+      if (communicableRecords.isEmpty) {
+        await _dbHelper.seedSampleCommunicableData();
+        allRecords = await _dbHelper.getAllRecords();
+        communicableRecords = allRecords.where((record) {
+          return record['diseaseType'] == 'Communicable';
+        }).toList();
+      }
 
       final currentPatients = _collapseCurrentPatients(
         communicableRecords.map((record) {
@@ -378,21 +386,24 @@ class _CommunicablePageState extends State<CommunicablePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: AppDesign.page,
       appBar: AppBar(
         title: Text(
           widget.listOnly == true
               ? 'Communicable List'
               : 'Chronic Care Management',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: AppDesign.ink,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.surface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: AppDesign.ink),
         actions: [
           if (widget.listOnly != true)
             IconButton(
-              icon: const Icon(Icons.add),
+              icon: const Icon(Icons.add, color: AppDesign.blue),
               onPressed: () {
                 _showAddPatientDialog();
               },
@@ -496,8 +507,8 @@ class _CommunicablePageState extends State<CommunicablePage> {
                   rowsPerPage: _effectiveRowsPerPage,
                   itemLabel: 'records',
                   accentColor: _primaryAqua,
-                  textColor: _lightOffWhite,
-                  surfaceColor: _darkDeepTeal.withValues(alpha: 0.55),
+                  textColor: AppDesign.ink,
+                  surfaceColor: AppDesign.surface,
                   onRowsPerPageChanged: (value) {
                     setState(() {
                       _rowsPerPage = value > 0 ? value : _defaultRowsPerPage;
@@ -528,7 +539,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
       ),
       bottomNavigationBar: (_isSelectionMode && _selectedIndices.isNotEmpty)
           ? BottomAppBar(
-              color: _darkDeepTeal,
+              color: AppDesign.surface,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -540,7 +551,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                     Text(
                       '${_selectedIndices.length} selected',
                       style: const TextStyle(
-                        color: _lightOffWhite,
+                        color: AppDesign.ink,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -565,11 +576,11 @@ class _CommunicablePageState extends State<CommunicablePage> {
   Widget _buildOverviewDashboard() {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: _darkDeepTeal,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+      decoration: const BoxDecoration(
+        color: AppDesign.surface,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
         ),
       ),
       child: Padding(
@@ -580,17 +591,17 @@ class _CommunicablePageState extends State<CommunicablePage> {
             const Text(
               'Chronic Care Overview',
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: AppDesign.ink,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             if (_isLoadingMetrics)
-              const Center(
+              Center(
                 child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: CircularProgressIndicator(color: Colors.white),
+                  padding: const EdgeInsets.all(20),
+                  child: CircularProgressIndicator(color: _primaryAqua),
                 ),
               )
             else
@@ -603,8 +614,8 @@ class _CommunicablePageState extends State<CommunicablePage> {
                           title: 'Active Cases',
                           value: _activeCases.toString(),
                           icon: Icons.people,
-                          color: Colors.white,
-                          textColor: Colors.white,
+                          color: AppDesign.surface,
+                          textColor: AppDesign.ink,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -613,8 +624,8 @@ class _CommunicablePageState extends State<CommunicablePage> {
                           title: 'Control Rate',
                           value: '${_controlRate.toStringAsFixed(1)}%',
                           icon: Icons.trending_up,
-                          color: Colors.white,
-                          textColor: Colors.white,
+                          color: AppDesign.surface,
+                          textColor: AppDesign.ink,
                         ),
                       ),
                     ],
@@ -639,17 +650,17 @@ class _CommunicablePageState extends State<CommunicablePage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: AppDesign.surface,
         border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.3),
-          width: 2,
+          color: _primaryAqua.withValues(alpha: 0.35),
+          width: 1.5,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -659,13 +670,13 @@ class _CommunicablePageState extends State<CommunicablePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: textColor, size: 28),
+              Icon(icon, color: _primaryAqua, size: 26),
               Text(
                 value,
-                style: TextStyle(
-                  fontSize: 28,
+                style: const TextStyle(
+                  fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: textColor,
+                  color: AppDesign.ink,
                 ),
               ),
             ],
@@ -673,9 +684,9 @@ class _CommunicablePageState extends State<CommunicablePage> {
           const SizedBox(height: 8),
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
-              color: textColor.withValues(alpha: 0.8),
+              color: AppDesign.muted,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -689,17 +700,17 @@ class _CommunicablePageState extends State<CommunicablePage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: AppDesign.surface,
         border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.3),
-          width: 2,
+          color: _primaryAqua.withValues(alpha: 0.35),
+          width: 1.5,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -708,14 +719,14 @@ class _CommunicablePageState extends State<CommunicablePage> {
         children: [
           Row(
             children: [
-              Icon(Icons.medical_services, color: Colors.white, size: 24),
+              Icon(Icons.medical_services, color: _primaryAqua, size: 22),
               const SizedBox(width: 8),
-              Text(
+              const Text(
                 'Disease Types',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: AppDesign.ink,
                 ),
               ),
             ],
@@ -729,7 +740,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                 children: [
                   Text(
                     entry.key,
-                    style: TextStyle(fontSize: 14, color: Colors.white),
+                    style: const TextStyle(fontSize: 14, color: AppDesign.ink),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -737,7 +748,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: _primaryAqua.withValues(alpha: 0.2),
+                      color: _primaryAqua.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -762,11 +773,11 @@ class _CommunicablePageState extends State<CommunicablePage> {
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: AppDesign.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.3),
-          width: 2,
+          color: _primaryAqua.withValues(alpha: 0.35),
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
@@ -779,13 +790,14 @@ class _CommunicablePageState extends State<CommunicablePage> {
       child: TextField(
         controller: _searchController,
         onChanged: _filterPatients,
+        style: const TextStyle(color: AppDesign.ink, fontSize: 15),
         decoration: InputDecoration(
           hintText: 'Search by patient name, condition, or status...',
-          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
-          prefixIcon: Icon(Icons.search, color: Colors.white),
+          hintStyle: TextStyle(color: AppDesign.muted.withValues(alpha: 0.8)),
+          prefixIcon: Icon(Icons.search, color: _primaryAqua),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: Icon(Icons.clear, color: Colors.white),
+                  icon: Icon(Icons.clear, color: _primaryAqua),
                   onPressed: () {
                     _searchController.clear();
                     _filterPatients('');
@@ -799,7 +811,6 @@ class _CommunicablePageState extends State<CommunicablePage> {
             vertical: 14,
           ),
         ),
-        style: const TextStyle(color: Colors.white),
       ),
     );
   }
@@ -841,207 +852,208 @@ class _CommunicablePageState extends State<CommunicablePage> {
   }
 
   Widget _buildPatientCard(Map<String, dynamic> patient) {
+    final statusColors = AppDesign.statusColors(
+      patient['currentStatus']?.toString() ?? '',
+    );
     return GestureDetector(
       onLongPress: () => _showRecordActionModal(patient),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          border: Border.all(
-            color: _primaryAqua.withValues(alpha: 0.3),
-            width: 2,
-          ),
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        elevation: 1,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          side: BorderSide(color: AppDesign.border),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Patient Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: _primaryAqua,
-                    child: Text(
-                      patient['patientName']
-                          .toString()
-                          .substring(0, 1)
-                          .toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          patient['patientName'],
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${patient['age']} years • ${patient['gender']}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(patient['currentStatus']),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      patient['currentStatus'],
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+        child: InkWell(
+          onTap: () => _viewPatientDetails(patient),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppDesign.surface,
+              borderRadius: BorderRadius.circular(16),
             ),
-
-            // Patient Details
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _buildDetailRow(
-                    icon: Icons.medical_information,
-                    label: 'Condition',
-                    value: patient['condition'],
-                    color: const Color(0xFFD84315),
-                  ),
-                  const Divider(height: 20),
-                  _buildDetailRow(
-                    icon: Icons.medication,
-                    label: 'Treatment',
-                    value: patient['treatment'],
-                    color: const Color(0xFF7B1FA2),
-                  ),
-                  const Divider(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildDetailRow(
-                          icon: Icons.calendar_today,
-                          label: 'Last Visit',
-                          value: _formatDate(patient['lastVisit']),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Patient header ──────────────────────────────────
+                Row(
+                  children: [
+                    // Avatar
+                    Container(
+                      width: 52,
+                      height: 52,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: _primaryAqua.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _primaryAqua.withValues(alpha: 0.30),
+                        ),
+                      ),
+                      child: Text(
+                        patient['patientName']
+                            .toString()
+                            .substring(0, 1)
+                            .toUpperCase(),
+                        style: TextStyle(
                           color: _primaryAqua,
-                          isCompact: true,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildDetailRow(
-                          icon: Icons.event,
-                          label: 'Next Visit',
-                          value: _formatDate(patient['nextVisit']),
-                          color: const Color(0xFF4CAF50),
-                          isCompact: true,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            patient['patientName'].toString(),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppDesign.ink,
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${patient['age']} yrs • ${patient['gender']}',
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              color: AppDesign.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Status badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColors.background,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: statusColors.foreground.withValues(alpha: 0.22),
                         ),
                       ),
-                    ],
-                  ),
-                  const Divider(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildVitalSign(
-                          icon: Icons.favorite,
-                          label: 'Blood Pressure',
-                          value: patient['bloodPressure'],
+                      child: Text(
+                        patient['currentStatus'] ?? '',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: statusColors.foreground,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildVitalSign(
-                          icon: Icons.water_drop,
-                          label: 'Blood Sugar',
-                          value: patient['bloodSugar'],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Actions
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
+                    ),
+                  ],
                 ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildActionButton(
-                    icon: Icons.visibility,
-                    label: 'View',
-                    color: Colors.white,
-                    onTap: () => _viewPatientDetails(patient),
-                  ),
-                  _buildActionButton(
-                    icon: Icons.edit,
-                    label: 'Edit',
-                    color: Colors.white,
-                    onTap: () => _editPatient(patient),
-                  ),
-                  _buildActionButton(
-                    icon: Icons.medical_services,
-                    label: 'Treatment',
-                    color: Colors.white,
-                    onTap: () => _manageTreatment(patient),
-                  ),
-                  _buildActionButton(
-                    icon: Icons.history,
-                    label: 'History',
-                    color: Colors.white,
-                    onTap: () => _viewHistory(patient),
-                  ),
-                ],
-              ),
+
+                const SizedBox(height: 14),
+                const Divider(),
+                const SizedBox(height: 12),
+
+                // ── Details grid ────────────────────────────────────
+                _buildDetailRow(
+                  icon: Icons.medical_information,
+                  label: 'Condition',
+                  value: patient['condition'],
+                  color: const Color(0xFFD84315),
+                ),
+                const SizedBox(height: 12),
+                _buildDetailRow(
+                  icon: Icons.medication,
+                  label: 'Treatment',
+                  value: patient['treatment'],
+                  color: const Color(0xFF7B1FA2),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildDetailRow(
+                        icon: Icons.calendar_today,
+                        label: 'Last Visit',
+                        value: _formatDate(patient['lastVisit']),
+                        color: _primaryAqua,
+                        isCompact: true,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildDetailRow(
+                        icon: Icons.event,
+                        label: 'Next Visit',
+                        value: _formatDate(patient['nextVisit']),
+                        color: const Color(0xFF059669),
+                        isCompact: true,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildVitalSign(
+                        icon: Icons.favorite,
+                        label: 'Blood Pressure',
+                        value: patient['bloodPressure'],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildVitalSign(
+                        icon: Icons.water_drop,
+                        label: 'Blood Sugar',
+                        value: patient['bloodSugar'],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+                const Divider(),
+
+                // ── Action buttons ───────────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildActionButton(
+                      icon: Icons.visibility,
+                      label: 'View',
+                      color: _primaryAqua,
+                      onTap: () => _viewPatientDetails(patient),
+                    ),
+                    _buildActionButton(
+                      icon: Icons.edit,
+                      label: 'Edit',
+                      color: const Color(0xFFF59E0B),
+                      onTap: () => _editPatient(patient),
+                    ),
+                    _buildActionButton(
+                      icon: Icons.medical_services,
+                      label: 'Treatment',
+                      color: const Color(0xFF7B1FA2),
+                      onTap: () => _manageTreatment(patient),
+                    ),
+                    _buildActionButton(
+                      icon: Icons.history,
+                      label: 'History',
+                      color: const Color(0xFF059669),
+                      onTap: () => _viewHistory(patient),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -1057,26 +1069,36 @@ class _CommunicablePageState extends State<CommunicablePage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: isCompact ? 18 : 20, color: Colors.white),
-        const SizedBox(width: 8),
+        Container(
+          width: isCompact ? 28 : 32,
+          height: isCompact ? 28 : 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Icon(icon, size: isCompact ? 15 : 17, color: color),
+        ),
+        const SizedBox(width: 9),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                label,
-                style: TextStyle(
-                  fontSize: isCompact ? 11 : 12,
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontWeight: FontWeight.w500,
+                label.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 9.5,
+                  color: AppDesign.subtle,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.45,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.white,
+                  fontSize: 13,
+                  color: AppDesign.ink,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1095,13 +1117,13 @@ class _CommunicablePageState extends State<CommunicablePage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: _primaryAqua.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.3)),
+        border: Border.all(color: _primaryAqua.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.white),
+          Icon(icon, size: 18, color: _primaryAqua),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -1109,9 +1131,10 @@ class _CommunicablePageState extends State<CommunicablePage> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 10,
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: AppDesign.muted,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -1119,8 +1142,8 @@ class _CommunicablePageState extends State<CommunicablePage> {
                   value,
                   style: const TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    color: AppDesign.ink,
                   ),
                 ),
               ],
@@ -1144,14 +1167,14 @@ class _CommunicablePageState extends State<CommunicablePage> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 24),
+            Icon(icon, color: color, size: 22),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 11,
                 color: color,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
