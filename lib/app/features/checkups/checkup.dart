@@ -5755,7 +5755,7 @@ class _EditCheckUpFullScreenModalState
                               updatedRecord,
                             );
                             debugPrint(
-                              '✅ AI Classification complete: ${classification.category}',
+                              'AI Classification complete: ${classification.category}',
                             );
 
                             updatedRecord['ai_category'] =
@@ -5777,9 +5777,7 @@ class _EditCheckUpFullScreenModalState
                                   );
                             }
                           } catch (e) {
-                            debugPrint(
-                              '❌ AI classification failed on edit: $e',
-                            );
+                            debugPrint('AI classification failed on edit: $e');
                           }
 
                           await widget.onSave(updatedRecord);

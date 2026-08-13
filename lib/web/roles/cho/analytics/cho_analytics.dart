@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:mycapstone_project/firebase_helper.dart';
@@ -17,16 +19,17 @@ import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 import 'package:mycapstone_project/web/shared/utils/report_download.dart';
+import 'package:mycapstone_project/web/shared/utils/report_branding.dart';
 
 // Names are historical (page was dark-themed); values now point at the
 // white-card system used across the rest of the app.
-const Color _primaryAqua = Color(0xFF2F80ED);
-const Color _secondaryIceBlue = Color(0xFF163B66);
-const Color _darkDeepTeal = Color(0xFFF4F7FB);
-const Color _panelSurface = Colors.white;
-const Color _panelAlt = Color(0xFFF1F5F7);
-const Color _lightOffWhite = Color(0xFF0A1F24);
-const Color _mutedCoolGray = Color(0xFF546E7A);
+const Color _primaryAqua = ChoColors.aqua;
+const Color _secondaryIceBlue = ChoColors.ice;
+const Color _darkDeepTeal = ChoColors.background;
+const Color _panelSurface = ChoColors.surface;
+const Color _panelAlt = ChoColors.surfaceAlt;
+const Color _lightOffWhite = ChoColors.text;
+const Color _mutedCoolGray = ChoColors.muted;
 
 class AnalyticsPage extends StatefulWidget {
   const AnalyticsPage({super.key});
@@ -375,6 +378,12 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   }
 
   Future<void> _exportExcel() async {
+    final scopeName = _selectedBarangayFilter == 'ALL'
+        ? (_accessScope.canViewAllBarangays
+              ? 'Citywide'
+              : _accessScope.barangay)
+        : _selectedBarangayFilter;
+    final branding = await loadReportBranding(barangayName: scopeName);
     final rows = _records
         .map(
           (record) =>
@@ -383,10 +392,10 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               <td>${_escapeHtml(record.sourceLabel)}</td>
               <td>${_escapeHtml(record.patientLabel)}</td>
               <td>${_escapeHtml(record.diseaseLabel)}</td>
-              <td>${_escapeHtml(record.severityLabel)}</td>
+              <td class="center">${_escapeHtml(record.severityLabel)}</td>
               <td>${_escapeHtml(record.barangay)}</td>
               <td>${_escapeHtml(record.barangayDistrict)}</td>
-              <td>${_escapeHtml(record.recordDate.toIso8601String())}</td>
+              <td class="center">${DateFormat('yyyy-MM-dd').format(record.recordDate)}</td>
             </tr>
           ''',
         )
@@ -394,24 +403,56 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
     final html =
         '''
-      <html>
-        <head><meta charset="utf-8"></head>
-        <body>
-          <table border="1">
-            <tr>
-              <th>Source</th>
-              <th>Patient</th>
-              <th>Disease</th>
-              <th>Severity</th>
-              <th>Barangay</th>
-              <th>District</th>
-              <th>Date</th>
-            </tr>
-            $rows
-          </table>
-        </body>
-      </html>
-    ''';
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:x="urn:schemas-microsoft-com:office:excel">
+<head>
+  <meta charset="utf-8">
+  <style>
+    @page { size: landscape; margin: 0.45in; }
+    body { font-family: Arial, sans-serif; color: #14212B; font-size: 10pt; }
+    table { border-collapse: collapse; width: 100%; }
+    .header td { border: 0; vertical-align: middle; }
+    .seal-cell { width: 78px; text-align: center; }
+    .seal { width: 58px; height: 58px; object-fit: contain; }
+    .seal-label { font-size: 6pt; font-weight: bold; color: #52677D; }
+    .identity { text-align: center; }
+    .province { font-size: 8pt; font-weight: bold; color: #52677D; }
+    .city { font-size: 16pt; font-weight: bold; color: #173F70; }
+    .program { font-size: 9pt; font-weight: bold; color: #52677D; letter-spacing: 1px; }
+    .system { font-size: 8pt; font-weight: bold; color: #52677D; }
+    .title { border-top: 2px solid #173F70; padding: 8px 0 2px; font-size: 15pt; font-weight: bold; color: #173F70; }
+    .subtitle { color: #52677D; padding-bottom: 10px; }
+    .records { table-layout: fixed; }
+    .records thead { display: table-header-group; }
+    .records th { background: #173F70; color: white; padding: 7px; text-align: left; }
+    .records td { border: 1px solid #CBD5E1; padding: 6px; word-wrap: break-word; }
+    .records tr:nth-child(even) td { background: #F8FAFC; }
+    .center { text-align: center; }
+    .footer { border-top: 1px solid #CBD5E1; color: #52677D; font-size: 8pt; padding-top: 6px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <table class="header">
+    <tr>
+      <td class="seal-cell">${_excelImage(branding.cityLogo, 'Malaybalay City seal')}<br><span class="seal-label">MALAYBALAY CITY</span></td>
+      <td class="seal-cell">${_excelImage(branding.healthOfficeLogo, 'City Health Office seal')}<br><span class="seal-label">CITY HEALTH OFFICE</span></td>
+      <td class="seal-cell">${_excelImage(branding.barangayLogo, 'Barangay seal')}<br><span class="seal-label">BARANGAY</span></td>
+      <td class="identity"><div class="province">REPUBLIC OF THE PHILIPPINES • PROVINCE OF BUKIDNON</div><div class="city">CITY OF MALAYBALAY</div><div class="program">SAKA TA MALAYBALAY</div><div class="system">CITY HEALTH OFFICE ANALYTICS</div></td>
+    </tr>
+  </table>
+  <div class="title">CHO Health Records Analytics Report</div>
+  <div class="subtitle">Scope: ${_escapeHtml(scopeName)} &nbsp; | &nbsp; Grouping: ${_escapeHtml(_selectedPeriodMode)} &nbsp; | &nbsp; Generated: ${DateFormat('MMMM dd, yyyy hh:mm a').format(DateTime.now())}</div>
+  <table class="records">
+    <thead><tr>
+      <th>Source</th><th>Patient</th><th>Disease / Condition</th><th>Severity</th><th>Barangay</th><th>District</th><th>Date</th>
+    </tr></thead>
+    <tbody>$rows</tbody>
+  </table>
+  <div class="footer">Generated by AI-DSUHIS • Confidential health information • Report headers repeat when printed</div>
+</body>
+</html>
+''';
 
     downloadReportFile(
       bytes: utf8.encode(html),
@@ -422,6 +463,21 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
   Future<void> _exportPdf() async {
     final pdf = pw.Document();
+    final scopeName = _selectedBarangayFilter == 'ALL'
+        ? (_accessScope.canViewAllBarangays
+              ? 'Citywide'
+              : _accessScope.barangay)
+        : _selectedBarangayFilter;
+    final branding = await loadReportBranding(barangayName: scopeName);
+    final cityLogo = branding.cityLogo == null
+        ? null
+        : pw.MemoryImage(Uint8List.fromList(branding.cityLogo!));
+    final healthOfficeLogo = branding.healthOfficeLogo == null
+        ? null
+        : pw.MemoryImage(Uint8List.fromList(branding.healthOfficeLogo!));
+    final barangayLogo = branding.barangayLogo == null
+        ? null
+        : pw.MemoryImage(Uint8List.fromList(branding.barangayLogo!));
     final heatmap = _heatmapEntries().take(10).toList();
     final diseases = _diseaseCounts().entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -429,17 +485,45 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.fromLTRB(28, 32, 28, 28),
+        header: (_) => _buildChoPdfHeader(
+          scopeName: scopeName,
+          cityLogo: cityLogo,
+          healthOfficeLogo: healthOfficeLogo,
+          barangayLogo: barangayLogo,
+        ),
+        footer: (context) => pw.Row(
+          children: [
+            pw.Expanded(
+              child: pw.Text(
+                'Generated by AI-DSUHIS • Confidential health information',
+                style: const pw.TextStyle(
+                  fontSize: 8,
+                  color: PdfColors.grey700,
+                ),
+              ),
+            ),
+            pw.Text(
+              'Page ${context.pageNumber} of ${context.pagesCount}',
+              style: pw.TextStyle(
+                fontSize: 8,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.grey700,
+              ),
+            ),
+          ],
+        ),
         build: (context) => [
           pw.Text(
-            'DSUHIS Analytics Report',
-            style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
+            'CHO Health Records Analytics Report',
+            style: pw.TextStyle(
+              fontSize: 18,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColor.fromHex('#173F70'),
+            ),
           ),
-          pw.SizedBox(height: 8),
-          pw.Text(
-            _accessScope.canViewAllBarangays
-                ? 'Scope: CHO city-wide analytics${_selectedBarangayFilter == 'ALL' ? '' : ' • Barangay $_selectedBarangayFilter'}'
-                : 'Scope: Barangay-only analytics • ${_accessScope.barangay}',
-          ),
+          pw.SizedBox(height: 5),
+          pw.Text('Scope: $scopeName'),
           pw.Text('Grouping: $_selectedPeriodMode'),
           pw.SizedBox(height: 16),
           pw.Table(
@@ -545,6 +629,94 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     );
   }
 
+  pw.Widget _buildChoPdfHeader({
+    required String scopeName,
+    required pw.MemoryImage? cityLogo,
+    required pw.MemoryImage? healthOfficeLogo,
+    required pw.MemoryImage? barangayLogo,
+  }) {
+    pw.Widget logo(pw.MemoryImage? image, String label) {
+      return pw.Column(
+        mainAxisSize: pw.MainAxisSize.min,
+        children: [
+          pw.Container(
+            width: 42,
+            height: 42,
+            padding: const pw.EdgeInsets.all(2),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: PdfColor.fromHex('#CBD5E1')),
+              borderRadius: pw.BorderRadius.circular(5),
+            ),
+            child: image == null
+                ? pw.Center(
+                    child: pw.Text(
+                      'SEAL',
+                      style: const pw.TextStyle(fontSize: 6),
+                    ),
+                  )
+                : pw.Image(image, fit: pw.BoxFit.contain),
+          ),
+          pw.SizedBox(height: 2),
+          pw.Text(
+            label,
+            style: const pw.TextStyle(fontSize: 4.5, color: PdfColors.grey700),
+          ),
+        ],
+      );
+    }
+
+    return pw.Column(
+      children: [
+        pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
+          children: [
+            logo(cityLogo, 'CITY'),
+            pw.SizedBox(width: 6),
+            logo(healthOfficeLogo, 'CHO'),
+            pw.SizedBox(width: 6),
+            logo(barangayLogo, 'BARANGAY'),
+            pw.SizedBox(width: 12),
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  pw.Text(
+                    'CITY OF MALAYBALAY',
+                    style: pw.TextStyle(
+                      fontSize: 13,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColor.fromHex('#173F70'),
+                    ),
+                  ),
+                  pw.Text(
+                    'SAKA TA MALAYBALAY',
+                    style: pw.TextStyle(
+                      fontSize: 8,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.grey700,
+                    ),
+                  ),
+                  pw.Text(
+                    'CITY HEALTH OFFICE • ${_escapePdfText(scopeName)}',
+                    style: const pw.TextStyle(
+                      fontSize: 7,
+                      color: PdfColors.grey700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 7),
+        pw.Divider(color: PdfColor.fromHex('#CBD5E1')),
+      ],
+    );
+  }
+
+  String _escapePdfText(String value) =>
+      value.replaceAll(RegExp(r'\s+'), ' ').trim();
+
   pw.Widget _pdfCell(String text, {bool header = false}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.all(6),
@@ -580,7 +752,19 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     return value
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;');
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+  }
+
+  String _excelImage(Uint8List? bytes, String alt) {
+    if (bytes == null || bytes.isEmpty) {
+      return '<span class="seal-label">SEAL</span>';
+    }
+    final mime = bytes.length > 1 && bytes[0] == 0xFF && bytes[1] == 0xD8
+        ? 'image/jpeg'
+        : 'image/png';
+    return '<img class="seal" alt="${_escapeHtml(alt)}" src="data:$mime;base64,${base64Encode(bytes)}">';
   }
 
   @override

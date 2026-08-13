@@ -18,16 +18,20 @@ void main() {
       expect(extraction.fields['dateOfBirth']?.value, '1990-05-14');
       expect(extraction.fields['contactNumber']?.value, '09171234567');
       expect(extraction.fields['email']?.value, 'juan.delacruz@example.com');
-      expect(extraction.fields['address']?.value,
-          '123 Rizal St, Brgy. Uno, Quezon City');
+      expect(
+        extraction.fields['address']?.value,
+        '123 Rizal St, Brgy. Uno, Quezon City',
+      );
       for (final field in extraction.fields.values) {
-        expect(field.requiresManualReview, isFalse,
-            reason: '${field.key} should be trusted at default confidence');
+        expect(
+          field.requiresManualReview,
+          isFalse,
+          reason: '${field.key} should be trusted at default confidence',
+        );
       }
     });
 
-    test('is not dependent on line order or extra whitespace/misalignment',
-        () {
+    test('is not dependent on line order or extra whitespace/misalignment', () {
       const shuffled = '''
 
 
@@ -58,14 +62,34 @@ void main() {
     });
 
     test('normalizes assorted date formats to ISO 8601', () {
-      final extraction =
-          OcrExtraction.fromText('Date of Birth: 05/14/1990');
+      final extraction = OcrExtraction.fromText('Date of Birth: 05/14/1990');
       expect(extraction.fields['dateOfBirth']?.value, '1990-05-14');
     });
 
     test('normalizes a +63 mobile number to the local 0-prefixed format', () {
-      final extraction =
-          OcrExtraction.fromText('Contact Number: +63 917 123 4567');
+      final extraction = OcrExtraction.fromText(
+        'Contact Number: +63 917 123 4567',
+      );
+      expect(extraction.fields['contactNumber']?.value, '09171234567');
+    });
+
+    test('handles labels without punctuation and values on the next line', () {
+      final extraction = OcrExtraction.fromText('''
+        Patient Name Juan Dela Cruz
+        Dateofbirth
+        May 14, 1990
+        Sex F
+        Brgy. 07
+      ''');
+
+      expect(extraction.fields['fullName']?.value, 'Juan Dela Cruz');
+      expect(extraction.fields['dateOfBirth']?.value, '1990-05-14');
+      expect(extraction.fields['gender']?.value, 'Female');
+      expect(extraction.fields['barangay']?.value, 'Barangay 07');
+    });
+
+    test('normalizes compact Philippine mobile numbers', () {
+      final extraction = OcrExtraction.fromText('Phone 9171234567');
       expect(extraction.fields['contactNumber']?.value, '09171234567');
     });
   });
@@ -132,16 +156,18 @@ void main() {
       expect(seed['_ocrNeedsManualReview'], contains('email'));
     });
 
-    test('copyWithFields recomputes overall confidence from accepted edits',
-        () {
-      final extraction = OcrExtraction.fromText('Email: not-an-email');
-      final field = extraction.fields['email']!;
-      final corrected = extraction.copyWithFields({
-        'email': field.copyWith(value: 'juan@example.com', confidence: 0.9),
-      });
+    test(
+      'copyWithFields recomputes overall confidence from accepted edits',
+      () {
+        final extraction = OcrExtraction.fromText('Email: not-an-email');
+        final field = extraction.fields['email']!;
+        final corrected = extraction.copyWithFields({
+          'email': field.copyWith(value: 'juan@example.com', confidence: 0.9),
+        });
 
-      expect(corrected.fields['email']?.requiresManualReview, isFalse);
-      expect(corrected.overallConfidence, 0.9);
-    });
+        expect(corrected.fields['email']?.requiresManualReview, isFalse);
+        expect(corrected.overallConfidence, 0.9);
+      },
+    );
   });
 }

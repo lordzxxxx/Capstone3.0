@@ -5,12 +5,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
+import 'package:mycapstone_project/web/shared/utils/report_branding.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/shared/utils/pdf_fonts.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 enum ReportPeriod { monthly, quarterly, yearly }
+
+enum ReportExportFormat { pdf, excel }
 
 extension ReportPeriodLabel on ReportPeriod {
   String get label {
@@ -84,6 +87,7 @@ class _ReportSelection {
   final String approvedBy;
   final String approvedByPosition;
   final String remarks;
+  final ReportExportFormat format;
 
   const _ReportSelection({
     required this.period,
@@ -97,7 +101,25 @@ class _ReportSelection {
     required this.approvedBy,
     required this.approvedByPosition,
     required this.remarks,
+    this.format = ReportExportFormat.pdf,
   });
+
+  _ReportSelection copyWith({ReportExportFormat? format}) {
+    return _ReportSelection(
+      period: period,
+      month: month,
+      year: year,
+      barangayName: barangayName,
+      preparedBy: preparedBy,
+      preparedByPosition: preparedByPosition,
+      reviewedBy: reviewedBy,
+      reviewedByPosition: reviewedByPosition,
+      approvedBy: approvedBy,
+      approvedByPosition: approvedByPosition,
+      remarks: remarks,
+      format: format ?? this.format,
+    );
+  }
 
   int get quarter => ((month - 1) ~/ 3) + 1;
 
@@ -157,6 +179,9 @@ class _PdfGenerationParams {
   final List<Map<String, dynamic>> records;
   final List<ReportCsvColumn> columns;
   final DateTime? Function(Map<String, dynamic> record) dateResolver;
+  final List<int>? cityLogoBytes;
+  final List<int>? healthOfficeLogoBytes;
+  final List<int>? barangayLogoBytes;
 
   const _PdfGenerationParams({
     required this.moduleLabel,
@@ -164,6 +189,9 @@ class _PdfGenerationParams {
     required this.records,
     required this.columns,
     required this.dateResolver,
+    this.cityLogoBytes,
+    this.healthOfficeLogoBytes,
+    this.barangayLogoBytes,
   });
 }
 
@@ -331,12 +359,46 @@ Future<void> generateReportPdf({
     return;
   }
 
+  final branding = await loadReportBranding(
+    barangayName: selection.barangayName,
+  );
+
+  if (selection.format == ReportExportFormat.excel) {
+    final excelBytes = _buildFormalBhwReportExcelBytes(
+      moduleLabel: moduleLabel,
+      selection: selection,
+      records: filteredRecords,
+      columns: columns,
+      dateResolver: dateResolver,
+      branding: branding,
+    );
+    final filename =
+        '${_slugify(moduleLabel)}_${selection.period.label.toLowerCase()}_${selection.filenameToken}_report.xls';
+    final downloaded = downloadFile(
+      bytes: excelBytes,
+      filename: filename,
+      mimeType: 'application/vnd.ms-excel',
+    );
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Text(
+          downloaded
+              ? '${selection.period.label} $moduleLabel Excel report downloaded with ${filteredRecords.length} record${filteredRecords.length == 1 ? '' : 's'}.'
+              : 'Excel export is only supported in the web dashboard.',
+        ),
+        backgroundColor: downloaded ? accentColor : Colors.orange,
+      ),
+    );
+    return;
+  }
+
   final pdfBytes = await _buildFormalBhwReportPdfBytes(
     moduleLabel: moduleLabel,
     selection: selection,
     records: filteredRecords,
     columns: columns,
     dateResolver: dateResolver,
+    branding: branding,
   );
 
   final filename =
@@ -449,14 +511,33 @@ Future<_ReportSelection?> _showReportGenerationDialog({
               period: selectedPeriod,
               month: selectedMonth,
               year: selectedYear,
-              barangayName: barangayController.text.trim(),
-              preparedBy: preparedByController.text.trim(),
-              preparedByPosition: preparedByPositionController.text.trim(),
+              barangayName: _cleanFieldValue(
+                barangayController.text,
+                fallback: 'Barangay Not Specified',
+              ),
+              preparedBy: _cleanFieldValue(
+                preparedByController.text,
+                fallback: _defaultPreparedBy(),
+              ),
+              preparedByPosition: _cleanFieldValue(
+                preparedByPositionController.text,
+                fallback: 'Barangay Health Worker',
+              ),
               reviewedBy: reviewedByController.text.trim(),
-              reviewedByPosition: reviewedByPositionController.text.trim(),
+              reviewedByPosition: _cleanFieldValue(
+                reviewedByPositionController.text,
+                fallback: 'Reviewing Officer',
+              ),
               approvedBy: approvedByController.text.trim(),
-              approvedByPosition: approvedByPositionController.text.trim(),
-              remarks: remarksController.text.trim(),
+              approvedByPosition: _cleanFieldValue(
+                approvedByPositionController.text,
+                fallback: 'Approving Officer',
+              ),
+              remarks: _cleanFieldValue(
+                remarksController.text,
+                fallback:
+                    'This report was generated from encoded BHW records for official monitoring, submission, and filing.',
+              ),
             );
             final matchingCount = _filterRecordsForSelection(
               records,
@@ -742,7 +823,7 @@ Future<_ReportSelection?> _showReportGenerationDialog({
                             ),
                             const SizedBox(height: 10),
                             Text(
-                              '$matchingCount matching record${matchingCount == 1 ? '' : 's'} ready for print-ready PDF export.',
+                              '$matchingCount matching record${matchingCount == 1 ? '' : 's'} ready for print-ready PDF or Excel export.',
                               style: TextStyle(
                                 color: matchingCount > 0
                                     ? textColor
@@ -768,45 +849,25 @@ Future<_ReportSelection?> _showReportGenerationDialog({
                   style: TextButton.styleFrom(foregroundColor: mutedColor),
                   child: const Text('Cancel'),
                 ),
+                OutlinedButton.icon(
+                  onPressed: matchingCount == 0
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(
+                          selection.copyWith(format: ReportExportFormat.excel),
+                        ),
+                  icon: const Icon(Icons.table_chart_outlined),
+                  label: const Text('Generate Excel'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: accentColor,
+                    side: BorderSide(color: accentColor),
+                  ),
+                ),
                 FilledButton.icon(
                   onPressed: matchingCount == 0
                       ? null
-                      : () {
-                          Navigator.of(dialogContext).pop(
-                            _ReportSelection(
-                              period: selectedPeriod,
-                              month: selectedMonth,
-                              year: selectedYear,
-                              barangayName: _cleanFieldValue(
-                                barangayController.text,
-                                fallback: 'Barangay Not Specified',
-                              ),
-                              preparedBy: _cleanFieldValue(
-                                preparedByController.text,
-                                fallback: _defaultPreparedBy(),
-                              ),
-                              preparedByPosition: _cleanFieldValue(
-                                preparedByPositionController.text,
-                                fallback: 'Barangay Health Worker',
-                              ),
-                              reviewedBy: reviewedByController.text.trim(),
-                              reviewedByPosition: _cleanFieldValue(
-                                reviewedByPositionController.text,
-                                fallback: 'Reviewing Officer',
-                              ),
-                              approvedBy: approvedByController.text.trim(),
-                              approvedByPosition: _cleanFieldValue(
-                                approvedByPositionController.text,
-                                fallback: 'Approving Officer',
-                              ),
-                              remarks: _cleanFieldValue(
-                                remarksController.text,
-                                fallback:
-                                    'This report was generated from encoded BHW records for official monitoring, submission, and filing.',
-                              ),
-                            ),
-                          );
-                        },
+                      : () => Navigator.of(dialogContext).pop(
+                          selection.copyWith(format: ReportExportFormat.pdf),
+                        ),
                   style: FilledButton.styleFrom(
                     backgroundColor: accentColor,
                     foregroundColor: _bestForegroundColor(accentColor),
@@ -1039,6 +1100,7 @@ Future<List<int>> _buildFormalBhwReportPdfBytes({
   required List<Map<String, dynamic>> records,
   required List<ReportCsvColumn> columns,
   required DateTime? Function(Map<String, dynamic> record) dateResolver,
+  required ReportBranding branding,
 }) async {
   // Run the heavy PDF generation on a background isolate to prevent UI freezing
   return compute(
@@ -1049,6 +1111,9 @@ Future<List<int>> _buildFormalBhwReportPdfBytes({
       records: records,
       columns: columns,
       dateResolver: dateResolver,
+      cityLogoBytes: branding.cityLogo,
+      healthOfficeLogoBytes: branding.healthOfficeLogo,
+      barangayLogoBytes: branding.barangayLogo,
     ),
   );
 }
@@ -1082,6 +1147,15 @@ Future<List<int>> _generatePdfBytesInBackground(
     params.moduleLabel,
     params.dateResolver,
   );
+  final cityLogo = params.cityLogoBytes == null
+      ? null
+      : pw.MemoryImage(Uint8List.fromList(params.cityLogoBytes!));
+  final healthOfficeLogo = params.healthOfficeLogoBytes == null
+      ? null
+      : pw.MemoryImage(Uint8List.fromList(params.healthOfficeLogoBytes!));
+  final barangayLogo = params.barangayLogoBytes == null
+      ? null
+      : pw.MemoryImage(Uint8List.fromList(params.barangayLogoBytes!));
 
   pdf.addPage(
     pw.MultiPage(
@@ -1092,6 +1166,9 @@ Future<List<int>> _generatePdfBytesInBackground(
         selection: params.selection,
         generatedAt: generatedAt,
         reportReference: reportReference,
+        cityLogo: cityLogo,
+        healthOfficeLogo: healthOfficeLogo,
+        barangayLogo: barangayLogo,
       ),
       footer: (context) => _buildReportFooter(context, generatedAt),
       build: (context) => [
@@ -1143,84 +1220,268 @@ Future<List<int>> _generatePdfBytesInBackground(
   return pdf.save();
 }
 
+List<int> _buildFormalBhwReportExcelBytes({
+  required String moduleLabel,
+  required _ReportSelection selection,
+  required List<Map<String, dynamic>> records,
+  required List<ReportCsvColumn> columns,
+  required DateTime? Function(Map<String, dynamic> record) dateResolver,
+  required ReportBranding branding,
+}) {
+  final generatedAt = DateTime.now();
+  final reportTitle = _buildOfficialReportTitle(moduleLabel, selection.period);
+  final reportReference = _buildReportReference(
+    moduleLabel,
+    selection,
+    generatedAt,
+  );
+  final aggregation = _summarizeRecords(records, moduleLabel, dateResolver);
+  final recordRows = records.asMap().entries.map((entry) {
+    final cells = <String>[
+      _excelCell('${entry.key + 1}', center: true),
+      ...columns.map(
+        (column) => _excelCell(
+          _sanitizeTableCell(column.valueBuilder(entry.value)),
+          center: column.center,
+        ),
+      ),
+    ];
+    return '<tr>${cells.join()}</tr>';
+  }).join();
+  final headerCells = [
+    _excelCell('No.', header: true, center: true),
+    ...columns.map(
+      (column) =>
+          _excelCell(column.header, header: true, center: column.center),
+    ),
+  ];
+  final summaryRows =
+      [
+        ['Total Records', aggregation.totalRecords.toString()],
+        ['Unique Patients / Subjects', aggregation.uniqueSubjects.toString()],
+        [
+          'Coverage Window',
+          _dateSpanLabel(aggregation.earliestDate, aggregation.latestDate),
+        ],
+        ['Sex Distribution', _summarizeSexCounts(aggregation.sexCounts)],
+        ['Status Snapshot', _summarizeTopCounts(aggregation.statusCounts)],
+        [
+          aggregation.primaryLabel,
+          _summarizeTopCounts(aggregation.primaryCounts),
+        ],
+      ].map((row) {
+        return '<tr>${_excelCell(row[0], header: true)}${_excelCell(row[1])}</tr>';
+      }).join();
+
+  final html =
+      '''
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:x="urn:schemas-microsoft-com:office:excel"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta charset="utf-8">
+  <meta name="Generator" content="AI-DSUHIS">
+  <!-- Excel-compatible print settings: landscape, repeating table header. -->
+  <style>
+    @page { size: landscape; margin: 0.45in; }
+    body { font-family: Arial, sans-serif; color: #14212B; font-size: 10pt; }
+    table { border-collapse: collapse; width: 100%; }
+    .header-table { border: 0; margin-bottom: 10px; }
+    .header-table td { border: 0; vertical-align: middle; }
+    .seal { width: 58px; height: 58px; object-fit: contain; }
+    .seal-cell { width: 76px; text-align: center; }
+    .seal-label { display: block; font-size: 6pt; font-weight: bold; color: #52677D; }
+    .identity { text-align: center; }
+    .province { font-size: 8pt; font-weight: bold; color: #52677D; letter-spacing: 0.5px; }
+    .city { font-size: 16pt; font-weight: bold; color: #173F70; letter-spacing: 1px; }
+    .program { font-size: 9pt; font-weight: bold; color: #52677D; letter-spacing: 1px; }
+    .system { font-size: 8pt; font-weight: bold; color: #52677D; }
+    .control { border: 1px solid #CBD5E1; background: #F8FAFC; padding: 7px; font-size: 8pt; }
+    .title { font-size: 15pt; font-weight: bold; color: #173F70; border-top: 2px solid #173F70; padding-top: 8px; }
+    .subtitle { color: #52677D; padding: 3px 0 10px; }
+    .section { background: #173F70; color: white; font-weight: bold; padding: 6px 8px; }
+    .summary { margin: 0 0 12px; }
+    .summary td, .summary th, .records td, .records th, .signatures td { border: 1px solid #CBD5E1; padding: 6px; vertical-align: top; }
+    .summary th { background: #EAF3FF; color: #173F70; text-align: left; width: 28%; }
+    .records { table-layout: fixed; page-break-inside: auto; }
+    .records thead { display: table-header-group; }
+    .records tr { page-break-inside: avoid; }
+    .records th { background: #173F70; color: white; font-weight: bold; text-align: left; }
+    .records td { word-wrap: break-word; white-space: normal; }
+    .records tr:nth-child(even) td { background: #F8FAFC; }
+    .center { text-align: center; }
+    .notes { border: 1px solid #CBD5E1; background: #F8FAFC; padding: 8px; }
+    .signatures { margin-top: 10px; table-layout: fixed; }
+    .signature-line { display: block; border-bottom: 1px solid #52677D; height: 22px; }
+    .signature-label { font-size: 8pt; color: #52677D; }
+    .footer { color: #52677D; font-size: 8pt; border-top: 1px solid #CBD5E1; padding-top: 6px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <table class="header-table">
+    <tr>
+      <td class="seal-cell">${_excelImage(branding.cityLogo, 'Malaybalay City seal')}<span class="seal-label">MALAYBALAY CITY</span></td>
+      <td class="seal-cell">${_excelImage(branding.healthOfficeLogo, 'City Health Office seal')}<span class="seal-label">CITY HEALTH OFFICE</span></td>
+      <td class="seal-cell">${_excelImage(branding.barangayLogo, 'Barangay seal')}<span class="seal-label">BARANGAY</span></td>
+      <td class="identity">
+        <div class="province">REPUBLIC OF THE PHILIPPINES • PROVINCE OF BUKIDNON</div>
+        <div class="city">CITY OF MALAYBALAY</div>
+        <div class="program">SAKA TA MALAYBALAY</div>
+        <div class="system">BARANGAY HEALTH WORKER INFORMATION SYSTEM</div>
+      </td>
+      <td class="control">REPORT CONTROL<br><b>${_escapeHtml(reportReference)}</b><br>${_escapeHtml(_formatFormalDateTime(generatedAt))}</td>
+    </tr>
+  </table>
+  <div class="title">${_escapeHtml(reportTitle)}</div>
+  <div class="subtitle">Barangay: ${_escapeHtml(selection.barangayName)} &nbsp; | &nbsp; Reporting Period: ${_escapeHtml(selection.scopeLabel)}</div>
+
+  <table class="summary">
+    <tr><td class="section" colspan="2">I. REPORT IDENTIFICATION AND SUMMARY</td></tr>
+    <tr><th>Report Type</th><td>${_escapeHtml(selection.period.label)} Report</td></tr>
+    <tr><th>Module</th><td>${_escapeHtml(moduleLabel)}</td></tr>
+    <tr><th>Prepared By</th><td>${_escapeHtml(selection.preparedBy)} (${_escapeHtml(selection.preparedByPosition)})</td></tr>
+    <tr><th>Generated</th><td>${_escapeHtml(_formatFormalDateTime(generatedAt))}</td></tr>
+    $summaryRows
+  </table>
+
+  <table class="records">
+    <thead><tr>${headerCells.join()}</tr></thead>
+    <tbody>$recordRows</tbody>
+  </table>
+
+  <table class="summary" style="margin-top:12px;">
+    <tr><td class="section" colspan="2">III. REMARKS / NOTES</td></tr>
+    <tr><td class="notes" colspan="2">${_escapeHtml(selection.remarks)}<br><br><span class="signature-label">System notice: Review the encoded values before filing or submission.</span></td></tr>
+  </table>
+  <table class="signatures">
+    <tr>
+      ${_excelSignatureCell('Prepared by', selection.preparedBy, selection.preparedByPosition)}
+      ${_excelSignatureCell('Reviewed by', selection.reviewedBy, selection.reviewedByPosition)}
+      ${_excelSignatureCell('Approved by', selection.approvedBy, selection.approvedByPosition)}
+    </tr>
+  </table>
+  <div class="footer">Generated by AI-DSUHIS • Confidential health information • Page headers repeat when printed</div>
+</body>
+</html>
+''';
+
+  return utf8.encode(html);
+}
+
+String _excelCell(String value, {bool header = false, bool center = false}) {
+  final classes = [if (center) 'center'];
+  return '<${header ? 'th' : 'td'}${classes.isEmpty ? '' : ' class="${classes.join(' ')}"'}>${_escapeHtml(value)}</${header ? 'th' : 'td'}>';
+}
+
+String _excelSignatureCell(String label, String name, String position) {
+  return '<td><b>${_escapeHtml(label.toUpperCase())}</b><br><span class="signature-line"></span><span class="signature-label">Printed Name: ${_escapeHtml(name.isEmpty ? ' ' : name)}<br>Position: ${_escapeHtml(position)}</span></td>';
+}
+
+String _excelImage(Uint8List? bytes, String alt) {
+  if (bytes == null || bytes.isEmpty) {
+    return '<span class="seal-label">SEAL</span>';
+  }
+  final mime = bytes.length > 1 && bytes[0] == 0xFF && bytes[1] == 0xD8
+      ? 'image/jpeg'
+      : 'image/png';
+  return '<img class="seal" alt="${_escapeHtml(alt)}" src="data:$mime;base64,${base64Encode(bytes)}">';
+}
+
+String _escapeHtml(String value) {
+  return value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+}
+
 pw.Widget _buildReportHeader({
   required String reportTitle,
   required _ReportSelection selection,
   required DateTime generatedAt,
   required String reportReference,
+  required pw.MemoryImage? cityLogo,
+  required pw.MemoryImage? healthOfficeLogo,
+  required pw.MemoryImage? barangayLogo,
 }) {
-  final accent = PdfColors.black;
-  final border = PdfColors.black;
-  final muted = PdfColors.black;
+  final accent = PdfColor.fromHex('#173F70');
+  final border = PdfColor.fromHex('#CBD5E1');
+  final muted = PdfColor.fromHex('#52677D');
 
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
+      pw.Text(
+        'REPUBLIC OF THE PHILIPPINES  •  PROVINCE OF BUKIDNON',
+        style: pw.TextStyle(
+          fontSize: 7.2,
+          fontWeight: pw.FontWeight.bold,
+          color: muted,
+          letterSpacing: 0.5,
+        ),
+      ),
+      pw.SizedBox(height: 4),
       pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
-          pw.Container(
-            width: 48,
-            height: 48,
-            decoration: pw.BoxDecoration(
-              color: PdfColor.fromHex('#E8F3F6'),
-              border: pw.Border.all(color: border),
-              borderRadius: pw.BorderRadius.circular(8),
-            ),
-            child: pw.Center(
-              child: pw.Text(
-                'BHW',
-                style: pw.TextStyle(
-                  fontSize: 12,
-                  fontWeight: pw.FontWeight.bold,
-                  color: accent,
-                ),
-              ),
-            ),
-          ),
+          _buildReportLogo(cityLogo, 'MALAYBALAY CITY'),
+          pw.SizedBox(width: 6),
+          _buildReportLogo(healthOfficeLogo, 'CITY HEALTH OFFICE'),
+          pw.SizedBox(width: 6),
+          _buildReportLogo(barangayLogo, 'BARANGAY'),
           pw.SizedBox(width: 12),
           pw.Expanded(
             child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
                 pw.Text(
-                  'BARANGAY HEALTH WORKER INFORMATION SYSTEM',
+                  'CITY OF MALAYBALAY',
                   style: pw.TextStyle(
-                    fontSize: 8,
+                    fontSize: 13,
                     fontWeight: pw.FontWeight.bold,
-                    letterSpacing: 1,
                     color: accent,
-                  ),
-                ),
-                pw.SizedBox(height: 3),
-                pw.Text(
-                  reportTitle,
-                  style: pw.TextStyle(
-                    fontSize: 16,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.black,
+                    letterSpacing: 0.8,
                   ),
                 ),
                 pw.SizedBox(height: 2),
                 pw.Text(
-                  'Barangay: ${selection.barangayName}  |  Reporting Period: ${selection.scopeLabel}',
-                  style: pw.TextStyle(fontSize: 9, color: muted),
+                  'SAKA TA MALAYBALAY',
+                  style: pw.TextStyle(
+                    fontSize: 8.2,
+                    fontWeight: pw.FontWeight.bold,
+                    color: muted,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                pw.SizedBox(height: 5),
+                pw.Text(
+                  'BARANGAY HEALTH WORKER INFORMATION SYSTEM',
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(
+                    fontSize: 7.3,
+                    fontWeight: pw.FontWeight.bold,
+                    color: muted,
+                    letterSpacing: 0.55,
+                  ),
                 ),
               ],
             ),
           ),
           pw.Container(
-            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            width: 126,
+            padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 7),
             decoration: pw.BoxDecoration(
-              color: PdfColor.fromHex('#F7FAFB'),
+              color: PdfColor.fromHex('#F8FAFC'),
               border: pw.Border.all(color: border),
-              borderRadius: pw.BorderRadius.circular(8),
+              borderRadius: pw.BorderRadius.circular(6),
             ),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
-                  'SUBMISSION COPY',
+                  'REPORT CONTROL',
                   style: pw.TextStyle(
                     fontSize: 7.2,
                     fontWeight: pw.FontWeight.bold,
@@ -1247,8 +1508,61 @@ pw.Widget _buildReportHeader({
           ),
         ],
       ),
-      pw.SizedBox(height: 8),
+      pw.SizedBox(height: 6),
+      pw.Text(
+        reportTitle,
+        style: pw.TextStyle(
+          fontSize: 15,
+          fontWeight: pw.FontWeight.bold,
+          color: accent,
+        ),
+      ),
+      pw.SizedBox(height: 2),
+      pw.Text(
+        'Barangay: ${selection.barangayName}  |  Reporting Period: ${selection.scopeLabel}',
+        style: pw.TextStyle(fontSize: 8.6, color: muted),
+      ),
+      pw.SizedBox(height: 7),
       pw.Divider(color: border),
+    ],
+  );
+}
+
+pw.Widget _buildReportLogo(pw.MemoryImage? image, String label) {
+  return pw.Column(
+    mainAxisSize: pw.MainAxisSize.min,
+    children: [
+      pw.Container(
+        width: 48,
+        height: 48,
+        padding: const pw.EdgeInsets.all(3),
+        decoration: pw.BoxDecoration(
+          color: PdfColors.white,
+          border: pw.Border.all(color: PdfColor.fromHex('#CBD5E1')),
+          borderRadius: pw.BorderRadius.circular(6),
+        ),
+        child: image == null
+            ? pw.Center(
+                child: pw.Text(
+                  'SEAL',
+                  style: pw.TextStyle(
+                    fontSize: 7,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColor.fromHex('#52677D'),
+                  ),
+                ),
+              )
+            : pw.Image(image, fit: pw.BoxFit.contain),
+      ),
+      pw.SizedBox(height: 2),
+      pw.Text(
+        label,
+        style: pw.TextStyle(
+          fontSize: 4.8,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColor.fromHex('#52677D'),
+        ),
+      ),
     ],
   );
 }

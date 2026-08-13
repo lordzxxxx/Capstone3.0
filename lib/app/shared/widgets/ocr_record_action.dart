@@ -27,16 +27,14 @@ class OcrFieldValue {
   final String source;
 
   bool get requiresManualReview =>
-      value.trim().isEmpty ||
-      confidence < OcrExtraction.manualReviewThreshold;
+      value.trim().isEmpty || confidence < OcrExtraction.manualReviewThreshold;
 
-  OcrFieldValue copyWith({String? value, double? confidence}) =>
-      OcrFieldValue(
-        key: key,
-        value: value ?? this.value,
-        confidence: confidence ?? this.confidence,
-        source: source,
-      );
+  OcrFieldValue copyWith({String? value, double? confidence}) => OcrFieldValue(
+    key: key,
+    value: value ?? this.value,
+    confidence: confidence ?? this.confidence,
+    source: source,
+  );
 }
 
 /// Structured, reviewable OCR output passed into the mobile forms.
@@ -100,19 +98,18 @@ class OcrExtraction {
     String text, {
     Map<String, double> lineConfidence = const <String, double>{},
   }) {
-    final lines = text
+    final rawLines = text
         .split(RegExp(r'\r?\n'))
         .map((line) => line.trim())
         .where((line) => line.isNotEmpty)
         .toList(growable: false);
+    final lines = rawLines
+        .map(_normalizeOcrLine)
+        .where((line) => line.isNotEmpty)
+        .toList(growable: false);
     final values = <String, OcrFieldValue>{};
 
-    void addField(
-      String key,
-      String value,
-      double confidence,
-      String source,
-    ) {
+    void addField(String key, String value, double confidence, String source) {
       final normalized = _normalizeValue(key, value);
       if (normalized.isEmpty) return;
       final validated = _validateField(key, normalized);
@@ -128,39 +125,65 @@ class OcrExtraction {
       }
     }
 
-    for (final line in lines) {
-      final confidence = (lineConfidence[line] ?? 0.78).clamp(0.0, 1.0);
-      _extractLabelValue(
-        line,
-        confidence.toDouble(),
-        addField,
-      );
+    for (var index = 0; index < lines.length; index++) {
+      final line = lines[index];
+      final rawLine = index < rawLines.length ? rawLines[index] : line;
+      final confidence =
+          (lineConfidence[rawLine] ?? lineConfidence[line] ?? 0.78).clamp(
+            0.0,
+            1.0,
+          );
+      _extractLabelValue(line, confidence.toDouble(), addField);
+      // Forms frequently place a label on one line and its value on the next.
+      // Join only when the current line is a known label without a value, so
+      // ordinary multi-line addresses and notes are not guessed together.
+      if (_isLabelOnlyLine(line) && index + 1 < lines.length) {
+        final nextLine = lines[index + 1];
+        if (!_looksLikeLabel(nextLine)) {
+          _extractLabelValue(
+            '$line: $nextLine',
+            (confidence * 0.9).clamp(0.0, 1.0).toDouble(),
+            addField,
+          );
+        }
+      }
     }
 
     final allText = lines.join('\n');
     void addGlobal(String key, RegExp pattern, {double confidence = 0.62}) {
       final match = pattern.firstMatch(allText);
       if (match != null) {
-        addField(key, match.group(1) ?? match.group(0) ?? '', confidence, 'content match');
+        addField(
+          key,
+          match.group(1) ?? match.group(0) ?? '',
+          confidence,
+          'content match',
+        );
       }
     }
 
     if (!values.containsKey('email')) {
       addGlobal(
         'email',
-        RegExp(r'([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})', caseSensitive: false),
+        RegExp(
+          r'([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})',
+          caseSensitive: false,
+        ),
       );
     }
     if (!values.containsKey('contactNumber')) {
       addGlobal(
         'contactNumber',
-        RegExp(r'((?:\+63|0)\s?\d[\d\s-]{7,13}\d)'),
+        RegExp(r'((?:\+?63|0|9)[\s().-]*\d[\d\s().-]{7,14}\d)'),
       );
     }
     if (!values.containsKey('dateOfBirth')) {
       addGlobal(
         'dateOfBirth',
-        RegExp(r'\b(\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}[-/]\d{1,2}[-/]\d{2,4})\b'),
+        RegExp(
+          r'\b(\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4})\b',
+          caseSensitive: false,
+        ),
       );
     }
 
@@ -186,41 +209,45 @@ class OcrExtraction {
         }
       }
     }
-    return OcrExtraction.fromText(
-      result.text,
-      lineConfidence: lineConfidence,
-    );
+    return OcrExtraction.fromText(result.text, lineConfidence: lineConfidence);
   }
 
   static void _extractLabelValue(
     String line,
     double confidence,
     void Function(String key, String value, double confidence, String source)
-        addField,
+    addField,
   ) {
     final patterns = <String, RegExp>{
-      'firstName': RegExp(r'^\s*first\s*name\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'surname': RegExp(r'^\s*(?:surname|last\s*name)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'fullName': RegExp(r'^\s*(?:full\s*name|patient\s*name|name)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'dateOfBirth': RegExp(r'^\s*(?:date\s*of\s*birth|birth\s*date|dob)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'address': RegExp(r'^\s*(?:residential\s*)?address\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'patientId': RegExp(r'^\s*(?:patient|record|identification|id)\s*(?:id|no|number|#)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'contactNumber': RegExp(r'^\s*(?:contact|phone|mobile|telephone)(?:\s*(?:number|no))?\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'email': RegExp(r'^\s*(?:email|e-mail)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'age': RegExp(r'^\s*age\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'gender': RegExp(r'^\s*(?:sex|gender)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'symptoms': RegExp(r'^\s*(?:symptoms?|chief\s*complaint)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'disease': RegExp(r'^\s*(?:disease|diagnosis|condition)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'bloodPressure': RegExp(r'^\s*(?:blood\s*pressure|bp)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'temperature': RegExp(r'^\s*(?:temperature|temp)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'heartRate': RegExp(r'^\s*(?:heart\s*rate|pulse|hr)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'respiratoryRate': RegExp(r'^\s*(?:respiratory\s*rate|rr)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'oxygenSaturation': RegExp(r'^\s*(?:oxygen\s*saturation|spo2|o2)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'weight': RegExp(r'^\s*weight\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'height': RegExp(r'^\s*height\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'vaccine': RegExp(r'^\s*(?:vaccine|immunization)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'cause': RegExp(r'^\s*(?:cause(?:\s*of\s*death)?|death\s*cause)\s*[:#-]\s*(.+)$', caseSensitive: false),
-      'place': RegExp(r'^\s*(?:place|location)\s*[:#-]\s*(.+)$', caseSensitive: false),
+      'firstName': _labelPattern(r'first\s*name'),
+      'surname': _labelPattern(r'(?:surname|last\s*name|family\s*name)'),
+      'fullName': _labelPattern(r'(?:full\s*name|patient\s*name|name)'),
+      'dateOfBirth': _labelPattern(
+        r'(?:date\s*of\s*birth|birth\s*date|dob|birthday)',
+      ),
+      'address': _labelPattern(r'(?:residential\s*)?address'),
+      'barangay': _labelPattern(r'(?:barangay|brgy)'),
+      'patientId': _labelPattern(
+        r'(?:patient\s*(?:id|no|number)|record\s*(?:id|no|number)|identification|id)',
+      ),
+      'contactNumber': _labelPattern(
+        r'(?:contact|phone|mobile|telephone)(?:\s*(?:number|no))?',
+      ),
+      'email': _labelPattern(r'(?:email|e-mail)'),
+      'age': _labelPattern(r'age'),
+      'gender': _labelPattern(r'(?:sex|gender)'),
+      'symptoms': _labelPattern(r'(?:symptoms?|chief\s*complaint)'),
+      'disease': _labelPattern(r'(?:disease|diagnosis|condition)'),
+      'bloodPressure': _labelPattern(r'(?:blood\s*pressure|bp)'),
+      'temperature': _labelPattern(r'(?:temperature|temp)'),
+      'heartRate': _labelPattern(r'(?:heart\s*rate|pulse|hr)'),
+      'respiratoryRate': _labelPattern(r'(?:respiratory\s*rate|rr)'),
+      'oxygenSaturation': _labelPattern(r'(?:oxygen\s*saturation|spo2|o2)'),
+      'weight': _labelPattern(r'weight'),
+      'height': _labelPattern(r'height'),
+      'vaccine': _labelPattern(r'(?:vaccine|immunization)'),
+      'cause': _labelPattern(r'(?:cause(?:\s*of\s*death)?|death\s*cause)'),
+      'place': _labelPattern(r'(?:place|location)'),
     };
     for (final entry in patterns.entries) {
       final match = entry.value.firstMatch(line);
@@ -231,22 +258,162 @@ class OcrExtraction {
     }
   }
 
+  static RegExp _labelPattern(String labels) {
+    return RegExp(
+      r'^\s*(?:' + labels + r')(?:\s*[:#-]\s*|\s+)(.+)$',
+      caseSensitive: false,
+    );
+  }
+
+  static String _normalizeOcrLine(String line) {
+    var normalized = line
+        .replaceAll('\uFF1A', ':')
+        .replaceAll(RegExp(r'[\u2010-\u2015]'), '-')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    normalized = normalized
+        .replaceFirst(RegExp(r'^brgy\.?\s+', caseSensitive: false), 'Barangay ')
+        .replaceFirst(
+          RegExp(r'^dateofbirth\b', caseSensitive: false),
+          'Date of Birth',
+        )
+        .replaceFirst(
+          RegExp(r'^patientname\b', caseSensitive: false),
+          'Patient Name',
+        )
+        .replaceFirst(RegExp(r'^fullname\b', caseSensitive: false), 'Full Name')
+        .replaceFirst(
+          RegExp(r'^contactnumber\b', caseSensitive: false),
+          'Contact Number',
+        )
+        .replaceFirst(
+          RegExp(r'^bloodpressure\b', caseSensitive: false),
+          'Blood Pressure',
+        )
+        .replaceFirst(
+          RegExp(r'^heartrate\b', caseSensitive: false),
+          'Heart Rate',
+        )
+        .replaceFirst(
+          RegExp(r'^respiratoryrate\b', caseSensitive: false),
+          'Respiratory Rate',
+        );
+    return normalized;
+  }
+
+  static bool _isLabelOnlyLine(String line) {
+    return RegExp(
+      r'^\s*(?:first\s*name|surname|last\s*name|full\s*name|patient\s*name|name|date\s*of\s*birth|birth\s*date|dob|address|barangay|brgy|patient\s*(?:id|no|number)|record\s*(?:id|no|number)|contact|phone|mobile|telephone|email|age|sex|gender|symptoms?|chief\s*complaint|disease|diagnosis|condition|blood\s*pressure|bp|temperature|temp|heart\s*rate|pulse|hr|respiratory\s*rate|rr|oxygen\s*saturation|spo2|o2|weight|height|vaccine|immunization|cause|place|location)\s*[:#-]?\s*$',
+      caseSensitive: false,
+    ).hasMatch(line);
+  }
+
+  static bool _looksLikeLabel(String line) =>
+      _isLabelOnlyLine(line) ||
+      RegExp(
+        r'^\s*(?:first\s*name|surname|last\s*name|full\s*name|patient\s*name|name|date\s*of\s*birth|dob|address|barangay|patient|record|id|contact|phone|mobile|email|age|sex|gender|symptoms?|diagnosis|condition|vaccine)\b',
+        caseSensitive: false,
+      ).hasMatch(line);
+
   static String _normalizeValue(String key, String value) {
     var normalized = value.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (key == 'contactNumber') {
       normalized = normalized.replaceAll(RegExp(r'[^+\d]'), '');
       if (normalized.startsWith('+63')) {
         normalized = '0${normalized.substring(3)}';
+      } else if (normalized.startsWith('63') && normalized.length == 12) {
+        normalized = '0${normalized.substring(2)}';
+      } else if (normalized.startsWith('9') && normalized.length == 10) {
+        normalized = '0$normalized';
       }
     }
-    if (key == 'dateOfBirth') {
+    if (key == 'dateOfBirth' || key == 'date') {
       normalized = _normalizeDate(normalized);
+    }
+    if (key == 'gender') {
+      final lower = normalized.toLowerCase();
+      if (lower == 'm' || lower == 'male' || lower == 'man') {
+        normalized = 'Male';
+      } else if (lower == 'f' || lower == 'female' || lower == 'woman') {
+        normalized = 'Female';
+      } else if (lower == 'o' ||
+          lower == 'other' ||
+          lower == 'prefer not to say') {
+        normalized = 'Other';
+      }
+    }
+    if (key == 'barangay') {
+      normalized = normalized
+          .replaceFirst(
+            RegExp(r'^brgy\.?\s*', caseSensitive: false),
+            'Barangay ',
+          )
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+      if (RegExp(r'^\d{1,2}$').hasMatch(normalized)) {
+        normalized = 'Barangay ${normalized.padLeft(2, '0')}';
+      }
     }
     return normalized;
   }
 
   static String _normalizeDate(String value) {
-    final match = RegExp(r'^(\d{1,4})[-/](\d{1,2})[-/](\d{1,4})$').firstMatch(value);
+    final namedMonth = RegExp(
+      r'^(?:(\d{1,2})\s+([A-Za-z]+)|([A-Za-z]+)\s+(\d{1,2}),?)\s+(\d{2,4})$',
+      caseSensitive: false,
+    ).firstMatch(value.trim());
+    if (namedMonth != null) {
+      final monthNames = <String, int>{
+        'jan': 1,
+        'january': 1,
+        'feb': 2,
+        'february': 2,
+        'mar': 3,
+        'march': 3,
+        'apr': 4,
+        'april': 4,
+        'may': 5,
+        'jun': 6,
+        'june': 6,
+        'jul': 7,
+        'july': 7,
+        'aug': 8,
+        'august': 8,
+        'sep': 9,
+        'sept': 9,
+        'september': 9,
+        'oct': 10,
+        'october': 10,
+        'nov': 11,
+        'november': 11,
+        'dec': 12,
+        'december': 12,
+      };
+      final firstPart = namedMonth.group(1);
+      final firstMonthName = namedMonth.group(2);
+      final secondMonthName = namedMonth.group(3);
+      final secondPart = namedMonth.group(4);
+      final yearPart = int.tryParse(namedMonth.group(5) ?? '');
+      final monthName = (firstMonthName ?? secondMonthName ?? '').toLowerCase();
+      final month = monthNames[monthName];
+      final day = int.tryParse(firstPart ?? secondPart ?? '');
+      if (month != null && day != null && yearPart != null) {
+        final year = yearPart < 100 ? 2000 + yearPart : yearPart;
+        final date = DateTime.tryParse(
+          '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}',
+        );
+        if (date != null &&
+            date.year == year &&
+            date.month == month &&
+            date.day == day) {
+          return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+        }
+      }
+    }
+
+    final match = RegExp(
+      r'^(\d{1,4})[-/](\d{1,2})[-/](\d{1,4})$',
+    ).firstMatch(value);
     if (match == null) return value;
     var first = int.tryParse(match.group(1)!);
     var second = int.tryParse(match.group(2)!);
@@ -272,7 +439,10 @@ class OcrExtraction {
     final date = DateTime.tryParse(
       '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}',
     );
-    if (date == null || date.year != year || date.month != month || date.day != day) {
+    if (date == null ||
+        date.year != year ||
+        date.month != month ||
+        date.day != day) {
       return value;
     }
     return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -283,7 +453,15 @@ class OcrExtraction {
       case 'firstName':
       case 'surname':
       case 'fullName':
-        return RegExp(r"^[\p{L}][\p{L} .'-]{1,100}$", unicode: true).hasMatch(value);
+        return RegExp(
+          r"^[\p{L}][\p{L} .'-]{1,100}$",
+          unicode: true,
+        ).hasMatch(value);
+      case 'barangay':
+        return RegExp(
+          r"^[\p{L}\d][\p{L}\d .'-]{1,100}$",
+          unicode: true,
+        ).hasMatch(value);
       case 'email':
         return RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value);
       case 'contactNumber':
@@ -292,6 +470,7 @@ class OcrExtraction {
         final age = int.tryParse(value.replaceAll(RegExp(r'[^\d]'), ''));
         return age != null && age >= 0 && age <= 130;
       case 'dateOfBirth':
+      case 'date':
         return RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value);
       case 'patientId':
         return RegExp(r'^[A-Za-z0-9][A-Za-z0-9_/#.-]{1,80}$').hasMatch(value);
@@ -609,7 +788,14 @@ class OcrRecordCapture {
     final editedFields = <String, OcrFieldValue>{};
     for (final field in extraction.fields.values) {
       final edited = fieldControllers[field.key]?.text.trim() ?? field.value;
-      editedFields[field.key] = field.copyWith(value: edited);
+      final wasChanged = edited != field.value.trim();
+      editedFields[field.key] = field.copyWith(
+        value: edited,
+        // A user correction is an explicit verification event. Keep
+        // unchanged low-confidence values gated, but allow corrected values
+        // to flow into the existing form validation path.
+        confidence: wasChanged ? 0.95 : field.confidence,
+      );
     }
     controller.dispose();
     for (final fieldController in fieldControllers.values) {

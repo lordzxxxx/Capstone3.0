@@ -107,7 +107,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              '✅ Successfully added 100 sample immunization records!',
+              'Successfully added 100 sample immunization records.',
             ),
             backgroundColor: _primaryAqua,
             duration: Duration(seconds: 3),
@@ -124,7 +124,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Error seeding data: $e'),
+            content: Text('Error seeding data: $e'),
             backgroundColor: Colors.red,
           ),
         );

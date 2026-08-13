@@ -118,7 +118,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('✅ Successfully added 100 sample patient records!'),
+          content: Text('Successfully added 100 sample patient records.'),
           backgroundColor: AppDesign.patientRecords,
           duration: Duration(seconds: 3),
         ),
@@ -130,7 +130,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('❌ Error seeding data: $e'),
+          content: Text('Error seeding data: $e'),
           backgroundColor: Colors.red,
         ),
       );

@@ -338,7 +338,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              '✅ Successfully added 100 sample communicable disease records!',
+              'Successfully added 100 sample communicable disease records.',
             ),
             backgroundColor: Color(0xFF27AE60),
             duration: Duration(seconds: 3),
@@ -352,7 +352,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Error seeding data: $e'),
+            content: Text('Error seeding data: $e'),
             backgroundColor: Color(0xFFE74C3C),
             duration: const Duration(seconds: 3),
           ),

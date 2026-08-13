@@ -228,9 +228,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text(
-                                      '✅ 100 sample records seeded',
-                                    ),
+                                    content: Text('100 sample records seeded.'),
                                   ),
                                 );
                               }

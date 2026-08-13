@@ -332,7 +332,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('✅ Successfully seeded 100 NCD records'),
+          content: Text('Successfully seeded 100 NCD records.'),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 3),
         ),
@@ -348,7 +348,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('❌ Error seeding data: $e'),
+          content: Text('Error seeding data: $e'),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 3),
         ),

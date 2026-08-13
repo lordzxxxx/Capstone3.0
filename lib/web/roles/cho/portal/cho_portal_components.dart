@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
 abstract final class ChoColors {
-  static const background = Color(0xFFF5F7FA);
-  static const surface = Colors.white;
+  static const background = AppColors.backgroundLight;
+  static const surface = AppColors.surfaceLight;
   static const surfaceAlt = Color(0xFFEDF3FA);
   static const border = Color(0xFFD9E5F2);
-  static const aqua = Color(0xFF2F80ED);
-  static const ice = Color(0xFF163B66);
-  static const text = Color(0xFF0B1F3A);
-  static const muted = Color(0xFF4B6075);
-  static const navBackground = Color(0xFF071A33);
-  static const navSurface = Color(0xFF0D274D);
-  static const navText = Color(0xFFF8FBFF);
+  static const aqua = AppColors.primary;
+  static const ice = AppColors.secondary;
+  static const text = AppColors.textPrimary;
+  static const muted = AppColors.textSecondary;
+  static const navBackground = AppColors.backgroundDark;
+  static const navSurface = AppColors.surfaceDark;
+  static const navText = AppColors.textOnDark;
   static const navMuted = Color(0xFFE3EDF8);
   static const navBorder = Color(0xFF1C3D66);
 }

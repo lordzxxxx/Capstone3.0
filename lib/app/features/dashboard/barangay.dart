@@ -276,7 +276,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Successfully added $savedCount sample barangay records!'),
+            content: Text('Successfully added $savedCount sample barangay records.'),
             backgroundColor: _successGreen,
             duration: const Duration(seconds: 3),
           ),
@@ -289,7 +289,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Error seeding data: $e'),
+            content: Text('Error seeding data: $e'),
             backgroundColor: _emergencyRed,
             duration: const Duration(seconds: 3),
           ),
