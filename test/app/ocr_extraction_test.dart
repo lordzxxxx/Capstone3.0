@@ -88,6 +88,20 @@ void main() {
       expect(extraction.fields['barangay']?.value, 'Barangay 07');
     });
 
+    test(
+      'prefers an explicitly labeled value over a heading that starts with '
+      'the same field keyword',
+      () {
+        final extraction = OcrExtraction.fromText('''
+        Barangay Health Intake Form
+        Full Name: Juan Dela Cruz
+        Barangay: Barangay 03
+      ''');
+
+        expect(extraction.fields['barangay']?.value, 'Barangay 03');
+      },
+    );
+
     test('normalizes compact Philippine mobile numbers', () {
       final extraction = OcrExtraction.fromText('Phone 9171234567');
       expect(extraction.fields['contactNumber']?.value, '09171234567');

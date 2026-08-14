@@ -1945,16 +1945,32 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AddPatientModal(initialValues: initialValues),
+      builder: (context) => AddPatientModal(
+        initialValues: initialValues,
+        onSaved: _handlePatientSaved,
+      ),
+    );
+  }
+
+  Future<void> _handlePatientSaved(String patientName) async {
+    if (!mounted) return;
+    await _loadPatients();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Patient $patientName added successfully'),
+        backgroundColor: Colors.green,
+      ),
     );
   }
 }
 
 // Add Patient Modal Widget
 class AddPatientModal extends StatefulWidget {
-  const AddPatientModal({super.key, this.initialValues});
+  const AddPatientModal({super.key, this.initialValues, this.onSaved});
 
   final Map<String, dynamic>? initialValues;
+  final Future<void> Function(String patientName)? onSaved;
 
   @override
   State<AddPatientModal> createState() => _AddPatientModalState();
@@ -3434,24 +3450,16 @@ class _AddPatientModalState extends State<AddPatientModal> {
       final dbHelper = PatientDatabaseHelper.instance;
       await dbHelper.insertRecord(patientData);
 
-      // Close modal and reload list
+      final patientName =
+          '${_firstNameController.text.trim()} ${_surnameController.text.trim()}'
+              .trim();
+      if (!context.mounted) return;
+
+      // The dialog route is not a descendant of PatientRecordPage, so an
+      // ancestor-state lookup cannot reliably reach the page that owns the
+      // patient list. Notify it through the explicit callback instead.
       Navigator.pop(context);
-
-      // Trigger reload in parent widget
-      if (context.mounted) {
-        final parentState = context
-            .findAncestorStateOfType<_PatientRecordPageState>();
-        parentState?._loadPatients();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Patient ${_firstNameController.text} ${_surnameController.text} added successfully',
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
+      await widget.onSaved?.call(patientName);
     } catch (e) {
       print('Error saving patient: $e');
       ScaffoldMessenger.of(context).showSnackBar(

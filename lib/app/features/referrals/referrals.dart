@@ -1741,7 +1741,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
         // Keep enough vertical room to prevent label/value overflow on mobile.
-        mainAxisExtent: 126,
+        mainAxisExtent: 150,
       ),
       itemCount: summaries.length,
       itemBuilder: (context, index) {
@@ -1773,7 +1773,12 @@ class _ReferralsPageState extends State<ReferralsPage> {
             ),
           ),
           const SizedBox(height: 6),
-          Text(label, style: const TextStyle(color: _mutedCoolGray)),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: _mutedCoolGray),
+          ),
         ],
       ),
     );

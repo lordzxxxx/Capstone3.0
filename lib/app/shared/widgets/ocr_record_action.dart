@@ -56,12 +56,21 @@ class OcrFieldValue {
     required this.value,
     required this.confidence,
     this.source = '',
+    this.hasExplicitSeparator = false,
   });
 
   final String key;
   final String value;
   final double confidence;
   final String source;
+
+  /// Whether this value came from a line with an explicit label separator
+  /// (":", "#", "-"), as opposed to a bare-whitespace label match. A line
+  /// like "Barangay: Barangay 03" is unambiguous; a heading like "Barangay
+  /// Health Intake Form" can otherwise be misread as a labeled field because
+  /// it happens to start with a field keyword. Explicit-separator matches
+  /// always win over bare-whitespace ones for the same field.
+  final bool hasExplicitSeparator;
 
   bool get requiresManualReview =>
       value.trim().isEmpty || confidence < OcrExtraction.manualReviewThreshold;
@@ -71,6 +80,7 @@ class OcrFieldValue {
     value: value ?? this.value,
     confidence: confidence ?? this.confidence,
     source: source,
+    hasExplicitSeparator: hasExplicitSeparator,
   );
 }
 
@@ -151,18 +161,30 @@ class OcrExtraction {
         .toList(growable: false);
     final values = <String, OcrFieldValue>{};
 
-    void addField(String key, String value, double confidence, String source) {
+    void addField(
+      String key,
+      String value,
+      double confidence,
+      String source,
+      bool hasExplicitSeparator,
+    ) {
       final normalized = _normalizeValue(key, value);
       if (normalized.isEmpty) return;
       final validated = _validateField(key, normalized);
       final adjusted = validated ? confidence : confidence * 0.45;
       final current = values[key];
-      if (current == null || adjusted > current.confidence) {
+      final shouldReplace =
+          current == null ||
+          (hasExplicitSeparator && !current.hasExplicitSeparator) ||
+          (hasExplicitSeparator == current.hasExplicitSeparator &&
+              adjusted > current.confidence);
+      if (shouldReplace) {
         values[key] = OcrFieldValue(
           key: key,
           value: normalized,
           confidence: adjusted.clamp(0.0, 1.0).toDouble(),
           source: source,
+          hasExplicitSeparator: hasExplicitSeparator,
         );
       }
     }
@@ -200,6 +222,7 @@ class OcrExtraction {
           match.group(1) ?? match.group(0) ?? '',
           confidence,
           'content match',
+          false,
         );
       }
     }
@@ -257,7 +280,13 @@ class OcrExtraction {
   static void _extractLabelValue(
     String line,
     double confidence,
-    void Function(String key, String value, double confidence, String source)
+    void Function(
+      String key,
+      String value,
+      double confidence,
+      String source,
+      bool hasExplicitSeparator,
+    )
     addField,
   ) {
     final patterns = <String, RegExp>{
@@ -297,9 +326,18 @@ class OcrExtraction {
     for (final entry in patterns.entries) {
       final match = entry.value.firstMatch(line);
       if (match != null) {
-        final rawValue = match.group(1)!.trim();
+        final hasExplicitSeparator = (match.group(1) ?? '').contains(
+          RegExp(r'[:#-]'),
+        );
+        final rawValue = match.group(2)!.trim();
         final value = _valueBeforeNextLabel(rawValue);
-        addField(entry.key, value, confidence, 'label: ${entry.key}');
+        addField(
+          entry.key,
+          value,
+          confidence,
+          'label: ${entry.key}',
+          hasExplicitSeparator,
+        );
         final remainder = rawValue.substring(value.length).trim();
         if (remainder.isNotEmpty) {
           _extractLabelValue(remainder, confidence, addField);
@@ -311,7 +349,7 @@ class OcrExtraction {
 
   static RegExp _labelPattern(String labels) {
     return RegExp(
-      r'^\s*(?:' + labels + r')(?:\s*[:#-]\s*|\s+)(.+)$',
+      r'^\s*(?:' + labels + r')(\s*[:#-]\s*|\s+)(.+)$',
       caseSensitive: false,
     );
   }
@@ -862,7 +900,10 @@ class OcrRecordCapture {
           appBar: AppBar(
             title: Text('Review $moduleLabel OCR'),
             leading: IconButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
+              onPressed: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+                Navigator.pop(dialogContext, false);
+              },
               icon: const Icon(Icons.close),
             ),
           ),
@@ -946,7 +987,10 @@ class OcrRecordCapture {
                   child: SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed: () => Navigator.pop(dialogContext, true),
+                      onPressed: () {
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        Navigator.pop(dialogContext, true);
+                      },
                       icon: const Icon(Icons.fact_check_outlined),
                       label: const Text('Continue to new record'),
                     ),
@@ -971,10 +1015,18 @@ class OcrRecordCapture {
         confidence: wasChanged ? 0.95 : field.confidence,
       );
     }
-    controller.dispose();
-    for (final fieldController in fieldControllers.values) {
-      fieldController.dispose();
-    }
+    // showDialog's Future resolves as soon as the route is popped, before
+    // its exit transition finishes animating the still-mounted TextFields.
+    // Disposing these controllers immediately races that transition and
+    // throws "A TextEditingController was used after being disposed."
+    // Deferring past the transition avoids the race while still releasing
+    // the controllers.
+    Future.delayed(const Duration(milliseconds: 300), () {
+      controller.dispose();
+      for (final fieldController in fieldControllers.values) {
+        fieldController.dispose();
+      }
+    });
     if (accepted != true || editedText.isEmpty || !context.mounted) return;
     final reviewedExtraction = extraction.copyWithFields(editedFields);
     await onOcrReady(reviewedExtraction);
