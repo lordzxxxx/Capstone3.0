@@ -92,6 +92,32 @@ void main() {
       final extraction = OcrExtraction.fromText('Phone 9171234567');
       expect(extraction.fields['contactNumber']?.value, '09171234567');
     });
+
+    test('derives the form patient name from separate name fields', () {
+      final extraction = OcrExtraction.fromText('''
+        First Name: Maria
+        Surname: Santos
+      ''');
+
+      expect(extraction.toFormSeed()['patientName'], 'Maria Santos');
+    });
+
+    test('separates multiple explicitly labeled fields on one line', () {
+      final extraction = OcrExtraction.fromText(
+        'Full Name: Ana Cruz DOB: 05/14/1990 Sex: F',
+      );
+
+      expect(extraction.fields['fullName']?.value, 'Ana Cruz');
+      expect(extraction.fields['dateOfBirth']?.value, '1990-05-14');
+      expect(extraction.fields['gender']?.value, 'Female');
+    });
+
+    test('maps a visit date without confusing it with birth date', () {
+      final extraction = OcrExtraction.fromText('Visit Date: 2025-02-03');
+
+      expect(extraction.fields['date']?.value, '2025-02-03');
+      expect(extraction.fields.containsKey('dateOfBirth'), isFalse);
+    });
   });
 
   group('OcrExtraction validation and confidence gating', () {

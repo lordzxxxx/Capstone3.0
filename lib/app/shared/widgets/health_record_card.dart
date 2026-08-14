@@ -56,6 +56,8 @@ class HealthRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 390;
+    final cardPadding = compact ? 12.0 : 16.0;
     final initials =
         (avatarText?.trim().isNotEmpty == true
                 ? avatarText!.trim()
@@ -67,7 +69,7 @@ class HealthRecordCard extends StatelessWidget {
       selected: isSelected,
       label: '${recordLabel ?? 'Health record'} for $patientName',
       child: Card(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: EdgeInsets.only(bottom: compact ? 10 : 12),
         elevation: isSelected ? 2 : 1,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -82,7 +84,7 @@ class HealthRecordCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(cardPadding),
             decoration: BoxDecoration(
               color: isSelected
                   ? accentColor.withValues(alpha: 0.07)
@@ -108,8 +110,9 @@ class HealthRecordCard extends StatelessWidget {
                     _PatientAvatar(
                       initials: initials,
                       accentColor: accentColor,
+                      size: compact ? 46 : 52,
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: compact ? 9 : 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,16 +246,21 @@ class HealthRecordCard extends StatelessWidget {
 }
 
 class _PatientAvatar extends StatelessWidget {
-  const _PatientAvatar({required this.initials, required this.accentColor});
+  const _PatientAvatar({
+    required this.initials,
+    required this.accentColor,
+    required this.size,
+  });
 
   final String initials;
   final Color accentColor;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 52,
-      height: 52,
+      width: size,
+      height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: accentColor.withValues(alpha: 0.12),

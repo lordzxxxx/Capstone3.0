@@ -15,6 +15,7 @@ import 'firebase_dynamic_links_stub.dart';
 
 // Import app and web versions
 import 'package:mycapstone_project/app/shell/landing.dart' as app;
+import 'package:mycapstone_project/app/shell/mobile_startup.dart';
 import 'package:mycapstone_project/app/features/auth/login.dart' as app_login;
 import 'package:mycapstone_project/app/features/auth/signup.dart' as app_signup;
 import 'package:mycapstone_project/app/features/analytics/analytics.dart'
@@ -50,22 +51,27 @@ void main() async {
     runApp(const MyApp());
     unawaited(_initializeWebServices());
     return;
-  } else {
-    // Mobile platforms use google-services.json/GoogleService-Info.plist
-    await Firebase.initializeApp();
-    try {
-      await activateFirebaseAppCheck();
-    } catch (e) {
-      if (!kDebugMode) rethrow;
-      print('⚠️ [APP_CHECK] Could not initialize App Check on mobile: $e');
-    }
-    // Initialize dynamic links on mobile so password reset and other
-    // action links can be handled in-app.
-    await _initDynamicLinks();
-    await initializeMobileOfflineSync();
   }
 
-  runApp(const MyApp());
+  // Start the branded mobile shell immediately. Firebase and offline sync are
+  // completed behind the startup gate so the native splash transitions into a
+  // clean, animated AI-DSUHIS loading screen instead of a blank window.
+  runApp(MyApp(mobileInitialization: _initializeMobileServices));
+}
+
+Future<void> _initializeMobileServices() async {
+  // Mobile platforms use google-services.json/GoogleService-Info.plist.
+  await Firebase.initializeApp();
+  try {
+    await activateFirebaseAppCheck();
+  } catch (e) {
+    if (!kDebugMode) rethrow;
+    print('⚠️ [APP_CHECK] Could not initialize App Check on mobile: $e');
+  }
+  // Initialize dynamic links on mobile so password reset and other action
+  // links can be handled in-app.
+  await _initDynamicLinks();
+  await initializeMobileOfflineSync();
 }
 
 Future<void> _initializeWebServices() async {
@@ -110,12 +116,14 @@ Future<void> _initializeWebServices() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, this.mobileInitialization});
+
+  final Future<void> Function()? mobileInitialization;
 
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Health Monitoring System',
+      title: 'AI-DSUHIS',
       // Sourced from the shared AppColors/AppTheme (lib/web/shared/theme/
       // app_theme.dart) so the app follows the same canonical teal branding
       // (0xFF00A8B5) already used across lib/web/*, instead of the one-off
@@ -178,7 +186,12 @@ class MyApp extends StatelessWidget {
                 middlewares: [AuthGuardMiddleware()],
               ),
             ],
-      home: kIsWeb ? const web.LandingPage() : const app.LandingPage(),
+      home: kIsWeb
+          ? const web.LandingPage()
+          : MobileStartupGate(
+              initialize: mobileInitialization ?? () async {},
+              child: const app.LandingPage(),
+            ),
     );
   }
 }

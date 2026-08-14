@@ -581,15 +581,15 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       return Scaffold(
         backgroundColor: _darkDeepTeal,
         appBar: AppBar(
-          backgroundColor: _darkDeepTeal,
+          backgroundColor: AppDesign.navy,
           title: Text(
             'Analytics',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: _lightOffWhite,
+              color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
           ),
-          iconTheme: const IconThemeData(color: _lightOffWhite),
+          iconTheme: const IconThemeData(color: Colors.white),
           elevation: 0,
         ),
         body: const Center(
@@ -601,15 +601,15 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     return Scaffold(
       backgroundColor: _darkDeepTeal,
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.navy,
         title: Text(
           'Analytics',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _lightOffWhite,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: _lightOffWhite),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         actions: [
           IconButton(

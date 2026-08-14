@@ -12,6 +12,7 @@ class PatientDatabaseHelper {
   static Database? _database;
   bool _connectivityListenerStarted = false;
   bool _isConnectivitySyncRunning = false;
+  bool _isInboundSyncRunning = false;
 
   PatientDatabaseHelper._init();
 
@@ -509,6 +510,9 @@ class PatientDatabaseHelper {
 
   // Sync from Firebase to local
   Future<void> syncFromFirebase() async {
+    if (kIsWeb || _isInboundSyncRunning) return;
+
+    _isInboundSyncRunning = true;
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
@@ -516,7 +520,8 @@ class PatientDatabaseHelper {
         return;
       }
 
-      final accessScope = await UserAccessScopeService.instance.loadCurrentScope();
+      final accessScope = await UserAccessScopeService.instance
+          .loadCurrentScope();
       if (!accessScope.isAuthenticated) {
         print('No authenticated access scope. Skipping patient Firebase sync.');
         return;
@@ -546,17 +551,39 @@ class PatientDatabaseHelper {
           .toList(growable: false);
 
       final db = await database;
-      for (final record in records) {
-        final data = Map<String, dynamic>.from(record);
-        data.remove('_firestorePath');
-        data['synced'] = 1;
+      final columnRows = await db.rawQuery(
+        'PRAGMA table_info(patient_records)',
+      );
+      final sqliteColumns = columnRows
+          .map((row) => row['name']?.toString())
+          .whereType<String>()
+          .toSet();
 
-        // Convert boolean values to integers for SQLite
-        data.forEach((key, value) {
-          if (value is bool) {
-            data[key] = value ? 1 : 0;
-          }
-        });
+      for (final record in records) {
+        final recordId = (record['id'] ?? record['patientId'] ?? '')
+            .toString()
+            .trim();
+        if (recordId.isEmpty) continue;
+
+        // Keep a local edit authoritative until the outbound sync succeeds.
+        // This prevents a reconnect refresh from reverting an offline change.
+        final local = await db.query(
+          'patient_records',
+          columns: const ['synced'],
+          where: 'id = ?',
+          whereArgs: [recordId],
+          limit: 1,
+        );
+        if (local.isNotEmpty && local.first['synced'] == 0) continue;
+
+        // Reuse the canonical local schema mapper so every NOT NULL column
+        // receives a safe default, while unknown Firestore-only fields are
+        // intentionally ignored.
+        final data = _prepareRecordData(
+          sanitizeRecordForSqlite(record),
+          recordId,
+        )..removeWhere((key, _) => !sqliteColumns.contains(key));
+        data['synced'] = 1;
 
         await db.insert(
           'patient_records',
@@ -568,6 +595,8 @@ class PatientDatabaseHelper {
       print('Synced ${records.length} patient records from Firebase');
     } catch (e) {
       print('Error syncing from Firebase: $e');
+    } finally {
+      _isInboundSyncRunning = false;
     }
   }
 

@@ -3202,13 +3202,7 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    GridView.count(
-                      crossAxisCount: 1,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 3.5,
+                    Column(
                       children: [
                         _buildMetricCard(
                           title: 'Total Patients',
@@ -3222,6 +3216,7 @@ class _HomePageState extends State<HomePage> {
                           trendLabel: 'vs last month',
                           isPositiveTrend: true,
                         ),
+                        const SizedBox(height: 10),
                         _buildMetricCard(
                           title: 'Check-ups',
                           value: _isLoadingMetrics
@@ -3234,6 +3229,7 @@ class _HomePageState extends State<HomePage> {
                           trendLabel: 'from last month',
                           isPositiveTrend: true,
                         ),
+                        const SizedBox(height: 10),
                         _buildMetricCard(
                           title: 'Prenatal Care',
                           value: _isLoadingMetrics
@@ -3241,11 +3237,12 @@ class _HomePageState extends State<HomePage> {
                               : '$_filteredPrenatalRecords',
                           unit: _metricFilterScopeLabel(),
                           icon: Icons.pregnant_woman_rounded,
-                          color: const Color(0xFFD84315),
+                          color: _primaryAqua,
                           trend: '+15%',
                           trendLabel: 'new this week',
                           isPositiveTrend: true,
                         ),
+                        const SizedBox(height: 10),
                         _buildMetricCard(
                           title: 'Immunizations',
                           value: _isLoadingMetrics
@@ -3253,7 +3250,7 @@ class _HomePageState extends State<HomePage> {
                               : '$_filteredImmunizationRecords',
                           unit: _metricFilterScopeLabel(),
                           icon: Icons.vaccines_rounded,
-                          color: const Color(0xFF4CAF50),
+                          color: _darkDeepTeal,
                           trend: '+10%',
                           trendLabel: 'completion rate',
                           isPositiveTrend: true,
@@ -3270,7 +3267,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Individual Metric Card
+  // Individual Metric Card. It uses intrinsic height so narrow phones do not
+  // receive a forced grid height that can overflow its content.
   Widget _buildMetricCard({
     required String title,
     required String value,
@@ -3282,181 +3280,95 @@ class _HomePageState extends State<HomePage> {
     bool isPositiveTrend = true,
   }) {
     return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppDesign.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppDesign.border),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppDesign.ink,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppDesign.navy,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  unit,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppDesign.subtle,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppDesign.blueSoft,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isPositiveTrend
+                      ? Icons.trending_up_rounded
+                      : Icons.trending_down_rounded,
+                  size: 13,
+                  color: AppDesign.navy,
+                ),
+                const SizedBox(width: 2),
+                Text(
+                  trend,
+                  style: const TextStyle(
+                    color: AppDesign.navy,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            // Background pattern
-            Positioned(
-              right: -20,
-              top: -20,
-              child: Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.05),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-            Positioned(
-              right: -10,
-              bottom: -30,
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.03),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Main Row: Icon + Value and Trend Badge
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Icon
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [color, color.withValues(alpha: 0.7)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: color.withValues(alpha: 0.3),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(icon, color: Colors.white, size: 18),
-                      ),
-                      const SizedBox(width: 10),
-                      // Value and Title (Expanded to take available space)
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              value,
-                              style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: _darkDeepTeal,
-                                letterSpacing: -0.5,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              title,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: _darkDeepTeal,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Trend Badge (Flexible to shrink if needed)
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isPositiveTrend
-                                ? Color(0xFF4CAF50).withValues(alpha: 0.12)
-                                : Color(0xFFF44336).withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: isPositiveTrend
-                                  ? Color(0xFF4CAF50).withValues(alpha: 0.3)
-                                  : Color(0xFFF44336).withValues(alpha: 0.3),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                isPositiveTrend
-                                    ? Icons.trending_up_rounded
-                                    : Icons.trending_down_rounded,
-                                size: 11,
-                                color: isPositiveTrend
-                                    ? Color(0xFF4CAF50)
-                                    : Color(0xFFF44336),
-                              ),
-                              const SizedBox(width: 2),
-                              Flexible(
-                                child: Text(
-                                  trend,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: isPositiveTrend
-                                        ? Color(0xFF4CAF50)
-                                        : Color(0xFFF44336),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Unit text below
-                  const SizedBox(height: 6),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      unit,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppDesign.muted,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

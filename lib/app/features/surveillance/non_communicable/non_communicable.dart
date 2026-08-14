@@ -7,6 +7,8 @@ import 'package:mycapstone_project/app/features/patients/patient_history_dialogs
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.blueSoft;
@@ -365,7 +367,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
           'Non-Communicable Disease Management',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.navy,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -744,60 +746,10 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
 
   // Search Bar
   Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: _darkDeepTeal,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-      ),
-      child: TextField(
-        controller: _searchController,
-        onChanged: _filterPatients,
-        cursorColor: Colors.white,
-        textInputAction: TextInputAction.search,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          hintText: 'Search by patient name, condition, or status...',
-          hintStyle: TextStyle(
-            color: Colors.white.withValues(alpha: 0.5),
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
-          ),
-          prefixIcon: Icon(
-            Icons.search,
-            color: Colors.white.withValues(alpha: 0.9),
-            size: 22,
-          ),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: Icon(
-                    Icons.clear,
-                    color: Colors.white.withValues(alpha: 0.9),
-                    size: 20,
-                  ),
-                  onPressed: () {
-                    _searchController.clear();
-                    _filterPatients('');
-                  },
-                )
-              : null,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          filled: false,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 16,
-          ),
-        ),
-      ),
+    return MobileSearchField(
+      controller: _searchController,
+      hintText: 'Search by patient name, condition, or status...',
+      onChanged: _filterPatients,
     );
   }
 
@@ -1128,189 +1080,35 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
         ? 'Record Details'
         : patient['patientName'].toString();
 
-    showModalBottomSheet(
+    MobileRecordActionSheet.show(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+      title: patientName,
+      headerIcon: Icons.person_search_rounded,
+      actions: [
+        MobileRecordAction(
+          label: 'View Details',
+          icon: Icons.visibility_outlined,
+          tone: MobileRecordActionTone.primary,
+          onPressed: () => _viewPatientDetails(patient),
         ),
-      ),
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext sheetContext) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-          decoration: const BoxDecoration(
-            color: _darkDeepTeal,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: _mutedCoolGray.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                patientName,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _lightOffWhite,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _viewPatientDetails(patient);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryAqua,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.visibility, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'View Details',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _editPatient(patient);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange.withValues(alpha: 0.1),
-                    side: const BorderSide(color: Colors.orange, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.edit, size: 20, color: Colors.orange),
-                      SizedBox(width: 8),
-                      Text(
-                        'Edit Record',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _manageTreatment(patient);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(
-                      0xFF4CAF50,
-                    ).withValues(alpha: 0.1),
-                    side: const BorderSide(color: Color(0xFF4CAF50), width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.medical_services,
-                        size: 20,
-                        color: Color(0xFF4CAF50),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Manage Treatment',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4CAF50),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _viewHistory(patient);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryAqua.withValues(alpha: 0.1),
-                    side: const BorderSide(color: _primaryAqua, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.history, size: 20, color: _primaryAqua),
-                      SizedBox(width: 8),
-                      Text(
-                        'View Patient History',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: _primaryAqua,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
+        MobileRecordAction(
+          label: 'Edit Record',
+          icon: Icons.edit_outlined,
+          onPressed: () => _editPatient(patient),
+        ),
+        MobileRecordAction(
+          label: 'Manage Treatment',
+          icon: Icons.medical_services_outlined,
+          tone: MobileRecordActionTone.success,
+          onPressed: () => _manageTreatment(patient),
+        ),
+        MobileRecordAction(
+          label: 'View Patient History',
+          icon: Icons.history_rounded,
+          tone: MobileRecordActionTone.primary,
+          onPressed: () => _viewHistory(patient),
+        ),
+      ],
     );
   }
 

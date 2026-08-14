@@ -11,6 +11,8 @@ import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.blueSoft;
@@ -477,7 +479,7 @@ class _MortalityPageState extends State<MortalityPage>
           'Mortality List',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.navy,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -1322,49 +1324,10 @@ class _MortalityPageState extends State<MortalityPage>
           ),
         ),
         const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: _darkDeepTeal,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: _primaryAqua.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TextField(
-            controller: _searchController,
-            onChanged: _filterRecords,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText:
-                  'Search by name, cause, place, or verification status...',
-              hintStyle: TextStyle(
-                color: _mutedCoolGray.withValues(alpha: 0.7),
-              ),
-              prefixIcon: Icon(Icons.search, color: _primaryAqua),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: Icon(Icons.clear, color: _primaryAqua),
-                      onPressed: () {
-                        _searchController.clear();
-                        _filterRecords('');
-                      },
-                    )
-                  : null,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
-            ),
-          ),
+        MobileSearchField(
+          controller: _searchController,
+          hintText: 'Search by name, cause, place, or verification status...',
+          onChanged: _filterRecords,
         ),
       ],
     );
@@ -1824,220 +1787,39 @@ class _MortalityPageState extends State<MortalityPage>
     final rawName = record['name']?.toString().trim() ?? '';
     final patientName = rawName.isEmpty ? 'Record Details' : rawName;
 
-    showModalBottomSheet(
+    MobileRecordActionSheet.show(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+      title: patientName,
+      headerIcon: Icons.event_busy,
+      actions: [
+        MobileRecordAction(
+          label: 'View Record Details',
+          icon: Icons.visibility_outlined,
+          tone: MobileRecordActionTone.primary,
+          onPressed: () => _viewRecordDetails(record),
         ),
-      ),
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext sheetContext) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-          decoration: const BoxDecoration(
-            color: _darkDeepTeal,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: _mutedCoolGray.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                patientName,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _lightOffWhite,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _viewRecordDetails(record);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryAqua,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.visibility, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'View Record Details',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _showMortalityHistory(context, record);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryAqua.withValues(alpha: 0.1),
-                    side: const BorderSide(color: _primaryAqua, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.history, size: 20, color: _primaryAqua),
-                      SizedBox(width: 8),
-                      Text(
-                        'View Patient History',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: _primaryAqua,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _editRecord(record);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange.withValues(alpha: 0.1),
-                    side: const BorderSide(color: Colors.orange, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.edit, size: 20, color: Colors.orange),
-                      SizedBox(width: 8),
-                      Text(
-                        'Edit Record',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _verifyRecord(record);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(
-                      0xFF4CAF50,
-                    ).withValues(alpha: 0.1),
-                    side: const BorderSide(color: Color(0xFF4CAF50), width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.verified, size: 20, color: Color(0xFF4CAF50)),
-                      SizedBox(width: 8),
-                      Text(
-                        'Verify Record',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4CAF50),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _printRecord(record);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(
-                      0xFF607D8B,
-                    ).withValues(alpha: 0.1),
-                    side: const BorderSide(color: Color(0xFF607D8B), width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.print, size: 20, color: Color(0xFF607D8B)),
-                      SizedBox(width: 8),
-                      Text(
-                        'Print Record',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF607D8B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
+        MobileRecordAction(
+          label: 'View Patient History',
+          icon: Icons.history_rounded,
+          onPressed: () => _showMortalityHistory(context, record),
+        ),
+        MobileRecordAction(
+          label: 'Edit Record',
+          icon: Icons.edit_outlined,
+          onPressed: () => _editRecord(record),
+        ),
+        MobileRecordAction(
+          label: 'Verify Record',
+          icon: Icons.verified_outlined,
+          tone: MobileRecordActionTone.success,
+          onPressed: () => _verifyRecord(record),
+        ),
+        MobileRecordAction(
+          label: 'Print Record',
+          icon: Icons.print_outlined,
+          onPressed: () => _printRecord(record),
+        ),
+      ],
     );
   }
 

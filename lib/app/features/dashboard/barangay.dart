@@ -98,13 +98,11 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
             .collection('barangay_records')
             .orderBy('recordDate', descending: true)
             .get();
-        return snapshot.docs
-            .map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return data;
-            })
-            .toList();
+        return snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return data;
+        }).toList();
       } catch (e) {
         print('Error fetching barangay records: $e');
         return [];
@@ -152,8 +150,9 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
 
     // Count prenatal and pediatric
     _prenatalCases = _prenatalRecords.length;
-    _immunizedChildren =
-        _immunizationRecords.where((r) => r['status'] == 'Completed').length;
+    _immunizedChildren = _immunizationRecords
+        .where((r) => r['status'] == 'Completed')
+        .length;
   }
 
   void _saveSummaryToFirebase() async {
@@ -214,32 +213,63 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
 
     try {
       final List<String> barangays = [
-        'Del Carmen', 'Sagcahan', 'Binakayan', 'Kanluran', 'Silang', 'Salawag',
-        'Paliparan', 'Pag-asa', 'Sampalukan', 'Bagtas', 'Magdalo', 'Bayan',
-        'Caloocan', 'San Roque', 'Dasmariñas', 'Pakil', 'Marikina'
+        'Del Carmen',
+        'Sagcahan',
+        'Binakayan',
+        'Kanluran',
+        'Silang',
+        'Salawag',
+        'Paliparan',
+        'Pag-asa',
+        'Sampalukan',
+        'Bagtas',
+        'Magdalo',
+        'Bayan',
+        'Caloocan',
+        'San Roque',
+        'Dasmariñas',
+        'Pakil',
+        'Marikina',
       ];
 
       final List<String> recordTypes = [
-        'Regular Checkup', 'Vaccination', 'Prenatal Care', 'Child Immunization',
-        'Disease Surveillance', 'Health Education', 'Community Outreach',
-        'Emergency Medical Care', 'Chronic Disease Management', 'Follow-up Visit'
+        'Regular Checkup',
+        'Vaccination',
+        'Prenatal Care',
+        'Child Immunization',
+        'Disease Surveillance',
+        'Health Education',
+        'Community Outreach',
+        'Emergency Medical Care',
+        'Chronic Disease Management',
+        'Follow-up Visit',
       ];
 
       final List<String> statuses = [
-        'Completed', 'Completed', 'Completed', 'In Progress', 'Pending Review'
+        'Completed',
+        'Completed',
+        'Completed',
+        'In Progress',
+        'Pending Review',
       ];
 
       final List<String> findings = [
-        'Healthy', 'Mild Condition', 'Moderate Condition', 'Referral Required',
-        'Requires Hospitalization', 'Normal', 'Abnormal Findings'
+        'Healthy',
+        'Mild Condition',
+        'Moderate Condition',
+        'Referral Required',
+        'Requires Hospitalization',
+        'Normal',
+        'Abnormal Findings',
       ];
 
       int savedCount = 0;
       final timestamp = DateTime.now().millisecondsSinceEpoch;
 
       for (int i = 0; i < 100; i++) {
-        final recordDate =
-            DateTime.now().subtract(Duration(days: 300 - (i * 3)));
+        final recordDate = DateTime.now().subtract(
+          Duration(days: 300 - (i * 3)),
+        );
 
         final barangayRecord = {
           'barangayName': barangays[i % barangays.length],
@@ -276,7 +306,9 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Successfully added $savedCount sample barangay records.'),
+            content: Text(
+              'Successfully added $savedCount sample barangay records.',
+            ),
             backgroundColor: _successGreen,
             duration: const Duration(seconds: 3),
           ),
@@ -304,13 +336,10 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
       return Scaffold(
         backgroundColor: _darkDeepTeal,
         appBar: AppBar(
-          backgroundColor: _darkDeepTeal,
+          backgroundColor: AppDesign.navy,
           title: const Text(
             'Barangay Health Records',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           iconTheme: const IconThemeData(color: Colors.white),
           elevation: 0,
@@ -324,13 +353,10 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
     return Scaffold(
       backgroundColor: _darkDeepTeal,
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.navy,
         title: const Text(
           'Barangay Health Records',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
@@ -358,7 +384,10 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
               decoration: BoxDecoration(
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: _lightOffWhite.withValues(alpha: 0.5), width: 1),
+                border: Border.all(
+                  color: _lightOffWhite.withValues(alpha: 0.5),
+                  width: 1,
+                ),
               ),
               child: Row(
                 children: [
@@ -367,10 +396,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
                   Expanded(
                     child: Text(
                       'Last updated: ${_lastUpdated != null ? _formatDateTime(_lastUpdated!) : "N/A"}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
                     ),
                   ),
                 ],
@@ -479,7 +505,10 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _lightOffWhite.withValues(alpha: 0.4), width: 2),
+        border: Border.all(
+          color: _lightOffWhite.withValues(alpha: 0.4),
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.2),
@@ -509,10 +538,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-              ),
+              style: const TextStyle(color: Colors.white, fontSize: 11),
             ),
           ),
         ],
@@ -521,15 +547,17 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
   }
 
   Widget _buildDiseaseStatsCards() {
-    final total = _communicableDiseases +
-        _nonCommunicableDiseases +
-        _emergencyCases;
-    final commPercent =
-        total > 0 ? ((_communicableDiseases / total) * 100).toStringAsFixed(1) : '0.0';
-    final nonCommPercent =
-        total > 0 ? ((_nonCommunicableDiseases / total) * 100).toStringAsFixed(1) : '0.0';
-    final emergPercent =
-        total > 0 ? ((_emergencyCases / total) * 100).toStringAsFixed(1) : '0.0';
+    final total =
+        _communicableDiseases + _nonCommunicableDiseases + _emergencyCases;
+    final commPercent = total > 0
+        ? ((_communicableDiseases / total) * 100).toStringAsFixed(1)
+        : '0.0';
+    final nonCommPercent = total > 0
+        ? ((_nonCommunicableDiseases / total) * 100).toStringAsFixed(1)
+        : '0.0';
+    final emergPercent = total > 0
+        ? ((_emergencyCases / total) * 100).toStringAsFixed(1)
+        : '0.0';
 
     return Column(
       children: [
@@ -573,7 +601,10 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _lightOffWhite.withValues(alpha: 0.3), width: 1),
+        border: Border.all(
+          color: _lightOffWhite.withValues(alpha: 0.3),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -618,7 +649,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
     final totalImmunizationRecords = _immunizationRecords.length;
     final completedPercent = totalImmunizationRecords > 0
         ? ((_immunizedChildren / totalImmunizationRecords) * 100)
-            .toStringAsFixed(1)
+              .toStringAsFixed(1)
         : '0.0';
 
     return Container(
@@ -626,7 +657,10 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _lightOffWhite.withValues(alpha: 0.4), width: 1),
+        border: Border.all(
+          color: _lightOffWhite.withValues(alpha: 0.4),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -663,19 +697,22 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
                   const SizedBox(height: 4),
                   Text(
                     'Children Immunized',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: _successGreen.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _lightOffWhite.withValues(alpha: 0.4), width: 1),
+                  border: Border.all(
+                    color: _lightOffWhite.withValues(alpha: 0.4),
+                    width: 1,
+                  ),
                 ),
                 child: Text(
                   '$completedPercent%',
@@ -716,7 +753,10 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
           decoration: BoxDecoration(
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _lightOffWhite.withValues(alpha: 0.4), width: 1),
+            border: Border.all(
+              color: _lightOffWhite.withValues(alpha: 0.4),
+              width: 1,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -734,8 +774,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _buildInfoChip('Patients: ${record['totalPatients'] ?? 0}'),
-                  _buildInfoChip(
-                      'Checkups: ${record['totalCheckups'] ?? 0}'),
+                  _buildInfoChip('Checkups: ${record['totalCheckups'] ?? 0}'),
                 ],
               ),
               const SizedBox(height: 8),
@@ -759,7 +798,10 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
       decoration: BoxDecoration(
         color: _darkDeepTeal,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _lightOffWhite.withValues(alpha: 0.3), width: 0.5),
+        border: Border.all(
+          color: _lightOffWhite.withValues(alpha: 0.3),
+          width: 0.5,
+        ),
       ),
       child: Text(
         text,
@@ -822,69 +864,74 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
 
     return Column(
       children: concerns
-          .map((concern) => Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _lightOffWhite.withValues(alpha: 0.4), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: concern['color'].withOpacity(0.1),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+          .map(
+            (concern) => Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: _lightOffWhite.withValues(alpha: 0.4),
+                  width: 1.5,
                 ),
-                child: Row(
-                  children: [
-                    Icon(concern['icon'], color: Colors.white, size: 28),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            concern['title'],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
+                boxShadow: [
+                  BoxShadow(
+                    color: concern['color'].withOpacity(0.1),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Icon(concern['icon'], color: Colors.white, size: 28),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          concern['title'],
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${concern['count']} cases identified',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: concern['color'].withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        concern['count'].toString(),
-                        style: TextStyle(
-                          color: concern['color'],
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
                         ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${concern['count']} cases identified',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: concern['color'].withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      concern['count'].toString(),
+                      style: TextStyle(
+                        color: concern['color'],
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ],
-                ),
-              ))
+                  ),
+                ],
+              ),
+            ),
+          )
           .toList(),
     );
   }

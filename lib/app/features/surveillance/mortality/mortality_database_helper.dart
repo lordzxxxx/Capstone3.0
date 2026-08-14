@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/app/core/services/mobile_sync_utils.dart';
 
 class MortalityDatabaseHelper {
   static final MortalityDatabaseHelper instance =
@@ -526,6 +527,15 @@ class MortalityDatabaseHelper {
       for (final record in records) {
         final data = Map<String, dynamic>.from(record);
         data.remove('_firestorePath');
+        final recordId = (data['id'] ?? '').toString().trim();
+        if (recordId.isEmpty ||
+            await hasPendingLocalSync(
+              db,
+              table: 'mortality_records',
+              id: recordId,
+            )) {
+          continue;
+        }
         data['synced'] = 1;
         final sqliteData = _sanitizeRecordForSqlite(data);
         final insertData = _filterToKnownColumns(sqliteData, tableColumns);

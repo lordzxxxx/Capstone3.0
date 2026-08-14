@@ -8,6 +8,8 @@ import 'package:mycapstone_project/app/core/services/disease_prediction_api_serv
 import 'package:mycapstone_project/app/core/services/health_ai_classifier.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
 import 'package:mycapstone_project/app/features/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
@@ -976,15 +978,15 @@ class _CheckUpPageState extends State<CheckUpPage> {
     return Scaffold(
       backgroundColor: _darkDeepTeal,
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.navy,
         title: Text(
           'Check Up Dashboard',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _lightOffWhite,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: _lightOffWhite),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         actions: [
           PopupMenuButton(
@@ -1404,7 +1406,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
 
             // Search Bar
             Expanded(
-              child: TextField(
+              child: MobileSearchField(
                 controller: _searchController,
                 onChanged: (value) {
                   setState(() {
@@ -1412,47 +1414,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                     _resetPagination(clearSelection: true);
                   });
                 },
-                style: TextStyle(color: _lightOffWhite),
-                decoration: InputDecoration(
-                  hintText: 'Search by name, address, age...',
-                  hintStyle: TextStyle(
-                    color: _lightOffWhite.withValues(alpha: 0.5),
-                  ),
-                  prefixIcon: Icon(Icons.search, color: _lightOffWhite),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(Icons.clear, color: _lightOffWhite),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                              _resetPagination(clearSelection: true);
-                            });
-                          },
-                        )
-                      : null,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: _lightOffWhite.withValues(alpha: 0.3),
-                      width: 1.5,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: _lightOffWhite.withValues(alpha: 0.3),
-                      width: 1.5,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: _lightOffWhite, width: 2),
-                  ),
-                  filled: true,
-                  fillColor: Colors.transparent,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                ),
+                hintText: 'Search by name, address, age...',
               ),
             ),
           ],
@@ -1708,251 +1670,85 @@ class _CheckUpPageState extends State<CheckUpPage> {
     BuildContext context,
     Map<String, dynamic> record,
   ) {
-    showModalBottomSheet(
+    MobileRecordActionSheet.show(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+      title: (record['patient'] ?? 'Record Details').toString(),
+      headerIcon: Icons.medical_services_outlined,
+      actions: [
+        MobileRecordAction(
+          label: 'View Patient History',
+          icon: Icons.history_rounded,
+          tone: MobileRecordActionTone.primary,
+          onPressed: () => _showCheckUpHistory(context, record),
         ),
-      ),
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-          decoration: BoxDecoration(
-            color: _darkDeepTeal,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: _mutedCoolGray.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Patient Name as Title
-              Text(
-                record['patient'] ?? 'Record Details',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _lightOffWhite,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-
-              // View Patient History Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _showCheckUpHistory(context, record);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryAqua,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.history, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'View Patient History',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Select Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    setState(() {
-                      _isSelectionMode = true;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF4ECDC4).withValues(alpha: 0.1),
-                    side: BorderSide(color: Color(0xFF4ECDC4), width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.check_box_outlined,
-                        size: 20,
-                        color: Color(0xFF4ECDC4),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Select Multiple',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4ECDC4),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Edit Details Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Future.microtask(() {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (context) => _EditCheckUpFullScreenModal(
-                          record: record,
-                          aiClassifier: _aiClassifier,
-                          onSave: (updatedRecord) async {
-                            try {
-                              final id = updatedRecord['id']?.toString() ?? '';
-                              if (id.isEmpty) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Error: Record ID not found',
-                                      ),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                                return;
-                              }
-                              await DatabaseHelper.instance.updateRecord(
-                                id,
-                                updatedRecord,
-                              );
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Record updated successfully',
-                                    ),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error updating record: $e'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                        ),
+        MobileRecordAction(
+          label: 'Select Multiple',
+          icon: Icons.check_box_outlined,
+          onPressed: () {
+            setState(() => _isSelectionMode = true);
+          },
+        ),
+        MobileRecordAction(
+          label: 'Edit Details',
+          icon: Icons.edit_outlined,
+          onPressed: () {
+            Future.microtask(() {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => _EditCheckUpFullScreenModal(
+                  record: record,
+                  aiClassifier: _aiClassifier,
+                  onSave: (updatedRecord) async {
+                    try {
+                      final id = updatedRecord['id']?.toString() ?? '';
+                      if (id.isEmpty) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Error: Record ID not found'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                        return;
+                      }
+                      await DatabaseHelper.instance.updateRecord(
+                        id,
+                        updatedRecord,
                       );
-                    });
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Record updated successfully'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error updating record: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryAqua.withValues(alpha: 0.1),
-                    side: BorderSide(color: _primaryAqua, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.edit, size: 20, color: _primaryAqua),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Edit Details',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: _primaryAqua,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-
-              // Delete Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _showDeleteConfirmationDialog(context, record);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.withValues(alpha: 0.1),
-                    side: BorderSide(color: Colors.red, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.delete, size: 20, color: Colors.red),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Delete Record',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
+              );
+            });
+          },
+        ),
+        MobileRecordAction(
+          label: 'Delete Record',
+          icon: Icons.delete_outline,
+          tone: MobileRecordActionTone.danger,
+          onPressed: () => _showDeleteConfirmationDialog(context, record),
+        ),
+      ],
     );
   }
 

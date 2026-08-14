@@ -106,9 +106,14 @@ class OcrExtraction {
         seed[field.key] = field.value.trim();
       }
     }
-    final fullName = seed['fullName']?.toString();
-    if (fullName != null && fullName.isNotEmpty) {
-      seed['patientName'] = fullName;
+    final fullName = seed['fullName']?.toString().trim() ?? '';
+    final firstName = seed['firstName']?.toString().trim() ?? '';
+    final surname = seed['surname']?.toString().trim() ?? '';
+    final derivedName = fullName.isNotEmpty
+        ? fullName
+        : [firstName, surname].where((part) => part.isNotEmpty).join(' ');
+    if (derivedName.isNotEmpty) {
+      seed['patientName'] = derivedName;
     }
     return seed;
   }
@@ -214,7 +219,7 @@ class OcrExtraction {
         RegExp(r'((?:\+?63|0|9)[\s().-]*\d[\d\s().-]{7,14}\d)'),
       );
     }
-    if (!values.containsKey('dateOfBirth')) {
+    if (!values.containsKey('dateOfBirth') && !values.containsKey('date')) {
       addGlobal(
         'dateOfBirth',
         RegExp(
@@ -262,6 +267,9 @@ class OcrExtraction {
       'dateOfBirth': _labelPattern(
         r'(?:date\s*of\s*birth|birth\s*date|dob|birthday)',
       ),
+      'date': _labelPattern(
+        r'(?:date|visit\s*date|date\s*of\s*visit|record\s*date)',
+      ),
       'address': _labelPattern(r'(?:residential\s*)?address'),
       'barangay': _labelPattern(r'(?:barangay|brgy)'),
       'patientId': _labelPattern(
@@ -289,7 +297,13 @@ class OcrExtraction {
     for (final entry in patterns.entries) {
       final match = entry.value.firstMatch(line);
       if (match != null) {
-        addField(entry.key, match.group(1)!, confidence, 'label: ${entry.key}');
+        final rawValue = match.group(1)!.trim();
+        final value = _valueBeforeNextLabel(rawValue);
+        addField(entry.key, value, confidence, 'label: ${entry.key}');
+        final remainder = rawValue.substring(value.length).trim();
+        if (remainder.isNotEmpty) {
+          _extractLabelValue(remainder, confidence, addField);
+        }
         return;
       }
     }
@@ -312,6 +326,10 @@ class OcrExtraction {
         .replaceFirst(RegExp(r'^brgy\.?\s+', caseSensitive: false), 'Barangay ')
         .replaceFirst(
           RegExp(r'^dateofbirth\b', caseSensitive: false),
+          'Date of Birth',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:d\.?\s*o\.?\s*b\.?)\b', caseSensitive: false),
           'Date of Birth',
         )
         .replaceFirst(
@@ -340,7 +358,7 @@ class OcrExtraction {
 
   static bool _isLabelOnlyLine(String line) {
     return RegExp(
-      r'^\s*(?:first\s*name|surname|last\s*name|full\s*name|patient\s*name|name|date\s*of\s*birth|birth\s*date|dob|address|barangay|brgy|patient\s*(?:id|no|number)|record\s*(?:id|no|number)|contact|phone|mobile|telephone|email|age|sex|gender|symptoms?|chief\s*complaint|disease|diagnosis|condition|blood\s*pressure|bp|temperature|temp|heart\s*rate|pulse|hr|respiratory\s*rate|rr|oxygen\s*saturation|spo2|o2|weight|height|vaccine|immunization|cause|place|location)\s*[:#-]?\s*$',
+      r'^\s*(?:first\s*name|surname|last\s*name|full\s*name|patient\s*name|name|date|visit\s*date|date\s*of\s*visit|record\s*date|date\s*of\s*birth|birth\s*date|dob|address|barangay|brgy|patient\s*(?:id|no|number)|record\s*(?:id|no|number)|contact|phone|mobile|telephone|email|age|sex|gender|symptoms?|chief\s*complaint|disease|diagnosis|condition|blood\s*pressure|bp|temperature|temp|heart\s*rate|pulse|hr|respiratory\s*rate|rr|oxygen\s*saturation|spo2|o2|weight|height|vaccine|immunization|cause|place|location)\s*[:#-]?\s*$',
       caseSensitive: false,
     ).hasMatch(line);
   }
@@ -348,7 +366,7 @@ class OcrExtraction {
   static bool _looksLikeLabel(String line) =>
       _isLabelOnlyLine(line) ||
       RegExp(
-        r'^\s*(?:first\s*name|surname|last\s*name|full\s*name|patient\s*name|name|date\s*of\s*birth|dob|address|barangay|patient|record|id|contact|phone|mobile|email|age|sex|gender|symptoms?|diagnosis|condition|vaccine)\b',
+        r'^\s*(?:first\s*name|surname|last\s*name|full\s*name|patient\s*name|name|date|visit\s*date|date\s*of\s*visit|record\s*date|date\s*of\s*birth|dob|address|barangay|patient|record|id|contact|phone|mobile|email|age|sex|gender|symptoms?|diagnosis|condition|vaccine)\b',
         caseSensitive: false,
       ).hasMatch(line);
 
@@ -515,6 +533,18 @@ class OcrExtraction {
         return value.trim().length >= 2;
     }
   }
+
+  /// Stops a value at the next explicit field label when OCR places several
+  /// fields on one physical line (for example, "Name: Ana DOB: 01/02/1990").
+  /// Only labels followed by punctuation are boundaries so normal address
+  /// text such as "Barangay 3" is not truncated.
+  static String _valueBeforeNextLabel(String value) {
+    final boundary = RegExp(
+      r'\s+(?=(?:first\s*name|surname|last\s*name|family\s*name|full\s*name|patient\s*name|name|date|visit\s*date|date\s*of\s*visit|record\s*date|date\s*of\s*birth|birth\s*date|dob|birthday|address|barangay|brgy|patient\s*(?:id|no|number)|record\s*(?:id|no|number)|identification|id|contact|phone|mobile|telephone|email|age|sex|gender|symptoms?|chief\s*complaint|disease|diagnosis|condition|blood\s*pressure|bp|temperature|temp|heart\s*rate|pulse|hr|respiratory\s*rate|rr|oxygen\s*saturation|spo2|o2|weight|height|vaccine|immunization|cause|place|location)\s*[:#-])',
+      caseSensitive: false,
+    );
+    return value.split(boundary).first.trim();
+  }
 }
 
 /// Shared mobile record actions. OCR is intentionally an assistive workflow;
@@ -543,28 +573,74 @@ class RecordCreationFabGroup extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        FloatingActionButton.extended(
-          heroTag: 'ocr-$moduleLabel',
+        _CompactActionButton(
+          key: ValueKey('ocr-$moduleLabel'),
+          backgroundColor: AppDesign.navy,
+          foregroundColor: Colors.white,
+          icon: Icons.document_scanner_outlined,
+          label: 'OCR',
           onPressed: () => OcrRecordCapture.start(
             context: context,
             moduleLabel: moduleLabel,
             onOcrReady: onOcrReady ?? (_) async => onManualCreate(),
           ),
-          backgroundColor: AppDesign.navy,
-          foregroundColor: Colors.white,
-          icon: const Icon(Icons.document_scanner_outlined),
-          label: const Text('OCR'),
         ),
-        const SizedBox(height: 10),
-        FloatingActionButton.extended(
-          heroTag: 'manual-$moduleLabel',
-          onPressed: onManualCreate,
+        const SizedBox(height: 8),
+        _CompactActionButton(
+          key: ValueKey('manual-$moduleLabel'),
           backgroundColor: accentColor,
           foregroundColor: foregroundColor,
-          icon: const Icon(Icons.add),
-          label: Text(manualLabel),
+          icon: Icons.add_rounded,
+          label: manualLabel,
+          onPressed: onManualCreate,
         ),
       ],
+    );
+  }
+}
+
+class _CompactActionButton extends StatelessWidget {
+  const _CompactActionButton({
+    super.key,
+    required this.backgroundColor,
+    required this.foregroundColor,
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 112, maxWidth: 156),
+      child: SizedBox(
+        height: 44,
+        child: FilledButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon, size: 18),
+          label: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800),
+          ),
+          style: FilledButton.styleFrom(
+            backgroundColor: backgroundColor,
+            foregroundColor: foregroundColor,
+            minimumSize: const Size(0, 44),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -591,6 +667,10 @@ class OcrRecordButton extends StatelessWidget {
       ),
       icon: const Icon(Icons.document_scanner_outlined),
       label: const Text('Create with OCR'),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(0, 44),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      ),
     );
     return expanded ? SizedBox(width: double.infinity, child: button) : button;
   }
@@ -692,6 +772,8 @@ class OcrRecordCapture {
     try {
       final image = await ImagePicker().pickImage(
         source: source,
+        maxWidth: 2400,
+        maxHeight: 3200,
         imageQuality: 92,
       );
       if (image == null || !context.mounted) return;
@@ -785,76 +867,83 @@ class OcrRecordCapture {
             ),
           ),
           body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppDesign.blueSoft,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      'Verify all extracted text before saving. OCR assists data entry and does not validate clinical information.',
-                      style: TextStyle(color: AppDesign.muted, height: 1.4),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  if (extraction.fields.isNotEmpty) ...[
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Detected fields',
-                        style: Theme.of(context).textTheme.titleMedium,
+            child: Column(
+              children: [
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppDesign.blueSoft,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'Verify all extracted text before saving. OCR assists data entry and does not validate clinical information.',
+                          style: TextStyle(color: AppDesign.muted, height: 1.4),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    ...extraction.fields.values.map(
-                      (field) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: TextField(
-                          controller: fieldControllers[field.key],
-                          decoration: InputDecoration(
-                            labelText: _fieldLabel(field.key),
-                            helperText: field.requiresManualReview
-                                ? 'Manual verification required (confidence ${(field.confidence * 100).round()}%)'
-                                : 'Confidence ${(field.confidence * 100).round()}%',
-                            helperStyle: TextStyle(
-                              color: field.requiresManualReview
-                                  ? Colors.orange.shade700
-                                  : AppDesign.muted,
-                            ),
-                            prefixIcon: Icon(
-                              field.requiresManualReview
-                                  ? Icons.warning_amber_outlined
-                                  : Icons.check_circle_outline,
-                              color: field.requiresManualReview
-                                  ? Colors.orange.shade700
-                                  : AppDesign.blue,
+                      const SizedBox(height: 14),
+                      if (extraction.fields.isNotEmpty) ...[
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Detected fields',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ...extraction.fields.values.map(
+                          (field) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: TextField(
+                              controller: fieldControllers[field.key],
+                              decoration: InputDecoration(
+                                labelText: _fieldLabel(field.key),
+                                helperText: field.requiresManualReview
+                                    ? 'Manual verification required (confidence ${(field.confidence * 100).round()}%)'
+                                    : 'Confidence ${(field.confidence * 100).round()}%',
+                                helperStyle: TextStyle(
+                                  color: field.requiresManualReview
+                                      ? Colors.orange.shade700
+                                      : AppDesign.muted,
+                                ),
+                                prefixIcon: Icon(
+                                  field.requiresManualReview
+                                      ? Icons.warning_amber_outlined
+                                      : Icons.check_circle_outline,
+                                  color: field.requiresManualReview
+                                      ? Colors.orange.shade700
+                                      : AppDesign.blue,
+                                ),
+                              ),
                             ),
                           ),
                         ),
+                        const SizedBox(height: 4),
+                      ],
+                      SizedBox(
+                        height: 220,
+                        child: TextField(
+                          controller: controller,
+                          minLines: 8,
+                          maxLines: 12,
+                          textAlignVertical: TextAlignVertical.top,
+                          style: const TextStyle(color: AppDesign.ink),
+                          decoration: const InputDecoration(
+                            labelText: 'Recognized text',
+                            alignLabelWithHint: true,
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                  ],
-                  Expanded(
-                    child: TextField(
-                      controller: controller,
-                      expands: true,
-                      minLines: null,
-                      maxLines: null,
-                      textAlignVertical: TextAlignVertical.top,
-                      style: const TextStyle(color: AppDesign.ink),
-                      decoration: const InputDecoration(
-                        labelText: 'Recognized text',
-                      ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 14),
-                  SizedBox(
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
                       onPressed: () => Navigator.pop(dialogContext, true),
@@ -862,8 +951,8 @@ class OcrRecordCapture {
                       label: const Text('Continue to new record'),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -887,7 +976,6 @@ class OcrRecordCapture {
       fieldController.dispose();
     }
     if (accepted != true || editedText.isEmpty || !context.mounted) return;
-    await Clipboard.setData(ClipboardData(text: editedText));
     final reviewedExtraction = extraction.copyWithFields(editedFields);
     await onOcrReady(reviewedExtraction);
     if (context.mounted) {

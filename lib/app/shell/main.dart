@@ -55,7 +55,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Health Monitoring System',
+      title: 'AI-DSUHIS',
       theme: AppDesign.theme(),
       themeMode: ThemeMode.light,
       home: const LandingPage(),

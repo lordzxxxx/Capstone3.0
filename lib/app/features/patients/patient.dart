@@ -6,6 +6,8 @@ import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/features/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 
@@ -270,16 +272,16 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     return Scaffold(
       backgroundColor: _darkDeepTeal,
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.navy,
         elevation: 0,
         title: Text(
           'Patient Records',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _lightOffWhite,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: _lightOffWhite),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           PopupMenuButton(
             icon: const Icon(Icons.more_vert),
@@ -307,8 +309,8 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                     Row(
                       children: [
                         Container(
-                          width: 50,
-                          height: 50,
+                          width: 46,
+                          height: 46,
                           decoration: BoxDecoration(
                             color: _darkDeepTeal,
                             border: Border.all(
@@ -327,11 +329,11 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                         Expanded(child: _buildSearchBar()),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
 
                     // Filter Dropdown
                     _buildFilterDropdown(),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
                     // Patient Cards
                     _buildPatientCards(),
@@ -358,7 +360,8 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
 
   Widget _buildFilterDropdown() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: 46,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: _darkDeepTeal,
         border: Border.all(
@@ -371,11 +374,11 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         child: DropdownButton<String>(
           value: _selectedStatus,
           isExpanded: true,
-          dropdownColor: _darkDeepTeal,
+          dropdownColor: AppDesign.surface,
           iconEnabledColor: _lightOffWhite,
           style: TextStyle(
-            color: _lightOffWhite,
-            fontSize: 14,
+            color: AppDesign.ink,
+            fontSize: 13,
             fontWeight: FontWeight.w500,
           ),
           items: ['All', 'Active', 'Follow-up', 'Inactive']
@@ -686,46 +689,15 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   }
 
   Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _lightOffWhite.withValues(alpha: 0.5),
-          width: 1.5,
-        ),
-      ),
-      child: TextField(
-        controller: _searchController,
-        onChanged: (value) {
-          setState(() {
-            _searchQuery = value;
-            _resetPagination(clearSelection: true);
-          });
-        },
-        style: TextStyle(color: _lightOffWhite),
-        decoration: InputDecoration(
-          hintText: 'Search by name, address, age...',
-          hintStyle: TextStyle(color: _mutedCoolGray),
-          prefixIcon: Icon(Icons.search, color: _lightOffWhite),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: Icon(Icons.clear, color: _lightOffWhite),
-                  onPressed: () {
-                    setState(() {
-                      _searchController.clear();
-                      _searchQuery = '';
-                      _resetPagination(clearSelection: true);
-                    });
-                  },
-                )
-              : null,
-          filled: true,
-          fillColor: Colors.transparent,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(12),
-        ),
-      ),
+    return MobileSearchField(
+      controller: _searchController,
+      hintText: 'Search by name, address, age...',
+      onChanged: (value) {
+        setState(() {
+          _searchQuery = value;
+          _resetPagination(clearSelection: true);
+        });
+      },
     );
   }
 
@@ -1850,233 +1822,47 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     Map<String, dynamic> patient,
     int index,
   ) {
-    final patientName = '${patient['firstName']} ${patient['surname']}';
+    final patientName =
+        '${patient['firstName'] ?? ''} ${patient['surname'] ?? ''}'.trim();
 
-    showModalBottomSheet(
+    MobileRecordActionSheet.show(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+      title: patientName.isEmpty ? 'Patient Record' : patientName,
+      headerIcon: Icons.person_outline_rounded,
+      actions: [
+        MobileRecordAction(
+          label: 'View Details',
+          icon: Icons.visibility_outlined,
+          tone: MobileRecordActionTone.primary,
+          onPressed: () => _showPatientDetails(patient),
         ),
-      ),
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext sheetContext) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-          decoration: const BoxDecoration(
-            color: _darkDeepTeal,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: _mutedCoolGray.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                patientName,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _lightOffWhite,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _showPatientDetails(patient);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryAqua,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.visibility, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'View Details',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _showPatientHistory(patient);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryAqua.withValues(alpha: 0.1),
-                    side: const BorderSide(color: _primaryAqua, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.timeline, size: 20, color: _primaryAqua),
-                      SizedBox(width: 8),
-                      Text(
-                        'View Health History',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: _primaryAqua,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    setState(() {
-                      _isSelectionMode = true;
-                      _selectedIndices.add(index);
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(
-                      0xFF4ECDC4,
-                    ).withValues(alpha: 0.1),
-                    side: const BorderSide(color: Color(0xFF4ECDC4), width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.check_box_outlined,
-                        size: 20,
-                        color: Color(0xFF4ECDC4),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Select Multiple',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4ECDC4),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _showDeletePatientConfirmation(context, patient);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.withValues(alpha: 0.1),
-                    side: const BorderSide(color: Colors.red, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.delete, size: 20, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text(
-                        'Delete Record',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Edit functionality coming soon'),
-                        backgroundColor: Colors.orange,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange.withValues(alpha: 0.1),
-                    side: const BorderSide(color: Colors.orange, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.edit, size: 20, color: Colors.orange),
-                      SizedBox(width: 8),
-                      Text(
-                        'Edit Record',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
+        MobileRecordAction(
+          label: 'View Health History',
+          icon: Icons.timeline_rounded,
+          onPressed: () => _showPatientHistory(patient),
+        ),
+        MobileRecordAction(
+          label: 'Select Multiple',
+          icon: Icons.check_box_outlined,
+          onPressed: () {
+            setState(() {
+              _isSelectionMode = true;
+              _selectedIndices.add(index);
+            });
+          },
+        ),
+        MobileRecordAction(
+          label: 'Edit Record',
+          icon: Icons.edit_outlined,
+          onPressed: () => _editPatient(patient),
+        ),
+        MobileRecordAction(
+          label: 'Delete Record',
+          icon: Icons.delete_outline,
+          tone: MobileRecordActionTone.danger,
+          onPressed: () => _showDeletePatientConfirmation(context, patient),
+        ),
+      ],
     );
   }
 
@@ -2400,19 +2186,29 @@ class _AddPatientModalState extends State<AddPatientModal> {
       child: Scaffold(
         backgroundColor: _darkDeepTeal,
         appBar: AppBar(
-          backgroundColor: _darkDeepTeal,
+          backgroundColor: AppDesign.surface,
           title: const Text(
             'Add New Patient',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: AppDesign.ink,
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+            ),
           ),
           leading: IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
+            icon: const Icon(Icons.close_rounded, color: AppDesign.ink),
             onPressed: () => _showExitConfirmation(),
           ),
           actions: [
             TextButton.icon(
-              icon: const Icon(Icons.save, color: Colors.white),
-              label: const Text('Save', style: TextStyle(color: Colors.white)),
+              icon: const Icon(Icons.save_outlined, color: AppDesign.blue),
+              label: const Text(
+                'Save',
+                style: TextStyle(
+                  color: AppDesign.blue,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               onPressed: _savePatient,
             ),
           ],
@@ -2452,8 +2248,8 @@ class _AddPatientModalState extends State<AddPatientModal> {
 
   Widget _buildProgressIndicator() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      color: _darkDeepTeal,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      color: AppDesign.surface,
       child: Column(
         children: [
           Row(
@@ -2465,7 +2261,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
                   decoration: BoxDecoration(
                     color: index <= _currentPage
                         ? _primaryAqua
-                        : _lightOffWhite.withValues(alpha: 0.3),
+                        : AppDesign.borderStrong,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -2476,7 +2272,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
           Text(
             'Step ${_currentPage + 1} of $_totalPages: ${_getPageTitle()}',
             style: TextStyle(
-              color: _lightOffWhite,
+              color: AppDesign.muted,
               fontWeight: FontWeight.w600,
               fontSize: 14,
             ),
@@ -2515,14 +2311,14 @@ class _AddPatientModalState extends State<AddPatientModal> {
 
   Widget _buildNavigationButtons() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
       decoration: BoxDecoration(
-        color: _darkDeepTeal,
+        color: AppDesign.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
+            color: AppDesign.navy.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, -3),
           ),
         ],
       ),
@@ -2540,9 +2336,10 @@ class _AddPatientModalState extends State<AddPatientModal> {
                   );
                 },
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: _primaryAqua,
-                  side: BorderSide(color: _primaryAqua),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  foregroundColor: AppDesign.navy,
+                  side: const BorderSide(color: AppDesign.borderStrong),
+                  minimumSize: const Size(0, 44),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -2572,7 +2369,8 @@ class _AddPatientModalState extends State<AddPatientModal> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primaryAqua,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                minimumSize: const Size(0, 44),
+                padding: const EdgeInsets.symmetric(vertical: 11),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -3284,9 +3082,9 @@ class _AddPatientModalState extends State<AddPatientModal> {
     return Text(
       title,
       style: const TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-        color: Colors.white,
+        fontSize: 18,
+        fontWeight: FontWeight.w800,
+        color: AppDesign.navy,
       ),
     );
   }
@@ -3309,9 +3107,9 @@ class _AddPatientModalState extends State<AddPatientModal> {
               Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppDesign.ink,
                 ),
               ),
               if (required)
@@ -3326,25 +3124,19 @@ class _AddPatientModalState extends State<AddPatientModal> {
             controller: controller,
             maxLines: maxLines,
             keyboardType: keyboardType,
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(color: AppDesign.ink, fontSize: 14),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(
-                color: _lightOffWhite.withValues(alpha: 0.5),
-              ),
+              hintStyle: const TextStyle(color: AppDesign.subtle),
               filled: true,
-              fillColor: Colors.transparent,
+              fillColor: AppDesign.surface,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: _lightOffWhite.withValues(alpha: 0.3),
-                ),
+                borderSide: const BorderSide(color: AppDesign.borderStrong),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: _lightOffWhite.withValues(alpha: 0.3),
-                ),
+                borderSide: const BorderSide(color: AppDesign.borderStrong),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -3374,9 +3166,9 @@ class _AddPatientModalState extends State<AddPatientModal> {
               Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppDesign.ink,
                 ),
               ),
               if (required)
@@ -3389,13 +3181,15 @@ class _AddPatientModalState extends State<AddPatientModal> {
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: Colors.transparent,
+              color: AppDesign.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _lightOffWhite.withValues(alpha: 0.3)),
+              border: const Border.fromBorderSide(
+                BorderSide(color: AppDesign.borderStrong),
+              ),
             ),
             child: DropdownButtonFormField<String>(
               initialValue: value,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: AppDesign.ink, fontSize: 14),
               decoration: InputDecoration(
                 border: InputBorder.none,
                 filled: false,
@@ -3404,13 +3198,13 @@ class _AddPatientModalState extends State<AddPatientModal> {
                   vertical: 8,
                 ),
               ),
-              dropdownColor: _darkDeepTeal,
+              dropdownColor: AppDesign.surface,
               items: items.map((item) {
                 return DropdownMenuItem(
                   value: item,
                   child: Text(
                     item,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: AppDesign.ink),
                   ),
                 );
               }).toList(),
@@ -3437,9 +3231,9 @@ class _AddPatientModalState extends State<AddPatientModal> {
               Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppDesign.ink,
                 ),
               ),
               if (required)
@@ -3453,29 +3247,23 @@ class _AddPatientModalState extends State<AddPatientModal> {
           TextFormField(
             controller: controller,
             readOnly: true,
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(color: AppDesign.ink, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'mm/dd/yyyy',
-              hintStyle: TextStyle(
-                color: _lightOffWhite.withValues(alpha: 0.5),
-              ),
+              hintStyle: const TextStyle(color: AppDesign.subtle),
               filled: true,
-              fillColor: Colors.transparent,
+              fillColor: AppDesign.surface,
               suffixIcon: Icon(
-                Icons.calendar_today,
-                color: _lightOffWhite.withValues(alpha: 0.7),
+                Icons.calendar_today_outlined,
+                color: AppDesign.muted,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: _lightOffWhite.withValues(alpha: 0.3),
-                ),
+                borderSide: const BorderSide(color: AppDesign.borderStrong),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: _lightOffWhite.withValues(alpha: 0.3),
-                ),
+                borderSide: const BorderSide(color: AppDesign.borderStrong),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -3504,15 +3292,15 @@ class _AddPatientModalState extends State<AddPatientModal> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Discard Changes?',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: AppDesign.ink),
         ),
         content: const Text(
           'Are you sure you want to exit? All unsaved data will be lost.',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: AppDesign.muted),
         ),
         actions: [
           TextButton(
@@ -4068,23 +3856,30 @@ class _EditPatientModalState extends State<EditPatientModal> {
   Widget build(BuildContext context) {
     return Dialog.fullscreen(
       child: Scaffold(
-        backgroundColor: _lightOffWhite,
+        backgroundColor: AppDesign.page,
         appBar: AppBar(
-          backgroundColor: _primaryAqua,
+          backgroundColor: AppDesign.surface,
           title: const Text(
             'Edit Patient',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: AppDesign.ink,
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+            ),
           ),
           leading: IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
+            icon: const Icon(Icons.close_rounded, color: AppDesign.ink),
             onPressed: () => _showExitConfirmation(),
           ),
           actions: [
             TextButton.icon(
-              icon: const Icon(Icons.save, color: Colors.white),
+              icon: const Icon(Icons.save_outlined, color: AppDesign.blue),
               label: const Text(
                 'Update',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(
+                  color: AppDesign.blue,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               onPressed: _updatePatient,
             ),
@@ -4094,8 +3889,8 @@ class _EditPatientModalState extends State<EditPatientModal> {
           children: [
             // Progress Indicator
             Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              color: AppDesign.surface,
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
               child: Row(
                 children: [
                   Expanded(
@@ -4146,8 +3941,8 @@ class _EditPatientModalState extends State<EditPatientModal> {
 
             // Navigation Buttons
             Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(16),
+              color: AppDesign.surface,
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
               child: Row(
                 children: [
                   if (_currentPage > 0)
@@ -4162,9 +3957,10 @@ class _EditPatientModalState extends State<EditPatientModal> {
                         icon: const Icon(Icons.arrow_back),
                         label: const Text('Previous'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: _primaryAqua,
-                          side: BorderSide(color: _primaryAqua, width: 2),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          foregroundColor: AppDesign.navy,
+                          side: const BorderSide(color: AppDesign.borderStrong),
+                          minimumSize: const Size(0, 44),
+                          padding: const EdgeInsets.symmetric(vertical: 11),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -4198,7 +3994,8 @@ class _EditPatientModalState extends State<EditPatientModal> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primaryAqua,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        minimumSize: const Size(0, 44),
+                        padding: const EdgeInsets.symmetric(vertical: 11),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -4899,7 +4696,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
       style: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.bold,
-        color: _darkDeepTeal,
+        color: AppDesign.navy,
       ),
     );
   }
@@ -4924,7 +4721,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: _darkDeepTeal,
+                  color: AppDesign.ink,
                 ),
               ),
               if (required)
@@ -4981,7 +4778,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: _darkDeepTeal,
+                  color: AppDesign.ink,
                 ),
               ),
               if (required)
@@ -5037,7 +4834,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: _darkDeepTeal,
+                  color: AppDesign.ink,
                 ),
               ),
               if (required)

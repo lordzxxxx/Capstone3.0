@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/app/core/services/mobile_sync_utils.dart';
 
 class PrenatalDatabaseHelper {
   static final PrenatalDatabaseHelper instance = PrenatalDatabaseHelper._init();
@@ -528,16 +529,18 @@ class PrenatalDatabaseHelper {
       final db = await database;
 
       for (final record in records) {
-        final data = Map<String, dynamic>.from(record);
+        final data = sanitizeRecordForSqlite(record);
         data.remove('_firestorePath');
+        final recordId = (data['id'] ?? '').toString().trim();
+        if (recordId.isEmpty ||
+            await hasPendingLocalSync(
+              db,
+              table: 'prenatal_records',
+              id: recordId,
+            )) {
+          continue;
+        }
         data['synced'] = 1;
-
-        // Convert boolean values to integers for SQLite
-        data.forEach((key, value) {
-          if (value is bool) {
-            data[key] = value ? 1 : 0;
-          }
-        });
 
         // Ensure all fields exist with default values
         final completeData = {

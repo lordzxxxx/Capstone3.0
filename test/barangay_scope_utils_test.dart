@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 
@@ -74,5 +75,19 @@ void main() {
       ),
       isFalse,
     );
+  });
+
+  test('Firestore values are safe for the mobile SQLite cache', () {
+    final normalized = sanitizeRecordForSqlite({
+      'createdAt': Timestamp.fromDate(DateTime.utc(2026, 8, 1, 12)),
+      'enabled': true,
+      'tags': ['ocr', 'mobile'],
+      'metadata': {'source': 'firebase'},
+    });
+
+    expect(normalized['createdAt'], '2026-08-01T12:00:00.000Z');
+    expect(normalized['enabled'], 1);
+    expect(normalized['tags'], '["ocr","mobile"]');
+    expect(normalized['metadata'], '{"source":"firebase"}');
   });
 }

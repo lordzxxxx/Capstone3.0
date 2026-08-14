@@ -26,15 +26,15 @@ class ReferralsPage extends StatefulWidget {
 
 class _ReferralsPageState extends State<ReferralsPage> {
   static const List<String> _referralCategoryOptions = <String>[
-  'Emergency',
-  'Ambulatory',
-  'Medico-legal',
+    'Emergency',
+    'Ambulatory',
+    'Medico-legal',
   ];
   static const List<String> _referralReasonOptions = <String>[
-  'Hospital Capability',
-  'Lack of Specialist',
-  'Financial Constraint',
-  'Others',
+    'Hospital Capability',
+    'Lack of Specialist',
+    'Financial Constraint',
+    'Others',
   ];
 
   final FirebaseFirestore _firestore = getFirestoreInstance();
@@ -43,15 +43,15 @@ class _ReferralsPageState extends State<ReferralsPage> {
   final GlobalKey<FormState> _referralFormKey = GlobalKey<FormState>();
 
   final TextEditingController _referralDateTimeController =
-    TextEditingController();
+      TextEditingController();
   final TextEditingController _patientAddressController =
-    TextEditingController();
+      TextEditingController();
   final TextEditingController _patientSurnameController =
-    TextEditingController();
+      TextEditingController();
   final TextEditingController _patientFirstNameController =
-    TextEditingController();
+      TextEditingController();
   final TextEditingController _patientMiddleNameController =
-    TextEditingController();
+      TextEditingController();
   final TextEditingController _patientAgeController = TextEditingController();
   final TextEditingController _patientSexController = TextEditingController();
   final TextEditingController _chiefComplaintController =
@@ -62,13 +62,11 @@ class _ReferralsPageState extends State<ReferralsPage> {
       TextEditingController();
   final TextEditingController _lastMealTimeController = TextEditingController();
   final TextEditingController _completeVitalSignsController =
-    TextEditingController();
-  final TextEditingController _impressionController =
-    TextEditingController();
-  final TextEditingController _actionTakenController =
-    TextEditingController();
+      TextEditingController();
+  final TextEditingController _impressionController = TextEditingController();
+  final TextEditingController _actionTakenController = TextEditingController();
   final TextEditingController _healthInsuranceCoverageTypeController =
-    TextEditingController();
+      TextEditingController();
   final TextEditingController _referralReasonOtherController =
       TextEditingController();
 
@@ -90,17 +88,19 @@ class _ReferralsPageState extends State<ReferralsPage> {
   bool get _isChoOperator => _scope.canViewAllBarangays;
 
   List<QueryDocumentSnapshot<Map<String, dynamic>>> get _availableDoctorDocs {
-    return _doctorDocs.where((doctorDoc) {
-      final data = doctorDoc.data();
-      final accountStatus = (data['accountStatus'] ?? 'active')
-          .toString()
-          .trim()
-          .toLowerCase();
-      final availability = _doctorAvailability(data);
-      return accountStatus != 'disabled' &&
-          accountStatus != 'archived' &&
-          availability != 'unavailable';
-    }).toList(growable: false);
+    return _doctorDocs
+        .where((doctorDoc) {
+          final data = doctorDoc.data();
+          final accountStatus = (data['accountStatus'] ?? 'active')
+              .toString()
+              .trim()
+              .toLowerCase();
+          final availability = _doctorAvailability(data);
+          return accountStatus != 'disabled' &&
+              accountStatus != 'archived' &&
+              availability != 'unavailable';
+        })
+        .toList(growable: false);
   }
 
   Map<String, dynamic>? get _selectedPreferredDoctorData {
@@ -376,7 +376,9 @@ class _ReferralsPageState extends State<ReferralsPage> {
         'referralCategories': _selectedReferralCategories.toList()..sort(),
         'referralCategorySummary': referralCategorySummary,
         'referredTo': _selectedPreferredDoctorUid?.isNotEmpty == true
-            ? _doctorDisplayName(selectedDoctorData ?? const <String, dynamic>{})
+            ? _doctorDisplayName(
+                selectedDoctorData ?? const <String, dynamic>{},
+              )
             : '',
         'referralDateTime': _referralDateTimeController.text.trim(),
         'patientAddress': _patientAddressController.text.trim(),
@@ -1301,7 +1303,8 @@ class _ReferralsPageState extends State<ReferralsPage> {
               maxLines: 3,
               style: const TextStyle(color: _lightOffWhite),
               decoration: _inputDecoration('Medical History'),
-              validator: (value) => _requiredValidator('Medical History', value),
+              validator: (value) =>
+                  _requiredValidator('Medical History', value),
             ),
             const SizedBox(height: 12),
             _buildYesNoSelector(
@@ -1611,7 +1614,9 @@ class _ReferralsPageState extends State<ReferralsPage> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
-            color: selected ? _primaryAqua.withValues(alpha: 0.14) : _darkDeepTeal,
+            color: selected
+                ? _primaryAqua.withValues(alpha: 0.14)
+                : _darkDeepTeal,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: selected
@@ -2004,7 +2009,8 @@ class _ReferralsPageState extends State<ReferralsPage> {
     return Scaffold(
       backgroundColor: _darkDeepTeal,
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.navy,
+        foregroundColor: Colors.white,
         title: const Text('Referral Management'),
         actions: [
           IconButton(

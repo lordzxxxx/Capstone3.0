@@ -10,6 +10,8 @@ import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.blueSoft;
@@ -166,15 +168,15 @@ class _PrenatalPageState extends State<PrenatalPage> {
     return Scaffold(
       backgroundColor: _darkDeepTeal,
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.navy,
         title: Text(
           'Prenatal Care Dashboard',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _lightOffWhite,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: _lightOffWhite),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         actions: [
           IconButton(
@@ -313,53 +315,15 @@ class _PrenatalPageState extends State<PrenatalPage> {
     return Column(
       children: [
         // Search Bar (top row)
-        TextField(
+        MobileSearchField(
           controller: _searchController,
+          hintText: 'Search by name, address, or patient ID...',
           onChanged: (value) {
             setState(() {
               _searchQuery = value.toLowerCase();
               _resetPagination(clearSelection: true);
             });
           },
-          style: TextStyle(color: _lightOffWhite),
-          decoration: InputDecoration(
-            hintText: 'Search by name, address, or patient ID...',
-            hintStyle: TextStyle(color: _lightOffWhite.withValues(alpha: 0.5)),
-            prefixIcon: Icon(Icons.search, color: _lightOffWhite),
-            suffixIcon: _searchQuery.isNotEmpty
-                ? IconButton(
-                    icon: Icon(Icons.clear, color: _lightOffWhite),
-                    onPressed: () {
-                      _searchController.clear();
-                      setState(() {
-                        _searchQuery = '';
-                        _resetPagination(clearSelection: true);
-                      });
-                    },
-                  )
-                : null,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: _lightOffWhite.withValues(alpha: 0.5),
-                width: 1.5,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: _lightOffWhite.withValues(alpha: 0.5),
-                width: 1.5,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _lightOffWhite, width: 2),
-            ),
-            filled: true,
-            fillColor: Colors.transparent,
-            contentPadding: const EdgeInsets.symmetric(vertical: 12),
-          ),
         ),
         const SizedBox(height: 12),
 
@@ -827,282 +791,67 @@ class _PrenatalPageState extends State<PrenatalPage> {
     BuildContext context,
     Map<String, dynamic> record,
   ) {
-    final rawName = record['patientName']?.toString().trim() ?? '';
+    final rawName = (record['patientName'] ?? record['name'] ?? '')
+        .toString()
+        .trim();
     final patientName = rawName.isEmpty ? 'Record Details' : rawName;
 
-    showModalBottomSheet(
+    MobileRecordActionSheet.show(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+      title: patientName,
+      headerIcon: Icons.pregnant_woman,
+      actions: [
+        MobileRecordAction(
+          label: 'View Patient History',
+          icon: Icons.history_rounded,
+          tone: MobileRecordActionTone.primary,
+          onPressed: () => _showPrenatalHistory(context, record),
         ),
-      ),
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext sheetContext) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-          decoration: const BoxDecoration(
-            color: _darkDeepTeal,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: _mutedCoolGray.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(2),
+        MobileRecordAction(
+          label: 'Add Another Prenatal Visit',
+          icon: Icons.add_circle_outline,
+          onPressed: () => _showNewPrenatalModal(context, patientSeed: record),
+        ),
+        MobileRecordAction(
+          label: 'Edit Record',
+          icon: Icons.edit_outlined,
+          onPressed: () => _showEditPrenatalModal(context, record),
+        ),
+        MobileRecordAction(
+          label: 'Delete Record',
+          icon: Icons.delete_outline,
+          tone: MobileRecordActionTone.danger,
+          onPressed: () => _showDeleteConfirmation(context, record),
+        ),
+        MobileRecordAction(
+          label: 'Select Multiple',
+          icon: Icons.check_box_outlined,
+          onPressed: () {
+            setState(() {
+              _isSelectionMode = true;
+              _selectedIndices.clear();
+            });
+          },
+        ),
+        MobileRecordAction(
+          label: 'Delete Selected',
+          icon: Icons.delete_sweep,
+          tone: MobileRecordActionTone.danger,
+          onPressed: () {
+            if (_selectedIndices.isNotEmpty) {
+              setState(() => _isDeleteDialogShowing = true);
+              _showDeleteConfirmationForSelected(context);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please select records first'),
+                  behavior: SnackBarBehavior.floating,
                 ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                patientName,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _lightOffWhite,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _showPrenatalHistory(context, record);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryAqua,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.history, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'View Patient History',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _showNewPrenatalModal(context, patientSeed: record);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryAqua.withValues(alpha: 0.1),
-                    side: const BorderSide(color: _primaryAqua, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.add_circle_outline,
-                        size: 20,
-                        color: _primaryAqua,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Add Another Prenatal Visit',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: _primaryAqua,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _showEditPrenatalModal(context, record);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange.withValues(alpha: 0.1),
-                    side: const BorderSide(color: Colors.orange, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.edit, size: 20, color: Colors.orange),
-                      SizedBox(width: 8),
-                      Text(
-                        'Edit Record',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _showDeleteConfirmation(context, record);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.withValues(alpha: 0.1),
-                    side: const BorderSide(color: Colors.red, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.delete, size: 20, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text(
-                        'Delete Record',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    setState(() {
-                      _isSelectionMode = true;
-                      _selectedIndices.clear();
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(
-                      0xFF4ECDC4,
-                    ).withValues(alpha: 0.1),
-                    side: const BorderSide(color: Color(0xFF4ECDC4), width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.check_box_outlined,
-                        size: 20,
-                        color: Color(0xFF4ECDC4),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Select Multiple',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4ECDC4),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    if (_selectedIndices.isNotEmpty) {
-                      setState(() {
-                        _isDeleteDialogShowing = true;
-                      });
-                      _showDeleteConfirmationForSelected(context);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please select records first'),
-                          backgroundColor: Colors.orange,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade700.withValues(alpha: 0.1),
-                    side: BorderSide(color: Colors.red.shade700, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.delete_sweep,
-                        size: 20,
-                        color: Colors.red.shade700,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Delete Selected',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red.shade700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
+              );
+            }
+          },
+        ),
+      ],
     );
   }
 

@@ -6,7 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
-import 'package:mycapstone_project/web/roles/bhw/analytics/ai_summary.dart' as ai;
+import 'package:mycapstone_project/web/roles/bhw/analytics/ai_summary.dart'
+    as ai;
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 
@@ -45,7 +46,8 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
       String type;
       if (_mode == 'Daily') {
         result = await ai.generateDailySummaryForCurrentUser(_selectedDate);
-        _summaryTitle = 'Daily Summary - ${DateFormat.yMMMd().format(_selectedDate)}';
+        _summaryTitle =
+            'Daily Summary - ${DateFormat.yMMMd().format(_selectedDate)}';
         period = DateFormat('yyyy-MM-dd').format(_selectedDate);
         type = 'daily';
       } else if (_mode == 'Monthly') {
@@ -53,7 +55,8 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
           _selectedYear,
           _selectedMonth,
         );
-        _summaryTitle = 'Monthly Summary - $_selectedYear-${_selectedMonth.toString().padLeft(2, '0')}';
+        _summaryTitle =
+            'Monthly Summary - $_selectedYear-${_selectedMonth.toString().padLeft(2, '0')}';
         period = '$_selectedYear-${_selectedMonth.toString().padLeft(2, '0')}';
         type = 'monthly';
       } else {
@@ -113,10 +116,11 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
     UserAccessScope accessScope,
   ) {
     final firestore = getFirestoreInstance();
-    return buildScopedRecordQuery(firestore, 'summary_records', accessScope)
-        .orderBy('generatedAt', descending: true)
-        .limit(12)
-        .snapshots();
+    return buildScopedRecordQuery(
+      firestore,
+      'summary_records',
+      accessScope,
+    ).orderBy('generatedAt', descending: true).limit(12).snapshots();
   }
 
   void _copySummaryToClipboard() {
@@ -141,7 +145,10 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: _primaryAqua.withValues(alpha: 0.5), width: 1.5),
+        side: BorderSide(
+          color: _primaryAqua.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -157,15 +164,24 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                   items: const [
                     DropdownMenuItem(
                       value: 'Daily',
-                      child: Text('Daily', style: TextStyle(color: _lightOffWhite)),
+                      child: Text(
+                        'Daily',
+                        style: TextStyle(color: _lightOffWhite),
+                      ),
                     ),
                     DropdownMenuItem(
                       value: 'Monthly',
-                      child: Text('Monthly', style: TextStyle(color: _lightOffWhite)),
+                      child: Text(
+                        'Monthly',
+                        style: TextStyle(color: _lightOffWhite),
+                      ),
                     ),
                     DropdownMenuItem(
                       value: 'Yearly',
-                      child: Text('Yearly', style: TextStyle(color: _lightOffWhite)),
+                      child: Text(
+                        'Yearly',
+                        style: TextStyle(color: _lightOffWhite),
+                      ),
                     ),
                   ],
                   onChanged: (value) {
@@ -255,17 +271,18 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                     value: _selectedYear,
                     dropdownColor: _darkDeepTeal,
                     style: const TextStyle(color: _lightOffWhite),
-                    items: List.generate(6, (index) => DateTime.now().year - index)
-                        .map(
-                          (year) => DropdownMenuItem(
-                            value: year,
-                            child: Text(
-                              '$year',
-                              style: const TextStyle(color: _lightOffWhite),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                    items:
+                        List.generate(6, (index) => DateTime.now().year - index)
+                            .map(
+                              (year) => DropdownMenuItem(
+                                value: year,
+                                child: Text(
+                                  '$year',
+                                  style: const TextStyle(color: _lightOffWhite),
+                                ),
+                              ),
+                            )
+                            .toList(),
                     onChanged: (value) {
                       if (value != null) {
                         setState(() => _selectedYear = value);
@@ -288,17 +305,18 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                     value: _selectedYear,
                     dropdownColor: _darkDeepTeal,
                     style: const TextStyle(color: _lightOffWhite),
-                    items: List.generate(6, (index) => DateTime.now().year - index)
-                        .map(
-                          (year) => DropdownMenuItem(
-                            value: year,
-                            child: Text(
-                              '$year',
-                              style: const TextStyle(color: _lightOffWhite),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                    items:
+                        List.generate(6, (index) => DateTime.now().year - index)
+                            .map(
+                              (year) => DropdownMenuItem(
+                                value: year,
+                                child: Text(
+                                  '$year',
+                                  style: const TextStyle(color: _lightOffWhite),
+                                ),
+                              ),
+                            )
+                            .toList(),
                     onChanged: (value) {
                       if (value != null) {
                         setState(() => _selectedYear = value);
@@ -318,15 +336,15 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
     return Scaffold(
       backgroundColor: _darkDeepTeal,
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.navy,
         title: Text(
           'Summary Generation',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: _lightOffWhite,
-                fontWeight: FontWeight.bold,
-              ),
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        iconTheme: const IconThemeData(color: _lightOffWhite),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -382,7 +400,8 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                             _summaryTitle.isEmpty
                                 ? 'No summary report generated'
                                 : _summaryTitle,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
                                   fontWeight: FontWeight.w700,
                                   color: _lightOffWhite,
                                 ),
@@ -391,13 +410,23 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                         Row(
                           children: [
                             IconButton(
-                              onPressed: _summary.isEmpty ? null : _copySummaryToClipboard,
-                              icon: const Icon(Icons.copy, color: _lightOffWhite),
+                              onPressed: _summary.isEmpty
+                                  ? null
+                                  : _copySummaryToClipboard,
+                              icon: const Icon(
+                                Icons.copy,
+                                color: _lightOffWhite,
+                              ),
                               tooltip: 'Copy',
                             ),
                             IconButton(
-                              onPressed: _summary.isEmpty ? null : _clearSummary,
-                              icon: const Icon(Icons.clear, color: _lightOffWhite),
+                              onPressed: _summary.isEmpty
+                                  ? null
+                                  : _clearSummary,
+                              icon: const Icon(
+                                Icons.clear,
+                                color: _lightOffWhite,
+                              ),
                               tooltip: 'Clear',
                             ),
                           ],
@@ -411,17 +440,24 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: _primaryAqua.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: _primaryAqua.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: _summary.isNotEmpty
                           ? SelectableText(
                               _summary,
-                              style: const TextStyle(height: 1.4, color: _lightOffWhite),
+                              style: const TextStyle(
+                                height: 1.4,
+                                color: _lightOffWhite,
+                              ),
                             )
                           : Text(
                               'Run Summary Generation to view system-aligned insights, '
                               'key trends, and potential risk signals.',
-                              style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.7)),
+                              style: TextStyle(
+                                color: _lightOffWhite.withValues(alpha: 0.7),
+                              ),
                             ),
                     ),
                     const SizedBox(height: 12),
@@ -433,18 +469,24 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                         }
 
                         final currentUserId =
-                            FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+                            FirebaseAuth.instance.currentUser?.uid ??
+                            'anonymous';
                         final activeType = _mode.toLowerCase();
                         final activePeriod = _mode == 'Daily'
                             ? DateFormat('yyyy-MM-dd').format(_selectedDate)
                             : _mode == 'Monthly'
-                                ? '$_selectedYear-${_selectedMonth.toString().padLeft(2, '0')}'
-                                : '$_selectedYear';
+                            ? '$_selectedYear-${_selectedMonth.toString().padLeft(2, '0')}'
+                            : '$_selectedYear';
 
-                        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                          stream: _savedSummaryStream(accessScopeSnapshot.data!),
+                        return StreamBuilder<
+                          QuerySnapshot<Map<String, dynamic>>
+                        >(
+                          stream: _savedSummaryStream(
+                            accessScopeSnapshot.data!,
+                          ),
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
                               return const SizedBox();
                             }
                             if (!snapshot.hasData) {
@@ -479,7 +521,9 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                                   final text = (data['text'] as String?) ?? '';
                                   final ts = data['generatedAt'] as Timestamp?;
                                   final when = ts != null
-                                      ? DateFormat.yMMMd().add_jm().format(ts.toDate())
+                                      ? DateFormat.yMMMd().add_jm().format(
+                                          ts.toDate(),
+                                        )
                                       : 'recent';
 
                                   return ListTile(
@@ -497,7 +541,9 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        color: _lightOffWhite.withValues(alpha: 0.8),
+                                        color: _lightOffWhite.withValues(
+                                          alpha: 0.8,
+                                        ),
                                       ),
                                     ),
                                     trailing: IconButton(
@@ -509,7 +555,8 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                                         setState(() {
                                           _summary = text;
                                           _summaryTitle =
-                                              (data['title'] as String?) ?? 'Saved - $when';
+                                              (data['title'] as String?) ??
+                                              'Saved - $when';
                                         });
                                       },
                                     ),
@@ -543,9 +590,9 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       title,
       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: _lightOffWhite,
-            fontWeight: FontWeight.bold,
-          ),
+        color: _lightOffWhite,
+        fontWeight: FontWeight.bold,
+      ),
     );
   }
 }

@@ -59,6 +59,7 @@ dependencies:
   pdf: ^3.10.8
   image_picker: ^1.2.3
   google_mlkit_text_recognition: ^0.16.0
+  lottie: ^3.5.1
 
 dev_dependencies:
   flutter_test:

@@ -144,7 +144,7 @@ class _AuthHero extends StatelessWidget {
                   ),
                 ),
                 child: Image.asset(
-                  'assets/newlogo_white.png',
+                  'assets/ai_dsuhis_round.png',
                   fit: BoxFit.contain,
                   errorBuilder: (_, _, _) => const Icon(
                     Icons.health_and_safety_rounded,

@@ -505,12 +505,12 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
     return Scaffold(
       backgroundColor: _darkDeepTeal,
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.navy,
         elevation: 0,
-        iconTheme: const IconThemeData(color: _lightOffWhite),
+        iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
           'Prenatal Analytics',
-          style: TextStyle(color: _lightOffWhite, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(

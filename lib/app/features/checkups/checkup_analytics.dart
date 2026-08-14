@@ -385,10 +385,10 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
         backgroundColor: _darkDeepTeal,
         appBar: AppBar(
           title: const Text('Check-up Analytics'),
-          backgroundColor: _darkDeepTeal,
-          foregroundColor: _lightOffWhite,
+          backgroundColor: AppDesign.navy,
+          foregroundColor: Colors.white,
           elevation: 0,
-          iconTheme: const IconThemeData(color: _lightOffWhite),
+          iconTheme: const IconThemeData(color: Colors.white),
         ),
         body: const Center(
           child: CircularProgressIndicator(color: _primaryAqua),
@@ -399,10 +399,10 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Check-up Analytics'),
-        backgroundColor: _darkDeepTeal,
-        foregroundColor: _lightOffWhite,
+        backgroundColor: AppDesign.navy,
+        foregroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: _lightOffWhite),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       backgroundColor: _darkDeepTeal,
       body: SingleChildScrollView(

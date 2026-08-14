@@ -65,7 +65,7 @@ class LandingPage extends StatelessWidget {
         Align(
           alignment: compact ? Alignment.center : Alignment.centerLeft,
           child: Image.asset(
-            'assets/newlogo_white.png',
+            'assets/ai_dsuhis_round.png',
             width: logoSize,
             height: logoSize,
             fit: BoxFit.contain,

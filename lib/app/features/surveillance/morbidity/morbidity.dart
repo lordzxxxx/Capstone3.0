@@ -7,6 +7,8 @@ import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.blueSoft;
@@ -169,7 +171,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
     return Scaffold(
       backgroundColor: _darkDeepTeal,
       appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.navy,
         elevation: 0,
         title: Text(
           widget.analyticsOnly == true
@@ -178,11 +180,11 @@ class _MorbidityPageState extends State<MorbidityPage> {
               ? 'Morbidity List'
               : 'Morbidity Records',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _lightOffWhite,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: _lightOffWhite),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: widget.analyticsOnly == true || widget.listOnly == true
             ? [
                 IconButton(
@@ -1087,189 +1089,35 @@ class _MorbidityPageState extends State<MorbidityPage> {
             .trim();
     final patientName = rawName.isEmpty ? 'Record Details' : rawName;
 
-    showModalBottomSheet(
+    MobileRecordActionSheet.show(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+      title: patientName,
+      headerIcon: Icons.monitor_heart_outlined,
+      actions: [
+        MobileRecordAction(
+          label: 'View Patient History',
+          icon: Icons.history_rounded,
+          tone: MobileRecordActionTone.primary,
+          onPressed: () => _showMorbidityHistory(context, record),
         ),
-      ),
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext sheetContext) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-          decoration: const BoxDecoration(
-            color: _darkDeepTeal,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: _mutedCoolGray.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                patientName,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _lightOffWhite,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _showMorbidityHistory(context, record);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryAqua,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.history, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'View Patient History',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _showMorbidityDetails(context, record);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryAqua.withValues(alpha: 0.1),
-                    side: const BorderSide(color: _primaryAqua, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.visibility, size: 20, color: _primaryAqua),
-                      SizedBox(width: 8),
-                      Text(
-                        'View Record Details',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: _primaryAqua,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _showNewMorbidityModal(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(
-                      0xFF4ECDC4,
-                    ).withValues(alpha: 0.1),
-                    side: const BorderSide(color: Color(0xFF4ECDC4), width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.add_circle_outline,
-                        size: 20,
-                        color: Color(0xFF4ECDC4),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Add New Morbidity Record',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4ECDC4),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _showDeleteConfirmationDialog(context, record);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.withValues(alpha: 0.1),
-                    side: const BorderSide(color: Colors.red, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.delete, size: 20, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text(
-                        'Delete Record',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
+        MobileRecordAction(
+          label: 'View Record Details',
+          icon: Icons.visibility_outlined,
+          onPressed: () => _showMorbidityDetails(context, record),
+        ),
+        MobileRecordAction(
+          label: 'Add New Morbidity Record',
+          icon: Icons.add_circle_outline,
+          tone: MobileRecordActionTone.success,
+          onPressed: () => _showNewMorbidityModal(context),
+        ),
+        MobileRecordAction(
+          label: 'Delete Record',
+          icon: Icons.delete_outline,
+          tone: MobileRecordActionTone.danger,
+          onPressed: () => _showDeleteConfirmationDialog(context, record),
+        ),
+      ],
     );
   }
 
@@ -1382,66 +1230,13 @@ class _MorbidityPageState extends State<MorbidityPage> {
   }
 
   Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: _darkDeepTeal,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _lightOffWhite.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _primaryAqua.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: _searchController,
-        style: const TextStyle(color: _lightOffWhite),
-        onChanged: (value) {
-          _searchQuery = value;
-          _applySearch();
-        },
-        decoration: InputDecoration(
-          hintText: 'Search by patient name, disease, or record ID...',
-          hintStyle: TextStyle(color: _lightOffWhite.withValues(alpha: 0.5)),
-          prefixIcon: const Icon(Icons.search, color: _lightOffWhite),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear, color: _lightOffWhite),
-                  onPressed: () {
-                    _searchController.clear();
-                    _searchQuery = '';
-                    _applySearch();
-                  },
-                )
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: _lightOffWhite.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: _lightOffWhite.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-          ),
-          focusedBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12)),
-            borderSide: BorderSide(color: _lightOffWhite, width: 2),
-          ),
-          filled: true,
-          fillColor: _darkDeepTeal,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-        ),
-      ),
+    return MobileSearchField(
+      controller: _searchController,
+      hintText: 'Search by patient name, disease, or record ID...',
+      onChanged: (value) {
+        _searchQuery = value;
+        _applySearch();
+      },
     );
   }
 }

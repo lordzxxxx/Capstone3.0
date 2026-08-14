@@ -617,10 +617,25 @@ class PatientDatabaseHelper {
           .get();
 
       final db = await database;
+      final tableColumns = (await db.rawQuery(
+        'PRAGMA table_info(patient_records)',
+      )).map((row) => row['name']?.toString()).whereType<String>().toSet();
       for (var doc in snapshot.docs) {
-        final data = doc.data();
-        data['id'] = doc.id;
+        final data = _prepareRecordData(
+          sanitizeRecordForSqlite(doc.data()),
+          doc.id,
+        )..removeWhere((key, _) => !tableColumns.contains(key));
         data['synced'] = 1;
+
+        final recordId = doc.id.trim();
+        final local = await db.query(
+          'patient_records',
+          columns: const ['synced'],
+          where: 'id = ?',
+          whereArgs: [recordId],
+          limit: 1,
+        );
+        if (local.isNotEmpty && local.first['synced'] == 0) continue;
 
         await db.insert(
           'patient_records',

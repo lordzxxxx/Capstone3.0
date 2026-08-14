@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
@@ -183,6 +185,31 @@ Map<String, dynamic> materializeFirestoreRecord(
     'id': doc.id,
     '_firestorePath': doc.reference.path,
   };
+}
+
+/// Converts Firestore values to types supported by the mobile SQLite cache.
+/// Firestore records can contain Timestamp, nested maps, or lists; passing
+/// those objects directly to sqflite causes startup sync warnings/failures.
+dynamic sqliteSafeValue(dynamic value) {
+  if (value == null || value is num || value is String) return value;
+  if (value is bool) return value ? 1 : 0;
+  if (value is Timestamp) return value.toDate().toUtc().toIso8601String();
+  if (value is DateTime) return value.toIso8601String();
+  if (value is List) {
+    return jsonEncode(value.map(sqliteSafeValue).toList(growable: false));
+  }
+  if (value is Map) {
+    final normalized = <String, dynamic>{};
+    value.forEach((key, nestedValue) {
+      normalized[key.toString()] = sqliteSafeValue(nestedValue);
+    });
+    return jsonEncode(normalized);
+  }
+  return value.toString();
+}
+
+Map<String, dynamic> sanitizeRecordForSqlite(Map<String, dynamic> source) {
+  return source.map((key, value) => MapEntry(key, sqliteSafeValue(value)));
 }
 
 Query<Map<String, dynamic>> applyAccessScopeToQuery(

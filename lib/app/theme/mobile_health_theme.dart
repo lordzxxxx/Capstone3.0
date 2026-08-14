@@ -237,7 +237,7 @@ abstract final class AppDesign {
         fillColor: surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 15,
+          vertical: 12,
         ),
         border: _inputBorder(borderStrong),
         enabledBorder: _inputBorder(borderStrong),
@@ -266,8 +266,8 @@ abstract final class AppDesign {
           backgroundColor: surface,
           disabledForegroundColor: disabled,
           side: const BorderSide(color: borderStrong),
-          minimumSize: const Size(48, 50),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          minimumSize: const Size(48, 44),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
           shape: rounded,
           textStyle: const TextStyle(fontWeight: FontWeight.w700),
         ),
@@ -422,9 +422,9 @@ abstract final class AppDesign {
         return blue;
       }),
       elevation: const WidgetStatePropertyAll(0),
-      minimumSize: const WidgetStatePropertyAll(Size(48, 50)),
+      minimumSize: const WidgetStatePropertyAll(Size(48, 44)),
       padding: const WidgetStatePropertyAll(
-        EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        EdgeInsets.symmetric(horizontal: 16, vertical: 11),
       ),
       shape: WidgetStatePropertyAll(shape),
       textStyle: const WidgetStatePropertyAll(
