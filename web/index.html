@@ -18,7 +18,8 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="application-name" content="AI-DSUHIS">
+  <meta name="description" content="AI-DSUHIS healthcare information system.">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -26,13 +27,13 @@
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="mycapstone_project">
+  <meta name="apple-mobile-web-app-title" content="AI-DSUHIS">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>mycapstone_project</title>
+  <title>AI-DSUHIS</title>
   <link rel="manifest" href="manifest.json">
   <!-- Inter is the shared web UI typeface; Flutter falls back to the bundled
        fonts when a network connection is unavailable. -->
@@ -49,7 +50,57 @@
          to one viewport; long dashboards/auth forms can still scroll. */
       overflow-x: hidden;
       overflow-y: auto;
+      background: #071A33;
       font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    #app-startup-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: grid;
+      place-items: center;
+      background: #071A33;
+      color: #F8FBFF;
+      text-align: center;
+      transition: opacity 160ms ease;
+    }
+
+    #app-startup-loader[hidden] {
+      display: none;
+    }
+
+    #app-startup-loader .startup-content {
+      display: grid;
+      justify-items: center;
+      gap: 14px;
+      padding: 24px;
+    }
+
+    #app-startup-loader img {
+      width: 76px;
+      height: 76px;
+      object-fit: contain;
+    }
+
+    #app-startup-loader .startup-progress {
+      width: 28px;
+      height: 28px;
+      border: 3px solid rgba(248, 251, 255, 0.28);
+      border-top-color: #2F80ED;
+      border-radius: 50%;
+      animation: startup-spin 800ms linear infinite;
+    }
+
+    #app-startup-loader p {
+      margin: 0;
+      color: #D4E3F2;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    @keyframes startup-spin {
+      to { transform: rotate(360deg); }
     }
   </style>
   
@@ -59,6 +110,14 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
+  <div id="app-startup-loader" role="status" aria-live="polite">
+    <div class="startup-content">
+      <img src="assets/newlogo_white.png" alt="AI-DSUHIS">
+      <div class="startup-progress" aria-hidden="true"></div>
+      <p>Preparing your AI-DSUHIS workspace…</p>
+    </div>
+  </div>
+
   <script>
     // Prevent stale UI from an old service worker during development.
     if ('serviceWorker' in navigator) {
@@ -70,5 +129,26 @@
 
   <!-- FlutterFire loads the compatible modular Firebase SDK. -->
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // Remove the static fallback only after Flutter has created its view. This
+    // prevents a slow or failed bootstrap from appearing as a blank white page
+    // while leaving the Flutter startup/error UI in control once available.
+    (() => {
+      const loader = document.getElementById('app-startup-loader');
+      if (!loader) return;
+
+      const revealFlutter = () => {
+        if (!document.querySelector('flutter-view')) return false;
+        loader.hidden = true;
+        return true;
+      };
+
+      if (revealFlutter()) return;
+      const observer = new MutationObserver(() => {
+        if (revealFlutter()) observer.disconnect();
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    })();
+  </script>
 </body>
 </html>

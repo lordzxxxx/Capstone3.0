@@ -492,7 +492,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
     if (_submitted) return _successPage();
     return Theme(
       data: Theme.of(context).copyWith(
-        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Mont'),
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Manrope'),
       ),
       child: Scaffold(
         backgroundColor: _page,
@@ -817,7 +817,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
         const Text(
           'Create BHW Account',
           style: TextStyle(
-            fontFamily: 'Mont',
+            fontFamily: 'Manrope',
             color: _ink,
             fontSize: 30,
             fontWeight: FontWeight.w800,
@@ -871,7 +871,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
             Text(
               number,
               style: const TextStyle(
-                fontFamily: 'Mont',
+                fontFamily: 'Manrope',
                 color: _aqua,
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
@@ -881,7 +881,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
             Text(
               title,
               style: const TextStyle(
-                fontFamily: 'Mont',
+                fontFamily: 'Manrope',
                 color: _ink,
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
@@ -1301,7 +1301,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
                   'Registration submitted',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontFamily: 'Mont',
+                    fontFamily: 'Manrope',
                     color: _ink,
                     fontSize: 27,
                     fontWeight: FontWeight.w800,

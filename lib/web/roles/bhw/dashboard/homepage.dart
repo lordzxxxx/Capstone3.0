@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:mycapstone_project/web/roles/cho/admin/role_manager.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
@@ -19,6 +18,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart'
 import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/roles/bhw/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/web/roles/bhw/prenatal/prenatal_database_helper.dart';
 import 'package:mycapstone_project/web/roles/bhw/immunization/immunization_database_helper.dart';
@@ -27,6 +27,7 @@ import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/utils/dashboard_report_launcher.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 
 // Professional Vibrant Color Palette - Matching Analytics Page
@@ -1697,11 +1698,7 @@ class _HomePageState extends State<HomePage> {
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            gradient: LinearGradient(
-              colors: [color, color.withValues(alpha: 0.5)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
+            color: color,
             barWidth: 2.5,
             isStrokeCapRound: true,
             dotData: FlDotData(
@@ -1717,14 +1714,7 @@ class _HomePageState extends State<HomePage> {
             ),
             belowBarData: BarAreaData(
               show: true,
-              gradient: LinearGradient(
-                colors: [
-                  color.withValues(alpha: 0.2),
-                  color.withValues(alpha: 0.02),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+              color: color.withValues(alpha: 0.10),
             ),
           ),
         );
@@ -2492,7 +2482,7 @@ class _HomePageState extends State<HomePage> {
                       badge: 'Account',
                       onTap: () async {
                         Navigator.of(dialogContext).pop();
-                        await Get.to(() => const BHWProfilePage());
+                        await Get.toNamed(WebRoutes.bhwProfile);
                       },
                     ),
                     const SizedBox(height: 12),
@@ -2537,7 +2527,7 @@ class _HomePageState extends State<HomePage> {
                         badge: 'Access',
                         onTap: () {
                           Navigator.of(dialogContext).pop();
-                          Get.to(() => const RoleManager());
+                          Get.toNamed(WebRoutes.choRoleManager);
                         },
                       ),
                     ],
@@ -2599,7 +2589,7 @@ class _HomePageState extends State<HomePage> {
                             onPressed: () async {
                               Navigator.of(dialogContext).pop();
                               await FirebaseAuth.instance.signOut();
-                              Get.offAll(() => const Login());
+                              Get.offAllNamed(WebRoutes.login);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _accentRed,
@@ -2774,55 +2764,59 @@ class _HomePageState extends State<HomePage> {
           trailing: _buildKeyMetricsDatePickerButton(),
           onRefresh: _loadMetrics,
         ),
-        GridView.count(
-          crossAxisCount: 4,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 1.8,
-          children: [
-            _buildWebMetricCard(
-              title: 'Total Patients',
-              value: _isLoadingMetrics
-                  ? '...'
-                  : _metricCountLabel(_filteredPatientRegistrations),
-              subtitle: 'Registered ${_metricFilterScopeLabel()}',
-              icon: Icons.people_rounded,
-              color: _primaryAqua,
-              trend: '+12%',
-            ),
-            _buildWebMetricCard(
-              title: 'Check-ups',
-              value: _isLoadingMetrics
-                  ? '...'
-                  : _metricCountLabel(_filteredCheckupRecords),
-              subtitle: 'Completed ${_metricFilterScopeLabel()}',
-              icon: Icons.assignment_turned_in_rounded,
-              color: _darkDeepTeal,
-              trend: '+8%',
-            ),
-            _buildWebMetricCard(
-              title: 'Prenatal Care',
-              value: _isLoadingMetrics
-                  ? '...'
-                  : _metricCountLabel(_filteredPrenatalRecords),
-              subtitle: 'Visits recorded ${_metricFilterScopeLabel()}',
-              icon: Icons.pregnant_woman_rounded,
-              color: const Color(0xFFD84315),
-              trend: '+15%',
-            ),
-            _buildWebMetricCard(
-              title: 'Immunizations',
-              value: _isLoadingMetrics
-                  ? '...'
-                  : _metricCountLabel(_filteredImmunizationRecords),
-              subtitle: 'Administered ${_metricFilterScopeLabel()}',
-              icon: Icons.vaccines_rounded,
-              color: const Color(0xFF4CAF50),
-              trend: '+10%',
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 1100
+                ? 4
+                : constraints.maxWidth >= 680
+                ? 2
+                : 1;
+            const spacing = 16.0;
+            final width = columns == 1
+                ? constraints.maxWidth
+                : (constraints.maxWidth - spacing * (columns - 1)) / columns;
+            final cards = <Widget>[
+              _buildWebMetricCard(
+                title: 'Total Patients',
+                value: _isLoadingMetrics
+                    ? '...'
+                    : _metricCountLabel(_filteredPatientRegistrations),
+                subtitle: 'Registered ${_metricFilterScopeLabel()}',
+                icon: Icons.people_outline,
+              ),
+              _buildWebMetricCard(
+                title: 'Check-ups',
+                value: _isLoadingMetrics
+                    ? '...'
+                    : _metricCountLabel(_filteredCheckupRecords),
+                subtitle: 'Completed ${_metricFilterScopeLabel()}',
+                icon: Icons.assignment_turned_in_outlined,
+              ),
+              _buildWebMetricCard(
+                title: 'Prenatal Care',
+                value: _isLoadingMetrics
+                    ? '...'
+                    : _metricCountLabel(_filteredPrenatalRecords),
+                subtitle: 'Visits recorded ${_metricFilterScopeLabel()}',
+                icon: Icons.pregnant_woman_outlined,
+              ),
+              _buildWebMetricCard(
+                title: 'Immunizations',
+                value: _isLoadingMetrics
+                    ? '...'
+                    : _metricCountLabel(_filteredImmunizationRecords),
+                subtitle: 'Administered ${_metricFilterScopeLabel()}',
+                icon: Icons.vaccines_outlined,
+              ),
+            ];
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: cards
+                  .map((card) => SizedBox(width: width, child: card))
+                  .toList(growable: false),
+            );
+          },
         ),
       ],
     );
@@ -2875,48 +2869,36 @@ class _HomePageState extends State<HomePage> {
         'value': _totalPatients,
         'subtitle': 'Visible in your access scope',
         'icon': Icons.groups_2_rounded,
-        'color': _primaryAqua,
-        'badge': 'Live',
       },
       {
         'title': 'Consultations Today',
         'value': _consultationsToday,
         'subtitle': 'Check-ups recorded today',
         'icon': Icons.medical_services_rounded,
-        'color': _accentGreen,
-        'badge': 'Today',
       },
       {
         'title': 'Active Pregnancies',
         'value': _activePregnancies,
         'subtitle': 'Open prenatal care records',
         'icon': Icons.pregnant_woman_rounded,
-        'color': _accentPurple,
-        'badge': 'Active',
       },
       {
         'title': 'High-risk Patients',
         'value': _highRiskPatients,
         'subtitle': 'Unique patients requiring attention',
         'icon': Icons.warning_amber_rounded,
-        'color': _accentRed,
-        'badge': 'Priority',
       },
       {
         'title': 'Pending Referrals',
         'value': _pendingReferrals,
         'subtitle': 'Not completed or closed',
         'icon': Icons.assignment_late_rounded,
-        'color': const Color(0xFFF59E0B),
-        'badge': 'Action',
       },
       {
         'title': 'AI-generated Alerts',
         'value': _aiGeneratedAlerts,
         'subtitle': 'AI-guided records requiring attention',
         'icon': Icons.psychology_alt_rounded,
-        'color': const Color(0xFF38BDF8),
-        'badge': 'Decision support',
       },
     ];
 
@@ -2945,7 +2927,7 @@ class _HomePageState extends State<HomePage> {
                 crossAxisCount: columns,
                 mainAxisSpacing: 16,
                 crossAxisSpacing: 16,
-                childAspectRatio: columns == 1 ? 2.25 : 1.72,
+                childAspectRatio: columns == 1 ? 2.0 : 1.55,
               ),
               itemBuilder: (context, index) {
                 final metric = metrics[index];
@@ -2956,8 +2938,6 @@ class _HomePageState extends State<HomePage> {
                       : '${metric['value']}',
                   subtitle: metric['subtitle'] as String,
                   icon: metric['icon'] as IconData,
-                  color: metric['color'] as Color,
-                  trend: metric['badge'] as String,
                 );
               },
             );
@@ -3483,17 +3463,17 @@ class _HomePageState extends State<HomePage> {
                   _buildDrawerSidebarItem(
                     icon: Icons.assignment_turned_in_rounded,
                     label: 'Check-ups',
-                    onTap: () => Get.to(() => const checkup_page.CheckUpPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwCheckups),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.favorite_rounded,
                     label: 'Summary Generation',
-                    onTap: () => Get.to(() => const HealthMetricsPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwSummary),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.analytics_rounded,
                     label: 'Analytics',
-                    onTap: () => Get.to(() => const AnalyticsPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwAnalytics),
                   ),
                   const SizedBox(height: 8),
                   Padding(
@@ -3527,17 +3507,17 @@ class _HomePageState extends State<HomePage> {
                   _buildDrawerSidebarItem(
                     icon: Icons.pregnant_woman_rounded,
                     label: 'Prenatal Care',
-                    onTap: () => Get.to(() => const PrenatalPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwPrenatal),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.vaccines_rounded,
                     label: 'Immunization',
-                    onTap: () => Get.to(() => const ImmunizationPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwImmunization),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.person_rounded,
                     label: 'Patient Records',
-                    onTap: () => Get.to(() => const PatientRecordPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwPatients),
                   ),
                   const SizedBox(height: 8),
                   Padding(
@@ -3571,17 +3551,17 @@ class _HomePageState extends State<HomePage> {
                   _buildDrawerSidebarItem(
                     icon: Icons.coronavirus_rounded,
                     label: 'Communicable',
-                    onTap: () => Get.to(() => const CommunicablePage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwCommunicable),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.health_and_safety_rounded,
                     label: 'Non-Communicable',
-                    onTap: () => Get.to(() => const NonCommunicablePage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwNonCommunicable),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.analytics_outlined,
                     label: 'Mortality',
-                    onTap: () => Get.to(() => const MortalityPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwMortality),
                   ),
                 ],
               ),
@@ -3601,7 +3581,7 @@ class _HomePageState extends State<HomePage> {
                 child: InkWell(
                   onTap: () async {
                     await FirebaseAuth.instance.signOut();
-                    Get.offAll(() => const Login());
+                    Get.offAllNamed(WebRoutes.login);
                   },
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
@@ -3849,105 +3829,12 @@ class _HomePageState extends State<HomePage> {
     required String value,
     required String subtitle,
     required IconData icon,
-    required Color color,
-    required String trend,
   }) {
-    return StatefulBuilder(
-      builder: (context, setState) {
-        bool isHovered = false;
-        return MouseRegion(
-          onEnter: (_) => setState(() => isHovered = true),
-          onExit: (_) => setState(() => isHovered = false),
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0D274D),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: _primaryAqua.withValues(alpha: 0.15),
-                width: 1.5,
-              ),
-              boxShadow: isHovered
-                  ? [
-                      BoxShadow(
-                        color: _primaryAqua.withValues(alpha: 0.6),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                        offset: const Offset(0, 0),
-                      ),
-                    ]
-                  : [],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.transparent, width: 1),
-                      ),
-                      child: Icon(icon, color: Colors.white, size: 20),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _accentGreen.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: Colors.transparent,
-                          width: 0.5,
-                        ),
-                      ),
-                      child: Text(
-                        trend,
-                        style: const TextStyle(
-                          color: _accentGreen,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFFB8C9DB),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    return AppMetricCard(
+      label: title,
+      value: value,
+      icon: icon,
+      supportingText: subtitle,
     );
   }
 
@@ -5974,11 +5861,7 @@ class _HomePageState extends State<HomePage> {
                         BarChartRodData(
                           toY: score,
                           width: 16,
-                          gradient: LinearGradient(
-                            colors: [color.withValues(alpha: 0.55), color],
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                          ),
+                          color: color,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         BarChartRodData(

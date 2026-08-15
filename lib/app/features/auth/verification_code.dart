@@ -5,6 +5,7 @@ import 'package:mycapstone_project/app/features/auth/reset_password_service.dart
 import 'package:mycapstone_project/app/features/auth/new_password.dart';
 import 'package:mycapstone_project/app/features/auth/login.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.blueSoft;
@@ -15,18 +16,17 @@ const Color _lightOffWhite = AppDesign.page;
 class VerificationCode extends StatefulWidget {
   final String email;
 
-  const VerificationCode({
-    super.key,
-    required this.email,
-  });
+  const VerificationCode({super.key, required this.email});
 
   @override
   State<VerificationCode> createState() => _VerificationCodeState();
 }
 
 class _VerificationCodeState extends State<VerificationCode> {
-  final List<TextEditingController> codeControllers =
-      List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> codeControllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> focusNodes = List.generate(6, (_) => FocusNode());
   bool _isLoading = false;
   bool _hasError = false;
@@ -92,7 +92,10 @@ class _VerificationCodeState extends State<VerificationCode> {
       );
 
       Future.delayed(const Duration(seconds: 1), () {
-        Get.off(() => NewPassword(email: widget.email, code: code));
+        Get.offNamed(
+          MobileRoutes.newPassword,
+          arguments: {'email': widget.email, 'code': code},
+        );
       });
     } catch (e) {
       setState(() {
@@ -160,17 +163,14 @@ class _VerificationCodeState extends State<VerificationCode> {
               navigator.pop();
               return;
             }
-            navigator.pushReplacement(
-              MaterialPageRoute(builder: (context) => const Login()),
-            );
+            Get.offAllNamed(MobileRoutes.login);
           },
         ),
         title: Text(
           'Verify Code',
-          style:
-              Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: _lightOffWhite,
-                  ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(color: _lightOffWhite),
         ),
       ),
       body: SingleChildScrollView(
@@ -198,26 +198,23 @@ class _VerificationCodeState extends State<VerificationCode> {
               const SizedBox(height: 32),
               Text(
                 'Verification Code',
-                style: Theme.of(context)
-                    .textTheme
-                    .displaySmall
-                    ?.copyWith(color: _darkDeepTeal),
+                style: Theme.of(
+                  context,
+                ).textTheme.displaySmall?.copyWith(color: _darkDeepTeal),
               ),
               const SizedBox(height: 8),
               Text(
                 'We\'ve sent a 6-digit verification code to ${widget.email}',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.copyWith(color: _mutedCoolGray),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: _mutedCoolGray),
               ),
               const SizedBox(height: 32),
               Text(
                 'Enter Code',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(color: _darkDeepTeal),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: _darkDeepTeal),
               ),
               const SizedBox(height: 16),
               Row(
@@ -242,9 +239,7 @@ class _VerificationCodeState extends State<VerificationCode> {
                       },
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       maxLength: 1,
                       style: const TextStyle(
                         color: _darkDeepTeal,
@@ -284,9 +279,9 @@ class _VerificationCodeState extends State<VerificationCode> {
                 Text(
                   _errorMessage,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.red,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    color: Colors.red,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
               const SizedBox(height: 32),
@@ -297,7 +292,7 @@ class _VerificationCodeState extends State<VerificationCode> {
                   onPressed: _isLoading ? null : _verifyCode,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _primaryAqua,
-                    foregroundColor: _darkDeepTeal,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -308,16 +303,15 @@ class _VerificationCodeState extends State<VerificationCode> {
                           height: 24,
                           width: 24,
                           child: CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(_darkDeepTeal),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              _darkDeepTeal,
+                            ),
                             strokeWidth: 2.5,
                           ),
                         )
                       : Text(
                           'Verify Code',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
+                          style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(color: _darkDeepTeal),
                         ),
                 ),
@@ -328,10 +322,9 @@ class _VerificationCodeState extends State<VerificationCode> {
                   children: [
                     Text(
                       'Didn\'t receive the code?',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: _mutedCoolGray),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: _mutedCoolGray),
                     ),
                     const SizedBox(height: 8),
                     GestureDetector(
@@ -340,9 +333,7 @@ class _VerificationCodeState extends State<VerificationCode> {
                         _resendCountdown > 0
                             ? 'Resend in $_resendCountdown seconds'
                             : 'Resend Code',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
+                        style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
                               color: _resendCountdown > 0
                                   ? _mutedCoolGray
@@ -358,14 +349,14 @@ class _VerificationCodeState extends State<VerificationCode> {
               Center(
                 child: GestureDetector(
                   onTap: () {
-                    Get.offAll(() => const Login());
+                    Get.offAllNamed(MobileRoutes.login);
                   },
                   child: Text(
                     'Back to Login',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: _primaryAqua,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: _primaryAqua,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -375,4 +366,4 @@ class _VerificationCodeState extends State<VerificationCode> {
       ),
     );
   }
-} 
+}

@@ -9,13 +9,13 @@ const _text = Color(0xFF0B1F3A);
 const _muted = Color(0xFF4B6075);
 const _palette = <Color>[
   Color(0xFF2F80ED),
-  Color(0xFF5EC7FF),
-  Color(0xFFFFB74D),
-  Color(0xFF7E57C2),
-  Color(0xFF66BB6A),
-  Color(0xFFEC407A),
-  Color(0xFFFF7043),
-  Color(0xFF26A69A),
+  Color(0xFF163B66),
+  Color(0xFF5B8CC9),
+  Color(0xFF6F9DCE),
+  Color(0xFF8FAFD6),
+  Color(0xFFB8C9DB),
+  Color(0xFF1F5A91),
+  Color(0xFF2F80ED),
 ];
 
 class ImmunizationInsights extends StatelessWidget {
@@ -94,7 +94,7 @@ class ImmunizationInsights extends StatelessWidget {
                 overdue,
                 emptyMessage: 'No overdue next-dose schedules were found.',
                 unit: 'overdue record',
-                colors: const [Color(0xFFEF5350), Color(0xFFFF8A65)],
+                colors: const [Color(0xFF163B66), Color(0xFF2F80ED)],
               ),
             ),
             _chartCard(
@@ -108,7 +108,7 @@ class ImmunizationInsights extends StatelessWidget {
                 emptyMessage:
                     'Stock or vaccine-utilization data is not available yet.',
                 unit: stock.hasExplicitStock ? 'dose in stock' : 'dose used',
-                colors: const [Color(0xFF7E57C2), Color(0xFFB39DDB)],
+                colors: const [Color(0xFF163B66), Color(0xFF8FAFD6)],
               ),
             ),
             _chartCard(
@@ -120,7 +120,7 @@ class ImmunizationInsights extends StatelessWidget {
                 adverseEvents,
                 emptyMessage: 'No adverse events have been reported.',
                 unit: 'report',
-                colors: const [Color(0xFFFFB74D), Color(0xFFFF7043)],
+                colors: const [Color(0xFF5B8CC9), Color(0xFFB8C9DB)],
               ),
             ),
           ],
@@ -152,13 +152,13 @@ class ImmunizationInsights extends StatelessWidget {
         'Completed',
         completedCount,
         Icons.check_circle_outline_rounded,
-        const Color(0xFF66BB6A),
+        const Color(0xFF163B66),
       ),
       _metricCard(
         'Scheduled',
         scheduledCount,
         Icons.schedule_rounded,
-        const Color(0xFFFFB74D),
+        const Color(0xFF5B8CC9),
       ),
     ];
 
@@ -601,14 +601,7 @@ class ImmunizationInsights extends StatelessWidget {
             dotData: FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  _aqua.withValues(alpha: 0.26),
-                  _aqua.withValues(alpha: 0.02),
-                ],
-              ),
+              color: _aqua.withValues(alpha: 0.12),
             ),
           ),
         ],
@@ -622,7 +615,7 @@ class ImmunizationInsights extends StatelessWidget {
     required String emptyMessage,
     required String unit,
     bool percentageScale = false,
-    List<Color> colors = const [Color(0xFF008895), Color(0xFF35D4DE)],
+    List<Color> colors = const [_aqua, Color(0xFF163B66)],
   }) {
     final visible = entries.where((entry) => entry.value > 0).toList();
     if (visible.isEmpty) return _empty(emptyMessage);
@@ -667,11 +660,7 @@ class ImmunizationInsights extends StatelessWidget {
               BarChartRodData(
                 toY: visible[index].value.toDouble(),
                 width: visible.length > 6 ? 16 : 24,
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: colors,
-                ),
+                color: colors[index % colors.length],
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(6),
                 ),

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mycapstone_project/app/features/auth/login.dart';
-import 'package:mycapstone_project/app/features/auth/signup.dart';
 import 'package:mycapstone_project/app/features/dashboard/homepage.dart';
 import 'package:mycapstone_project/app/shared/widgets/privacy_notice_button.dart';
+import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 
 /// Mobile entry screen that uses the same fixed two-part composition as the
@@ -148,7 +147,7 @@ class LandingPage extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => Get.to(() => const Login()),
+                onPressed: () => Get.toNamed(MobileRoutes.login),
                 icon: const Icon(Icons.login_rounded),
                 label: const Text('Login'),
               ),
@@ -157,7 +156,7 @@ class LandingPage extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => Get.to(() => const Signup()),
+                onPressed: () => Get.toNamed(MobileRoutes.signup),
                 icon: const Icon(Icons.person_add_alt_1_rounded),
                 label: const Text('Create account'),
               ),

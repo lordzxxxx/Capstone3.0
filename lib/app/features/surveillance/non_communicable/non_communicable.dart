@@ -6,6 +6,8 @@ import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
+import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
@@ -634,52 +636,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     required Color color,
     required Color textColor,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _primaryAqua.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: _primaryAqua, size: 28),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: _lightOffWhite,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 13,
-              color: _mutedCoolGray,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
+    return AppMetricCard(label: title, value: value, icon: icon);
   }
 
   Widget _buildDiseaseTypeCard() {
@@ -841,12 +798,9 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
-            color: _darkDeepTeal,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _lightOffWhite.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
+            border: Border.all(color: AppDesign.navy, width: 1.5),
             boxShadow: [
               BoxShadow(
                 color: _primaryAqua.withValues(alpha: 0.08),
@@ -859,28 +813,29 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
             value: _statusFilter,
             isExpanded: true,
             underline: const SizedBox.shrink(),
-            dropdownColor: _darkDeepTeal,
-            iconEnabledColor: _lightOffWhite,
-            items: [
-              'All',
-              'Under Treatment',
-              'Controlled',
-              'Uncontrolled',
-              'Monitoring',
-              'Critical',
-            ].map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(
-                  value,
-                  style: TextStyle(
-                    color: _lightOffWhite,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
-                ),
-              );
-            }).toList(),
+            dropdownColor: Colors.white,
+            iconEnabledColor: AppDesign.navy,
+            items:
+                [
+                  'All',
+                  'Under Treatment',
+                  'Controlled',
+                  'Uncontrolled',
+                  'Monitoring',
+                  'Critical',
+                ].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        color: AppDesign.navy,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                  );
+                }).toList(),
             onChanged: (String? newValue) {
               if (newValue != null) {
                 setState(() {
@@ -1215,7 +1170,10 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
 
   // Action Methods
   Future<void> _showAddPatientDialog() async {
-    await Get.to(() => const PatientRecordPage(openRegistrationOnLoad: true));
+    await Get.toNamed(
+      MobileRoutes.patients,
+      arguments: const {'openRegistrationOnLoad': true},
+    );
   }
 
   void _showRecordActionModal(Map<String, dynamic> patient) {
@@ -1446,7 +1404,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _primaryAqua,
-                            foregroundColor: _lightOffWhite,
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),

@@ -4,6 +4,7 @@ import 'package:mycapstone_project/app/features/auth/login.dart';
 import 'package:mycapstone_project/app/features/auth/reset_password_service.dart';
 import 'package:mycapstone_project/app/features/auth/verification_code.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.navySoft;
@@ -51,7 +52,10 @@ class _ForgotPasswordState extends State<ForgotPassword> {
 
       // Navigate to verification screen
       Future.delayed(const Duration(milliseconds: 500), () {
-        Get.offAll(() => VerificationCode(email: email));
+        Get.offAllNamed(
+          MobileRoutes.verificationCode,
+          arguments: {'email': email},
+        );
       });
     } catch (e) {
       setState(() => _isLoading = false);
@@ -85,9 +89,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
               navigator.pop();
               return;
             }
-            navigator.pushReplacement(
-              MaterialPageRoute(builder: (context) => const Login()),
-            );
+            Get.offAllNamed(MobileRoutes.login);
           },
         ),
         title: Text(
@@ -267,7 +269,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Get.offAll(() => const Login());
+                            Get.offAllNamed(MobileRoutes.login);
                           },
                           child: Text(
                             'Sign In',

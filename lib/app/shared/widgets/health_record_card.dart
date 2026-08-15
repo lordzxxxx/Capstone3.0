@@ -24,8 +24,8 @@ class HealthRecordCard extends StatelessWidget {
   const HealthRecordCard({
     super.key,
     required this.patientName,
-    required this.accentColor,
     required this.metadata,
+    this.accentColor,
     this.location,
     this.avatarText,
     this.status,
@@ -45,7 +45,10 @@ class HealthRecordCard extends StatelessWidget {
   final String? status;
   final String? secondaryStatus;
   final String? recordLabel;
-  final Color accentColor;
+
+  /// Kept for source compatibility with older module callers. The shared
+  /// card intentionally uses [AppDesign.blue] for decorative UI.
+  final Color? accentColor;
   final List<RecordMetadata> metadata;
   final bool isSelected;
   final bool showSelection;
@@ -56,6 +59,9 @@ class HealthRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Record modules share one product identity. Status colors remain semantic
+    // in RecordStatusBadge; this accent is reserved for brand/decorative UI.
+    const accentColor = AppDesign.blue;
     final compact = MediaQuery.sizeOf(context).width < 390;
     final cardPadding = compact ? 12.0 : 16.0;
     final initials =

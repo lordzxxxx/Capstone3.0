@@ -105,13 +105,14 @@ class _ReferralAnalyticsPageState extends State<ReferralAnalyticsPage> {
     return Scaffold(
       backgroundColor: AppDesign.page,
       appBar: AppBar(
-        backgroundColor: AppDesign.surface,
+        backgroundColor: AppDesign.navy,
+        foregroundColor: Colors.white,
         elevation: 0,
         title: const Text(
           'Referral Analytics',
-          style: TextStyle(color: AppDesign.ink, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
         ),
-        iconTheme: const IconThemeData(color: AppDesign.ink),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             onPressed: _isLoadingScope ? null : _loadScope,
@@ -125,15 +126,15 @@ class _ReferralAnalyticsPageState extends State<ReferralAnalyticsPage> {
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: _referralsStream(),
               builder: (context, snapshot) {
-                final docRecords =
-                    (snapshot.hasData && snapshot.data != null)
-                        ? snapshot.data!.docs
-                            .map((document) => document.data())
-                            .toList(growable: false)
-                        : <Map<String, dynamic>>[];
+                final docRecords = (snapshot.hasData && snapshot.data != null)
+                    ? snapshot.data!.docs
+                          .map((document) => document.data())
+                          .toList(growable: false)
+                    : <Map<String, dynamic>>[];
 
-                final records =
-                    docRecords.isEmpty ? _demoRecords() : docRecords;
+                final records = docRecords.isEmpty
+                    ? _demoRecords()
+                    : docRecords;
                 return _ReferralAnalyticsBody(records: records);
               },
             ),
@@ -209,9 +210,7 @@ class _ReferralAnalyticsBody extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppDesign.informationBackground,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppDesign.blue.withValues(alpha: .22),
-            ),
+            border: Border.all(color: AppDesign.blue.withValues(alpha: .22)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
 import 'package:mycapstone_project/web/features/auth/landing.dart';
 import 'package:mycapstone_project/web/features/auth/forgot.dart';
 import 'package:mycapstone_project/web/shared/widgets/login_success_sweet_alert.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _secondaryIceBlue = Color(0xFF163B66);
@@ -27,11 +27,7 @@ class _BHOLoginState extends State<BHOLogin> {
     FocusManager.instance.primaryFocus?.unfocus();
     await Future.delayed(const Duration(milliseconds: 90));
     if (!mounted) return;
-    Get.offAll(
-      () => const HomePage(),
-      transition: Transition.fadeIn,
-      duration: const Duration(milliseconds: 420),
-    );
+    Get.offAllNamed(WebRoutes.bhwDashboard);
   }
 
   Future<void> _showSuccessDialogAndNavigate() async {
@@ -527,7 +523,7 @@ class _BHOLoginState extends State<BHOLogin> {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () {
-                Get.to(() => const ForgotPassword());
+                Get.toNamed(WebRoutes.forgotPassword);
               },
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -551,7 +547,7 @@ class _BHOLoginState extends State<BHOLogin> {
               onPressed: _isLoading ? null : signIn,
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primaryAqua,
-                foregroundColor: _lightOffWhite,
+                foregroundColor: Colors.white,
                 disabledBackgroundColor: _mutedCoolGray.withValues(alpha: 0.3),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -655,7 +651,7 @@ class _BHOLoginState extends State<BHOLogin> {
                 navigator.pop();
                 return;
               }
-              Get.offAll(() => const LandingPage());
+              Get.offAllNamed(WebRoutes.landing);
             },
           ),
         ],

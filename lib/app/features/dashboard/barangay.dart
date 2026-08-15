@@ -6,6 +6,7 @@ import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helpe
 import 'package:mycapstone_project/app/features/immunization/immunization_database_helper.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.blueSoft;
@@ -500,50 +501,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
     IconData icon,
     Color color,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _lightOffWhite.withValues(alpha: 0.4),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: Colors.white, size: 24),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Flexible(
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.white, fontSize: 11),
-            ),
-          ),
-        ],
-      ),
-    );
+    return AppMetricCard(label: label, value: value, icon: icon);
   }
 
   Widget _buildDiseaseStatsCards() {
@@ -962,7 +920,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
             icon: const Icon(Icons.refresh),
             label: const Text('Refresh All Data'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
+              backgroundColor: AppDesign.blue,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(

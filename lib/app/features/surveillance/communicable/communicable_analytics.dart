@@ -7,15 +7,7 @@ const _accent = AppDesign.blue;
 const _bg = AppDesign.page;
 const _panel = AppDesign.surface;
 const _text = AppDesign.ink;
-const _barPalette = <Color>[
-  AppDesign.skyBlue,
-  Color(0xFF5EC7FF),
-  Color(0xFFFFB74D),
-  Color(0xFFEC407A),
-  Color(0xFF7E57C2),
-  Color(0xFF66BB6A),
-  Color(0xFFFF7043),
-];
+const _barPalette = AppDesign.chartPalette;
 
 class CommunicableAnalyticsPage extends StatefulWidget {
   const CommunicableAnalyticsPage({super.key});
@@ -258,12 +250,13 @@ class _CommunicableAnalyticsPageState extends State<CommunicableAnalyticsPage> {
     return Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: AppDesign.navy,
+        foregroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: _text),
+        iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
           'Communicable Analytics',
-          style: TextStyle(color: _text, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
         ),
         actions: [
           IconButton(
@@ -618,11 +611,11 @@ class _CommunicableAnalyticsPageState extends State<CommunicableAnalyticsPage> {
     if (entries.isEmpty) return _card(title, subtitle, _empty());
     final total = entries.fold<int>(0, (sum, e) => sum + e.value);
     const colors = [
-      Color(0xFF5EC7FF),
-      Color(0xFFEC407A),
-      Color(0xFFFFB74D),
-      Color(0xFF66BB6A),
-      Color(0xFF7E57C2),
+      AppDesign.blue,
+      AppDesign.navy,
+      AppDesign.skyBlue,
+      Color(0xFF8FAFD6),
+      Color(0xFFB8C9DB),
     ];
     return _card(
       title,
@@ -684,8 +677,8 @@ class _CommunicableAnalyticsPageState extends State<CommunicableAnalyticsPage> {
           : Column(
               children: entries.map((entry) {
                 final color = Color.lerp(
-                  const Color(0xFF43A047),
-                  const Color(0xFFE53935),
+                  AppDesign.blueSoft,
+                  AppDesign.navy,
                   entry.value / maximum,
                 )!;
                 return Container(

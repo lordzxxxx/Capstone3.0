@@ -7,15 +7,7 @@ const _aqua = AppDesign.blue;
 const _background = AppDesign.page;
 const _panel = AppDesign.surface;
 const _text = AppDesign.ink;
-const _barPalette = <Color>[
-  AppDesign.skyBlue,
-  Color(0xFF5EC7FF),
-  Color(0xFFFFB74D),
-  Color(0xFFEC407A),
-  Color(0xFF7E57C2),
-  Color(0xFF66BB6A),
-  Color(0xFFFF7043),
-];
+const _barPalette = AppDesign.chartPalette;
 
 class ImmunizationAnalyticsPage extends StatefulWidget {
   const ImmunizationAnalyticsPage({super.key});
@@ -325,12 +317,13 @@ class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
     return Scaffold(
       backgroundColor: _background,
       appBar: AppBar(
-        backgroundColor: _background,
+        backgroundColor: AppDesign.navy,
+        foregroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: _text),
+        iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
           'Immunization Analytics',
-          style: TextStyle(color: _text, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
         ),
         actions: [
           IconButton(
@@ -682,10 +675,10 @@ class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
     final entries = _entries(data);
     final total = entries.fold<int>(0, (sum, entry) => sum + entry.value);
     const colors = [
-      Color(0xFF66BB6A),
-      Color(0xFFFFB74D),
-      Color(0xFFEF5350),
-      Color(0xFF5EC7FF),
+      AppDesign.blue,
+      AppDesign.navy,
+      AppDesign.skyBlue,
+      Color(0xFF8FAFD6),
     ];
     return _card(
       title,

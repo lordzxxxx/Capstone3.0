@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
@@ -14,6 +15,12 @@ const Color _secondaryIceBlue = AppDesign.blueSoft;
 const Color _darkDeepTeal = AppDesign.page;
 const Color _mutedCoolGray = AppDesign.muted;
 const Color _lightOffWhite = AppDesign.ink;
+const Color _historyBackground = Color(0xFFF8FAFC);
+const Color _historySurface = Colors.white;
+const Color _historyAccent = Color(0xFF2563EB);
+const Color _historyText = Color(0xFF0F172A);
+const Color _historyMuted = Color(0xFF4B6075);
+const Color _historyBorder = Color(0xFFE2E8F0);
 
 class ImmunizationPage extends StatefulWidget {
   const ImmunizationPage({super.key});
@@ -277,7 +284,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       context: context,
       builder: (dialogContext) {
         return Dialog(
-          backgroundColor: _darkDeepTeal,
+          backgroundColor: _historyBackground,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -286,9 +293,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
               maxHeight: MediaQuery.of(dialogContext).size.height * 0.86,
             ),
             decoration: BoxDecoration(
-              color: _darkDeepTeal,
+              color: _historyBackground,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _lightOffWhite.withValues(alpha: 0.18)),
+              border: Border.all(color: _historyBorder),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -297,11 +304,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [_darkDeepTeal, _secondaryIceBlue],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: _historySurface,
+                    border: Border(bottom: BorderSide(color: _historyBorder)),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(20),
                       topRight: Radius.circular(20),
@@ -311,7 +315,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                     children: [
                       const Icon(
                         Icons.history,
-                        color: _lightOffWhite,
+                        color: _historyAccent,
                         size: 28,
                       ),
                       const SizedBox(width: 12),
@@ -324,7 +328,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: _lightOffWhite,
+                                color: _historyText,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -333,7 +337,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   ? 'Immunization history'
                                   : 'Patient ID: $patientId',
                               style: TextStyle(
-                                color: _lightOffWhite.withValues(alpha: 0.76),
+                                color: _historyMuted,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -342,7 +346,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: _lightOffWhite),
+                        icon: const Icon(Icons.close, color: _historyAccent),
                         onPressed: () => Navigator.pop(dialogContext),
                       ),
                     ],
@@ -409,7 +413,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                             'Recorded immunization history',
                             style: Theme.of(dialogContext).textTheme.titleMedium
                                 ?.copyWith(
-                                  color: _lightOffWhite,
+                                  color: _historyText,
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),
@@ -420,10 +424,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                       const SizedBox(height: 6),
                       Text(
                         'Review previous immunizations before adding another dose for this patient.',
-                        style: TextStyle(
-                          color: _lightOffWhite.withValues(alpha: 0.68),
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: _historyMuted, fontSize: 12),
                       ),
                     ],
                   ),
@@ -437,7 +438,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                               'No previous immunization history found for this patient.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: _lightOffWhite.withValues(alpha: 0.68),
+                                color: _historyMuted,
                                 fontSize: 13,
                               ),
                             ),
@@ -488,15 +489,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 child: Container(
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
-                                    color: _secondaryIceBlue.withValues(
-                                      alpha: 0.2,
-                                    ),
+                                    color: _historySurface,
                                     borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: _lightOffWhite.withValues(
-                                        alpha: 0.12,
-                                      ),
-                                    ),
+                                    border: Border.all(color: _historyBorder),
                                   ),
                                   child: Column(
                                     crossAxisAlignment:
@@ -510,7 +505,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
-                                                color: _lightOffWhite,
+                                                color: _historyText,
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 14,
                                               ),
@@ -544,7 +539,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                         Text(
                                           'Adverse events: $adverseEvents',
                                           style: TextStyle(
-                                            color: Colors.orange.shade200,
+                                            color: const Color(0xFFB45309),
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -575,9 +570,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _secondaryIceBlue.withValues(alpha: 0.2),
+        color: _historySurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _lightOffWhite.withValues(alpha: 0.12)),
+        border: Border.all(color: _historyBorder),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -592,7 +587,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                 Text(
                   label,
                   style: TextStyle(
-                    color: _lightOffWhite.withValues(alpha: 0.68),
+                    color: _historyMuted,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -603,7 +598,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: _lightOffWhite,
+                    color: _historyAccent,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
@@ -623,7 +618,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           TextSpan(
             text: '$label: ',
             style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.6),
+              color: _historyMuted,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -631,7 +626,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           TextSpan(
             text: value,
             style: const TextStyle(
-              color: _lightOffWhite,
+              color: _historyAccent,
               fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
@@ -1023,12 +1018,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
-            color: _darkDeepTeal,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _lightOffWhite.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
+            border: Border.all(color: AppDesign.navy, width: 1.5),
             boxShadow: [
               BoxShadow(
                 color: _primaryAqua.withValues(alpha: 0.08),
@@ -1041,8 +1033,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             value: _selectedVaccineFilter,
             isExpanded: true,
             underline: const SizedBox.shrink(),
-            dropdownColor: _darkDeepTeal,
-            iconEnabledColor: _lightOffWhite,
+            dropdownColor: Colors.white,
+            iconEnabledColor: AppDesign.navy,
             items: _vaccineFilterOptions.map((String value) {
               return DropdownMenuItem<String>(
                 value: value,
@@ -1097,14 +1089,25 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     DateTime? nextDoseDueDate;
 
     if (patientSeed != null) {
-      final directFirstName = (patientSeed['firstName'] ?? '').toString().trim();
+      final directFirstName = (patientSeed['firstName'] ?? '')
+          .toString()
+          .trim();
       final directSurname = (patientSeed['surname'] ?? '').toString().trim();
       if (directFirstName.isNotEmpty || directSurname.isNotEmpty) {
         firstNameController.text = directFirstName;
         surnameController.text = directSurname;
       } else {
-        final seededName = (patientSeed['patientName'] ?? patientSeed['fullName'] ?? patientSeed['patient'] ?? patientSeed['name'] ?? '').toString().trim();
-        final nameParts = seededName.isEmpty ? <String>[] : seededName.split(' ');
+        final seededName =
+            (patientSeed['patientName'] ??
+                    patientSeed['fullName'] ??
+                    patientSeed['patient'] ??
+                    patientSeed['name'] ??
+                    '')
+                .toString()
+                .trim();
+        final nameParts = seededName.isEmpty
+            ? <String>[]
+            : seededName.split(' ');
         firstNameController.text = nameParts.isNotEmpty ? nameParts.first : '';
         surnameController.text = nameParts.length > 1
             ? nameParts.sublist(1).join(' ')
@@ -1115,7 +1118,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       contactNumberController.text = (patientSeed['contactNumber'] ?? '')
           .toString();
       if (patientSeed['doseNumber'] != null || patientSeed['dose'] != null) {
-        doseNumberController.text = (patientSeed['doseNumber'] ?? patientSeed['dose'] ?? '').toString();
+        doseNumberController.text =
+            (patientSeed['doseNumber'] ?? patientSeed['dose'] ?? '').toString();
       }
       if (patientSeed['vaccineBrand'] != null) {
         vaccineBrandController.text = patientSeed['vaccineBrand'].toString();
@@ -1124,7 +1128,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
         batchNumberController.text = patientSeed['batchNumber'].toString();
       }
       if (patientSeed['administeredBy'] != null) {
-        administeredByController.text = patientSeed['administeredBy'].toString();
+        administeredByController.text = patientSeed['administeredBy']
+            .toString();
       }
     }
 
@@ -2203,58 +2208,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     required IconData icon,
     required Color color,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: _mutedCoolGray,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: _darkDeepTeal,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    return AppMetricCard(label: title, value: value, icon: icon);
   }
 
   Widget _buildImmunizationCard({
@@ -2519,13 +2473,13 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: _historyBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           decoration: BoxDecoration(
-            color: _darkDeepTeal,
+            color: _historyBackground,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _lightOffWhite.withValues(alpha: 0.18)),
+            border: Border.all(color: _historyBorder),
           ),
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.85,
@@ -2537,11 +2491,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [_darkDeepTeal, _secondaryIceBlue],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: _historySurface,
+                  border: Border(bottom: BorderSide(color: _historyBorder)),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
@@ -2549,7 +2500,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.vaccines, color: _lightOffWhite, size: 28),
+                    Icon(Icons.vaccines, color: _historyAccent, size: 28),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -2557,12 +2508,12 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: _lightOffWhite,
+                          color: _historyText,
                         ),
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.close, color: _lightOffWhite),
+                      icon: const Icon(Icons.close, color: _historyAccent),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -3205,16 +3156,16 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: _historyText,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: _lightOffWhite.withValues(alpha: 0.05),
+            color: _historySurface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _lightOffWhite.withValues(alpha: 0.12)),
+            border: Border.all(color: _historyBorder),
           ),
           child: Column(children: children),
         ),
@@ -3227,7 +3178,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: _lightOffWhite.withValues(alpha: 0.9)),
+          Icon(icon, size: 20, color: _historyAccent),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -3237,7 +3188,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                   label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: _lightOffWhite.withValues(alpha: 0.72),
+                    color: _historyMuted,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -3246,7 +3197,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                   value?.toString() ?? 'N/A',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.white,
+                    color: _historyAccent,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

@@ -33,16 +33,13 @@ class _PrenatalFilterBarState extends State<PrenatalFilterBar> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: darkDeepTeal.withValues(alpha: 0.6),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: primaryAqua.withValues(alpha: 0.25),
-          width: 1.5,
-        ),
+        border: Border.all(color: const Color(0xFFD9E5F2), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 12,
+            color: const Color(0xFF163B66).withValues(alpha: 0.08),
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
@@ -60,7 +57,7 @@ class _PrenatalFilterBarState extends State<PrenatalFilterBar> {
                   Text(
                     'Prenatal Patients Registry',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: const Color(0xFF0B1F3A),
                       fontWeight: FontWeight.w700,
                       fontSize: 18,
                     ),
@@ -68,7 +65,10 @@ class _PrenatalFilterBarState extends State<PrenatalFilterBar> {
                   const SizedBox(height: 4),
                   Text(
                     'View and manage all prenatal patient records',
-                    style: TextStyle(color: mutedCoolGray, fontSize: 13),
+                    style: const TextStyle(
+                      color: Color(0xFF4B6075),
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -99,44 +99,44 @@ class _PrenatalFilterBarState extends State<PrenatalFilterBar> {
           ),
           const SizedBox(height: 20),
 
-          // Filter Controls
-          Row(
-            children: [
-              // Status Filter Dropdown
-              Expanded(flex: 2, child: _buildStatusFilterDropdown()),
-              const SizedBox(width: 12),
-
-              // Date Filters
-              Expanded(
-                child: _buildDatePickerButton(
-                  label: 'From',
-                  date: widget.fromDate,
-                  onTap: widget.onFromDateSelected,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildDatePickerButton(
-                  label: 'To',
-                  date: widget.toDate,
-                  onTap: widget.onToDateSelected,
-                ),
-              ),
-
-              // Clear Filters Button
-              if (widget.fromDate != null || widget.toDate != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Tooltip(
-                    message: 'Clear date filters',
-                    child: Container(
+          // Filter controls wrap instead of overflowing on narrow web widths.
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 720;
+              final status = _buildStatusFilterDropdown();
+              final from = _buildDatePickerButton(
+                label: 'From',
+                date: widget.fromDate,
+                onTap: widget.onFromDateSelected,
+              );
+              final to = _buildDatePickerButton(
+                label: 'To',
+                date: widget.toDate,
+                onTap: widget.onToDateSelected,
+              );
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  SizedBox(
+                    width: compact ? constraints.maxWidth : 260,
+                    child: status,
+                  ),
+                  SizedBox(
+                    width: compact ? constraints.maxWidth : 170,
+                    child: from,
+                  ),
+                  SizedBox(
+                    width: compact ? constraints.maxWidth : 170,
+                    child: to,
+                  ),
+                  if (widget.fromDate != null || widget.toDate != null)
+                    Container(
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.2),
+                        color: const Color(0xFFFEECEC),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.red.withValues(alpha: 0.4),
-                          width: 1,
-                        ),
+                        border: Border.all(color: Colors.red.shade200),
                       ),
                       child: IconButton(
                         onPressed: widget.onClearDates,
@@ -144,9 +144,9 @@ class _PrenatalFilterBarState extends State<PrenatalFilterBar> {
                         tooltip: 'Clear filters',
                       ),
                     ),
-                  ),
-                ),
-            ],
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -157,9 +157,9 @@ class _PrenatalFilterBarState extends State<PrenatalFilterBar> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       decoration: BoxDecoration(
-        color: darkDeepTeal.withValues(alpha: 0.8),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: primaryAqua.withValues(alpha: 0.3), width: 1),
+        border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
       ),
       child: Row(
         children: [
@@ -172,15 +172,18 @@ class _PrenatalFilterBarState extends State<PrenatalFilterBar> {
                 isExpanded: true,
                 icon: Icon(Icons.arrow_drop_down, color: primaryAqua, size: 20),
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: const Color(0xFF0B1F3A),
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
-                dropdownColor: darkDeepTeal,
+                dropdownColor: Colors.white,
                 items: statusFilterOptions.map((String option) {
                   return DropdownMenuItem<String>(
                     value: option,
-                    child: Text(option),
+                    child: Text(
+                      option,
+                      style: const TextStyle(color: Color(0xFF0B1F3A)),
+                    ),
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -206,9 +209,7 @@ class _PrenatalFilterBarState extends State<PrenatalFilterBar> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: date != null
-              ? primaryAqua.withValues(alpha: 0.2)
-              : darkDeepTeal.withValues(alpha: 0.8),
+          color: date != null ? const Color(0xFFEAF3FF) : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: date != null
@@ -226,7 +227,9 @@ class _PrenatalFilterBarState extends State<PrenatalFilterBar> {
               child: Text(
                 date != null ? '${date.day}/${date.month}' : label,
                 style: TextStyle(
-                  color: date != null ? primaryAqua : mutedCoolGray,
+                  color: date != null
+                      ? const Color(0xFF0B1F3A)
+                      : const Color(0xFF4B6075),
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),

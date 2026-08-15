@@ -10,6 +10,7 @@ import 'package:mycapstone_project/web/roles/bhw/analytics/ai_summary.dart'
     as ai;
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF071A33);
@@ -17,8 +18,10 @@ const Color _panelTeal = Colors.white;
 const Color _panelTealSoft = Color(0xFFEDF3FA);
 const Color _lightOffWhite = Color(0xFF0B1F3A);
 const Color _mutedCoolGray = Color(0xFF4B6075);
-const Color _signalGreen = Color(0xFF74D7A7);
-const Color _signalAmber = Color(0xFFFFC86B);
+// Keep this operational page on the shared clinical-blue palette. Semantic
+// warning/success colors belong to actual status messages, not decoration.
+const Color _signalGreen = _primaryAqua;
+const Color _signalAmber = _primaryAqua;
 
 class HealthMetricsPage extends StatefulWidget {
   const HealthMetricsPage({super.key});
@@ -417,7 +420,7 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppColors.backgroundLight,
       drawer: WebAppSidebar(
         userName: userName,
         activeItem: WebSidebarItem.summaryGeneration,
@@ -449,7 +452,7 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
         ),
       ),
       body: ColoredBox(
-        color: Color(0xFFF5F7FA),
+        color: AppColors.backgroundLight,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Center(
@@ -501,74 +504,46 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
   Widget _buildHeroSection(String userName) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(16),
         color: _panelTeal,
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.22)),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: _primaryAqua.withValues(alpha: 0.08),
-            blurRadius: 28,
-            offset: const Offset(0, 18),
+            color: Color(0x120B1F3A),
+            blurRadius: 14,
+            offset: Offset(0, 5),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: Stack(
-          children: [
-            Positioned(
-              right: -50,
-              top: -20,
-              child: Container(
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _primaryAqua.withValues(alpha: 0.10),
-                ),
-              ),
-            ),
-            Positioned(
-              left: -20,
-              bottom: -60,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _signalGreen.withValues(alpha: 0.08),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(28),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final vertical = constraints.maxWidth < 760;
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final vertical = constraints.maxWidth < 760;
 
-                  if (vertical) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeroIntro(userName),
-                        const SizedBox(height: 20),
-                        _buildHeroScopeCard(),
-                      ],
-                    );
-                  }
+              if (vertical) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeroIntro(userName),
+                    const SizedBox(height: 20),
+                    _buildHeroScopeCard(),
+                  ],
+                );
+              }
 
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 6, child: _buildHeroIntro(userName)),
-                      const SizedBox(width: 20),
-                      Expanded(flex: 4, child: _buildHeroScopeCard()),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 6, child: _buildHeroIntro(userName)),
+                  const SizedBox(width: 20),
+                  Expanded(flex: 4, child: _buildHeroScopeCard()),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -582,7 +557,7 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: _lightOffWhite.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(color: _lightOffWhite.withValues(alpha: 0.12)),
           ),
           child: Row(
@@ -651,9 +626,9 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _lightOffWhite.withValues(alpha: 0.10)),
+        color: _panelTealSoft,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -698,35 +673,49 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
         ? 'Not generated'
         : DateFormat.yMMMd().add_jm().format(generatedAt);
 
-    return Wrap(
-      spacing: 14,
-      runSpacing: 14,
-      children: [
-        _DashboardInfoCard(
-          label: 'Selected Mode',
-          value: _effectivePeriod,
-          icon: _currentPeriodIcon,
-          accent: _primaryAqua,
-        ),
-        _DashboardInfoCard(
-          label: 'Scope',
-          value: _currentPeriodLabel,
-          icon: Icons.filter_alt_rounded,
-          accent: _signalGreen,
-        ),
-        _DashboardInfoCard(
-          label: 'Summary Status',
-          value: summary.isEmpty ? 'Ready to run' : 'Generated',
-          icon: summary.isEmpty ? Icons.pending_actions : Icons.check_circle,
-          accent: summary.isEmpty ? _signalAmber : _signalGreen,
-        ),
-        _DashboardInfoCard(
-          label: 'Last Update',
-          value: generatedLabel,
-          icon: Icons.history_rounded,
-          accent: _signalAmber,
-        ),
-      ],
+    final cards = [
+      _DashboardInfoCard(
+        label: 'Selected Mode',
+        value: _effectivePeriod,
+        icon: _currentPeriodIcon,
+        accent: _primaryAqua,
+      ),
+      _DashboardInfoCard(
+        label: 'Scope',
+        value: _currentPeriodLabel,
+        icon: Icons.filter_alt_rounded,
+        accent: _signalGreen,
+      ),
+      _DashboardInfoCard(
+        label: 'Summary Status',
+        value: summary.isEmpty ? 'Ready to run' : 'Generated',
+        icon: summary.isEmpty ? Icons.pending_actions : Icons.check_circle,
+        accent: summary.isEmpty ? _signalAmber : _signalGreen,
+      ),
+      _DashboardInfoCard(
+        label: 'Last Update',
+        value: generatedLabel,
+        icon: Icons.history_rounded,
+        accent: _signalAmber,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 1040
+            ? 4
+            : constraints.maxWidth >= 620
+            ? 2
+            : 1;
+        final width = (constraints.maxWidth - (14 * (columns - 1))) / columns;
+        return Wrap(
+          spacing: 14,
+          runSpacing: 14,
+          children: cards
+              .map((card) => SizedBox(width: width, child: card))
+              .toList(growable: false),
+        );
+      },
     );
   }
 
@@ -824,7 +813,7 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
               onPressed: _isLoading ? null : _generateSummary,
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primaryAqua,
-                foregroundColor: _darkDeepTeal,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
@@ -872,9 +861,9 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
         width: double.infinity,
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _primaryAqua.withValues(alpha: 0.24)),
+          color: _panelTealSoft,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           children: [
@@ -999,7 +988,7 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
         labelText: label,
         labelStyle: const TextStyle(color: _mutedCoolGray),
         filled: true,
-        fillColor: Colors.black.withValues(alpha: 0.18),
+        fillColor: _panelTealSoft,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide(color: _primaryAqua.withValues(alpha: 0.22)),
@@ -1105,9 +1094,9 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+              color: _panelTealSoft,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
             ),
             child: summary.isEmpty
                 ? _buildEmptySummaryState()
@@ -1360,14 +1349,14 @@ class _SurfaceCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: _panelTeal.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
-        boxShadow: [
+        color: _panelTeal,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.22),
-            blurRadius: 22,
-            offset: const Offset(0, 14),
+            color: Color(0x120B1F3A),
+            blurRadius: 14,
+            offset: Offset(0, 5),
           ),
         ],
       ),
@@ -1393,7 +1382,7 @@ class _PillTag extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: accent.withValues(alpha: 0.25)),
       ),
       child: Row(
@@ -1466,11 +1455,11 @@ class _DashboardInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 250,
+      width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _panelTeal.withValues(alpha: 0.78),
-        borderRadius: BorderRadius.circular(22),
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: accent.withValues(alpha: 0.22)),
       ),
       child: Column(
@@ -1530,8 +1519,8 @@ class _PeriodOptionButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? _primaryAqua.withValues(alpha: 0.16)
-              : Colors.black.withValues(alpha: 0.14),
-          borderRadius: BorderRadius.circular(18),
+              : _panelTealSoft,
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
                 ? _primaryAqua
@@ -1571,9 +1560,9 @@ class _MiniSourceTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: _lightOffWhite.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: _lightOffWhite.withValues(alpha: 0.08)),
+        color: _panelTealSoft,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
       ),
       child: Text(
         label,
@@ -1608,9 +1597,9 @@ class _SavedSummaryCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.16),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _primaryAqua.withValues(alpha: 0.14)),
+          color: AppColors.surfaceLight,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1648,7 +1637,7 @@ class _SavedSummaryCard extends StatelessWidget {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: _lightOffWhite.withValues(alpha: 0.86),
+                      color: AppColors.textPrimary,
                       height: 1.45,
                     ),
                   ),
@@ -1787,7 +1776,7 @@ class _EmptyStateBullet extends StatelessWidget {
           child: Text(
             text,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: _lightOffWhite.withValues(alpha: 0.88),
+              color: AppColors.textPrimary,
               height: 1.5,
             ),
           ),

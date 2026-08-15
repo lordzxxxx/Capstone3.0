@@ -16,6 +16,8 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
@@ -144,7 +146,8 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     super.initState();
     _selectedView = healthModuleViewFromUrl();
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => persistHealthModuleView('/NonCommunicablePage', _resolvedView),
+      (_) =>
+          persistHealthModuleView(WebRoutes.bhwNonCommunicable, _resolvedView),
     );
     _dbHelper.startConnectivityListener();
     _loadPatients();
@@ -157,7 +160,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       _isSelectionMode = false;
       _getSelectedPatientIds.clear();
     });
-    persistHealthModuleView('/NonCommunicablePage', view);
+    persistHealthModuleView(WebRoutes.bhwNonCommunicable, view);
   }
 
   @override
@@ -384,11 +387,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       height: 70,
       padding: const EdgeInsets.symmetric(horizontal: 32),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_darkDeepTeal, _darkDeepTeal.withValues(alpha: 0.95)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
+        color: _darkDeepTeal,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -651,23 +650,23 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                   label: 'Dashboard',
                   onTap: () {
                     Navigator.pop(context);
-                    Get.to(() => const HomePage());
+                    Get.toNamed(WebRoutes.bhwDashboard);
                   },
                 ),
                 _buildDrawerSidebarItem(
                   icon: Icons.assignment_turned_in_rounded,
                   label: 'Check-ups',
-                  onTap: () => Get.to(() => const checkup_page.CheckUpPage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwCheckups),
                 ),
                 _buildDrawerSidebarItem(
                   icon: Icons.favorite_rounded,
                   label: 'Summary Generation',
-                  onTap: () => Get.to(() => const HealthMetricsPage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwSummary),
                 ),
                 _buildDrawerSidebarItem(
                   icon: Icons.analytics_rounded,
                   label: 'Analytics',
-                  onTap: () => Get.to(() => const AnalyticsPage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwAnalytics),
                 ),
                 const SizedBox(height: 8),
                 Padding(
@@ -701,17 +700,17 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                 _buildDrawerSidebarItem(
                   icon: Icons.pregnant_woman_rounded,
                   label: 'Prenatal Care',
-                  onTap: () => Get.to(() => const PrenatalPage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwPrenatal),
                 ),
                 _buildDrawerSidebarItem(
                   icon: Icons.vaccines_rounded,
                   label: 'Immunization',
-                  onTap: () => Get.to(() => const ImmunizationPage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwImmunization),
                 ),
                 _buildDrawerSidebarItem(
                   icon: Icons.person_rounded,
                   label: 'Patient Records',
-                  onTap: () => Get.to(() => const PatientRecordPage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwPatients),
                 ),
                 const SizedBox(height: 8),
                 Padding(
@@ -745,7 +744,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                 _buildDrawerSidebarItem(
                   icon: Icons.coronavirus_rounded,
                   label: 'Communicable',
-                  onTap: () => Get.to(() => const CommunicablePage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwCommunicable),
                 ),
                 _buildDrawerSidebarItem(
                   icon: Icons.health_and_safety_rounded,
@@ -757,7 +756,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                 _buildDrawerSidebarItem(
                   icon: Icons.analytics_outlined,
                   label: 'Mortality',
-                  onTap: () => Get.to(() => const MortalityPage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwMortality),
                 ),
               ],
             ),
@@ -777,7 +776,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
               child: InkWell(
                 onTap: () async {
                   await FirebaseAuth.instance.signOut();
-                  Get.offAll(() => const Login());
+                  Get.offAllNamed(WebRoutes.login);
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
@@ -942,25 +941,19 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                 title: 'Active Cases',
                 value: _activeCases.toString(),
                 subtitle: 'Non-communicable cases',
-                icon: Icons.people_rounded,
-                color: _primaryAqua,
-                trend: '${_activeCases > 0 ? '+' : ''}0%',
+                icon: Icons.people_outline,
               ),
               _buildWebMetricCard(
                 title: 'Control Rate',
                 value: '${_controlRate.toStringAsFixed(1)}%',
                 subtitle: 'Cases completed',
-                icon: Icons.trending_up_rounded,
-                color: const Color(0xFF4CAF50),
-                trend: '+${_controlRate.toStringAsFixed(0)}%',
+                icon: Icons.trending_up_outlined,
               ),
               _buildWebMetricCard(
                 title: 'Disease Types',
                 value: _diseaseTypes.length.toString(),
                 subtitle: 'Types tracked',
-                icon: Icons.medical_services_rounded,
-                color: const Color(0xFFFF6F00),
-                trend: '+0%',
+                icon: Icons.medical_services_outlined,
               ),
             ],
           ),
@@ -1035,106 +1028,12 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     required String value,
     required String subtitle,
     required IconData icon,
-    required Color color,
-    required String trend,
   }) {
-    return StatefulBuilder(
-      builder: (context, setState) {
-        bool isHovered = false;
-        return MouseRegion(
-          onEnter: (_) => setState(() => isHovered = true),
-          onExit: (_) => setState(() => isHovered = false),
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: _sidebarDark,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: _primaryAqua.withValues(alpha: 0.15),
-                width: 1.5,
-              ),
-              boxShadow: isHovered
-                  ? [
-                      BoxShadow(
-                        color: _primaryAqua.withValues(alpha: 0.6),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                        offset: const Offset(0, 0),
-                      ),
-                    ]
-                  : [],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.transparent, width: 1),
-                      ),
-                      child: Icon(icon, color: Colors.white, size: 20),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: Colors.transparent,
-                          width: 0.5,
-                        ),
-                      ),
-                      child: Text(
-                        trend,
-                        style: TextStyle(
-                          color: color,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: _mutedCoolGray,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    return AppMetricCard(
+      label: title,
+      value: value,
+      icon: icon,
+      supportingText: subtitle,
     );
   }
 
@@ -1997,7 +1896,10 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   Future<void> _showAddPatientDialog() async {
     // Use the same canonical registration modal exposed by Patient Records
     // instead of leaving this module on a non-functional placeholder.
-    await Get.to(() => const PatientRecordPage(openRegistrationOnLoad: true));
+    await Get.toNamed(
+      WebRoutes.bhwPatients,
+      arguments: const {'openRegistrationOnLoad': true},
+    );
   }
 
   void _viewPatientDetails(Map<String, dynamic> patient) {

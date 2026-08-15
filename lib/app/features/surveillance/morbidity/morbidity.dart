@@ -6,6 +6,7 @@ import 'package:mycapstone_project/app/features/patients/patient_history_dialogs
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
@@ -366,50 +367,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
     required IconData icon,
     required Color color,
   }) {
-    return Container(
-      width: 220,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: _primaryAqua, size: 24),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    color: _mutedCoolGray,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              color: _lightOffWhite,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
+    return AppMetricCard(label: title, value: value, icon: icon);
   }
 
   Widget _buildChartssection() {
@@ -1330,12 +1288,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
-            color: _darkDeepTeal,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _lightOffWhite.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
+            border: Border.all(color: AppDesign.navy, width: 1.5),
             boxShadow: [
               BoxShadow(
                 color: _primaryAqua.withValues(alpha: 0.08),
@@ -1348,8 +1303,8 @@ class _MorbidityPageState extends State<MorbidityPage> {
             value: _statusFilter,
             isExpanded: true,
             underline: const SizedBox.shrink(),
-            dropdownColor: _darkDeepTeal,
-            iconEnabledColor: _lightOffWhite,
+            dropdownColor: Colors.white,
+            iconEnabledColor: AppDesign.navy,
             items: ['All', 'Mild', 'Moderate', 'Severe', 'Active', 'Resolved']
                 .map((String value) {
                   return DropdownMenuItem<String>(
@@ -1357,7 +1312,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                     child: Text(
                       value,
                       style: TextStyle(
-                        color: _lightOffWhite,
+                        color: AppDesign.navy,
                         fontWeight: FontWeight.w500,
                         fontSize: 14,
                       ),
@@ -1820,16 +1775,33 @@ void _showNewMorbidityModal(
 }) {
   final formKey = GlobalKey<FormState>();
   final patientNameController = TextEditingController(
-    text: (patientSeed?['patientName'] ?? patientSeed?['fullName'] ?? patientSeed?['name'] ?? patientSeed?['patient'] ?? '').toString(),
+    text:
+        (patientSeed?['patientName'] ??
+                patientSeed?['fullName'] ??
+                patientSeed?['name'] ??
+                patientSeed?['patient'] ??
+                '')
+            .toString(),
   );
   final ageController = TextEditingController(
     text: (patientSeed?['age'] ?? '').toString(),
   );
   final diseaseController = TextEditingController(
-    text: (patientSeed?['disease'] ?? patientSeed?['diagnosis'] ?? patientSeed?['symptoms'] ?? patientSeed?['chiefComplaint'] ?? '').toString(),
+    text:
+        (patientSeed?['disease'] ??
+                patientSeed?['diagnosis'] ??
+                patientSeed?['symptoms'] ??
+                patientSeed?['chiefComplaint'] ??
+                '')
+            .toString(),
   );
   final facilityController = TextEditingController(
-    text: (patientSeed?['place'] ?? patientSeed?['address'] ?? patientSeed?['barangay'] ?? '').toString(),
+    text:
+        (patientSeed?['place'] ??
+                patientSeed?['address'] ??
+                patientSeed?['barangay'] ??
+                '')
+            .toString(),
   );
   showDialog(
     context: context,
@@ -1899,7 +1871,7 @@ void _showNewMorbidityModal(
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: _primaryAqua,
-              foregroundColor: _darkDeepTeal,
+              foregroundColor: Colors.white,
             ),
             onPressed: () async {
               if (!(formKey.currentState?.validate() ?? false)) {

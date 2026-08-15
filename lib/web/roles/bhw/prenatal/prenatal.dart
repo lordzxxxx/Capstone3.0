@@ -18,6 +18,8 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart'
 import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
@@ -97,7 +99,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
     super.initState();
     _activeView = healthModuleViewFromUrl();
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => persistHealthModuleView('/prenatal', _activeView),
+      (_) => persistHealthModuleView(WebRoutes.bhwPrenatal, _activeView),
     );
     _loadRecords();
     _dbHelper.startConnectivityListener();
@@ -118,7 +120,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
       _isSelectionMode = false;
       _selectedIndices.clear();
     });
-    persistHealthModuleView('/prenatal', view);
+    persistHealthModuleView(WebRoutes.bhwPrenatal, view);
   }
 
   Future<void> _initializeAI() async {
@@ -531,22 +533,22 @@ class _PrenatalPageState extends State<PrenatalPage> {
                   _buildSidebarItem(
                     icon: Icons.dashboard_rounded,
                     label: 'Dashboard',
-                    onTap: () => Get.to(() => const HomePage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwDashboard),
                   ),
                   _buildSidebarItem(
                     icon: Icons.assignment_turned_in_rounded,
                     label: 'Check-ups',
-                    onTap: () => Get.to(() => const checkup_page.CheckUpPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwCheckups),
                   ),
                   _buildSidebarItem(
                     icon: Icons.favorite_rounded,
                     label: 'Summary Generation',
-                    onTap: () => Get.to(() => const HealthMetricsPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwSummary),
                   ),
                   _buildSidebarItem(
                     icon: Icons.analytics_rounded,
                     label: 'Analytics',
-                    onTap: () => Get.to(() => const AnalyticsPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwAnalytics),
                   ),
                   const SizedBox(height: 8),
                   Padding(
@@ -586,12 +588,12 @@ class _PrenatalPageState extends State<PrenatalPage> {
                   _buildSidebarItem(
                     icon: Icons.vaccines_rounded,
                     label: 'Immunization',
-                    onTap: () => Get.to(() => const ImmunizationPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwImmunization),
                   ),
                   _buildSidebarItem(
                     icon: Icons.person_rounded,
                     label: 'Patient Records',
-                    onTap: () => Get.to(() => const PatientRecordPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwPatients),
                   ),
                   const SizedBox(height: 8),
                   Padding(
@@ -625,17 +627,17 @@ class _PrenatalPageState extends State<PrenatalPage> {
                   _buildSidebarItem(
                     icon: Icons.coronavirus_rounded,
                     label: 'Communicable',
-                    onTap: () => Get.to(() => const CommunicablePage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwCommunicable),
                   ),
                   _buildSidebarItem(
                     icon: Icons.health_and_safety_rounded,
                     label: 'Non-Communicable',
-                    onTap: () => Get.to(() => const NonCommunicablePage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwNonCommunicable),
                   ),
                   _buildSidebarItem(
                     icon: Icons.analytics_outlined,
                     label: 'Mortality',
-                    onTap: () => Get.to(() => const MortalityPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwMortality),
                   ),
                 ],
               ),
@@ -655,7 +657,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 child: InkWell(
                   onTap: () async {
                     await FirebaseAuth.instance.signOut();
-                    Get.offAll(() => const Login());
+                    Get.offAllNamed(WebRoutes.login);
                   },
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
@@ -800,13 +802,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
     return Container(
       height: 70,
       padding: const EdgeInsets.symmetric(horizontal: 32),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_darkDeepTeal, _darkDeepTeal.withValues(alpha: 0.95)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-      ),
+      decoration: BoxDecoration(color: _darkDeepTeal),
       child: Row(
         children: [
           IconButton(
@@ -1366,7 +1362,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _primaryAqua,
-                      foregroundColor: _darkDeepTeal,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -2261,7 +2257,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _primaryAqua,
-                              foregroundColor: _darkDeepTeal,
+                              foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -4156,7 +4152,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _primaryAqua,
-                          foregroundColor: _darkDeepTeal,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -4920,7 +4916,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                 ),
                                 label: const Text('Generate PDF'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
+                                  backgroundColor: _primaryAqua,
                                   foregroundColor: Colors.white,
                                   shadowColor: Colors.transparent,
                                   padding: const EdgeInsets.symmetric(
@@ -5865,7 +5861,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           _highRiskByBarangay(),
           emptyMessage: 'No high-risk pregnancies are currently recorded.',
           tooltipUnit: 'case',
-          colors: const [Color(0xFFB3261E), Color(0xFFFF6B61)],
+          colors: const [_secondaryIceBlue, _primaryAqua],
         ),
       ),
       _buildPrenatalChartCard(
@@ -5876,7 +5872,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           _gestationalAgeDistribution(),
           emptyMessage: 'Gestational-age data has not been recorded yet.',
           tooltipUnit: 'pregnancy',
-          colors: const [Color(0xFF5B5FEF), Color(0xFF9B8AFB)],
+          colors: const [_secondaryIceBlue, Color(0xFF5B8CC9)],
         ),
       ),
       _buildPrenatalChartCard(
@@ -5893,7 +5889,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           _maternalAgeDistribution(),
           emptyMessage: 'Maternal-age data has not been recorded yet.',
           tooltipUnit: 'patient',
-          colors: const [Color(0xFF008895), Color(0xFF35D4DE)],
+          colors: const [_primaryAqua, Color(0xFF8FAFD6)],
         ),
       ),
       _buildPrenatalChartCard(
@@ -5904,7 +5900,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           _pregnancyComplicationDistribution(),
           emptyMessage: 'No pregnancy complications are currently recorded.',
           tooltipUnit: 'case',
-          colors: const [Color(0xFFCC6B00), Color(0xFFFFB547)],
+          colors: const [_secondaryIceBlue, Color(0xFF8FAFD6)],
         ),
       ),
     ];
@@ -5927,26 +5923,22 @@ class _PrenatalPageState extends State<PrenatalPage> {
               _buildWebMetricCard(
                 title: 'Total Prenatal',
                 value: '$total',
-                icon: Icons.pregnant_woman_rounded,
-                color: _primaryAqua,
+                icon: Icons.pregnant_woman_outlined,
               ),
               _buildWebMetricCard(
                 title: 'Active',
                 value: '$active',
-                icon: Icons.favorite_rounded,
-                color: const Color(0xFF4CAF50),
+                icon: Icons.monitor_heart_outlined,
               ),
               _buildWebMetricCard(
                 title: 'High Risk',
                 value: '$highRisk',
-                icon: Icons.warning_rounded,
-                color: const Color(0xFFFF9800),
+                icon: Icons.warning_amber_outlined,
               ),
               _buildWebMetricCard(
                 title: 'Completed',
                 value: '$completed',
-                icon: Icons.check_circle_rounded,
-                color: const Color(0xFF2196F3),
+                icon: Icons.check_circle_outline,
               ),
             ];
             return Wrap(
@@ -6458,10 +6450,10 @@ class _PrenatalPageState extends State<PrenatalPage> {
   Widget _buildPrenatalRiskPieChart() {
     final entries = _riskDistribution();
     const colorByRisk = <String, Color>{
-      'High Risk': Color(0xFFEF5350),
-      'Follow Up': Color(0xFFFFB547),
-      'Active': Color(0xFF35C58A),
-      'Completed': Color(0xFF4AA3FF),
+      'High Risk': _secondaryIceBlue,
+      'Follow Up': Color(0xFF5B8CC9),
+      'Active': _primaryAqua,
+      'Completed': Color(0xFF8FAFD6),
     };
     return _buildPrenatalPieChart(
       entries,
@@ -6483,7 +6475,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
     final percentage = records.isEmpty ? 0 : (completed * 100 / records.length);
     return _buildPrenatalPieChart(
       entries.where((entry) => entry.value > 0).toList(),
-      const [Color(0xFF35C58A), Color(0xFF39545A)],
+      const [_primaryAqua, _secondaryIceBlue],
       centerLabel: '${percentage.toStringAsFixed(0)}%',
       centerSubtitle: 'complete',
     );
@@ -6657,19 +6649,14 @@ class _PrenatalPageState extends State<PrenatalPage> {
       decoration: BoxDecoration(
         color: _sidebarDark,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFFFFB547).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: _primaryAqua.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(
-                Icons.notification_important_outlined,
-                color: Color(0xFFFFB547),
-              ),
+              Icon(Icons.notification_important_outlined, color: _primaryAqua),
               SizedBox(width: 10),
               Text(
                 'Highlights Requiring Care-Team Attention',
@@ -6692,7 +6679,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF35C58A).withValues(alpha: 0.08),
+                color: _primaryAqua.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Text(
@@ -6706,9 +6693,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
               final patient = (record['patientName'] ?? 'Unknown patient')
                   .toString();
               final highRisk = _isHighRiskPregnancy(record);
-              final color = highRisk
-                  ? const Color(0xFFEF5350)
-                  : const Color(0xFFFFB547);
+              final color = highRisk ? _secondaryIceBlue : _primaryAqua;
               return Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(14),
@@ -6761,91 +6746,14 @@ class _PrenatalPageState extends State<PrenatalPage> {
     );
   }
 
-  // Metric card - matches patient.dart dark style with hover shadow
+  // Keep this compatibility wrapper for the older prenatal view while using
+  // the same metric card as every other CHO/BHW operational page.
   Widget _buildWebMetricCard({
     required String title,
     required String value,
     required IconData icon,
-    required Color color,
   }) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: color.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Icon(icon, color: color, size: 22),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'Live',
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(
-              value,
-              style: TextStyle(
-                color: color,
-                fontSize: 32,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -1,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: const TextStyle(
-                color: Color(0xFF4B6075),
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return AppMetricCard(label: title, value: value, icon: icon);
   }
 
   Widget _buildPrenatalHeaderCell(String label, {required int flex}) {
@@ -6885,15 +6793,11 @@ class _PrenatalPageState extends State<PrenatalPage> {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF00E5FF), Color(0xFF2F80ED)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: _primaryAqua,
             borderRadius: BorderRadius.circular(10),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF00E5FF).withValues(alpha: 0.45),
+                color: _primaryAqua.withValues(alpha: 0.24),
                 blurRadius: 14,
                 spreadRadius: 1.5,
                 offset: const Offset(0, 5),
@@ -6929,22 +6833,15 @@ class _PrenatalPageState extends State<PrenatalPage> {
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF00E5FF).withValues(alpha: 0.18),
-            _primaryAqua.withValues(alpha: 0.2),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: _primaryAqua.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFF00E5FF).withValues(alpha: 0.55),
+          color: _primaryAqua.withValues(alpha: 0.35),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF00E5FF).withValues(alpha: 0.18),
+            color: _primaryAqua.withValues(alpha: 0.18),
             blurRadius: 14,
             spreadRadius: 1,
             offset: const Offset(0, 4),
@@ -6960,7 +6857,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF163B66),
+        color: _secondaryIceBlue,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.25),
@@ -8178,7 +8075,7 @@ class _PrenatalCard extends StatelessWidget {
                         color: mutedText,
                         fontSize: 10.5,
                         fontWeight: FontWeight.w500,
-                        fontFamily: 'Mont',
+                        fontFamily: 'Manrope',
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -8306,27 +8203,6 @@ class _PrenatalDashboardHeader extends StatelessWidget {
                 fontSize: 28,
               ),
             ),
-            const SizedBox(width: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: _primaryAqua.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: _lightOffWhite.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                'Live',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
             const Spacer(),
             Text(
               'Maternal health tracking & management system',
@@ -8347,9 +8223,7 @@ class _PrenatalDashboardHeader extends StatelessWidget {
               child: _buildWebMetricCard(
                 title: 'Total Patients',
                 value: '$totalPatients',
-                icon: Icons.group_rounded,
-                color: Color(0xFF4CAF50),
-                bgColor: Color(0xFF4CAF50).withValues(alpha: 0.08),
+                icon: Icons.groups_outlined,
               ),
             ),
             const SizedBox(width: 20),
@@ -8357,9 +8231,7 @@ class _PrenatalDashboardHeader extends StatelessWidget {
               child: _buildWebMetricCard(
                 title: 'High Risk',
                 value: '$highRiskCount',
-                icon: Icons.warning_rounded,
-                color: Color(0xFFFF9800),
-                bgColor: Color(0xFFFF9800).withValues(alpha: 0.08),
+                icon: Icons.warning_amber_outlined,
               ),
             ),
             const SizedBox(width: 20),
@@ -8367,9 +8239,7 @@ class _PrenatalDashboardHeader extends StatelessWidget {
               child: _buildWebMetricCard(
                 title: 'Completed',
                 value: '$completedCount',
-                icon: Icons.check_circle_rounded,
-                color: Color(0xFF2196F3),
-                bgColor: Color(0xFF2196F3).withValues(alpha: 0.08),
+                icon: Icons.check_circle_outline,
               ),
             ),
             const SizedBox(width: 20),
@@ -8378,9 +8248,7 @@ class _PrenatalDashboardHeader extends StatelessWidget {
                 title: 'Status',
                 value:
                     '${((completedCount / (totalPatients > 0 ? totalPatients : 1)) * 100).toStringAsFixed(0)}%',
-                icon: Icons.trending_up_rounded,
-                color: _primaryAqua,
-                bgColor: _primaryAqua.withValues(alpha: 0.08),
+                icon: Icons.trending_up_outlined,
               ),
             ),
           ],
@@ -8393,59 +8261,7 @@ class _PrenatalDashboardHeader extends StatelessWidget {
     required String title,
     required String value,
     required IconData icon,
-    required Color color,
-    required Color bgColor,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _lightOffWhite.withValues(alpha: 0.3),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: _primaryAqua.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: Colors.white, size: 24),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
-          ),
-        ],
-      ),
-    );
+    return AppMetricCard(label: title, value: value, icon: icon);
   }
 }

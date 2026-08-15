@@ -11,10 +11,9 @@ import 'package:flutter/gestures.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
-import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/features/auth/landing.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
-import 'package:mycapstone_project/web/roles/cho/dashboard/cho_dashboard.dart';
 import 'package:mycapstone_project/web/features/auth/cho_access_session.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/services/barangay_branding_service.dart';
@@ -809,8 +808,8 @@ class _SignupState extends State<Signup> {
       }
       if (role == 'CHO') {
         ChoAccessSession.trustedUid = userCredential.user!.uid;
-        Get.offAll(
-          () => const ChoDashboard(),
+        Get.offAllNamed(
+          WebRoutes.choDashboard,
           arguments: {
             'roleValidated': true,
             'uid': userCredential.user!.uid,
@@ -819,7 +818,7 @@ class _SignupState extends State<Signup> {
         );
       } else {
         ChoAccessSession.trustedUid = null;
-        Get.offAll(() => const HomePage());
+        Get.offAllNamed(WebRoutes.bhwDashboard);
       }
     } on TimeoutException {
       if (userCredential?.user != null) {
@@ -992,7 +991,7 @@ class _SignupState extends State<Signup> {
               Text(
                 'AI-DSUHIS',
                 style: TextStyle(
-                  fontFamily: 'Mont',
+                  fontFamily: 'Manrope',
                   fontSize: isCompact ? 32 : 52,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -1003,7 +1002,7 @@ class _SignupState extends State<Signup> {
               Text(
                 'Create secure access to unified city and barangay health information.',
                 style: TextStyle(
-                  fontFamily: 'Mont',
+                  fontFamily: 'Manrope',
                   fontSize: isCompact ? 15 : 20,
                   color: Colors.white.withValues(alpha: 0.88),
                   height: 1.45,
@@ -1013,7 +1012,7 @@ class _SignupState extends State<Signup> {
               Text(
                 'Choose the correct role and provide the details needed for a reliable, approval-aware account.',
                 style: TextStyle(
-                  fontFamily: 'Mont',
+                  fontFamily: 'Manrope',
                   fontSize: isCompact ? 13 : 15,
                   color: Colors.white.withValues(alpha: 0.72),
                   height: 1.55,
@@ -1033,7 +1032,7 @@ class _SignupState extends State<Signup> {
 
     return Theme(
       data: Theme.of(context).copyWith(
-        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Mont'),
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Manrope'),
       ),
       child: Scaffold(
         backgroundColor: _darkDeepTeal,
@@ -1282,7 +1281,7 @@ class _SignupState extends State<Signup> {
             Text(
               'Create your account',
               style: TextStyle(
-                fontFamily: 'Mont',
+                fontFamily: 'Manrope',
                 fontSize: isCompact ? 27 : 32,
                 fontWeight: FontWeight.w800,
                 color: _darkDeepTeal,

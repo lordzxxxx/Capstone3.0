@@ -9,6 +9,7 @@ import 'package:mycapstone_project/shared/official_report_layout.dart';
 import 'package:mycapstone_project/web/shared/utils/report_branding.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/shared/utils/pdf_fonts.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -333,6 +334,15 @@ Future<void> generateReportPdf({
 
   final defaults = await _loadReportDialogDefaults(records);
   if (!context.mounted) return;
+  // Some legacy callers still pass the old light-surface/white-text pair.
+  // Normalize the dialog palette here so every report workflow remains
+  // readable without changing report data or export behavior.
+  final isDarkDialog =
+      ThemeData.estimateBrightnessForColor(dialogColor) == Brightness.dark;
+  final readableTextColor = isDarkDialog ? Colors.white : AppColors.textPrimary;
+  final readableMutedColor = isDarkDialog
+      ? AppColors.textOnDarkMuted
+      : AppColors.textSecondary;
   final selection = await _showReportGenerationDialog(
     context: context,
     moduleLabel: moduleLabel,
@@ -340,8 +350,8 @@ Future<void> generateReportPdf({
     dateResolver: dateResolver,
     accentColor: accentColor,
     dialogColor: dialogColor,
-    textColor: textColor,
-    mutedColor: mutedColor,
+    textColor: readableTextColor,
+    mutedColor: readableMutedColor,
     defaults: defaults,
   );
 

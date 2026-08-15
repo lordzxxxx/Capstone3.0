@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:mycapstone_project/app/features/dashboard/homepage.dart';
 import 'package:mycapstone_project/app/shell/landing.dart';
 import 'package:mycapstone_project/app/core/services/mobile_sync_bootstrap.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mycapstone_project/app/features/auth/signup.dart';
-import 'package:mycapstone_project/app/features/auth/forgot.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/features/auth/widgets/mobile_auth_shell.dart';
+import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _darkDeepTeal = AppDesign.ink;
@@ -46,7 +44,7 @@ class _LoginState extends State<Login> {
   }
 
   Future<void> _openMobileDashboard() async {
-    Get.offAll(() => const HomePage());
+    Get.offAllNamed(MobileRoutes.dashboard);
   }
 
   Future<void> _completeLoginFlow() async {
@@ -367,7 +365,7 @@ class _LoginState extends State<Login> {
             children: [
               const AuthFieldLabel('Password'),
               TextButton(
-                onPressed: () => Get.to(() => const ForgotPassword()),
+                onPressed: () => Get.toNamed(MobileRoutes.forgotPassword),
                 child: const Text('Forgot password?'),
               ),
             ],
@@ -456,7 +454,7 @@ class _LoginState extends State<Login> {
                       fontWeight: FontWeight.w800,
                     ),
                     recognizer: TapGestureRecognizer()
-                      ..onTap = () => Get.to(() => const Signup()),
+                      ..onTap = () => Get.toNamed(MobileRoutes.signup),
                   ),
                 ],
               ),

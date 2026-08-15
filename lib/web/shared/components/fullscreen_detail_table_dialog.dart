@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
 class DetailTableItem {
   const DetailTableItem({
@@ -33,17 +34,14 @@ Widget _buildHighlightedDetailValueText(String value, TextStyle baseStyle) {
   for (final match in matches) {
     if (match.start > start) {
       spans.add(
-        TextSpan(
-          text: value.substring(start, match.start),
-          style: baseStyle,
-        ),
+        TextSpan(text: value.substring(start, match.start), style: baseStyle),
       );
     }
 
     spans.add(
       TextSpan(
         text: value.substring(match.start, match.end),
-        style: baseStyle.copyWith(color: const Color(0xFF00E5F7)),
+        style: baseStyle.copyWith(color: AppColors.primary),
       ),
     );
     start = match.end;
@@ -62,14 +60,12 @@ Future<void> showFullscreenDetailTableDialog({
   required String subject,
   required List<DetailTableItem> items,
 }) async {
-  final rows = items
-      .where((item) {
-        final normalized = item.value.trim().toLowerCase();
-        return normalized.isNotEmpty &&
-            normalized != 'null' &&
-            normalized != 'undefined';
-      })
-      .toList();
+  final rows = items.where((item) {
+    final normalized = item.value.trim().toLowerCase();
+    return normalized.isNotEmpty &&
+        normalized != 'null' &&
+        normalized != 'undefined';
+  }).toList();
 
   await showDialog<void>(
     context: context,
@@ -85,7 +81,7 @@ Future<void> showFullscreenDetailTableDialog({
           width: screenSize.width,
           height: screenSize.height,
           child: Container(
-            color: const Color(0xFF0A1F24),
+            color: AppColors.backgroundLight,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -97,10 +93,10 @@ Future<void> showFullscreenDetailTableDialog({
                     isCompact ? 18 : 24,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF10343C),
+                    color: AppColors.secondary,
                     border: Border(
                       bottom: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.08),
+                        color: AppColors.borderStrong.withValues(alpha: 0.45),
                         width: 1,
                       ),
                     ),
@@ -115,7 +111,7 @@ Future<void> showFullscreenDetailTableDialog({
                             Text(
                               title,
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppColors.textOnDark,
                                 fontSize: isCompact ? 22 : 26,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -125,7 +121,7 @@ Future<void> showFullscreenDetailTableDialog({
                               Text(
                                 subject,
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.78),
+                                  color: AppColors.textOnDark,
                                   fontSize: isCompact ? 14 : 15.5,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -137,7 +133,7 @@ Future<void> showFullscreenDetailTableDialog({
                       IconButton(
                         onPressed: () => Navigator.of(dialogContext).pop(),
                         icon: const Icon(Icons.close_rounded),
-                        color: Colors.white,
+                        color: AppColors.textOnDark,
                         tooltip: 'Close',
                       ),
                     ],
@@ -148,11 +144,9 @@ Future<void> showFullscreenDetailTableDialog({
                     padding: EdgeInsets.all(isCompact ? 16 : 24),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0E2F34),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: const Color(0xFF00A8B5).withValues(alpha: 0.18),
-                        ),
+                        color: AppColors.surfaceLight,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: rows.isEmpty
                           ? Padding(
@@ -160,7 +154,7 @@ Future<void> showFullscreenDetailTableDialog({
                               child: Text(
                                 'No details available.',
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.8),
+                                  color: AppColors.textSecondary,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -176,7 +170,7 @@ Future<void> showFullscreenDetailTableDialog({
                                   TableCellVerticalAlignment.middle,
                               border: TableBorder(
                                 horizontalInside: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.08),
+                                  color: AppColors.border,
                                   width: 1,
                                 ),
                               ),
@@ -188,7 +182,7 @@ Future<void> showFullscreenDetailTableDialog({
                                           padding: const EdgeInsets.all(14),
                                           child: Icon(
                                             item.icon,
-                                            color: const Color(0xFF00A8B5),
+                                            color: AppColors.primary,
                                             size: 20,
                                           ),
                                         ),
@@ -202,9 +196,7 @@ Future<void> showFullscreenDetailTableDialog({
                                             style: TextStyle(
                                               color:
                                                   item.labelColor ??
-                                                  Colors.white.withValues(
-                                                    alpha: 0.86,
-                                                  ),
+                                                  AppColors.textPrimary,
                                               fontSize: 13.5,
                                               fontWeight: FontWeight.w700,
                                             ),
@@ -215,18 +207,17 @@ Future<void> showFullscreenDetailTableDialog({
                                             horizontal: 12,
                                             vertical: 14,
                                           ),
-                                          child: _buildHighlightedDetailValueText(
-                                            item.value,
-                                            TextStyle(
-                                              color:
-                                                  item.valueColor ??
-                                                  Colors.white.withValues(
-                                                    alpha: 0.8,
-                                                  ),
-                                              fontSize: 13.5,
-                                              height: 1.45,
-                                            ),
-                                          ),
+                                          child:
+                                              _buildHighlightedDetailValueText(
+                                                item.value,
+                                                TextStyle(
+                                                  color:
+                                                      item.valueColor ??
+                                                      AppColors.textSecondary,
+                                                  fontSize: 13.5,
+                                                  height: 1.45,
+                                                ),
+                                              ),
                                         ),
                                       ],
                                     ),
@@ -245,10 +236,7 @@ Future<void> showFullscreenDetailTableDialog({
   );
 }
 
-String detailText(
-  dynamic value, {
-  String fallback = '',
-}) {
+String detailText(dynamic value, {String fallback = ''}) {
   final text = value?.toString().trim() ?? '';
   return text.isEmpty ? fallback : text;
 }

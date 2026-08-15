@@ -13,6 +13,7 @@ import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF071A33);
@@ -20,6 +21,11 @@ const Color _panelSurface = Colors.white;
 const Color _panelAlt = Color(0xFFEDF3FA);
 const Color _lightOffWhite = Color(0xFF0B1F3A);
 const Color _mutedCoolGray = Color(0xFF4B6075);
+const Color _chartNavy = Color(0xFF163B66);
+const Color _chartBlue = Color(0xFF2F80ED);
+const Color _chartMidBlue = Color(0xFF5B8CC9);
+const Color _chartSoftBlue = Color(0xFF8FAFD6);
+const Color _chartPaleBlue = Color(0xFFB8C9DB);
 
 class BHWAnalyticsPage extends StatefulWidget {
   const BHWAnalyticsPage({super.key});
@@ -37,7 +43,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       subtitle:
           'Track vaccine coverage, missed follow-ups, and monthly protection activity.',
       icon: Icons.vaccines_rounded,
-      accent: Color(0xFF4DD0E1),
+      accent: _primaryAqua,
     ),
     _AnalyticsModuleDefinition(
       id: 'checkup_records',
@@ -45,7 +51,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       subtitle:
           'Monitor outpatient workload, service demand, and consultation movement.',
       icon: Icons.assignment_turned_in_rounded,
-      accent: Color(0xFF5EEAD4),
+      accent: _primaryAqua,
     ),
     _AnalyticsModuleDefinition(
       id: 'mortality_records',
@@ -53,7 +59,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       subtitle:
           'Review reported deaths, likely causes, and outcome reporting patterns.',
       icon: Icons.monitor_heart_outlined,
-      accent: Color(0xFFF87171),
+      accent: _primaryAqua,
     ),
     _AnalyticsModuleDefinition(
       id: 'morbidity',
@@ -61,7 +67,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       subtitle:
           'Visualize disease burden, severity patterns, and encoded case load.',
       icon: Icons.bar_chart_rounded,
-      accent: Color(0xFFFFB74D),
+      accent: _primaryAqua,
     ),
     _AnalyticsModuleDefinition(
       id: 'referrals',
@@ -69,7 +75,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       subtitle:
           'Track submitted referrals, destination facilities, and follow-through activity.',
       icon: Icons.assignment_ind_rounded,
-      accent: Color(0xFF22D3EE),
+      accent: _primaryAqua,
     ),
     _AnalyticsModuleDefinition(
       id: 'communicable',
@@ -77,7 +83,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       subtitle:
           'Surface outbreak-prone conditions that need quick community response.',
       icon: Icons.coronavirus_rounded,
-      accent: Color(0xFFFF8A65),
+      accent: _primaryAqua,
     ),
     _AnalyticsModuleDefinition(
       id: 'non_communicable',
@@ -85,7 +91,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       subtitle:
           'Track chronic disease load for continuity of care and follow-up planning.',
       icon: Icons.health_and_safety_rounded,
-      accent: Color(0xFF64B5F6),
+      accent: _primaryAqua,
     ),
     _AnalyticsModuleDefinition(
       id: 'patient_records',
@@ -93,7 +99,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       subtitle:
           'Monitor registry growth, patient continuity, and barangay record coverage.',
       icon: Icons.people_alt_rounded,
-      accent: Color(0xFFA78BFA),
+      accent: _primaryAqua,
     ),
   ];
 
@@ -197,7 +203,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       final scope = await UserAccessScopeService.instance.loadCurrentScope();
       if (!scope.isAuthenticated) {
         if (!mounted) return;
-        Get.offAll(() => const Login());
+        Get.offAllNamed(WebRoutes.login);
         return;
       }
 
@@ -1024,22 +1030,22 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       _ClinicalSlice(
         label: 'Underweight',
         value: counts['Underweight'] ?? 0,
-        color: const Color(0xFFF59E0B),
+        color: _chartNavy,
       ),
       _ClinicalSlice(
         label: 'Normal',
         value: counts['Normal'] ?? 0,
-        color: const Color(0xFF10B981),
+        color: _chartBlue,
       ),
       _ClinicalSlice(
         label: 'Overweight',
         value: counts['Overweight'] ?? 0,
-        color: const Color(0xFF60A5FA),
+        color: _chartMidBlue,
       ),
       _ClinicalSlice(
         label: 'Obese',
         value: counts['Obese'] ?? 0,
-        color: const Color(0xFFEF4444),
+        color: _chartSoftBlue,
       ),
     ];
   }
@@ -1117,27 +1123,27 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       _CountBarPoint(
         label: '0-14',
         value: counts['0-14'] ?? 0,
-        color: const Color(0xFF38BDF8),
+        color: _chartBlue,
       ),
       _CountBarPoint(
         label: '15-24',
         value: counts['15-24'] ?? 0,
-        color: const Color(0xFF818CF8),
+        color: _chartNavy,
       ),
       _CountBarPoint(
         label: '25-44',
         value: counts['25-44'] ?? 0,
-        color: const Color(0xFF34D399),
+        color: _chartMidBlue,
       ),
       _CountBarPoint(
         label: '45-64',
         value: counts['45-64'] ?? 0,
-        color: const Color(0xFFF59E0B),
+        color: _chartSoftBlue,
       ),
       _CountBarPoint(
         label: '65+',
         value: counts['65+'] ?? 0,
-        color: const Color(0xFFEF4444),
+        color: _chartPaleBlue,
       ),
     ];
   }
@@ -1162,22 +1168,22 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       _ClinicalSlice(
         label: 'Male',
         value: counts['Male'] ?? 0,
-        color: const Color(0xFF60A5FA),
+        color: _chartBlue,
       ),
       _ClinicalSlice(
         label: 'Female',
         value: counts['Female'] ?? 0,
-        color: const Color(0xFFF472B6),
+        color: _chartNavy,
       ),
       _ClinicalSlice(
         label: 'Other',
         value: counts['Other'] ?? 0,
-        color: const Color(0xFFA78BFA),
+        color: _chartMidBlue,
       ),
       _ClinicalSlice(
         label: 'Unknown',
         value: counts['Unknown'] ?? 0,
-        color: const Color(0xFF94A3B8),
+        color: _chartPaleBlue,
       ),
     ];
   }
@@ -1243,12 +1249,8 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_panelSurface, _panelAlt],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
+        color: _panelSurface,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
       ),
       child: Wrap(
@@ -1279,7 +1281,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: _panelAlt,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFD9E5F2)),
             ),
             child: Column(
@@ -1446,9 +1448,9 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
         final chartPanel = Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _darkDeepTeal.withValues(alpha: 0.52),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+            color: _panelAlt,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFD9E5F2)),
           ),
           child: SizedBox(
             height: 300,
@@ -1461,9 +1463,9 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
         final detailsPanel = Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _darkDeepTeal.withValues(alpha: 0.52),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+            color: _panelAlt,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFD9E5F2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1538,15 +1540,8 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    _panelSurface,
-                    Color.lerp(_panelSurface, module.accent, 0.12) ?? _panelAlt,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(24),
+                color: _panelSurface,
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: module.accent.withValues(alpha: 0.42),
                 ),
@@ -1735,7 +1730,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                     subtitle:
                         'Latest BMI readings grouped by nutritional status.',
                     icon: Icons.monitor_weight_outlined,
-                    accent: const Color(0xFFF59E0B),
+                    accent: _chartBlue,
                     onTap: _showBmiDistributionDialog,
                     child: _buildBmiDistributionChart(),
                   ),
@@ -1748,7 +1743,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                     subtitle:
                         'Average systolic and diastolic readings across the selected window.',
                     icon: Icons.favorite_outline_rounded,
-                    accent: const Color(0xFFEF4444),
+                    accent: _chartNavy,
                     onTap: _showBloodPressureTrendDialog,
                     child: _buildBloodPressureTrendChart(),
                   ),
@@ -1761,7 +1756,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                     subtitle:
                         'Age-group distribution with visible sex breakdown from patient records.',
                     icon: Icons.groups_rounded,
-                    accent: const Color(0xFF818CF8),
+                    accent: _chartMidBlue,
                     onTap: _showPatientDemographicDialog,
                     child: _buildPatientDemographicChart(),
                   ),
@@ -1799,7 +1794,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
   }
 
   Future<void> _showBmiDistributionDialog() async {
-    const accent = Color(0xFFF59E0B);
+    const accent = _chartBlue;
     final slices = _bmiDistributionSlices();
     final total = slices.fold<int>(0, (runningTotal, item) {
       return runningTotal + item.value;
@@ -1843,7 +1838,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
   }
 
   Future<void> _showBloodPressureTrendDialog() async {
-    const accent = Color(0xFFEF4444);
+    const accent = _chartNavy;
     final points = _bloodPressureTrendPoints();
     final totalReadings = points.fold<int>(
       0,
@@ -1893,7 +1888,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
   }
 
   Future<void> _showPatientDemographicDialog() async {
-    const accent = Color(0xFF818CF8);
+    const accent = _chartMidBlue;
     final agePoints = _patientDemographicAgePoints();
     final sexSlices = _patientSexSlices();
     final totalProfiles = agePoints.fold<int>(
@@ -1963,15 +1958,8 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    _panelSurface,
-                    Color.lerp(_panelSurface, accent, 0.12) ?? _panelAlt,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(24),
+                color: _panelSurface,
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: accent.withValues(alpha: 0.42)),
                 boxShadow: [
                   BoxShadow(
@@ -2036,11 +2024,9 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: _darkDeepTeal.withValues(alpha: 0.54),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.06),
-                        ),
+                        color: _panelAlt,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFD9E5F2)),
                       ),
                       child: SizedBox(height: 360, child: chart),
                     ),
@@ -2090,15 +2076,8 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                 height: 360,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      _panelSurface,
-                      Color.lerp(_panelSurface, accent, 0.12) ?? _panelAlt,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(22),
+                  color: _panelSurface,
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: accent.withValues(alpha: isHovered ? 0.58 : 0.34),
                   ),
@@ -2161,7 +2140,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                           decoration: BoxDecoration(
                             color: isHovered
                                 ? accent.withValues(alpha: 0.14)
-                                : Colors.white.withValues(alpha: 0.05),
+                                : _panelAlt,
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Row(
@@ -2312,18 +2291,18 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
               lineBarsData: [
                 LineChartBarData(
                   isCurved: true,
-                  color: const Color(0xFFEF4444),
+                  color: _chartNavy,
                   barWidth: 3,
                   dotData: FlDotData(show: true),
                   belowBarData: BarAreaData(
                     show: true,
-                    color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                    color: _chartNavy.withValues(alpha: 0.12),
                   ),
                   spots: systolicSpots,
                 ),
                 LineChartBarData(
                   isCurved: true,
-                  color: const Color(0xFF60A5FA),
+                  color: _chartBlue,
                   barWidth: 3,
                   dotData: FlDotData(show: true),
                   belowBarData: BarAreaData(show: false),
@@ -2377,17 +2356,17 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
           runSpacing: 8,
           children: [
             _buildLegendChip(
-              color: const Color(0xFFEF4444),
+              color: _chartNavy,
               label:
                   'Systolic (${systolicValues.isEmpty ? 'N/A' : systolicValues.last.toStringAsFixed(0)})',
             ),
             _buildLegendChip(
-              color: const Color(0xFF60A5FA),
+              color: _chartBlue,
               label:
                   'Diastolic (${diastolicValues.isEmpty ? 'N/A' : diastolicValues.last.toStringAsFixed(0)})',
             ),
             _buildLegendChip(
-              color: const Color(0xFF94A3B8),
+              color: _chartPaleBlue,
               label:
                   'Readings (${points.fold<int>(0, (readingCount, point) => readingCount + point.sampleCount)})',
             ),
@@ -2487,14 +2466,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                     BarChartRodData(
                       toY: point.value.toDouble(),
                       width: 16,
-                      gradient: LinearGradient(
-                        colors: [
-                          point.color.withValues(alpha: 0.45),
-                          point.color,
-                        ],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                      ),
+                      color: point.color,
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ],
@@ -2539,9 +2511,9 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: _darkDeepTeal.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.24)),
+        color: _panelAlt,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFD9E5F2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2600,16 +2572,8 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                 curve: Curves.easeOutCubic,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      _panelSurface,
-                      Color.lerp(_panelSurface, module.accent, 0.14) ??
-                          _panelAlt,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(22),
+                  color: _panelSurface,
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: module.accent.withValues(
                       alpha: isHovered ? 0.62 : 0.34,
@@ -2678,7 +2642,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                           decoration: BoxDecoration(
                             color: isHovered
                                 ? module.accent.withValues(alpha: 0.14)
-                                : Colors.white.withValues(alpha: 0.05),
+                                : _panelAlt,
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Row(
@@ -2753,9 +2717,9 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: _darkDeepTeal.withValues(alpha: 0.58),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withValues(alpha: 0.24)),
+        color: _panelAlt,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFD9E5F2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2790,9 +2754,9 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: _darkDeepTeal.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        color: _panelAlt,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFD9E5F2)),
       ),
       child: Center(
         child: Padding(
@@ -2949,14 +2913,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                 BarChartRodData(
                   toY: point.count.toDouble(),
                   width: 16,
-                  gradient: LinearGradient(
-                    colors: [
-                      module.accent.withValues(alpha: 0.45),
-                      module.accent,
-                    ],
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                  ),
+                  color: module.accent,
                   borderRadius: BorderRadius.circular(6),
                 ),
               ],

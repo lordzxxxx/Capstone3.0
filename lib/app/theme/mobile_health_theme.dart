@@ -5,17 +5,20 @@ import 'package:flutter/material.dart';
 /// Legacy aliases such as [navySoft], [page], and [ink] are intentionally kept
 /// so active feature screens can migrate without changing application logic.
 abstract final class AppDesign {
+  static const bodyFontFamily = 'Manrope';
+  static const displayFontFamily = 'SpaceGrotesk';
+
   // Brand.
   static const blue = Color(0xFF2F80ED);
   static const bluePressed = Color(0xFF256FD1);
   static const navy = Color(0xFF173F70);
   static const blueSoft = Color(0xFFEAF3FF);
-  static const teal = Color(0xFF159BAD);
+  static const teal = Color(0xFF1F5A91);
   static const green = Color(0xFF219B68);
   static const orange = Color(0xFFFFA33B);
   static const red = Color(0xFFFF5151);
   static const pink = Color(0xFFF63373);
-  static const skyBlue = Color(0xFF3BB7EA);
+  static const skyBlue = Color(0xFF5B8CC9);
 
   // Surfaces and typography.
   static const page = Color(0xFFF5F7FA);
@@ -47,23 +50,23 @@ abstract final class AppDesign {
   // Stable domain identities.
   static const patientRecords = blue;
   static const checkUp = navy;
-  static const prenatal = pink;
-  static const immunization = green;
-  static const morbidity = orange;
-  static const mortality = red;
+  static const prenatal = blue;
+  static const immunization = navy;
+  static const morbidity = Color(0xFF5B8CC9);
+  static const mortality = navy;
   static const referrals = blue;
-  static const communicable = skyBlue;
-  static const nonCommunicable = teal;
+  static const communicable = Color(0xFF8FAFD6);
+  static const nonCommunicable = Color(0xFF1F5A91);
 
   static const chartPalette = <Color>[
     blue,
     navy,
-    teal,
-    green,
-    orange,
-    pink,
-    red,
-    skyBlue,
+    Color(0xFF5B8CC9),
+    Color(0xFF8FAFD6),
+    navy,
+    Color(0xFF1F5A91),
+    Color(0xFFB8C9DB),
+    blue,
   ];
 
   /// Maps healthcare wording by meaning. Specific high-risk phrases are
@@ -163,19 +166,22 @@ abstract final class AppDesign {
         );
 
     final textTheme = base.textTheme
-        .apply(fontFamily: 'Manrope', bodyColor: ink, displayColor: ink)
+        .apply(fontFamily: bodyFontFamily, bodyColor: ink, displayColor: ink)
         .copyWith(
           headlineLarge: const TextStyle(
+            fontFamily: displayFontFamily,
             fontSize: 28,
             fontWeight: FontWeight.w800,
             color: ink,
           ),
           headlineMedium: const TextStyle(
+            fontFamily: displayFontFamily,
             fontSize: 23,
             fontWeight: FontWeight.w800,
             color: ink,
           ),
           headlineSmall: const TextStyle(
+            fontFamily: displayFontFamily,
             fontSize: 20,
             fontWeight: FontWeight.w800,
             color: ink,
@@ -214,7 +220,7 @@ abstract final class AppDesign {
         centerTitle: false,
         titleTextStyle: TextStyle(
           color: ink,
-          fontFamily: 'Manrope',
+          fontFamily: bodyFontFamily,
           fontSize: 18,
           fontWeight: FontWeight.w800,
         ),
@@ -289,13 +295,13 @@ abstract final class AppDesign {
         surfaceTintColor: Colors.transparent,
         titleTextStyle: TextStyle(
           color: ink,
-          fontFamily: 'Manrope',
+          fontFamily: bodyFontFamily,
           fontSize: 20,
           fontWeight: FontWeight.w800,
         ),
         contentTextStyle: TextStyle(
           color: muted,
-          fontFamily: 'Manrope',
+          fontFamily: bodyFontFamily,
           fontSize: 14,
         ),
         shape: RoundedRectangleBorder(
@@ -325,7 +331,7 @@ abstract final class AppDesign {
         indicatorColor: blueSoft,
         elevation: 1,
         labelTextStyle: WidgetStatePropertyAll(
-          TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700),
+          TextStyle(fontFamily: bodyFontFamily, fontWeight: FontWeight.w700),
         ),
       ),
       drawerTheme: const DrawerThemeData(
@@ -374,7 +380,7 @@ abstract final class AppDesign {
       ),
       snackBarTheme: const SnackBarThemeData(
         backgroundColor: navy,
-        contentTextStyle: TextStyle(color: surface, fontFamily: 'Manrope'),
+        contentTextStyle: TextStyle(color: surface, fontFamily: bodyFontFamily),
         actionTextColor: surface,
         behavior: SnackBarBehavior.floating,
       ),

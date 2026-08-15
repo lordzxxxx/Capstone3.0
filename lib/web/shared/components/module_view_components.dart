@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:universal_html/html.dart' as html;
 
 enum HealthModuleView { insights, records }
@@ -31,9 +32,9 @@ class HealthModuleViewHeader extends StatelessWidget {
     required this.description,
     required this.activeView,
     required this.onViewChanged,
-    this.primaryColor = const Color(0xFF2F80ED),
-    this.foregroundColor = const Color(0xFF0B1F3A),
-    this.mutedColor = const Color(0xFF4B6075),
+    this.primaryColor = AppColors.primary,
+    this.foregroundColor = AppColors.textPrimary,
+    this.mutedColor = AppColors.textSecondary,
     this.actions = const [],
     this.insightsLabel = 'Insights',
     this.recordsLabel = 'Records',
@@ -58,18 +59,12 @@ class HealthModuleViewHeader extends StatelessWidget {
       label: '$title module navigation',
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFD9E5F2)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x120B1F3A),
-              blurRadius: 18,
-              offset: Offset(0, 8),
-            ),
-          ],
+          color: AppColors.surfaceLight,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+          boxShadow: const [],
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -81,6 +76,7 @@ class HealthModuleViewHeader extends StatelessWidget {
                   title,
                   style: TextStyle(
                     color: foregroundColor,
+                    fontFamily: AppTheme.displayFontFamily,
                     fontSize: compact ? 22 : 27,
                     fontWeight: FontWeight.w800,
                   ),
@@ -133,7 +129,7 @@ class HealthModuleViewTabs extends StatelessWidget {
     super.key,
     required this.activeView,
     required this.onChanged,
-    this.primaryColor = const Color(0xFF2F80ED),
+    this.primaryColor = AppColors.primary,
     this.insightsLabel = 'Insights',
     this.recordsLabel = 'Records',
   });
@@ -148,11 +144,11 @@ class HealthModuleViewTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     return FocusTraversalGroup(
       child: Container(
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(AppSpacing.xs),
         decoration: BoxDecoration(
-          color: const Color(0xFFEDF3FA),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFD9E5F2)),
+          color: AppColors.surfaceSubtle,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -180,14 +176,12 @@ class HealthModuleViewTabs extends StatelessWidget {
                   style: TextButton.styleFrom(
                     foregroundColor: selected
                         ? Colors.white
-                        : const Color(0xFF4B6075),
+                        : AppColors.textSecondary,
                     backgroundColor: selected
                         ? primaryColor
                         : Colors.transparent,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 15,
-                      vertical: 12,
-                    ),
+                    minimumSize: const Size(48, 44),
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -232,7 +226,8 @@ class ModuleEmptyState extends StatelessWidget {
                 title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: const Color(0xFF0B1F3A),
+                  fontFamily: AppTheme.displayFontFamily,
+                  color: AppColors.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                 ),
@@ -241,7 +236,10 @@ class ModuleEmptyState extends StatelessWidget {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xFF4B6075), height: 1.5),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  height: 1.5,
+                ),
               ),
               if (action != null) ...[const SizedBox(height: 18), action!],
             ],

@@ -16,6 +16,8 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart'
 import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
@@ -103,7 +105,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
     super.initState();
     _activeView = healthModuleViewFromUrl();
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => persistHealthModuleView('/checkups', _activeView),
+      (_) => persistHealthModuleView(WebRoutes.bhwCheckups, _activeView),
     );
     _setupRealtimeListener();
     _dbHelper.startConnectivityListener();
@@ -124,7 +126,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
       _isSelectionMode = false;
       _selectedIndices.clear();
     });
-    persistHealthModuleView('/checkups', view);
+    persistHealthModuleView(WebRoutes.bhwCheckups, view);
   }
 
   Future<void> _initializeAI() async {
@@ -1408,12 +1410,12 @@ class _CheckUpPageState extends State<CheckUpPage> {
                   _buildDrawerSidebarItem(
                     icon: Icons.favorite_rounded,
                     label: 'Summary Generation',
-                    onTap: () => Get.to(() => const HealthMetricsPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwSummary),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.analytics_rounded,
                     label: 'Analytics',
-                    onTap: () => Get.to(() => const AnalyticsPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwAnalytics),
                   ),
                   const SizedBox(height: 8),
                   Padding(
@@ -1447,17 +1449,17 @@ class _CheckUpPageState extends State<CheckUpPage> {
                   _buildDrawerSidebarItem(
                     icon: Icons.pregnant_woman_rounded,
                     label: 'Prenatal Care',
-                    onTap: () => Get.to(() => const PrenatalPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwPrenatal),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.vaccines_rounded,
                     label: 'Immunization',
-                    onTap: () => Get.to(() => const ImmunizationPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwImmunization),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.person_rounded,
                     label: 'Patient Records',
-                    onTap: () => Get.to(() => const PatientRecordPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwPatients),
                   ),
                   const SizedBox(height: 8),
                   Padding(
@@ -1491,17 +1493,17 @@ class _CheckUpPageState extends State<CheckUpPage> {
                   _buildDrawerSidebarItem(
                     icon: Icons.coronavirus_rounded,
                     label: 'Communicable',
-                    onTap: () => Get.to(() => const CommunicablePage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwCommunicable),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.health_and_safety_rounded,
                     label: 'Non-Communicable',
-                    onTap: () => Get.to(() => const NonCommunicablePage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwNonCommunicable),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.analytics_outlined,
                     label: 'Mortality',
-                    onTap: () => Get.to(() => const MortalityPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwMortality),
                   ),
                 ],
               ),
@@ -1521,7 +1523,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                 child: InkWell(
                   onTap: () async {
                     await FirebaseAuth.instance.signOut();
-                    Get.offAll(() => const Login());
+                    Get.offAllNamed(WebRoutes.login);
                   },
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
@@ -1666,13 +1668,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
     return Container(
       height: 70,
       padding: const EdgeInsets.symmetric(horizontal: 32),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_darkDeepTeal, _darkDeepTeal.withValues(alpha: 0.95)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-      ),
+      decoration: BoxDecoration(color: _darkDeepTeal),
       child: Row(
         children: [
           IconButton(
@@ -3081,14 +3077,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
             dotData: FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  _primaryAqua.withValues(alpha: 0.28),
-                  _primaryAqua.withValues(alpha: 0.02),
-                ],
-              ),
+              color: _primaryAqua.withValues(alpha: 0.12),
             ),
           ),
         ],
@@ -3100,7 +3089,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
     List<MapEntry<String, int>> entries, {
     required String emptyMessage,
     required String tooltipUnit,
-    List<Color> colors = const [Color(0xFF008895), Color(0xFF35D4DE)],
+    List<Color> colors = const [_primaryAqua, _secondaryIceBlue],
   }) {
     if (entries.isEmpty) {
       return Center(
@@ -3152,11 +3141,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
               BarChartRodData(
                 toY: entries[index].value.toDouble(),
                 width: 24,
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: colors,
-                ),
+                color: colors[index % colors.length],
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(6),
                 ),
@@ -3220,77 +3205,8 @@ class _CheckUpDashboardHeader extends StatelessWidget {
     required String title,
     required String value,
     required IconData icon,
-    required Color color,
-    required Color bgColor,
   }) {
-    return StatefulBuilder(
-      builder: (context, setState) {
-        bool isHovered = false;
-        return MouseRegion(
-          onEnter: (_) => setState(() => isHovered = true),
-          onExit: (_) => setState(() => isHovered = false),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 160),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: _primaryAqua.withValues(alpha: 0.15),
-                width: 1.5,
-              ),
-              boxShadow: isHovered
-                  ? [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.4),
-                        blurRadius: 15,
-                        spreadRadius: 1,
-                        offset: const Offset(0, 0),
-                      ),
-                    ]
-                  : [],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(icon, color: color, size: 24),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: _darkDeepTeal,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF4B6075),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    return AppMetricCard(label: title, value: value, icon: icon);
   }
 
   /// Builds the Total Check-ups metric card
@@ -3298,9 +3214,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
     return _buildWebMetricCard(
       title: 'Total Check-ups',
       value: '$totalCheckups',
-      icon: Icons.assignment_rounded,
-      color: Color(0xFF4CAF50),
-      bgColor: Color(0xFF4CAF50).withValues(alpha: 0.08),
+      icon: Icons.assignment_outlined,
     );
   }
 
@@ -3309,9 +3223,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
     return _buildWebMetricCard(
       title: 'This Month',
       value: '$thisMonthCheckups',
-      icon: Icons.calendar_month_rounded,
-      color: Color(0xFFFF9800),
-      bgColor: Color(0xFFFF9800).withValues(alpha: 0.08),
+      icon: Icons.calendar_month_outlined,
     );
   }
 
@@ -3320,9 +3232,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
     return _buildWebMetricCard(
       title: 'With Vitals',
       value: '$vitalRecordsCount',
-      icon: Icons.favorite_rounded,
-      color: Color(0xFFE91E63),
-      bgColor: Color(0xFFE91E63).withValues(alpha: 0.08),
+      icon: Icons.monitor_heart_outlined,
     );
   }
 
@@ -3334,9 +3244,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
     return _buildWebMetricCard(
       title: 'Status',
       value: '$percentage%',
-      icon: Icons.trending_up_rounded,
-      color: _primaryAqua,
-      bgColor: _primaryAqua.withValues(alpha: 0.08),
+      icon: Icons.trending_up_outlined,
     );
   }
 }
@@ -5643,7 +5551,7 @@ class _NewCheckUpFullScreenModalState
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _primaryAqua,
-                      foregroundColor: _darkDeepTeal,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -6536,7 +6444,7 @@ class _EditCheckUpFullScreenModalState
                                 ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: _primaryAqua,
-                                    foregroundColor: _darkDeepTeal,
+                                    foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -7090,7 +6998,7 @@ class _EditCheckUpFullScreenModalState
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _primaryAqua,
-                      foregroundColor: _darkDeepTeal,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

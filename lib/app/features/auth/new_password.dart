@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:mycapstone_project/app/features/auth/reset_password_service.dart';
 import 'package:mycapstone_project/app/features/auth/login.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.blueSoft;
@@ -14,11 +15,7 @@ class NewPassword extends StatefulWidget {
   final String email;
   final String code;
 
-  const NewPassword({
-    super.key,
-    required this.email,
-    required this.code,
-  });
+  const NewPassword({super.key, required this.email, required this.code});
 
   @override
   State<NewPassword> createState() => _NewPasswordState();
@@ -105,10 +102,7 @@ class _NewPasswordState extends State<NewPassword> {
 
     try {
       // Complete the password reset via Cloud Function
-      await ResetPasswordService.completePasswordReset(
-        widget.email,
-        password,
-      );
+      await ResetPasswordService.completePasswordReset(widget.email, password);
 
       setState(() => _isLoading = false);
 
@@ -120,7 +114,7 @@ class _NewPasswordState extends State<NewPassword> {
       );
 
       Future.delayed(const Duration(seconds: 2), () {
-        Get.offAll(() => const Login());
+        Get.offAllNamed(MobileRoutes.login);
       });
     } catch (e) {
       setState(() => _isLoading = false);
@@ -163,17 +157,14 @@ class _NewPasswordState extends State<NewPassword> {
               navigator.pop();
               return;
             }
-            navigator.pushReplacement(
-              MaterialPageRoute(builder: (context) => const Login()),
-            );
+            Get.offAllNamed(MobileRoutes.login);
           },
         ),
         title: Text(
           'Reset Password',
-          style: Theme.of(context)
-              .textTheme
-              .headlineMedium
-              ?.copyWith(color: _lightOffWhite),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(color: _lightOffWhite),
         ),
       ),
       body: SingleChildScrollView(
@@ -191,37 +182,30 @@ class _NewPasswordState extends State<NewPassword> {
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: _primaryAqua, width: 2),
                   ),
-                  child: const Icon(
-                    Icons.lock,
-                    color: _primaryAqua,
-                    size: 50,
-                  ),
+                  child: const Icon(Icons.lock, color: _primaryAqua, size: 50),
                 ),
               ),
               const SizedBox(height: 32),
               Text(
                 'Create New Password',
-                style: Theme.of(context)
-                    .textTheme
-                    .displaySmall
-                    ?.copyWith(color: _darkDeepTeal),
+                style: Theme.of(
+                  context,
+                ).textTheme.displaySmall?.copyWith(color: _darkDeepTeal),
               ),
               const SizedBox(height: 8),
               Text(
                 'Enter a strong password for your account',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.copyWith(color: _mutedCoolGray),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: _mutedCoolGray),
               ),
               const SizedBox(height: 32),
               // New Password Field
               Text(
                 'New Password',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(color: _darkDeepTeal),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: _darkDeepTeal),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -231,8 +215,10 @@ class _NewPasswordState extends State<NewPassword> {
                 decoration: InputDecoration(
                   hintText: 'Enter new password',
                   hintStyle: const TextStyle(color: _mutedCoolGray),
-                  prefixIcon:
-                      const Icon(Icons.lock_outline, color: _primaryAqua),
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                    color: _primaryAqua,
+                  ),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword
@@ -254,8 +240,7 @@ class _NewPasswordState extends State<NewPassword> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: _primaryAqua, width: 2),
+                    borderSide: const BorderSide(color: _primaryAqua, width: 2),
                   ),
                   filled: true,
                   fillColor: Colors.white,
@@ -268,20 +253,16 @@ class _NewPasswordState extends State<NewPassword> {
                   children: [
                     Text(
                       'Strength: ',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: _mutedCoolGray),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: _mutedCoolGray),
                     ),
                     Text(
                       _passwordStrength,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(
-                            color: _strengthColor,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: _strengthColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -293,7 +274,9 @@ class _NewPasswordState extends State<NewPassword> {
                   decoration: BoxDecoration(
                     color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,28 +284,27 @@ class _NewPasswordState extends State<NewPassword> {
                       Text(
                         'Password needs:',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      ...unmet.map((requirement) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Row(
-                              children: [
-                                Icon(Icons.close,
-                                    size: 16, color: Colors.red),
-                                const SizedBox(width: 8),
-                                Text(
-                                  requirement,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(color: Colors.red),
-                                ),
-                              ],
-                            ),
-                          )),
+                      ...unmet.map(
+                        (requirement) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            children: [
+                              Icon(Icons.close, size: 16, color: Colors.red),
+                              const SizedBox(width: 8),
+                              Text(
+                                requirement,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: Colors.red),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 )
@@ -333,21 +315,22 @@ class _NewPasswordState extends State<NewPassword> {
                     color: const Color(0xFF388E3C).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                        color: const Color(0xFF388E3C).withValues(alpha: 0.3)),
+                      color: const Color(0xFF388E3C).withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.check,
-                          size: 16, color: Color(0xFF388E3C)),
+                      const Icon(
+                        Icons.check,
+                        size: 16,
+                        color: Color(0xFF388E3C),
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Password requirements met',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(
-                              color: const Color(0xFF388E3C),
-                            ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFF388E3C),
+                        ),
                       ),
                     ],
                   ),
@@ -356,10 +339,9 @@ class _NewPasswordState extends State<NewPassword> {
               // Confirm Password Field
               Text(
                 'Confirm Password',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(color: _darkDeepTeal),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: _darkDeepTeal),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -369,8 +351,10 @@ class _NewPasswordState extends State<NewPassword> {
                 decoration: InputDecoration(
                   hintText: 'Confirm new password',
                   hintStyle: const TextStyle(color: _mutedCoolGray),
-                  prefixIcon:
-                      const Icon(Icons.lock_outline, color: _primaryAqua),
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                    color: _primaryAqua,
+                  ),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureConfirmPassword
@@ -379,8 +363,10 @@ class _NewPasswordState extends State<NewPassword> {
                       color: _mutedCoolGray,
                     ),
                     onPressed: () {
-                      setState(() =>
-                          _obscureConfirmPassword = !_obscureConfirmPassword);
+                      setState(
+                        () =>
+                            _obscureConfirmPassword = !_obscureConfirmPassword,
+                      );
                     },
                   ),
                   border: OutlineInputBorder(
@@ -393,8 +379,7 @@ class _NewPasswordState extends State<NewPassword> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: _primaryAqua, width: 2),
+                    borderSide: const BorderSide(color: _primaryAqua, width: 2),
                   ),
                   filled: true,
                   fillColor: Colors.white,
@@ -411,23 +396,23 @@ class _NewPasswordState extends State<NewPassword> {
                           : Icons.cancel,
                       color:
                           passwordController.text ==
-                                  confirmPasswordController.text
-                              ? const Color(0xFF388E3C)
-                              : Colors.red,
+                              confirmPasswordController.text
+                          ? const Color(0xFF388E3C)
+                          : Colors.red,
                       size: 16,
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      passwordController.text ==
-                              confirmPasswordController.text
+                      passwordController.text == confirmPasswordController.text
                           ? 'Passwords match'
                           : 'Passwords do not match',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: passwordController.text ==
-                                    confirmPasswordController.text
-                                ? const Color(0xFF388E3C)
-                                : Colors.red,
-                          ),
+                        color:
+                            passwordController.text ==
+                                confirmPasswordController.text
+                            ? const Color(0xFF388E3C)
+                            : Colors.red,
+                      ),
                     ),
                   ],
                 ),
@@ -436,7 +421,8 @@ class _NewPasswordState extends State<NewPassword> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: unmet.isEmpty &&
+                  onPressed:
+                      unmet.isEmpty &&
                           passwordController.text.isNotEmpty &&
                           confirmPasswordController.text.isNotEmpty &&
                           passwordController.text ==
@@ -446,8 +432,10 @@ class _NewPasswordState extends State<NewPassword> {
                       : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _primaryAqua,
-                    foregroundColor: _darkDeepTeal,
-                    disabledBackgroundColor: _primaryAqua.withValues(alpha: 0.5),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: _primaryAqua.withValues(
+                      alpha: 0.5,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -458,16 +446,15 @@ class _NewPasswordState extends State<NewPassword> {
                           height: 24,
                           width: 24,
                           child: CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(_darkDeepTeal),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              _darkDeepTeal,
+                            ),
                             strokeWidth: 2.5,
                           ),
                         )
                       : Text(
                           'Reset Password',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
+                          style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(color: _darkDeepTeal),
                         ),
                 ),
@@ -476,14 +463,14 @@ class _NewPasswordState extends State<NewPassword> {
               Center(
                 child: GestureDetector(
                   onTap: () {
-                    Get.offAll(() => const Login());
+                    Get.offAllNamed(MobileRoutes.login);
                   },
                   child: Text(
                     'Back to Login',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: _primaryAqua,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: _primaryAqua,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),

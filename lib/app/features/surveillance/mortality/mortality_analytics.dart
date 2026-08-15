@@ -7,15 +7,7 @@ const _accent = AppDesign.blue;
 const _background = AppDesign.page;
 const _surface = AppDesign.surface;
 const _foreground = AppDesign.ink;
-const _barPalette = <Color>[
-  AppDesign.skyBlue,
-  Color(0xFF5EC7FF),
-  Color(0xFFFFB74D),
-  Color(0xFFEC407A),
-  Color(0xFF7E57C2),
-  Color(0xFF66BB6A),
-  Color(0xFFFF7043),
-];
+const _barPalette = AppDesign.chartPalette;
 
 class MortalityAnalyticsPage extends StatefulWidget {
   const MortalityAnalyticsPage({super.key});
@@ -280,12 +272,13 @@ class _MortalityAnalyticsPageState extends State<MortalityAnalyticsPage> {
     return Scaffold(
       backgroundColor: _background,
       appBar: AppBar(
-        backgroundColor: _background,
+        backgroundColor: AppDesign.navy,
+        foregroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: _foreground),
+        iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
           'Mortality Analytics',
-          style: TextStyle(color: _foreground, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
         ),
         actions: [
           IconButton(
@@ -652,11 +645,11 @@ class _MortalityAnalyticsPageState extends State<MortalityAnalyticsPage> {
     final entries = _entries(data);
     final total = entries.fold<int>(0, (sum, e) => sum + e.value);
     const colors = [
-      Color(0xFF5EC7FF),
-      Color(0xFFEC407A),
-      Color(0xFFFFB74D),
-      Color(0xFF66BB6A),
-      Color(0xFF7E57C2),
+      AppDesign.blue,
+      AppDesign.navy,
+      AppDesign.skyBlue,
+      Color(0xFF8FAFD6),
+      Color(0xFFB8C9DB),
     ];
     if (entries.isEmpty) return _card(title, subtitle, _empty());
     return _card(
@@ -719,8 +712,8 @@ class _MortalityAnalyticsPageState extends State<MortalityAnalyticsPage> {
           : Column(
               children: entries.map((entry) {
                 final color = Color.lerp(
-                  const Color(0xFF43A047),
-                  const Color(0xFFE53935),
+                  AppDesign.blueSoft,
+                  AppDesign.navy,
                   entry.value / maximum,
                 )!;
                 return Container(

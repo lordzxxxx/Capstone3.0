@@ -53,6 +53,11 @@ Future<void> initializeMobileOfflineSync() async {
   }
   _mobileSyncBootstrapInitialized = true;
 
+  // Firebase Auth is restored during app startup before this function is
+  // called. Keep this first event for callers that initialize sync directly
+  // in tests or from another entrypoint.
+  await FirebaseAuth.instance.authStateChanges().first;
+
   if (FirebaseAuth.instance.currentUser != null) {
     await syncMobileOfflineDataAfterLogin();
   }

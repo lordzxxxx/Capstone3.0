@@ -17,6 +17,8 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart'
 import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality_database_helper.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
@@ -85,7 +87,7 @@ class _MortalityPageState extends State<MortalityPage> {
     super.initState();
     _activeView = healthModuleViewFromUrl();
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => persistHealthModuleView('/mortality', _activeView),
+      (_) => persistHealthModuleView(WebRoutes.bhwMortality, _activeView),
     );
     // Load data asynchronously to avoid blocking UI
     Future.microtask(() => _loadData());
@@ -99,7 +101,7 @@ class _MortalityPageState extends State<MortalityPage> {
   void _setActiveView(HealthModuleView view) {
     if (_activeView == view) return;
     setState(() => _activeView = view);
-    persistHealthModuleView('/mortality', view);
+    persistHealthModuleView(WebRoutes.bhwMortality, view);
   }
 
   @override
@@ -680,17 +682,17 @@ class _MortalityPageState extends State<MortalityPage> {
                   _buildDrawerSidebarItem(
                     icon: Icons.assignment_turned_in_rounded,
                     label: 'Check-ups',
-                    onTap: () => Get.to(() => const checkup_page.CheckUpPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwCheckups),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.favorite_rounded,
                     label: 'Summary Generation',
-                    onTap: () => Get.to(() => const HealthMetricsPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwSummary),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.analytics_rounded,
                     label: 'Analytics',
-                    onTap: () => Get.to(() => const AnalyticsPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwAnalytics),
                   ),
                   const SizedBox(height: 8),
                   Padding(
@@ -724,17 +726,17 @@ class _MortalityPageState extends State<MortalityPage> {
                   _buildDrawerSidebarItem(
                     icon: Icons.pregnant_woman_rounded,
                     label: 'Prenatal Care',
-                    onTap: () => Get.to(() => const PrenatalPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwPrenatal),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.vaccines_rounded,
                     label: 'Immunization',
-                    onTap: () => Get.to(() => const ImmunizationPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwImmunization),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.person_rounded,
                     label: 'Patient Records',
-                    onTap: () => Get.to(() => const PatientRecordPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwPatients),
                   ),
                   const SizedBox(height: 8),
                   Padding(
@@ -768,17 +770,17 @@ class _MortalityPageState extends State<MortalityPage> {
                   _buildDrawerSidebarItem(
                     icon: Icons.coronavirus_rounded,
                     label: 'Communicable',
-                    onTap: () => Get.to(() => const CommunicablePage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwCommunicable),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.health_and_safety_rounded,
                     label: 'Non-Communicable',
-                    onTap: () => Get.to(() => const NonCommunicablePage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwNonCommunicable),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.analytics_outlined,
                     label: 'Mortality',
-                    onTap: () => Get.to(() => const MortalityPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwMortality),
                   ),
                 ],
               ),
@@ -798,7 +800,7 @@ class _MortalityPageState extends State<MortalityPage> {
                 child: InkWell(
                   onTap: () async {
                     await FirebaseAuth.instance.signOut();
-                    Get.offAll(() => const Login());
+                    Get.offAllNamed(WebRoutes.login);
                   },
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
@@ -1113,22 +1115,22 @@ class _MortalityPageState extends State<MortalityPage> {
                 _buildSidebarItem(
                   icon: Icons.dashboard_rounded,
                   label: 'Dashboard',
-                  onTap: () => Get.to(() => const HomePage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwDashboard),
                 ),
                 _buildSidebarItem(
                   icon: Icons.assignment_turned_in_rounded,
                   label: 'Check-ups',
-                  onTap: () => Get.to(() => const checkup_page.CheckUpPage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwCheckups),
                 ),
                 _buildSidebarItem(
                   icon: Icons.favorite_rounded,
                   label: 'Summary Generation',
-                  onTap: () => Get.to(() => const HealthMetricsPage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwSummary),
                 ),
                 _buildSidebarItem(
                   icon: Icons.analytics_rounded,
                   label: 'Analytics',
-                  onTap: () => Get.to(() => const AnalyticsPage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwAnalytics),
                 ),
                 const SizedBox(height: 8),
                 Padding(
@@ -1162,17 +1164,17 @@ class _MortalityPageState extends State<MortalityPage> {
                 _buildSidebarItem(
                   icon: Icons.pregnant_woman_rounded,
                   label: 'Prenatal Care',
-                  onTap: () => Get.to(() => const PrenatalPage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwPrenatal),
                 ),
                 _buildSidebarItem(
                   icon: Icons.vaccines_rounded,
                   label: 'Immunization',
-                  onTap: () => Get.to(() => const ImmunizationPage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwImmunization),
                 ),
                 _buildSidebarItem(
                   icon: Icons.person_rounded,
                   label: 'Patient Records',
-                  onTap: () => Get.to(() => const PatientRecordPage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwPatients),
                 ),
                 const SizedBox(height: 8),
                 Padding(
@@ -1206,12 +1208,12 @@ class _MortalityPageState extends State<MortalityPage> {
                 _buildSidebarItem(
                   icon: Icons.coronavirus_rounded,
                   label: 'Communicable',
-                  onTap: () => Get.to(() => const CommunicablePage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwCommunicable),
                 ),
                 _buildSidebarItem(
                   icon: Icons.health_and_safety_rounded,
                   label: 'Non-Communicable',
-                  onTap: () => Get.to(() => const NonCommunicablePage()),
+                  onTap: () => Get.toNamed(WebRoutes.bhwNonCommunicable),
                 ),
                 _buildSidebarItem(
                   icon: Icons.analytics_outlined,
@@ -1237,7 +1239,7 @@ class _MortalityPageState extends State<MortalityPage> {
               child: InkWell(
                 onTap: () async {
                   await FirebaseAuth.instance.signOut();
-                  Get.offAll(() => const Login());
+                  Get.offAllNamed(WebRoutes.login);
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
@@ -1378,7 +1380,7 @@ class _MortalityPageState extends State<MortalityPage> {
       height: 70,
       padding: const EdgeInsets.symmetric(horizontal: 32),
       decoration: BoxDecoration(
-        color: _sidebarDark,
+        color: _darkDeepTeal,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -1529,55 +1531,48 @@ class _MortalityPageState extends State<MortalityPage> {
                 ),
               )
             else
-              Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildWebMetricCard(
-                          title: 'Total Deaths',
-                          value: _totalDeaths.toString(),
-                          icon: Icons.assignment_outlined,
-                          accentColor: Color(0xFF64B5F6),
-                          backgroundColor: _sidebarDark,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildWebMetricCard(
-                          title: 'Elderly Deaths',
-                          value: _elderlyDeaths.toString(),
-                          icon: Icons.elderly_rounded,
-                          accentColor: Color(0xFF81C784),
-                          backgroundColor: _sidebarDark,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildWebMetricCard(
-                          title: 'Verification Rate',
-                          value: '${_verificationRate.toStringAsFixed(1)}%',
-                          icon: Icons.verified_user_rounded,
-                          accentColor: Color(0xFFFFB74D),
-                          backgroundColor: _sidebarDark,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildWebMetricCard(
-                          title: 'Leading Cause',
-                          value: _leadingCause.length > 20
-                              ? '${_leadingCause.substring(0, 20)}...'
-                              : _leadingCause,
-                          icon: Icons.warning_rounded,
-                          accentColor: Color(0xFFFF7043),
-                          backgroundColor: _sidebarDark,
-                          isSmallText: true,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final columns = constraints.maxWidth >= 1100
+                      ? 4
+                      : constraints.maxWidth >= 680
+                      ? 2
+                      : 1;
+                  const spacing = 16.0;
+                  final width = columns == 1
+                      ? constraints.maxWidth
+                      : (constraints.maxWidth - spacing * (columns - 1)) /
+                            columns;
+                  final cards = <Widget>[
+                    _buildWebMetricCard(
+                      title: 'Total Deaths',
+                      value: _totalDeaths.toString(),
+                      icon: Icons.assignment_outlined,
+                    ),
+                    _buildWebMetricCard(
+                      title: 'Elderly Deaths',
+                      value: _elderlyDeaths.toString(),
+                      icon: Icons.elderly_outlined,
+                    ),
+                    _buildWebMetricCard(
+                      title: 'Verification Rate',
+                      value: '${_verificationRate.toStringAsFixed(1)}%',
+                      icon: Icons.verified_user_outlined,
+                    ),
+                    _buildWebMetricCard(
+                      title: 'Leading Cause',
+                      value: _leadingCause,
+                      icon: Icons.warning_amber_outlined,
+                    ),
+                  ];
+                  return Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
+                    children: cards
+                        .map((card) => SizedBox(width: width, child: card))
+                        .toList(growable: false),
+                  );
+                },
               ),
           ],
         ),
@@ -1653,62 +1648,8 @@ class _MortalityPageState extends State<MortalityPage> {
     required String title,
     required String value,
     required IconData icon,
-    required Color accentColor,
-    required Color backgroundColor,
-    bool isSmallText = false,
   }) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accentColor.withValues(alpha: 0.3), width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withValues(alpha: 0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: accentColor, size: 24),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            isSmallText
-                ? (value.length > 25 ? '${value.substring(0, 22)}...' : value)
-                : value,
-            style: TextStyle(
-              fontSize: isSmallText ? 14 : 24,
-              fontWeight: FontWeight.bold,
-              color: _darkDeepTeal,
-              letterSpacing: 0.5,
-            ),
-            maxLines: isSmallText ? 2 : 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: _mutedCoolGray,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.3,
-            ),
-          ),
-        ],
-      ),
-    );
+    return AppMetricCard(label: title, value: value, icon: icon);
   }
 
   // Graphs Section
@@ -4086,7 +4027,7 @@ class _MortalityPageState extends State<MortalityPage> {
                 ),
                 label: Text(isEditing ? 'Update Record' : 'Save Record'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
+                  backgroundColor: _primaryAqua,
                   foregroundColor: Colors.white,
                   shadowColor: Colors.transparent,
                   padding: const EdgeInsets.symmetric(
@@ -5799,7 +5740,7 @@ class _MortalityPageState extends State<MortalityPage> {
                               ),
                               label: const Text('Verify Record'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
+                                backgroundColor: _primaryAqua,
                                 foregroundColor: Colors.white,
                                 shadowColor: Colors.transparent,
                                 padding: const EdgeInsets.symmetric(

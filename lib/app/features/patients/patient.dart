@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:mycapstone_project/app/features/patients/patient_database_helper.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
+import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/features/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
@@ -326,7 +327,11 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                           ),
                           child: PopupMenuButton<String>(
                             color: _darkDeepTeal,
-                            icon: Icon(Icons.menu, color: _lightOffWhite, size: 24),
+                            icon: Icon(
+                              Icons.menu,
+                              color: _lightOffWhite,
+                              size: 24,
+                            ),
                             onSelected: (value) {
                               switch (value) {
                                 case 'all':
@@ -471,35 +476,37 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                icon: Icons.people,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 720 ? 3 : 2;
+            const spacing = 12.0;
+            final width =
+                (constraints.maxWidth - spacing * (columns - 1)) / columns;
+            final cards = <Widget>[
+              _buildStatCard(
+                icon: Icons.people_outline,
                 title: 'Total Patients',
                 value: _totalPatients.toString(),
-                color: _primaryAqua,
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
-                icon: Icons.person_add,
+              _buildStatCard(
+                icon: Icons.person_add_outlined,
                 title: 'New This Month',
                 value: _newThisMonth.toString(),
-                color: _primaryAqua,
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
-                icon: Icons.event_repeat,
+              _buildStatCard(
+                icon: Icons.event_repeat_outlined,
                 title: 'Follow-up Rate',
                 value: '${_followUpRate.toStringAsFixed(1)}%',
-                color: _primaryAqua,
               ),
-            ),
-          ],
+            ];
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: cards
+                  .map((card) => SizedBox(width: width, child: card))
+                  .toList(growable: false),
+            );
+          },
         ),
       ],
     );
@@ -509,54 +516,8 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     required IconData icon,
     required String title,
     required String value,
-    required Color color,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: _mutedCoolGray.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: TextStyle(
-              color: _mutedCoolGray,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: _darkDeepTeal,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
+    return AppMetricCard(label: title, value: value, icon: icon);
   }
 
   Widget _buildFiltersSection() {
@@ -1014,7 +975,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                           label: const Text('Open Cross-Module History'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _primaryAqua,
-                            foregroundColor: _darkDeepTeal,
+                            foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                         ),
@@ -2157,9 +2118,14 @@ class _AddPatientModalState extends State<AddPatientModal> {
     _registrationDateController.text = '01/29/2026';
     final values = widget.initialValues;
     if (values != null) {
-      final name = (values['patientName'] ?? values['fullName'] ?? values['patient'] ?? values['name'] ?? '')
-          .toString()
-          .trim();
+      final name =
+          (values['patientName'] ??
+                  values['fullName'] ??
+                  values['patient'] ??
+                  values['name'] ??
+                  '')
+              .toString()
+              .trim();
       final parts = name
           .split(RegExp(r'\s+'))
           .where((part) => part.isNotEmpty)
@@ -2171,10 +2137,15 @@ class _AddPatientModalState extends State<AddPatientModal> {
           (values['surname'] ??
                   (parts.length > 1 ? parts.sublist(1).join(' ') : ''))
               .toString();
-      _dobController.text = (values['dateOfBirth'] ?? values['dob'] ?? '').toString();
+      _dobController.text = (values['dateOfBirth'] ?? values['dob'] ?? '')
+          .toString();
       _ageController.text = (values['age'] ?? '').toString();
       _phoneController.text =
-          (values['contactNumber'] ?? values['phoneNumber'] ?? values['phone'] ?? '').toString();
+          (values['contactNumber'] ??
+                  values['phoneNumber'] ??
+                  values['phone'] ??
+                  '')
+              .toString();
       _emailController.text = (values['email'] ?? values['emailAddress'] ?? '')
           .toString();
       _streetController.text = (values['address'] ?? values['street'] ?? '')
@@ -2182,18 +2153,27 @@ class _AddPatientModalState extends State<AddPatientModal> {
       _barangayController.text = (values['barangay'] ?? '').toString();
       _municipalityController.text = (values['municipality'] ?? '').toString();
       _provinceController.text = (values['province'] ?? '').toString();
-      _chiefComplaintController.text = (values['symptoms'] ?? values['chiefComplaint'] ?? '').toString();
-      _currentSymptomsController.text = (values['symptoms'] ?? values['chiefComplaint'] ?? '').toString();
-      _bodyTempController.text = (values['temperature'] ?? values['temp'] ?? '').toString();
-      _heartRateController.text = (values['heartRate'] ?? values['hr'] ?? values['pulse'] ?? '').toString();
-      _respiratoryRateController.text = (values['respiratoryRate'] ?? values['rr'] ?? '')
+      _chiefComplaintController.text =
+          (values['symptoms'] ?? values['chiefComplaint'] ?? '').toString();
+      _currentSymptomsController.text =
+          (values['symptoms'] ?? values['chiefComplaint'] ?? '').toString();
+      _bodyTempController.text = (values['temperature'] ?? values['temp'] ?? '')
           .toString();
-      _oxygenSaturationController.text = (values['oxygenSaturation'] ?? values['spo2'] ?? '')
+      _heartRateController.text =
+          (values['heartRate'] ?? values['hr'] ?? values['pulse'] ?? '')
+              .toString();
+      _respiratoryRateController.text =
+          (values['respiratoryRate'] ?? values['rr'] ?? '').toString();
+      _oxygenSaturationController.text =
+          (values['oxygenSaturation'] ?? values['spo2'] ?? '').toString();
+      _weightController.text = (values['weight'] ?? values['wt'] ?? '')
           .toString();
-      _weightController.text = (values['weight'] ?? values['wt'] ?? '').toString();
-      _heightController.text = (values['height'] ?? values['ht'] ?? '').toString();
+      _heightController.text = (values['height'] ?? values['ht'] ?? '')
+          .toString();
 
-      final bp = (values['bloodPressure'] ?? values['bp'] ?? '').toString().trim();
+      final bp = (values['bloodPressure'] ?? values['bp'] ?? '')
+          .toString()
+          .trim();
       if (bp.isNotEmpty) {
         final bpParts = bp.split('/');
         if (bpParts.length == 2) {

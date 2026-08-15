@@ -12,14 +12,17 @@ import 'package:mycapstone_project/web/roles/cho/dashboard/cho_dashboard.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/barangay_branding_service.dart';
 import 'package:mycapstone_project/web/shared/widgets/barangay_logo_image.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
+import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:universal_html/html.dart' as html;
 
-const Color _primaryAqua = Color(0xFF2F80ED);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
-const Color _panelSurface = Color(0xFF061920);
-const Color _sidebarDark = Color(0xFF0E2F34);
-const Color _mutedCoolGray = Color(0xFF546E7A);
+const Color _primaryAqua = AppColors.primary;
+const Color _darkDeepTeal = AppColors.backgroundDark;
+const Color _lightOffWhite = AppColors.textOnDark;
+const Color _panelSurface = AppColors.surfaceDark;
+const Color _sidebarDark = AppColors.backgroundDark;
+const Color _mutedCoolGray = AppColors.textOnDarkMuted;
 
 class _SelectedBrandingFile {
   final Uint8List bytes;
@@ -82,7 +85,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        Get.offAll(() => const Login());
+        Get.offAllNamed(WebRoutes.login);
         return;
       }
 
@@ -106,7 +109,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
       );
       await Future.delayed(const Duration(milliseconds: 400));
       if (mounted) {
-        Get.offAll(() => const Login());
+        Get.offAllNamed(WebRoutes.login);
       }
     } catch (e) {
       if (kDebugMode) {
@@ -119,7 +122,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
         colorText: Colors.white,
       );
       if (mounted) {
-        Get.offAll(() => const Login());
+        Get.offAllNamed(WebRoutes.login);
       }
     }
   }
@@ -135,26 +138,31 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
       'updatedBy': currentUser?.uid,
     };
 
-    await _firestore.collection('users').doc(uid).set(
-      payload,
-      SetOptions(merge: true),
-    );
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .set(payload, SetOptions(merge: true));
 
     try {
-      final rtdbUpdates = <String, dynamic>{
-        'updatedAt': ServerValue.timestamp,
-      };
+      final rtdbUpdates = <String, dynamic>{'updatedAt': ServerValue.timestamp};
       if (updates.containsKey('role')) {
         rtdbUpdates['role'] = updates['role'];
       }
       if (updates.containsKey('barangay')) {
-        rtdbUpdates['barangay'] = updates['barangay'] is FieldValue ? null : updates['barangay'];
+        rtdbUpdates['barangay'] = updates['barangay'] is FieldValue
+            ? null
+            : updates['barangay'];
       }
       if (updates.containsKey('barangayCode')) {
-        rtdbUpdates['barangayCode'] = updates['barangayCode'] is FieldValue ? null : updates['barangayCode'];
+        rtdbUpdates['barangayCode'] = updates['barangayCode'] is FieldValue
+            ? null
+            : updates['barangayCode'];
       }
       if (updates.containsKey('barangayDistrict')) {
-        rtdbUpdates['barangayDistrict'] = updates['barangayDistrict'] is FieldValue ? null : updates['barangayDistrict'];
+        rtdbUpdates['barangayDistrict'] =
+            updates['barangayDistrict'] is FieldValue
+            ? null
+            : updates['barangayDistrict'];
       }
       if (updates.containsKey('accountStatus')) {
         rtdbUpdates['accountStatus'] = updates['accountStatus'];
@@ -194,7 +202,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
   }
 
   Future<void> _setAccountStatus(String uid, String status) async {
-    await _updateUserGovernance(uid, <String, dynamic>{'accountStatus': status});
+    await _updateUserGovernance(uid, <String, dynamic>{
+      'accountStatus': status,
+    });
     Get.snackbar(
       'Saved',
       'Account status updated to $status.',
@@ -289,7 +299,10 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                         hintStyle: TextStyle(
                           color: _mutedCoolGray.withValues(alpha: 0.85),
                         ),
-                        prefixIcon: const Icon(Icons.search, color: _primaryAqua),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: _primaryAqua,
+                        ),
                         filled: true,
                         fillColor: _panelSurface,
                         border: OutlineInputBorder(
@@ -336,7 +349,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                         decoration: BoxDecoration(
                           color: _panelSurface,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
+                          border: Border.all(
+                            color: _primaryAqua.withValues(alpha: 0.18),
+                          ),
                         ),
                         child: filtered.isEmpty
                             ? Center(
@@ -346,7 +361,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                                     'No barangay matched your search or district filter.',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      color: _lightOffWhite.withValues(alpha: 0.72),
+                                      color: _lightOffWhite.withValues(
+                                        alpha: 0.72,
+                                      ),
                                       height: 1.4,
                                     ),
                                   ),
@@ -360,12 +377,16 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                                   return ListTile(
                                     title: Text(
                                       barangay.name,
-                                      style: const TextStyle(color: _lightOffWhite),
+                                      style: const TextStyle(
+                                        color: _lightOffWhite,
+                                      ),
                                     ),
                                     subtitle: Text(
                                       barangay.district,
                                       style: TextStyle(
-                                        color: _lightOffWhite.withValues(alpha: 0.65),
+                                        color: _lightOffWhite.withValues(
+                                          alpha: 0.65,
+                                        ),
                                       ),
                                     ),
                                     onTap: () {
@@ -517,7 +538,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                 ElevatedButton(
                   onPressed: () async {
                     final email = emailController.text.trim();
-                    if (email.isEmpty || (selectedRole == 'BHW' && selectedBarangay == null)) {
+                    if (email.isEmpty ||
+                        (selectedRole == 'BHW' && selectedBarangay == null)) {
                       Get.snackbar(
                         'Incomplete',
                         selectedRole == 'BHW'
@@ -533,7 +555,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                       'email': email,
                       'emailLower': email.toLowerCase(),
                       'role': selectedRole,
-                      'accessScope': selectedRole == 'BHW' ? 'barangay' : 'citywide',
+                      'accessScope': selectedRole == 'BHW'
+                          ? 'barangay'
+                          : 'citywide',
                       'barangay': selectedBarangay?.name,
                       'barangayCode': selectedBarangay?.code,
                       'barangayDistrict': selectedBarangay?.district,
@@ -730,7 +754,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                                   Text(
                                     barangay.district,
                                     style: TextStyle(
-                                      color: _lightOffWhite.withValues(alpha: 0.68),
+                                      color: _lightOffWhite.withValues(
+                                        alpha: 0.68,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(height: 12),
@@ -739,7 +765,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                                         ? 'Official logo URL is active and will render automatically during BHW registration.'
                                         : 'No official logo URL is set yet. A placeholder will remain active until a logo is uploaded or mapped.',
                                     style: TextStyle(
-                                      color: _lightOffWhite.withValues(alpha: 0.78),
+                                      color: _lightOffWhite.withValues(
+                                        alpha: 0.78,
+                                      ),
                                       height: 1.4,
                                     ),
                                   ),
@@ -753,7 +781,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                       _buildBrandingInput(
                         controller: logoUrlController,
                         label: 'Logo URL',
-                        hint: 'https://yourdomain.com/assets/barangay-logos/${barangay.code}.png',
+                        hint:
+                            'https://yourdomain.com/assets/barangay-logos/${barangay.code}.png',
                       ),
                       const SizedBox(height: 12),
                       Wrap(
@@ -761,20 +790,26 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                         runSpacing: 10,
                         children: [
                           ElevatedButton.icon(
-                            onPressed: isUploadingLogo ? null : () => uploadAsset(false),
+                            onPressed: isUploadingLogo
+                                ? null
+                                : () => uploadAsset(false),
                             icon: isUploadingLogo
                                 ? const SizedBox(
                                     width: 16,
                                     height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Icon(Icons.upload_file_outlined),
                             label: Text(
-                              isUploadingLogo ? 'Uploading logo...' : 'Upload logo file',
+                              isUploadingLogo
+                                  ? 'Uploading logo...'
+                                  : 'Upload logo file',
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _primaryAqua,
-                              foregroundColor: _darkDeepTeal,
+                              foregroundColor: Colors.white,
                             ),
                           ),
                           OutlinedButton.icon(
@@ -790,7 +825,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                             label: const Text('Use placeholder'),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: _primaryAqua,
-                              side: BorderSide(color: _primaryAqua.withValues(alpha: 0.35)),
+                              side: BorderSide(
+                                color: _primaryAqua.withValues(alpha: 0.35),
+                              ),
                             ),
                           ),
                         ],
@@ -811,7 +848,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                       _buildBrandingInput(
                         controller: signatureUrlController,
                         label: 'E-signature URL',
-                        hint: 'https://yourdomain.com/assets/barangay-logos/${barangay.code}-esign.png',
+                        hint:
+                            'https://yourdomain.com/assets/barangay-logos/${barangay.code}-esign.png',
                       ),
                       const SizedBox(height: 12),
                       Wrap(
@@ -820,12 +858,16 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           ElevatedButton.icon(
-                            onPressed: isUploadingSignature ? null : () => uploadAsset(true),
+                            onPressed: isUploadingSignature
+                                ? null
+                                : () => uploadAsset(true),
                             icon: isUploadingSignature
                                 ? const SizedBox(
                                     width: 16,
                                     height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Icon(Icons.draw_outlined),
                             label: Text(
@@ -835,7 +877,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _primaryAqua,
-                              foregroundColor: _darkDeepTeal,
+                              foregroundColor: Colors.white,
                             ),
                           ),
                           if (signatureUrlController.text.trim().isNotEmpty)
@@ -850,7 +892,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                       _buildBrandingInput(
                         controller: notesController,
                         label: 'Notes',
-                        hint: 'Usage notes, version details, or document references',
+                        hint:
+                            'Usage notes, version details, or document references',
                         maxLines: 3,
                       ),
                     ],
@@ -868,7 +911,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                   onPressed: isSaving
                       ? null
                       : () async {
-                          final effectiveDate = effectiveDateController.text.trim();
+                          final effectiveDate = effectiveDateController.text
+                              .trim();
                           if (effectiveDate.isNotEmpty &&
                               DateTime.tryParse(effectiveDate) == null) {
                             Get.snackbar(
@@ -887,7 +931,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                               logoUrl: logoUrlController.text,
                               logoStoragePath: logoStoragePath,
                               assignedOfficial: assignedOfficialController.text,
-                              officialESignatureUrl: signatureUrlController.text,
+                              officialESignatureUrl:
+                                  signatureUrlController.text,
                               effectiveDate: effectiveDateController.text,
                               notes: notesController.text,
                               updatedBy: FirebaseAuth.instance.currentUser?.uid,
@@ -962,7 +1007,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
       final username = (data['username'] ?? '').toString().toLowerCase();
       final role = (data['role'] ?? '').toString().toUpperCase();
       final barangay = (data['barangay'] ?? '').toString();
-      final status = (data['accountStatus'] ?? 'active').toString().toLowerCase();
+      final status = (data['accountStatus'] ?? 'active')
+          .toString()
+          .toLowerCase();
 
       final matchesSearch =
           _searchQuery.isEmpty ||
@@ -972,7 +1019,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
       final matchesRole =
           _selectedRoleFilter == 'ALL' || role == _selectedRoleFilter;
       final matchesBarangay =
-          _selectedBarangayFilter == 'ALL' || barangay == _selectedBarangayFilter;
+          _selectedBarangayFilter == 'ALL' ||
+          barangay == _selectedBarangayFilter;
       final matchesStatus =
           _selectedStatusFilter == 'ALL' || status == _selectedStatusFilter;
 
@@ -992,34 +1040,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     required String value,
     required IconData icon,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _panelSurface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: _primaryAqua),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              color: _lightOffWhite,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72)),
-          ),
-        ],
-      ),
-    );
+    return AppMetricCard(label: label, value: value, icon: icon);
   }
 
   Widget _buildChip(String label, Color color) {
@@ -1115,7 +1136,10 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                 runSpacing: 8,
                 children: [
                   _buildChip(role, _primaryAqua),
-                  _buildChip(accountStatus.toUpperCase(), _statusColor(accountStatus)),
+                  _buildChip(
+                    accountStatus.toUpperCase(),
+                    _statusColor(accountStatus),
+                  ),
                   _buildChip(
                     approvalStatus.toUpperCase(),
                     _approvalColor(approvalStatus),
@@ -1193,7 +1217,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                   label: const Text('Assign barangay'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _primaryAqua,
-                    side: BorderSide(color: _primaryAqua.withValues(alpha: 0.35)),
+                    side: BorderSide(
+                      color: _primaryAqua.withValues(alpha: 0.35),
+                    ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 16,
@@ -1281,7 +1307,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     return StreamBuilder<List<BarangayBrandingProfile>>(
       stream: _brandingService.watchAllBranding(),
       builder: (context, snapshot) {
-        final profiles = snapshot.data ??
+        final profiles =
+            snapshot.data ??
             MalaybalayBarangays.all
                 .map(BarangayBrandingProfile.fallback)
                 .toList();
@@ -1333,7 +1360,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                         runSpacing: 12,
                         children: entry.value.map((barangay) {
                           final assignedUsers = counts[barangay.name] ?? 0;
-                          final profile = profileByCode[barangay.code] ??
+                          final profile =
+                              profileByCode[barangay.code] ??
                               BarangayBrandingProfile.fallback(barangay);
 
                           return Container(
@@ -1360,7 +1388,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             barangay.name,
@@ -1373,7 +1402,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                                           Text(
                                             '$assignedUsers assigned user${assignedUsers == 1 ? '' : 's'}',
                                             style: TextStyle(
-                                              color: _lightOffWhite.withValues(alpha: 0.65),
+                                              color: _lightOffWhite.withValues(
+                                                alpha: 0.65,
+                                              ),
                                               fontSize: 12,
                                             ),
                                           ),
@@ -1401,7 +1432,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                                       ? 'No assigned official recorded'
                                       : 'Official: ${profile.assignedOfficial}',
                                   style: TextStyle(
-                                    color: _lightOffWhite.withValues(alpha: 0.78),
+                                    color: _lightOffWhite.withValues(
+                                      alpha: 0.78,
+                                    ),
                                     fontSize: 12,
                                   ),
                                 ),
@@ -1411,7 +1444,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                                       ? 'No effective date recorded'
                                       : 'Effective: ${profile.effectiveDate}',
                                   style: TextStyle(
-                                    color: _lightOffWhite.withValues(alpha: 0.65),
+                                    color: _lightOffWhite.withValues(
+                                      alpha: 0.65,
+                                    ),
                                     fontSize: 12,
                                   ),
                                 ),
@@ -1422,7 +1457,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      color: _lightOffWhite.withValues(alpha: 0.58),
+                                      color: _lightOffWhite.withValues(
+                                        alpha: 0.58,
+                                      ),
                                       fontSize: 12,
                                       height: 1.35,
                                     ),
@@ -1430,13 +1467,18 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                                 ],
                                 const SizedBox(height: 12),
                                 OutlinedButton.icon(
-                                  onPressed: () => _showBrandingEditor(barangay),
-                                  icon: const Icon(Icons.photo_library_outlined),
+                                  onPressed: () =>
+                                      _showBrandingEditor(barangay),
+                                  icon: const Icon(
+                                    Icons.photo_library_outlined,
+                                  ),
                                   label: const Text('Manage logo and details'),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: _primaryAqua,
                                     side: BorderSide(
-                                      color: _primaryAqua.withValues(alpha: 0.35),
+                                      color: _primaryAqua.withValues(
+                                        alpha: 0.35,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -1459,9 +1501,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
   @override
   Widget build(BuildContext context) {
     if (_checkingAccess) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (!_authorized) {
@@ -1476,7 +1516,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
         actions: [
           TextButton.icon(
             onPressed: () {
-              Get.to(() => const ChoDashboard());
+              Get.toNamed(WebRoutes.choDashboard);
             },
             icon: const Icon(Icons.analytics_outlined, color: _primaryAqua),
             label: const Text(
@@ -1505,8 +1545,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
           final docs = snapshot.data!.docs;
           final filteredDocs = _filterUsers(docs);
           final pendingApprovals = docs.where((doc) {
-            final approval =
-                (doc.data()['approvalStatus'] ?? 'pending').toString();
+            final approval = (doc.data()['approvalStatus'] ?? 'pending')
+                .toString();
             return approval.toLowerCase() != 'approved';
           }).length;
           final activeBhw = docs.where((doc) {
@@ -1532,7 +1572,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                 ),
                 const SizedBox(height: 24),
                 GridView.count(
-                  crossAxisCount: MediaQuery.of(context).size.width > 1200 ? 4 : 2,
+                  crossAxisCount: MediaQuery.of(context).size.width > 1200
+                      ? 4
+                      : 2,
                   crossAxisSpacing: 14,
                   mainAxisSpacing: 14,
                   shrinkWrap: true,
@@ -1567,7 +1609,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                   decoration: BoxDecoration(
                     color: _panelSurface,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+                    border: Border.all(
+                      color: _primaryAqua.withValues(alpha: 0.16),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1590,7 +1634,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                             label: const Text('Record invite'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _primaryAqua,
-                              foregroundColor: _darkDeepTeal,
+                              foregroundColor: Colors.white,
                             ),
                           ),
                         ],
@@ -1632,7 +1676,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                               style: const TextStyle(color: _lightOffWhite),
                               decoration: InputDecoration(
                                 labelText: 'Role',
-                                labelStyle: const TextStyle(color: _lightOffWhite),
+                                labelStyle: const TextStyle(
+                                  color: _lightOffWhite,
+                                ),
                                 filled: true,
                                 fillColor: _sidebarDark,
                                 border: OutlineInputBorder(
@@ -1640,14 +1686,18 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                                   borderSide: BorderSide.none,
                                 ),
                               ),
-                              items: <String>['ALL', ...MalaybalayBarangays.roleOptions]
-                                  .map(
-                                    (value) => DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    ),
-                                  )
-                                  .toList(),
+                              items:
+                                  <String>[
+                                        'ALL',
+                                        ...MalaybalayBarangays.roleOptions,
+                                      ]
+                                      .map(
+                                        (value) => DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        ),
+                                      )
+                                      .toList(),
                               onChanged: (value) {
                                 if (value == null) return;
                                 setState(() => _selectedRoleFilter = value);
@@ -1662,7 +1712,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                               style: const TextStyle(color: _lightOffWhite),
                               decoration: InputDecoration(
                                 labelText: 'Barangay',
-                                labelStyle: const TextStyle(color: _lightOffWhite),
+                                labelStyle: const TextStyle(
+                                  color: _lightOffWhite,
+                                ),
                                 filled: true,
                                 fillColor: _sidebarDark,
                                 border: OutlineInputBorder(
@@ -1670,17 +1722,20 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                                   borderSide: BorderSide.none,
                                 ),
                               ),
-                              items: <String>[
-                                'ALL',
-                                ...MalaybalayBarangays.all.map((item) => item.name),
-                              ]
-                                  .map(
-                                    (value) => DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    ),
-                                  )
-                                  .toList(),
+                              items:
+                                  <String>[
+                                        'ALL',
+                                        ...MalaybalayBarangays.all.map(
+                                          (item) => item.name,
+                                        ),
+                                      ]
+                                      .map(
+                                        (value) => DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        ),
+                                      )
+                                      .toList(),
                               onChanged: (value) {
                                 if (value == null) return;
                                 setState(() => _selectedBarangayFilter = value);
@@ -1695,7 +1750,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                               style: const TextStyle(color: _lightOffWhite),
                               decoration: InputDecoration(
                                 labelText: 'Status',
-                                labelStyle: const TextStyle(color: _lightOffWhite),
+                                labelStyle: const TextStyle(
+                                  color: _lightOffWhite,
+                                ),
                                 filled: true,
                                 fillColor: _sidebarDark,
                                 border: OutlineInputBorder(
@@ -1722,7 +1779,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                       const SizedBox(height: 20),
                       Text(
                         '${filteredDocs.length} user${filteredDocs.length == 1 ? '' : 's'} matched',
-                        style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.68)),
+                        style: TextStyle(
+                          color: _lightOffWhite.withValues(alpha: 0.68),
+                        ),
                       ),
                       const SizedBox(height: 14),
                       ...filteredDocs.map(_buildUserCard),

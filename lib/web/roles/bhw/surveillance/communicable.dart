@@ -16,6 +16,7 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
@@ -121,7 +122,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
     super.initState();
     _selectedView = healthModuleViewFromUrl();
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => persistHealthModuleView('/CommunicablePage', _resolvedView),
+      (_) => persistHealthModuleView(WebRoutes.bhwCommunicable, _resolvedView),
     );
     _dbHelper.startConnectivityListener();
     _loadPatients();
@@ -134,7 +135,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
       _isSelectionMode = false;
       _getSelectedPatientIds.clear();
     });
-    persistHealthModuleView('/CommunicablePage', view);
+    persistHealthModuleView(WebRoutes.bhwCommunicable, view);
   }
 
   @override
@@ -365,11 +366,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
       height: 70,
       padding: const EdgeInsets.symmetric(horizontal: 32),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_darkDeepTeal, _darkDeepTeal.withValues(alpha: 0.95)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
+        color: _darkDeepTeal,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -1308,7 +1305,10 @@ class _CommunicablePageState extends State<CommunicablePage> {
     // Keep one canonical patient-registration flow across every BHW module.
     // The surveillance pages previously displayed a placeholder snackbar,
     // which left users without a way to create the patient needed for a case.
-    await Get.to(() => const PatientRecordPage(openRegistrationOnLoad: true));
+    await Get.toNamed(
+      WebRoutes.bhwPatients,
+      arguments: const {'openRegistrationOnLoad': true},
+    );
   }
 
   void _viewPatientDetails(Map<String, dynamic> patient) {
@@ -2148,23 +2148,23 @@ class _CommunicablePageState extends State<CommunicablePage> {
                     label: 'Dashboard',
                     onTap: () {
                       Navigator.pop(context);
-                      Get.to(() => const HomePage());
+                      Get.toNamed(WebRoutes.bhwDashboard);
                     },
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.assignment_turned_in_rounded,
                     label: 'Check-ups',
-                    onTap: () => Get.to(() => const checkup_page.CheckUpPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwCheckups),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.favorite_rounded,
                     label: 'Summary Generation',
-                    onTap: () => Get.to(() => const HealthMetricsPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwSummary),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.analytics_rounded,
                     label: 'Analytics',
-                    onTap: () => Get.to(() => const AnalyticsPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwAnalytics),
                   ),
                   const SizedBox(height: 8),
                   Padding(
@@ -2198,17 +2198,17 @@ class _CommunicablePageState extends State<CommunicablePage> {
                   _buildDrawerSidebarItem(
                     icon: Icons.pregnant_woman_rounded,
                     label: 'Prenatal Care',
-                    onTap: () => Get.to(() => const PrenatalPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwPrenatal),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.vaccines_rounded,
                     label: 'Immunization',
-                    onTap: () => Get.to(() => const ImmunizationPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwImmunization),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.person_rounded,
                     label: 'Patient Records',
-                    onTap: () => Get.to(() => const PatientRecordPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwPatients),
                   ),
                   const SizedBox(height: 8),
                   Padding(
@@ -2250,12 +2250,12 @@ class _CommunicablePageState extends State<CommunicablePage> {
                   _buildDrawerSidebarItem(
                     icon: Icons.health_and_safety_rounded,
                     label: 'Non-Communicable',
-                    onTap: () => Get.to(() => const NonCommunicablePage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwNonCommunicable),
                   ),
                   _buildDrawerSidebarItem(
                     icon: Icons.analytics_outlined,
                     label: 'Mortality',
-                    onTap: () => Get.to(() => const MortalityPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwMortality),
                   ),
                 ],
               ),
@@ -2275,7 +2275,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                 child: InkWell(
                   onTap: () async {
                     await FirebaseAuth.instance.signOut();
-                    Get.offAll(() => const Login());
+                    Get.offAllNamed(WebRoutes.login);
                   },
                   borderRadius: BorderRadius.circular(8),
                   child: Container(

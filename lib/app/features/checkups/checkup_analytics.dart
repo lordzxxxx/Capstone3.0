@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _darkDeepTeal = AppDesign.page;
@@ -29,22 +30,13 @@ const _monthLabels = [
   'Dec',
 ];
 
-const _symptomLineColors = [
-  Color(0xFF5E35B1),
-  AppDesign.teal,
-  Color(0xFFE65100),
-  Color(0xFF43A047),
-  Color(0xFF1E88E5),
-  Color(0xFFFF6B6B),
-  Color(0xFFFFE66D),
-  Color(0xFF4ECDC4),
-];
+const _symptomLineColors = AppDesign.chartPalette;
 
 const _ageRangeColors = {
-  '0-17': Color(0xFF1E88E5),
-  '18-35': Color(0xFF43A047),
-  '36-50': Color(0xFFE65100),
-  '51+': Color(0xFF5E35B1),
+  '0-17': AppDesign.blue,
+  '18-35': AppDesign.navy,
+  '36-50': Color(0xFF5B8CC9),
+  '51+': Color(0xFF8FAFD6),
 };
 
 class CheckUpAnalyticsPage extends StatefulWidget {
@@ -915,11 +907,7 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                   isCurved: true,
                   curveSmoothness: 0.22,
                   preventCurveOverShooting: true,
-                  gradient: const LinearGradient(
-                    colors: [AppDesign.teal, _primaryAqua],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
+                  color: _primaryAqua,
                   barWidth: 3.5,
                   isStrokeCapRound: true,
                   dotData: FlDotData(
@@ -935,16 +923,7 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                   ),
                   belowBarData: BarAreaData(
                     show: true,
-                    gradient: LinearGradient(
-                      colors: [
-                        _primaryAqua.withValues(alpha: 0.28),
-                        _primaryAqua.withValues(alpha: 0.04),
-                        Colors.transparent,
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      stops: const [0.0, 0.55, 1.0],
-                    ),
+                    color: _primaryAqua.withValues(alpha: 0.12),
                   ),
                   spots: data.asMap().entries.map((entry) {
                     return FlSpot(
@@ -1278,9 +1257,7 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                   isCurved: true,
                   curveSmoothness: 0.2,
                   preventCurveOverShooting: true,
-                  gradient: LinearGradient(
-                    colors: [color, color.withValues(alpha: 0.65)],
-                  ),
+                  color: color,
                   barWidth: 2.8,
                   isStrokeCapRound: true,
                   dotData: FlDotData(
@@ -1561,11 +1538,7 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(8),
                       ),
-                      gradient: LinearGradient(
-                        colors: [color, color.withValues(alpha: 0.55)],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                      ),
+                      color: color,
                       backDrawRodData: BackgroundBarChartRodData(
                         show: true,
                         toY: maxY,
@@ -1644,60 +1617,11 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 150,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            _panelTop.withValues(alpha: 0.98),
-            _panelBottom.withValues(alpha: 0.98),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.18), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.16),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: _lightOffWhite,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.8),
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
+    return AppMetricCard(
+      label: title,
+      value: value,
+      icon: icon,
+      supportingText: subtitle,
     );
   }
 }

@@ -670,13 +670,22 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           ),
         ),
         actions: [
-          TextButton.icon(
+          OutlinedButton.icon(
             onPressed: () async {
               Navigator.pop(context);
               await _showPatientHistory(record);
             },
             icon: const Icon(Icons.history),
             label: const Text('Patient history'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: ChoColors.aqua,
+              side: const BorderSide(color: ChoColors.aqua, width: 1.4),
+              minimumSize: const Size.fromHeight(44),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              textStyle: const TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),

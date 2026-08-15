@@ -144,7 +144,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
 
     return Theme(
       data: Theme.of(context).copyWith(
-        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Mont'),
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Manrope'),
       ),
       child: Scaffold(
         backgroundColor: _darkDeepTeal,
@@ -529,7 +529,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
               onPressed: _isLoading ? null : resetPassword,
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primaryAqua,
-                foregroundColor: _darkDeepTeal,
+                foregroundColor: Colors.white,
                 disabledBackgroundColor: _mutedCoolGray.withValues(alpha: 0.3),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),

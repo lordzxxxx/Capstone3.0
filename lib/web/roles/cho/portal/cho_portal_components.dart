@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
 abstract final class ChoColors {
   static const background = AppColors.backgroundLight;
+  static const canvas = AppColors.canvasLight;
   static const surface = AppColors.surfaceLight;
-  static const surfaceAlt = Color(0xFFEDF3FA);
-  static const border = Color(0xFFD9E5F2);
+  static const surfaceAlt = AppColors.surfaceSubtle;
+  static const border = AppColors.border;
+  static const borderStrong = AppColors.borderStrong;
   static const aqua = AppColors.primary;
   static const ice = AppColors.secondary;
   static const text = AppColors.textPrimary;
@@ -41,18 +44,12 @@ class ChoPageHeader extends StatelessWidget {
       label: '$title page',
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(22),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: ChoColors.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: ChoColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          boxShadow: const [],
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -61,14 +58,18 @@ class ChoPageHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 5,
-                  height: 58,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    color: ChoColors.aqua,
-                    borderRadius: BorderRadius.circular(99),
+                    color: ChoColors.aqua.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: ChoColors.aqua.withValues(alpha: 0.22),
+                    ),
                   ),
+                  child: Icon(icon, color: ChoColors.aqua, size: 22),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,7 +77,6 @@ class ChoPageHeader extends StatelessWidget {
                       Text(
                         '$breadcrumb / $title',
                         style: const TextStyle(
-                          fontFamily: 'Mont',
                           color: ChoColors.aqua,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -86,7 +86,7 @@ class ChoPageHeader extends StatelessWidget {
                       Text(
                         title,
                         style: TextStyle(
-                          fontFamily: 'Mont',
+                          fontFamily: AppTheme.displayFontFamily,
                           color: ChoColors.text,
                           fontSize: compact ? 23 : 28,
                           fontWeight: FontWeight.w800,
@@ -96,7 +96,6 @@ class ChoPageHeader extends StatelessWidget {
                       Text(
                         description,
                         style: const TextStyle(
-                          fontFamily: 'Mont',
                           color: ChoColors.muted,
                           height: 1.45,
                         ),
@@ -160,7 +159,7 @@ class ChoViewTabs extends StatelessWidget {
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             color: ChoColors.surfaceAlt,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: ChoColors.border),
           ),
           child: Row(
@@ -177,17 +176,12 @@ class ChoViewTabs extends StatelessWidget {
                     backgroundColor: selected
                         ? ChoColors.aqua
                         : Colors.transparent,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 13,
-                    ),
+                    minimumSize: const Size(48, 44),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    textStyle: const TextStyle(
-                      fontFamily: 'Mont',
-                      fontWeight: FontWeight.w700,
-                    ),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   child: Text(tabs[index]),
                 ),
@@ -223,75 +217,12 @@ class ChoKpiCard extends StatelessWidget {
     return Semantics(
       button: onTap != null,
       label: '$label: $value. $supportingText',
-      child: InkWell(
+      child: AppMetricCard(
+        label: label,
+        value: value,
+        icon: icon,
+        supportingText: supportingText,
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          // Leave enough vertical room for the value, label, and optional
-          // two-line supporting text at the readable sans-serif weight.
-          // This prevents the yellow/black RenderFlex overflow stripe on
-          // CHO and BHW module summary cards.
-          height: 154,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: ChoColors.navSurface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: ChoColors.navBorder),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(11),
-                  border: Border.all(color: color.withValues(alpha: 0.35)),
-                ),
-                child: Icon(icon, color: Colors.white, size: 20),
-              ),
-              const Spacer(),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontFamily: 'Mont',
-                  color: ChoColors.navText,
-                  fontSize: 23,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontFamily: 'Mont',
-                  color: ChoColors.navMuted,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (supportingText.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  supportingText,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Mont',
-                    color: ChoColors.navMuted,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -378,7 +309,7 @@ class ChoStatusBadge extends StatelessWidget {
                   softWrap: false,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontFamily: 'Mont',
+                    fontFamily: 'Manrope',
                     color: color,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -422,7 +353,7 @@ class ChoEmptyState extends StatelessWidget {
             Text(
               title,
               style: const TextStyle(
-                fontFamily: 'Mont',
+                fontFamily: 'Manrope',
                 color: ChoColors.text,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -433,7 +364,7 @@ class ChoEmptyState extends StatelessWidget {
               displayMessage,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontFamily: 'Mont',
+                fontFamily: 'Manrope',
                 color: ChoColors.muted,
               ),
             ),
@@ -471,7 +402,7 @@ class ChoErrorState extends StatelessWidget {
             const Text(
               'Data could not be loaded',
               style: TextStyle(
-                fontFamily: 'Mont',
+                fontFamily: 'Manrope',
                 color: ChoColors.text,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -482,7 +413,7 @@ class ChoErrorState extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontFamily: 'Mont',
+                fontFamily: 'Manrope',
                 color: ChoColors.muted,
               ),
             ),

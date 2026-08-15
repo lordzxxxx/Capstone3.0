@@ -20,6 +20,7 @@ import 'package:mycapstone_project/web/roles/bhw/referrals/referrals.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 import 'package:mycapstone_project/web/shared/widgets/login_success_sweet_alert.dart';
 import 'package:mycapstone_project/web/shared/services/firestore_rest_reader.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _primaryAquaBright = Color(0xFF4EA1FF);
@@ -109,10 +110,15 @@ class _LoginState extends State<Login> {
   Future<void> _safeOffAll(
     Widget page, {
     Map<String, dynamic>? arguments,
+    String? routeName,
   }) async {
     FocusManager.instance.primaryFocus?.unfocus();
     await Future.delayed(const Duration(milliseconds: 90));
     if (!mounted) return;
+    if (routeName != null) {
+      Get.offAllNamed(routeName, arguments: arguments);
+      return;
+    }
     Get.offAll(
       () => page,
       arguments: arguments,
@@ -232,7 +238,10 @@ class _LoginState extends State<Login> {
   Future<void> _navigateByRole(User user, String role) async {
     if (_isChoSuperAdminRole(role)) {
       _clearRoleValidationForDashboard();
-      await _safeOffAll(const ChoSuperAdminCenter());
+      await _safeOffAll(
+        const ChoSuperAdminCenter(),
+        routeName: WebRoutes.choSuperAdmin,
+      );
       return;
     }
 
@@ -241,19 +250,23 @@ class _LoginState extends State<Login> {
       await _safeOffAll(
         const cho.ChoDashboard(),
         arguments: {'roleValidated': true, 'uid': user.uid, 'role': 'cho'},
+        routeName: WebRoutes.choDashboard,
       );
       return;
     }
 
     if (_isDoctorRole(role)) {
       _clearRoleValidationForDashboard();
-      await _safeOffAll(const ReferralsPage());
+      await _safeOffAll(
+        const ReferralsPage(),
+        routeName: WebRoutes.doctorReferrals,
+      );
       return;
     }
 
     // BHW and other non-CHO roles should not access the CHO dashboard route.
     _clearRoleValidationForDashboard();
-    await _safeOffAll(const HomePage());
+    await _safeOffAll(const HomePage(), routeName: WebRoutes.bhwDashboard);
   }
 
   Future<void> _showSuccessDialogAndNavigate(User user, String role) async {
@@ -977,7 +990,7 @@ class _LoginState extends State<Login> {
               Text(
                 'AI-DSUHIS',
                 style: TextStyle(
-                  fontFamily: 'Mont',
+                  fontFamily: 'Manrope',
                   fontSize: isCompact ? 32 : 52,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -988,7 +1001,7 @@ class _LoginState extends State<Login> {
               Text(
                 'Secure access to unified city and barangay health information.',
                 style: TextStyle(
-                  fontFamily: 'Mont',
+                  fontFamily: 'Manrope',
                   fontSize: isCompact ? 15 : 20,
                   color: Colors.white.withValues(alpha: 0.88),
                   height: 1.45,
@@ -998,7 +1011,7 @@ class _LoginState extends State<Login> {
               Text(
                 'A trusted workspace for patient records, referrals, analytics, and community health operations.',
                 style: TextStyle(
-                  fontFamily: 'Mont',
+                  fontFamily: 'Manrope',
                   fontSize: isCompact ? 13 : 15,
                   color: Colors.white.withValues(alpha: 0.72),
                   height: 1.55,
@@ -1050,7 +1063,7 @@ class _LoginState extends State<Login> {
 
     return Theme(
       data: Theme.of(context).copyWith(
-        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Mont'),
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Manrope'),
       ),
       child: Scaffold(
         backgroundColor: _darkDeepTeal,
@@ -1225,7 +1238,7 @@ class _LoginState extends State<Login> {
             Text(
               'Welcome back',
               style: TextStyle(
-                fontFamily: 'Mont',
+                fontFamily: 'Manrope',
                 fontSize: isCompact ? 28 : 34,
                 fontWeight: FontWeight.w800,
                 color: _darkDeepTeal,

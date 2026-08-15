@@ -11,6 +11,7 @@ import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
+import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
 
@@ -636,64 +637,7 @@ class _MortalityPageState extends State<MortalityPage>
     required Color textColor,
     bool isSmallText = false,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _primaryAqua.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: _primaryAqua, size: 28),
-              if (!isSmallText)
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: _lightOffWhite,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (isSmallText)
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: _lightOffWhite,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 13,
-              color: _mutedCoolGray,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
+    return AppMetricCard(label: title, value: value, icon: icon);
   }
 
   // Graphs Section
@@ -1414,12 +1358,9 @@ class _MortalityPageState extends State<MortalityPage>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
-            color: _darkDeepTeal,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _lightOffWhite.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
+            border: Border.all(color: AppDesign.navy, width: 1.5),
             boxShadow: [
               BoxShadow(
                 color: _primaryAqua.withValues(alpha: 0.08),
@@ -1432,27 +1373,28 @@ class _MortalityPageState extends State<MortalityPage>
             value: _statusFilter,
             isExpanded: true,
             underline: const SizedBox.shrink(),
-            dropdownColor: _darkDeepTeal,
-            iconEnabledColor: _lightOffWhite,
-            items: [
-              'All',
-              'Verified',
-              'Pending certification',
-              'Under Review',
-              'Certified',
-            ].map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(
-                  value,
-                  style: TextStyle(
-                    color: _lightOffWhite,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
-                ),
-              );
-            }).toList(),
+            dropdownColor: Colors.white,
+            iconEnabledColor: AppDesign.navy,
+            items:
+                [
+                  'All',
+                  'Verified',
+                  'Pending certification',
+                  'Under Review',
+                  'Certified',
+                ].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        color: AppDesign.navy,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                  );
+                }).toList(),
             onChanged: (String? newValue) {
               if (newValue != null) {
                 setState(() {
@@ -1959,23 +1901,43 @@ class _MortalityPageState extends State<MortalityPage>
 
   void _showAddRecordDialog({Map<String, dynamic>? patientSeed}) {
     final nameController = TextEditingController(
-      text: (patientSeed?['name'] ?? patientSeed?['patientName'] ?? patientSeed?['fullName'] ?? patientSeed?['patient'] ?? '')
-          .toString(),
+      text:
+          (patientSeed?['name'] ??
+                  patientSeed?['patientName'] ??
+                  patientSeed?['fullName'] ??
+                  patientSeed?['patient'] ??
+                  '')
+              .toString(),
     );
     final ageController = TextEditingController(
       text: (patientSeed?['age'] ?? '').toString(),
     );
     final causeController = TextEditingController(
-      text: (patientSeed?['cause'] ?? patientSeed?['causeOfDeath'] ?? patientSeed?['diagnosis'] ?? patientSeed?['disease'] ?? '').toString(),
+      text:
+          (patientSeed?['cause'] ??
+                  patientSeed?['causeOfDeath'] ??
+                  patientSeed?['diagnosis'] ??
+                  patientSeed?['disease'] ??
+                  '')
+              .toString(),
     );
     final placeController = TextEditingController(
-      text: (patientSeed?['place'] ?? patientSeed?['placeOfDeath'] ?? patientSeed?['address'] ?? '').toString(),
+      text:
+          (patientSeed?['place'] ??
+                  patientSeed?['placeOfDeath'] ??
+                  patientSeed?['address'] ??
+                  '')
+              .toString(),
     );
     final reportedByController = TextEditingController(
       text: (patientSeed?['reportedBy'] ?? '').toString(),
     );
-    final rawGender = (patientSeed?['gender'] ?? patientSeed?['sex'] ?? 'Male').toString();
-    String selectedGender = (rawGender.toLowerCase() == 'female' || rawGender.toLowerCase() == 'f') ? 'Female' : 'Male';
+    final rawGender = (patientSeed?['gender'] ?? patientSeed?['sex'] ?? 'Male')
+        .toString();
+    String selectedGender =
+        (rawGender.toLowerCase() == 'female' || rawGender.toLowerCase() == 'f')
+        ? 'Female'
+        : 'Male';
 
     showDialog(
       context: context,

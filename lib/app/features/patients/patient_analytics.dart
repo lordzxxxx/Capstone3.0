@@ -116,7 +116,13 @@ class _PatientAnalyticsPageState extends State<PatientAnalyticsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Patient Records Analytics'),
+        backgroundColor: AppDesign.navy,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Patient Records Analytics',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+        ),
         actions: [
           IconButton(
             onPressed: _isLoading ? null : _loadRecords,

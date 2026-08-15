@@ -12,6 +12,7 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'prenatal_constants.dart';
 
 class PrenatalSidebar extends StatelessWidget {
@@ -41,22 +42,22 @@ class PrenatalSidebar extends StatelessWidget {
               (
                 'Dashboard',
                 Icons.dashboard_rounded,
-                () => Get.to(() => const HomePage()),
+                () => Get.toNamed(WebRoutes.bhwDashboard),
               ),
               (
                 'Check-ups',
                 Icons.assignment_turned_in_rounded,
-                () => Get.to(() => const checkup_page.CheckUpPage()),
+                () => Get.toNamed(WebRoutes.bhwCheckups),
               ),
               (
                 'Summary Generation',
                 Icons.favorite_rounded,
-                () => Get.to(() => const HealthMetricsPage()),
+                () => Get.toNamed(WebRoutes.bhwSummary),
               ),
               (
                 'Analytics',
                 Icons.analytics_rounded,
-                () => Get.to(() => const AnalyticsPage()),
+                () => Get.toNamed(WebRoutes.bhwAnalytics),
               ),
             ]),
 
@@ -66,12 +67,12 @@ class PrenatalSidebar extends StatelessWidget {
               (
                 'Immunization',
                 Icons.vaccines_rounded,
-                () => Get.to(() => const ImmunizationPage()),
+                () => Get.toNamed(WebRoutes.bhwImmunization),
               ),
               (
                 'Patient Records',
                 Icons.person_rounded,
-                () => Get.to(() => const PatientRecordPage()),
+                () => Get.toNamed(WebRoutes.bhwPatients),
               ),
             ]),
 
@@ -80,17 +81,17 @@ class PrenatalSidebar extends StatelessWidget {
               (
                 'Communicable',
                 Icons.coronavirus_rounded,
-                () => Get.to(() => const CommunicablePage()),
+                () => Get.toNamed(WebRoutes.bhwCommunicable),
               ),
               (
                 'Non-Communicable',
                 Icons.health_and_safety_rounded,
-                () => Get.to(() => const NonCommunicablePage()),
+                () => Get.toNamed(WebRoutes.bhwNonCommunicable),
               ),
               (
                 'Mortality',
                 Icons.analytics_outlined,
-                () => Get.to(() => const MortalityPage()),
+                () => Get.toNamed(WebRoutes.bhwMortality),
               ),
             ]),
 
@@ -378,7 +379,7 @@ class PrenatalSidebar extends StatelessWidget {
         child: InkWell(
           onTap: () async {
             await FirebaseAuth.instance.signOut();
-            Get.offAll(() => const Login());
+            Get.offAllNamed(WebRoutes.login);
           },
           borderRadius: BorderRadius.circular(8),
           child: Container(

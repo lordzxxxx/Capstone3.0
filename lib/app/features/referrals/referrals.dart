@@ -9,6 +9,8 @@ import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
+import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _darkDeepTeal = AppDesign.page;
@@ -250,7 +252,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
       final scope = await UserAccessScopeService.instance.loadCurrentScope();
       if (!scope.isAuthenticated) {
         if (!mounted) return;
-        Get.offAll(() => const Login());
+        Get.offAllNamed(MobileRoutes.login);
         return;
       }
 
@@ -264,7 +266,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
           backgroundColor: Colors.redAccent,
           colorText: Colors.white,
         );
-        Get.offAll(() => const Login());
+        Get.offAllNamed(MobileRoutes.login);
         return;
       }
 
@@ -1437,7 +1439,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                 label: Text(_isSubmitting ? 'Submitting...' : 'Send referral'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primaryAqua,
-                  foregroundColor: _darkDeepTeal,
+                  foregroundColor: Colors.white,
                 ),
               ),
             ),
@@ -1752,36 +1754,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
   }
 
   Widget _buildSummaryCard(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _panelSurface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: _primaryAqua),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              color: _lightOffWhite,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: _mutedCoolGray),
-          ),
-        ],
-      ),
-    );
+    return AppMetricCard(label: label, value: value, icon: icon);
   }
 
   Widget _buildReferralCard(QueryDocumentSnapshot<Map<String, dynamic>> doc) {

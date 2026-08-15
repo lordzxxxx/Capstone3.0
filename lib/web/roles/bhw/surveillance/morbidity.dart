@@ -7,6 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/web/shared/utils/checkup_pdf.dart';
@@ -57,14 +59,14 @@ class _MorbidityPageState extends State<MorbidityPage> {
     super.initState();
     _activeView = healthModuleViewFromUrl();
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => persistHealthModuleView('/morbidity', _activeView),
+      (_) => persistHealthModuleView(WebRoutes.bhwMorbidity, _activeView),
     );
   }
 
   void _setActiveView(HealthModuleView view) {
     if (_activeView == view) return;
     setState(() => _activeView = view);
-    persistHealthModuleView('/morbidity', view);
+    persistHealthModuleView(WebRoutes.bhwMorbidity, view);
   }
 
   static const List<String> _statusOptions = [
@@ -608,42 +610,36 @@ class _MorbidityPageState extends State<MorbidityPage> {
         value: summary.totalCases.toString(),
         helper: 'All morbidity cases derived from linked check-up records',
         icon: Icons.folder_open_rounded,
-        accent: _primaryAqua,
       ),
       _MetricCard(
         label: 'Active Follow-up',
         value: summary.activeCases.toString(),
         helper: 'Cases still active or under treatment',
         icon: Icons.health_and_safety_rounded,
-        accent: _signalAmber,
       ),
       _MetricCard(
         label: 'Closed Cases',
         value: summary.recoveredCases.toString(),
         helper: 'Linked check-up cases already completed or resolved',
         icon: Icons.healing_rounded,
-        accent: _signalGreen,
       ),
       _MetricCard(
         label: 'High Priority',
         value: summary.highPriorityCases.toString(),
         helper: 'Severe or critical records needing close review',
         icon: Icons.priority_high_rounded,
-        accent: _signalAmber,
       ),
       _MetricCard(
         label: 'Recovery Rate',
         value: '${summary.recoveryRate.toStringAsFixed(1)}%',
         helper: 'Closed cases compared with total linked morbidity cases',
         icon: Icons.trending_up_rounded,
-        accent: _signalGreen,
       ),
       _MetricCard(
         label: 'Top Disease',
         value: summary.topDisease,
         helper: 'Most reported symptom pulled from linked check-up records',
         icon: Icons.biotech_rounded,
-        accent: _signalRed,
       ),
     ];
 
@@ -1615,7 +1611,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                           label: const Text('Generate PDF'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _primaryAqua,
-                            foregroundColor: _darkDeepTeal,
+                            foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 18,
                               vertical: 14,
@@ -1953,7 +1949,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: _primaryAqua,
-                                  foregroundColor: _darkDeepTeal,
+                                  foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 18,
                                     vertical: 14,
@@ -2332,62 +2328,21 @@ class _MetricCard extends StatelessWidget {
   final String value;
   final String helper;
   final IconData icon;
-  final Color accent;
 
   const _MetricCard({
     required this.label,
     required this.value,
     required this.helper,
     required this.icon,
-    required this.accent,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _panelTeal,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: accent),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            label,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: _mutedCoolGray),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: _lightOffWhite,
-              fontWeight: FontWeight.w700,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            helper,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: _mutedCoolGray, height: 1.4),
-          ),
-        ],
-      ),
+    return AppMetricCard(
+      label: label,
+      value: value,
+      icon: icon,
+      supportingText: helper,
     );
   }
 }

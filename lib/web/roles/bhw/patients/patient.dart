@@ -16,14 +16,17 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/morbidity.dart';
 import 'package:mycapstone_project/web/roles/bhw/referrals/bhw_referral_management.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_database_helper.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/canonical_patient_registration_modal.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/canonical_patient_details_modal.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_operational_summary.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/shared/utils/patient_pdf.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'dart:async';
 import 'dart:math' as math;
@@ -575,22 +578,22 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                   _buildSidebarItem(
                     icon: Icons.dashboard_rounded,
                     label: 'Dashboard',
-                    onTap: () => Get.to(() => const HomePage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwDashboard),
                   ),
                   _buildSidebarItem(
                     icon: Icons.assignment_turned_in_rounded,
                     label: 'Check-ups',
-                    onTap: () => Get.to(() => const checkup_page.CheckUpPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwCheckups),
                   ),
                   _buildSidebarItem(
                     icon: Icons.favorite_rounded,
                     label: 'Summary Generation',
-                    onTap: () => Get.to(() => const HealthMetricsPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwSummary),
                   ),
                   _buildSidebarItem(
                     icon: Icons.analytics_rounded,
                     label: 'Analytics',
-                    onTap: () => Get.to(() => const AnalyticsPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwAnalytics),
                   ),
                   const SizedBox(height: 8),
                   Padding(
@@ -624,12 +627,12 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                   _buildSidebarItem(
                     icon: Icons.pregnant_woman_rounded,
                     label: 'Prenatal Care',
-                    onTap: () => Get.to(() => const PrenatalPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwPrenatal),
                   ),
                   _buildSidebarItem(
                     icon: Icons.vaccines_rounded,
                     label: 'Immunization',
-                    onTap: () => Get.to(() => const ImmunizationPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwImmunization),
                   ),
                   _buildSidebarItem(
                     icon: Icons.person_rounded,
@@ -669,17 +672,17 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                   _buildSidebarItem(
                     icon: Icons.coronavirus_rounded,
                     label: 'Communicable',
-                    onTap: () => Get.to(() => const CommunicablePage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwCommunicable),
                   ),
                   _buildSidebarItem(
                     icon: Icons.health_and_safety_rounded,
                     label: 'Non-Communicable',
-                    onTap: () => Get.to(() => const NonCommunicablePage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwNonCommunicable),
                   ),
                   _buildSidebarItem(
                     icon: Icons.analytics_outlined,
                     label: 'Mortality',
-                    onTap: () => Get.to(() => const MortalityPage()),
+                    onTap: () => Get.toNamed(WebRoutes.bhwMortality),
                   ),
                 ],
               ),
@@ -699,7 +702,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                 child: InkWell(
                   onTap: () async {
                     await FirebaseAuth.instance.signOut();
-                    Get.offAll(() => const Login());
+                    Get.offAllNamed(WebRoutes.login);
                   },
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
@@ -890,47 +893,51 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   }
 
   Widget _buildStatisticsDashboard() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildWebMetricCard(
-            title: 'Total Patients',
-            value: '${_filteredPatients.length}',
-            icon: Icons.people,
-            color: _primaryAqua,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildWebMetricCard(
-            title: 'Active',
-            value:
-                '${_filteredPatients.where((r) => r['status'] == 'Active').length}',
-            icon: Icons.check_circle,
-            color: Colors.green,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildWebMetricCard(
-            title: 'Follow-up',
-            value:
-                '${_filteredPatients.where((r) => r['status'] == 'Follow-up').length}',
-            icon: Icons.schedule,
-            color: Colors.orange,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildWebMetricCard(
-            title: 'Inactive',
-            value:
-                '${_filteredPatients.where((r) => r['status'] == 'Inactive').length}',
-            icon: Icons.hourglass_empty,
-            color: Colors.red,
-          ),
-        ),
-      ],
+    final cards = <Widget>[
+      _buildWebMetricCard(
+        title: 'Total Patients',
+        value: '${_filteredPatients.length}',
+        icon: Icons.people_outline,
+      ),
+      _buildWebMetricCard(
+        title: 'Active',
+        value:
+            '${_filteredPatients.where((r) => r['status'] == 'Active').length}',
+        icon: Icons.check_circle_outline,
+      ),
+      _buildWebMetricCard(
+        title: 'Follow-up',
+        value:
+            '${_filteredPatients.where((r) => r['status'] == 'Follow-up').length}',
+        icon: Icons.schedule_outlined,
+      ),
+      _buildWebMetricCard(
+        title: 'Inactive',
+        value:
+            '${_filteredPatients.where((r) => r['status'] == 'Inactive').length}',
+        icon: Icons.hourglass_empty_outlined,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 1100
+            ? 4
+            : constraints.maxWidth >= 680
+            ? 2
+            : 1;
+        const spacing = 12.0;
+        final width = columns == 1
+            ? constraints.maxWidth
+            : (constraints.maxWidth - spacing * (columns - 1)) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: cards
+              .map((card) => SizedBox(width: width, child: card))
+              .toList(growable: false),
+        );
+      },
     );
   }
 
@@ -938,75 +945,8 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     required String title,
     required String value,
     required IconData icon,
-    required Color color,
   }) {
-    return StatefulBuilder(
-      builder: (context, setState) {
-        bool isHovered = false;
-        return MouseRegion(
-          onEnter: (_) => setState(() => isHovered = true),
-          onExit: (_) => setState(() => isHovered = false),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _primaryAqua.withValues(alpha: 0.15),
-                width: 1.5,
-              ),
-              boxShadow: isHovered
-                  ? [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.4),
-                        blurRadius: 15,
-                        spreadRadius: 1,
-                        offset: const Offset(0, 0),
-                      ),
-                    ]
-                  : [],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(icon, color: color, size: 24),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: _darkDeepTeal,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: _mutedCoolGray,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    return AppMetricCard(label: title, value: value, icon: icon);
   }
 
   Widget _buildFiltersSection() {
@@ -1041,10 +981,10 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                   child: DropdownButton<String>(
                     value: _selectedStatus,
                     isExpanded: true,
-                    dropdownColor: _darkDeepTeal,
+                    dropdownColor: Colors.white,
                     icon: Icon(Icons.arrow_drop_down, color: _primaryAqua),
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1054,7 +994,14 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                     ) {
                       return DropdownMenuItem<String>(
                         value: option,
-                        child: Text(option),
+                        child: Text(
+                          option,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       );
                     }).toList(),
                     onChanged: (String? newValue) {
@@ -1076,7 +1023,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: _sidebarDark,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _primaryAqua.withValues(alpha: 0.2),
@@ -1419,32 +1366,68 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     required List<String> options,
     required ValueChanged<String> onChanged,
   }) {
+    final responsiveWidth = math.min(
+      178.0,
+      math.max(132.0, MediaQuery.sizeOf(context).width - 56),
+    );
     return SizedBox(
-      width: 178,
+      width: responsiveWidth,
       child: DropdownButtonFormField<String>(
         key: ValueKey('$label-$value'),
         initialValue: options.contains(value) ? value : options.first,
         isExpanded: true,
-        dropdownColor: _darkDeepTeal,
-        style: const TextStyle(color: Colors.white, fontSize: 12),
+        dropdownColor: AppColors.surfaceLight,
+        iconEnabledColor: AppColors.textSecondary,
+        style: const TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: Colors.white60),
+          labelStyle: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+          floatingLabelStyle: const TextStyle(
+            color: AppColors.primary,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
           filled: true,
-          fillColor: _darkDeepTeal,
-          isDense: true,
+          fillColor: AppColors.surfaceLight,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(9),
-            borderSide: BorderSide(color: _primaryAqua.withValues(alpha: 0.3)),
+            borderSide: const BorderSide(color: AppColors.borderStrong),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(9),
-            borderSide: BorderSide(color: _primaryAqua.withValues(alpha: 0.3)),
+            borderSide: const BorderSide(color: AppColors.borderStrong),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: const BorderSide(color: AppColors.primary, width: 2),
           ),
         ),
         items: options
             .map(
-              (option) => DropdownMenuItem(value: option, child: Text(option)),
+              (option) => DropdownMenuItem(
+                value: option,
+                child: Text(
+                  option,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             )
             .toList(growable: false),
         onChanged: (next) {
@@ -3801,7 +3784,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                                 ),
                                 label: const Text('Generate PDF'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
+                                  backgroundColor: _primaryAqua,
                                   foregroundColor: Colors.white,
                                   shadowColor: Colors.transparent,
                                   padding: const EdgeInsets.symmetric(
@@ -4729,7 +4712,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
                       label: const Text('Save'),
                       onPressed: _savePatient,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
+                        backgroundColor: _primaryAqua,
                         foregroundColor: Colors.white,
                         shadowColor: Colors.transparent,
                         padding: const EdgeInsets.symmetric(

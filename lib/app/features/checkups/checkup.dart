@@ -638,7 +638,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                         label: const Text('Got It'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _primaryAqua,
-                          foregroundColor: _lightOffWhite,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 24,
                             vertical: 12,
@@ -1425,12 +1425,9 @@ class _CheckUpPageState extends State<CheckUpPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
-            color: _darkDeepTeal,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _lightOffWhite.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
+            border: Border.all(color: AppDesign.navy, width: 1.5),
             boxShadow: [
               BoxShadow(
                 color: _primaryAqua.withValues(alpha: 0.08),
@@ -1443,8 +1440,8 @@ class _CheckUpPageState extends State<CheckUpPage> {
             value: _statusFilter,
             isExpanded: true,
             underline: const SizedBox.shrink(),
-            dropdownColor: _darkDeepTeal,
-            iconEnabledColor: _lightOffWhite,
+            dropdownColor: Colors.white,
+            iconEnabledColor: AppDesign.navy,
             items: ['All', 'Pending', 'Completed', 'Process', 'On Follow Up']
                 .map((String value) {
                   return DropdownMenuItem<String>(
@@ -2080,7 +2077,6 @@ class _CheckUpTable extends StatelessWidget {
           recordLabel: 'Check-up record',
           patientName: patientName,
           location: address,
-          accentColor: AppDesign.checkUp,
           status: record['status']?.toString() ?? 'Recorded',
           secondaryStatus:
               record['referralStatus']?.toString() ??
@@ -2487,7 +2483,7 @@ void _showCheckUpDetailsDialog(
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _primaryAqua,
-                          foregroundColor: _lightOffWhite,
+                          foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -3616,15 +3612,15 @@ Color _getCategoryColor(String category) {
     case 'emergency':
       return Colors.red;
     case 'communicable disease':
-      return Colors.orange;
+      return AppDesign.blue;
     case 'non-communicable disease':
       return Colors.blue;
     case 'prenatal care':
-      return Colors.pink;
+      return AppDesign.blue;
     case 'pediatric care':
-      return Colors.purple;
+      return AppDesign.navy;
     default:
-      return Colors.green;
+      return AppDesign.blue;
   }
 }
 
@@ -3700,7 +3696,10 @@ class _NewCheckUpFullScreenModalState
       _surnameController.text = directSurname;
     } else {
       final patientName =
-          (patientSeed['patient'] ?? patientSeed['patientName'] ?? patientSeed['fullName'] ?? '')
+          (patientSeed['patient'] ??
+                  patientSeed['patientName'] ??
+                  patientSeed['fullName'] ??
+                  '')
               .toString()
               .trim();
       final nameParts = patientName.isEmpty
@@ -3720,19 +3719,36 @@ class _NewCheckUpFullScreenModalState
         ? fullAddress
         : (patientSeed['address'] ?? '').toString();
     _symptomsController.text =
-        (patientSeed['symptoms'] ?? patientSeed['chiefComplaint'] ?? patientSeed['disease'] ?? '').toString();
+        (patientSeed['symptoms'] ??
+                patientSeed['chiefComplaint'] ??
+                patientSeed['disease'] ??
+                '')
+            .toString();
     _planController.text =
-        (patientSeed['plan'] ?? patientSeed['treatment'] ?? patientSeed['treatmentPlan'] ?? '').toString();
-    _bloodPressureController.text = (patientSeed['bloodPressure'] ?? patientSeed['bp'] ?? '')
+        (patientSeed['plan'] ??
+                patientSeed['treatment'] ??
+                patientSeed['treatmentPlan'] ??
+                '')
+            .toString();
+    _bloodPressureController.text =
+        (patientSeed['bloodPressure'] ?? patientSeed['bp'] ?? '').toString();
+    _temperatureController.text =
+        (patientSeed['temperature'] ?? patientSeed['temp'] ?? '').toString();
+    _heartRateController.text =
+        (patientSeed['heartRate'] ??
+                patientSeed['hr'] ??
+                patientSeed['pulse'] ??
+                '')
+            .toString();
+    _respiratoryRateController.text =
+        (patientSeed['respiratoryRate'] ?? patientSeed['rr'] ?? '').toString();
+    _oxygenSaturationController.text =
+        (patientSeed['oxygenSaturation'] ?? patientSeed['spo2'] ?? '')
+            .toString();
+    _weightController.text = (patientSeed['weight'] ?? patientSeed['wt'] ?? '')
         .toString();
-    _temperatureController.text = (patientSeed['temperature'] ?? patientSeed['temp'] ?? '').toString();
-    _heartRateController.text = (patientSeed['heartRate'] ?? patientSeed['hr'] ?? patientSeed['pulse'] ?? '').toString();
-    _respiratoryRateController.text = (patientSeed['respiratoryRate'] ?? patientSeed['rr'] ?? '')
+    _heightController.text = (patientSeed['height'] ?? patientSeed['ht'] ?? '')
         .toString();
-    _oxygenSaturationController.text = (patientSeed['oxygenSaturation'] ?? patientSeed['spo2'] ?? '')
-        .toString();
-    _weightController.text = (patientSeed['weight'] ?? patientSeed['wt'] ?? '').toString();
-    _heightController.text = (patientSeed['height'] ?? patientSeed['ht'] ?? '').toString();
   }
 
   // Helper method to build section cards
@@ -4208,7 +4224,7 @@ class _NewCheckUpFullScreenModalState
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _primaryAqua,
-                              foregroundColor: _darkDeepTeal,
+                              foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -4875,7 +4891,7 @@ class _NewCheckUpFullScreenModalState
                       label: const Text('Got It'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primaryAqua,
-                        foregroundColor: _lightOffWhite,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
                           vertical: 12,
@@ -6157,7 +6173,7 @@ class _EditCheckUpFullScreenModalState
                       label: const Text('Got It'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primaryAqua,
-                        foregroundColor: _lightOffWhite,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
                           vertical: 12,

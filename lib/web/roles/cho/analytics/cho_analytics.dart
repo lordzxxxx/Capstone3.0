@@ -15,12 +15,14 @@ import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
+import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 import 'package:mycapstone_project/web/shared/utils/report_download.dart';
 import 'package:mycapstone_project/web/shared/utils/report_branding.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 
 // Names are historical (page was dark-themed); values now point at the
 // white-card system used across the rest of the app.
@@ -94,7 +96,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       );
       if (!scope.isAuthenticated) {
         if (mounted) {
-          Get.offAll(() => const Login());
+          Get.offAllNamed(WebRoutes.login);
         }
         return;
       }
@@ -701,7 +703,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
         title: const Text(
           'CHO Reports and Analytics',
           style: TextStyle(
-            fontFamily: 'Mont',
+            fontFamily: 'Manrope',
             color: ChoColors.navText,
             fontWeight: FontWeight.w800,
           ),
@@ -755,11 +757,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_panelSurface, _panelAlt],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: _panelSurface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
       ),
@@ -797,9 +795,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: _darkDeepTeal,
+              color: _panelAlt,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _primaryAqua.withValues(alpha: 0.20)),
+              border: Border.all(color: const Color(0xFFD9E5F2)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -967,41 +965,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   }
 
   Widget _buildMetricCard(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0D274D),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF1C3D66)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: _primaryAqua.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(label, style: const TextStyle(color: Color(0xFFB8C9DB))),
-        ],
-      ),
-    );
+    return AppMetricCard(label: label, value: value, icon: icon);
   }
 
   Widget _buildTrendSection() {
@@ -1251,8 +1215,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   ? 0.08
                   : (entry.caseCount / maxCases).clamp(0.12, 1.0);
               final color = Color.lerp(
-                Colors.teal.withValues(alpha: 0.15),
-                Colors.redAccent.withValues(alpha: 0.90),
+                ChoColors.ice.withValues(alpha: 0.15),
+                ChoColors.aqua.withValues(alpha: 0.90),
                 intensity,
               )!;
               return Container(
@@ -1567,7 +1531,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             label: const Text('Export CSV'),
             style: ElevatedButton.styleFrom(
               backgroundColor: _primaryAqua,
-              foregroundColor: _darkDeepTeal,
+              foregroundColor: Colors.white,
             ),
           ),
           ElevatedButton.icon(

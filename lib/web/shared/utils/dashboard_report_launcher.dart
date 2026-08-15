@@ -18,11 +18,12 @@ import 'package:mycapstone_project/web/shared/utils/report_branding.dart';
 import 'package:mycapstone_project/web/shared/utils/report_generation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
-const Color _launcherPrimaryAqua = Color(0xFF00A8B5);
-const Color _launcherDarkDeepTeal = Color(0xFF0A1F24);
-const Color _launcherSidebarDark = Color(0xFF0E2F34);
-const Color _launcherMutedCoolGray = Color(0xFF546E7A);
+const Color _launcherPrimaryAqua = AppColors.primary;
+const Color _launcherDarkDeepTeal = AppColors.backgroundDark;
+const Color _launcherSidebarDark = AppColors.surfaceDark;
+const Color _launcherMutedCoolGray = AppColors.textOnDarkMuted;
 
 enum DashboardReportType {
   checkup,

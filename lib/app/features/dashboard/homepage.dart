@@ -23,11 +23,13 @@ import 'package:mycapstone_project/app/features/surveillance/non_communicable/no
 import 'package:mycapstone_project/app/features/surveillance/mortality/mortality.dart';
 import 'package:mycapstone_project/app/features/surveillance/morbidity/morbidity_list.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
+import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helper.dart';
 import 'package:mycapstone_project/app/features/immunization/immunization_database_helper.dart';
 import 'package:mycapstone_project/app/features/patients/patient_database_helper.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.navySoft;
@@ -372,7 +374,7 @@ class _HomePageState extends State<HomePage> {
               label: const Text('Login'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primaryAqua,
-                foregroundColor: _darkDeepTeal,
+                foregroundColor: Colors.white,
               ),
             ),
           ],
@@ -1306,16 +1308,7 @@ class _HomePageState extends State<HomePage> {
       }
 
       // Generate color for each symptom
-      final colors = [
-        AppDesign.teal,
-        const Color(0xFFFF6B6B), // red
-        const Color(0xFF4ECDC4), // teal
-        const Color(0xFFFFE66D), // yellow
-        const Color(0xFF95E1D3), // mint
-        const Color(0xFFC7CEEA), // lavender
-        const Color(0xFFFFB6C1), // pink
-        const Color(0xFFA8E6CF), // green
-      ];
+      final colors = AppDesign.chartPalette;
 
       final symptomColors = <String, Color>{};
       for (var i = 0; i < symptomsWithData.length; i++) {
@@ -1336,11 +1329,7 @@ class _HomePageState extends State<HomePage> {
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            gradient: LinearGradient(
-              colors: [color, color.withValues(alpha: 0.5)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
+            color: color,
             barWidth: 2.5,
             isStrokeCapRound: true,
             dotData: FlDotData(
@@ -1356,14 +1345,7 @@ class _HomePageState extends State<HomePage> {
             ),
             belowBarData: BarAreaData(
               show: true,
-              gradient: LinearGradient(
-                colors: [
-                  color.withValues(alpha: 0.2),
-                  color.withValues(alpha: 0.02),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+              color: color.withValues(alpha: 0.14),
             ),
           ),
         );
@@ -1434,7 +1416,7 @@ class _HomePageState extends State<HomePage> {
           ),
           onTap: (index) {
             if (index == 1) {
-              Get.to(() => const AnalyticsPage());
+              Get.toNamed(MobileRoutes.analytics);
               return;
             }
             setState(() {
@@ -1530,22 +1512,22 @@ class _HomePageState extends State<HomePage> {
           {
             'label': 'Check Up',
             'icon': Icons.medical_services,
-            'onTap': () => Get.to(() => const CheckUpPage()),
+            'onTap': () => Get.toNamed(MobileRoutes.checkups),
           },
           {
             'label': 'Morbidity',
             'icon': Icons.healing,
-            'onTap': () => Get.to(() => const MorbidityListPage()),
+            'onTap': () => Get.toNamed(MobileRoutes.morbidity),
           },
           {
             'label': 'Prenatal Care',
             'icon': Icons.pregnant_woman,
-            'onTap': () => Get.to(() => const PrenatalPage()),
+            'onTap': () => Get.toNamed(MobileRoutes.prenatal),
           },
           {
             'label': 'Immunization',
             'icon': Icons.vaccines,
-            'onTap': () => Get.to(() => const ImmunizationPage()),
+            'onTap': () => Get.toNamed(MobileRoutes.immunization),
           },
         ],
       },
@@ -1553,12 +1535,12 @@ class _HomePageState extends State<HomePage> {
         'title': 'Records',
         'subtitle': 'Patient Records',
         'icon': Icons.folder_copy_rounded,
-        'color': Colors.tealAccent,
+        'color': AppDesign.blue,
         'buttons': <Map<String, dynamic>>[
           {
             'label': 'Patient Records',
             'icon': Icons.folder_special,
-            'onTap': () => Get.to(() => const PatientRecordPage()),
+            'onTap': () => Get.toNamed(MobileRoutes.patients),
           },
         ],
       },
@@ -1566,22 +1548,22 @@ class _HomePageState extends State<HomePage> {
         'title': 'Disease Monitoring',
         'subtitle': 'Communicable Disease, Non Communicable Disease, Mortality',
         'icon': Icons.monitor_heart_rounded,
-        'color': Colors.orangeAccent,
+        'color': AppDesign.navy,
         'buttons': <Map<String, dynamic>>[
           {
             'label': 'Communicable Disease',
             'icon': Icons.coronavirus,
-            'onTap': () => Get.to(() => const CommunicableListPage()),
+            'onTap': () => Get.toNamed(MobileRoutes.communicable),
           },
           {
             'label': 'Non Communicable Disease',
             'icon': Icons.sick,
-            'onTap': () => Get.to(() => const NonCommunicablePage()),
+            'onTap': () => Get.toNamed(MobileRoutes.nonCommunicable),
           },
           {
             'label': 'Mortality',
             'icon': Icons.airline_seat_flat,
-            'onTap': () => Get.to(() => const MortalityPage()),
+            'onTap': () => Get.toNamed(MobileRoutes.mortality),
           },
         ],
       },
@@ -1589,12 +1571,12 @@ class _HomePageState extends State<HomePage> {
         'title': 'Coordination',
         'subtitle': 'Referrals',
         'icon': Icons.forward_to_inbox_rounded,
-        'color': Colors.deepPurpleAccent,
+        'color': AppDesign.blue,
         'buttons': <Map<String, dynamic>>[
           {
             'label': 'Referrals',
             'icon': Icons.forward_to_inbox_rounded,
-            'onTap': () => Get.to(() => const ReferralsPage()),
+            'onTap': () => Get.toNamed(MobileRoutes.referrals),
           },
         ],
       },
@@ -1769,285 +1751,244 @@ class _HomePageState extends State<HomePage> {
         child: Drawer(
           backgroundColor: Colors.white,
           elevation: 0,
-          child: Container(
-            decoration: const BoxDecoration(color: Colors.white),
-            child: Stack(
+          child: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
-                Positioned(
-                  top: -70,
-                  right: -50,
-                  child: Container(
-                    width: 180,
-                    height: 180,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _primaryAqua.withValues(alpha: 0.10),
-                    ),
-                  ),
+                _buildDrawerProfileCard(
+                  context,
+                  user: user,
+                  isLoggedIn: isLoggedIn,
                 ),
-                Positioned(
-                  bottom: 90,
-                  left: -40,
-                  child: Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _secondaryIceBlue.withValues(alpha: 0.08),
-                    ),
-                  ),
-                ),
-                SafeArea(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                const SizedBox(height: 20),
+                _buildDrawerSection(
+                  icon: Icons.local_hospital_rounded,
+                  title: 'Patient Management',
+                  subtitle: 'Daily clinical workflows and care tracking',
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.12,
                     children: [
-                      _buildDrawerProfileCard(
-                        context,
-                        user: user,
-                        isLoggedIn: isLoggedIn,
+                      _buildDrawerCardButton(
+                        icon: Icons.medical_services,
+                        label: 'Check Up',
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const CheckUpPage(),
+                            ),
+                          );
+                        },
                       ),
-                      const SizedBox(height: 20),
-                      _buildDrawerSection(
-                        icon: Icons.local_hospital_rounded,
-                        title: 'Patient Management',
-                        subtitle: 'Daily clinical workflows and care tracking',
-                        child: GridView.count(
-                          crossAxisCount: 2,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 1.12,
-                          children: [
-                            _buildDrawerCardButton(
-                              icon: Icons.medical_services,
-                              label: 'Check Up',
-                              onTap: () {
-                                Navigator.of(context).pop();
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => const CheckUpPage(),
-                                  ),
-                                );
-                              },
+                      _buildDrawerCardButton(
+                        icon: Icons.healing,
+                        label: 'Morbidity',
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const MorbidityListPage(),
                             ),
-                            _buildDrawerCardButton(
-                              icon: Icons.healing,
-                              label: 'Morbidity',
-                              onTap: () {
-                                Navigator.of(context).pop();
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const MorbidityListPage(),
-                                  ),
-                                );
-                              },
-                            ),
-                            _buildDrawerCardButton(
-                              icon: Icons.pregnant_woman,
-                              label: 'Prenatal Care',
-                              onTap: () {
-                                Navigator.of(context).pop();
-                                Get.to(() => const PrenatalPage());
-                              },
-                            ),
-                            _buildDrawerCardButton(
-                              icon: Icons.vaccines,
-                              label: 'Immunization',
-                              onTap: () {
-                                Navigator.of(context).pop();
-                                Get.to(() => const ImmunizationPage());
-                              },
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                      const SizedBox(height: 16),
-                      _buildDrawerSection(
-                        icon: Icons.folder_copy_rounded,
-                        title: 'Records Hub',
-                        subtitle: 'Community registries and patient files',
-                        child: GridView.count(
-                          crossAxisCount: 2,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 1.12,
-                          children: [
-                            _buildDrawerCardButton(
-                              icon: Icons.folder_special,
-                              label: 'Patient Records',
-                              onTap: () {
-                                Navigator.of(context).pop();
-                                Get.to(() => const PatientRecordPage());
-                              },
-                            ),
-                          ],
-                        ),
+                      _buildDrawerCardButton(
+                        icon: Icons.pregnant_woman,
+                        label: 'Prenatal Care',
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Get.toNamed(MobileRoutes.prenatal);
+                        },
                       ),
-                      const SizedBox(height: 16),
-                      _buildDrawerSection(
-                        icon: Icons.monitor_heart_rounded,
-                        title: 'Disease Monitoring',
-                        subtitle: 'Population health surveillance and outcomes',
-                        child: GridView.count(
-                          crossAxisCount: 2,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 1.12,
-                          children: [
-                            _buildDrawerCardButton(
-                              icon: Icons.coronavirus,
-                              label: 'Communicable Disease',
-                              onTap: () {
-                                Navigator.pop(context);
-                                Get.to(() => const CommunicableListPage());
-                              },
-                            ),
-                            _buildDrawerCardButton(
-                              icon: Icons.sick,
-                              label: 'Non Communicable Disease',
-                              onTap: () {
-                                Navigator.pop(context);
-                                Get.to(() => const NonCommunicablePage());
-                              },
-                            ),
-                            _buildDrawerCardButton(
-                              icon: Icons.airline_seat_flat,
-                              label: 'Mortality',
-                              onTap: () {
-                                Navigator.pop(context);
-                                Get.to(() => const MortalityPage());
-                              },
-                            ),
-                          ],
-                        ),
+                      _buildDrawerCardButton(
+                        icon: Icons.vaccines,
+                        label: 'Immunization',
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Get.toNamed(MobileRoutes.immunization);
+                        },
                       ),
-                      const SizedBox(height: 16),
-                      _buildDrawerSection(
-                        icon: Icons.hub_rounded,
-                        title: 'Insights & Coordination',
-                        subtitle:
-                            'Open mobile analytics and referral workflows',
-                        child: GridView.count(
-                          crossAxisCount: 2,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 1.12,
-                          children: [
-                            _buildDrawerCardButton(
-                              icon: Icons.analytics_rounded,
-                              label: 'Analytics',
-                              onTap: () {
-                                Navigator.pop(context);
-                                Get.to(() => const AnalyticsPage());
-                              },
-                            ),
-                            _buildDrawerCardButton(
-                              icon: Icons.forward_to_inbox_rounded,
-                              label: 'Referrals',
-                              onTap: () {
-                                Navigator.pop(context);
-                                Get.to(() => const ReferralsPage());
-                              },
-                            ),
-                          ],
-                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildDrawerSection(
+                  icon: Icons.folder_copy_rounded,
+                  title: 'Records Hub',
+                  subtitle: 'Community registries and patient files',
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.12,
+                    children: [
+                      _buildDrawerCardButton(
+                        icon: Icons.folder_special,
+                        label: 'Patient Records',
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Get.toNamed(MobileRoutes.patients);
+                        },
                       ),
-                      const SizedBox(height: 16),
-                      _buildDrawerSection(
-                        icon: isLoggedIn
-                            ? Icons.verified_user_rounded
-                            : Icons.login_rounded,
-                        title: isLoggedIn ? 'Account Access' : 'Ready To Sync',
-                        subtitle: isLoggedIn
-                            ? 'Manage your authenticated mobile session'
-                            : _isOfflineMode
-                            ? 'Sign in or create an account to upload offline records'
-                            : 'Sign in or create an account to unlock synced cloud access',
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            SizedBox(
-                              width: double.infinity,
-                              height: 52,
-                              child: ElevatedButton.icon(
-                                onPressed: () async {
-                                  if (isLoggedIn) {
-                                    await signout();
-                                    if (mounted) {
-                                      _openLoginScreen(
-                                        replaceCurrentRoute: true,
-                                      );
-                                    }
-                                    return;
-                                  }
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildDrawerSection(
+                  icon: Icons.monitor_heart_rounded,
+                  title: 'Disease Monitoring',
+                  subtitle: 'Population health surveillance and outcomes',
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.12,
+                    children: [
+                      _buildDrawerCardButton(
+                        icon: Icons.coronavirus,
+                        label: 'Communicable Disease',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Get.toNamed(MobileRoutes.communicable);
+                        },
+                      ),
+                      _buildDrawerCardButton(
+                        icon: Icons.sick,
+                        label: 'Non Communicable Disease',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Get.toNamed(MobileRoutes.nonCommunicable);
+                        },
+                      ),
+                      _buildDrawerCardButton(
+                        icon: Icons.airline_seat_flat,
+                        label: 'Mortality',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Get.toNamed(MobileRoutes.mortality);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildDrawerSection(
+                  icon: Icons.hub_rounded,
+                  title: 'Insights & Coordination',
+                  subtitle: 'Open mobile analytics and referral workflows',
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.12,
+                    children: [
+                      _buildDrawerCardButton(
+                        icon: Icons.analytics_rounded,
+                        label: 'Analytics',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Get.toNamed(MobileRoutes.analytics);
+                        },
+                      ),
+                      _buildDrawerCardButton(
+                        icon: Icons.forward_to_inbox_rounded,
+                        label: 'Referrals',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Get.toNamed(MobileRoutes.referrals);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildDrawerSection(
+                  icon: isLoggedIn
+                      ? Icons.verified_user_rounded
+                      : Icons.login_rounded,
+                  title: isLoggedIn ? 'Account Access' : 'Ready To Sync',
+                  subtitle: isLoggedIn
+                      ? 'Manage your authenticated mobile session'
+                      : _isOfflineMode
+                      ? 'Sign in or create an account to upload offline records'
+                      : 'Sign in or create an account to unlock synced cloud access',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            if (isLoggedIn) {
+                              await signout();
+                              if (mounted) {
+                                _openLoginScreen(replaceCurrentRoute: true);
+                              }
+                              return;
+                            }
 
-                                  _openLoginScreen(
-                                    replaceCurrentRoute: !_isOfflineMode,
-                                    syncOfflineAfterLogin: _isOfflineMode,
-                                  );
-                                },
-                                icon: Icon(
-                                  isLoggedIn ? Icons.logout : Icons.login,
-                                  size: 20,
-                                ),
-                                label: Text(
-                                  isLoggedIn ? 'Sign Out' : 'Sign In',
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isLoggedIn
-                                      ? Colors.red.shade700
-                                      : _primaryAqua,
-                                  foregroundColor: Colors.white,
-                                  elevation: 6,
-                                  shadowColor:
-                                      (isLoggedIn
-                                              ? Colors.red.shade700
-                                              : _primaryAqua)
-                                          .withValues(alpha: 0.35),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                              ),
+                            _openLoginScreen(
+                              replaceCurrentRoute: !_isOfflineMode,
+                              syncOfflineAfterLogin: _isOfflineMode,
+                            );
+                          },
+                          icon: Icon(
+                            isLoggedIn ? Icons.logout : Icons.login,
+                            size: 20,
+                          ),
+                          label: Text(isLoggedIn ? 'Sign Out' : 'Sign In'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isLoggedIn
+                                ? Colors.red.shade700
+                                : _primaryAqua,
+                            foregroundColor: Colors.white,
+                            elevation: 6,
+                            shadowColor:
+                                (isLoggedIn
+                                        ? Colors.red.shade700
+                                        : _primaryAqua)
+                                    .withValues(alpha: 0.35),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                            if (!isLoggedIn) ...[
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 50,
-                                child: OutlinedButton.icon(
-                                  onPressed: _openSignupScreen,
-                                  icon: const Icon(
-                                    Icons.person_add_alt_1_rounded,
-                                  ),
-                                  label: const Text('Create Account'),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: _secondaryIceBlue,
-                                    side: BorderSide(
-                                      color: _primaryAqua.withValues(
-                                        alpha: 0.55,
-                                      ),
-                                      width: 1.4,
-                                    ),
-                                    backgroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
+                          ),
                         ),
                       ),
+                      if (!isLoggedIn) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: OutlinedButton.icon(
+                            onPressed: _openSignupScreen,
+                            icon: const Icon(Icons.person_add_alt_1_rounded),
+                            label: const Text('Create Account'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: _secondaryIceBlue,
+                              side: BorderSide(
+                                color: _primaryAqua.withValues(alpha: 0.55),
+                                width: 1.4,
+                              ),
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -2518,28 +2459,14 @@ class _HomePageState extends State<HomePage> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.white, color.withValues(alpha: 0.03)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border.all(
-              color: color.withValues(alpha: 0.25),
-              width: 1.5,
-            ),
+            color: AppDesign.surface,
+            border: Border.all(color: AppDesign.borderStrong),
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
-                color: color.withValues(alpha: 0.12),
-                blurRadius: 15,
-                offset: const Offset(0, 5),
-                spreadRadius: 0,
-              ),
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-                spreadRadius: 0,
+                color: Color(0x100B1F3A),
+                blurRadius: 12,
+                offset: Offset(0, 4),
               ),
             ],
           ),
@@ -2549,22 +2476,11 @@ class _HomePageState extends State<HomePage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [color, color.withValues(alpha: 0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.35),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                      spreadRadius: -2,
-                    ),
-                  ],
+                  border: Border.all(color: color.withValues(alpha: 0.22)),
                 ),
-                child: Icon(icon, size: 32, color: Colors.white),
+                child: Icon(icon, size: 30, color: color),
               ),
               const SizedBox(height: 14),
               Text(
@@ -2624,26 +2540,13 @@ class _HomePageState extends State<HomePage> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              _primaryAqua,
-                              _primaryAqua.withValues(alpha: 0.8),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          color: AppDesign.blueSoft,
                           borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: _primaryAqua.withValues(alpha: 0.4),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          border: Border.all(color: AppDesign.border),
                         ),
                         child: const Icon(
                           Icons.trending_up,
-                          color: Colors.white,
+                          color: AppDesign.blue,
                           size: 24,
                         ),
                       ),
@@ -3101,28 +3004,13 @@ class _HomePageState extends State<HomePage> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      _primaryAqua,
-                                      _primaryAqua.withValues(alpha: 0.8),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
+                                  color: AppDesign.blueSoft,
                                   borderRadius: BorderRadius.circular(14),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: _primaryAqua.withValues(
-                                        alpha: 0.4,
-                                      ),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
+                                  border: Border.all(color: AppDesign.border),
                                 ),
                                 child: const Icon(
                                   Icons.dashboard,
-                                  color: Colors.white,
+                                  color: AppDesign.blue,
                                   size: 24,
                                 ),
                               ),
@@ -3274,102 +3162,16 @@ class _HomePageState extends State<HomePage> {
     required String value,
     required String unit,
     required IconData icon,
-    required Color color,
-    required String trend,
+    Color? color,
+    String? trend,
     String trendLabel = '',
     bool isPositiveTrend = true,
   }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppDesign.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppDesign.border),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppDesign.ink,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppDesign.navy,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  unit,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppDesign.subtle,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppDesign.blueSoft,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isPositiveTrend
-                      ? Icons.trending_up_rounded
-                      : Icons.trending_down_rounded,
-                  size: 13,
-                  color: AppDesign.navy,
-                ),
-                const SizedBox(width: 2),
-                Text(
-                  trend,
-                  style: const TextStyle(
-                    color: AppDesign.navy,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return AppMetricCard(
+      label: title,
+      value: value,
+      icon: icon,
+      supportingText: unit,
     );
   }
 
@@ -3378,52 +3180,9 @@ class _HomePageState extends State<HomePage> {
     required String title,
     required String value,
     required IconData icon,
-    required Color color,
+    Color? color,
   }) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: color.withValues(alpha: 0.2),
-              child: Icon(icon, size: 32, color: color),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: _mutedCoolGray,
-            ),
-          ],
-        ),
-      ),
-    );
+    return AppMetricCard(label: title, value: value, icon: icon);
   }
 
   Widget _buildActivityItem({
@@ -3593,243 +3352,188 @@ class _HomePageState extends State<HomePage> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF102C34),
-            const Color(0xFF0B2027),
-            _secondaryIceBlue.withValues(alpha: 0.44),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: _lightOffWhite.withValues(alpha: 0.12),
-          width: 1.2,
-        ),
+        color: AppDesign.navy,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppDesign.navySoft),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.22),
-            blurRadius: 24,
-            offset: const Offset(0, 14),
-            spreadRadius: -12,
+            color: AppDesign.navy.withValues(alpha: 0.14),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Positioned(
-            right: -12,
-            top: -22,
-            child: Container(
-              width: 104,
-              height: 104,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _primaryAqua.withValues(alpha: 0.10),
-              ),
-            ),
-          ),
-          Positioned(
-            left: -18,
-            bottom: -36,
-            child: Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _lightOffWhite.withValues(alpha: 0.04),
-              ),
-            ),
-          ),
-          Column(
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Container(
+                width: 64,
+                height: 64,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _primaryAqua,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  _getDrawerInitials(displayName),
+                  style: const TextStyle(
+                    color: _lightOffWhite,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                displayName,
+                                style: const TextStyle(
+                                  color: _lightOffWhite,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.2,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                subtitle,
+                                style: TextStyle(
+                                  color: _lightOffWhite.withValues(alpha: 0.76),
+                                  fontSize: 12.5,
+                                  height: 1.35,
+                                ),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Material(
+                          color: Colors.white.withValues(alpha: 0.07),
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () => Navigator.of(context).pop(),
+                            child: const Padding(
+                              padding: EdgeInsets.all(10),
+                              child: Icon(
+                                Icons.close_rounded,
+                                color: _lightOffWhite,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildDrawerStatusChip(
+                icon: isLoggedIn
+                    ? Icons.verified_user_rounded
+                    : Icons.person_outline_rounded,
+                label: isLoggedIn ? 'Signed In' : 'Guest Session',
+                color: isLoggedIn ? _primaryAqua : const Color(0xFFFFC857),
+              ),
+              _buildDrawerStatusChip(
+                icon: _isOfflineMode
+                    ? Icons.cloud_off_rounded
+                    : Icons.cloud_done_rounded,
+                label: _isOfflineMode ? 'Offline Mode' : 'Cloud Ready',
+                color: _isOfflineMode
+                    ? const Color(0xFFFFB74D)
+                    : const Color(0xFF7ED957),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _buildDrawerMetricBadge(
+                icon: Icons.people_alt_rounded,
+                label: 'Patients',
+                value: _isLoadingMetrics ? '--' : '$_totalPatients',
+              ),
+              const SizedBox(width: 10),
+              _buildDrawerMetricBadge(
+                icon: Icons.sync_rounded,
+                label: 'Storage',
+                value: isLoggedIn
+                    ? 'Firestore'
+                    : _isOfflineMode
+                    ? 'Local'
+                    : 'Limited',
+              ),
+            ],
+          ),
+          if (_isOfflineMode) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: const Color(0xFFFFB74D).withValues(alpha: 0.22),
+                ),
+              ),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: 64,
-                    height: 64,
-                    alignment: Alignment.center,
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [_primaryAqua, _secondaryIceBlue],
-                      ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: _primaryAqua.withValues(alpha: 0.30),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
+                      color: const Color(0xFFFFB74D).withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
-                      _getDrawerInitials(displayName),
-                      style: const TextStyle(
-                        color: _lightOffWhite,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.4,
-                      ),
+                    child: const Icon(
+                      Icons.wifi_find_rounded,
+                      color: Color(0xFFFFCC80),
+                      size: 18,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    displayName,
-                                    style: const TextStyle(
-                                      color: _lightOffWhite,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.2,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    subtitle,
-                                    style: TextStyle(
-                                      color: _lightOffWhite.withValues(
-                                        alpha: 0.76,
-                                      ),
-                                      fontSize: 12.5,
-                                      height: 1.35,
-                                    ),
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Material(
-                              color: Colors.white.withValues(alpha: 0.07),
-                              shape: const CircleBorder(),
-                              child: InkWell(
-                                customBorder: const CircleBorder(),
-                                onTap: () => Navigator.of(context).pop(),
-                                child: const Padding(
-                                  padding: EdgeInsets.all(10),
-                                  child: Icon(
-                                    Icons.close_rounded,
-                                    color: _lightOffWhite,
-                                    size: 18,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                    child: Text(
+                      isLoggedIn
+                          ? 'You can keep working offline. Any pending local records will sync again when connectivity is available.'
+                          : 'Continue recording data offline. When internet returns, log in to upload saved records to Firestore automatically.',
+                      style: TextStyle(
+                        color: _lightOffWhite.withValues(alpha: 0.78),
+                        fontSize: 12.2,
+                        height: 1.4,
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _buildDrawerStatusChip(
-                    icon: isLoggedIn
-                        ? Icons.verified_user_rounded
-                        : Icons.person_outline_rounded,
-                    label: isLoggedIn ? 'Signed In' : 'Guest Session',
-                    color: isLoggedIn ? _primaryAqua : const Color(0xFFFFC857),
-                  ),
-                  _buildDrawerStatusChip(
-                    icon: _isOfflineMode
-                        ? Icons.cloud_off_rounded
-                        : Icons.cloud_done_rounded,
-                    label: _isOfflineMode ? 'Offline Mode' : 'Cloud Ready',
-                    color: _isOfflineMode
-                        ? const Color(0xFFFFB74D)
-                        : const Color(0xFF7ED957),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  _buildDrawerMetricBadge(
-                    icon: Icons.people_alt_rounded,
-                    label: 'Patients',
-                    value: _isLoadingMetrics ? '--' : '$_totalPatients',
-                  ),
-                  const SizedBox(width: 10),
-                  _buildDrawerMetricBadge(
-                    icon: Icons.sync_rounded,
-                    label: 'Storage',
-                    value: isLoggedIn
-                        ? 'Firestore'
-                        : _isOfflineMode
-                        ? 'Local'
-                        : 'Limited',
-                  ),
-                ],
-              ),
-              if (_isOfflineMode) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: const Color(0xFFFFB74D).withValues(alpha: 0.22),
-                    ),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(
-                            0xFFFFB74D,
-                          ).withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.wifi_find_rounded,
-                          color: Color(0xFFFFCC80),
-                          size: 18,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          isLoggedIn
-                              ? 'You can keep working offline. Any pending local records will sync again when connectivity is available.'
-                              : 'Continue recording data offline. When internet returns, log in to upload saved records to Firestore automatically.',
-                          style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.78),
-                            fontSize: 12.2,
-                            height: 1.4,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
+            ),
+          ],
         ],
       ),
     );
@@ -3845,14 +3549,13 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppDesign.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppDesign.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.16),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-            spreadRadius: -14,
+            color: AppDesign.navy.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -3864,17 +3567,10 @@ class _HomePageState extends State<HomePage> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      _primaryAqua.withValues(alpha: 0.92),
-                      _secondaryIceBlue.withValues(alpha: 0.92),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
+                  color: AppDesign.blueSoft,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: Colors.white, size: 18),
+                child: Icon(icon, color: AppDesign.blue, size: 18),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -4087,25 +3783,17 @@ class _HomePageState extends State<HomePage> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         child: Ink(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withValues(alpha: 0.08),
-                _primaryAqua.withValues(alpha: 0.12),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppDesign.border),
+            color: AppDesign.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppDesign.borderStrong),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 14,
-                offset: const Offset(0, 10),
-                spreadRadius: -10,
+                color: AppDesign.navy.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -4121,28 +3809,21 @@ class _HomePageState extends State<HomePage> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            _primaryAqua.withValues(alpha: 0.95),
-                            _secondaryIceBlue.withValues(alpha: 0.95),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(14),
+                        color: AppDesign.blueSoft,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(icon, color: Colors.white, size: 18),
+                      child: Icon(icon, color: AppDesign.blue, size: 18),
                     ),
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
+                        color: AppDesign.canvas,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         Icons.arrow_outward_rounded,
-                        color: AppDesign.muted,
+                        color: AppDesign.subtle,
                         size: 14,
                       ),
                     ),

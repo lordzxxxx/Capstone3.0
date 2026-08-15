@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/web/roles/bhw/dashboard/bhw_profile.dart';
+import 'package:mycapstone_project/web/roles/bhw/analytics/bhw_analytics.dart';
+import 'package:mycapstone_project/web/roles/bhw/analytics/health_metrics.dart';
 import 'package:mycapstone_project/web/roles/bhw/immunization/immunization.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/morbidity.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
@@ -14,15 +16,18 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
 import 'package:mycapstone_project/web/roles/bhw/prenatal/prenatal.dart';
 import 'package:mycapstone_project/web/roles/bhw/referrals/bhw_referral_management.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/widgets/sidebar_page_transition.dart';
+import 'package:get/get.dart';
 
 abstract final class _BhwDrawerColors {
-  static const background = Color(0xFF071A33);
-  static const surface = Color(0xFF0D274D);
-  static const surfaceAlt = Color(0xFF163B66);
+  static const background = AppColors.backgroundDark;
+  static const surface = AppColors.surfaceDark;
+  static const surfaceAlt = AppColors.secondary;
   static const border = Color(0xFF1C3D66);
-  static const aqua = Color(0xFF4EA1FF);
-  static const text = Color(0xFFF8FBFF);
+  static const aqua = AppColors.primary;
+  static const text = AppColors.textOnDark;
   static const muted = Color(0xFFE3EDF8);
 }
 
@@ -88,6 +93,7 @@ class WebAppSidebar extends StatelessWidget {
                           context,
                           WebSidebarItem.dashboard,
                           () => const HomePage(),
+                          routeName: WebRoutes.bhwDashboard,
                         ),
                       ),
                       _buildSectionHeader('PATIENT SERVICES'),
@@ -99,6 +105,7 @@ class WebAppSidebar extends StatelessWidget {
                           context,
                           WebSidebarItem.patientRecords,
                           () => const PatientRecordPage(),
+                          routeName: WebRoutes.bhwPatients,
                         ),
                       ),
                       _buildSidebarItem(
@@ -109,7 +116,31 @@ class WebAppSidebar extends StatelessWidget {
                           context,
                           WebSidebarItem.checkups,
                           () => const checkup_page.CheckUpPage(),
-                          routeName: '/checkups',
+                          routeName: WebRoutes.bhwCheckups,
+                        ),
+                      ),
+                      _buildSectionHeader('INSIGHTS'),
+                      _buildSidebarItem(
+                        icon: Icons.auto_graph_rounded,
+                        label: 'Summary Generation',
+                        isActive:
+                            activeItem == WebSidebarItem.summaryGeneration,
+                        onTap: _navigateTo(
+                          context,
+                          WebSidebarItem.summaryGeneration,
+                          () => const HealthMetricsPage(),
+                          routeName: WebRoutes.bhwSummary,
+                        ),
+                      ),
+                      _buildSidebarItem(
+                        icon: Icons.insights_rounded,
+                        label: 'Analytics',
+                        isActive: activeItem == WebSidebarItem.analytics,
+                        onTap: _navigateTo(
+                          context,
+                          WebSidebarItem.analytics,
+                          () => const BHWAnalyticsPage(),
+                          routeName: WebRoutes.bhwAnalytics,
                         ),
                       ),
                       _buildSidebarItem(
@@ -120,7 +151,7 @@ class WebAppSidebar extends StatelessWidget {
                           context,
                           WebSidebarItem.prenatalCare,
                           () => const PrenatalPage(),
-                          routeName: '/prenatal',
+                          routeName: WebRoutes.bhwPrenatal,
                         ),
                       ),
                       _buildSidebarItem(
@@ -131,6 +162,7 @@ class WebAppSidebar extends StatelessWidget {
                           context,
                           WebSidebarItem.immunization,
                           () => const ImmunizationPage(),
+                          routeName: WebRoutes.bhwImmunization,
                         ),
                       ),
                       _buildSectionHeader('CASE MONITORING'),
@@ -142,6 +174,7 @@ class WebAppSidebar extends StatelessWidget {
                           context,
                           WebSidebarItem.communicable,
                           () => const CommunicablePage(),
+                          routeName: WebRoutes.bhwCommunicable,
                         ),
                       ),
                       _buildSidebarItem(
@@ -152,6 +185,7 @@ class WebAppSidebar extends StatelessWidget {
                           context,
                           WebSidebarItem.nonCommunicable,
                           () => const NonCommunicablePage(),
+                          routeName: WebRoutes.bhwNonCommunicable,
                         ),
                       ),
                       _buildSidebarItem(
@@ -162,7 +196,7 @@ class WebAppSidebar extends StatelessWidget {
                           context,
                           WebSidebarItem.morbidity,
                           () => const MorbidityPage(),
-                          routeName: '/morbidity',
+                          routeName: WebRoutes.bhwMorbidity,
                         ),
                       ),
                       _buildSidebarItem(
@@ -173,7 +207,7 @@ class WebAppSidebar extends StatelessWidget {
                           context,
                           WebSidebarItem.mortality,
                           () => const MortalityPage(),
-                          routeName: '/mortality',
+                          routeName: WebRoutes.bhwMortality,
                         ),
                       ),
                       _buildSectionHeader('COORDINATION'),
@@ -185,6 +219,7 @@ class WebAppSidebar extends StatelessWidget {
                           context,
                           WebSidebarItem.referrals,
                           () => const BhwReferralPage(),
+                          routeName: WebRoutes.bhwReferrals,
                         ),
                       ),
                       _buildSectionHeader('ACCOUNT'),
@@ -196,7 +231,7 @@ class WebAppSidebar extends StatelessWidget {
                           context,
                           WebSidebarItem.profile,
                           () => const BHWProfilePage(),
-                          routeName: '/bhw-profile',
+                          routeName: WebRoutes.bhwProfile,
                         ),
                       ),
                     ],
@@ -227,6 +262,11 @@ class WebAppSidebar extends StatelessWidget {
 
       await Future<void>.delayed(const Duration(milliseconds: 150));
       if (!navigator.mounted) return;
+
+      if (routeName != null) {
+        await Get.toNamed(routeName);
+        return;
+      }
 
       await navigator.push(
         buildSidebarPageRoute(
@@ -284,7 +324,7 @@ class WebAppSidebar extends StatelessWidget {
               Text(
                 'AI-DSUHIS',
                 style: TextStyle(
-                  fontFamily: 'Mont',
+                  fontFamily: 'Manrope',
                   color: _BhwDrawerColors.text,
                   fontWeight: FontWeight.w900,
                   fontSize: 18,
@@ -293,7 +333,7 @@ class WebAppSidebar extends StatelessWidget {
               Text(
                 'Barangay Health Worker Portal',
                 style: TextStyle(
-                  fontFamily: 'Mont',
+                  fontFamily: 'Manrope',
                   color: _BhwDrawerColors.muted,
                   fontSize: 11,
                 ),
@@ -328,7 +368,7 @@ class WebAppSidebar extends StatelessWidget {
                   userName,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontFamily: 'Mont',
+                    fontFamily: 'Manrope',
                     color: _BhwDrawerColors.text,
                     fontWeight: FontWeight.w700,
                   ),
@@ -338,7 +378,7 @@ class WebAppSidebar extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontFamily: 'Mont',
+                    fontFamily: 'Manrope',
                     color: _BhwDrawerColors.muted,
                     fontSize: 10,
                     height: 1.3,
@@ -358,7 +398,7 @@ class WebAppSidebar extends StatelessWidget {
       child: Text(
         title,
         style: const TextStyle(
-          fontFamily: 'Mont',
+          fontFamily: 'Manrope',
           color: _BhwDrawerColors.muted,
           fontSize: 9,
           fontWeight: FontWeight.w800,
@@ -374,30 +414,73 @@ class WebAppSidebar extends StatelessWidget {
     required VoidCallback onTap,
     bool isActive = false,
   }) {
+    // Keep the selected state deliberately simple and high contrast. The
+    // drawer is shared by every BHW route, so the active label must not rely
+    // on a subtle border or a page-specific text style to remain visible.
+    final foreground = isActive
+        ? Colors.white
+        : _BhwDrawerColors.text.withValues(alpha: 0.92);
     return Semantics(
       button: true,
       selected: isActive,
       label: '$label navigation item',
-      child: ListTile(
-        selected: isActive,
-        selectedColor: _BhwDrawerColors.text,
-        textColor: _BhwDrawerColors.text,
-        iconColor: isActive ? _BhwDrawerColors.aqua : _BhwDrawerColors.text,
-        leading: Icon(icon, size: 20),
-        title: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Mont',
-            fontSize: 13,
-            fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+      child: Tooltip(
+        message: label,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          decoration: BoxDecoration(
+            color: isActive ? _BhwDrawerColors.aqua : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: Border(
+              left: BorderSide(
+                color: isActive ? Colors.white : Colors.transparent,
+                width: 4,
+              ),
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              hoverColor: _BhwDrawerColors.aqua.withValues(alpha: 0.18),
+              onTap: onTap,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 52),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      Icon(icon, size: 20, color: foreground),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            color: foreground,
+                            fontSize: 13,
+                            height: 1.15,
+                            fontWeight: isActive
+                                ? FontWeight.w800
+                                : FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (isActive)
+                        const SizedBox(
+                          width: 4,
+                          height: 24,
+                          child: ColoredBox(color: Colors.white),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
-        tileColor: isActive
-            ? _BhwDrawerColors.aqua.withValues(alpha: 0.24)
-            : null,
-        hoverColor: _BhwDrawerColors.aqua.withValues(alpha: 0.12),
-        onTap: onTap,
       ),
     );
   }
@@ -426,7 +509,7 @@ class WebAppSidebar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(11),
               ),
               textStyle: const TextStyle(
-                fontFamily: 'Mont',
+                fontFamily: 'Manrope',
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -450,13 +533,13 @@ class WebAppSidebar extends StatelessWidget {
         ),
         title: const Text(
           'Logout from BHW Portal?',
-          style: TextStyle(fontFamily: 'Mont', color: _BhwDrawerColors.text),
+          style: TextStyle(fontFamily: 'Manrope', color: _BhwDrawerColors.text),
         ),
         content: const Text(
           'You will need to sign in again to access your assigned barangay records.',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontFamily: 'Mont',
+            fontFamily: 'Manrope',
             color: _BhwDrawerColors.muted,
             height: 1.4,
           ),
@@ -488,7 +571,7 @@ class WebAppSidebar extends StatelessWidget {
       if (!rootNavigator.mounted) return;
       rootNavigator.pushAndRemoveUntil<void>(
         MaterialPageRoute<void>(
-          settings: const RouteSettings(name: '/login'),
+          settings: const RouteSettings(name: WebRoutes.login),
           builder: (_) => const Login(),
         ),
         (_) => false,

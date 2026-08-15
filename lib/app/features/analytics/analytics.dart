@@ -24,6 +24,7 @@ import 'package:mycapstone_project/app/features/surveillance/mortality/mortality
 import 'package:mycapstone_project/app/features/referrals/referral_analytics.dart';
 import 'dart:async';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.blueSoft;
@@ -678,7 +679,7 @@ class _AnalyticsSummarySection extends StatelessWidget {
             title: 'Active Cases',
             value: activeCases.toString(),
             icon: Icons.assignment,
-            color: Colors.orange,
+            color: AppDesign.navy,
           ),
         ),
         const SizedBox(width: 12),
@@ -687,7 +688,7 @@ class _AnalyticsSummarySection extends StatelessWidget {
             title: 'Check-ups This Month',
             value: checkupsThisMonth.toString(),
             icon: Icons.calendar_today,
-            color: Colors.purple,
+            color: AppDesign.blue,
           ),
         ),
       ],
@@ -710,55 +711,7 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _lightOffWhite.withValues(alpha: 0.5),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: _lightOffWhite,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 11,
-              color: _lightOffWhite,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
+    return AppMetricCard(label: title, value: value, icon: icon);
   }
 }
 
@@ -1305,22 +1258,22 @@ class _BuildBMIChartState extends State<_BuildBMIChart>
               _MetricPill(
                 label: 'Underweight',
                 value: _underweight.toString(),
-                color: Colors.indigo,
+                color: AppDesign.navy,
               ),
               _MetricPill(
                 label: 'Normal',
                 value: _normal.toString(),
-                color: Colors.green,
+                color: AppDesign.blue,
               ),
               _MetricPill(
                 label: 'Overweight',
                 value: _overweight.toString(),
-                color: Colors.amber,
+                color: AppDesign.skyBlue,
               ),
               _MetricPill(
                 label: 'Obese',
                 value: _obese.toString(),
-                color: Colors.red,
+                color: AppDesign.navy,
               ),
             ],
           ),
@@ -1883,12 +1836,7 @@ class _BuildImmunizationChartState extends State<_BuildImmunizationChart>
         .toList(growable: false);
 
     final palette = <Color>[
-      _primaryAqua,
-      Colors.greenAccent,
-      Colors.orangeAccent,
-      Colors.pinkAccent,
-      Colors.blueAccent,
-      Colors.amberAccent,
+      ...AppDesign.chartPalette,
     ];
 
     return Column(
@@ -2120,7 +2068,7 @@ class _StatisticsGridState extends State<_StatisticsGrid> {
         unit: 'mmHg',
         trend: '+2.5%',
         icon: Icons.favorite_border,
-        color: Colors.red,
+        color: AppDesign.navy,
       ),
       _StatisticCard(
         title: 'Avg. Heart Rate',
@@ -2128,7 +2076,7 @@ class _StatisticsGridState extends State<_StatisticsGrid> {
         unit: 'bpm',
         trend: '-1.2%',
         icon: Icons.favorite,
-        color: Colors.pink,
+        color: AppDesign.blue,
       ),
       _StatisticCard(
         title: 'Avg. BMI',
@@ -2136,7 +2084,7 @@ class _StatisticsGridState extends State<_StatisticsGrid> {
         unit: 'kg/m²',
         trend: '+0.8%',
         icon: Icons.scale,
-        color: Colors.orange,
+        color: AppDesign.blue,
       ),
       _StatisticCard(
         title: 'Avg. Temperature',

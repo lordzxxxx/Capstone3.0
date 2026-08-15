@@ -8,6 +8,7 @@ import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
@@ -16,6 +17,7 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/shared_patient_search_panel.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/utils/referral_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/report_print.dart';
 
@@ -459,7 +461,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
       final scope = await UserAccessScopeService.instance.loadCurrentScope();
       if (!scope.isAuthenticated) {
         if (!mounted) return;
-        Get.offAll(() => const Login());
+        Get.offAllNamed(WebRoutes.login);
         return;
       }
 
@@ -473,7 +475,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
           backgroundColor: Colors.redAccent,
           colorText: Colors.white,
         );
-        Get.offAll(() => const Login());
+        Get.offAllNamed(WebRoutes.login);
         return;
       }
 
@@ -1718,7 +1720,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                 label: Text(_isSubmitting ? 'Submitting...' : 'Send referral'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primaryAqua,
-                  foregroundColor: _darkDeepTeal,
+                  foregroundColor: Colors.white,
                 ),
               ),
             ),
@@ -1775,7 +1777,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
             onPressed: _selectReferralPatient,
             style: ElevatedButton.styleFrom(
               backgroundColor: _primaryAqua,
-              foregroundColor: _darkDeepTeal,
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             ),
             icon: const Icon(Icons.search_rounded),
@@ -2179,56 +2181,44 @@ class _ReferralsPageState extends State<ReferralsPage> {
       }
     }
 
-    return GridView.count(
-      crossAxisCount: MediaQuery.of(context).size.width > 1180 ? 4 : 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.8,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      children: [
-        _buildSummaryCard(
-          'Visible referrals',
-          '${docs.length}',
-          Icons.folder_shared_outlined,
-        ),
-        _buildSummaryCard('Submitted', '$submitted', Icons.outbox_outlined),
-        _buildSummaryCard(
-          'Assigned / Active',
-          '${assigned + inTreatment}',
-          Icons.assignment_ind_outlined,
-        ),
-        _buildSummaryCard('Completed', '$completed', Icons.verified_outlined),
-      ],
+    final cards = <Widget>[
+      _buildSummaryCard(
+        'Visible referrals',
+        '${docs.length}',
+        Icons.folder_shared_outlined,
+      ),
+      _buildSummaryCard('Submitted', '$submitted', Icons.outbox_outlined),
+      _buildSummaryCard(
+        'Assigned / Active',
+        '${assigned + inTreatment}',
+        Icons.assignment_ind_outlined,
+      ),
+      _buildSummaryCard('Completed', '$completed', Icons.verified_outlined),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 1180
+            ? 4
+            : constraints.maxWidth >= 680
+            ? 2
+            : 1;
+        const spacing = 12.0;
+        final width = columns == 1
+            ? constraints.maxWidth
+            : (constraints.maxWidth - spacing * (columns - 1)) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: cards
+              .map((card) => SizedBox(width: width, child: card))
+              .toList(growable: false),
+        );
+      },
     );
   }
 
   Widget _buildSummaryCard(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _panelSurface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: _primaryAqua),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              color: _lightOffWhite,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(label, style: const TextStyle(color: _mutedCoolGray)),
-        ],
-      ),
-    );
+    return AppMetricCard(label: label, value: value, icon: icon);
   }
 
   List<String> _readStringList(dynamic value) {

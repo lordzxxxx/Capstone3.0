@@ -17,6 +17,7 @@ import 'package:mycapstone_project/web/shared/services/barangay_branding_service
 import 'package:mycapstone_project/web/shared/widgets/barangay_logo_image.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/features/auth/widgets/mobile_auth_shell.dart';
+import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _darkDeepTeal = AppDesign.ink;
@@ -606,7 +607,7 @@ class _SignupState extends State<Signup> {
         duration: const Duration(seconds: 2),
       );
 
-      Get.offAll(() => const HomePage());
+      Get.offAllNamed(MobileRoutes.dashboard);
     } on TimeoutException {
       if (userCredential?.user != null) {
         try {
@@ -688,7 +689,7 @@ class _SignupState extends State<Signup> {
         if (navigator.canPop()) {
           navigator.pop();
         } else {
-          Get.offAll(() => const Login());
+          Get.offAllNamed(MobileRoutes.login);
         }
       },
       child: Column(
@@ -786,7 +787,7 @@ class _SignupState extends State<Signup> {
                         if (navigator.canPop()) {
                           navigator.pop();
                         } else {
-                          Get.offAll(() => const Login());
+                          Get.offAllNamed(MobileRoutes.login);
                         }
                       },
                   ),

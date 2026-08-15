@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
+import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 
 void main() {
   test('view parser defaults safely to insights', () {
@@ -59,5 +60,32 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Check-up Management'), findsOneWidget);
     expect(find.text('Records'), findsOneWidget);
+  });
+
+  testWidgets('CHO KPI card grows for narrow, wrapped content', (tester) async {
+    tester.view.physicalSize = const Size(280, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(12),
+            child: ChoKpiCard(
+              label: 'Pending validation records',
+              value: '128',
+              icon: Icons.fact_check_outlined,
+              supportingText:
+                  'Submitted records waiting for review from the city health office.',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('128'), findsOneWidget);
   });
 }

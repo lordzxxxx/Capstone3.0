@@ -1,5 +1,5 @@
 name: mycapstone_project
-description: "A new Flutter project."
+description: "AI-DSUHIS healthcare information system."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -99,17 +99,6 @@ flutter:
     - assets/models/
 
   fonts:
-    # Keep the existing family name for compatibility with the web widgets,
-    # but use a normal-weight sans-serif face for every standard interface
-    # style. The previous ExtraLight asset was too thin for body copy.
-    - family: Mont
-      fonts:
-        - asset: assets/Mont-ExtraLightDEMO.otf
-          weight: 400
-        - asset: assets/fonts/Roboto-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Roboto-Bold.ttf
-          weight: 800
     - family: RobotoPdf
       fonts:
         - asset: fonts/Roboto-Regular.ttf

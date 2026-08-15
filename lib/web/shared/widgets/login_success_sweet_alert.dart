@@ -61,7 +61,7 @@ Future<bool> showLoginSuccessSweetAlert({
                   title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontFamily: 'Mont',
+                    fontFamily: 'Manrope',
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -72,7 +72,7 @@ Future<bool> showLoginSuccessSweetAlert({
                   message,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontFamily: 'Mont',
+                    fontFamily: 'Manrope',
                     fontSize: 14.5,
                     fontWeight: FontWeight.w500,
                     color: _dialogMuted,
@@ -95,7 +95,7 @@ Future<bool> showLoginSuccessSweetAlert({
                     child: Text(
                       confirmButtonText,
                       style: const TextStyle(
-                        fontFamily: 'Mont',
+                        fontFamily: 'Manrope',
                         fontSize: 15.5,
                         fontWeight: FontWeight.w700,
                       ),

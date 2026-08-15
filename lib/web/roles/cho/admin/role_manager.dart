@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF0A1F24);
@@ -32,7 +33,7 @@ class _RoleManagerState extends State<RoleManager> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        Get.offAll(() => const Login());
+        Get.offAllNamed(WebRoutes.login);
         return;
       }
 
@@ -54,7 +55,7 @@ class _RoleManagerState extends State<RoleManager> {
           colorText: Colors.white,
         );
         await Future.delayed(const Duration(milliseconds: 400));
-        Get.offAll(() => const Login());
+        Get.offAllNamed(WebRoutes.login);
       }
     } catch (e) {
       if (kDebugMode) print('Admin verify error: $e');
@@ -64,7 +65,7 @@ class _RoleManagerState extends State<RoleManager> {
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
-      Get.offAll(() => const Login());
+      Get.offAllNamed(WebRoutes.login);
     }
   }
 

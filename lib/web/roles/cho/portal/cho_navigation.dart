@@ -2,14 +2,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/web/features/auth/cho_access_session.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
-import 'package:mycapstone_project/web/roles/cho/analytics/cho_analytics.dart';
-import 'package:mycapstone_project/web/roles/cho/dashboard/cho_dashboard.dart';
-import 'package:mycapstone_project/web/roles/cho/portal/cho_module_workspace.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
-import 'package:mycapstone_project/web/roles/cho/portal/cho_support_center.dart';
-import 'package:mycapstone_project/web/roles/cho/referrals/cho_referral_management.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:get/get.dart';
 
 class ChoNavigationDrawer extends StatelessWidget {
   const ChoNavigationDrawer({super.key, required this.current});
@@ -63,7 +60,7 @@ class ChoNavigationDrawer extends StatelessWidget {
                         Text(
                           'AI-DSUHIS',
                           style: TextStyle(
-                            fontFamily: 'Mont',
+                            fontFamily: 'Manrope',
                             color: ChoColors.navText,
                             fontWeight: FontWeight.w900,
                             fontSize: 18,
@@ -72,7 +69,7 @@ class ChoNavigationDrawer extends StatelessWidget {
                         Text(
                           'City Health Office Portal',
                           style: TextStyle(
-                            fontFamily: 'Mont',
+                            fontFamily: 'Manrope',
                             color: ChoColors.navMuted,
                             fontSize: 11,
                           ),
@@ -106,7 +103,7 @@ class ChoNavigationDrawer extends StatelessWidget {
                             user?.email?.split('@').first ?? 'CHO Staff',
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontFamily: 'Mont',
+                              fontFamily: 'Manrope',
                               color: ChoColors.navText,
                               fontWeight: FontWeight.w700,
                             ),
@@ -114,7 +111,7 @@ class ChoNavigationDrawer extends StatelessWidget {
                           const Text(
                             'CHO • City-wide operations',
                             style: TextStyle(
-                              fontFamily: 'Mont',
+                              fontFamily: 'Manrope',
                               color: ChoColors.navMuted,
                               fontSize: 10,
                             ),
@@ -225,7 +222,7 @@ class ChoNavigationDrawer extends StatelessWidget {
     child: Text(
       label,
       style: const TextStyle(
-        fontFamily: 'Mont',
+        fontFamily: 'Manrope',
         color: ChoColors.navMuted,
         fontSize: 9,
         fontWeight: FontWeight.w800,
@@ -257,7 +254,7 @@ class ChoNavigationDrawer extends StatelessWidget {
               borderRadius: BorderRadius.circular(11),
             ),
             textStyle: const TextStyle(
-              fontFamily: 'Mont',
+              fontFamily: 'Manrope',
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -280,13 +277,13 @@ class ChoNavigationDrawer extends StatelessWidget {
         ),
         title: const Text(
           'Logout from CHO Portal?',
-          style: TextStyle(fontFamily: 'Mont', color: ChoColors.text),
+          style: TextStyle(fontFamily: 'Manrope', color: ChoColors.text),
         ),
         content: const Text(
           'You will need to sign in again to access city-wide health records.',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontFamily: 'Mont',
+            fontFamily: 'Manrope',
             color: ChoColors.muted,
             height: 1.4,
           ),
@@ -320,7 +317,7 @@ class ChoNavigationDrawer extends StatelessWidget {
       if (!rootNavigator.mounted) return;
       rootNavigator.pushAndRemoveUntil<void>(
         MaterialPageRoute<void>(
-          settings: const RouteSettings(name: '/login'),
+          settings: const RouteSettings(name: WebRoutes.login),
           builder: (_) => const Login(),
         ),
         (_) => false,
@@ -343,32 +340,76 @@ class ChoNavigationDrawer extends StatelessWidget {
 
   Widget _item(ChoDestination destination, String label, IconData icon) {
     final selected = destination == current;
+    // Use the same explicit active treatment as the BHW drawer. CHO and BHW
+    // have different permissions, but their navigation must communicate
+    // selection in the same way.
+    final foreground = selected ? Colors.white : ChoColors.navText;
     return Semantics(
       button: true,
       selected: selected,
       label: '$label navigation item',
-      child: Builder(
-        builder: (itemContext) => ListTile(
-          selected: selected,
-          selectedColor: ChoColors.navText,
-          textColor: ChoColors.navText,
-          iconColor: selected ? ChoColors.aqua : ChoColors.navText,
-          leading: Icon(icon, size: 20),
-          title: Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Mont',
-              fontSize: 13,
-              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+      child: Tooltip(
+        message: label,
+        child: Builder(
+          builder: (itemContext) => Container(
+            margin: const EdgeInsets.symmetric(vertical: 2),
+            decoration: BoxDecoration(
+              color: selected ? ChoColors.aqua : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              border: Border(
+                left: BorderSide(
+                  color: selected ? Colors.white : Colors.transparent,
+                  width: 4,
+                ),
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                hoverColor: ChoColors.aqua.withValues(alpha: 0.18),
+                onTap: () => _navigateFromDrawer(
+                  itemContext,
+                  destination,
+                  selected: selected,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 52),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      children: [
+                        Icon(icon, size: 20, color: foreground),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              color: foreground,
+                              fontSize: 13,
+                              height: 1.15,
+                              fontWeight: selected
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        if (selected)
+                          const SizedBox(
+                            width: 4,
+                            height: 24,
+                            child: ColoredBox(color: Colors.white),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(11),
-          ),
-          tileColor: selected ? ChoColors.aqua.withValues(alpha: 0.24) : null,
-          hoverColor: ChoColors.aqua.withValues(alpha: 0.12),
-          onTap: () =>
-              _navigateFromDrawer(itemContext, destination, selected: selected),
         ),
       ),
     );
@@ -391,50 +432,12 @@ class ChoNavigationDrawer extends StatelessWidget {
     Future<void>.delayed(const Duration(milliseconds: 350), () {
       try {
         if (!rootNavigator.mounted) return;
-        rootNavigator.pushReplacement<void, void>(
-          MaterialPageRoute<void>(
-            settings: RouteSettings(name: '/cho/${destination.name}'),
-            builder: (_) => _pageFor(destination),
-          ),
-        );
+        Get.offNamed(WebRoutes.choDestination(destination));
       } finally {
         Future<void>.delayed(const Duration(milliseconds: 500), () {
           _navigationInProgress = false;
         });
       }
     });
-  }
-
-  Widget _pageFor(ChoDestination destination) {
-    final config = ChoModuleConfig.all
-        .where((candidate) => candidate.destination == destination)
-        .firstOrNull;
-    if (config != null) {
-      return ChoModuleWorkspace(config: config);
-    }
-    return switch (destination) {
-      ChoDestination.dashboard => const ChoDashboard(),
-      ChoDestination.referrals => const CHOPreferralPage(),
-      ChoDestination.reports => const AnalyticsPage(),
-      ChoDestination.bhwManagement => const ChoSupportCenter(
-        section: ChoSupportSection.bhwManagement,
-      ),
-      ChoDestination.announcements => const ChoSupportCenter(
-        section: ChoSupportSection.announcements,
-      ),
-      ChoDestination.dataQuality => const ChoSupportCenter(
-        section: ChoSupportSection.dataQuality,
-      ),
-      ChoDestination.auditLogs => const ChoSupportCenter(
-        section: ChoSupportSection.auditLogs,
-      ),
-      ChoDestination.notifications => const ChoSupportCenter(
-        section: ChoSupportSection.notifications,
-      ),
-      ChoDestination.profile => const ChoSupportCenter(
-        section: ChoSupportSection.profile,
-      ),
-      _ => const ChoDashboard(),
-    };
   }
 }

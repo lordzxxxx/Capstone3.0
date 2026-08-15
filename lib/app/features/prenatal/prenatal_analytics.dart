@@ -342,8 +342,8 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
             ...entries.take(8).map((entry) {
               final intensity = entry.value / maxValue;
               final color = Color.lerp(
-                const Color(0xFF43A047),
-                const Color(0xFFE53935),
+                AppDesign.blueSoft,
+                AppDesign.navy,
                 intensity,
               )!;
               return Container(
@@ -553,19 +553,17 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFB74D).withValues(alpha: 0.12),
+                        color: AppDesign.blueSoft.withValues(alpha: 0.55),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: const Color(
-                            0xFFFFB74D,
-                          ).withValues(alpha: 0.35),
+                          color: AppDesign.blue.withValues(alpha: 0.35),
                         ),
                       ),
                       child: const Row(
                         children: [
                           Icon(
                             Icons.science_outlined,
-                            color: Color(0xFFFFB74D),
+                            color: AppDesign.blue,
                             size: 19,
                           ),
                           SizedBox(width: 9),
@@ -660,15 +658,7 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
     final maxValue = entries.isEmpty
         ? 1.0
         : entries.map((e) => e.value).reduce((a, b) => a > b ? a : b) + 1.0;
-    const palette = [
-      AppDesign.skyBlue,
-      Color(0xFF5EC7FF),
-      Color(0xFFFFB74D),
-      Color(0xFFEC407A),
-      Color(0xFF7E57C2),
-      Color(0xFF66BB6A),
-      Color(0xFFFF7043),
-    ];
+    const palette = AppDesign.chartPalette;
     return _panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -898,14 +888,7 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                       dotData: FlDotData(show: true),
                       belowBarData: BarAreaData(
                         show: true,
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            _primaryAqua.withValues(alpha: 0.30),
-                            _primaryAqua.withValues(alpha: 0.02),
-                          ],
-                        ),
+                        color: _primaryAqua.withValues(alpha: 0.12),
                       ),
                     ),
                   ],
@@ -927,13 +910,7 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
   }) {
     final entries = _visibleEntries(data);
     final total = entries.fold<int>(0, (sum, entry) => sum + entry.value);
-    const palette = [
-      Color(0xFF66BB6A),
-      Color(0xFFFFB74D),
-      Color(0xFFEF5350),
-      Color(0xFF5EC7FF),
-      Color(0xFF7E57C2),
-    ];
+    const palette = AppDesign.chartPalette;
     return _panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1027,13 +1004,7 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                   .reduce((a, b) => a > b ? a : b)
                   .toDouble() +
               1;
-    const colors = <Color>[
-      AppDesign.skyBlue,
-      Color(0xFF5EC7FF),
-      Color(0xFFFFB74D),
-      Color(0xFFEC407A),
-      Color(0xFF7E57C2),
-    ];
+    const colors = AppDesign.chartPalette;
 
     return _panel(
       child: Column(

@@ -18,8 +18,10 @@ import 'package:mycapstone_project/web/roles/cho/referrals/referral.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 
 // Names are historical (dashboard was dark-themed); values now point at the
 // white-card system used across the rest of the app. _darkDeepTeal/_panelTeal/
@@ -34,9 +36,9 @@ const Color _mutedCoolGray = Color(0xFF546E7A);
 const Color _lightOffWhite = Color(0xFF0A1F24);
 const Color _chartText = Color(0xFF4B6075);
 const Color _chartGrid = Color(0xFFD9E5F2);
-const Color _chartGreen = Color(0xFF1F9D63);
-const Color _chartCyan = Color(0xFF0F9BA8);
-const Color _chartLime = Color(0xFF79A82E);
+const Color _chartGreen = _primaryAqua;
+const Color _chartCyan = _secondaryIceBlue;
+const Color _chartLime = Color(0xFF5B8CC9);
 
 class _ChartLegendDot extends StatelessWidget {
   final String label;
@@ -341,7 +343,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
           colorText: Colors.white,
         );
         await Future.delayed(const Duration(milliseconds: 300));
-        Get.offAll(() => const Login());
+        Get.offAllNamed(WebRoutes.login);
         return;
       }
 
@@ -425,7 +427,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       );
       ChoAccessSession.trustedUid = null;
       await Future.delayed(const Duration(milliseconds: 500));
-      Get.offAll(() => const Login());
+      Get.offAllNamed(WebRoutes.login);
     } catch (e) {
       if (kDebugMode) print('Access check error: $e');
       Get.snackbar(
@@ -435,7 +437,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         colorText: Colors.white,
       );
       ChoAccessSession.trustedUid = null;
-      Get.offAll(() => const Login());
+      Get.offAllNamed(WebRoutes.login);
     }
   }
 
@@ -2347,7 +2349,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   _buildHeroAction(
                     icon: Icons.assignment_ind_outlined,
                     label: 'Referral workspace',
-                    onTap: () => Get.to(() => const CHOReferralWorkspacePage()),
+                    onTap: () => Get.toNamed(WebRoutes.choReferrals),
                     primary: true,
                   ),
                   _buildHeroAction(
@@ -2412,14 +2414,14 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   'Referral completion',
                   '$completionRate%',
                   '${_safeMetricText(_referralsCompleted)} completed cases',
-                  Colors.greenAccent,
+                  AppColors.success,
                 ),
                 const SizedBox(height: 14),
                 _buildHeroMetric(
                   'Clinical attention',
                   _safeMetricText(_highRiskPatients + _followUpPatients),
                   'high-risk and follow-up cases',
-                  Colors.orangeAccent,
+                  AppColors.warning,
                 ),
               ],
             ),
@@ -2459,18 +2461,12 @@ class _ChoDashboardState extends State<ChoDashboard> {
       icon: Icon(icon, size: 17),
       label: Text(label),
       style: FilledButton.styleFrom(
-        backgroundColor: primary
-            ? _primaryAqua
-            : Colors.black.withValues(alpha: 0.08),
-        foregroundColor: Colors.white,
+        backgroundColor: primary ? _primaryAqua : ChoColors.surfaceAlt,
+        foregroundColor: primary ? Colors.white : ChoColors.text,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(13),
-          side: BorderSide(
-            color: primary
-                ? _primaryAqua
-                : Colors.black.withValues(alpha: 0.12),
-          ),
+          side: BorderSide(color: primary ? _primaryAqua : ChoColors.border),
         ),
       ),
     );
@@ -2564,7 +2560,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               value: _safeMetricText(_highRiskPatients),
               context: 'High-risk patients require clinical review',
               icon: Icons.health_and_safety_outlined,
-              color: Colors.redAccent,
+              color: ChoColors.ice,
             ),
             _buildInsightCard(
               width: width,
@@ -2572,7 +2568,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               value: _safeMetricText(referralBacklog),
               context: 'Cases not yet marked completed',
               icon: Icons.route_outlined,
-              color: Colors.cyanAccent,
+              color: ChoColors.aqua,
             ),
             _buildInsightCard(
               width: width,
@@ -2580,7 +2576,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               value: _safeMetricText(coverageGaps),
               context: 'Missing visits, schedules, or risk data',
               icon: Icons.data_exploration_outlined,
-              color: Colors.orangeAccent,
+              color: ChoColors.ice,
             ),
             _buildInsightCard(
               width: width,
@@ -2588,7 +2584,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               value: _safeMetricText(_followUpPatients),
               context: 'Patients requiring continuity of care',
               icon: Icons.event_repeat_outlined,
-              color: Colors.greenAccent,
+              color: ChoColors.aqua,
             ),
           ],
         );
@@ -2840,12 +2836,12 @@ class _ChoDashboardState extends State<ChoDashboard> {
       width: width,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: ChoColors.navSurface,
+        color: ChoColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: ChoColors.navBorder),
+        border: Border.all(color: ChoColors.border),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -2874,7 +2870,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       child: Text(
                         title,
                         style: TextStyle(
-                          color: ChoColors.navMuted,
+                          color: ChoColors.muted,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -2883,7 +2879,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     Text(
                       value,
                       style: const TextStyle(
-                        color: ChoColors.navText,
+                        color: ChoColors.text,
                         fontSize: 21,
                         fontWeight: FontWeight.w800,
                       ),
@@ -2896,7 +2892,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: ChoColors.navMuted,
+                    color: ChoColors.muted,
                     fontSize: 9.5,
                     height: 1.3,
                   ),
@@ -2929,26 +2925,26 @@ class _ChoDashboardState extends State<ChoDashboard> {
     };
     const moduleColors = <String, Color>{
       'Patient Records': _primaryAqua,
-      'Check-ups': Color(0xFF60A5FA),
-      'Prenatal': Color(0xFFF472B6),
-      'Mortality': Color(0xFFFB7185),
-      'Morbidity': Color(0xFFF59E0B),
-      'Communicable': Color(0xFFA78BFA),
-      'Non-Communicable': Color(0xFF34D399),
+      'Check-ups': _secondaryIceBlue,
+      'Prenatal': _primaryAqua,
+      'Mortality': Color(0xFF5B8CC9),
+      'Morbidity': _secondaryIceBlue,
+      'Communicable': Color(0xFF8FAFD6),
+      'Non-Communicable': _primaryAqua,
     };
     const ageColors = <Color>[
-      Color(0xFF38BDF8),
-      Color(0xFF818CF8),
-      Color(0xFF34D399),
-      Color(0xFFF59E0B),
-      Color(0xFFEF4444),
-      Color(0xFF94A3B8),
+      _primaryAqua,
+      _secondaryIceBlue,
+      Color(0xFF5B8CC9),
+      Color(0xFF6F9DCE),
+      Color(0xFF8FAFD6),
+      Color(0xFFB8C9DB),
     ];
     const sexColors = <String, Color>{
-      'Male': Color(0xFF60A5FA),
-      'Female': Color(0xFFF472B6),
-      'Other': Color(0xFFA78BFA),
-      'Unknown': Color(0xFF94A3B8),
+      'Male': _primaryAqua,
+      'Female': _secondaryIceBlue,
+      'Other': Color(0xFF5B8CC9),
+      'Unknown': Color(0xFFB8C9DB),
     };
 
     return Container(
@@ -3807,8 +3803,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: () =>
-                      Get.to(() => const CHOReferralWorkspacePage()),
+                  onPressed: () => Get.toNamed(WebRoutes.choReferrals),
                   icon: const Icon(Icons.open_in_new_rounded, size: 16),
                   label: const Text('Open referrals'),
                 ),
@@ -4017,12 +4012,12 @@ class _ChoDashboardState extends State<ChoDashboard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: ChoColors.navBackground,
+        color: ChoColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: ChoColors.navBorder),
+        border: Border.all(color: ChoColors.border),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 18,
             offset: const Offset(0, 9),
           ),
@@ -4038,7 +4033,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               borderRadius: BorderRadius.circular(15),
               border: Border.all(color: color.withValues(alpha: 0.18)),
             ),
-            child: Icon(icon, color: Colors.white, size: 22),
+            child: Icon(icon, color: color, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -4050,7 +4045,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: ChoColors.navMuted,
+                    color: ChoColors.muted,
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -4059,7 +4054,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 Text(
                   value,
                   style: const TextStyle(
-                    color: ChoColors.navText,
+                    color: ChoColors.text,
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                   ),
@@ -4913,8 +4908,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
     final maxY = _maxFromIntValues(allValues, minimum: 5) * 1.2;
     final interval = ((maxY / 4).clamp(1, maxY)).toDouble();
     const seriesColors = <Color>[
-      Colors.redAccent,
-      Colors.orangeAccent,
+      _secondaryIceBlue,
+      _primaryAqua,
       _chartLime,
       _chartCyan,
     ];
@@ -5035,10 +5030,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
     final colors = <Color>[
       _primaryAqua,
       _secondaryIceBlue,
-      Colors.pinkAccent,
+      _chartLime,
       _chartGreen,
-      Colors.orangeAccent,
-      Colors.redAccent,
+      _chartCyan,
+      _chartLime,
       _chartCyan,
     ];
     final maxY = _maxFromIntValues(values, minimum: 5) * 1.2;
@@ -5238,9 +5233,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
       _safeMetricCount(_referralsCompleted),
     ];
     final colors = <Color>[
-      Colors.orangeAccent,
-      Colors.lightBlueAccent,
-      Colors.amberAccent,
+      _secondaryIceBlue,
+      _primaryAqua,
+      _chartLime,
       _chartGreen,
     ];
 
@@ -5474,10 +5469,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
   Widget _buildRiskDonutChart() {
     final labels = <String>['High', 'Moderate', 'Low', 'Unknown'];
     final colors = <Color>[
-      Colors.redAccent,
-      Colors.orangeAccent,
+      _secondaryIceBlue,
+      _primaryAqua,
       _chartLime,
-      Colors.blueGrey,
+      _chartCyan,
     ];
     final rawRiskValues = _safeIntList(_riskLevelCounts, fallbackLength: 4);
     final riskValues = rawRiskValues
@@ -5743,13 +5738,13 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     BarChartRodData(
                       toY: prenatalVals[i].toDouble(),
                       width: 7,
-                      color: Colors.pinkAccent,
+                      color: _primaryAqua,
                       borderRadius: BorderRadius.circular(3),
                     ),
                     BarChartRodData(
                       toY: immunizationVals[i].toDouble(),
                       width: 7,
-                      color: Colors.greenAccent,
+                      color: _chartLime,
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ],
@@ -5807,8 +5802,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
           runSpacing: 4,
           children: const [
             _ChartLegendDot(label: 'Checkups', color: _secondaryIceBlue),
-            _ChartLegendDot(label: 'Prenatal', color: Colors.pinkAccent),
-            _ChartLegendDot(label: 'Immunization', color: Colors.greenAccent),
+            _ChartLegendDot(label: 'Prenatal', color: _primaryAqua),
+            _ChartLegendDot(label: 'Immunization', color: _chartLime),
           ],
         ),
       ],
@@ -5824,10 +5819,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
       _coverageFollowUpNoSchedule,
     ];
     final colors = <Color>[
-      Colors.orangeAccent,
-      Colors.amberAccent,
-      Colors.blueGrey,
-      Colors.redAccent,
+      _secondaryIceBlue,
+      _primaryAqua,
+      _chartCyan,
+      _chartLime,
     ];
     final total = values.fold<int>(0, (sum, v) => sum + v);
     if (total == 0) {
@@ -6086,9 +6081,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
               padding: const EdgeInsets.all(14),
               margin: const EdgeInsets.only(bottom: 14),
               decoration: BoxDecoration(
-                color: ChoColors.navSurface,
+                color: ChoColors.surface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: ChoColors.navBorder),
+                border: Border.all(color: ChoColors.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -6096,7 +6091,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   const Text(
                     'CHO Dashboard: Firestore-powered patient monitoring, service delivery tracking, and public health risk surveillance.',
                     style: TextStyle(
-                      color: ChoColors.navText,
+                      color: ChoColors.text,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
@@ -6106,7 +6101,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: ChoColors.navBackground,
+                      color: ChoColors.surfaceAlt,
                       borderRadius: BorderRadius.circular(9),
                     ),
                     child: Row(
@@ -6116,7 +6111,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                               ? Icons.cloud_done
                               : Icons.cloud_sync,
                           color: _syncStatus.values.every((v) => v)
-                              ? const Color(0xFF65E6B0)
+                              ? AppColors.success
                               : ChoColors.aqua,
                           size: 16,
                         ),
@@ -6127,7 +6122,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                               : 'Syncing Firestore collections...',
                           style: TextStyle(
                             color: _syncStatus.values.every((v) => v)
-                                ? const Color(0xFF65E6B0)
+                                ? AppColors.success
                                 : ChoColors.aqua,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -6190,31 +6185,31 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     'Active Prenatal Cases',
                     _safeMetricText(_activePrenatal),
                     Icons.pregnant_woman,
-                    Colors.pinkAccent,
+                    _primaryAqua,
                   ),
                   _summaryCard(
                     'Immunization Records',
                     _safeMetricText(_immunizationRecords),
                     Icons.vaccines,
-                    Colors.greenAccent,
+                    _chartLime,
                   ),
                   _summaryCard(
                     'Morbidity Reports',
                     _safeMetricText(_morbidityReports),
                     Icons.monitor_heart,
-                    Colors.orangeAccent,
+                    _chartCyan,
                   ),
                   _summaryCard(
                     'Mortality Reports',
                     _safeMetricText(_mortalityReports),
                     Icons.heart_broken,
-                    Colors.redAccent,
+                    _secondaryIceBlue,
                   ),
                   _summaryCard(
                     'Referral Reports',
                     _safeMetricText(_referralReports),
                     Icons.assignment_ind_outlined,
-                    Colors.cyanAccent,
+                    _primaryAqua,
                   ),
                 ];
                 return Wrap(
