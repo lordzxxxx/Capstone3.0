@@ -861,11 +861,25 @@ class _LandingPageState extends State<LandingPage>
           physics: const ClampingScrollPhysics(),
           child: Column(
             children: [
-              SizedBox(
-                width: constraints.maxWidth,
-                height: constraints.maxHeight,
-                child: _buildLandingContent(context),
-              ),
+              // Desktop keeps a viewport-sized hero for its stable two-column
+              // composition. On tablet/mobile the hero and access card must
+              // be allowed to use their intrinsic height; forcing both into
+              // the viewport creates a RenderFlex overflow before the outer
+              // scroll view can do its job.
+              if (constraints.maxWidth < 980)
+                ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: SizedBox(
+                    width: constraints.maxWidth,
+                    child: _buildLandingContent(context),
+                  ),
+                )
+              else
+                SizedBox(
+                  width: constraints.maxWidth,
+                  height: constraints.maxHeight,
+                  child: _buildLandingContent(context),
+                ),
               _buildLandingFooter(context),
             ],
           ),
@@ -943,24 +957,20 @@ class _LandingPageState extends State<LandingPage>
           );
         }
 
-        // Tablet/mobile switches intentionally at a meaningful width.  The
-        // landing route still owns the viewport and does not add a scroll
-        // view; dimensions above are chosen from the available height.
+        // Tablet/mobile content is intentionally intrinsic-height. The
+        // surrounding SingleChildScrollView owns vertical overflow, so the
+        // hero and access card do not compete for a too-small fixed height.
         return Center(
-          child: SizedBox(
-            width: constraints.maxWidth,
-            height: constraints.maxHeight,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Flexible(child: hero),
+                hero,
                 SizedBox(height: _responsive(height, 0.018, 10, 18)),
-                Flexible(
-                  child: _fadeSlideIn(
-                    animation: _panelEntrance,
-                    child: _buildAccessPanel(context, compact: true),
-                  ),
+                _fadeSlideIn(
+                  animation: _panelEntrance,
+                  child: _buildAccessPanel(context, compact: true),
                 ),
               ],
             ),
