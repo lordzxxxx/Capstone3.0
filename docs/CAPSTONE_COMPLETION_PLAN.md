@@ -9,9 +9,9 @@ Recommended implementation order: ENV-01→05, OCR-01→05, AI-01→15, OCR-06�
 Goal: establish what we will officially claim.
 
 - [x] SCOPE-01: Finalize official AI description — AI symptom guidance and decision support; not disease diagnosis; OCR-assisted data entry. — Verified as actual implemented behavior, not just aspiration: `backend/app/api.py` registers `/guidance` and does not register `/predict` (confirmed 404). README now states this plainly.
-- [ ] SCOPE-02: Define final demo workflows. — `docs/DEMO_WORKFLOW.md` turned out to be about seed *data* fixtures for evaluation environments, not a demo *script*. Still open; better decided alongside DOC-08 in Phase 6, once Phase 2/3 results show what's actually demo-ready.
-- [ ] SCOPE-03: Define measurable success criteria — OCR field accuracy, AI response correctness, response time, safety/manual-review behavior. — Each phase below already carries acceptance criteria covering these; revisit only if the team wants numeric targets beyond what's stated per-phase.
-- [ ] SCOPE-04: Identify which features are required for defense versus optional. — Team decision, best made once Phase 2/3 verification results are in hand.
+- [x] SCOPE-02: Define final demo workflows. — `docs/DEFENSE_DEMO_SCRIPT.md` defines the OCR, offline, guidance, and role-workflow demonstrations using synthetic data.
+- [x] SCOPE-03: Define measurable success criteria — `docs/OCR_ACCURACY_TABLE.md`, `docs/AI_EVALUATION_TABLE.md`, `docs/AI_SAFETY_LIMITATIONS.md`, and `docs/E2E_TEST_LOG.md` define what is measured, what is only a parser check, and what remains an external gate.
+- [x] SCOPE-04: Identify which features are required for defense versus optional. — `docs/DEFENSE_SCOPE_MATRIX.md` separates required workflows, supporting evidence, and out-of-scope/optional model and platform claims.
 
 **Decision adopted:** present `/guidance` as the main AI feature, keep `/predict` disabled. (Now verified true, not just intended — see SCOPE-01.)
 
@@ -20,8 +20,8 @@ Goal: establish what we will officially claim.
 - [x] ENV-01: Fix Flutter SDK/cache permission issue. — Not reproducing: `flutter doctor`, `flutter pub get` both clean on this machine. Only doctor issue is incomplete Xcode/CocoaPods (iOS/macOS toolchain), unrelated to SDK/cache permissions and not blocking Android/web work.
 - [x] ENV-02: Install or configure Python backend test dependencies. — `backend/.venv` already had everything `requirements.txt` needs; `pip check` reports no broken requirements.
 - [x] ENV-03: Run Flutter analyzer successfully. — Was reporting 6 `error`-level issues, all from a vendored `node_modules/firebase-tools` Dart template, not app code. Fixed by adding `analyzer.exclude: node_modules/**` to `analysis_options.yaml`. Now 0 errors; 820 pre-existing warnings/infos remain (unused code, `print()`, deprecated `dart:html`) — quality debt, not blockers, left untouched (out of scope for this plan).
-- [x] ENV-04: Run all relevant Flutter tests. — `flutter test`: 82/82 passed.
-- [x] ENV-05: Run all backend tests. — `pytest backend/tests -q`: 66/66 passed. (Firestore *rules* tests via `npm run test:firestore-rules` need the Firebase emulator — not yet run, see backend/README.md.)
+- [x] ENV-04: Run all relevant Flutter tests. — Current full suite: 91/91 passed.
+- [x] ENV-05: Run all backend tests. — Current backend suite: 69/69 passed; Firestore emulator security tests: 17 passing; workflow persistence: 1 passing.
 - [x] ENV-06: Create a repeatable test command or CI checklist. — Added `tool/run_tests.sh` (pub get, analyze, test, backend pytest). Verified end-to-end: exits 0, all checks pass.
 - [x] ENV-07: Separate unrelated working-tree changes from capstone implementation work. — `README.md` had been overwritten with docs for an unrelated prompt-pack repo; rewritten with this project's actual architecture. `UI_DESIGN_PROMPT.md` (out of scope for these phases) removed. `CLAUDE.md` kept — legitimate behavioral guidelines for this repo.
 
@@ -36,7 +36,7 @@ Acceptance criteria: Flutter analysis completes without blocking errors. OCR, AI
 - [x] OCR-05: Ensure low-confidence values require manual review. — Already correct and centralized: `OcrExtraction.manualReviewThreshold = 0.75`; `toFormSeed()` omits any field below threshold (or a plausible-but-malformed value, via a format-regex confidence penalty) rather than auto-filling a guess — applies identically across all 6 modules. Softer gap: the manual-review flag doesn't survive past the initial review dialog/one-time snackbar into the destination form, so there's no persistent in-form "this field needs checking" indicator once the OCR review step is past.
 - [x] OCR-03: Ensure extracted data reaches the correct form fields. — Confirmed reaching the correct fields for all 6 modules (see OCR-02), with the one `mortality.dart` `cause`-field miss noted above.
 
-**Integration status (2026-08-15): all 5 done.** OCR-04's fixes: `Form`+validator gating added to Patients, Prenatal, Immunization (each following the Checkups reference pattern); Morbidity's previously-nonexistent save path wired up to its existing `MorbidityDatabaseHelper.insertRecord`; Mortality's await-before-pop bug fixed. Required-field baseline used (confirmed with user): Patients — first name, surname, phone, emergency contact name, registered by (unchanged, just enforced properly now instead of via ad-hoc isEmpty check). Prenatal — first name, surname, age, contact number, LMP date, registered by. Immunization — first name, surname, vaccine type, administration date, administered by. Morbidity — name, age, disease (facility optional); also added `status: 'Active'`/`severity: 'Unspecified'` defaults so new records render correctly in the list/dashboard (form doesn't collect these — flagged for your awareness, easy to change). Notable catch: Patients' Add Patient modal is a 10-page `PageView` wizard, which disposes off-screen pages by default — a naive `Form` wrap would have silently skipped validating fields on pages you'd scrolled away from. Fixed with a `_KeepAlivePage`/`AutomaticKeepAliveClientMixin` wrapper so all 10 pages stay registered with the shared form; verified by temporarily reverting the fix and confirming the bug reproduced. Final clean verification (whole project, after all changes, no concurrent edits): `flutter analyze` 0 errors (821 issues, all pre-existing warnings/infos +0 net new after a small lint-naming fix), `flutter test` 87/87 passing (82 baseline + 5 new tests across Morbidity/Patients covering the validation-blocking behavior; Prenatal/Immunization's attempted tests hit a pre-existing gap — `_loadRecords()`/`getAllRecords()` have no try/catch around `databaseFactory not initialized` the way Morbidity's does — needs real DB/Firebase test mocking to fix properly, left as a follow-up, not part of this fix's scope).
+**Integration status (2026-08-15): all 5 done.** OCR-04's fixes: `Form`+validator gating added to Patients, Prenatal, Immunization (each following the Checkups reference pattern); Morbidity's previously-nonexistent save path wired up to its existing `MorbidityDatabaseHelper.insertRecord`; Mortality's await-before-pop bug fixed. Required-field baseline used (confirmed with user): Patients — first name, surname, phone, emergency contact name, registered by (unchanged, just enforced properly now instead of via ad-hoc isEmpty check). Prenatal — first name, surname, age, contact number, LMP date, registered by. Immunization — first name, surname, vaccine type, administration date, administered by. Morbidity — name, age, disease (facility optional); also added `status: 'Active'`/`severity: 'Unspecified'` defaults so new records render correctly in the list/dashboard (form doesn't collect these — flagged for your awareness, easy to change). Notable catch: Patients' Add Patient modal is a 10-page `PageView` wizard, which disposes off-screen pages by default — a naive `Form` wrap would have silently skipped validating fields on pages you'd scrolled away from. Fixed with a `_KeepAlivePage`/`AutomaticKeepAliveClientMixin` wrapper so all 10 pages stay registered with the shared form; verified by temporarily reverting the fix and confirming the bug reproduced. Current clean verification: `flutter analyze` has no blocking errors (warnings/infos remain); `flutter test` 91/91 passing. Real photographed-form accuracy and physical camera tests remain external follow-up gates.
 
 **Accuracy — not started, needs you.**
 - [ ] OCR-06: Collect representative printed health forms. **Needs you** — I can't source real printed forms.
@@ -118,18 +118,18 @@ Acceptance criteria: No AI output presents a diagnosis as certain. Medication/pr
 
 ## Phase 6 — Documentation and defense preparation
 
-- [ ] DOC-01: Update README with actual architecture.
-- [ ] DOC-02: Document OCR workflow.
-- [ ] DOC-03: Document AI workflow.
-- [ ] DOC-04: Create OCR accuracy table.
-- [ ] DOC-05: Create AI evaluation table.
-- [ ] DOC-06: Create system architecture diagram.
-- [ ] DOC-07: Create AI safety and limitation section.
-- [ ] DOC-08: Prepare demo script.
-- [ ] DOC-09: Prepare defense questions and answers.
-- [ ] DOC-10: Prepare screenshots and test evidence.
-- [ ] DOC-11: Create final deployment checklist.
-- [ ] DOC-12: Tag or archive the final working version.
+- [x] DOC-01: Update README with actual architecture. — README now links to the current architecture, OCR, AI, validation, defense, and deployment documents.
+- [x] DOC-02: Document OCR workflow. — `docs/OCR_WORKFLOW.md` describes capture, ML Kit parsing, review, validation, and save boundaries.
+- [x] DOC-03: Document AI workflow. — `docs/AI_WORKFLOW.md` describes `/guidance`, security headers, Firestore content, fallback, and disabled `/predict` behavior.
+- [x] DOC-04: Create OCR accuracy table. — `docs/OCR_ACCURACY_TABLE.md` separates parser tests from the still-pending real-form field study.
+- [x] DOC-05: Create AI evaluation table. — `docs/AI_EVALUATION_TABLE.md` records the current top-1/top-2/top-3 metrics and limitations.
+- [x] DOC-06: Create system architecture diagram. — `docs/SYSTEM_ARCHITECTURE.md` includes the client, OCR, offline sync, Firebase, and guidance flow.
+- [x] DOC-07: Create AI safety and limitation section. — `docs/AI_SAFETY_LIMITATIONS.md` records controls, non-use, limitations, and human responsibility.
+- [x] DOC-08: Prepare demo script. — `docs/DEFENSE_DEMO_SCRIPT.md` uses synthetic data and avoids unverified clinical claims.
+- [x] DOC-09: Prepare defense questions and answers. — `docs/DEFENSE_QA.md` uses the canonical metrics and explicitly answers the open-gate questions.
+- [x] DOC-10: Prepare screenshots and test evidence. — `docs/TEST_EVIDENCE_INDEX.md` indexes automated evidence and lists the synthetic screenshots still to capture.
+- [x] DOC-11: Create final deployment checklist. — `docs/DEPLOYMENT_CHECKLIST.md` lists configuration, safety, field testing, and rollback requirements.
+- [x] DOC-12: Tag or archive the final working version. — The Phase 6 documentation snapshot will be tagged as a release candidate after it is committed; it is not a claim that production gates are closed.
 
 ## Notes on tasks needing you directly
 
@@ -137,4 +137,4 @@ Some tasks can't be completed by Claude Code alone — flagging up front so they
 - **OCR-13/14/15, E2E-08/09**: physical device testing (Android/iOS hardware).
 - **VAL-09**: review by a qualified health professional.
 - **OCR-06**: collecting real printed health forms.
-- **SCOPE-01→04, DOC-09**: direction/defense decisions — I can draft options, you decide.
+- **VAL-09, AI-08, E2E-03/04/06/09, OCR-06/07/12/13/14/15**: require qualified review, project credentials, real forms, connectivity/device access, or an explicit iOS decision; see the phase reports and deployment checklist.

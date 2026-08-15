@@ -1,14 +1,13 @@
-# 🎯 AI Defense - Quick Reference Card
+# 🎯 AI Defense - Quick Reference Card (archived historical draft)
 
-> **Accuracy and validation correction:** This quick-reference file contains
-> historical prototype claims. Do **not** present its old 87% overall, 95%
-> emergency, clinician-review, 90% time-reduction, or 100% offline claims as
-> verified results. Use [`docs/AI_VALIDATION_REPORT.md`](docs/AI_VALIDATION_REPORT.md)
-> as the current source of truth: the offline Random Forest reports 89.3399%
-> top-1, 96.5424% top-2, and 98.5052% top-3 on a group-safe held-out dataset;
-> the active product feature is Firestore-backed symptom guidance and is not a
-> diagnosis system. Qualified clinical review and production field testing
-> remain pending.
+> **Do not use the historical claims below in a defense.** This file is kept
+> only as an archive. Use [`docs/DEFENSE_DEMO_SCRIPT.md`](docs/DEFENSE_DEMO_SCRIPT.md),
+> [`docs/DEFENSE_QA.md`](docs/DEFENSE_QA.md), and
+> [`docs/AI_VALIDATION_REPORT.md`](docs/AI_VALIDATION_REPORT.md) instead. The
+> current product feature is Firestore-backed symptom guidance, not diagnosis;
+> the current offline evaluation is 89.3399% top-1, 96.5424% top-2, and
+> 98.5052% top-3, and qualified clinical review/production field testing remain
+> pending.
 
 ## Memorize These Key Points
 

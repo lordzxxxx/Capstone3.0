@@ -78,7 +78,18 @@ configuration, troubleshooting) is documented in
 
 - [docs/CAPSTONE_COMPLETION_PLAN.md](docs/CAPSTONE_COMPLETION_PLAN.md) — phased
   checklist tracking the remaining capstone work.
-- [docs/DEMO_WORKFLOW.md](docs/DEMO_WORKFLOW.md) — demo script.
+- [docs/SYSTEM_ARCHITECTURE.md](docs/SYSTEM_ARCHITECTURE.md) — actual client,
+  Firebase, OCR, sync, and guidance architecture.
+- [docs/OCR_WORKFLOW.md](docs/OCR_WORKFLOW.md) — OCR capture, review, and save
+  workflow.
+- [docs/AI_WORKFLOW.md](docs/AI_WORKFLOW.md) — active guidance and fallback
+  workflow.
+- [docs/AI_VALIDATION_REPORT.md](docs/AI_VALIDATION_REPORT.md) — canonical AI
+  evaluation, safety, and limitation evidence.
+- [docs/DEFENSE_DEMO_SCRIPT.md](docs/DEFENSE_DEMO_SCRIPT.md) — safe defense
+  demonstration script.
+- [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md) — production
+  gates and final handoff checklist.
 - [docs/DATASET_PROVENANCE.md](docs/DATASET_PROVENANCE.md) — training data
   sources and lineage.
 - [docs/AI_REQUIREMENTS_STATUS.md](docs/AI_REQUIREMENTS_STATUS.md) /

@@ -69,7 +69,7 @@ The system employs a serverless, cloud-synchronized architecture:
 - **Frontend:** Built with Flutter, supporting both Web and Mobile platforms from a single codebase. It uses a modern Dark Theme UI for improved accessibility (WCAG AAA compliant).
 - **Backend/Database:** Firebase Cloud Firestore serves as the primary cloud database, with Firebase Authentication and Cloud Functions handling secure operations (e.g., account management, password resets via Nodemailer).
 - **Local Storage:** SQLite (via `sqflite`) is used for local data persistence, enabling the offline-first capability.
-- **AI Engine:** A rule-based Dart classifier runs locally on the device to provide instant, offline classification and home-care guidance. An optional Python FastAPI backend utilizing a RandomForest model (trained on a dataset of 96,000+ records) is available for advanced research but kept strictly non-prescriptive in production.
+- **AI Engine:** The active product feature is a non-prescriptive, Firestore-backed FastAPI symptom-guidance endpoint with Firebase Authentication, App Check, rate limiting, and medication filtering. A local rule-based Dart classifier remains available for offline decision support. The Python Random Forest artifact is retained for offline evaluation only; `/predict` is disabled and no AI path is presented as a clinical diagnosis.
 
 ### 3.3 Data Flow and Security
 Data entered by a BHW is first written to the local SQLite database. A background sync manager listens for internet connectivity and pushes the data to Firestore. Security is enforced via Firebase Security Rules, ensuring that BHWs only access data within their jurisdiction, while Doctors and CHOs can view patient histories relevant to their assigned referrals.
@@ -81,14 +81,23 @@ Data entered by a BHW is first written to the local SQLite database. A backgroun
 ### 4.1 System Implementation
 The Smart Health Integration system was successfully developed and deployed with the following core modules:
 1. **Patient Registry & Timeline:** A unified view showing chronological check-ups, prenatal visits, and referrals.
-2. **Offline-First Synchronization:** The system correctly caches records locally and syncs them automatically to Firestore without data loss.
+2. **Offline-First Synchronization:** The mobile code caches records locally, marks pending rows, and retries synchronization on connectivity restoration. Emulator-backed persistence and permission tests pass; physical field confirmation remains a release gate.
 3. **Continuity of Care (Doctor Notes):** Doctors can append notes to check-ups. These notes are read-only once created and are visible to subsequent assigned doctors, ensuring continuous patient care.
 4. **Report Generation:** A built-in PDF generator creates printable health indicator reports directly on the client side, bypassing the need for a dedicated reporting server.
 
-### 4.2 AI Classification Results
-The AI classification module was implemented successfully. The system parses keywords from symptoms and vital signs to determine disease categories (e.g., Communicable, Non-Communicable, Emergency) and severity.
-- **Safety Compliance:** The system successfully produces supportive home-care instructions, precautions, and general advice. All medication recommendations were verified to be removed from the system source code, aligning with clinical safety standards.
-- **Performance:** The rule-based Dart classifier executes in under 10ms entirely offline, ensuring immediate feedback for BHWs.
+### 4.2 AI Guidance and Evaluation Results
+The active AI feature provides symptom guidance and escalation prompts for a
+health worker to review. It does not return a diagnosis or prescription. The
+backend reads Firestore-authored guidance content, rejects unsupported input,
+filters medication wording, preserves emergency warnings, and requires
+Firebase Authentication and App Check. The local Dart rule-based path keeps
+record workflows usable when the service is unavailable.
+
+The separate offline Random Forest evaluation reports 89.3399% group-safe
+held-out top-1 accuracy, 96.5424% top-2, and 98.5052% top-3. These numbers are
+agreement with dataset labels, not clinical validation. Dataset provenance,
+weak recalls, manual safety cases, and open professional-review gates are
+documented in `docs/AI_VALIDATION_REPORT.md`.
 
 ### 4.3 UI/UX Enhancements
 The analytics dashboard was redesigned using a professional Dark Deep Teal theme, which improved contrast ratios and readability for health workers analyzing data for extended periods.
@@ -104,7 +113,11 @@ The Smart Health Integration system provides a comprehensive, digitized workflow
 Based on the implementation, the study concludes that:
 1. Offline-first architecture using Flutter and Firebase is highly effective for healthcare applications in areas with unreliable internet.
 2. Implementing append-only Doctor Notes significantly improves the continuity of care by providing a clear, immutable history of medical advice.
-3. Artificial Intelligence can be safely utilized in primary care if heavily restricted to non-prescriptive, supportive guidance rather than automated medication prescriptions.
+3. Artificial Intelligence can be designed as a safer primary-care decision-
+   support aid when it is restricted to non-prescriptive guidance, clearly
+   exposes uncertainty, preserves emergency referral prompts, and remains
+   under qualified human oversight. This implementation does not establish
+   clinical validation by itself.
 
 ### 5.3 Recommendations
 For future researchers and developers, the following are recommended:
