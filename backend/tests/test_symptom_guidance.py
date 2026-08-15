@@ -157,6 +157,63 @@ def test_guidance_endpoint_accepts_explicit_disease_without_predicting() -> None
     assert payload["categoryBasis"] == "unmapped_explicit_condition"
 
 
+def test_guidance_filters_medication_wording_but_preserves_emergency_warnings() -> None:
+    service = SymptomGuidanceService(
+        db=FakeDb(
+            {
+                "_default": _document(
+                    homeCare=[
+                        "Rest and monitor symptoms.",
+                        "Take antibiotics for three days.",
+                    ],
+                    precautions=["Ask about medication safety."],
+                    emergencyWarningSigns=["Difficulty breathing requires urgent care."],
+                ),
+                "fever": _document(
+                    emergencyWarningSigns=["Fever with confusion or seizure."],
+                ),
+            }
+        )
+    )
+    api.app.dependency_overrides[api.get_symptom_guidance_service] = lambda: service
+    api.app.dependency_overrides[api.get_disease_service] = lambda: (
+        FakeDiseaseService()
+    )
+
+    response = TestClient(api.app).post(
+        "/guidance", json={"symptoms": ["fever"]}
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    returned_text = " ".join(
+        item
+        for field in (
+            "homeCare",
+            "precautions",
+            "whenToSeekCare",
+            "emergencyWarningSigns",
+        )
+        for item in payload[field]
+    ).casefold()
+    assert "antibiotic" not in returned_text
+    assert "medication" not in returned_text
+    assert "difficulty breathing" in returned_text
+    assert "confusion or seizure" in returned_text
+
+
+def test_guidance_rejects_unknown_input_without_fabricating_content() -> None:
+    response = TestClient(api.app).post(
+        "/guidance", json={"symptoms": ["made-up symptom"]}
+    )
+
+    assert response.status_code == 422
+    payload = response.json()
+    assert payload["recognizedSymptoms"] == []
+    assert payload["recognizedConditions"] == []
+    assert payload["ignoredSymptoms"] == ["made-up symptom"]
+
+
 def test_local_flutter_web_origin_is_allowed_by_cors() -> None:
     client = TestClient(api.app)
     response = client.options(

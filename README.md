@@ -24,9 +24,10 @@ decision support. Built around two capstone features:
   surveillance (communicable, non-communicable, mortality, morbidity),
   referrals, dashboard, and analytics.
 - **Shared** — `lib/shared` — code used by both mobile and web targets.
-- **Backend** — `backend/` (Python, FastAPI). Serves symptom guidance from a
-  trained Random Forest model plus Firestore-authored guidance content, and
-  the supporting dataset/training pipeline. See
+- **Backend** — `backend/` (Python, FastAPI). Serves authenticated symptom
+  guidance from Firestore-authored content, plus the supporting offline model
+  evaluation/training pipeline. The Random Forest is not an active diagnosis
+  endpoint. See
   [backend/README.md](backend/README.md) for the full pipeline, API, and
   deployment details.
 - **Firebase** — Authentication, Firestore, App Check, and Hosting. Every

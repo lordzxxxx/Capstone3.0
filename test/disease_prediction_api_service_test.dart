@@ -92,4 +92,27 @@ void main() {
       service.close();
     },
   );
+
+  test(
+    'unconfigured guidance reports a safe unavailable state without a network call',
+    () async {
+      final service = SymptomGuidanceApiService(
+        client: MockClient((_) => throw StateError('must not be called')),
+        baseUrl: '',
+        securityHeadersProvider: () async => const {},
+      );
+
+      await expectLater(
+        service.getGuidanceFromText('fever'),
+        throwsA(
+          isA<SymptomGuidanceApiException>().having(
+            (error) => error.message,
+            'message',
+            allOf(contains('not configured'), contains('still be saved')),
+          ),
+        ),
+      );
+      service.close();
+    },
+  );
 }

@@ -51,6 +51,11 @@ class DiseasePredictionApiService {
     if (_configuredBaseUrl.trim().isNotEmpty) {
       return _configuredBaseUrl.trim();
     }
+    // Never let a release build silently call a developer's localhost. The
+    // deployment pipeline must provide the real HTTPS API with
+    // --dart-define=AI_API_BASE_URL=...; the check-up flow catches the empty
+    // value and continues saving the record without remote guidance.
+    if (kReleaseMode) return '';
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       return 'http://10.0.2.2:8000';
     }
@@ -166,6 +171,11 @@ class SymptomGuidanceApiService {
     if (symptoms.isEmpty) {
       throw const SymptomGuidanceApiException(
         'Enter at least one symptom before requesting symptom guidance.',
+      );
+    }
+    if (_baseUrl.isEmpty) {
+      throw const SymptomGuidanceApiException(
+        'Symptom guidance is not configured for this release. The record can still be saved.',
       );
     }
     try {

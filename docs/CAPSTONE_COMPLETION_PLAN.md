@@ -59,28 +59,28 @@ Acceptance criteria: OCR successfully populates forms on real test documents ⚠
 ## Phase 3 — Finalize AI integration
 
 **Backend**
-- [ ] AI-01: Verify `/guidance` endpoint locally.
-- [ ] AI-02: Verify Firebase Authentication.
-- [ ] AI-03: Verify Firebase App Check.
-- [ ] AI-04: Verify rate limiting and error responses.
-- [ ] AI-05: Verify Firestore symptom-guidance content.
-- [ ] AI-06: Verify medication and prescription filtering.
-- [ ] AI-07: Verify emergency-warning behavior.
+- [x] AI-01: Verify `/guidance` endpoint locally. — Live local checks: `/` and `/health` return 200; unauthenticated `/guidance` returns 401; `/predict` returns 404.
+- [x] AI-02: Verify Firebase Authentication. — Missing-token rejection and valid-token verification controls pass; real-account testing remains E2E-04.
+- [x] AI-03: Verify Firebase App Check. — Missing App Check is rejected with 403 after token verification; live attestation remains E2E-03/E2E-04.
+- [x] AI-04: Verify rate limiting and error responses. — Backend tests cover retry-after behavior and safe 401/403/422/429 responses.
+- [x] AI-05: Verify Firestore symptom-guidance content. — Local seed validation passes for 7 active documents; live Firestore reads require deployment credentials.
+- [x] AI-06: Verify medication and prescription filtering. — API regression coverage removes medication wording while retaining emergency warnings.
+- [x] AI-07: Verify emergency-warning behavior. — Fever and breathing-risk guidance preserve urgent warning signs in seed/API tests.
 - [ ] AI-08: Configure the production `AI_API_BASE_URL`.
 
 **Flutter integration**
-- [ ] AI-09: Verify symptom input parsing.
-- [ ] AI-10: Verify guidance display in mobile checkups.
-- [ ] AI-11: Verify guidance display in web BHW checkups.
-- [ ] AI-12: Verify guidance is saved correctly with the record.
-- [ ] AI-13: Verify unavailable-backend behavior does not block record saving.
-- [ ] AI-14: Verify low-confidence and disclaimer messaging.
-- [ ] AI-15: Remove or hide confusing legacy disease-prediction UI.
+- [x] AI-09: Verify symptom input parsing. — Comma, semicolon, newline, trimming, and de-duplication tests pass.
+- [x] AI-10: Verify guidance display in mobile checkups. — Mobile check-ups call `/guidance`, display reviewed sections, and show the disclaimer.
+- [x] AI-11: Verify guidance display in web BHW checkups. — Web BHW check-ups use the same guidance service and modal contract.
+- [x] AI-12: Verify guidance is saved correctly with the record. — `toRecordFields()` is merged into the record before the update/save path.
+- [x] AI-13: Verify unavailable-backend behavior does not block record saving. — Mobile saves before remote guidance; web falls back locally; release URL absence now fails closed without a network call.
+- [x] AI-14: Verify low-confidence and disclaimer messaging. — Decision-support metadata, human review state, uncertainty, and disclaimer tests pass.
+- [x] AI-15: Remove or hide confusing legacy disease-prediction UI. — No active caller remains; `/predict` is unregistered and the client method is disabled. Compatibility display code only reads old stored records.
 
 **Model decision**
-- [ ] AI-16: Keep local rule-based classifier as the active mobile classifier, or formally remove it from scope.
-- [ ] AI-17: Keep the portable model documented as experimental unless retrained with real data.
-- [ ] AI-18: Keep `/predict` disabled unless the team explicitly chooses to validate and expose it.
+- [x] AI-16: Keep local rule-based classifier as the active mobile classifier, or formally remove it from scope. — The local rule-based path remains the active offline/fallback classifier.
+- [x] AI-17: Keep the portable model documented as experimental unless retrained with real data. — Documented as offline/evaluation-only and not clinically validated.
+- [x] AI-18: Keep `/predict` disabled unless the team explicitly chooses to validate and expose it. — Route remains unregistered and returns 404.
 
 Acceptance criteria: A user can enter symptoms and receive safe, reviewed guidance. Authentication/App Check failures are handled properly. Guidance is clearly labeled as decision support. The application remains usable if the AI service is unavailable.
 

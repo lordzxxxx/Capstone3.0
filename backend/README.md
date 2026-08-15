@@ -57,7 +57,7 @@ Files with no recognizable disease target and corrupted CSVs are logged and
 skipped. `Name` is treated as a disease only when the same dataset contains a
 symptom-list column; this avoids misclassifying catalog/remedy tables.
 
-## Production prediction API
+## Production symptom-guidance API
 
 > The check-up workflow uses the authenticated `POST /guidance` endpoint for
 > recognition-only symptom guidance. The legacy `POST /predict` route is no
@@ -66,7 +66,7 @@ symptom-list column; this avoids misclassifying catalog/remedy tables.
 ### Symptom guidance workflow
 
 `POST /guidance` normalizes submitted symptom keywords, validates them against
-the 229-feature vocabulary, and retrieves self-care and emergency guidance from
+the 228-feature vocabulary, and retrieves self-care and emergency guidance from
 the Firestore `symptom_guidance` collection. It never calls the Random Forest
 prediction method and never returns a disease label, confidence, or Top-3 list.
 An exact or aliased condition explicitly entered by staff (for example `UTI`,
@@ -103,10 +103,13 @@ Invoke-RestMethod -Method Post `
   -Body $body
 ```
 
-The FastAPI service loads the existing Random Forest and ordered feature columns
-once, converts submitted symptom names to a binary vector, returns the Top 3
-probabilities, and enriches the top result from Firestore. It never trains or
-modifies the model.
+The active FastAPI guidance path does not load or call the Random Forest. It
+recognizes submitted symptom/condition terms, retrieves reviewed Firestore
+content, applies the medication/prescription safety filter, and returns
+supportive care, precautions, referral prompts, emergency warning signs, and a
+human-review disclaimer. The Random Forest and ordered feature columns remain
+available for offline evaluation only; the disabled `/predict` route never
+returns its Top-3 probabilities.
 
 ### Install and configure
 
@@ -152,7 +155,7 @@ Open `http://127.0.0.1:8000/docs`. Status endpoints are `GET /` and
 ### Run the protected Flutter web client
 
 Register a reCAPTCHA v3 web provider in Firebase App Check, add `localhost` and
-the deployed Hosting domains to its allowed domains, then run:
+the deployed Hosting domains to its allowed domains, then run locally:
 
 ```powershell
 .\flutter\bin\flutter.bat run -d chrome `
@@ -160,6 +163,20 @@ the deployed Hosting domains to its allowed domains, then run:
   --dart-define=AI_API_BASE_URL=http://127.0.0.1:8000 `
   --dart-define=FIREBASE_APP_CHECK_WEB_KEY=YOUR_RECAPTCHA_V3_SITE_KEY
 ```
+
+Production web and mobile builds must provide the deployed HTTPS FastAPI host;
+never ship the development localhost fallback:
+
+```bash
+flutter build web --release \
+  --dart-define=AI_API_BASE_URL=https://YOUR_DEPLOYED_AI_API_HOST \
+  --dart-define=FIREBASE_APP_CHECK_WEB_KEY=YOUR_RECAPTCHA_V3_SITE_KEY
+```
+
+The repository does not contain a deployed AI API host yet. Until one is
+provisioned, `AI-08` remains an operational deployment task rather than an
+invented configuration value. Release builds fail closed for the guidance
+request and still allow check-up records to be saved when the define is absent.
 
 Release web builds fail at startup if the App Check site key is missing.
 Android release builds use Play Integrity; Apple release builds use App Attest
