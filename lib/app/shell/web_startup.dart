@@ -42,17 +42,23 @@ class _WebStartupGateState extends State<WebStartupGate> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<void>(
-      future: _initialization,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return _WebStartupError(onRetry: _retry);
-        }
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const _WebStartupLoading();
-        }
-        return widget.child;
-      },
+    // This gate is mounted before MyApp/MaterialApp. Keep the entire startup
+    // tree direction-aware so loading and failure text never depends on an
+    // inherited Directionality that does not exist yet.
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: FutureBuilder<void>(
+        future: _initialization,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return _WebStartupError(onRetry: _retry);
+          }
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const _WebStartupLoading();
+          }
+          return widget.child;
+        },
+      ),
     );
   }
 }
@@ -62,43 +68,37 @@ class _WebStartupLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // WebStartupGate is intentionally mounted before MyApp so Firebase can
-    // finish before any route builds. That means it cannot rely on the
-    // Directionality supplied by MaterialApp yet.
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: ColoredBox(
-        color: AppColors.backgroundDark,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                'assets/newlogo_white.png',
-                width: 92,
-                height: 92,
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.high,
+    return ColoredBox(
+      color: AppColors.backgroundDark,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/newlogo_white.png',
+              width: 92,
+              height: 92,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
+            ),
+            const SizedBox(height: 20),
+            const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: AppColors.primary,
               ),
-              const SizedBox(height: 20),
-              const SizedBox(
-                width: 28,
-                height: 28,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: AppColors.primary,
-                ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Preparing your AI-DSUHIS workspace…',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.textOnDarkMuted,
               ),
-              const SizedBox(height: 14),
-              Text(
-                'Preparing your AI-DSUHIS workspace…',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textOnDarkMuted,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
@@ -112,46 +112,43 @@ class _WebStartupError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Scaffold(
-        backgroundColor: AppColors.backgroundLight,
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(28),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.cloud_off_rounded,
-                        color: AppColors.warning,
-                        size: 48,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Workspace could not be prepared',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Check your connection and try again. No page was opened before the secure Firebase connection was ready.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 20),
-                      FilledButton.icon(
-                        onPressed: onRetry,
-                        icon: const Icon(Icons.refresh_rounded),
-                        label: const Text('Try again'),
-                      ),
-                    ],
-                  ),
+    return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.cloud_off_rounded,
+                      color: AppColors.warning,
+                      size: 48,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Workspace could not be prepared',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Check your connection and try again. No page was opened before the secure Firebase connection was ready.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton.icon(
+                      onPressed: onRetry,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Try again'),
+                    ),
+                  ],
                 ),
               ),
             ),

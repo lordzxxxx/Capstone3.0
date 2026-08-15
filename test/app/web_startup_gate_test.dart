@@ -18,6 +18,12 @@ void main() {
     );
 
     expect(find.text('Preparing your AI-DSUHIS workspace…'), findsOneWidget);
+    expect(
+      Directionality.of(
+        tester.element(find.text('Preparing your AI-DSUHIS workspace…')),
+      ),
+      TextDirection.ltr,
+    );
   });
 
   testWidgets('renders a recoverable startup error without red-screen errors', (
@@ -33,6 +39,12 @@ void main() {
 
     expect(find.text('Workspace could not be prepared'), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
+    expect(
+      Directionality.of(
+        tester.element(find.text('Workspace could not be prepared')),
+      ),
+      TextDirection.ltr,
+    );
   });
 
   testWidgets('does not build the application before web services finish', (
