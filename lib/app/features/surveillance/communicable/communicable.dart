@@ -11,6 +11,7 @@ import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
+import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _darkDeepTeal = AppDesign.page;
@@ -480,25 +481,28 @@ class _CommunicablePageState extends State<CommunicablePage> {
               // Patient Table
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _CommunicableTable(
-                  records: _pagedFilteredPatients,
-                  startIndex: _pageStartIndex,
-                  isSelectionMode: _isSelectionMode,
-                  selectedIndices: _selectedIndices,
-                  onSelectionChanged: (index, selected) {
-                    setState(() {
-                      if (selected) {
-                        _selectedIndices.add(index);
-                      } else {
-                        _selectedIndices.remove(index);
-                      }
-                    });
-                  },
-                  onEdit: _editPatient,
-                  onTap: (patient) {
-                    _viewHistory(patient);
-                  },
-                  onLongPress: _showRecordActionModal,
+                child: SpringDataMotion(
+                  dataKey: _pagedFilteredPatients,
+                  child: _CommunicableTable(
+                    records: _pagedFilteredPatients,
+                    startIndex: _pageStartIndex,
+                    isSelectionMode: _isSelectionMode,
+                    selectedIndices: _selectedIndices,
+                    onSelectionChanged: (index, selected) {
+                      setState(() {
+                        if (selected) {
+                          _selectedIndices.add(index);
+                        } else {
+                          _selectedIndices.remove(index);
+                        }
+                      });
+                    },
+                    onEdit: _editPatient,
+                    onTap: (patient) {
+                      _viewHistory(patient);
+                    },
+                    onLongPress: _showRecordActionModal,
+                  ),
                 ),
               ),
 

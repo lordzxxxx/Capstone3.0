@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const _aqua = Color(0xFF2F80ED);
 const _panel = Colors.white;
@@ -308,7 +309,9 @@ class ImmunizationInsights extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          Expanded(child: child),
+          Expanded(
+            child: SpringDataMotion(dataKey: child, child: child),
+          ),
         ],
       ),
     );

@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/app/features/immunization/immunization_database_helper.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const _aqua = AppDesign.blue;
 const _background = AppDesign.page;
@@ -469,7 +470,7 @@ class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
           style: TextStyle(color: _text.withValues(alpha: 0.58), fontSize: 11),
         ),
         const SizedBox(height: 18),
-        chart,
+        SpringDataMotion(dataKey: chart, child: chart),
       ],
     ),
   );

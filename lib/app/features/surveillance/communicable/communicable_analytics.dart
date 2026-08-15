@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const _accent = AppDesign.blue;
 const _bg = AppDesign.page;
@@ -408,7 +409,7 @@ class _CommunicableAnalyticsPageState extends State<CommunicableAnalyticsPage> {
           style: TextStyle(color: _text.withValues(alpha: 0.58), fontSize: 11),
         ),
         const SizedBox(height: 18),
-        child,
+        SpringDataMotion(dataKey: child, child: child),
       ],
     ),
   );

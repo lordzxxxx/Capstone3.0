@@ -15,6 +15,7 @@ import 'package:mycapstone_project/app/features/patients/patient_history_dialogs
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.blueSoft;
@@ -1049,89 +1050,93 @@ class _CheckUpPageState extends State<CheckUpPage> {
                             const SizedBox(height: 16),
 
                             // Records Table
-                            _CheckUpTable(
-                              records: _pagedFilteredRecords,
-                              startIndex: _pageStartIndex,
-                              isSelectionMode: _isSelectionMode,
-                              selectedIndices: _selectedIndices,
-                              onSelectionChanged: (index, selected) {
-                                setState(() {
-                                  if (selected) {
-                                    _selectedIndices.add(index);
-                                  } else {
-                                    _selectedIndices.remove(index);
-                                  }
-                                });
-                              },
-                              onEdit: (record) {
-                                Future.microtask(() {
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor: Colors.transparent,
-                                    builder: (context) => _EditCheckUpFullScreenModal(
-                                      record: record,
-                                      aiClassifier: _aiClassifier,
-                                      onSave: (updatedRecord) async {
-                                        try {
-                                          // Update in database
-                                          final id =
-                                              updatedRecord['id']?.toString() ??
-                                              '';
-                                          if (id.isEmpty) {
+                            SpringDataMotion(
+                              dataKey: _pagedFilteredRecords,
+                              child: _CheckUpTable(
+                                records: _pagedFilteredRecords,
+                                startIndex: _pageStartIndex,
+                                isSelectionMode: _isSelectionMode,
+                                selectedIndices: _selectedIndices,
+                                onSelectionChanged: (index, selected) {
+                                  setState(() {
+                                    if (selected) {
+                                      _selectedIndices.add(index);
+                                    } else {
+                                      _selectedIndices.remove(index);
+                                    }
+                                  });
+                                },
+                                onEdit: (record) {
+                                  Future.microtask(() {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (context) => _EditCheckUpFullScreenModal(
+                                        record: record,
+                                        aiClassifier: _aiClassifier,
+                                        onSave: (updatedRecord) async {
+                                          try {
+                                            // Update in database
+                                            final id =
+                                                updatedRecord['id']
+                                                    ?.toString() ??
+                                                '';
+                                            if (id.isEmpty) {
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'Error: Record ID not found',
+                                                    ),
+                                                    backgroundColor: Colors.red,
+                                                  ),
+                                                );
+                                              }
+                                              return;
+                                            }
+                                            await _dbHelper.updateRecord(
+                                              id,
+                                              updatedRecord,
+                                            );
+                                            // Reload from database
+                                            await _loadRecords();
                                             if (context.mounted) {
                                               ScaffoldMessenger.of(
                                                 context,
                                               ).showSnackBar(
                                                 const SnackBar(
                                                   content: Text(
-                                                    'Error: Record ID not found',
+                                                    'Record updated successfully',
+                                                  ),
+                                                  backgroundColor: Colors.green,
+                                                ),
+                                              );
+                                            }
+                                          } catch (e) {
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    'Error updating record: $e',
                                                   ),
                                                   backgroundColor: Colors.red,
                                                 ),
                                               );
                                             }
-                                            return;
                                           }
-                                          await _dbHelper.updateRecord(
-                                            id,
-                                            updatedRecord,
-                                          );
-                                          // Reload from database
-                                          await _loadRecords();
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Record updated successfully',
-                                                ),
-                                                backgroundColor: Colors.green,
-                                              ),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  'Error updating record: $e',
-                                                ),
-                                                backgroundColor: Colors.red,
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      },
-                                    ),
-                                  );
-                                });
-                              },
-                              onLongPress: _showLongPressContextMenu,
-                              onTap: _showCheckUpHistory,
+                                        },
+                                      ),
+                                    );
+                                  });
+                                },
+                                onLongPress: _showLongPressContextMenu,
+                                onTap: _showCheckUpHistory,
+                              ),
                             ),
                             MobilePaginationControls(
                               currentPage: _safeCurrentPage,

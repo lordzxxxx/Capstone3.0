@@ -10,6 +10,7 @@ import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
+import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.blueSoft;
@@ -304,12 +305,15 @@ class _MorbidityPageState extends State<MorbidityPage> {
                             ],
 
                             if (widget.analyticsOnly != true) ...[
-                              _MorbidityTable(
-                                records: _filteredRecords,
-                                onView: (record) =>
-                                    _showMorbidityHistory(context, record),
-                                onLongPress: (record) =>
-                                    _showRecordActionModal(context, record),
+                              SpringDataMotion(
+                                dataKey: _filteredRecords,
+                                child: _MorbidityTable(
+                                  records: _filteredRecords,
+                                  onView: (record) =>
+                                      _showMorbidityHistory(context, record),
+                                  onLongPress: (record) =>
+                                      _showRecordActionModal(context, record),
+                                ),
                               ),
                               const SizedBox(height: 80),
                             ],

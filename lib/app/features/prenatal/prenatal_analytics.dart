@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helper.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _darkDeepTeal = AppDesign.page;
@@ -1287,7 +1288,7 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
       borderRadius: BorderRadius.circular(18),
       border: Border.all(color: _primaryAqua.withValues(alpha: 0.20)),
     ),
-    child: child,
+    child: SpringDataMotion(dataKey: child, child: child),
   );
 
   Widget _panelHeader(String title, String subtitle, IconData icon) => Row(

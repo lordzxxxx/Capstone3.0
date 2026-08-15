@@ -13,6 +13,7 @@ import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
+import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.blueSoft;
@@ -225,29 +226,32 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             const SizedBox(height: 16),
 
                             // Prenatal Records Table
-                            _PrenatalTable(
-                              records: _pagedFilteredRecords,
-                              startIndex: _pageStartIndex,
-                              isSelectionMode: _isSelectionMode,
-                              selectedIndices: _selectedIndices,
-                              onSelectionChanged: (index, selected) {
-                                setState(() {
-                                  if (selected) {
-                                    _selectedIndices.add(index);
-                                  } else {
-                                    _selectedIndices.remove(index);
-                                  }
-                                });
-                              },
-                              onEdit: (record) {
-                                _showEditPrenatalModal(context, record);
-                              },
-                              onTap: (record) {
-                                _showPrenatalHistory(context, record);
-                              },
-                              onLongPress: (record) {
-                                _showRecordActionModal(context, record);
-                              },
+                            SpringDataMotion(
+                              dataKey: _pagedFilteredRecords,
+                              child: _PrenatalTable(
+                                records: _pagedFilteredRecords,
+                                startIndex: _pageStartIndex,
+                                isSelectionMode: _isSelectionMode,
+                                selectedIndices: _selectedIndices,
+                                onSelectionChanged: (index, selected) {
+                                  setState(() {
+                                    if (selected) {
+                                      _selectedIndices.add(index);
+                                    } else {
+                                      _selectedIndices.remove(index);
+                                    }
+                                  });
+                                },
+                                onEdit: (record) {
+                                  _showEditPrenatalModal(context, record);
+                                },
+                                onTap: (record) {
+                                  _showPrenatalHistory(context, record);
+                                },
+                                onLongPress: (record) {
+                                  _showRecordActionModal(context, record);
+                                },
+                              ),
                             ),
                             MobilePaginationControls(
                               currentPage: _safeCurrentPage,

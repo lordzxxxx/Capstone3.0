@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -1368,44 +1369,47 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           const SizedBox(height: 18),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingTextStyle: const TextStyle(
-                color: _lightOffWhite,
-                fontWeight: FontWeight.w800,
-              ),
-              dataTextStyle: const TextStyle(
-                color: _lightOffWhite,
-                fontWeight: FontWeight.w500,
-              ),
-              headingRowColor: WidgetStatePropertyAll(
-                _darkDeepTeal.withValues(alpha: 0.85),
-              ),
-              dataRowColor: const WidgetStatePropertyAll(_panelAlt),
-              dividerThickness: 0.6,
-              columns: const [
-                DataColumn(label: Text('Source')),
-                DataColumn(label: Text('Patient')),
-                DataColumn(label: Text('Disease / Condition')),
-                DataColumn(label: Text('Barangay')),
-                DataColumn(label: Text('Severity')),
-                DataColumn(label: Text('Date')),
-              ],
-              rows: pageRecords.map((record) {
-                return DataRow(
-                  cells: [
-                    DataCell(Text(record.sourceLabel)),
-                    DataCell(Text(record.patientLabel)),
-                    DataCell(Text(record.diseaseLabel)),
-                    DataCell(Text(record.barangay)),
-                    DataCell(Text(record.severityLabel)),
-                    DataCell(
-                      Text(
-                        record.recordDate.toIso8601String().split('T').first,
+            child: SpringDataMotion(
+              dataKey: pageRecords,
+              child: DataTable(
+                headingTextStyle: const TextStyle(
+                  color: _lightOffWhite,
+                  fontWeight: FontWeight.w800,
+                ),
+                dataTextStyle: const TextStyle(
+                  color: _lightOffWhite,
+                  fontWeight: FontWeight.w500,
+                ),
+                headingRowColor: WidgetStatePropertyAll(
+                  _darkDeepTeal.withValues(alpha: 0.85),
+                ),
+                dataRowColor: const WidgetStatePropertyAll(_panelAlt),
+                dividerThickness: 0.6,
+                columns: const [
+                  DataColumn(label: Text('Source')),
+                  DataColumn(label: Text('Patient')),
+                  DataColumn(label: Text('Disease / Condition')),
+                  DataColumn(label: Text('Barangay')),
+                  DataColumn(label: Text('Severity')),
+                  DataColumn(label: Text('Date')),
+                ],
+                rows: pageRecords.map((record) {
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(record.sourceLabel)),
+                      DataCell(Text(record.patientLabel)),
+                      DataCell(Text(record.diseaseLabel)),
+                      DataCell(Text(record.barangay)),
+                      DataCell(Text(record.severityLabel)),
+                      DataCell(
+                        Text(
+                          record.recordDate.toIso8601String().split('T').first,
+                        ),
                       ),
-                    ),
-                  ],
-                );
-              }).toList(),
+                    ],
+                  );
+                }).toList(),
+              ),
             ),
           ),
           const SizedBox(height: 16),

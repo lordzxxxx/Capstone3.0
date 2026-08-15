@@ -9,6 +9,7 @@ import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
+import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.blueSoft;
@@ -696,32 +697,35 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                             const SizedBox(height: 16),
 
                             // Immunization Records Table
-                            _ImmunizationTable(
-                              records: _pagedFilteredRecords,
-                              startIndex: _pageStartIndex,
-                              isSelectionMode: _isSelectionMode,
-                              selectedIndices: _selectedIndices,
-                              onSelectionChanged: (index, selected) {
-                                setState(() {
-                                  if (selected) {
-                                    _selectedIndices.add(index);
-                                  } else {
-                                    _selectedIndices.remove(index);
-                                  }
-                                });
-                              },
-                              onEdit: (record) {
-                                _showEditImmunizationModal(context, record);
-                              },
-                              onTap: (record) {
-                                _showPatientImmunizationHistory(
-                                  context,
-                                  record,
-                                );
-                              },
-                              onLongPress: (record) {
-                                _showRecordActionModal(context, record);
-                              },
+                            SpringDataMotion(
+                              dataKey: _pagedFilteredRecords,
+                              child: _ImmunizationTable(
+                                records: _pagedFilteredRecords,
+                                startIndex: _pageStartIndex,
+                                isSelectionMode: _isSelectionMode,
+                                selectedIndices: _selectedIndices,
+                                onSelectionChanged: (index, selected) {
+                                  setState(() {
+                                    if (selected) {
+                                      _selectedIndices.add(index);
+                                    } else {
+                                      _selectedIndices.remove(index);
+                                    }
+                                  });
+                                },
+                                onEdit: (record) {
+                                  _showEditImmunizationModal(context, record);
+                                },
+                                onTap: (record) {
+                                  _showPatientImmunizationHistory(
+                                    context,
+                                    record,
+                                  );
+                                },
+                                onLongPress: (record) {
+                                  _showRecordActionModal(context, record);
+                                },
+                              ),
                             ),
                             MobilePaginationControls(
                               currentPage: _safeCurrentPage,

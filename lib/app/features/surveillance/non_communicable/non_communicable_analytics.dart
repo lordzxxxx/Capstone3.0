@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const _accent = AppDesign.blue;
 const _background = AppDesign.page;
@@ -477,7 +478,7 @@ class _NonCommunicableAnalyticsPageState
           ),
         ),
         const SizedBox(height: 18),
-        child,
+        SpringDataMotion(dataKey: child, child: child),
       ],
     ),
   );

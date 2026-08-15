@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
@@ -1134,41 +1135,44 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
       borderRadius: BorderRadius.circular(16),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowColor: WidgetStateProperty.all(_surfaceAlt),
-          columns: const [
-            DataColumn(label: Text('Referral ID')),
-            DataColumn(label: Text('Patient')),
-            DataColumn(label: Text('Date')),
-            DataColumn(label: Text('Priority')),
-            DataColumn(label: Text('Status')),
-            DataColumn(label: Text('CHO Remarks')),
-            DataColumn(label: Text('Actions')),
-          ],
-          rows: records
-              .map(
-                (record) => DataRow(
-                  cells: [
-                    DataCell(Text(record.shortId)),
-                    DataCell(Text(record.patientName)),
-                    DataCell(Text(_date(record.createdAt))),
-                    DataCell(_statusBadge(record.priorityLabel)),
-                    DataCell(_statusBadge(record.statusLabel)),
-                    DataCell(
-                      SizedBox(
-                        width: 220,
-                        child: Text(
-                          record.choRemarks,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+        child: SpringDataMotion(
+          dataKey: records,
+          child: DataTable(
+            headingRowColor: WidgetStateProperty.all(_surfaceAlt),
+            columns: const [
+              DataColumn(label: Text('Referral ID')),
+              DataColumn(label: Text('Patient')),
+              DataColumn(label: Text('Date')),
+              DataColumn(label: Text('Priority')),
+              DataColumn(label: Text('Status')),
+              DataColumn(label: Text('CHO Remarks')),
+              DataColumn(label: Text('Actions')),
+            ],
+            rows: records
+                .map(
+                  (record) => DataRow(
+                    cells: [
+                      DataCell(Text(record.shortId)),
+                      DataCell(Text(record.patientName)),
+                      DataCell(Text(_date(record.createdAt))),
+                      DataCell(_statusBadge(record.priorityLabel)),
+                      DataCell(_statusBadge(record.statusLabel)),
+                      DataCell(
+                        SizedBox(
+                          width: 220,
+                          child: Text(
+                            record.choRemarks,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
-                    ),
-                    DataCell(_recordActions(record)),
-                  ],
-                ),
-              )
-              .toList(),
+                      DataCell(_recordActions(record)),
+                    ],
+                  ),
+                )
+                .toList(),
+          ),
         ),
       ),
     ),
