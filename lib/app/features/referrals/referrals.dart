@@ -1139,11 +1139,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: <Color>[_panelSurface, _panelAlt],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppDesign.navy,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
       ),
@@ -1153,7 +1149,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
           Text(
             title,
             style: const TextStyle(
-              color: _lightOffWhite,
+              color: Colors.white,
               fontSize: 28,
               fontWeight: FontWeight.bold,
             ),
@@ -1161,10 +1157,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
           const SizedBox(height: 10),
           Text(
             subtitle,
-            style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.76),
-              height: 1.45,
-            ),
+            style: TextStyle(color: AppDesign.blueSoft, height: 1.45),
           ),
         ],
       ),
@@ -1457,11 +1450,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: <Color>[_darkDeepTeal, _panelAlt],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: _panelAlt,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
       ),

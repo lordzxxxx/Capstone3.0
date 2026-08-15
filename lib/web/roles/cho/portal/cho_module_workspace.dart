@@ -10,6 +10,7 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 
 class ChoModuleWorkspace extends StatefulWidget {
@@ -271,6 +272,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
               onPressed: () => _export(rows),
               icon: const Icon(Icons.download_outlined),
               label: const Text('Export CSV'),
+              style: AppButtonStyles.outline(),
             ),
           ],
         ),

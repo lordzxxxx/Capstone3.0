@@ -410,11 +410,7 @@ class CommunicableInsights extends StatelessWidget {
               BarChartRodData(
                 toY: visible[index].value.toDouble(),
                 width: visible.length > 5 ? 18 : 26,
-                gradient: const LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Color(0xFF008895), Color(0xFF35D4DE)],
-                ),
+                color: const Color(0xFF008895),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(6),
                 ),

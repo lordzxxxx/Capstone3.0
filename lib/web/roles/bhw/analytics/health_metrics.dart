@@ -826,9 +826,7 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                       width: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          _darkDeepTeal,
-                        ),
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
                   : const Icon(Icons.play_arrow_rounded),

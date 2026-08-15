@@ -18,6 +18,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart'
 import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
@@ -727,16 +728,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: BoxDecoration(
-              gradient: isActive
-                  ? LinearGradient(
-                      colors: [
-                        _primaryAqua.withValues(alpha: 0.15),
-                        _primaryAqua.withValues(alpha: 0.05),
-                      ],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    )
-                  : null,
+              color: isActive ? _primaryAqua.withValues(alpha: 0.18) : null,
               borderRadius: BorderRadius.circular(12),
               border: Border(
                 left: BorderSide(
@@ -4889,49 +4881,17 @@ class _PrenatalPageState extends State<PrenatalPage> {
                               ),
                               child: const Text('Close'),
                             ),
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [_primaryAqua, _secondaryIceBlue],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(14),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: _primaryAqua.withValues(alpha: 0.22),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                Navigator.of(dialogContext).pop();
+                                await _generatePrenatalPdf(context, record);
+                              },
+                              icon: const Icon(
+                                Icons.picture_as_pdf_rounded,
+                                size: 18,
                               ),
-                              child: ElevatedButton.icon(
-                                onPressed: () async {
-                                  Navigator.of(dialogContext).pop();
-                                  await _generatePrenatalPdf(context, record);
-                                },
-                                icon: const Icon(
-                                  Icons.picture_as_pdf_rounded,
-                                  size: 18,
-                                ),
-                                label: const Text('Generate PDF'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _primaryAqua,
-                                  foregroundColor: Colors.white,
-                                  shadowColor: Colors.transparent,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 15,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
+                              label: const Text('Generate PDF'),
+                              style: AppButtonStyles.report(),
                             ),
                           ],
                         ),
@@ -5889,7 +5849,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           _maternalAgeDistribution(),
           emptyMessage: 'Maternal-age data has not been recorded yet.',
           tooltipUnit: 'patient',
-          colors: const [_primaryAqua, Color(0xFF8FAFD6)],
+          colors: const [_primaryAqua, _secondaryIceBlue],
         ),
       ),
       _buildPrenatalChartCard(
@@ -5900,7 +5860,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           _pregnancyComplicationDistribution(),
           emptyMessage: 'No pregnancy complications are currently recorded.',
           tooltipUnit: 'case',
-          colors: const [_secondaryIceBlue, Color(0xFF8FAFD6)],
+          colors: const [_primaryAqua, Color(0xFF8FAFD6)],
         ),
       ),
     ];
@@ -6360,14 +6320,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
             dotData: FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  _primaryAqua.withValues(alpha: 0.28),
-                  _primaryAqua.withValues(alpha: 0.02),
-                ],
-              ),
+              color: _primaryAqua.withValues(alpha: 0.12),
             ),
           ),
         ],
@@ -6431,11 +6384,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
               BarChartRodData(
                 toY: entries[index].value.toDouble(),
                 width: 24,
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: colors,
-                ),
+                color: colors[index % colors.length],
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(6),
                 ),
@@ -6795,14 +6744,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
           decoration: BoxDecoration(
             color: _primaryAqua,
             borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: _primaryAqua.withValues(alpha: 0.24),
-                blurRadius: 14,
-                spreadRadius: 1.5,
-                offset: const Offset(0, 5),
-              ),
-            ],
             border: Border.all(
               color: Colors.white.withValues(alpha: 0.35),
               width: 1,
@@ -6839,14 +6780,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
           color: _primaryAqua.withValues(alpha: 0.35),
           width: 1.2,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: _primaryAqua.withValues(alpha: 0.18),
-            blurRadius: 14,
-            spreadRadius: 1,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: _buildHighlightedPrenatalAddButton(context),
     );

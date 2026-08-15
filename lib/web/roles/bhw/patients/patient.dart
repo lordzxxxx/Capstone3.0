@@ -27,6 +27,7 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient_operational_su
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/shared/utils/patient_pdf.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'dart:async';
 import 'dart:math' as math;
@@ -1438,52 +1439,11 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   }
 
   Widget _buildTableAddPatientButton() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: _showAddPatientModal,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                _primaryAqua.withValues(alpha: 0.22),
-                _primaryAqua.withValues(alpha: 0.1),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: _primaryAqua.withValues(alpha: 0.6),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: _primaryAqua.withValues(alpha: 0.22),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.person_add_outlined, color: Colors.white, size: 18),
-              SizedBox(width: 8),
-              Text(
-                'Add',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return FilledButton.icon(
+      onPressed: _showAddPatientModal,
+      style: AppButtonStyles.primary(),
+      icon: const Icon(Icons.person_add_outlined, size: 18),
+      label: const Text('Add'),
     );
   }
 
@@ -3754,52 +3714,20 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                               ),
                               child: const Text('Close'),
                             ),
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [_primaryAqua, _secondaryIceBlue],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(14),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: _primaryAqua.withValues(alpha: 0.22),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                Navigator.of(dialogContext).pop();
+                                await _downloadPatientRecordPdf(
+                                  context,
+                                  patient,
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.picture_as_pdf_rounded,
+                                size: 18,
                               ),
-                              child: ElevatedButton.icon(
-                                onPressed: () async {
-                                  Navigator.of(dialogContext).pop();
-                                  await _downloadPatientRecordPdf(
-                                    context,
-                                    patient,
-                                  );
-                                },
-                                icon: const Icon(
-                                  Icons.picture_as_pdf_rounded,
-                                  size: 18,
-                                ),
-                                label: const Text('Generate PDF'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _primaryAqua,
-                                  foregroundColor: Colors.white,
-                                  shadowColor: Colors.transparent,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 15,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
+                              label: const Text('Generate PDF'),
+                              style: AppButtonStyles.report(),
                             ),
                           ],
                         ),
@@ -4691,21 +4619,8 @@ class _AddPatientModalState extends State<AddPatientModal> {
                   const SizedBox(width: 16),
                   DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF00E5FF), Color(0xFF2F80ED)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      color: _primaryAqua,
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(
-                            0xFF00E5FF,
-                          ).withValues(alpha: 0.26),
-                          blurRadius: 14,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
                     ),
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.save_outlined),
@@ -6478,15 +6393,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
                 icon: const Icon(Icons.check),
                 label: const Text('Update Patient'),
                 onPressed: _updatePatient,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: _primaryAqua,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                ),
+                style: AppButtonStyles.primary(),
               ),
             ),
           ],

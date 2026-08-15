@@ -17,6 +17,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart'
 import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
@@ -903,20 +904,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF00E5FF), Color(0xFF2F80ED)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: _primaryAqua,
             borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF00E5FF).withValues(alpha: 0.45),
-                blurRadius: 14,
-                spreadRadius: 1.5,
-                offset: const Offset(0, 5),
-              ),
-            ],
             border: Border.all(
               color: Colors.white.withValues(alpha: 0.35),
               width: 1,
@@ -951,27 +940,12 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF00E5FF).withValues(alpha: 0.18),
-            _primaryAqua.withValues(alpha: 0.2),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: _primaryAqua.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: const Color(0xFF00E5FF).withValues(alpha: 0.55),
           width: 1.2,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF00E5FF).withValues(alpha: 0.18),
-            blurRadius: 14,
-            spreadRadius: 1,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: _buildAddImmunizationButton(context),
     );
@@ -2182,11 +2156,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [_sidebarDark, _darkDeepTeal],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
+                    color: _sidebarDark,
                     border: Border(
                       bottom: BorderSide(
                         color: _primaryAqua.withValues(alpha: 0.28),
@@ -4093,52 +4063,20 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                               ),
                               child: const Text('Close'),
                             ),
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [_primaryAqua, _secondaryIceBlue],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(14),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: _primaryAqua.withValues(alpha: 0.22),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                Navigator.of(dialogContext).pop();
+                                await _downloadImmunizationRecordPdf(
+                                  context,
+                                  record,
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.picture_as_pdf_rounded,
+                                size: 18,
                               ),
-                              child: ElevatedButton.icon(
-                                onPressed: () async {
-                                  Navigator.of(dialogContext).pop();
-                                  await _downloadImmunizationRecordPdf(
-                                    context,
-                                    record,
-                                  );
-                                },
-                                icon: const Icon(
-                                  Icons.picture_as_pdf_rounded,
-                                  size: 18,
-                                ),
-                                label: const Text('Generate PDF'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _primaryAqua,
-                                  foregroundColor: Colors.white,
-                                  shadowColor: Colors.transparent,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 15,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
+                              label: const Text('Generate PDF'),
+                              style: AppButtonStyles.report(),
                             ),
                           ],
                         ),
@@ -4282,11 +4220,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [_primaryAqua, _secondaryIceBlue],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: _primaryAqua,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
@@ -5433,16 +5367,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: BoxDecoration(
-              gradient: isActive
-                  ? LinearGradient(
-                      colors: [
-                        _primaryAqua.withValues(alpha: 0.15),
-                        _primaryAqua.withValues(alpha: 0.05),
-                      ],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    )
-                  : null,
+              color: isActive ? _primaryAqua.withValues(alpha: 0.18) : null,
               borderRadius: BorderRadius.circular(12),
               border: Border(
                 left: BorderSide(

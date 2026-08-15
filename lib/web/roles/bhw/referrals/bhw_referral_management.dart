@@ -13,18 +13,20 @@ import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:universal_html/html.dart' as html;
 
-const _aqua = Color(0xFF2F80ED);
-const _background = Color(0xFF071A33);
-const _surface = Color(0xFF0D274D);
-const _surfaceAlt = Color(0xFF163B66);
-const _text = Color(0xFFF5F7FA);
-const _muted = Color(0xFFB8C9DB);
-const _lightField = Color(0xFFF7FAFC);
-const _darkFieldText = Color(0xFF12252B);
+const _aqua = AppColors.primary;
+const _background = AppColors.backgroundLight;
+const _surface = AppColors.surfaceLight;
+const _surfaceAlt = AppColors.surfaceSubtle;
+const _text = AppColors.textPrimary;
+const _muted = AppColors.textSecondary;
+const _lightField = Colors.white;
+const _darkFieldText = AppColors.textPrimary;
 
 class BhwReferralPage extends StatefulWidget {
   const BhwReferralPage({super.key, this.initialPatient});
@@ -133,13 +135,13 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
         : user?.email?.split('@').first ?? 'BHW';
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: _background,
       drawer: WebAppSidebar(
         userName: userName,
         activeItem: WebSidebarItem.referrals,
       ),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF071A33),
+        backgroundColor: AppColors.backgroundDark,
         title: const Text('BHW Referral Management'),
         leading: IconButton(
           icon: const Icon(Icons.menu),
@@ -185,7 +187,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
         children: [
           const Icon(
             Icons.cloud_off_outlined,
-            color: Colors.orangeAccent,
+            color: AppColors.textSecondary,
             size: 48,
           ),
           const SizedBox(height: 12),
@@ -195,7 +197,11 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
             style: const TextStyle(color: _text),
           ),
           const SizedBox(height: 14),
-          FilledButton(onPressed: _loadScope, child: const Text('Retry')),
+          FilledButton(
+            onPressed: _loadScope,
+            style: AppButtonStyles.primary(),
+            child: const Text('Retry'),
+          ),
         ],
       ),
     ),
@@ -226,9 +232,9 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     width: double.infinity,
     padding: const EdgeInsets.all(22),
     decoration: BoxDecoration(
-      gradient: const LinearGradient(colors: [_surfaceAlt, Color(0xFF0A2830)]),
+      color: AppColors.secondary,
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: _aqua.withValues(alpha: 0.22)),
+      border: Border.all(color: AppColors.primary, width: 1.2),
     ),
     child: LayoutBuilder(
       builder: (context, constraints) {
@@ -239,7 +245,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: _aqua.withValues(alpha: 0.14),
+                color: AppColors.primary.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: const Icon(
@@ -265,7 +271,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
                   Text(
                     'Referral Management',
                     style: TextStyle(
-                      color: _text,
+                      color: Colors.white,
                       fontSize: compact ? 23 : 28,
                       fontWeight: FontWeight.w800,
                     ),
@@ -273,7 +279,10 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
                   const SizedBox(height: 5),
                   const Text(
                     'Create patient-linked requests for CHO review and monitor higher-level care. BHWs cannot approve, assign providers, diagnose, or prescribe.',
-                    style: TextStyle(color: _muted, height: 1.45),
+                    style: TextStyle(
+                      color: AppColors.textOnDarkMuted,
+                      height: 1.45,
+                    ),
                   ),
                 ],
               ),
@@ -289,8 +298,9 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     child: Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.22),
+        color: _surfaceAlt,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: List.generate(_views.length, (index) {
@@ -306,7 +316,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
             icon: Icon(icons[index], size: 18),
             label: Text(_views[index]),
             style: TextButton.styleFrom(
-              foregroundColor: selected ? Colors.white : Colors.white70,
+              foregroundColor: selected ? Colors.white : _muted,
               backgroundColor: selected ? _aqua : Colors.transparent,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               shape: RoundedRectangleBorder(
@@ -427,7 +437,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
   Widget _recentReferral(_BhwReferralRecord record) => Container(
     padding: const EdgeInsets.symmetric(vertical: 13),
     decoration: const BoxDecoration(
-      border: Border(bottom: BorderSide(color: Colors.white10)),
+      border: Border(bottom: BorderSide(color: AppColors.border)),
     ),
     child: Row(
       children: [
@@ -520,6 +530,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
                     const Spacer(),
                     FilledButton.icon(
                       onPressed: _submitting ? null : _submit,
+                      style: AppButtonStyles.primary(),
                       icon: _submitting
                           ? const SizedBox(
                               width: 18,
@@ -573,6 +584,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
             const SizedBox(height: 18),
             FilledButton.icon(
               onPressed: _choosePatient,
+              style: AppButtonStyles.primary(),
               icon: const Icon(Icons.search_rounded),
               label: const Text('Search and Select Patient'),
             ),
@@ -765,7 +777,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     decoration: BoxDecoration(
       color: _background.withValues(alpha: 0.5),
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: Colors.white12),
+      border: Border.all(color: AppColors.border),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1129,7 +1141,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     decoration: BoxDecoration(
       color: _surface,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.white10),
+      border: Border.all(color: AppColors.border),
     ),
     child: ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -1185,7 +1197,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     decoration: BoxDecoration(
       color: _surface,
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: Colors.white10),
+      border: Border.all(color: AppColors.border),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1350,6 +1362,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
         const SizedBox(height: 14),
         FilledButton.icon(
           onPressed: () => _recordFollowUp(record),
+          style: AppButtonStyles.primary(),
           icon: const Icon(Icons.home_work_outlined),
           label: Text(
             record.homeVisitCompleted
@@ -1421,6 +1434,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
                 }
                 Navigator.pop(context, true);
               },
+              style: AppButtonStyles.primary(),
               child: const Text('Save Home Visit'),
             ),
           ],

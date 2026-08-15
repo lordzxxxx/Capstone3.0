@@ -1403,11 +1403,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
               padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [_primaryAqua, _secondaryIceBlue],
-                ),
+                color: _primaryAqua,
                 boxShadow: [
                   BoxShadow(
                     color: _primaryAqua.withValues(alpha: 0.3),
@@ -1480,11 +1476,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [_darkDeepTeal, _secondaryIceBlue],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: AppDesign.navy,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
@@ -1996,14 +1988,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        _darkDeepTeal,
-                        _darkDeepTeal.withValues(alpha: 0.9),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: AppDesign.navy,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(20),
                       topRight: Radius.circular(20),
@@ -2666,11 +2651,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [_darkDeepTeal, _secondaryIceBlue],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: AppDesign.navy,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),

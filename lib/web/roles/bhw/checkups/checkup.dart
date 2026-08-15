@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:mycapstone_project/web/roles/bhw/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/core/services/health_ai_classifier.dart';
@@ -1593,16 +1594,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: BoxDecoration(
-              gradient: isActive
-                  ? LinearGradient(
-                      colors: [
-                        _primaryAqua.withValues(alpha: 0.15),
-                        _primaryAqua.withValues(alpha: 0.05),
-                      ],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    )
-                  : null,
+              color: isActive ? _primaryAqua.withValues(alpha: 0.18) : null,
               borderRadius: BorderRadius.circular(12),
               border: Border(
                 left: BorderSide(
@@ -1686,16 +1678,9 @@ class _CheckUpPageState extends State<CheckUpPage> {
             ),
           ),
           const Spacer(),
-          OutlinedButton.icon(
+          FilledButton.icon(
             onPressed: _isLoading ? null : _generateCheckupReport,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: BorderSide(color: Colors.white.withValues(alpha: 0.25)),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
+            style: AppButtonStyles.report(),
             icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
             label: const Text(
               'Generate',
@@ -1749,20 +1734,8 @@ class _CheckUpPageState extends State<CheckUpPage> {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF00E5FF), Color(0xFF2F80ED)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: _primaryAqua,
             borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF00E5FF).withValues(alpha: 0.45),
-                blurRadius: 14,
-                spreadRadius: 1.5,
-                offset: const Offset(0, 5),
-              ),
-            ],
             border: Border.all(
               color: Colors.white.withValues(alpha: 0.35),
               width: 1,
@@ -1797,27 +1770,12 @@ class _CheckUpPageState extends State<CheckUpPage> {
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF00E5FF).withValues(alpha: 0.18),
-            _primaryAqua.withValues(alpha: 0.2),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: _primaryAqua.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: const Color(0xFF00E5FF).withValues(alpha: 0.55),
           width: 1.2,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF00E5FF).withValues(alpha: 0.18),
-            blurRadius: 14,
-            spreadRadius: 1,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: _buildHighlightedAddButton(),
     );
@@ -2739,7 +2697,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
                 emptyMessage:
                     'Reported symptoms will appear after symptom data is saved.',
                 tooltipUnit: 'report',
-                colors: const [Color(0xFF6C63FF), Color(0xFFB58CFF)],
+                colors: const [_primaryAqua, _secondaryIceBlue],
               ),
             );
             final ageChart = _buildChartPanel(
@@ -2751,7 +2709,7 @@ class _CheckUpDashboardHeader extends StatelessWidget {
                 emptyMessage:
                     'Age-range data will appear after patient ages are saved.',
                 tooltipUnit: 'patient',
-                colors: const [Color(0xFFFF8A42), Color(0xFFFFC857)],
+                colors: const [_secondaryIceBlue, Color(0xFF8FAFD6)],
               ),
             );
 

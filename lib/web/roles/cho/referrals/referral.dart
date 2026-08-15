@@ -885,11 +885,7 @@ class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: <Color>[_darkDeepTeal, _panelAlt],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          color: _darkDeepTeal,
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(
                             color: _primaryAqua.withValues(alpha: 0.18),
@@ -2399,11 +2395,7 @@ class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: <Color>[_panelSurface, _panelAlt],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: _darkDeepTeal,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
       ),

@@ -399,7 +399,7 @@ class _DoctorNotesSectionState extends State<DoctorNotesSection> {
                         label: const Text('Add Note'),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          foregroundColor: AppColors.textPrimary,
+                          foregroundColor: Colors.white,
                         ),
                       ),
                     ),

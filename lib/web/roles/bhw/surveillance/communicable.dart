@@ -2345,16 +2345,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: BoxDecoration(
-              gradient: isActive
-                  ? LinearGradient(
-                      colors: [
-                        _primaryAqua.withValues(alpha: 0.15),
-                        _primaryAqua.withValues(alpha: 0.05),
-                      ],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    )
-                  : null,
+              color: isActive ? _primaryAqua.withValues(alpha: 0.18) : null,
               borderRadius: BorderRadius.circular(12),
               border: Border(
                 left: BorderSide(

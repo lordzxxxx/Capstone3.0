@@ -19,6 +19,7 @@ import 'package:mycapstone_project/web/shared/utils/report_generation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 
 const Color _launcherPrimaryAqua = AppColors.primary;
 const Color _launcherDarkDeepTeal = AppColors.backgroundDark;
@@ -586,10 +587,7 @@ Future<_OverallReportSelection?> _showOverallSelectionDialog(
                       ),
                     );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _launcherPrimaryAqua,
-                    foregroundColor: Colors.white,
-                  ),
+                  style: AppButtonStyles.report(),
                   icon: const Icon(Icons.picture_as_pdf_rounded),
                   label: const Text('Generate PDF'),
                 ),
@@ -2241,16 +2239,7 @@ class _DashboardReportCardState extends State<_DashboardReportCard> {
           width: 340,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                _launcherDarkDeepTeal,
-                widget.option.accent.withValues(
-                  alpha: _isHovered ? 0.24 : 0.14,
-                ),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: _launcherDarkDeepTeal,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: widget.option.accent.withValues(

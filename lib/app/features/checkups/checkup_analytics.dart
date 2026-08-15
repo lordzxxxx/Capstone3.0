@@ -406,11 +406,7 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [_panelTop, _panelBottom],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: _panelTop,
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(
                   color: _panelStroke.withValues(alpha: 0.7),
@@ -1647,14 +1643,7 @@ class _AnalyticsCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            _panelTop.withValues(alpha: 0.98),
-            _panelBottom.withValues(alpha: 0.98),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: _panelTop,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: _panelStroke.withValues(alpha: 0.7),

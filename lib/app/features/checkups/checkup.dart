@@ -451,11 +451,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
             padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [_primaryAqua, _secondaryIceBlue],
-              ),
+              color: _primaryAqua,
               boxShadow: [
                 BoxShadow(
                   color: _primaryAqua.withValues(alpha: 0.3),
@@ -528,11 +524,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [_darkDeepTeal, _secondaryIceBlue],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: AppDesign.navy,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(20),
                       topRight: Radius.circular(20),
@@ -2689,11 +2681,7 @@ void _showCheckUpDetails(BuildContext context, Map<String, dynamic> record) {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_primaryAqua, _primaryAqua.withValues(alpha: 0.8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: _primaryAqua,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),
@@ -2976,11 +2964,7 @@ Widget _buildAIClassificationSection(Map<String, dynamic> record) {
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [_primaryAqua.withValues(alpha: 0.05), Colors.white],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
         ),
@@ -3383,11 +3367,7 @@ Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
   return Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [Colors.green.shade50, Colors.white],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
+      color: Colors.green.shade50,
       borderRadius: BorderRadius.circular(12),
       border: Border.all(color: Colors.green.shade300),
     ),
@@ -4456,11 +4436,7 @@ class _NewCheckUpFullScreenModalState
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [_darkDeepTeal, _secondaryIceBlue],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: AppDesign.navy,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
@@ -4725,11 +4701,7 @@ class _NewCheckUpFullScreenModalState
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [_darkDeepTeal, _secondaryIceBlue],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: AppDesign.navy,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
@@ -5981,11 +5953,7 @@ class _EditCheckUpFullScreenModalState
               padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [_primaryAqua, _secondaryIceBlue],
-                ),
+                color: _primaryAqua,
                 boxShadow: [
                   BoxShadow(
                     color: _primaryAqua.withValues(alpha: 0.3),
@@ -6066,11 +6034,7 @@ class _EditCheckUpFullScreenModalState
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [_darkDeepTeal, _secondaryIceBlue],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: AppDesign.navy,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),

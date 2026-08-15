@@ -757,14 +757,7 @@ class _GraphCard extends StatelessWidget {
 
         return Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                _panelTop.withValues(alpha: 0.98),
-                _panelBottom.withValues(alpha: 0.98),
-              ],
-            ),
+            color: _panelTop,
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
               color: _panelStroke.withValues(alpha: 0.75),
@@ -801,14 +794,7 @@ class _GraphCard extends StatelessWidget {
                       height: isCompact ? 42 : 48,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
-                        gradient: LinearGradient(
-                          colors: [
-                            _primaryAqua.withValues(alpha: 0.24),
-                            _primaryAqua.withValues(alpha: 0.10),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                        color: _primaryAqua.withValues(alpha: 0.12),
                         border: Border.all(
                           color: _primaryAqua.withValues(alpha: 0.26),
                         ),
@@ -1835,9 +1821,7 @@ class _BuildImmunizationChartState extends State<_BuildImmunizationChart>
         .map((e) => BarData(_compactChartLabelAscii(e.key), e.value))
         .toList(growable: false);
 
-    final palette = <Color>[
-      ...AppDesign.chartPalette,
-    ];
+    final palette = <Color>[...AppDesign.chartPalette];
 
     return Column(
       children: [
@@ -2258,11 +2242,7 @@ class _InsightCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [color.withValues(alpha: 0.08), Colors.transparent],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _lightOffWhite.withValues(alpha: 0.5),

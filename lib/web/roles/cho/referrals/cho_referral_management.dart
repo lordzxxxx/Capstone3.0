@@ -12,6 +12,7 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 
 /// CHO referral review/approval workspace — reached from the sidebar
@@ -146,8 +147,9 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                 'Validate BHW referrals, coordinate receiving facilities and doctors, and monitor referral progress. CHO review does not diagnose or prescribe.',
             icon: Icons.assignment_turned_in_outlined,
             actions: [
-              OutlinedButton.icon(
+              FilledButton.icon(
                 onPressed: () => _exportReport(records),
+                style: AppButtonStyles.report(),
                 icon: const Icon(Icons.download_outlined),
                 label: const Text('Generate report'),
               ),
@@ -474,6 +476,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                 );
                 if (dialogContext.mounted) Navigator.pop(dialogContext, true);
               },
+              style: AppButtonStyles.primary(),
               child: const Text('Save review'),
             ),
           ],
@@ -565,6 +568,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
+            style: AppButtonStyles.primary(),
             child: const Text('Confirm'),
           ),
         ],

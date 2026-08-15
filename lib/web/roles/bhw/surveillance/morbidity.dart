@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
@@ -281,19 +282,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Center(
-              child: OutlinedButton.icon(
+              child: FilledButton.icon(
                 onPressed: _generateMorbidityReport,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                style: AppButtonStyles.report(),
                 icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
                 label: const Text(
                   'Generate',
@@ -1609,14 +1600,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                           },
                           icon: const Icon(Icons.picture_as_pdf_rounded),
                           label: const Text('Generate PDF'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _primaryAqua,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 14,
-                            ),
-                          ),
+                          style: AppButtonStyles.report(),
                         ),
                       ],
                     ),

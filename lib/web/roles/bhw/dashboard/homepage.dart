@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
@@ -2217,23 +2218,10 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.white,
                 ),
                 const SizedBox(width: 8),
-                OutlinedButton.icon(
+                FilledButton.icon(
                   onPressed: () =>
                       showOverallHealthReportDialog(context: context),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.28),
-                    ),
-                    backgroundColor: _sidebarDark.withValues(alpha: 0.4),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
+                  style: AppButtonStyles.report(),
                   icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
                   label: const Text(
                     'Generate Overall PDF',
@@ -3644,16 +3632,7 @@ class _HomePageState extends State<HomePage> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: BoxDecoration(
-              gradient: isActive
-                  ? LinearGradient(
-                      colors: [
-                        _primaryAqua.withValues(alpha: 0.15),
-                        _primaryAqua.withValues(alpha: 0.05),
-                      ],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    )
-                  : null,
+              color: isActive ? _primaryAqua.withValues(alpha: 0.18) : null,
               borderRadius: BorderRadius.circular(12),
               border: Border(
                 left: BorderSide(
@@ -3728,16 +3707,7 @@ class _HomePageState extends State<HomePage> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: BoxDecoration(
-              gradient: isActive
-                  ? LinearGradient(
-                      colors: [
-                        _primaryAqua.withValues(alpha: 0.15),
-                        _primaryAqua.withValues(alpha: 0.05),
-                      ],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    )
-                  : null,
+              color: isActive ? _primaryAqua.withValues(alpha: 0.18) : null,
               borderRadius: BorderRadius.circular(12),
               border: Border(
                 left: BorderSide(

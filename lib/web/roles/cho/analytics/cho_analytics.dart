@@ -17,6 +17,7 @@ import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
@@ -1529,32 +1530,23 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               ],
             ),
           ),
-          ElevatedButton.icon(
+          OutlinedButton.icon(
             onPressed: _records.isEmpty ? null : _exportCsv,
             icon: const Icon(Icons.table_view_outlined),
             label: const Text('Export CSV'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryAqua,
-              foregroundColor: Colors.white,
-            ),
+            style: AppButtonStyles.outline(),
           ),
-          ElevatedButton.icon(
+          OutlinedButton.icon(
             onPressed: _records.isEmpty ? null : _exportExcel,
             icon: const Icon(Icons.grid_on_outlined),
             label: const Text('Export Excel'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _secondaryIceBlue,
-              foregroundColor: _lightOffWhite,
-            ),
+            style: AppButtonStyles.outline(),
           ),
-          ElevatedButton.icon(
+          FilledButton.icon(
             onPressed: _records.isEmpty ? null : _exportPdf,
             icon: const Icon(Icons.picture_as_pdf_outlined),
             label: const Text('Export PDF'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-              foregroundColor: _lightOffWhite,
-            ),
+            style: AppButtonStyles.report(),
           ),
         ],
       ),

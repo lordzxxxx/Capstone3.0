@@ -494,11 +494,7 @@ class PatientOperationalSummary extends StatelessWidget {
                 BarChartRodData(
                   toY: counts[index].toDouble(),
                   width: 24,
-                  gradient: const LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [Color(0xFF008895), Color(0xFF35D4DE)],
-                  ),
+                  color: _accent,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(6),
                   ),

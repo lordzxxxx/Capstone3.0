@@ -18,6 +18,7 @@ import 'package:mycapstone_project/web/roles/bhw/patients/shared_patient_search_
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/utils/referral_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/report_print.dart';
 
@@ -885,7 +886,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: _darkDeepTeal,
+                        color: _panelAlt,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: _primaryAqua.withValues(alpha: 0.18),
@@ -1401,11 +1402,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: <Color>[_panelSurface, _panelAlt],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: _panelSurface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
       ),
@@ -1718,10 +1715,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                 onPressed: _isSubmitting ? null : _submitReferral,
                 icon: const Icon(Icons.send_outlined),
                 label: Text(_isSubmitting ? 'Submitting...' : 'Send referral'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _primaryAqua,
-                  foregroundColor: Colors.white,
-                ),
+                style: AppButtonStyles.primary(),
               ),
             ),
           ],
@@ -1775,11 +1769,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
           const SizedBox(height: 18),
           ElevatedButton.icon(
             onPressed: _selectReferralPatient,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryAqua,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            ),
+            style: AppButtonStyles.primary(),
             icon: const Icon(Icons.search_rounded),
             label: const Text('Search and Select Patient'),
           ),
@@ -1812,11 +1802,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: <Color>[_darkDeepTeal, _panelAlt],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: _panelAlt,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
       ),
@@ -2414,7 +2400,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: _darkDeepTeal,
+                color: _panelAlt,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Column(
@@ -2485,12 +2471,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                 onPressed: () => _printReferralReport(data),
                 icon: const Icon(Icons.print_outlined),
                 label: const Text('Print form'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _lightOffWhite,
-                  side: BorderSide(
-                    color: _lightOffWhite.withValues(alpha: 0.18),
-                  ),
-                ),
+                style: AppButtonStyles.outline(),
               ),
               if (_isChoOperator)
                 OutlinedButton.icon(
@@ -2509,10 +2490,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                   onPressed: () => _showDoctorUpdateDialog(doc),
                   icon: const Icon(Icons.medical_information_outlined),
                   label: const Text('Update care'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.greenAccent,
-                    side: const BorderSide(color: Colors.greenAccent),
-                  ),
+                  style: AppButtonStyles.outline(),
                 ),
             ],
           ),
@@ -2565,7 +2543,8 @@ class _ReferralsPageState extends State<ReferralsPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: _darkDeepTeal,
+        color: _panelAlt,
+        border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(

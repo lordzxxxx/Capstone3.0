@@ -217,6 +217,8 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.surfaceSubtle,
+          disabledForegroundColor: AppColors.textSecondary,
           elevation: 0,
           minimumSize: const Size(48, 44),
           padding: const EdgeInsets.symmetric(
@@ -233,6 +235,8 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.surfaceSubtle,
+          disabledForegroundColor: AppColors.textSecondary,
           minimumSize: const Size(48, 44),
           padding: const EdgeInsets.symmetric(
             vertical: AppSpacing.sm + AppSpacing.xs,
@@ -248,6 +252,7 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
           backgroundColor: AppColors.surfaceLight,
+          disabledForegroundColor: AppColors.textSecondary,
           minimumSize: const Size(48, 44),
           padding: const EdgeInsets.symmetric(
             vertical: AppSpacing.sm + AppSpacing.xs,

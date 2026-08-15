@@ -10,6 +10,7 @@ import 'package:mycapstone_project/web/shared/utils/report_branding.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/shared/utils/pdf_fonts.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -907,10 +908,7 @@ Future<_ReportSelection?> _showReportGenerationDialog({
                         ),
                   icon: const Icon(Icons.table_chart_outlined),
                   label: const Text('Generate Excel'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: accentColor,
-                    side: BorderSide(color: accentColor),
-                  ),
+                  style: AppButtonStyles.outline(),
                 ),
                 FilledButton.icon(
                   onPressed: matchingCount == 0
@@ -918,10 +916,7 @@ Future<_ReportSelection?> _showReportGenerationDialog({
                       : () => Navigator.of(dialogContext).pop(
                           selection.copyWith(format: ReportExportFormat.pdf),
                         ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: accentColor,
-                    foregroundColor: _bestForegroundColor(accentColor),
-                  ),
+                  style: AppButtonStyles.report(),
                   icon: const Icon(Icons.picture_as_pdf_rounded),
                   label: const Text('Generate PDF'),
                 ),
