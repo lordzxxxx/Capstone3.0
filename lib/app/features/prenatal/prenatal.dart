@@ -314,20 +314,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
   Widget _buildPrenatalSearchAndFilterBar() {
     return Column(
       children: [
-        // Search Bar (top row)
-        MobileSearchField(
-          controller: _searchController,
-          hintText: 'Search by name, address, or patient ID...',
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value.toLowerCase();
-              _resetPagination(clearSelection: true);
-            });
-          },
-        ),
-        const SizedBox(height: 12),
-
-        // Burger Menu and Status Filter (bottom row)
+        // Search Bar with Burger Menu
         Row(
           children: [
             // Burger Menu Button
@@ -402,53 +389,69 @@ class _PrenatalPageState extends State<PrenatalPage> {
             ),
             const SizedBox(width: 12),
 
-            // Status Filter Dropdown
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: _darkDeepTeal.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _lightOffWhite.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryAqua.withValues(alpha: 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: DropdownButton<String>(
-                value: _selectedStatusFilter,
-                isExpanded: false,
-                underline: const SizedBox.shrink(),
-                dropdownColor: _darkDeepTeal,
-                items: _statusFilterOptions.map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(
-                      value,
-                      style: TextStyle(
-                        color: _lightOffWhite,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _selectedStatusFilter = newValue;
-                      _resetPagination(clearSelection: true);
-                    });
-                  }
+            // Search Bar
+            Expanded(
+              child: MobileSearchField(
+                controller: _searchController,
+                hintText: 'Search by name, address, or patient ID...',
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value.toLowerCase();
+                    _resetPagination(clearSelection: true);
+                  });
                 },
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+
+        // Status Filter Dropdown
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: _darkDeepTeal,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _lightOffWhite.withValues(alpha: 0.5),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _primaryAqua.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: DropdownButton<String>(
+            value: _selectedStatusFilter,
+            isExpanded: true,
+            underline: const SizedBox.shrink(),
+            dropdownColor: _darkDeepTeal,
+            iconEnabledColor: _lightOffWhite,
+            items: _statusFilterOptions.map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    color: _lightOffWhite,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  _selectedStatusFilter = newValue;
+                  _resetPagination(clearSelection: true);
+                });
+              }
+            },
+          ),
         ),
       ],
     );
@@ -1058,7 +1061,7 @@ class _PrenatalTable extends StatelessWidget {
           recordLabel: 'Prenatal care',
           patientName: patientName.toString(),
           location: address,
-          accentColor: AppDesign.prenatal,
+          accentColor: AppDesign.checkUp,
           status: status,
           isSelected: selectedIndices.contains(absoluteIndex),
           showSelection: isSelectionMode,
@@ -1883,19 +1886,32 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
         : 'Add Another Prenatal Visit';
 
     if (patientSeed != null) {
-      final seededName = (patientSeed['patientName'] ?? '').toString().trim();
-      final nameParts = seededName
-          .split(RegExp(r'\s+'))
-          .where((part) => part.isNotEmpty)
-          .toList();
-      if (nameParts.isNotEmpty) {
-        firstNameController.text = nameParts.first;
-        if (nameParts.length > 1) {
-          surnameController.text = nameParts.sublist(1).join(' ');
+      final directFirstName = (patientSeed['firstName'] ?? '').toString().trim();
+      final directSurname = (patientSeed['surname'] ?? '').toString().trim();
+      if (directFirstName.isNotEmpty || directSurname.isNotEmpty) {
+        firstNameController.text = directFirstName;
+        surnameController.text = directSurname;
+      } else {
+        final seededName = (patientSeed['patientName'] ?? patientSeed['fullName'] ?? patientSeed['patient'] ?? '').toString().trim();
+        final nameParts = seededName
+            .split(RegExp(r'\s+'))
+            .where((part) => part.isNotEmpty)
+            .toList();
+        if (nameParts.isNotEmpty) {
+          firstNameController.text = nameParts.first;
+          if (nameParts.length > 1) {
+            surnameController.text = nameParts.sublist(1).join(' ');
+          }
         }
       }
       ageController.text = (patientSeed['age'] ?? '').toString();
-      addressController.text = (patientSeed['address'] ?? '').toString();
+      final fullAddress = [
+        (patientSeed['address'] ?? '').toString().trim(),
+        (patientSeed['barangay'] ?? '').toString().trim(),
+      ].where((p) => p.isNotEmpty).join(', ');
+      addressController.text = fullAddress.isNotEmpty
+          ? fullAddress
+          : (patientSeed['address'] ?? '').toString();
       patientIdController.text = (patientSeed['patientId'] ?? '').toString();
       contactNumberController.text = (patientSeed['contactNumber'] ?? '')
           .toString();
@@ -3050,7 +3066,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _lightOffWhite, width: 2),
+              borderSide: const BorderSide(color: _primaryAqua, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,

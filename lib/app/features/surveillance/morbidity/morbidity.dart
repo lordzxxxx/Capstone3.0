@@ -40,9 +40,10 @@ class _MorbidityPageState extends State<MorbidityPage> {
   bool _isDataLoaded = false;
   DateTime? _lastUpdated;
 
-  // Search
+  // Search & Filter
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String _statusFilter = 'All';
 
   // Data
   List<Map<String, dynamic>> _morbidityRecords = [];
@@ -134,10 +135,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
 
   void _applySearch() {
     setState(() {
-      if (_searchQuery.isEmpty) {
-        _filteredRecords = _collapseCurrentRecords(_morbidityRecords);
-      } else {
-        final filtered = _morbidityRecords
+      var filtered = _morbidityRecords;
+      if (_searchQuery.isNotEmpty) {
+        filtered = filtered
             .where(
               (record) =>
                   (record['patientName'] ?? record['patient'] ?? record['name'])
@@ -150,8 +150,19 @@ class _MorbidityPageState extends State<MorbidityPage> {
                   record['id'].toString().contains(_searchQuery),
             )
             .toList();
-        _filteredRecords = _collapseCurrentRecords(filtered);
       }
+      if (_statusFilter != 'All') {
+        filtered = filtered.where((record) {
+          final severity = (record['severity'] ?? '').toString().toLowerCase();
+          final status = (record['status'] ?? '').toString().toLowerCase();
+          final filter = _statusFilter.toLowerCase();
+          return severity == filter ||
+              status == filter ||
+              severity.contains(filter) ||
+              status.contains(filter);
+        }).toList();
+      }
+      _filteredRecords = _collapseCurrentRecords(filtered);
     });
   }
 
@@ -328,7 +339,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
             title: 'Active Patients',
             value: '$_activePatients',
             icon: Icons.local_hospital,
-            color: _secondaryIceBlue,
+            color: _primaryAqua,
           ),
           const SizedBox(width: 16),
           _buildMetricCard(
@@ -342,7 +353,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
             title: 'Most Common',
             value: _mostCommonDisease,
             icon: Icons.warning_amber,
-            color: _secondaryIceBlue,
+            color: _primaryAqua,
           ),
         ],
       ),
@@ -360,7 +371,10 @@ class _MorbidityPageState extends State<MorbidityPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.transparent,
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -368,15 +382,15 @@ class _MorbidityPageState extends State<MorbidityPage> {
         children: [
           Row(
             children: [
-              Icon(icon, color: Colors.white, size: 24),
+              Icon(icon, color: _primaryAqua, size: 24),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   title,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: _mutedCoolGray,
                     fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1232,13 +1246,136 @@ class _MorbidityPageState extends State<MorbidityPage> {
   }
 
   Widget _buildSearchBar() {
-    return MobileSearchField(
-      controller: _searchController,
-      hintText: 'Search by patient name, disease, or record ID...',
-      onChanged: (value) {
-        _searchQuery = value;
-        _applySearch();
-      },
+    return Column(
+      children: [
+        // Search Bar with Burger Menu
+        Row(
+          children: [
+            // Burger Menu Button
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _lightOffWhite.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _primaryAqua.withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: PopupMenuButton<String>(
+                color: _darkDeepTeal,
+                icon: Icon(Icons.menu, color: _lightOffWhite, size: 24),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'all':
+                      setState(() {
+                        _statusFilter = 'All';
+                        _searchController.clear();
+                        _searchQuery = '';
+                        _applySearch();
+                      });
+                      break;
+                    case 'clear':
+                      setState(() {
+                        _statusFilter = 'All';
+                        _searchController.clear();
+                        _searchQuery = '';
+                        _applySearch();
+                      });
+                      break;
+                  }
+                },
+                itemBuilder: (BuildContext context) => [
+                  PopupMenuItem<String>(
+                    value: 'all',
+                    child: Text(
+                      'Show All Records',
+                      style: TextStyle(color: _lightOffWhite),
+                    ),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'clear',
+                    child: Text(
+                      'Clear All Filters',
+                      style: TextStyle(color: _lightOffWhite),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Search Bar
+            Expanded(
+              child: MobileSearchField(
+                controller: _searchController,
+                hintText: 'Search by patient name, disease, or record ID...',
+                onChanged: (value) {
+                  _searchQuery = value;
+                  _applySearch();
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Status Filter Dropdown
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: _darkDeepTeal,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _lightOffWhite.withValues(alpha: 0.5),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _primaryAqua.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: DropdownButton<String>(
+            value: _statusFilter,
+            isExpanded: true,
+            underline: const SizedBox.shrink(),
+            dropdownColor: _darkDeepTeal,
+            iconEnabledColor: _lightOffWhite,
+            items: ['All', 'Mild', 'Moderate', 'Severe', 'Active', 'Resolved']
+                .map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        color: _lightOffWhite,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                  );
+                })
+                .toList(),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  _statusFilter = newValue;
+                  _applySearch();
+                });
+              }
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1401,7 +1538,7 @@ class _MorbidityTableState extends State<_MorbidityTable> {
                   record['address']?.toString() ??
                   record['healthFacility']?.toString() ??
                   'Location not recorded',
-              accentColor: AppDesign.morbidity,
+              accentColor: AppDesign.checkUp,
               status: record['status']?.toString() ?? severity,
               secondaryStatus:
                   record['referralStatus']?.toString() ??
@@ -1683,16 +1820,16 @@ void _showNewMorbidityModal(
 }) {
   final formKey = GlobalKey<FormState>();
   final patientNameController = TextEditingController(
-    text: (patientSeed?['patientName'] ?? '').toString(),
+    text: (patientSeed?['patientName'] ?? patientSeed?['fullName'] ?? patientSeed?['name'] ?? patientSeed?['patient'] ?? '').toString(),
   );
   final ageController = TextEditingController(
     text: (patientSeed?['age'] ?? '').toString(),
   );
   final diseaseController = TextEditingController(
-    text: (patientSeed?['disease'] ?? '').toString(),
+    text: (patientSeed?['disease'] ?? patientSeed?['diagnosis'] ?? patientSeed?['symptoms'] ?? patientSeed?['chiefComplaint'] ?? '').toString(),
   );
   final facilityController = TextEditingController(
-    text: (patientSeed?['place'] ?? patientSeed?['address'] ?? '').toString(),
+    text: (patientSeed?['place'] ?? patientSeed?['address'] ?? patientSeed?['barangay'] ?? '').toString(),
   );
   showDialog(
     context: context,
@@ -1839,7 +1976,7 @@ Widget _buildModalTextField(
         borderRadius: BorderRadius.circular(12),
       ),
       focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: _lightOffWhite, width: 2),
+        borderSide: const BorderSide(color: _primaryAqua, width: 2),
         borderRadius: BorderRadius.circular(12),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

@@ -76,9 +76,10 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   double _controlRate = 0.0;
   bool _isLoadingMetrics = false;
 
-  // Search
+  // Search & Filter
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String _statusFilter = 'All';
 
   // Data from check-up database
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
@@ -216,22 +217,34 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   }
 
   void _applySearchFilter() {
-    if (_searchQuery.isEmpty) {
-      _filteredPatients = List.from(_patients);
-      return;
+    var filtered = _patients;
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((patient) {
+        return patient['patientName'].toString().toLowerCase().contains(
+              _searchQuery,
+            ) ||
+            patient['condition'].toString().toLowerCase().contains(
+              _searchQuery,
+            ) ||
+            patient['currentStatus'].toString().toLowerCase().contains(
+              _searchQuery,
+            );
+      }).toList();
     }
-
-    _filteredPatients = _patients.where((patient) {
-      return patient['patientName'].toString().toLowerCase().contains(
-            _searchQuery,
-          ) ||
-          patient['condition'].toString().toLowerCase().contains(
-            _searchQuery,
-          ) ||
-          patient['currentStatus'].toString().toLowerCase().contains(
-            _searchQuery,
-          );
-    }).toList();
+    if (_statusFilter != 'All') {
+      filtered = filtered.where((patient) {
+        final status = (patient['currentStatus'] ?? patient['status'] ?? '')
+            .toString()
+            .toLowerCase();
+        final condition = (patient['condition'] ?? '').toString().toLowerCase();
+        final filter = _statusFilter.toLowerCase();
+        return status == filter ||
+            condition == filter ||
+            status.contains(filter) ||
+            condition.contains(filter);
+      }).toList();
+    }
+    _filteredPatients = List.from(filtered);
   }
 
   void _filterPatients(String query) {
@@ -551,7 +564,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: _darkDeepTeal,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
@@ -562,12 +575,12 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'NCD Overview',
+            Text(
+              'Non-Communicable Disease Overview',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: _lightOffWhite,
               ),
             ),
             const SizedBox(height: 20),
@@ -575,7 +588,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
               const Center(
                 child: Padding(
                   padding: EdgeInsets.all(20),
-                  child: CircularProgressIndicator(color: Colors.white),
+                  child: CircularProgressIndicator(color: _primaryAqua),
                 ),
               )
             else
@@ -588,8 +601,8 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                           title: 'Active Cases',
                           value: _activeCases.toString(),
                           icon: Icons.people,
-                          color: Colors.transparent,
-                          textColor: Colors.white,
+                          color: _primaryAqua,
+                          textColor: _lightOffWhite,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -598,8 +611,8 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                           title: 'Control Rate',
                           value: '${_controlRate.toStringAsFixed(1)}%',
                           icon: Icons.trending_up,
-                          color: Colors.transparent,
-                          textColor: Colors.white,
+                          color: _primaryAqua,
+                          textColor: _lightOffWhite,
                         ),
                       ),
                     ],
@@ -624,20 +637,19 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
-        border: color == Colors.transparent
-            ? Border.all(color: _primaryAqua.withValues(alpha: 0.3), width: 1)
-            : null,
-        boxShadow: color == Colors.transparent
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _primaryAqua.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -645,13 +657,13 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: textColor, size: 28),
+              Icon(icon, color: _primaryAqua, size: 28),
               Text(
                 value,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: textColor,
+                  color: _lightOffWhite,
                 ),
               ),
             ],
@@ -661,7 +673,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
             title,
             style: TextStyle(
               fontSize: 13,
-              color: textColor.withValues(alpha: 0.8),
+              color: _mutedCoolGray,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -679,11 +691,11 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.3),
-          width: 1,
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: _primaryAqua.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -694,14 +706,14 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
         children: [
           Row(
             children: [
-              Icon(Icons.local_hospital, color: Colors.white, size: 24),
+              Icon(Icons.local_hospital, color: _primaryAqua, size: 24),
               const SizedBox(width: 8),
               Text(
                 'Disease Types',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: _lightOffWhite,
                 ),
               ),
             ],
@@ -715,7 +727,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                 children: [
                   Text(
                     entry.key,
-                    style: TextStyle(fontSize: 14, color: Colors.white),
+                    style: TextStyle(fontSize: 14, color: _lightOffWhite),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -723,7 +735,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: _primaryAqua.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -731,7 +743,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: _primaryAqua,
                       ),
                     ),
                   ),
@@ -744,12 +756,143 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     );
   }
 
-  // Search Bar
+  // Search Bar with Burger Menu and Status Filter
   Widget _buildSearchBar() {
-    return MobileSearchField(
-      controller: _searchController,
-      hintText: 'Search by patient name, condition, or status...',
-      onChanged: _filterPatients,
+    return Column(
+      children: [
+        // Search Bar with Burger Menu
+        Row(
+          children: [
+            // Burger Menu Button
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _lightOffWhite.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _primaryAqua.withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: PopupMenuButton<String>(
+                color: _darkDeepTeal,
+                icon: Icon(Icons.menu, color: _lightOffWhite, size: 24),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'all':
+                      setState(() {
+                        _statusFilter = 'All';
+                        _searchController.clear();
+                        _searchQuery = '';
+                        _applySearchFilter();
+                        _resetPagination(clearSelection: true);
+                      });
+                      break;
+                    case 'clear':
+                      setState(() {
+                        _statusFilter = 'All';
+                        _searchController.clear();
+                        _searchQuery = '';
+                        _applySearchFilter();
+                        _resetPagination(clearSelection: true);
+                      });
+                      break;
+                  }
+                },
+                itemBuilder: (BuildContext context) => [
+                  PopupMenuItem<String>(
+                    value: 'all',
+                    child: Text(
+                      'Show All Records',
+                      style: TextStyle(color: _lightOffWhite),
+                    ),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'clear',
+                    child: Text(
+                      'Clear All Filters',
+                      style: TextStyle(color: _lightOffWhite),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Search Bar
+            Expanded(
+              child: MobileSearchField(
+                controller: _searchController,
+                hintText: 'Search by patient name, condition, or status...',
+                onChanged: _filterPatients,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Status Filter Dropdown
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: _darkDeepTeal,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _lightOffWhite.withValues(alpha: 0.5),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _primaryAqua.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: DropdownButton<String>(
+            value: _statusFilter,
+            isExpanded: true,
+            underline: const SizedBox.shrink(),
+            dropdownColor: _darkDeepTeal,
+            iconEnabledColor: _lightOffWhite,
+            items: [
+              'All',
+              'Under Treatment',
+              'Controlled',
+              'Uncontrolled',
+              'Monitoring',
+              'Critical',
+            ].map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    color: _lightOffWhite,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  _statusFilter = newValue;
+                  _applySearchFilter();
+                  _resetPagination(clearSelection: true);
+                });
+              }
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -1614,7 +1757,7 @@ class _NonCommunicableTable extends StatelessWidget {
               record['barangay']?.toString() ??
               record['address']?.toString() ??
               'Location not recorded',
-          accentColor: AppDesign.nonCommunicable,
+          accentColor: AppDesign.checkUp,
           status: status,
           secondaryStatus:
               record['referralStatus']?.toString() ??

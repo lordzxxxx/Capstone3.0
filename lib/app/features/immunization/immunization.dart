@@ -927,20 +927,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
   Widget _buildImmunizationSearchAndFilterBar() {
     return Column(
       children: [
-        // Search Bar (top row)
-        MobileSearchField(
-          controller: _searchController,
-          hintText: 'Search by patient name, vaccine, or patient ID...',
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value.toLowerCase();
-              _resetPagination(clearSelection: true);
-            });
-          },
-        ),
-        const SizedBox(height: 12),
-
-        // Burger Menu and Vaccine Filter (bottom row)
+        // Search Bar with Burger Menu
         Row(
           children: [
             // Burger Menu Button
@@ -1015,53 +1002,69 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             ),
             const SizedBox(width: 12),
 
-            // Vaccine Filter Dropdown
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: _darkDeepTeal.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _lightOffWhite.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryAqua.withValues(alpha: 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: DropdownButton<String>(
-                value: _selectedVaccineFilter,
-                isExpanded: false,
-                underline: const SizedBox.shrink(),
-                dropdownColor: _darkDeepTeal,
-                items: _vaccineFilterOptions.map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(
-                      value,
-                      style: TextStyle(
-                        color: _lightOffWhite,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _selectedVaccineFilter = newValue;
-                      _resetPagination(clearSelection: true);
-                    });
-                  }
+            // Search Bar
+            Expanded(
+              child: MobileSearchField(
+                controller: _searchController,
+                hintText: 'Search by patient name, vaccine, or patient ID...',
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value.toLowerCase();
+                    _resetPagination(clearSelection: true);
+                  });
                 },
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+
+        // Vaccine Filter Dropdown
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: _darkDeepTeal,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _lightOffWhite.withValues(alpha: 0.5),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _primaryAqua.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: DropdownButton<String>(
+            value: _selectedVaccineFilter,
+            isExpanded: true,
+            underline: const SizedBox.shrink(),
+            dropdownColor: _darkDeepTeal,
+            iconEnabledColor: _lightOffWhite,
+            items: _vaccineFilterOptions.map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    color: _lightOffWhite,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  _selectedVaccineFilter = newValue;
+                  _resetPagination(clearSelection: true);
+                });
+              }
+            },
+          ),
         ),
       ],
     );
@@ -1077,35 +1080,54 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     final patientIdController = TextEditingController();
     final ageController = TextEditingController();
     final contactNumberController = TextEditingController();
-
-    if (patientSeed != null) {
-      final seededName = (patientSeed['patientName'] ?? '').toString().trim();
-      final nameParts = seededName.isEmpty ? <String>[] : seededName.split(' ');
-      firstNameController.text = nameParts.isNotEmpty ? nameParts.first : '';
-      surnameController.text = nameParts.length > 1
-          ? nameParts.sublist(1).join(' ')
-          : '';
-      patientIdController.text = (patientSeed['patientId'] ?? '').toString();
-      ageController.text = (patientSeed['age'] ?? '').toString();
-      contactNumberController.text = (patientSeed['contactNumber'] ?? '')
-          .toString();
-    }
+    final vaccineBrandController = TextEditingController();
+    final batchNumberController = TextEditingController();
+    final doseNumberController = TextEditingController();
+    final administeredByController = TextEditingController();
+    final adverseEventsController = TextEditingController();
 
     String selectedVaccineType = _normalizeVaccineType(
       patientSeed != null ? patientSeed['vaccine'] : null,
     );
-    final vaccineBrandController = TextEditingController();
-    final batchNumberController = TextEditingController();
-    DateTime? expirationDate;
-
-    DateTime? administrationDate = DateTime.now();
-    TimeOfDay? administrationTime = TimeOfDay.now();
-    final doseNumberController = TextEditingController();
     String selectedRouteOfAdministration = 'Intramuscular (IM)';
     String selectedInjectionSite = 'Left Upper Arm';
-    final administeredByController = TextEditingController();
-    final adverseEventsController = TextEditingController();
+    DateTime? expirationDate;
+    DateTime? administrationDate = DateTime.now();
+    TimeOfDay? administrationTime = TimeOfDay.now();
     DateTime? nextDoseDueDate;
+
+    if (patientSeed != null) {
+      final directFirstName = (patientSeed['firstName'] ?? '').toString().trim();
+      final directSurname = (patientSeed['surname'] ?? '').toString().trim();
+      if (directFirstName.isNotEmpty || directSurname.isNotEmpty) {
+        firstNameController.text = directFirstName;
+        surnameController.text = directSurname;
+      } else {
+        final seededName = (patientSeed['patientName'] ?? patientSeed['fullName'] ?? patientSeed['patient'] ?? patientSeed['name'] ?? '').toString().trim();
+        final nameParts = seededName.isEmpty ? <String>[] : seededName.split(' ');
+        firstNameController.text = nameParts.isNotEmpty ? nameParts.first : '';
+        surnameController.text = nameParts.length > 1
+            ? nameParts.sublist(1).join(' ')
+            : '';
+      }
+      patientIdController.text = (patientSeed['patientId'] ?? '').toString();
+      ageController.text = (patientSeed['age'] ?? '').toString();
+      contactNumberController.text = (patientSeed['contactNumber'] ?? '')
+          .toString();
+      if (patientSeed['doseNumber'] != null || patientSeed['dose'] != null) {
+        doseNumberController.text = (patientSeed['doseNumber'] ?? patientSeed['dose'] ?? '').toString();
+      }
+      if (patientSeed['vaccineBrand'] != null) {
+        vaccineBrandController.text = patientSeed['vaccineBrand'].toString();
+      }
+      if (patientSeed['batchNumber'] != null) {
+        batchNumberController.text = patientSeed['batchNumber'].toString();
+      }
+      if (patientSeed['administeredBy'] != null) {
+        administeredByController.text = patientSeed['administeredBy'].toString();
+      }
+    }
+
     final modalTitle = patientSeed == null
         ? 'New Immunization Record'
         : 'Add Another Immunization';
@@ -1691,7 +1713,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _lightOffWhite, width: 2),
+              borderSide: const BorderSide(color: _primaryAqua, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -4020,7 +4042,7 @@ class _ImmunizationTable extends StatelessWidget {
               record['barangay']?.toString() ??
               record['address']?.toString() ??
               'Location not recorded',
-          accentColor: AppDesign.immunization,
+          accentColor: AppDesign.checkUp,
           status: status,
           isSelected: selectedIndices.contains(absoluteIndex),
           showSelection: isSelectionMode,

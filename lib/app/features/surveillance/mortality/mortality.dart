@@ -47,9 +47,10 @@ class _MortalityPageState extends State<MortalityPage>
   bool _isLoadingMetrics = false;
   bool _isDataLoaded = false;
 
-  // Search
+  // Search & Filter
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String _statusFilter = 'All';
   static const int _defaultRowsPerPage = 10;
   int _currentPage = 1;
   int _rowsPerPage = _defaultRowsPerPage;
@@ -284,10 +285,9 @@ class _MortalityPageState extends State<MortalityPage>
   void _filterRecords(String query) {
     setState(() {
       _searchQuery = query.toLowerCase();
-      if (_searchQuery.isEmpty) {
-        _filteredRecords = _collapseCurrentRecords(_mortalityRecords);
-      } else {
-        final filtered = _mortalityRecords.where((record) {
+      var filtered = _mortalityRecords;
+      if (_searchQuery.isNotEmpty) {
+        filtered = filtered.where((record) {
           return record['name'].toString().toLowerCase().contains(
                 _searchQuery,
               ) ||
@@ -299,8 +299,18 @@ class _MortalityPageState extends State<MortalityPage>
                 _searchQuery,
               );
         }).toList();
-        _filteredRecords = _collapseCurrentRecords(filtered);
       }
+      if (_statusFilter != 'All') {
+        filtered = filtered.where((record) {
+          final verification =
+              (record['verification'] ?? record['status'] ?? '')
+                  .toString()
+                  .toLowerCase();
+          final filter = _statusFilter.toLowerCase();
+          return verification == filter || verification.contains(filter);
+        }).toList();
+      }
+      _filteredRecords = _collapseCurrentRecords(filtered);
       _resetPagination();
     });
   }
@@ -543,12 +553,12 @@ class _MortalityPageState extends State<MortalityPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Mortality Overview',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: _lightOffWhite,
               ),
             ),
             const SizedBox(height: 20),
@@ -556,7 +566,7 @@ class _MortalityPageState extends State<MortalityPage>
               const Center(
                 child: Padding(
                   padding: EdgeInsets.all(20),
-                  child: CircularProgressIndicator(color: Colors.white),
+                  child: CircularProgressIndicator(color: _primaryAqua),
                 ),
               )
             else
@@ -569,8 +579,8 @@ class _MortalityPageState extends State<MortalityPage>
                           title: 'Total Deaths',
                           value: _totalDeaths.toString(),
                           icon: Icons.assignment,
-                          color: Colors.white,
-                          textColor: _primaryAqua,
+                          color: _primaryAqua,
+                          textColor: _lightOffWhite,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -579,8 +589,8 @@ class _MortalityPageState extends State<MortalityPage>
                           title: 'Elderly Deaths',
                           value: _elderlyDeaths.toString(),
                           icon: Icons.elderly,
-                          color: Colors.white,
-                          textColor: const Color(0xFFD84315),
+                          color: _primaryAqua,
+                          textColor: _lightOffWhite,
                         ),
                       ),
                     ],
@@ -593,8 +603,8 @@ class _MortalityPageState extends State<MortalityPage>
                           title: 'Leading Cause',
                           value: _leadingCause,
                           icon: Icons.warning,
-                          color: Colors.white,
-                          textColor: const Color(0xFF7B1FA2),
+                          color: _primaryAqua,
+                          textColor: _lightOffWhite,
                           isSmallText: true,
                         ),
                       ),
@@ -604,8 +614,8 @@ class _MortalityPageState extends State<MortalityPage>
                           title: 'Verification Rate',
                           value: '${_verificationRate.toStringAsFixed(1)}%',
                           icon: Icons.verified,
-                          color: Colors.white,
-                          textColor: const Color(0xFF4CAF50),
+                          color: _primaryAqua,
+                          textColor: _lightOffWhite,
                         ),
                       ),
                     ],
@@ -632,14 +642,14 @@ class _MortalityPageState extends State<MortalityPage>
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.5),
+          color: _primaryAqua.withValues(alpha: 0.3),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: _primaryAqua.withValues(alpha: 0.08),
             blurRadius: 8,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -649,14 +659,14 @@ class _MortalityPageState extends State<MortalityPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: Colors.white, size: 28),
+              Icon(icon, color: _primaryAqua, size: 28),
               if (!isSmallText)
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: _lightOffWhite,
                   ),
                 ),
             ],
@@ -665,19 +675,19 @@ class _MortalityPageState extends State<MortalityPage>
           if (isSmallText)
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: _lightOffWhite,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: Colors.white,
+              color: _mutedCoolGray,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1310,7 +1320,7 @@ class _MortalityPageState extends State<MortalityPage>
     );
   }
 
-  // Search Bar
+  // Search Bar with Burger Menu and Status Filter
   Widget _buildSearchBar() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1320,14 +1330,138 @@ class _MortalityPageState extends State<MortalityPage>
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: _lightOffWhite,
           ),
         ),
         const SizedBox(height: 12),
-        MobileSearchField(
-          controller: _searchController,
-          hintText: 'Search by name, cause, place, or verification status...',
-          onChanged: _filterRecords,
+        // Search Bar with Burger Menu
+        Row(
+          children: [
+            // Burger Menu Button
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _lightOffWhite.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _primaryAqua.withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: PopupMenuButton<String>(
+                color: _darkDeepTeal,
+                icon: Icon(Icons.menu, color: _lightOffWhite, size: 24),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'all':
+                      setState(() {
+                        _statusFilter = 'All';
+                        _searchController.clear();
+                        _searchQuery = '';
+                        _filterRecords('');
+                      });
+                      break;
+                    case 'clear':
+                      setState(() {
+                        _statusFilter = 'All';
+                        _searchController.clear();
+                        _searchQuery = '';
+                        _filterRecords('');
+                      });
+                      break;
+                  }
+                },
+                itemBuilder: (BuildContext context) => [
+                  PopupMenuItem<String>(
+                    value: 'all',
+                    child: Text(
+                      'Show All Records',
+                      style: TextStyle(color: _lightOffWhite),
+                    ),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'clear',
+                    child: Text(
+                      'Clear All Filters',
+                      style: TextStyle(color: _lightOffWhite),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Search Bar
+            Expanded(
+              child: MobileSearchField(
+                controller: _searchController,
+                hintText:
+                    'Search by name, cause, place, or verification status...',
+                onChanged: _filterRecords,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Verification Filter Dropdown
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: _darkDeepTeal,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _lightOffWhite.withValues(alpha: 0.5),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _primaryAqua.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: DropdownButton<String>(
+            value: _statusFilter,
+            isExpanded: true,
+            underline: const SizedBox.shrink(),
+            dropdownColor: _darkDeepTeal,
+            iconEnabledColor: _lightOffWhite,
+            items: [
+              'All',
+              'Verified',
+              'Pending certification',
+              'Under Review',
+              'Certified',
+            ].map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    color: _lightOffWhite,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  _statusFilter = newValue;
+                  _filterRecords(_searchQuery);
+                });
+              }
+            },
+          ),
         ),
       ],
     );
@@ -1344,14 +1478,14 @@ class _MortalityPageState extends State<MortalityPage>
               Icon(
                 Icons.search_off,
                 size: 64,
-                color: Colors.white.withValues(alpha: 0.5),
+                color: _mutedCoolGray.withValues(alpha: 0.4),
               ),
               const SizedBox(height: 16),
               Text(
                 _searchQuery.isEmpty
                     ? 'No records found'
                     : 'No results for "$_searchQuery"',
-                style: const TextStyle(fontSize: 16, color: Colors.white),
+                style: TextStyle(fontSize: 16, color: _mutedCoolGray),
               ),
             ],
           ),
@@ -1378,7 +1512,7 @@ class _MortalityPageState extends State<MortalityPage>
                 record['barangay']?.toString() ??
                 record['address']?.toString() ??
                 'Location not recorded',
-            accentColor: AppDesign.mortality,
+            accentColor: AppDesign.checkUp,
             status: verification,
             onTap: () => _showMortalityHistory(context, record),
             onLongPress: () => _showRecordActionModal(context, record),
@@ -1825,23 +1959,23 @@ class _MortalityPageState extends State<MortalityPage>
 
   void _showAddRecordDialog({Map<String, dynamic>? patientSeed}) {
     final nameController = TextEditingController(
-      text: (patientSeed?['name'] ?? patientSeed?['patientName'] ?? '')
+      text: (patientSeed?['name'] ?? patientSeed?['patientName'] ?? patientSeed?['fullName'] ?? patientSeed?['patient'] ?? '')
           .toString(),
     );
     final ageController = TextEditingController(
       text: (patientSeed?['age'] ?? '').toString(),
     );
-    final genderController = TextEditingController(
-      text: (patientSeed?['gender'] ?? '').toString(),
+    final causeController = TextEditingController(
+      text: (patientSeed?['cause'] ?? patientSeed?['causeOfDeath'] ?? patientSeed?['diagnosis'] ?? patientSeed?['disease'] ?? '').toString(),
     );
-    final causeController = TextEditingController();
     final placeController = TextEditingController(
-      text: (patientSeed?['place'] ?? '').toString(),
+      text: (patientSeed?['place'] ?? patientSeed?['placeOfDeath'] ?? patientSeed?['address'] ?? '').toString(),
     );
     final reportedByController = TextEditingController(
       text: (patientSeed?['reportedBy'] ?? '').toString(),
     );
-    String selectedGender = (patientSeed?['gender'] ?? 'Male').toString();
+    final rawGender = (patientSeed?['gender'] ?? patientSeed?['sex'] ?? 'Male').toString();
+    String selectedGender = (rawGender.toLowerCase() == 'female' || rawGender.toLowerCase() == 'f') ? 'Female' : 'Male';
 
     showDialog(
       context: context,

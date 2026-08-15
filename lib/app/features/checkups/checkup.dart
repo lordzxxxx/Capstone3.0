@@ -3693,31 +3693,46 @@ class _NewCheckUpFullScreenModalState
       return;
     }
 
-    final patientName =
-        (patientSeed['patient'] ?? patientSeed['patientName'] ?? '')
-            .toString()
-            .trim();
-    final nameParts = patientName.isEmpty
-        ? <String>[]
-        : patientName.split(RegExp(r'\s+'));
-    _firstNameController.text = nameParts.isNotEmpty ? nameParts.first : '';
-    _surnameController.text = nameParts.length > 1
-        ? nameParts.sublist(1).join(' ')
-        : '';
+    final directFirstName = (patientSeed['firstName'] ?? '').toString().trim();
+    final directSurname = (patientSeed['surname'] ?? '').toString().trim();
+    if (directFirstName.isNotEmpty || directSurname.isNotEmpty) {
+      _firstNameController.text = directFirstName;
+      _surnameController.text = directSurname;
+    } else {
+      final patientName =
+          (patientSeed['patient'] ?? patientSeed['patientName'] ?? patientSeed['fullName'] ?? '')
+              .toString()
+              .trim();
+      final nameParts = patientName.isEmpty
+          ? <String>[]
+          : patientName.split(RegExp(r'\s+'));
+      _firstNameController.text = nameParts.isNotEmpty ? nameParts.first : '';
+      _surnameController.text = nameParts.length > 1
+          ? nameParts.sublist(1).join(' ')
+          : '';
+    }
     _ageController.text = (patientSeed['age'] ?? '').toString();
-    _addressController.text = (patientSeed['address'] ?? '').toString();
+    final fullAddress = [
+      (patientSeed['address'] ?? '').toString().trim(),
+      (patientSeed['barangay'] ?? '').toString().trim(),
+    ].where((p) => p.isNotEmpty).join(', ');
+    _addressController.text = fullAddress.isNotEmpty
+        ? fullAddress
+        : (patientSeed['address'] ?? '').toString();
     _symptomsController.text =
-        (patientSeed['symptoms'] ?? patientSeed['disease'] ?? '').toString();
-    _bloodPressureController.text = (patientSeed['bloodPressure'] ?? '')
+        (patientSeed['symptoms'] ?? patientSeed['chiefComplaint'] ?? patientSeed['disease'] ?? '').toString();
+    _planController.text =
+        (patientSeed['plan'] ?? patientSeed['treatment'] ?? patientSeed['treatmentPlan'] ?? '').toString();
+    _bloodPressureController.text = (patientSeed['bloodPressure'] ?? patientSeed['bp'] ?? '')
         .toString();
-    _temperatureController.text = (patientSeed['temperature'] ?? '').toString();
-    _heartRateController.text = (patientSeed['heartRate'] ?? '').toString();
-    _respiratoryRateController.text = (patientSeed['respiratoryRate'] ?? '')
+    _temperatureController.text = (patientSeed['temperature'] ?? patientSeed['temp'] ?? '').toString();
+    _heartRateController.text = (patientSeed['heartRate'] ?? patientSeed['hr'] ?? patientSeed['pulse'] ?? '').toString();
+    _respiratoryRateController.text = (patientSeed['respiratoryRate'] ?? patientSeed['rr'] ?? '')
         .toString();
-    _oxygenSaturationController.text = (patientSeed['oxygenSaturation'] ?? '')
+    _oxygenSaturationController.text = (patientSeed['oxygenSaturation'] ?? patientSeed['spo2'] ?? '')
         .toString();
-    _weightController.text = (patientSeed['weight'] ?? '').toString();
-    _heightController.text = (patientSeed['height'] ?? '').toString();
+    _weightController.text = (patientSeed['weight'] ?? patientSeed['wt'] ?? '').toString();
+    _heightController.text = (patientSeed['height'] ?? patientSeed['ht'] ?? '').toString();
   }
 
   // Helper method to build section cards

@@ -210,4 +210,140 @@ void main() {
       },
     );
   });
+
+  group('Handwritten form OCR accuracy and disambiguation', () {
+    test('corrects common handwritten numeric character substitutions', () {
+      const text = '''
+        Pt. Name: _JUAN DELA CRUZ_
+        Age: 2S yo
+        BP: 12O/8O
+        Temp: 36,5 C
+        HR: 7S bpm
+        RR: l8 cpm
+        SpO2: 98%
+        Weight: 5S kg
+        Height: 16O cm
+        Contact: O9171234567
+        DOB: O5/14/199O
+        Sex: [x] Male
+        Civil Status: Single
+        Barangay: Brgy 3
+      ''';
+
+      final extraction = OcrExtraction.fromText(text);
+
+      expect(extraction.fields['fullName']?.value, 'Juan Dela Cruz');
+      expect(extraction.fields['age']?.value, '25');
+      expect(extraction.fields['bloodPressure']?.value, '120/80');
+      expect(extraction.fields['temperature']?.value, '36.5');
+      expect(extraction.fields['heartRate']?.value, '75');
+      expect(extraction.fields['respiratoryRate']?.value, '18');
+      expect(extraction.fields['oxygenSaturation']?.value, '98');
+      expect(extraction.fields['weight']?.value, '55');
+      expect(extraction.fields['height']?.value, '160');
+      expect(extraction.fields['contactNumber']?.value, '09171234567');
+      expect(extraction.fields['dateOfBirth']?.value, '1990-05-14');
+      expect(extraction.fields['gender']?.value, 'Male');
+      expect(extraction.fields['civilStatus']?.value, 'Single');
+      expect(extraction.fields['barangay']?.value, 'Barangay 03');
+    });
+
+    test('parses Filipino clinical shorthand labels', () {
+      const text = '''
+        Pangalan: Maria Santos
+        Edad: 32
+        Kasarian: Babae
+        Tirahan: Brgy. 05, Makati
+        Presyon: 110/70
+        Timbang: 52
+        Taas: 155
+        Reklamo: Lagnat at ubo
+        Karamdaman: Acute URI
+      ''';
+
+      final extraction = OcrExtraction.fromText(text);
+
+      expect(extraction.fields['fullName']?.value, 'Maria Santos');
+      expect(extraction.fields['age']?.value, '32');
+      expect(extraction.fields['gender']?.value, 'Female');
+      expect(extraction.fields['address']?.value, 'Brgy. 05, Makati');
+      expect(extraction.fields['bloodPressure']?.value, '110/70');
+      expect(extraction.fields['weight']?.value, '52');
+      expect(extraction.fields['height']?.value, '155');
+      expect(extraction.fields['symptoms']?.value, 'Lagnat at ubo');
+      expect(extraction.fields['disease']?.value, 'Acute URI');
+    });
+
+    test('extracts multiple fields from a single handwritten intake line', () {
+      final extraction = OcrExtraction.fromText(
+        'Pt: Pedro Reyes Age: 40 Sex: M BP: 130/90 Temp: 37.0',
+      );
+
+      expect(extraction.fields['fullName']?.value, 'Pedro Reyes');
+      expect(extraction.fields['age']?.value, '40');
+      expect(extraction.fields['gender']?.value, 'Male');
+      expect(extraction.fields['bloodPressure']?.value, '130/90');
+      expect(extraction.fields['temperature']?.value, '37.0');
+    });
+
+    test('maps scanned form fields automatically to all system form seed aliases', () {
+      const formText = '''
+        FORM: CHK-2026
+        Full Name: Juan Dela Cruz
+        Patient ID: PAT-2026-001
+        Age: 35
+        Sex: Male
+        Date of Birth: 1991-04-20
+        Civil Status: Married
+        Address: 123 Main St, Brgy. 01
+        Barangay: Barangay 01
+        Contact Number: 09171234567
+        Blood Pressure: 120/80
+        Body Temp: 36.6
+        Pulse Rate: 72
+        Resp. Rate: 18
+        Oxygen Sat: 99
+        Weight: 65
+        Height: 170
+        Chief Complaint: Fever and mild cough
+        Diagnosis: Upper Respiratory Tract Infection
+        Treatment Plan: Paracetamol 500mg TID, Hydration
+        Date of Visit: 2026-08-15
+      ''';
+
+      final extraction = OcrExtraction.fromText(formText);
+      final seed = extraction.toFormSeed();
+
+      expect(seed['patientName'], 'Juan Dela Cruz');
+      expect(seed['patient'], 'Juan Dela Cruz');
+      expect(seed['fullName'], 'Juan Dela Cruz');
+      expect(seed['patientId'], 'PAT-2026-001');
+      expect(seed['age'], '35');
+      expect(seed['gender'], 'Male');
+      expect(seed['sex'], 'Male');
+      expect(seed['dateOfBirth'], '1991-04-20');
+      expect(seed['civilStatus'], 'Married');
+      expect(seed['contactNumber'], '09171234567');
+      expect(seed['bloodPressure'], '120/80');
+      expect(seed['bp'], '120/80');
+      expect(seed['temperature'], '36.6');
+      expect(seed['temp'], '36.6');
+      expect(seed['heartRate'], '72');
+      expect(seed['hr'], '72');
+      expect(seed['respiratoryRate'], '18');
+      expect(seed['rr'], '18');
+      expect(seed['oxygenSaturation'], '99');
+      expect(seed['spo2'], '99');
+      expect(seed['weight'], '65');
+      expect(seed['wt'], '65');
+      expect(seed['height'], '170');
+      expect(seed['ht'], '170');
+      expect(seed['symptoms'], 'Fever and mild cough');
+      expect(seed['chiefComplaint'], 'Fever and mild cough');
+      expect(seed['disease'], 'Upper Respiratory Tract Infection');
+      expect(seed['diagnosis'], 'Upper Respiratory Tract Infection');
+      expect(seed['date'], '2026-08-15');
+      expect(seed['visitDate'], '2026-08-15');
+    });
+  });
 }

@@ -309,27 +309,77 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                     Row(
                       children: [
                         Container(
-                          width: 46,
-                          height: 46,
                           decoration: BoxDecoration(
-                            color: _darkDeepTeal,
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: _lightOffWhite.withValues(alpha: 0.5),
+                              color: _lightOffWhite.withValues(alpha: 0.3),
                               width: 1.5,
                             ),
-                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _primaryAqua.withValues(alpha: 0.08),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                          child: Icon(
-                            Icons.menu,
-                            color: _lightOffWhite,
-                            size: 24,
+                          child: PopupMenuButton<String>(
+                            color: _darkDeepTeal,
+                            icon: Icon(Icons.menu, color: _lightOffWhite, size: 24),
+                            onSelected: (value) {
+                              switch (value) {
+                                case 'all':
+                                  setState(() {
+                                    _selectedStatus = 'All';
+                                    _searchController.clear();
+                                    _searchQuery = '';
+                                    _resetPagination(clearSelection: true);
+                                  });
+                                  break;
+                                case 'clear':
+                                  setState(() {
+                                    _selectedStatus = 'All';
+                                    _searchController.clear();
+                                    _searchQuery = '';
+                                    _resetPagination(clearSelection: true);
+                                  });
+                                  break;
+                                case 'seed':
+                                  _seedSampleData();
+                                  break;
+                              }
+                            },
+                            itemBuilder: (BuildContext context) => [
+                              PopupMenuItem<String>(
+                                value: 'all',
+                                child: Text(
+                                  'Show All Records',
+                                  style: TextStyle(color: _lightOffWhite),
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'clear',
+                                child: Text(
+                                  'Clear All Filters',
+                                  style: TextStyle(color: _lightOffWhite),
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'seed',
+                                child: Text(
+                                  'Seed 100 Sample Records',
+                                  style: TextStyle(color: Color(0xFFF39C12)),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(child: _buildSearchBar()),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
 
                     // Filter Dropdown
                     _buildFilterDropdown(),
@@ -360,40 +410,51 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
 
   Widget _buildFilterDropdown() {
     return Container(
-      height: 46,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: _darkDeepTeal,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _lightOffWhite.withValues(alpha: 0.5),
           width: 1.5,
         ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedStatus,
-          isExpanded: true,
-          dropdownColor: AppDesign.surface,
-          iconEnabledColor: _lightOffWhite,
-          style: TextStyle(
-            color: AppDesign.ink,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
+        boxShadow: [
+          BoxShadow(
+            color: _primaryAqua.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          items: ['All', 'Active', 'Follow-up', 'Inactive']
-              .map(
-                (status) =>
-                    DropdownMenuItem(value: status, child: Text(status)),
-              )
-              .toList(),
-          onChanged: (value) {
+        ],
+      ),
+      child: DropdownButton<String>(
+        value: _selectedStatus,
+        isExpanded: true,
+        underline: const SizedBox.shrink(),
+        dropdownColor: _darkDeepTeal,
+        iconEnabledColor: _lightOffWhite,
+        items: ['All', 'Active', 'Follow-up', 'Inactive']
+            .map(
+              (status) => DropdownMenuItem<String>(
+                value: status,
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    color: _lightOffWhite,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            )
+            .toList(),
+        onChanged: (value) {
+          if (value != null) {
             setState(() {
-              _selectedStatus = value!;
+              _selectedStatus = value;
               _resetPagination(clearSelection: true);
             });
-          },
-        ),
+          }
+        },
       ),
     );
   }
@@ -405,7 +466,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         Text(
           'Patient Statistics',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: _darkDeepTeal,
+            color: _lightOffWhite,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -426,7 +487,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                 icon: Icons.person_add,
                 title: 'New This Month',
                 value: _newThisMonth.toString(),
-                color: Colors.green,
+                color: _primaryAqua,
               ),
             ),
             const SizedBox(width: 12),
@@ -435,7 +496,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                 icon: Icons.event_repeat,
                 title: 'Follow-up Rate',
                 value: '${_followUpRate.toStringAsFixed(1)}%',
-                color: Colors.orange,
+                color: _primaryAqua,
               ),
             ),
           ],
@@ -814,7 +875,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       recordLabel: 'Patient record',
       patientName: patientName.isEmpty ? 'Unknown patient' : patientName,
       location: location.isEmpty ? 'Location not recorded' : location,
-      accentColor: AppDesign.patientRecords,
+      accentColor: AppDesign.checkUp,
       status: statusLabel,
       isSelected: isSelected,
       showSelection: _isSelectionMode,
@@ -2096,7 +2157,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
     _registrationDateController.text = '01/29/2026';
     final values = widget.initialValues;
     if (values != null) {
-      final name = (values['patientName'] ?? values['fullName'] ?? '')
+      final name = (values['patientName'] ?? values['fullName'] ?? values['patient'] ?? values['name'] ?? '')
           .toString()
           .trim();
       final parts = name
@@ -2110,10 +2171,10 @@ class _AddPatientModalState extends State<AddPatientModal> {
           (values['surname'] ??
                   (parts.length > 1 ? parts.sublist(1).join(' ') : ''))
               .toString();
-      _dobController.text = (values['dateOfBirth'] ?? '').toString();
+      _dobController.text = (values['dateOfBirth'] ?? values['dob'] ?? '').toString();
       _ageController.text = (values['age'] ?? '').toString();
       _phoneController.text =
-          (values['contactNumber'] ?? values['phoneNumber'] ?? '').toString();
+          (values['contactNumber'] ?? values['phoneNumber'] ?? values['phone'] ?? '').toString();
       _emailController.text = (values['email'] ?? values['emailAddress'] ?? '')
           .toString();
       _streetController.text = (values['address'] ?? values['street'] ?? '')
@@ -2121,16 +2182,40 @@ class _AddPatientModalState extends State<AddPatientModal> {
       _barangayController.text = (values['barangay'] ?? '').toString();
       _municipalityController.text = (values['municipality'] ?? '').toString();
       _provinceController.text = (values['province'] ?? '').toString();
-      _chiefComplaintController.text = (values['symptoms'] ?? '').toString();
-      _currentSymptomsController.text = (values['symptoms'] ?? '').toString();
-      _bodyTempController.text = (values['temperature'] ?? '').toString();
-      _heartRateController.text = (values['heartRate'] ?? '').toString();
-      _respiratoryRateController.text = (values['respiratoryRate'] ?? '')
+      _chiefComplaintController.text = (values['symptoms'] ?? values['chiefComplaint'] ?? '').toString();
+      _currentSymptomsController.text = (values['symptoms'] ?? values['chiefComplaint'] ?? '').toString();
+      _bodyTempController.text = (values['temperature'] ?? values['temp'] ?? '').toString();
+      _heartRateController.text = (values['heartRate'] ?? values['hr'] ?? values['pulse'] ?? '').toString();
+      _respiratoryRateController.text = (values['respiratoryRate'] ?? values['rr'] ?? '')
           .toString();
-      _oxygenSaturationController.text = (values['oxygenSaturation'] ?? '')
+      _oxygenSaturationController.text = (values['oxygenSaturation'] ?? values['spo2'] ?? '')
           .toString();
-      _weightController.text = (values['weight'] ?? '').toString();
-      _heightController.text = (values['height'] ?? '').toString();
+      _weightController.text = (values['weight'] ?? values['wt'] ?? '').toString();
+      _heightController.text = (values['height'] ?? values['ht'] ?? '').toString();
+
+      final bp = (values['bloodPressure'] ?? values['bp'] ?? '').toString().trim();
+      if (bp.isNotEmpty) {
+        final bpParts = bp.split('/');
+        if (bpParts.length == 2) {
+          _bpSystolicController.text = bpParts[0].trim();
+          _bpDiastolicController.text = bpParts[1].trim();
+        }
+      }
+
+      if (values['gender'] != null || values['sex'] != null) {
+        final g = (values['gender'] ?? values['sex']).toString().toLowerCase();
+        if (g == 'female' || g == 'f') {
+          _gender = 'Female';
+        } else if (g == 'male' || g == 'm') {
+          _gender = 'Male';
+        }
+      }
+      if (values['civilStatus'] != null) {
+        final cs = values['civilStatus'].toString();
+        if (['Single', 'Married', 'Widowed', 'Separated'].contains(cs)) {
+          _civilStatus = cs;
+        }
+      }
     }
   }
 
