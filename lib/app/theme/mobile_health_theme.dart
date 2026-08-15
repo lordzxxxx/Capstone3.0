@@ -51,7 +51,7 @@ abstract final class AppDesign {
   static const immunization = green;
   static const morbidity = orange;
   static const mortality = red;
-  static const referrals = teal;
+  static const referrals = blue;
   static const communicable = skyBlue;
   static const nonCommunicable = teal;
 
