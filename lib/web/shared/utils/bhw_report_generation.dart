@@ -900,7 +900,7 @@ Future<_ReportSelection?> _showReportGenerationDialog({
                   style: TextButton.styleFrom(foregroundColor: mutedColor),
                   child: const Text('Cancel'),
                 ),
-                OutlinedButton.icon(
+                FilledButton.icon(
                   onPressed: matchingCount == 0
                       ? null
                       : () => Navigator.of(dialogContext).pop(
@@ -908,7 +908,7 @@ Future<_ReportSelection?> _showReportGenerationDialog({
                         ),
                   icon: const Icon(Icons.table_chart_outlined),
                   label: const Text('Generate Excel'),
-                  style: AppButtonStyles.outline(),
+                  style: AppButtonStyles.report(),
                 ),
                 FilledButton.icon(
                   onPressed: matchingCount == 0

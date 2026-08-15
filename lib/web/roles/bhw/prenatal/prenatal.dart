@@ -812,16 +812,9 @@ class _PrenatalPageState extends State<PrenatalPage> {
             ),
           ),
           const Spacer(),
-          OutlinedButton.icon(
+          FilledButton.icon(
             onPressed: _isLoading ? null : _generatePrenatalReport,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: BorderSide(color: Colors.white.withValues(alpha: 0.25)),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
+            style: AppButtonStyles.report(),
             icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
             label: const Text(
               'Generate',
@@ -4881,7 +4874,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                               ),
                               child: const Text('Close'),
                             ),
-                            ElevatedButton.icon(
+                            FilledButton.icon(
                               onPressed: () async {
                                 Navigator.of(dialogContext).pop();
                                 await _generatePrenatalPdf(context, record);

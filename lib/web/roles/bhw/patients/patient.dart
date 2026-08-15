@@ -3714,7 +3714,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                               ),
                               child: const Text('Close'),
                             ),
-                            ElevatedButton.icon(
+                            FilledButton.icon(
                               onPressed: () async {
                                 Navigator.of(dialogContext).pop();
                                 await _downloadPatientRecordPdf(

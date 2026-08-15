@@ -9,6 +9,7 @@ import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/roles/bhw/analytics/ai_summary.dart'
     as ai;
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
@@ -809,17 +810,9 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
+            child: FilledButton.icon(
               onPressed: _isLoading ? null : _generateSummary,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _primaryAqua,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                elevation: 0,
-              ),
+              style: AppButtonStyles.report(),
               icon: _isLoading
                   ? const SizedBox(
                       height: 18,

@@ -1593,7 +1593,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                           ),
                           child: const Text('Close'),
                         ),
-                        ElevatedButton.icon(
+                        FilledButton.icon(
                           onPressed: () async {
                             Navigator.of(dialogContext).pop();
                             await _generateMorbidityPdf(context, record);

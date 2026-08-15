@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
@@ -123,7 +125,7 @@ void main() async {
 
 Future<void> _initializeMobileServices() async {
   // Mobile platforms use google-services.json/GoogleService-Info.plist.
-  await Firebase.initializeApp();
+  await Firebase.initializeApp().timeout(const Duration(seconds: 12));
   await _restoreFirebaseAuthSession();
   try {
     await activateFirebaseAppCheck();
@@ -152,7 +154,7 @@ Future<void> _initializeWebServices() async {
           appId: "1:628319595773:web:afe9520590fad2a3192294",
           measurementId: "G-DFQ4GMPTHP",
         ),
-      );
+      ).timeout(const Duration(seconds: 12));
     }
     print('✅ [FIREBASE] Firebase initialized');
   } catch (e) {
@@ -163,7 +165,11 @@ Future<void> _initializeWebServices() async {
   await _restoreFirebaseAuthSession();
 
   try {
-    await activateFirebaseAppCheck();
+    // App Check is a protection layer, but it must not prevent the public
+    // shell from rendering when the browser cannot reach the attestation
+    // provider. Firebase-backed actions will still surface their normal
+    // authorization/error state when they are attempted.
+    await activateFirebaseAppCheck().timeout(const Duration(seconds: 5));
   } catch (e) {
     print('⚠️ [APP_CHECK] Web activation skipped: $e');
   }
@@ -195,7 +201,9 @@ Future<void> _restoreFirebaseAuthSession() async {
 
   if (kIsWeb) {
     try {
-      await auth.setPersistence(Persistence.LOCAL);
+      await auth
+          .setPersistence(Persistence.LOCAL)
+          .timeout(const Duration(seconds: 5));
     } catch (error) {
       if (kDebugMode) {
         print('⚠️ [AUTH] Local web persistence unavailable: $error');
@@ -203,7 +211,20 @@ Future<void> _restoreFirebaseAuthSession() async {
     }
   }
 
-  await auth.authStateChanges().first;
+  try {
+    // Firebase normally emits this immediately after restoring the browser
+    // session. A blocked/failed JS adapter must not leave the entire app on a
+    // permanent startup spinner, however; the route shell can render and
+    // Firebase will report the actionable error when a protected operation is
+    // attempted.
+    await auth.authStateChanges().first.timeout(const Duration(seconds: 8));
+  } on TimeoutException catch (error) {
+    if (kDebugMode) {
+      print(
+        '⚠️ [AUTH] Session restore timed out; continuing to app shell: $error',
+      );
+    }
+  }
 }
 
 class MyApp extends StatelessWidget {

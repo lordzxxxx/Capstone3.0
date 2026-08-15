@@ -4063,7 +4063,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                               ),
                               child: const Text('Close'),
                             ),
-                            ElevatedButton.icon(
+                            FilledButton.icon(
                               onPressed: () async {
                                 Navigator.of(dialogContext).pop();
                                 await _downloadImmunizationRecordPdf(
@@ -5459,16 +5459,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           ),
           const SizedBox(width: 8),
           const Spacer(),
-          OutlinedButton.icon(
+          FilledButton.icon(
             onPressed: _isLoading ? null : _generateImmunizationReport,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _darkDeepTeal,
-              side: BorderSide(color: _primaryAqua.withValues(alpha: 0.45)),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
+            style: AppButtonStyles.report(),
             icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
             label: const Text(
               'Generate',

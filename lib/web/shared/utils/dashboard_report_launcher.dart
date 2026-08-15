@@ -574,7 +574,7 @@ Future<_OverallReportSelection?> _showOverallSelectionDialog(
                   onPressed: () => Navigator.of(dialogContext).pop(),
                   child: const Text('Cancel'),
                 ),
-                ElevatedButton.icon(
+                FilledButton.icon(
                   onPressed: () {
                     Navigator.of(dialogContext).pop(
                       _OverallReportSelection(
