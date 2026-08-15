@@ -2233,26 +2233,34 @@ class _AddPatientModalState extends State<AddPatientModal> {
           children: [
             _buildProgressIndicator(),
             Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                onPageChanged: (page) {
-                  setState(() {
-                    _currentPage = page;
-                  });
-                },
-                children: [
-                  _buildPersonalDetailsPage(),
-                  _buildContactInformationPage(),
-                  _buildMedicalDetailsPage(),
-                  _buildVitalSignsPage(),
-                  _buildEmergencyContactPage(),
-                  _buildLifestyleHabitsPage(),
-                  _buildMorbidityAssessmentPage(),
-                  _buildInsuranceCoveragePage(),
-                  _buildAdditionalDetailsPage(),
-                  _buildConsentAndRegistrationPage(),
-                ],
+              child: Form(
+                key: _formKey,
+                child: PageView(
+                  controller: _pageController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  onPageChanged: (page) {
+                    setState(() {
+                      _currentPage = page;
+                    });
+                  },
+                  children: [
+                    // Wrapped with _KeepAlivePage so every page's
+                    // TextFormFields stay registered with _formKey's Form
+                    // even after scrolling off-screen; otherwise PageView
+                    // disposes off-screen pages and validate() would skip
+                    // required fields that aren't on the current page.
+                    _KeepAlivePage(child: _buildPersonalDetailsPage()),
+                    _KeepAlivePage(child: _buildContactInformationPage()),
+                    _KeepAlivePage(child: _buildMedicalDetailsPage()),
+                    _KeepAlivePage(child: _buildVitalSignsPage()),
+                    _KeepAlivePage(child: _buildEmergencyContactPage()),
+                    _KeepAlivePage(child: _buildLifestyleHabitsPage()),
+                    _KeepAlivePage(child: _buildMorbidityAssessmentPage()),
+                    _KeepAlivePage(child: _buildInsuranceCoveragePage()),
+                    _KeepAlivePage(child: _buildAdditionalDetailsPage()),
+                    _KeepAlivePage(child: _buildConsentAndRegistrationPage()),
+                  ],
+                ),
               ),
             ),
             _buildNavigationButtons(),
@@ -2412,12 +2420,14 @@ class _AddPatientModalState extends State<AddPatientModal> {
             _firstNameController,
             required: true,
             hint: 'Enter first name',
+            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
           ),
           _buildTextField(
             'Surname',
             _surnameController,
             required: true,
             hint: 'Enter surname/last name',
+            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
           ),
           _buildTextField(
             'Mothers Maiden Name',
@@ -2501,6 +2511,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
             keyboardType: TextInputType.phone,
             required: true,
             hint: '0912-345-6789',
+            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
           ),
           _buildTextField(
             'Email Address',
@@ -2765,6 +2776,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
             _emergencyNameController,
             required: true,
             hint: 'Full name of emergency contact',
+            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
           ),
           _buildTextField(
             'Relationship',
@@ -3081,6 +3093,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
             _registeredByController,
             hint: 'Health Worker Name',
             required: true,
+            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
           ),
           _buildTextField(
             'Additional Notes',
@@ -3112,6 +3125,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
     String? hint,
+    FormFieldValidator<String>? validator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -3141,6 +3155,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
             maxLines: maxLines,
             keyboardType: keyboardType,
             style: const TextStyle(color: AppDesign.ink, fontSize: 14),
+            validator: validator,
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: const TextStyle(color: AppDesign.subtle),
@@ -3347,17 +3362,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
     }
 
     // Validate required fields
-    if (_firstNameController.text.isEmpty ||
-        _surnameController.text.isEmpty ||
-        _phoneController.text.isEmpty ||
-        _emergencyNameController.text.isEmpty ||
-        _registeredByController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in all required fields'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
@@ -3469,6 +3474,29 @@ class _AddPatientModalState extends State<AddPatientModal> {
         ),
       );
     }
+  }
+}
+
+// Keeps a PageView page's element tree alive when scrolled off-screen so its
+// TextFormFields stay registered with the modal's shared Form/validate().
+class _KeepAlivePage extends StatefulWidget {
+  const _KeepAlivePage({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_KeepAlivePage> createState() => _KeepAlivePageState();
+}
+
+class _KeepAlivePageState extends State<_KeepAlivePage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }
 

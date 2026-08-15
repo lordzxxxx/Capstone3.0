@@ -1859,6 +1859,25 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
 
     final registeredByController = TextEditingController();
     final additionalNoteController = TextEditingController();
+
+    // Gates the Save action so a patient record cannot be registered blank.
+    final formKey = GlobalKey<FormState>();
+
+    String? requiredValidator(String? value) {
+      return (value == null || value.trim().isEmpty) ? 'Required' : null;
+    }
+
+    String? ageValidator(String? value) {
+      if (value == null || value.trim().isEmpty) {
+        return 'Required';
+      }
+      final age = int.tryParse(value.trim());
+      if (age == null || age < 0 || age > 130) {
+        return 'Enter a valid age (0-130)';
+      }
+      return null;
+    }
+
     final modalTitle = patientSeed == null
         ? 'New Prenatal Registration'
         : 'Add Another Prenatal Visit';
@@ -1998,7 +2017,9 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(24),
-                    child: Column(
+                    child: Form(
+                      key: formKey,
+                      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Patient Information Area
@@ -2015,6 +2036,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                                   label: 'First Name',
                                   icon: Icons.person_outline,
                                   hintText: 'Enter first name',
+                                  validator: requiredValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -2024,6 +2046,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                                   label: 'Surname',
                                   icon: Icons.person_outline,
                                   hintText: 'Enter surname',
+                                  validator: requiredValidator,
                                 ),
                               ),
                             ],
@@ -2038,6 +2061,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                                   icon: Icons.cake,
                                   hintText: 'Enter age',
                                   keyboardType: TextInputType.number,
+                                  validator: ageValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -2066,6 +2090,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                             icon: Icons.phone,
                             hintText: 'e.g., +63 912 345 6789',
                             keyboardType: TextInputType.phone,
+                            validator: requiredValidator,
                           ),
                           const SizedBox(height: 16),
                           Row(
@@ -2364,6 +2389,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                             label: 'Registered By',
                             icon: Icons.person_pin,
                             hintText: 'Enter staff name or ID',
+                            validator: requiredValidator,
                           ),
                           const SizedBox(height: 16),
                           _buildTextField(
@@ -2381,6 +2407,22 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () async {
+                              final isFormValid =
+                                  formKey.currentState?.validate() ?? false;
+                              final isLmpDateValid = lmpDate != null;
+                              if (!isLmpDateValid) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('LMP date is required'),
+                                    backgroundColor: Color(0xFFE74C3C),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                              if (!isFormValid || !isLmpDateValid) {
+                                return;
+                              }
+
                               // Create new prenatal record
                               final newRecord = {
                                 'patientName':
@@ -2524,6 +2566,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                         ),
                         const SizedBox(height: 24),
                       ],
+                    ),
                     ),
                   ),
                 ),
@@ -2959,6 +3002,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
     String? hintText,
     TextInputType? keyboardType,
     int maxLines = 1,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2972,10 +3016,11 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
+          validator: validator,
           style: const TextStyle(
             color: _lightOffWhite,
             fontSize: 14,

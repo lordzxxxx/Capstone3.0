@@ -2071,8 +2071,8 @@ class _MortalityPageState extends State<MortalityPage>
                 child: const Text('Cancel', style: TextStyle(fontSize: 14)),
               ),
               ElevatedButton.icon(
-                onPressed: () {
-                  _addNewRecord(
+                onPressed: () async {
+                  final saved = await _addNewRecord(
                     nameController.text,
                     ageController.text,
                     selectedGender,
@@ -2080,7 +2080,9 @@ class _MortalityPageState extends State<MortalityPage>
                     placeController.text,
                     reportedByController.text,
                   );
-                  Navigator.pop(context);
+                  if (saved && mounted) {
+                    Navigator.pop(context);
+                  }
                 },
                 icon: const Icon(Icons.save, size: 18, color: _lightOffWhite),
                 label: const Text(
@@ -2102,7 +2104,7 @@ class _MortalityPageState extends State<MortalityPage>
     );
   }
 
-  void _addNewRecord(
+  Future<bool> _addNewRecord(
     String name,
     String age,
     String gender,
@@ -2119,7 +2121,7 @@ class _MortalityPageState extends State<MortalityPage>
           backgroundColor: Color(0xFFD84315),
         ),
       );
-      return;
+      return false;
     }
 
     try {
@@ -2151,6 +2153,7 @@ class _MortalityPageState extends State<MortalityPage>
 
       // Trigger data reload to update metrics and charts
       _loadData();
+      return true;
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -2158,6 +2161,7 @@ class _MortalityPageState extends State<MortalityPage>
           backgroundColor: Color(0xFFD84315),
         ),
       );
+      return false;
     }
   }
 

@@ -256,11 +256,13 @@ class _MorbidityPageState extends State<MorbidityPage> {
           : RecordCreationFabGroup(
               moduleLabel: 'Morbidity',
               manualLabel: 'New Record',
-              onManualCreate: () => _showNewMorbidityModal(context),
+              onManualCreate: () =>
+                  _showNewMorbidityModal(context, onSaved: _loadData),
               onOcrReady: (extraction) async {
                 _showNewMorbidityModal(
                   context,
                   patientSeed: extraction.toFormSeed(),
+                  onSaved: _loadData,
                 );
               },
             ),
@@ -1109,7 +1111,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
           label: 'Add New Morbidity Record',
           icon: Icons.add_circle_outline,
           tone: MobileRecordActionTone.success,
-          onPressed: () => _showNewMorbidityModal(context),
+          onPressed: () => _showNewMorbidityModal(context, onSaved: _loadData),
         ),
         MobileRecordAction(
           label: 'Delete Record',
@@ -1677,7 +1679,9 @@ class AgeDistribution {
 void _showNewMorbidityModal(
   BuildContext context, {
   Map<String, dynamic>? patientSeed,
+  Future<void> Function()? onSaved,
 }) {
+  final formKey = GlobalKey<FormState>();
   final patientNameController = TextEditingController(
     text: (patientSeed?['patientName'] ?? '').toString(),
   );
@@ -1707,17 +1711,44 @@ void _showNewMorbidityModal(
           style: TextStyle(color: _lightOffWhite, fontWeight: FontWeight.bold),
         ),
         content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildModalTextField('Patient Name', patientNameController),
-              const SizedBox(height: 12),
-              _buildModalTextField('Age', ageController),
-              const SizedBox(height: 12),
-              _buildModalTextField('Disease', diseaseController),
-              const SizedBox(height: 12),
-              _buildModalTextField('Health Facility', facilityController),
-            ],
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildModalTextField(
+                  'Patient Name',
+                  patientNameController,
+                  validator: (value) => (value ?? '').trim().isEmpty
+                      ? 'Patient name is required'
+                      : null,
+                ),
+                const SizedBox(height: 12),
+                _buildModalTextField(
+                  'Age',
+                  ageController,
+                  validator: (value) {
+                    final text = (value ?? '').trim();
+                    if (text.isEmpty) return 'Age is required';
+                    final parsedAge = int.tryParse(text);
+                    if (parsedAge == null || parsedAge < 0 || parsedAge > 130) {
+                      return 'Enter a valid age (0-130)';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildModalTextField(
+                  'Disease',
+                  diseaseController,
+                  validator: (value) => (value ?? '').trim().isEmpty
+                      ? 'Disease is required'
+                      : null,
+                ),
+                const SizedBox(height: 12),
+                _buildModalTextField('Health Facility', facilityController),
+              ],
+            ),
           ),
         ),
         actions: [
@@ -1733,7 +1764,46 @@ void _showNewMorbidityModal(
               backgroundColor: _primaryAqua,
               foregroundColor: _darkDeepTeal,
             ),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () async {
+              if (!(formKey.currentState?.validate() ?? false)) {
+                return;
+              }
+
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+              final newRecord = {
+                'id': DateTime.now().millisecondsSinceEpoch.toString(),
+                'patientName': patientNameController.text.trim(),
+                'age': ageController.text.trim(),
+                'disease': diseaseController.text.trim(),
+                'healthFacility': facilityController.text.trim(),
+                'severity': 'Unspecified',
+                'status': 'Active',
+                'dateReported': DateTime.now().toIso8601String(),
+              };
+
+              try {
+                await MorbidityDatabaseHelper.instance.insertRecord(newRecord);
+
+                // Trigger data reload to update metrics and charts
+                onSaved?.call();
+                navigator.pop();
+
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Record added successfully'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Error adding record: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
             child: const Text('Save'),
           ),
         ],
@@ -1742,9 +1812,14 @@ void _showNewMorbidityModal(
   );
 }
 
-Widget _buildModalTextField(String label, TextEditingController controller) {
-  return TextField(
+Widget _buildModalTextField(
+  String label,
+  TextEditingController controller, {
+  String? Function(String?)? validator,
+}) {
+  return TextFormField(
     controller: controller,
+    validator: validator,
     style: const TextStyle(
       color: _lightOffWhite,
       fontSize: 14,
