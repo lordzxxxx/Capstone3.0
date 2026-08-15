@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Small manually labeled safety-routing set for local review; not a clinical validation set.",
+  "labelScope": "Expected administrative routing and escalation behavior only. Labels do not assert a diagnosis.",
+  "reviewStatus": "pending_qualified_health_professional_review",
+  "cases": [
+    {
+      "id": "MV-01",
+      "input": {"symptoms": "fever and cough", "age": "33"},
+      "expectedCategory": "Communicable",
+      "emergencyWarningExpected": false,
+      "medicationPrompt": false,
+      "unknownInput": false,
+      "reference": "WHO influenza seasonal fact sheet pattern"
+    },
+    {
+      "id": "MV-02",
+      "input": {"symptoms": "sore throat and swollen glands", "age": "20"},
+      "expectedCategory": "Communicable",
+      "emergencyWarningExpected": false,
+      "medicationPrompt": false,
+      "unknownInput": false,
+      "reference": "WHO influenza / streptococcal pharyngitis pattern"
+    },
+    {
+      "id": "MV-03",
+      "input": {"symptoms": "ongoing arthritis pain in my hands", "age": "62"},
+      "expectedCategory": "Non-Communicable",
+      "emergencyWarningExpected": false,
+      "medicationPrompt": false,
+      "unknownInput": false,
+      "reference": "WHO osteoarthritis fact sheet pattern"
+    },
+    {
+      "id": "MV-04",
+      "input": {"symptoms": "crushing chest pain and difficulty breathing", "age": "58"},
+      "expectedCategory": "Emergency",
+      "emergencyWarningExpected": true,
+      "medicationPrompt": false,
+      "unknownInput": false,
+      "reference": "AHA acute coronary syndrome / emergency breathing-risk pattern"
+    },
+    {
+      "id": "MV-05",
+      "input": {"symptoms": "unresponsive and not breathing", "age": "45"},
+      "expectedCategory": "Emergency",
+      "emergencyWarningExpected": true,
+      "medicationPrompt": false,
+      "unknownInput": false,
+      "reference": "WHO emergency danger-sign pattern"
+    },
+    {
+      "id": "MV-06",
+      "input": {"symptoms": "pregnant with severe headache and vision changes", "age": "28"},
+      "expectedCategory": "Prenatal Care",
+      "emergencyWarningExpected": true,
+      "medicationPrompt": false,
+      "unknownInput": false,
+      "reference": "WHO antenatal danger-sign pattern"
+    },
+    {
+      "id": "MV-07",
+      "input": {"symptoms": "no new problems, routine follow-up", "age": "39"},
+      "expectedCategory": "Needs Clinical Review",
+      "emergencyWarningExpected": false,
+      "medicationPrompt": false,
+      "unknownInput": true,
+      "reference": "No specific symptom evidence; human review required"
+    },
+    {
+      "id": "MV-08",
+      "input": {"symptoms": "unfamiliar symptom phrase qzx-17", "age": "40"},
+      "expectedCategory": "Needs Clinical Review",
+      "emergencyWarningExpected": false,
+      "medicationPrompt": false,
+      "unknownInput": true,
+      "reference": "Unsupported input must not be treated as a diagnosis"
+    },
+    {
+      "id": "MV-09",
+      "input": {"symptoms": "fever; what medicine should I take?", "age": "34"},
+      "expectedCategory": "Needs Clinical Review",
+      "emergencyWarningExpected": false,
+      "medicationPrompt": true,
+      "unknownInput": false,
+      "reference": "Medication request must remain clinician/pharmacist controlled"
+    },
+    {
+      "id": "MV-10",
+      "input": {"symptoms": "overdosed on medication, drowsy and unresponsive", "age": "30"},
+      "expectedCategory": "Emergency",
+      "emergencyWarningExpected": true,
+      "medicationPrompt": true,
+      "unknownInput": false,
+      "reference": "WHO / poison-control emergency presentation pattern"
+    },
+    {
+      "id": "MV-11",
+      "input": {"symptoms": "cough but no fever", "age": "41"},
+      "expectedCategory": "Needs Clinical Review",
+      "emergencyWarningExpected": false,
+      "medicationPrompt": false,
+      "unknownInput": false,
+      "reference": "Single symptom with negation/insufficient context requires review"
+    },
+    {
+      "id": "MV-12",
+      "input": {"symptoms": "abdominal pain and vomiting", "age": "47"},
+      "expectedCategory": "Needs Clinical Review",
+      "emergencyWarningExpected": false,
+      "medicationPrompt": false,
+      "unknownInput": false,
+      "reference": "Ambiguous symptom combination requires human review"
+    }
+  ]
+}

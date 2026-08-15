@@ -86,18 +86,18 @@ Acceptance criteria: A user can enter symptoms and receive safe, reviewed guidan
 
 ## Phase 4 — Validate AI data and safety
 
-- [ ] VAL-01: Verify dataset provenance.
-- [ ] VAL-02: Identify classes with weak recall.
-- [ ] VAL-03: Document the top-1 accuracy honestly.
-- [ ] VAL-04: Document top-2/top-3 results.
-- [ ] VAL-05: Test ambiguous and unknown symptoms.
-- [ ] VAL-06: Test emergency symptoms.
-- [ ] VAL-07: Test medication-related prompts.
-- [ ] VAL-08: Test unsupported symptoms.
+- [x] VAL-01: Verify dataset provenance. — Row-level provenance and source limitations are documented; external publisher/clinical representativeness remain unverified.
+- [x] VAL-02: Identify classes with weak recall. — Current weakest recalls are documented, led by COPD at 54.32%.
+- [x] VAL-03: Document the 89.34% top-1 accuracy honestly. — Canonical report states 89.3399% held-out accuracy and that this is not clinical validation.
+- [x] VAL-04: Document top-2/top-3 results. — Canonical report records 96.5424% top-2 and 98.5052% top-3.
+- [x] VAL-05: Test ambiguous and unknown symptoms. — Backend 422 coverage and the local manual validation set cover both cases.
+- [x] VAL-06: Test emergency symptoms. — Emergency-warning regression cases pass in backend and Flutter safety suites.
+- [x] VAL-07: Test medication-related prompts. — Medication/prescription filtering tests pass for backend and local guidance paths.
+- [x] VAL-08: Test unsupported symptoms. — Unknown input is rejected or explicitly marked for review; no fabricated diagnosis is returned.
 - [ ] VAL-09: Review responses with a qualified health professional.
-- [ ] VAL-10: Create a small manually labeled local validation set.
-- [ ] VAL-11: Document that the model is not clinically validated.
-- [ ] VAL-12: Document human oversight and referral responsibility.
+- [x] VAL-10: Create a small manually labeled local validation set. — Added 12 safety-routing cases, explicitly pending qualified professional review.
+- [x] VAL-11: Document that the model is not clinically validated. — Stated in the canonical AI validation report.
+- [x] VAL-12: Document human oversight and referral responsibility. — Stated in the canonical AI validation report and active guidance disclaimer.
 
 Acceptance criteria: No AI output presents a diagnosis as certain. Medication/prescription advice is not returned. Unknown input is rejected or clearly identified. The final report contains limitations and validation evidence.
 

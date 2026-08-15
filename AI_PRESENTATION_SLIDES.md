@@ -1,5 +1,13 @@
 # AI Classification System - Presentation Outline
 
+> **Current metrics correction:** This outline contains historical prototype
+> claims and must be updated before defense use. Do not quote its old 87%
+> overall or 95% emergency figures as verified results. Use
+> `docs/AI_VALIDATION_REPORT.md`: the offline Random Forest is 89.3399% top-1,
+> 96.5424% top-2, and 98.5052% top-3 on a group-safe held-out dataset. The
+> active product feature is non-diagnostic symptom guidance; clinical review
+> and production field testing remain pending.
+
 ## 🎤 Suggested Presentation Structure (10-15 minutes)
 
 ---
