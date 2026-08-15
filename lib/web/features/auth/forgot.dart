@@ -552,12 +552,17 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                       children: [
                         const Icon(Icons.send_rounded, size: 20),
                         const SizedBox(width: 8),
-                        Text(
-                          'Send Reset Link',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
+                        Flexible(
+                          child: Text(
+                            'Send Reset Link',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
                       ],
@@ -568,11 +573,13 @@ class _ForgotPasswordState extends State<ForgotPassword> {
 
           // Sign In Link
           Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 4,
               children: [
                 Text(
-                  'Remember your password? ',
+                  'Remember your password?',
                   style: TextStyle(
                     color: _lightOffWhite.withValues(alpha: 0.78),
                     fontSize: 14,

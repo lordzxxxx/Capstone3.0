@@ -862,17 +862,14 @@ class _LandingPageState extends State<LandingPage>
           child: Column(
             children: [
               // Desktop keeps a viewport-sized hero for its stable two-column
-              // composition. On tablet/mobile the hero and access card must
-              // be allowed to use their intrinsic height; forcing both into
-              // the viewport creates a RenderFlex overflow before the outer
-              // scroll view can do its job.
+              // composition. Mobile content is deliberately unconstrained in
+              // height so its intrinsic content can flow into this scroll
+              // view without producing a RenderFlex overflow when the
+              // browser height changes.
               if (constraints.maxWidth < 980)
-                ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: SizedBox(
-                    width: constraints.maxWidth,
-                    child: _buildLandingContent(context),
-                  ),
+                SizedBox(
+                  width: constraints.maxWidth,
+                  child: _buildLandingContent(context),
                 )
               else
                 SizedBox(
@@ -959,14 +956,21 @@ class _LandingPageState extends State<LandingPage>
 
         // Tablet/mobile content is intentionally intrinsic-height. The
         // surrounding SingleChildScrollView owns vertical overflow, so the
-        // hero and access card do not compete for a too-small fixed height.
+        // hero and access card do not compete for a fixed viewport height.
         return Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                hero,
+                // Release the vertical constraint inherited from browser
+                // viewport resizes while keeping the hero at the available
+                // width. The outer scroll view owns vertical movement.
+                UnconstrainedBox(
+                  constrainedAxis: Axis.horizontal,
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(width: constraints.maxWidth, child: hero),
+                ),
                 SizedBox(height: _responsive(height, 0.018, 10, 18)),
                 _fadeSlideIn(
                   animation: _panelEntrance,

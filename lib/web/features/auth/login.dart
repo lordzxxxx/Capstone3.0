@@ -1251,17 +1251,32 @@ class _LoginState extends State<Login> {
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildFieldLabel(context, 'Password'),
-                TextButton(
-                  onPressed: () =>
-                      pushAuthPage(context, const ForgotPassword()),
-                  child: const Text('Forgot password?'),
-                ),
-              ],
-            ),
+            isCompact
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildFieldLabel(context, 'Password'),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () =>
+                              pushAuthPage(context, const ForgotPassword()),
+                          child: const Text('Forgot password?'),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildFieldLabel(context, 'Password'),
+                      TextButton(
+                        onPressed: () =>
+                            pushAuthPage(context, const ForgotPassword()),
+                        child: const Text('Forgot password?'),
+                      ),
+                    ],
+                  ),
             _buildPasswordField(),
             const SizedBox(height: 22),
             SizedBox(
@@ -1523,12 +1538,17 @@ class _LoginState extends State<Login> {
           children: [
             Icon(icon, color: color, size: 24),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: _darkDeepTeal,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _darkDeepTeal,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
               ),
             ),
           ],
