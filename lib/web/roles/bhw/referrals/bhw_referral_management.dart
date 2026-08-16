@@ -243,19 +243,6 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(
-                Icons.local_hospital_outlined,
-                color: _aqua,
-                size: 27,
-              ),
-            ),
-            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,19 +340,16 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
             'Returned Referrals',
             count((r) => r.isReturned),
             Icons.undo_rounded,
-            color: Colors.orangeAccent,
           ),
           _kpi(
             'Completed Referrals',
             count((r) => r.isCompleted),
             Icons.task_alt_rounded,
-            color: Colors.greenAccent,
           ),
           _kpi(
             'Follow-ups Required',
             count((r) => r.followUpRequired),
             Icons.home_work_outlined,
-            color: Colors.amberAccent,
           ),
         ]),
         const SizedBox(height: 18),

@@ -1371,6 +1371,132 @@ class _MortalityPageState extends State<MortalityPage> {
     );
   }
 
+  void _showNotificationsPanel(BuildContext context) {
+    final pending = _mortalityRecords
+        .where((record) => _safeText(record['verification'], 'Pending') != 'Verified')
+        .toList();
+
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.72),
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: _sidebarDark,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: _primaryAqua.withValues(alpha: 0.2), width: 1.2),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.notifications_rounded, color: _primaryAqua, size: 22),
+            const SizedBox(width: 10),
+            Text(
+              pending.isEmpty
+                  ? 'Notifications'
+                  : 'Notifications (${pending.length})',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 420,
+          child: pending.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'No pending notifications. Every recorded death has been verified.',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.68)),
+                  ),
+                )
+              : ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 360),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: pending.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (_, index) {
+                      final record = pending[index];
+                      final name = patientDisplayName(record, fallback: 'Unrecorded name');
+                      return Material(
+                        color: Colors.white.withValues(alpha: 0.04),
+                        borderRadius: BorderRadius.circular(14),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: () {
+                            Navigator.of(dialogContext).pop();
+                            _editRecord(record);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 34,
+                                  height: 34,
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.withValues(alpha: 0.16),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.fact_check_outlined,
+                                    color: Colors.amber,
+                                    size: 18,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        name,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Cause-of-death verification pending. Tap to review.',
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(alpha: 0.6),
+                                          fontSize: 11.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(
+              'Close',
+              style: TextStyle(color: _primaryAqua.withValues(alpha: 0.9)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTopBar(BuildContext context) {
     return Container(
       height: 70,
@@ -1428,14 +1554,16 @@ class _MortalityPageState extends State<MortalityPage> {
           const SizedBox(width: 12),
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+            tooltip: 'Notifications',
+            onPressed: () => _showNotificationsPanel(context),
             color: Colors.white70,
             iconSize: 28,
           ),
           const SizedBox(width: 12),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            onPressed: () {},
+            tooltip: 'Profile and Settings',
+            onPressed: () => Get.toNamed(WebRoutes.bhwProfile),
             color: Colors.white70,
             iconSize: 28,
           ),
