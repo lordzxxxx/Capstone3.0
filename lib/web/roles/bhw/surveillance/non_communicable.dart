@@ -2302,7 +2302,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         // Update patient data
                         patient['patientName'] = nameController.text;
                         patient['age'] =
@@ -2316,15 +2316,28 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                         patient['lastVisit'] = lastVisitController.text;
                         patient['nextVisit'] = nextVisitController.text;
 
-                        Navigator.pop(context);
-                        setState(() {}); // Refresh UI
-                        Get.snackbar(
-                          'Success',
-                          'Patient information updated successfully',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: const Color(0xFF4CAF50),
-                          colorText: Colors.white,
-                        );
+                        final patientId = patient['id']?.toString() ?? '';
+                        try {
+                          await _dbHelper.updateRecord(patientId, patient);
+                          if (!context.mounted) return;
+                          Navigator.pop(context);
+                          setState(() {}); // Refresh UI
+                          Get.snackbar(
+                            'Success',
+                            'Patient information updated successfully',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: const Color(0xFF4CAF50),
+                            colorText: Colors.white,
+                          );
+                        } catch (e) {
+                          Get.snackbar(
+                            'Error',
+                            'Could not update patient information: $e',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.redAccent,
+                            colorText: Colors.white,
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primaryAqua,

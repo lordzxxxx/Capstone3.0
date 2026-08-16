@@ -175,6 +175,45 @@ describe('user profile privilege boundaries', () => {
     await assertFails(attackerRef.update({approvalStatus: 'pending'}));
   });
 
+  it('blocks self-activation via isApproved/status alone, without touching '
+    + 'approvalStatus/accountStatus (hasApprovedActiveProfile() treats '
+    + 'these as OR-equivalent, so both pairs must be protected)', async () => {
+    await seed(
+      'users/bhw-2',
+      activeProfile('bhw-2', 'bhw2@example.test', {
+        approvalStatus: 'pending',
+        accountStatus: 'pending_approval',
+        status: 'Pending Approval',
+        isApproved: false,
+      }),
+    );
+    const bhw2Db = testEnv
+      .authenticatedContext('bhw-2', {email: 'bhw2@example.test'})
+      .firestore();
+    const ownRef = bhw2Db.doc('users/bhw-2');
+
+    // Leaves approvalStatus/accountStatus untouched -- only the
+    // OR-equivalent isApproved/status fields are changed.
+    await assertFails(
+      ownRef.update({
+        isApproved: true,
+        status: 'Active',
+        updatedAt: new Date(),
+      }),
+    );
+
+    // Confirms the self-activation never took effect: a still-unapproved
+    // BHW cannot write barangay-scoped clinical data.
+    await assertFails(
+      bhw2Db.doc('checkup_records/probe-record').set({
+        patientName: 'Probe',
+        barangay: 'Barangay 10',
+        barangayCode: 'barangay_10',
+        createdByUid: 'bhw-2',
+      }),
+    );
+  });
+
   it('grants barangay-scoped access immediately after authenticated signup', async () => {
     await seed(
       'users/bhw-1',
