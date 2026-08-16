@@ -12,6 +12,7 @@ import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/utils/checkup_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/shared/utils/report_generation.dart';
@@ -1086,88 +1087,75 @@ class _MorbidityPageState extends State<MorbidityPage> {
           ).textTheme.bodyMedium?.copyWith(color: _mutedCoolGray),
         ),
         const SizedBox(height: 16),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final searchField = TextField(
-              controller: _searchController,
-              style: const TextStyle(color: _lightOffWhite),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                  _currentPage = 1;
-                });
-                _scheduleSharedPatientSearch(value);
+        WebFilterSurface(
+          padding: const EdgeInsets.all(10),
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final searchField = WebSearchField(
+                  controller: _searchController,
+                  hintText:
+                      'Search patient, disease, classification, or linked IDs',
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                      _currentPage = 1;
+                    });
+                    _scheduleSharedPatientSearch(value);
+                  },
+                  onClear: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                      _currentPage = 1;
+                    });
+                    _scheduleSharedPatientSearch('');
+                  },
+                );
+                final statusFilter = _FilterDropdown(
+                  label: 'Status',
+                  value: _statusFilter,
+                  options: _statusOptions,
+                  onChanged: (value) => setState(() {
+                    _statusFilter = value;
+                    _currentPage = 1;
+                  }),
+                );
+                final severityFilter = _FilterDropdown(
+                  label: 'Severity',
+                  value: _severityFilter,
+                  options: _severityOptions,
+                  onChanged: (value) => setState(() {
+                    _severityFilter = value;
+                    _currentPage = 1;
+                  }),
+                );
+
+                if (constraints.maxWidth < 820) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      searchField,
+                      const SizedBox(height: 12),
+                      statusFilter,
+                      const SizedBox(height: 12),
+                      severityFilter,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(flex: 5, child: searchField),
+                    const SizedBox(width: 12),
+                    Expanded(flex: 2, child: statusFilter),
+                    const SizedBox(width: 12),
+                    Expanded(flex: 2, child: severityFilter),
+                  ],
+                );
               },
-              decoration: InputDecoration(
-                hintText:
-                    'Search patient, disease, classification, or linked IDs',
-                hintStyle: const TextStyle(color: _mutedCoolGray),
-                prefixIcon: const Icon(
-                  Icons.search_rounded,
-                  color: _primaryAqua,
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(
-                    color: _primaryAqua.withValues(alpha: 0.18),
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(
-                    color: _primaryAqua.withValues(alpha: 0.18),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: _primaryAqua),
-                ),
-              ),
-            );
-            final statusFilter = _FilterDropdown(
-              label: 'Status',
-              value: _statusFilter,
-              options: _statusOptions,
-              onChanged: (value) => setState(() {
-                _statusFilter = value;
-                _currentPage = 1;
-              }),
-            );
-            final severityFilter = _FilterDropdown(
-              label: 'Severity',
-              value: _severityFilter,
-              options: _severityOptions,
-              onChanged: (value) => setState(() {
-                _severityFilter = value;
-                _currentPage = 1;
-              }),
-            );
-
-            if (constraints.maxWidth < 820) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  searchField,
-                  const SizedBox(height: 12),
-                  statusFilter,
-                  const SizedBox(height: 12),
-                  severityFilter,
-                ],
-              );
-            }
-
-            return Row(
-              children: [
-                Expanded(flex: 5, child: searchField),
-                const SizedBox(width: 12),
-                Expanded(flex: 2, child: statusFilter),
-                const SizedBox(width: 12),
-                Expanded(flex: 2, child: severityFilter),
-              ],
-            );
-          },
+            ),
+          ],
         ),
         if (_searchQuery.trim().isNotEmpty || _isSearchingSharedPatients) ...[
           const SizedBox(height: 14),

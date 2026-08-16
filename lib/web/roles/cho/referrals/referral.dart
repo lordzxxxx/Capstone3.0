@@ -15,6 +15,7 @@ import 'package:mycapstone_project/web/shared/utils/referral_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/report_download.dart';
 import 'package:mycapstone_project/web/shared/utils/report_print.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
@@ -2476,108 +2477,83 @@ class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
             .toList()
           ..sort();
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _panelSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
-      ),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          SizedBox(
-            width: 320,
-            child: TextField(
-              controller: _searchController,
-              onChanged: (_) => setState(() {}),
-              style: const TextStyle(color: _lightOffWhite),
-              decoration:
-                  _inputDecoration(
-                    'Search patient, barangay, complaint',
-                  ).copyWith(
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      color: _mutedCoolGray,
-                    ),
+    return WebFilterSurface(
+      children: [
+        WebSearchField(
+          controller: _searchController,
+          width: 320,
+          hintText: 'Search patient, barangay, complaint',
+          onChanged: (_) => setState(() {}),
+          onClear: () {
+            _searchController.clear();
+            setState(() {});
+          },
+        ),
+        WebFilterDropdown<String>(
+          label: 'Status',
+          value: _selectedStatus,
+          width: 220,
+          items:
+              const <String>[
+                'all',
+                'submitted',
+                'under_review',
+                'assigned',
+                'in_treatment',
+                'completed',
+              ].map((value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(
+                    value == 'all'
+                        ? 'All statuses'
+                        : value.replaceAll('_', ' '),
+                    overflow: TextOverflow.ellipsis,
                   ),
+                );
+              }).toList(),
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => _selectedStatus = value);
+          },
+        ),
+        WebFilterDropdown<String>(
+          label: 'Barangay',
+          value: _selectedBarangay,
+          width: 220,
+          items: <DropdownMenuItem<String>>[
+            const DropdownMenuItem<String>(
+              value: 'all',
+              child: Text('All barangays'),
             ),
-          ),
-          SizedBox(
-            width: 220,
-            child: DropdownButtonFormField<String>(
-              initialValue: _selectedStatus,
-              dropdownColor: _panelAlt,
-              style: const TextStyle(color: _lightOffWhite),
-              decoration: _inputDecoration('Status'),
-              items:
-                  const <String>[
-                    'all',
-                    'submitted',
-                    'under_review',
-                    'assigned',
-                    'in_treatment',
-                    'completed',
-                  ].map((value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(
-                        value == 'all'
-                            ? 'All statuses'
-                            : value.replaceAll('_', ' '),
-                      ),
-                    );
-                  }).toList(),
-              onChanged: (value) {
-                if (value == null) return;
-                setState(() => _selectedStatus = value);
-              },
+            ...barangays.map(
+              (barangay) => DropdownMenuItem<String>(
+                value: barangay,
+                child: Text(barangay, overflow: TextOverflow.ellipsis),
+              ),
             ),
+          ],
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => _selectedBarangay = value);
+          },
+        ),
+        OutlinedButton.icon(
+          onPressed: () {
+            _searchController.clear();
+            setState(() {
+              _selectedStatus = 'all';
+              _selectedBarangay = 'all';
+            });
+          },
+          icon: const Icon(Icons.filter_alt_off_rounded),
+          label: const Text('Clear filters'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _primaryAqua,
+            side: BorderSide(color: _primaryAqua.withValues(alpha: 0.28)),
           ),
-          SizedBox(
-            width: 220,
-            child: DropdownButtonFormField<String>(
-              initialValue: _selectedBarangay,
-              dropdownColor: _panelAlt,
-              style: const TextStyle(color: _lightOffWhite),
-              decoration: _inputDecoration('Barangay'),
-              items: <DropdownMenuItem<String>>[
-                const DropdownMenuItem<String>(
-                  value: 'all',
-                  child: Text('All barangays'),
-                ),
-                ...barangays.map(
-                  (barangay) => DropdownMenuItem<String>(
-                    value: barangay,
-                    child: Text(barangay),
-                  ),
-                ),
-              ],
-              onChanged: (value) {
-                if (value == null) return;
-                setState(() => _selectedBarangay = value);
-              },
-            ),
-          ),
-          OutlinedButton.icon(
-            onPressed: () {
-              _searchController.clear();
-              setState(() {
-                _selectedStatus = 'all';
-                _selectedBarangay = 'all';
-              });
-            },
-            icon: const Icon(Icons.filter_alt_off_rounded),
-            label: const Text('Clear filters'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _primaryAqua,
-              side: BorderSide(color: _primaryAqua.withValues(alpha: 0.28)),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

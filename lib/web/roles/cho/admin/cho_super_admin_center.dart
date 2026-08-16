@@ -14,6 +14,7 @@ import 'package:mycapstone_project/web/shared/services/barangay_branding_service
 import 'package:mycapstone_project/web/shared/widgets/barangay_logo_image.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:universal_html/html.dart' as html;
@@ -292,58 +293,42 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(
+                    WebSearchField(
                       controller: searchController,
+                      hintText: 'Search barangay or district',
                       onChanged: (_) => setPickerState(() {}),
-                      style: const TextStyle(color: _lightOffWhite),
-                      decoration: InputDecoration(
-                        hintText: 'Search barangay or district',
-                        hintStyle: TextStyle(
-                          color: _mutedCoolGray.withValues(alpha: 0.85),
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: _primaryAqua,
-                        ),
-                        filled: true,
-                        fillColor: _panelSurface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
+                      onClear: () {
+                        searchController.clear();
+                        setPickerState(() {});
+                      },
                     ),
                     const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedDistrict,
-                      dropdownColor: _panelSurface,
-                      style: const TextStyle(color: _lightOffWhite),
-                      decoration: InputDecoration(
-                        labelText: 'District',
-                        labelStyle: const TextStyle(color: _lightOffWhite),
-                        filled: true,
-                        fillColor: _panelSurface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      items: districtOptions
-                          .map(
-                            (district) => DropdownMenuItem<String>(
-                              value: district,
-                              child: Text(
-                                district == 'ALL' ? 'All Districts' : district,
+                    WebFilterSurface(
+                      padding: const EdgeInsets.all(10),
+                      child: WebFilterDropdown<String>(
+                        label: 'District',
+                        width: double.infinity,
+                        value: selectedDistrict,
+                        items: districtOptions
+                            .map(
+                              (district) => DropdownMenuItem<String>(
+                                value: district,
+                                child: Text(
+                                  district == 'ALL'
+                                      ? 'All Districts'
+                                      : district,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setPickerState(() {
-                          selectedDistrict = value;
-                        });
-                      },
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setPickerState(() {
+                            selectedDistrict = value;
+                          });
+                        },
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Flexible(
@@ -1650,139 +1635,74 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        crossAxisAlignment: WrapCrossAlignment.center,
+                      WebFilterSurface(
+                        padding: const EdgeInsets.all(10),
                         children: [
-                          SizedBox(
+                          WebSearchField(
+                            controller: _searchController,
                             width: 280,
-                            child: TextField(
-                              controller: _searchController,
-                              style: const TextStyle(color: _lightOffWhite),
-                              decoration: InputDecoration(
-                                hintText: 'Search email, username, barangay',
-                                hintStyle: TextStyle(
-                                  color: _mutedCoolGray.withValues(alpha: 0.85),
-                                ),
-                                prefixIcon: const Icon(
-                                  Icons.search,
-                                  color: _primaryAqua,
-                                ),
-                                filled: true,
-                                fillColor: _sidebarDark,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: BorderSide.none,
-                                ),
-                              ),
-                            ),
+                            hintText: 'Search email, username, barangay',
                           ),
-                          SizedBox(
+                          WebFilterDropdown<String>(
+                            label: 'Role',
+                            value: _selectedRoleFilter,
                             width: 170,
-                            child: DropdownButtonFormField<String>(
-                              initialValue: _selectedRoleFilter,
-                              dropdownColor: _sidebarDark,
-                              style: const TextStyle(color: _lightOffWhite),
-                              decoration: InputDecoration(
-                                labelText: 'Role',
-                                labelStyle: const TextStyle(
-                                  color: _lightOffWhite,
-                                ),
-                                filled: true,
-                                fillColor: _sidebarDark,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: BorderSide.none,
-                                ),
-                              ),
-                              items:
-                                  <String>[
-                                        'ALL',
-                                        ...MalaybalayBarangays.roleOptions,
-                                      ]
-                                      .map(
-                                        (value) => DropdownMenuItem<String>(
-                                          value: value,
-                                          child: Text(value),
-                                        ),
-                                      )
-                                      .toList(),
-                              onChanged: (value) {
-                                if (value == null) return;
-                                setState(() => _selectedRoleFilter = value);
-                              },
-                            ),
+                            items:
+                                <String>[
+                                      'ALL',
+                                      ...MalaybalayBarangays.roleOptions,
+                                    ]
+                                    .map(
+                                      (value) => DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      ),
+                                    )
+                                    .toList(),
+                            onChanged: (value) {
+                              if (value == null) return;
+                              setState(() => _selectedRoleFilter = value);
+                            },
                           ),
-                          SizedBox(
+                          WebFilterDropdown<String>(
+                            label: 'Barangay',
+                            value: _selectedBarangayFilter,
                             width: 220,
-                            child: DropdownButtonFormField<String>(
-                              initialValue: _selectedBarangayFilter,
-                              dropdownColor: _sidebarDark,
-                              style: const TextStyle(color: _lightOffWhite),
-                              decoration: InputDecoration(
-                                labelText: 'Barangay',
-                                labelStyle: const TextStyle(
-                                  color: _lightOffWhite,
-                                ),
-                                filled: true,
-                                fillColor: _sidebarDark,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: BorderSide.none,
-                                ),
-                              ),
-                              items:
-                                  <String>[
-                                        'ALL',
-                                        ...MalaybalayBarangays.all.map(
-                                          (item) => item.name,
-                                        ),
-                                      ]
-                                      .map(
-                                        (value) => DropdownMenuItem<String>(
-                                          value: value,
-                                          child: Text(value),
-                                        ),
-                                      )
-                                      .toList(),
-                              onChanged: (value) {
-                                if (value == null) return;
-                                setState(() => _selectedBarangayFilter = value);
-                              },
-                            ),
+                            items:
+                                <String>[
+                                      'ALL',
+                                      ...MalaybalayBarangays.all.map(
+                                        (item) => item.name,
+                                      ),
+                                    ]
+                                    .map(
+                                      (value) => DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      ),
+                                    )
+                                    .toList(),
+                            onChanged: (value) {
+                              if (value == null) return;
+                              setState(() => _selectedBarangayFilter = value);
+                            },
                           ),
-                          SizedBox(
+                          WebFilterDropdown<String>(
+                            label: 'Status',
+                            value: _selectedStatusFilter,
                             width: 170,
-                            child: DropdownButtonFormField<String>(
-                              initialValue: _selectedStatusFilter,
-                              dropdownColor: _sidebarDark,
-                              style: const TextStyle(color: _lightOffWhite),
-                              decoration: InputDecoration(
-                                labelText: 'Status',
-                                labelStyle: const TextStyle(
-                                  color: _lightOffWhite,
-                                ),
-                                filled: true,
-                                fillColor: _sidebarDark,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: BorderSide.none,
-                                ),
-                              ),
-                              items: const <String>['ALL', 'active', 'disabled']
-                                  .map(
-                                    (value) => DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value.toUpperCase()),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (value) {
-                                if (value == null) return;
-                                setState(() => _selectedStatusFilter = value);
-                              },
-                            ),
+                            items: const <String>['ALL', 'active', 'disabled']
+                                .map(
+                                  (value) => DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value.toUpperCase()),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              if (value == null) return;
+                              setState(() => _selectedStatusFilter = value);
+                            },
                           ),
                         ],
                       ),
@@ -1794,7 +1714,12 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      ...filteredDocs.map(_buildUserCard),
+                      WebTableSurface(
+                        minWidth: 1100,
+                        child: Column(
+                          children: filteredDocs.map(_buildUserCard).toList(),
+                        ),
+                      ),
                     ],
                   ),
                 ),

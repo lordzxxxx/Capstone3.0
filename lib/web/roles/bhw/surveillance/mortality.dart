@@ -22,6 +22,8 @@ import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
@@ -2280,18 +2282,8 @@ class _MortalityPageState extends State<MortalityPage> {
   }
 
   Widget _buildCauseTable() {
-    return Container(
-      decoration: BoxDecoration(
-        color: _sidebarDark,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return WebTableSurface(
+      minWidth: 620,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2299,100 +2291,96 @@ class _MortalityPageState extends State<MortalityPage> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(Icons.table_chart, color: Colors.white, size: 20),
+                const Icon(
+                  Icons.table_chart_outlined,
+                  color: _primaryAqua,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
-                Text(
+                const Text(
                   'Cause of Death Breakdown',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: _lightOffWhite,
                   ),
                 ),
               ],
             ),
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: WidgetStateProperty.all(
-                _primaryAqua.withValues(alpha: 0.2),
+          DataTable(
+            columns: [
+              DataColumn(
+                label: const Text(
+                  'Cause of Death',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _lightOffWhite,
+                  ),
+                ),
               ),
-              columns: [
-                DataColumn(
-                  label: Text(
-                    'Cause of Death',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+              DataColumn(
+                label: const Text(
+                  'Percentage',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _lightOffWhite,
                   ),
                 ),
-                DataColumn(
-                  label: Text(
-                    'Percentage',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+              ),
+              DataColumn(
+                label: const Text(
+                  'Progress',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _lightOffWhite,
                   ),
                 ),
-                DataColumn(
-                  label: Text(
-                    'Progress',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+              ),
+              DataColumn(
+                label: const Text(
+                  'Death Count',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _lightOffWhite,
                   ),
                 ),
-                DataColumn(
-                  label: Text(
-                    'Death Count',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              ),
+            ],
+            rows: _causeData.map((cause) {
+              return DataRow(
+                cells: [
+                  DataCell(
+                    Text(
+                      cause.cause,
+                      style: const TextStyle(color: _lightOffWhite),
                     ),
                   ),
-                ),
-              ],
-              rows: _causeData.map((cause) {
-                return DataRow(
-                  cells: [
-                    DataCell(
-                      Text(
-                        cause.cause,
-                        style: const TextStyle(color: Colors.white),
+                  DataCell(
+                    Text(
+                      '${cause.percentage.toStringAsFixed(1)}%',
+                      style: const TextStyle(color: _lightOffWhite),
+                    ),
+                  ),
+                  DataCell(
+                    SizedBox(
+                      width: 100,
+                      child: LinearProgressIndicator(
+                        value: cause.percentage / 100,
+                        backgroundColor: AppColors.border,
+                        valueColor: AlwaysStoppedAnimation<Color>(_primaryAqua),
                       ),
                     ),
-                    DataCell(
-                      Text(
-                        '${cause.percentage.toStringAsFixed(1)}%',
-                        style: const TextStyle(color: Colors.white),
-                      ),
+                  ),
+                  DataCell(
+                    Text(
+                      cause.count.toString(),
+                      style: const TextStyle(color: _lightOffWhite),
                     ),
-                    DataCell(
-                      SizedBox(
-                        width: 100,
-                        child: LinearProgressIndicator(
-                          value: cause.percentage / 100,
-                          backgroundColor: Colors.grey[700],
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            _primaryAqua,
-                          ),
-                        ),
-                      ),
-                    ),
-                    DataCell(
-                      Text(
-                        cause.count.toString(),
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
-            ),
+                  ),
+                ],
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -2400,18 +2388,8 @@ class _MortalityPageState extends State<MortalityPage> {
   }
 
   Widget _buildAgeTable() {
-    return Container(
-      decoration: BoxDecoration(
-        color: _sidebarDark,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return WebTableSurface(
+      minWidth: 480,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2419,79 +2397,77 @@ class _MortalityPageState extends State<MortalityPage> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(Icons.table_rows, color: Colors.white, size: 20),
+                const Icon(
+                  Icons.table_rows_outlined,
+                  color: _primaryAqua,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
-                Text(
+                const Text(
                   'Age Distribution',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: _lightOffWhite,
                   ),
                 ),
               ],
             ),
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: WidgetStateProperty.all(
-                _primaryAqua.withValues(alpha: 0.2),
+          DataTable(
+            columns: [
+              DataColumn(
+                label: const Text(
+                  'Age Range',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _lightOffWhite,
+                  ),
+                ),
               ),
-              columns: [
-                DataColumn(
-                  label: Text(
-                    'Age Range',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+              DataColumn(
+                label: const Text(
+                  'Death Count',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _lightOffWhite,
                   ),
                 ),
-                DataColumn(
-                  label: Text(
-                    'Death Count',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+              ),
+              DataColumn(
+                label: const Text(
+                  'Percentage',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _lightOffWhite,
                   ),
                 ),
-                DataColumn(
-                  label: Text(
-                    'Percentage',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              ),
+            ],
+            rows: _ageDistributions.map((age) {
+              return DataRow(
+                cells: [
+                  DataCell(
+                    Text(
+                      age.ageRange,
+                      style: const TextStyle(color: _lightOffWhite),
                     ),
                   ),
-                ),
-              ],
-              rows: _ageDistributions.map((age) {
-                return DataRow(
-                  cells: [
-                    DataCell(
-                      Text(
-                        age.ageRange,
-                        style: const TextStyle(color: Colors.white),
-                      ),
+                  DataCell(
+                    Text(
+                      age.count.toString(),
+                      style: const TextStyle(color: _lightOffWhite),
                     ),
-                    DataCell(
-                      Text(
-                        age.count.toString(),
-                        style: const TextStyle(color: Colors.white),
-                      ),
+                  ),
+                  DataCell(
+                    Text(
+                      '${age.percentage.toStringAsFixed(1)}%',
+                      style: const TextStyle(color: _lightOffWhite),
                     ),
-                    DataCell(
-                      Text(
-                        '${age.percentage.toStringAsFixed(1)}%',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
-            ),
+                  ),
+                ],
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -2596,7 +2572,7 @@ class _MortalityPageState extends State<MortalityPage> {
       style: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.bold,
-        color: Colors.white,
+        color: _lightOffWhite,
       ),
     );
   }
@@ -2716,7 +2692,7 @@ class _MortalityPageState extends State<MortalityPage> {
                         ),
                         child: const Icon(
                           Icons.inbox_rounded,
-                          color: Colors.white,
+                          color: _primaryAqua,
                           size: 48,
                         ),
                       ),
@@ -2726,7 +2702,7 @@ class _MortalityPageState extends State<MortalityPage> {
                             ? 'No records found'
                             : 'No results for "$_searchQuery"',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: _lightOffWhite,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -2734,10 +2710,7 @@ class _MortalityPageState extends State<MortalityPage> {
                       const SizedBox(height: 8),
                       Text(
                         'Try adjusting your search or add a new mortality record',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: _mutedCoolGray, fontSize: 14),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -2755,7 +2728,7 @@ class _MortalityPageState extends State<MortalityPage> {
                       'Showing ${pageStartIndex + 1}-$pageEndIndex of ${_filteredRecords.length} records',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.72),
+                        color: _mutedCoolGray,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -2766,7 +2739,7 @@ class _MortalityPageState extends State<MortalityPage> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: _darkDeepTeal,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: _primaryAqua.withValues(alpha: 0.25),
@@ -2774,14 +2747,14 @@ class _MortalityPageState extends State<MortalityPage> {
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<int>(
-                        dropdownColor: _darkDeepTeal,
+                        dropdownColor: Colors.white,
                         value: effectiveRowsPerPage,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: _lightOffWhite,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
-                        iconEnabledColor: Colors.white,
+                        iconEnabledColor: _lightOffWhite,
                         items: const [
                           DropdownMenuItem(value: 10, child: Text('10 / page')),
                           DropdownMenuItem(value: 20, child: Text('20 / page')),
@@ -2808,7 +2781,7 @@ class _MortalityPageState extends State<MortalityPage> {
                           }
                         : null,
                     icon: const Icon(Icons.chevron_left),
-                    color: Colors.white,
+                    color: _lightOffWhite,
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -2816,7 +2789,7 @@ class _MortalityPageState extends State<MortalityPage> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: _darkDeepTeal,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: _primaryAqua.withValues(alpha: 0.25),
@@ -2825,7 +2798,7 @@ class _MortalityPageState extends State<MortalityPage> {
                     child: Text(
                       '$currentPage / $totalPages',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: _lightOffWhite,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -2944,7 +2917,7 @@ class _MortalityPageState extends State<MortalityPage> {
   }
 
   Widget _buildRowDivider() {
-    return Container(width: 1, height: 70, color: const Color(0xFF26476B));
+    return Container(width: 1, height: 70, color: AppColors.border);
   }
 
   Widget _buildRowActionButton({
@@ -2953,11 +2926,11 @@ class _MortalityPageState extends State<MortalityPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF163B66),
+        color: _primaryAqua,
         borderRadius: BorderRadius.circular(7),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF163B66).withValues(alpha: 0.28),
+            color: _primaryAqua.withValues(alpha: 0.24),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -2988,15 +2961,15 @@ class _MortalityPageState extends State<MortalityPage> {
     final verification = _safeText(record['verification'], 'Pending');
     final reportedDate = _formatDate(record['dateReported'] ?? record['date']);
 
-    const rowText = Color(0xFFF3F8FC);
-    const mutedText = Color(0xFFB1C4D5);
+    const rowText = AppColors.textPrimary;
+    const mutedText = AppColors.textSecondary;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: _darkDeepTeal.withValues(alpha: 0.96),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF26476B), width: 1),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -3033,7 +3006,7 @@ class _MortalityPageState extends State<MortalityPage> {
                   Text(
                     'Reported: $reportedDate',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: mutedText,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -3076,7 +3049,7 @@ class _MortalityPageState extends State<MortalityPage> {
                     Text(
                       'Reported by: $reportedBy',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
+                        color: mutedText,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),

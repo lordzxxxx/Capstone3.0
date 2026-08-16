@@ -19,6 +19,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
@@ -1866,380 +1867,326 @@ class _CheckUpPageState extends State<CheckUpPage> {
   }
 
   Widget _buildSearchBar() {
-    return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.18),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: _effectiveSearchController,
-        cursorColor: _primaryAqua,
-        onChanged: (value) {
-          setState(() {
-            _searchQuery = value.trim();
-            _currentPage = 1;
-            _selectedIndices.clear();
-          });
-          _scheduleSharedPatientSearch(value);
-        },
-        style: const TextStyle(color: _lightOffWhite),
-        decoration: InputDecoration(
-          hintText:
-              'Search by patient name, address, age, symptoms, or status...',
-          hintStyle: const TextStyle(color: _mutedCoolGray),
-          filled: true,
-          fillColor: Colors.white,
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            color: _primaryAqua.withValues(alpha: 0.88),
-          ),
-          suffixIcon: _effectiveSearchQuery.isNotEmpty
-              ? IconButton(
-                  icon: Icon(Icons.clear_rounded, color: _mutedCoolGray),
-                  onPressed: () {
-                    _effectiveSearchController.clear();
-                    setState(() {
-                      _searchQuery = '';
-                      _currentPage = 1;
-                      _selectedIndices.clear();
-                    });
-                    _scheduleSharedPatientSearch('');
-                  },
-                )
-              : null,
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: const Color(0xFFD9E5F2), width: 1),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(
-              color: _primaryAqua.withValues(alpha: 0.45),
-              width: 1.2,
-            ),
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
-      ),
+    return WebSearchField(
+      controller: _effectiveSearchController,
+      hintText: 'Search by patient name, address, age, symptoms, or status...',
+      onChanged: (value) {
+        setState(() {
+          _searchQuery = value.trim();
+          _currentPage = 1;
+          _selectedIndices.clear();
+        });
+        _scheduleSharedPatientSearch(value);
+      },
+      onClear: () {
+        _effectiveSearchController.clear();
+        setState(() {
+          _searchQuery = '';
+          _currentPage = 1;
+          _selectedIndices.clear();
+        });
+        _scheduleSharedPatientSearch('');
+      },
     );
   }
 
   Widget _buildFilterSection() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: _sidebarDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final dateWidth = math.min(
-            440.0,
-            math.max(260.0, constraints.maxWidth - 40),
-          );
-          return Wrap(
-            spacing: 20,
-            runSpacing: 12,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              // Title Section
-              Icon(Icons.tune_rounded, color: _primaryAqua, size: 20),
-              const SizedBox(width: 12),
-              Text(
-                'Filter Results',
-                style: TextStyle(
-                  color: _lightOffWhite,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.3,
-                ),
-              ),
-              const SizedBox(width: 8),
-
-              // Date Range Picker (From - To)
-              SizedBox(
-                width: dateWidth,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Date Range',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: _mutedCoolGray,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        // From Date Picker
-                        Expanded(
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: _fromDate ?? DateTime.now(),
-                                  firstDate: DateTime(2020),
-                                  lastDate: DateTime.now(),
-                                  builder: (context, child) {
-                                    return Theme(
-                                      data: _buildDarkDatePickerTheme(context),
-                                      child: child!,
-                                    );
-                                  },
-                                );
-                                if (picked != null) {
-                                  setState(() {
-                                    _fromDate = picked;
-                                    // Ensure toDate is not before fromDate
-                                    if (_toDate != null &&
-                                        _toDate!.isBefore(picked)) {
-                                      _toDate = picked;
-                                    }
-                                    _currentPage = 1;
-                                  });
-                                }
-                              },
-                              borderRadius: BorderRadius.circular(8),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: _primaryAqua.withValues(alpha: 0.2),
-                                    width: 1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: const Color(0xFFF7FAFD),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_today_rounded,
-                                      color: _primaryAqua,
-                                      size: 12,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        _fromDate != null
-                                            ? "${_fromDate!.year}-${_fromDate!.month.toString().padLeft(2, '0')}-${_fromDate!.day.toString().padLeft(2, '0')}"
-                                            : 'From',
-                                        style: TextStyle(
-                                          color: _lightOffWhite,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text('-', style: TextStyle(color: _mutedCoolGray)),
-                        const SizedBox(width: 8),
-                        // To Date Picker
-                        Expanded(
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: _toDate ?? DateTime.now(),
-                                  firstDate: _fromDate ?? DateTime(2020),
-                                  lastDate: DateTime.now(),
-                                  builder: (context, child) {
-                                    return Theme(
-                                      data: _buildDarkDatePickerTheme(context),
-                                      child: child!,
-                                    );
-                                  },
-                                );
-                                if (picked != null) {
-                                  setState(() {
-                                    _toDate = picked;
-                                    _currentPage = 1;
-                                  });
-                                }
-                              },
-                              borderRadius: BorderRadius.circular(8),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: _primaryAqua.withValues(alpha: 0.2),
-                                    width: 1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: const Color(0xFFF7FAFD),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_today_rounded,
-                                      color: _primaryAqua,
-                                      size: 12,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        _toDate != null
-                                            ? "${_toDate!.year}-${_toDate!.month.toString().padLeft(2, '0')}-${_toDate!.day.toString().padLeft(2, '0')}"
-                                            : 'To',
-                                        style: TextStyle(
-                                          color: _lightOffWhite,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-
-              // Status Filter
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: _primaryAqua.withValues(alpha: 0.2),
-                    width: 1,
+    return WebFilterSurface(
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final dateWidth = math.min(
+              440.0,
+              math.max(260.0, constraints.maxWidth - 40),
+            );
+            return Wrap(
+              spacing: 20,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                // Title Section
+                Icon(Icons.tune_rounded, color: _primaryAqua, size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  'Filter Results',
+                  style: TextStyle(
+                    color: _lightOffWhite,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
                   ),
-                  borderRadius: BorderRadius.circular(8),
-                  color: const Color(0xFFF7FAFD),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.flag_outlined, color: _primaryAqua, size: 12),
-                    const SizedBox(width: 6),
-                    DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _statusFilter,
-                        dropdownColor: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        isDense: true,
-                        iconSize: 18,
-                        style: const TextStyle(
-                          color: _lightOffWhite,
+                const SizedBox(width: 8),
+
+                // Date Range Picker (From - To)
+                SizedBox(
+                  width: dateWidth,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Date Range',
+                        style: TextStyle(
                           fontSize: 11,
+                          color: _mutedCoolGray,
                           fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
                         ),
-                        iconEnabledColor: _primaryAqua,
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'All',
-                            child: Text('All Status'),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          // From Date Picker
+                          Expanded(
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: _fromDate ?? DateTime.now(),
+                                    firstDate: DateTime(2020),
+                                    lastDate: DateTime.now(),
+                                    builder: (context, child) {
+                                      return Theme(
+                                        data: _buildDarkDatePickerTheme(
+                                          context,
+                                        ),
+                                        child: child!,
+                                      );
+                                    },
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _fromDate = picked;
+                                      // Ensure toDate is not before fromDate
+                                      if (_toDate != null &&
+                                          _toDate!.isBefore(picked)) {
+                                        _toDate = picked;
+                                      }
+                                      _currentPage = 1;
+                                    });
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: _primaryAqua.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      width: 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: const Color(0xFFF7FAFD),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today_rounded,
+                                        color: _primaryAqua,
+                                        size: 12,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          _fromDate != null
+                                              ? "${_fromDate!.year}-${_fromDate!.month.toString().padLeft(2, '0')}-${_fromDate!.day.toString().padLeft(2, '0')}"
+                                              : 'From',
+                                          style: TextStyle(
+                                            color: _lightOffWhite,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                          DropdownMenuItem(
-                            value: 'Pending',
-                            child: Text('Pending'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Completed',
-                            child: Text('Completed'),
+                          const SizedBox(width: 8),
+                          Text('-', style: TextStyle(color: _mutedCoolGray)),
+                          const SizedBox(width: 8),
+                          // To Date Picker
+                          Expanded(
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: _toDate ?? DateTime.now(),
+                                    firstDate: _fromDate ?? DateTime(2020),
+                                    lastDate: DateTime.now(),
+                                    builder: (context, child) {
+                                      return Theme(
+                                        data: _buildDarkDatePickerTheme(
+                                          context,
+                                        ),
+                                        child: child!,
+                                      );
+                                    },
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _toDate = picked;
+                                      _currentPage = 1;
+                                    });
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: _primaryAqua.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      width: 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: const Color(0xFFF7FAFD),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today_rounded,
+                                        color: _primaryAqua,
+                                        size: 12,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          _toDate != null
+                                              ? "${_toDate!.year}-${_toDate!.month.toString().padLeft(2, '0')}-${_toDate!.day.toString().padLeft(2, '0')}"
+                                              : 'To',
+                                          style: TextStyle(
+                                            color: _lightOffWhite,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ],
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() {
-                            _statusFilter = value;
-                            _currentPage = 1;
-                          });
-                        },
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 20),
+                const SizedBox(width: 8),
 
-              // Clear Filter Button
-              if (_fromDate != null ||
-                  _toDate != null ||
-                  _statusFilter != 'All' ||
-                  _effectiveSearchQuery.isNotEmpty)
+                // Status Filter
                 Container(
-                  decoration: BoxDecoration(
-                    color: _primaryAqua.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 1,
                   ),
-                  child: IconButton(
-                    icon: const Icon(Icons.close_rounded, color: _primaryAqua),
-                    iconSize: 18,
-                    onPressed: () {
-                      setState(() {
-                        _fromDate = null;
-                        _toDate = null;
-                        _statusFilter = 'All';
-                        _effectiveSearchController.clear();
-                        _searchQuery = '';
-                        _currentPage = 1;
-                      });
-                    },
-                    tooltip: 'Clear filters',
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: _primaryAqua.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    color: const Color(0xFFF7FAFD),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.flag_outlined, color: _primaryAqua, size: 12),
+                      const SizedBox(width: 6),
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _statusFilter,
+                          dropdownColor: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          isDense: true,
+                          iconSize: 18,
+                          style: const TextStyle(
+                            color: _lightOffWhite,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          iconEnabledColor: _primaryAqua,
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'All',
+                              child: Text('All Status'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Pending',
+                              child: Text('Pending'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Completed',
+                              child: Text('Completed'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() {
+                              _statusFilter = value;
+                              _currentPage = 1;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-            ],
-          );
-        },
-      ),
+                const SizedBox(width: 20),
+
+                // Clear Filter Button
+                if (_fromDate != null ||
+                    _toDate != null ||
+                    _statusFilter != 'All' ||
+                    _effectiveSearchQuery.isNotEmpty)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: _primaryAqua.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: _primaryAqua,
+                      ),
+                      iconSize: 18,
+                      onPressed: () {
+                        setState(() {
+                          _fromDate = null;
+                          _toDate = null;
+                          _statusFilter = 'All';
+                          _effectiveSearchController.clear();
+                          _searchQuery = '';
+                          _currentPage = 1;
+                        });
+                      },
+                      tooltip: 'Clear filters',
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 

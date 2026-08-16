@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'prenatal_constants.dart';
 
 class PrenatalFilterBar extends StatefulWidget {
@@ -154,48 +155,23 @@ class _PrenatalFilterBarState extends State<PrenatalFilterBar> {
   }
 
   Widget _buildStatusFilterDropdown() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.filter_list_rounded, color: primaryAqua, size: 18),
-          const SizedBox(width: 10),
-          Expanded(
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: widget.selectedStatus,
-                isExpanded: true,
-                icon: Icon(Icons.arrow_drop_down, color: primaryAqua, size: 20),
-                style: const TextStyle(
-                  color: const Color(0xFF0B1F3A),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                dropdownColor: Colors.white,
-                items: statusFilterOptions.map((String option) {
-                  return DropdownMenuItem<String>(
-                    value: option,
-                    child: Text(
-                      option,
-                      style: const TextStyle(color: Color(0xFF0B1F3A)),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    widget.onStatusChanged(value);
-                  }
-                },
-              ),
+    return WebFilterDropdown<String>(
+      label: 'Status',
+      value: widget.selectedStatus,
+      width: 260,
+      items: statusFilterOptions
+          .map(
+            (option) => DropdownMenuItem<String>(
+              value: option,
+              child: Text(option, overflow: TextOverflow.ellipsis),
             ),
-          ),
-        ],
-      ),
+          )
+          .toList(),
+      onChanged: (value) {
+        if (value != null) {
+          widget.onStatusChanged(value);
+        }
+      },
     );
   }
 

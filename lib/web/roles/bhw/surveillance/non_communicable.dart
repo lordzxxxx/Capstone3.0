@@ -20,6 +20,8 @@ import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable_insights.dart';
 
@@ -1100,50 +1102,14 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
 
   // Search Bar
   Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: _sidebarDark,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.15),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: _searchController,
-        onChanged: _filterPatients,
-        style: const TextStyle(color: Color(0xFF0B1F3A)),
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: _sidebarDark,
-          hintText: 'Search by patient name, condition, or status...',
-          hintStyle: const TextStyle(color: _mutedCoolGray),
-          prefixIcon: Icon(Icons.search, color: _primaryAqua),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: Icon(Icons.clear, color: _mutedCoolGray),
-                  onPressed: () {
-                    _searchController.clear();
-                    _filterPatients('');
-                  },
-                )
-              : null,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
-      ),
+    return WebSearchField(
+      controller: _searchController,
+      hintText: 'Search by patient name, condition, or status...',
+      onChanged: _filterPatients,
+      onClear: () {
+        _searchController.clear();
+        _filterPatients('');
+      },
     );
   }
 
@@ -1193,16 +1159,8 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
 
     return Column(
       children: [
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: _sidebarDark,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _primaryAqua.withValues(alpha: 0.3),
-              width: 1,
-            ),
-          ),
+        WebTableSurface(
+          minWidth: 1180,
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -1373,7 +1331,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
           Text(
             'Showing $startLabel-$endIndex of $totalRecords',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.8),
+              color: AppColors.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -1382,7 +1340,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             decoration: BoxDecoration(
-              color: _darkDeepTeal,
+              color: AppColors.surfaceLight,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: _primaryAqua.withValues(alpha: 0.25),
@@ -1392,11 +1350,14 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
             child: DropdownButtonHideUnderline(
               child: DropdownButton<int>(
                 value: _rowsPerPage,
-                dropdownColor: _darkDeepTeal,
-                style: const TextStyle(color: Colors.white, fontSize: 12),
+                dropdownColor: AppColors.surfaceLight,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 12,
+                ),
                 icon: const Icon(
                   Icons.arrow_drop_down,
-                  color: Colors.white70,
+                  color: AppColors.textSecondary,
                   size: 18,
                 ),
                 items: const [5, 10, 20, 50]
@@ -1423,13 +1384,13 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                 ? () => setState(() => _currentPage = currentPage - 1)
                 : null,
             icon: const Icon(Icons.chevron_left_rounded),
-            color: canGoPrev ? _primaryAqua : Colors.white24,
+            color: canGoPrev ? _primaryAqua : AppColors.borderStrong,
             tooltip: 'Previous page',
           ),
           Text(
             '$currentPage / $totalPages',
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.textPrimary,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -1439,7 +1400,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                 ? () => setState(() => _currentPage = currentPage + 1)
                 : null,
             icon: const Icon(Icons.chevron_right_rounded),
-            color: canGoNext ? _primaryAqua : Colors.white24,
+            color: canGoNext ? _primaryAqua : AppColors.borderStrong,
             tooltip: 'Next page',
           ),
         ],

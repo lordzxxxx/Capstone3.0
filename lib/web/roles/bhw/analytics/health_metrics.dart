@@ -10,6 +10,7 @@ import 'package:mycapstone_project/web/roles/bhw/analytics/ai_summary.dart'
     as ai;
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
@@ -966,29 +967,10 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
     required List<DropdownMenuItem<T>> items,
     required ValueChanged<T?> onChanged,
   }) {
-    return DropdownButtonFormField<T>(
-      initialValue: value,
-      isExpanded: true,
-      dropdownColor: _panelTeal,
-      iconEnabledColor: _lightOffWhite,
-      style: const TextStyle(
-        color: _lightOffWhite,
-        fontWeight: FontWeight.w600,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: _mutedCoolGray),
-        filled: true,
-        fillColor: _panelTealSoft,
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide(color: _primaryAqua.withValues(alpha: 0.22)),
-        ),
-        focusedBorder: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(18)),
-          borderSide: BorderSide(color: _primaryAqua),
-        ),
-      ),
+    return WebFilterDropdown<T>(
+      label: label,
+      value: value,
+      width: double.infinity,
       items: items,
       onChanged: onChanged,
     );

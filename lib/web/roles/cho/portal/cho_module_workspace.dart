@@ -11,6 +11,7 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.da
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 
 class ChoModuleWorkspace extends StatefulWidget {
@@ -465,17 +466,10 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
               icon: Icons.search_off_rounded,
             )
           else
-            LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: constraints.maxWidth < 1380
-                      ? 1380
-                      : constraints.maxWidth,
-                  child: Column(
-                    children: [_tableHeader(), ...pageRows.map(_tableRow)],
-                  ),
-                ),
+            WebTableSurface(
+              minWidth: 1380,
+              child: Column(
+                children: [_tableHeader(), ...pageRows.map(_tableRow)],
               ),
             ),
           const SizedBox(height: 8),
@@ -531,35 +525,27 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
   }
 
   Widget _filters(List<String> barangays, List<String> statuses) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 700;
-        final fullWidth = constraints.maxWidth.isFinite
-            ? constraints.maxWidth
-            : 330.0;
-        final searchWidth = compact ? fullWidth : 330.0;
-        final dropdownWidth = compact ? fullWidth : 190.0;
+    return WebFilterSurface(
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 700;
+            final fullWidth = constraints.maxWidth.isFinite
+                ? constraints.maxWidth
+                : 330.0;
+            final searchWidth = compact ? fullWidth : 330.0;
+            final dropdownWidth = compact ? fullWidth : 190.0;
 
-        return Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            SizedBox(
-              width: searchWidth,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const _ChoFilterLabel('Search records'),
-                  const SizedBox(height: 6),
-                  TextField(
+            return Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                SizedBox(
+                  width: searchWidth,
+                  child: WebSearchField(
                     controller: _searchController,
-                    style: const TextStyle(
-                      color: Color(0xFF12252B),
-                      fontWeight: FontWeight.w600,
-                    ),
-                    cursorColor: ChoColors.aqua,
+                    hintText: 'Name, ID, contact, or household',
                     onChanged: (value) {
                       _searchDebounce?.cancel();
                       _searchDebounce = Timer(
@@ -574,63 +560,46 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
                         },
                       );
                     },
-                    decoration: InputDecoration(
-                      hintText: 'Name, ID, contact, or household',
-                      hintStyle: const TextStyle(color: Color(0xFF6B7D84)),
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        color: Color(0xFF415A63),
-                      ),
-                      filled: true,
-                      fillColor: const Color(0xFFF7FAFC),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFB7C7CC)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFB7C7CC)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                          color: ChoColors.aqua,
-                          width: 2,
-                        ),
-                      ),
-                    ),
+                    onClear: () {
+                      _searchController.clear();
+                      _searchDebounce?.cancel();
+                      setState(() {
+                        _search = '';
+                        _page = 1;
+                      });
+                    },
                   ),
-                ],
-              ),
-            ),
-            _dropdown(
-              width: dropdownWidth,
-              value: _barangay,
-              label: 'Barangay',
-              values: ['All', ...barangays],
-              onChanged: (value) => setState(() {
-                _barangay = value;
-                _page = 1;
-              }),
-            ),
-            _dropdown(
-              width: dropdownWidth,
-              value: _status,
-              label: 'Status',
-              values: ['All', ...statuses],
-              onChanged: (value) => setState(() {
-                _status = value;
-                _page = 1;
-              }),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => setState(() => _descending = !_descending),
-              icon: Icon(_descending ? Icons.south : Icons.north),
-              label: Text(_descending ? 'Newest first' : 'Oldest first'),
-            ),
-          ],
-        );
-      },
+                ),
+                _dropdown(
+                  width: dropdownWidth,
+                  value: _barangay,
+                  label: 'Barangay',
+                  values: ['All', ...barangays],
+                  onChanged: (value) => setState(() {
+                    _barangay = value;
+                    _page = 1;
+                  }),
+                ),
+                _dropdown(
+                  width: dropdownWidth,
+                  value: _status,
+                  label: 'Status',
+                  values: ['All', ...statuses],
+                  onChanged: (value) => setState(() {
+                    _status = value;
+                    _page = 1;
+                  }),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => setState(() => _descending = !_descending),
+                  icon: Icon(_descending ? Icons.south : Icons.north),
+                  label: Text(_descending ? 'Newest first' : 'Oldest first'),
+                ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -641,62 +610,24 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
     required List<String> values,
     required ValueChanged<String> onChanged,
   }) {
-    return SizedBox(
+    return WebFilterDropdown<String>(
+      label: label,
+      value: values.contains(value) ? value : 'All',
       width: width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _ChoFilterLabel(label),
-          const SizedBox(height: 6),
-          DropdownButtonFormField<String>(
-            initialValue: values.contains(value) ? value : 'All',
-            isExpanded: true,
-            dropdownColor: const Color(0xFFF7FAFC),
-            iconEnabledColor: const Color(0xFF415A63),
-            style: const TextStyle(
-              color: Color(0xFF12252B),
-              fontWeight: FontWeight.w600,
-            ),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: const Color(0xFFF7FAFC),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFFB7C7CC)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFFB7C7CC)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: ChoColors.aqua, width: 2),
+      items: values
+          .map(
+            (item) => DropdownMenuItem(
+              value: item,
+              child: Tooltip(
+                message: item,
+                child: Text(item, overflow: TextOverflow.ellipsis),
               ),
             ),
-            items: values
-                .map(
-                  (item) => DropdownMenuItem(
-                    value: item,
-                    child: Tooltip(
-                      message: item,
-                      child: Text(
-                        item,
-                        maxLines: 1,
-                        softWrap: false,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Color(0xFF12252B)),
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
-            onChanged: (item) {
-              if (item != null) onChanged(item);
-            },
-          ),
-        ],
-      ),
+          )
+          .toList(),
+      onChanged: (item) {
+        if (item != null) onChanged(item);
+      },
     );
   }
 

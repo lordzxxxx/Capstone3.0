@@ -15,6 +15,7 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_histo
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:universal_html/html.dart' as html;
@@ -1051,28 +1052,18 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
   Widget _recordFilters() => _panel(
     title: 'Referral Records',
     subtitle: 'Your submitted referrals and CHO review results',
-    child: Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      crossAxisAlignment: WrapCrossAlignment.end,
+    child: WebFilterSurface(
+      padding: EdgeInsets.zero,
       children: [
-        SizedBox(
+        WebSearchField(
+          controller: _patientFilterController,
           width: 250,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _fieldLabel('Patient'),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _patientFilterController,
-                onChanged: (_) => setState(() {}),
-                style: const TextStyle(color: _darkFieldText),
-                decoration: _inputDecoration(
-                  'Patient name or referral ID',
-                ).copyWith(prefixIcon: const Icon(Icons.search)),
-              ),
-            ],
-          ),
+          hintText: 'Patient name or referral ID',
+          onChanged: (_) => setState(() {}),
+          onClear: () {
+            _patientFilterController.clear();
+            setState(() {});
+          },
         ),
         _filterDropdown(
           label: 'Status',
@@ -1137,55 +1128,45 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     }
   }
 
-  Widget _recordsTable(List<_BhwReferralRecord> records) => Container(
-    decoration: BoxDecoration(
-      color: _surface,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: AppColors.border),
-    ),
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SpringDataMotion(
-          dataKey: records,
-          child: DataTable(
-            headingRowColor: WidgetStateProperty.all(_surfaceAlt),
-            columns: const [
-              DataColumn(label: Text('Referral ID')),
-              DataColumn(label: Text('Patient')),
-              DataColumn(label: Text('Date')),
-              DataColumn(label: Text('Priority')),
-              DataColumn(label: Text('Status')),
-              DataColumn(label: Text('CHO Remarks')),
-              DataColumn(label: Text('Actions')),
-            ],
-            rows: records
-                .map(
-                  (record) => DataRow(
-                    cells: [
-                      DataCell(Text(record.shortId)),
-                      DataCell(Text(record.patientName)),
-                      DataCell(Text(_date(record.createdAt))),
-                      DataCell(_statusBadge(record.priorityLabel)),
-                      DataCell(_statusBadge(record.statusLabel)),
-                      DataCell(
-                        SizedBox(
-                          width: 220,
-                          child: Text(
-                            record.choRemarks,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
+  Widget _recordsTable(List<_BhwReferralRecord> records) => WebTableSurface(
+    minWidth: 1040,
+    child: SpringDataMotion(
+      dataKey: records,
+      child: DataTable(
+        headingRowColor: WidgetStateProperty.all(_surfaceAlt),
+        columns: const [
+          DataColumn(label: Text('Referral ID')),
+          DataColumn(label: Text('Patient')),
+          DataColumn(label: Text('Date')),
+          DataColumn(label: Text('Priority')),
+          DataColumn(label: Text('Status')),
+          DataColumn(label: Text('CHO Remarks')),
+          DataColumn(label: Text('Actions')),
+        ],
+        rows: records
+            .map(
+              (record) => DataRow(
+                cells: [
+                  DataCell(Text(record.shortId)),
+                  DataCell(Text(record.patientName)),
+                  DataCell(Text(_date(record.createdAt))),
+                  DataCell(_statusBadge(record.priorityLabel)),
+                  DataCell(_statusBadge(record.statusLabel)),
+                  DataCell(
+                    SizedBox(
+                      width: 220,
+                      child: Text(
+                        record.choRemarks,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      DataCell(_recordActions(record)),
-                    ],
+                    ),
                   ),
-                )
-                .toList(),
-          ),
-        ),
+                  DataCell(_recordActions(record)),
+                ],
+              ),
+            )
+            .toList(),
       ),
     ),
   );
@@ -1602,37 +1583,21 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     required String value,
     required Map<String, String> values,
     required ValueChanged<String> onChanged,
-  }) => SizedBox(
+  }) => WebFilterDropdown<String>(
+    label: label,
+    value: value,
     width: 210,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _fieldLabel(label),
-        const SizedBox(height: 6),
-        DropdownButtonFormField<String>(
-          initialValue: value,
-          isExpanded: true,
-          dropdownColor: _lightField,
-          style: const TextStyle(color: _darkFieldText),
-          decoration: _inputDecoration(''),
-          items: values.entries
-              .map(
-                (entry) => DropdownMenuItem(
-                  value: entry.key,
-                  child: Text(
-                    entry.value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              )
-              .toList(),
-          onChanged: (item) {
-            if (item != null) onChanged(item);
-          },
-        ),
-      ],
-    ),
+    items: values.entries
+        .map(
+          (entry) => DropdownMenuItem<String>(
+            value: entry.key,
+            child: Text(entry.value, overflow: TextOverflow.ellipsis),
+          ),
+        )
+        .toList(),
+    onChanged: (item) {
+      if (item != null) onChanged(item);
+    },
   );
 
   Widget _fieldLabel(String value) => Text(

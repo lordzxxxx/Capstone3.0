@@ -18,6 +18,8 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
@@ -903,80 +905,80 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   }
 
   Widget _buildFilters() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: _panelSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
-      ),
-      child: Wrap(
-        spacing: 14,
-        runSpacing: 14,
-        children: [
-          SizedBox(
-            width: 190,
-            child: DropdownButtonFormField<String>(
-              initialValue: _selectedPeriodMode,
-              dropdownColor: _panelAlt,
-              style: const TextStyle(color: _lightOffWhite),
-              decoration: _inputDecoration('Trend grouping'),
-              items: _periodModes
-                  .map(
-                    (value) => DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
+    final barangays = <String>[
+      'ALL',
+      ...MalaybalayBarangays.all.map((item) => item.name),
+    ];
+    final selectedBarangay = barangays.contains(_selectedBarangayFilter)
+        ? _selectedBarangayFilter
+        : 'ALL';
+
+    return WebFilterSurface(
+      children: [
+        WebFilterDropdown<String>(
+          label: 'Trend grouping',
+          value: _selectedPeriodMode,
+          items: _periodModes
+              .map(
+                (value) =>
+                    DropdownMenuItem<String>(value: value, child: Text(value)),
+              )
+              .toList(growable: false),
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => _selectedPeriodMode = value);
+          },
+        ),
+        if (_accessScope.canViewAllBarangays)
+          WebFilterDropdown<String>(
+            width: 260,
+            label: 'Barangay',
+            value: selectedBarangay,
+            items: barangays
+                .map(
+                  (value) => DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(
+                      value == 'ALL' ? 'All barangays' : value,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                if (value == null) return;
-                setState(() => _selectedPeriodMode = value);
-              },
-            ),
+                  ),
+                )
+                .toList(growable: false),
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() {
+                _selectedBarangayFilter = value;
+                _recentActivityPage = 1;
+              });
+              _loadAnalytics(showLoader: false);
+            },
           ),
-          if (_accessScope.canViewAllBarangays)
-            SizedBox(
-              width: 260,
-              child: DropdownButtonFormField<String>(
-                initialValue: _selectedBarangayFilter,
-                dropdownColor: _panelAlt,
-                style: const TextStyle(color: _lightOffWhite),
-                decoration: _inputDecoration('Barangay filter'),
-                items:
-                    <String>[
-                          'ALL',
-                          ...MalaybalayBarangays.all.map((item) => item.name),
-                        ]
-                        .map(
-                          (value) => DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(
-                              value == 'ALL' ? 'All barangays' : value,
-                            ),
-                          ),
-                        )
-                        .toList(),
-                onChanged: (value) {
-                  if (value == null) return;
-                  setState(() {
-                    _selectedBarangayFilter = value;
-                    _recentActivityPage = 1;
-                  });
-                  _loadAnalytics(showLoader: false);
-                },
+        Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceLight,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.borderStrong),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.policy_outlined, size: 18, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text(
+                'Scope enforced',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
               ),
-            ),
-          ActionChip(
-            avatar: const Icon(Icons.policy_outlined, size: 18),
-            label: const Text('Isolation enforced'),
-            backgroundColor: _darkDeepTeal,
-            labelStyle: const TextStyle(color: _lightOffWhite),
-            side: BorderSide(color: _primaryAqua.withValues(alpha: 0.2)),
-            onPressed: () {},
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -1314,51 +1316,42 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             ],
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            crossAxisAlignment: WrapCrossAlignment.center,
+          WebFilterSurface(
+            padding: const EdgeInsets.all(10),
             children: [
               SizedBox(
                 width: 260,
-                child: TextField(
+                child: WebSearchField(
                   controller: _heatmapSearchController,
+                  hintText: 'Search barangay or district',
                   onChanged: (value) => setState(() {
                     _heatmapSearch = value;
                   }),
-                  decoration: _inputDecoration('Search barangay or district')
-                      .copyWith(
-                        prefixIcon: const Icon(
-                          Icons.search_rounded,
-                          color: _primaryAqua,
-                        ),
-                      ),
-                  style: const TextStyle(color: ChoColors.text),
-                ),
-              ),
-              SizedBox(
-                width: 210,
-                child: DropdownButtonFormField<String>(
-                  initialValue: districtValue,
-                  dropdownColor: _panelSurface,
-                  style: const TextStyle(color: ChoColors.text),
-                  decoration: _inputDecoration('District'),
-                  items: <String>['ALL', ...districts]
-                      .map(
-                        (value) => DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(
-                            value == 'ALL' ? 'All districts' : value,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _heatmapDistrictFilter = value);
+                  onClear: () {
+                    _heatmapSearchController.clear();
+                    setState(() => _heatmapSearch = '');
                   },
                 ),
+              ),
+              WebFilterDropdown<String>(
+                width: 210,
+                label: 'District',
+                value: districtValue,
+                items: <String>['ALL', ...districts]
+                    .map(
+                      (value) => DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(
+                          value == 'ALL' ? 'All districts' : value,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() => _heatmapDistrictFilter = value);
+                },
               ),
               OutlinedButton.icon(
                 onPressed: filteredHeatmap.length <= 8
@@ -1648,112 +1641,95 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             ],
           ),
           const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
+          WebFilterSurface(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: ChoColors.surfaceAlt,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: ChoColors.border),
-            ),
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                SizedBox(
-                  width: 260,
-                  child: TextField(
-                    controller: _activitySearchController,
-                    onChanged: (value) => setState(() {
-                      _activitySearch = value;
+            children: [
+              SizedBox(
+                width: 260,
+                child: WebSearchField(
+                  controller: _activitySearchController,
+                  hintText: 'Search records',
+                  onChanged: (value) => setState(() {
+                    _activitySearch = value;
+                    _recentActivityPage = 1;
+                  }),
+                  onClear: () {
+                    _activitySearchController.clear();
+                    setState(() {
+                      _activitySearch = '';
                       _recentActivityPage = 1;
-                    }),
-                    decoration: _inputDecoration('Search records').copyWith(
-                      prefixIcon: const Icon(
-                        Icons.search_rounded,
-                        color: _primaryAqua,
+                    });
+                  },
+                ),
+              ),
+              WebFilterDropdown<String>(
+                width: 180,
+                label: 'Source',
+                value: sourceValue,
+                items: <String>['ALL', ...sourceOptions]
+                    .map(
+                      (value) => DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(
+                          value == 'ALL' ? 'All sources' : value,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    style: const TextStyle(color: ChoColors.text),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() {
+                    _activitySourceFilter = value;
+                    _recentActivityPage = 1;
+                  });
+                },
+              ),
+              WebFilterDropdown<String>(
+                width: 180,
+                label: 'Severity / status',
+                value: severityValue,
+                items: <String>['ALL', ...severityOptions]
+                    .map(
+                      (value) => DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(
+                          value == 'ALL' ? 'All statuses' : value,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() {
+                    _activitySeverityFilter = value;
+                    _recentActivityPage = 1;
+                  });
+                },
+              ),
+              if (_activitySearch.isNotEmpty ||
+                  _activitySourceFilter != 'ALL' ||
+                  _activitySeverityFilter != 'ALL')
+                OutlinedButton.icon(
+                  onPressed: () {
+                    _activitySearchController.clear();
+                    setState(() {
+                      _activitySearch = '';
+                      _activitySourceFilter = 'ALL';
+                      _activitySeverityFilter = 'ALL';
+                      _recentActivityPage = 1;
+                    });
+                  },
+                  icon: const Icon(Icons.clear_all_rounded, size: 18),
+                  label: const Text('Clear filters'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _primaryAqua,
+                    side: const BorderSide(color: _primaryAqua),
+                    minimumSize: const Size(132, 48),
                   ),
                 ),
-                SizedBox(
-                  width: 180,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: sourceValue,
-                    dropdownColor: _panelSurface,
-                    style: const TextStyle(color: ChoColors.text),
-                    decoration: _inputDecoration('Source'),
-                    items: <String>['ALL', ...sourceOptions]
-                        .map(
-                          (value) => DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(
-                              value == 'ALL' ? 'All sources' : value,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() {
-                        _activitySourceFilter = value;
-                        _recentActivityPage = 1;
-                      });
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 180,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: severityValue,
-                    dropdownColor: _panelSurface,
-                    style: const TextStyle(color: ChoColors.text),
-                    decoration: _inputDecoration('Severity / status'),
-                    items: <String>['ALL', ...severityOptions]
-                        .map(
-                          (value) => DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(
-                              value == 'ALL' ? 'All statuses' : value,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() {
-                        _activitySeverityFilter = value;
-                        _recentActivityPage = 1;
-                      });
-                    },
-                  ),
-                ),
-                if (_activitySearch.isNotEmpty ||
-                    _activitySourceFilter != 'ALL' ||
-                    _activitySeverityFilter != 'ALL')
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      _activitySearchController.clear();
-                      setState(() {
-                        _activitySearch = '';
-                        _activitySourceFilter = 'ALL';
-                        _activitySeverityFilter = 'ALL';
-                        _recentActivityPage = 1;
-                      });
-                    },
-                    icon: const Icon(Icons.clear_all_rounded, size: 18),
-                    label: const Text('Clear filters'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _primaryAqua,
-                      side: const BorderSide(color: _primaryAqua),
-                      minimumSize: const Size(132, 48),
-                    ),
-                  ),
-              ],
-            ),
+            ],
           ),
           const SizedBox(height: 12),
           if (pageRecords.isEmpty)
@@ -1770,75 +1746,64 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                 final tableWidth = constraints.maxWidth < 960
                     ? 960.0
                     : constraints.maxWidth;
-                return Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: ChoColors.border),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SizedBox(
-                      width: tableWidth,
-                      child: SpringDataMotion(
-                        dataKey: pageRecords,
-                        child: DataTable(
-                          horizontalMargin: 14,
-                          columnSpacing: 24,
-                          headingRowHeight: 44,
-                          dataRowMinHeight: 44,
-                          dataRowMaxHeight: 54,
-                          headingTextStyle: const TextStyle(
-                            color: ChoColors.text,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 12,
-                          ),
-                          dataTextStyle: const TextStyle(
-                            color: ChoColors.text,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12,
-                          ),
-                          headingRowColor: const WidgetStatePropertyAll(
-                            ChoColors.surfaceAlt,
-                          ),
-                          dividerThickness: 0.6,
-                          columns: const [
-                            DataColumn(label: Text('Source')),
-                            DataColumn(label: Text('Patient')),
-                            DataColumn(label: Text('Disease / Condition')),
-                            DataColumn(label: Text('Barangay')),
-                            DataColumn(label: Text('Severity')),
-                            DataColumn(label: Text('Date')),
-                          ],
-                          rows: pageRecords.asMap().entries.map((entry) {
-                            final record = entry.value;
-                            return DataRow.byIndex(
-                              index: entry.key,
-                              color: WidgetStatePropertyAll(
-                                entry.key.isEven
-                                    ? ChoColors.surface
-                                    : ChoColors.background,
-                              ),
-                              cells: [
-                                DataCell(Text(record.sourceLabel)),
-                                DataCell(Text(record.patientLabel)),
-                                DataCell(Text(record.diseaseLabel)),
-                                DataCell(Text(record.barangay)),
-                                DataCell(Text(record.severityLabel)),
-                                DataCell(
-                                  Text(
-                                    record.recordDate
-                                        .toIso8601String()
-                                        .split('T')
-                                        .first,
-                                  ),
-                                ),
-                              ],
-                            );
-                          }).toList(),
-                        ),
+                return WebTableSurface(
+                  minWidth: tableWidth,
+                  child: SpringDataMotion(
+                    dataKey: pageRecords,
+                    child: DataTable(
+                      horizontalMargin: 14,
+                      columnSpacing: 24,
+                      headingRowHeight: 44,
+                      dataRowMinHeight: 44,
+                      dataRowMaxHeight: 54,
+                      headingTextStyle: const TextStyle(
+                        color: ChoColors.text,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
                       ),
+                      dataTextStyle: const TextStyle(
+                        color: ChoColors.text,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                      headingRowColor: const WidgetStatePropertyAll(
+                        ChoColors.surfaceAlt,
+                      ),
+                      dividerThickness: 0.6,
+                      columns: const [
+                        DataColumn(label: Text('Source')),
+                        DataColumn(label: Text('Patient')),
+                        DataColumn(label: Text('Disease / Condition')),
+                        DataColumn(label: Text('Barangay')),
+                        DataColumn(label: Text('Severity')),
+                        DataColumn(label: Text('Date')),
+                      ],
+                      rows: pageRecords.asMap().entries.map((entry) {
+                        final record = entry.value;
+                        return DataRow.byIndex(
+                          index: entry.key,
+                          color: WidgetStatePropertyAll(
+                            entry.key.isEven
+                                ? ChoColors.surface
+                                : ChoColors.background,
+                          ),
+                          cells: [
+                            DataCell(Text(record.sourceLabel)),
+                            DataCell(Text(record.patientLabel)),
+                            DataCell(Text(record.diseaseLabel)),
+                            DataCell(Text(record.barangay)),
+                            DataCell(Text(record.severityLabel)),
+                            DataCell(
+                              Text(
+                                record.recordDate
+                                    .toIso8601String()
+                                    .split('T')
+                                    .first,
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
                     ),
                   ),
                 );

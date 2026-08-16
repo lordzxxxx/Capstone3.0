@@ -20,6 +20,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.d
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/roles/bhw/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/web/roles/bhw/prenatal/prenatal_database_helper.dart';
 import 'package:mycapstone_project/web/roles/bhw/immunization/immunization_database_helper.dart';
@@ -4489,16 +4490,8 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             const SizedBox(height: 18),
-            Container(
+            WebFilterSurface(
               padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: _primaryAqua.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: _primaryAqua.withValues(alpha: 0.15),
-                  width: 1,
-                ),
-              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

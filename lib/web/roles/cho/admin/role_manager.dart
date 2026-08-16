@@ -8,6 +8,7 @@ import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 
 class RoleManager extends StatefulWidget {
@@ -20,11 +21,19 @@ class RoleManager extends StatefulWidget {
 class _RoleManagerState extends State<RoleManager> {
   bool _checking = true;
   bool _isAdmin = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
 
   @override
   void initState() {
     super.initState();
     _verifyAdmin();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _verifyAdmin() async {
@@ -160,6 +169,25 @@ class _RoleManagerState extends State<RoleManager> {
               ),
             ),
             const SizedBox(height: 14),
+            WebFilterSurface(
+              padding: const EdgeInsets.all(10),
+              child: LayoutBuilder(
+                builder: (context, constraints) => WebSearchField(
+                  controller: _searchController,
+                  width: constraints.maxWidth > 440
+                      ? 440
+                      : constraints.maxWidth,
+                  hintText: 'Search users by email or role',
+                  onChanged: (value) =>
+                      setState(() => _query = value.trim().toLowerCase()),
+                  onClear: () {
+                    _searchController.clear();
+                    setState(() => _query = '');
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: getFirestoreInstance()
@@ -173,104 +201,113 @@ class _RoleManagerState extends State<RoleManager> {
                   if (!snap.hasData) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  final docs = snap.data!.docs;
-                  return ListView.builder(
-                    itemCount: docs.length,
-                    itemBuilder: (context, i) {
-                      final d = docs[i];
-                      final data = d.data() as Map<String, dynamic>;
-                      final email =
-                          data['email'] ??
-                          data['emailAddress'] ??
-                          data['email'] ??
-                          '—';
-                      final role = (data['role'] ?? '').toString();
-                      String selected = role.isNotEmpty ? role : 'none';
-                      return Card(
-                        color: ChoColors.surface,
-                        elevation: 0,
-                        margin: const EdgeInsets.only(bottom: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: ChoColors.border),
-                        ),
-                        child: ListTile(
-                          title: Text(email.toString()),
-                          subtitle: Text('Role: $selected'),
-                          trailing: SizedBox(
-                            width: 220,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                DropdownButton<String>(
-                                  value: selected,
-                                  dropdownColor: ChoColors.surface,
-                                  style: const TextStyle(color: ChoColors.text),
-                                  items: const [
-                                    DropdownMenuItem(
-                                      value: 'none',
-                                      child: Text('none'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'BHW',
-                                      child: Text('BHW'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'CHO',
-                                      child: Text('CHO'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'admin',
-                                      child: Text('admin'),
-                                    ),
-                                  ],
-                                  onChanged: (v) async {
-                                    if (v == null) return;
-                                    setState(() => selected = v);
-                                    final roleToSave = v == 'none' ? '' : v;
-                                    await _setRole(d.id, roleToSave);
-                                  },
-                                ),
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline),
-                                  color: ChoColors.muted,
-                                  onPressed: () async {
-                                    // remove role field only
-                                    await getFirestoreInstance()
-                                        .collection('users')
-                                        .doc(d.id)
-                                        .set({
-                                          'role': FieldValue.delete(),
-                                        }, SetOptions(merge: true));
-                                    try {
-                                      await FirebaseDatabase.instance
-                                          .ref()
-                                          .child('users')
-                                          .child(d.id)
-                                          .child('role')
-                                          .remove();
-                                    } catch (e) {
-                                      if (kDebugMode) {
-                                        print(
-                                          'RTDB role mirror delete failed for ${d.id}: $e',
-                                        );
-                                      }
-                                    }
-                                    Get.snackbar(
-                                      'Removed',
-                                      'Role removed',
-                                      backgroundColor: Colors.orange,
-                                      colorText: Colors.white,
-                                    );
-                                  },
-                                ),
-                              ],
+                  final docs = snap.data!.docs.where((doc) {
+                    if (_query.isEmpty) return true;
+                    final data = doc.data() as Map<String, dynamic>;
+                    final email = (data['email'] ?? data['emailAddress'] ?? '')
+                        .toString()
+                        .toLowerCase();
+                    final role = (data['role'] ?? '').toString().toLowerCase();
+                    return '$email $role'.contains(_query);
+                  }).toList();
+                  if (docs.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No matching users.',
+                        style: TextStyle(color: ChoColors.muted),
+                      ),
+                    );
+                  }
+                  return WebTableSurface(
+                    minWidth: 860,
+                    child: DataTable(
+                      columns: const [
+                        DataColumn(label: Text('Email')),
+                        DataColumn(label: Text('Current role')),
+                        DataColumn(label: Text('Change role')),
+                        DataColumn(label: Text('Actions')),
+                      ],
+                      rows: docs.map((d) {
+                        final data = d.data() as Map<String, dynamic>;
+                        final email =
+                            data['email'] ?? data['emailAddress'] ?? '—';
+                        final role = (data['role'] ?? '').toString();
+                        final selected = role.isNotEmpty ? role : 'none';
+                        return DataRow(
+                          cells: [
+                            DataCell(Text(email.toString())),
+                            DataCell(Text(selected)),
+                            DataCell(
+                              WebFilterDropdown<String>(
+                                label: 'Role',
+                                value: selected,
+                                width: 160,
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'none',
+                                    child: Text('none'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'BHW',
+                                    child: Text('BHW'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'CHO',
+                                    child: Text('CHO'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'admin',
+                                    child: Text('admin'),
+                                  ),
+                                ],
+                                onChanged: (value) async {
+                                  if (value == null) return;
+                                  await _setRole(
+                                    d.id,
+                                    value == 'none' ? '' : value,
+                                  );
+                                },
+                              ),
                             ),
-                          ),
-                        ),
-                      );
-                    },
+                            DataCell(
+                              IconButton(
+                                tooltip: 'Remove role',
+                                icon: const Icon(Icons.delete_outline),
+                                color: ChoColors.muted,
+                                onPressed: () async {
+                                  await getFirestoreInstance()
+                                      .collection('users')
+                                      .doc(d.id)
+                                      .set({
+                                        'role': FieldValue.delete(),
+                                      }, SetOptions(merge: true));
+                                  try {
+                                    await FirebaseDatabase.instance
+                                        .ref()
+                                        .child('users')
+                                        .child(d.id)
+                                        .child('role')
+                                        .remove();
+                                  } catch (e) {
+                                    if (kDebugMode) {
+                                      print(
+                                        'RTDB role mirror delete failed for ${d.id}: $e',
+                                      );
+                                    }
+                                  }
+                                  Get.snackbar(
+                                    'Removed',
+                                    'Role removed',
+                                    backgroundColor: Colors.orange,
+                                    colorText: Colors.white,
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
                   );
                 },
               ),

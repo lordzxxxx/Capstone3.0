@@ -19,6 +19,7 @@ import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_database_helper.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/canonical_patient_registration_modal.dart';
@@ -2012,96 +2013,79 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: SizedBox(
-                            width: math.max(1380, constraints.maxWidth),
-                            child: Column(
-                              children: [
-                                _buildPatientCardHeader(),
-                                if (pagedPatients.isEmpty)
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 20,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _darkDeepTeal.withValues(
-                                        alpha: 0.88,
+                    WebTableSurface(
+                      minWidth: 1380,
+                      child: Column(
+                        children: [
+                          _buildPatientCardHeader(),
+                          if (pagedPatients.isEmpty)
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 20,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceSubtle,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: _primaryAqua.withValues(alpha: 0.18),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.search_off,
+                                        color: _mutedCoolGray,
+                                        size: 18,
                                       ),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: _primaryAqua.withValues(
-                                          alpha: 0.18,
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'No patients found',
+                                        style: TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
                                         ),
-                                        width: 1,
                                       ),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.search_off,
-                                              color: _mutedCoolGray,
-                                              size: 18,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'No patients found',
-                                              style: TextStyle(
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.82,
-                                                ),
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          _patients.isEmpty
-                                              ? 'Add your first patient record to get started.'
-                                              : 'Try adjusting the search text or filter options.',
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.62,
-                                            ),
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                else
-                                  Column(
-                                    children: List.generate(
-                                      pagedPatients.length,
-                                      (index) {
-                                        final absoluteIndex =
-                                            pageStartIndex + index;
-                                        final isSelected = _selectedIndices
-                                            .contains(absoluteIndex);
-                                        return _buildPatientCard(
-                                          pagedPatients[index],
-                                          absoluteIndex,
-                                          isSelected,
-                                        );
-                                      },
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    _patients.isEmpty
+                                        ? 'Add your first patient record to get started.'
+                                        : 'Try adjusting the search text or filter options.',
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                              ],
+                                ],
+                              ),
+                            )
+                          else
+                            Column(
+                              children: List.generate(pagedPatients.length, (
+                                index,
+                              ) {
+                                final absoluteIndex = pageStartIndex + index;
+                                final isSelected = _selectedIndices.contains(
+                                  absoluteIndex,
+                                );
+                                return _buildPatientCard(
+                                  pagedPatients[index],
+                                  absoluteIndex,
+                                  isSelected,
+                                );
+                              }),
                             ),
-                          ),
-                        );
-                      },
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -2111,7 +2095,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                             'Showing $startLabel-$pageEndIndex of ${filteredPatients.length} patients',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white.withValues(alpha: 0.72),
+                              color: AppColors.textSecondary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -2122,7 +2106,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: _darkDeepTeal,
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: _primaryAqua.withValues(alpha: 0.25),
@@ -2130,14 +2114,14 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<int>(
-                              dropdownColor: _darkDeepTeal,
+                              dropdownColor: Colors.white,
                               value: effectiveRowsPerPage,
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppColors.textPrimary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
-                              iconEnabledColor: Colors.white,
+                              iconEnabledColor: AppColors.textPrimary,
                               items: const [
                                 DropdownMenuItem(
                                   value: 10,
@@ -2173,7 +2157,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                                 }
                               : null,
                           icon: const Icon(Icons.chevron_left),
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -2181,7 +2165,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: _darkDeepTeal,
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: _primaryAqua.withValues(alpha: 0.25),
@@ -2190,7 +2174,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                           child: Text(
                             '$currentPage / $totalPages',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.textPrimary,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -2206,7 +2190,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                                 }
                               : null,
                           icon: const Icon(Icons.chevron_right),
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                         ),
                       ],
                     ),

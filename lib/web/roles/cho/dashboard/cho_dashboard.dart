@@ -17,6 +17,7 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
@@ -3007,32 +3008,30 @@ class _ChoDashboardState extends State<ChoDashboard> {
               );
               final selector = SizedBox(
                 width: compact ? constraints.maxWidth : 340,
-                child: DropdownButtonFormField<String>(
-                  initialValue: _selectedDemographicBarangayCode,
-                  isExpanded: true,
-                  dropdownColor: ChoColors.surface,
-                  style: const TextStyle(color: ChoColors.text, fontSize: 12),
-                  decoration: _availabilityInputDecoration(
-                    'Choose barangay first',
-                    Icons.location_on_outlined,
-                  ),
-                  hint: Text(
-                    'Select barangay',
-                    style: TextStyle(color: ChoColors.muted),
-                  ),
-                  items: MalaybalayBarangays.all
-                      .map(
-                        (barangay) => DropdownMenuItem<String>(
-                          value: barangay.code,
-                          child: Text(
-                            '${barangay.name} • ${barangay.district}',
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                child: WebFilterDropdown<String>(
+                  label: 'Barangay',
+                  value: _selectedDemographicBarangayCode ?? '',
+                  width: compact ? constraints.maxWidth : 340,
+                  items: <DropdownMenuItem<String>>[
+                    const DropdownMenuItem<String>(
+                      value: '',
+                      child: Text('Select barangay'),
+                    ),
+                    ...MalaybalayBarangays.all.map(
+                      (barangay) => DropdownMenuItem<String>(
+                        value: barangay.code,
+                        child: Text(
+                          '${barangay.name} • ${barangay.district}',
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      )
-                      .toList(growable: false),
+                      ),
+                    ),
+                  ],
                   onChanged: (value) {
-                    setState(() => _selectedDemographicBarangayCode = value);
+                    setState(() {
+                      _selectedDemographicBarangayCode =
+                          value == null || value.isEmpty ? null : value;
+                    });
                   },
                 ),
               );
@@ -3667,17 +3666,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: DropdownButtonFormField<int>(
-                      initialValue: _doctorAvailabilityDuration,
-                      dropdownColor: ChoColors.surface,
-                      style: const TextStyle(
-                        color: ChoColors.text,
-                        fontSize: 12,
-                      ),
-                      decoration: _availabilityInputDecoration(
-                        'Duration',
-                        Icons.timelapse_rounded,
-                      ),
+                    child: WebFilterDropdown<int>(
+                      label: 'Duration',
+                      value: _doctorAvailabilityDuration,
+                      width: fieldWidth,
                       items: const <int>[30, 45, 60, 90, 120]
                           .map(
                             (minutes) => DropdownMenuItem<int>(
@@ -3697,17 +3689,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _doctorSpecialtyFilter,
-                      dropdownColor: ChoColors.surface,
-                      style: const TextStyle(
-                        color: ChoColors.text,
-                        fontSize: 12,
-                      ),
-                      decoration: _availabilityInputDecoration(
-                        'Specialty',
-                        Icons.medical_information_outlined,
-                      ),
+                    child: WebFilterDropdown<String>(
+                      label: 'Specialty',
+                      value: _doctorSpecialtyFilter,
+                      width: fieldWidth,
                       items: specialties
                           .map(
                             (specialty) => DropdownMenuItem<String>(
@@ -4185,21 +4170,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
           ),
         );
 
-        return Container(
-          width: double.infinity,
+        return WebFilterSurface(
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: _panelTeal,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: filterBorderColor),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

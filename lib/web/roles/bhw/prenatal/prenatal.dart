@@ -23,6 +23,8 @@ import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
@@ -3339,7 +3341,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                   ),
                   child: const Icon(
                     Icons.filter_alt_rounded,
-                    color: Colors.white,
+                    color: AppColors.textSecondary,
                     size: 20,
                   ),
                 ),
@@ -3656,145 +3658,52 @@ class _PrenatalPageState extends State<PrenatalPage> {
 
   // Web Filter Bar - Horizontal layout for desktop
   Widget _buildWebFilterBar() {
-    return Row(
+    return WebFilterSurface(
       children: [
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-            decoration: BoxDecoration(
-              color: _darkDeepTeal.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: _primaryAqua.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.filter_list_rounded, color: _primaryAqua, size: 18),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedStatusFilter,
-                      isExpanded: true,
-                      icon: Icon(
-                        Icons.arrow_drop_down,
-                        color: _primaryAqua,
-                        size: 20,
-                      ),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      dropdownColor: _darkDeepTeal,
-                      items: _statusFilterOptions.map((String option) {
-                        return DropdownMenuItem<String>(
-                          value: option,
-                          child: Text(option),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() => _selectedStatusFilter = newValue);
-                        }
-                      },
-                    ),
-                  ),
+        WebFilterDropdown<String>(
+          width: 220,
+          label: 'Status',
+          value: _selectedStatusFilter,
+          items: _statusFilterOptions
+              .map(
+                (option) => DropdownMenuItem<String>(
+                  value: option,
+                  child: Text(option, overflow: TextOverflow.ellipsis),
                 ),
-              ],
-            ),
+              )
+              .toList(),
+          onChanged: (value) {
+            if (value != null) {
+              setState(() => _selectedStatusFilter = value);
+            }
+          },
+        ),
+        OutlinedButton.icon(
+          onPressed: () => _selectDate(context, true),
+          icon: const Icon(Icons.calendar_today_outlined, size: 18),
+          label: Text(
+            _fromDate != null
+                ? '${_fromDate!.day}/${_fromDate!.month}'
+                : 'From date',
           ),
         ),
-        const SizedBox(width: 12),
-        InkWell(
-          onTap: () => _selectDate(context, true),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: _fromDate != null
-                  ? _primaryAqua.withValues(alpha: 0.2)
-                  : _darkDeepTeal.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: _fromDate != null
-                    ? _primaryAqua
-                    : _mutedCoolGray.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.calendar_today, color: _primaryAqua, size: 16),
-                const SizedBox(width: 6),
-                Text(
-                  _fromDate != null
-                      ? '${_fromDate!.day}/${_fromDate!.month}'
-                      : 'From',
-                  style: TextStyle(
-                    color: _fromDate != null ? _primaryAqua : _mutedCoolGray,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
+        OutlinedButton.icon(
+          onPressed: () => _selectDate(context, false),
+          icon: const Icon(Icons.calendar_today_outlined, size: 18),
+          label: Text(
+            _toDate != null ? '${_toDate!.day}/${_toDate!.month}' : 'To date',
           ),
         ),
-        const SizedBox(width: 8),
-        InkWell(
-          onTap: () => _selectDate(context, false),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: _toDate != null
-                  ? _primaryAqua.withValues(alpha: 0.2)
-                  : _darkDeepTeal.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: _toDate != null
-                    ? _primaryAqua
-                    : _mutedCoolGray.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.calendar_today, color: _primaryAqua, size: 16),
-                const SizedBox(width: 6),
-                Text(
-                  _toDate != null ? '${_toDate!.day}/${_toDate!.month}' : 'To',
-                  style: TextStyle(
-                    color: _toDate != null ? _primaryAqua : _mutedCoolGray,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+        if (_fromDate != null || _toDate != null)
+          OutlinedButton.icon(
+            onPressed: _clearDateFilters,
+            icon: const Icon(Icons.clear_rounded, size: 18),
+            label: const Text('Clear dates'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.error,
+              side: const BorderSide(color: AppColors.error),
             ),
           ),
-        ),
-        if (_fromDate != null || _toDate != null) ...[
-          const SizedBox(width: 8),
-          InkWell(
-            onTap: _clearDateFilters,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: Colors.red.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
-              child: Icon(Icons.clear, color: Colors.red, size: 18),
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -6858,10 +6767,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
       decoration: BoxDecoration(
         color: _sidebarDark,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -6886,193 +6792,64 @@ class _PrenatalPageState extends State<PrenatalPage> {
               ),
             ),
 
-          // Filters row
+          // Filters wrap into a readable light toolbar on smaller screens.
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: WebFilterSurface(
+              padding: const EdgeInsets.all(10),
               children: [
-                // Status filter dropdown
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _darkDeepTeal,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: _primaryAqua.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.filter_list_rounded,
-                          color: _primaryAqua,
-                          size: 18,
+                WebFilterDropdown<String>(
+                  label: 'Status',
+                  value: _selectedStatusFilter,
+                  items: _statusFilterOptions
+                      .map(
+                        (option) => DropdownMenuItem<String>(
+                          value: option,
+                          child: Text(option),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _selectedStatusFilter,
-                              isExpanded: true,
-                              icon: Icon(
-                                Icons.arrow_drop_down,
-                                color: _primaryAqua,
-                                size: 20,
-                              ),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              dropdownColor: _darkDeepTeal,
-                              items: _statusFilterOptions.map((String option) {
-                                return DropdownMenuItem<String>(
-                                  value: option,
-                                  child: Text(option),
-                                );
-                              }).toList(),
-                              onChanged: (String? newValue) {
-                                if (newValue != null) {
-                                  setState(() {
-                                    _selectedStatusFilter = newValue;
-                                    _currentPage = 1;
-                                  });
-                                }
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      )
+                      .toList(),
+                  onChanged: (newValue) {
+                    if (newValue == null) return;
+                    setState(() {
+                      _selectedStatusFilter = newValue;
+                      _currentPage = 1;
+                    });
+                  },
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _selectDate(context, true),
+                  icon: const Icon(Icons.calendar_today_rounded, size: 17),
+                  label: Text(
+                    _fromDate == null
+                        ? 'From date'
+                        : '${_fromDate!.day}/${_fromDate!.month}/${_fromDate!.year}',
                   ),
                 ),
-                const SizedBox(width: 10),
-                // From date
-                InkWell(
-                  onTap: () => _selectDate(context, true),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _fromDate != null
-                          ? _primaryAqua.withValues(alpha: 0.15)
-                          : _darkDeepTeal,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: _fromDate != null
-                            ? _primaryAqua
-                            : _mutedCoolGray.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          color: _primaryAqua,
-                          size: 15,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _fromDate != null
-                              ? '${_fromDate!.day}/${_fromDate!.month}/${_fromDate!.year}'
-                              : 'From',
-                          style: TextStyle(
-                            color: _fromDate != null
-                                ? _primaryAqua
-                                : _mutedCoolGray,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+                OutlinedButton.icon(
+                  onPressed: () => _selectDate(context, false),
+                  icon: const Icon(Icons.calendar_today_rounded, size: 17),
+                  label: Text(
+                    _toDate == null
+                        ? 'To date'
+                        : '${_toDate!.day}/${_toDate!.month}/${_toDate!.year}',
                   ),
                 ),
-                const SizedBox(width: 8),
-                // To date
-                InkWell(
-                  onTap: () => _selectDate(context, false),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _toDate != null
-                          ? _primaryAqua.withValues(alpha: 0.15)
-                          : _darkDeepTeal,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: _toDate != null
-                            ? _primaryAqua
-                            : _mutedCoolGray.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          color: _primaryAqua,
-                          size: 15,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _toDate != null
-                              ? '${_toDate!.day}/${_toDate!.month}/${_toDate!.year}'
-                              : 'To',
-                          style: TextStyle(
-                            color: _toDate != null
-                                ? _primaryAqua
-                                : _mutedCoolGray,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                if (_fromDate != null || _toDate != null)
+                  OutlinedButton.icon(
+                    onPressed: _clearDateFilters,
+                    icon: const Icon(Icons.clear_rounded, size: 17),
+                    label: const Text('Clear dates'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFB42318),
+                      side: const BorderSide(color: Color(0xFFB42318)),
                     ),
                   ),
-                ),
-                if (_fromDate != null || _toDate != null) ...[
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: _clearDateFilters,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.red.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.clear,
-                        color: Colors.red,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
 
-          Divider(color: Colors.white.withValues(alpha: 0.08), height: 1),
+          const Divider(color: AppColors.border, height: 1),
 
           // Record count
           Padding(
@@ -7080,7 +6857,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
             child: Text(
               '${records.length} prenatal record${records.length != 1 ? 's' : ''} found',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
+                color: AppColors.textSecondary,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -7216,28 +6993,32 @@ class _PrenatalPageState extends State<PrenatalPage> {
           else
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                children: List.generate(pagedRecords.length, (index) {
-                  final absoluteIndex = pageStartIndex + index;
-                  final isSelected = _selectedIndices.contains(absoluteIndex);
-                  return _PrenatalCard(
-                    record: pagedRecords[index],
-                    isSelectionMode: _isSelectionMode,
-                    isSelected: isSelected,
-                    index: absoluteIndex,
-                    onSelectionChanged: (idx, selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedIndices.add(idx);
-                        } else {
-                          _selectedIndices.remove(idx);
-                        }
-                      });
-                    },
-                    onEdit: (record) => _showEditPrenatalModal(context, record),
-                    onView: (record) => _onViewButtonPressed(context, record),
-                  );
-                }),
+              child: WebTableSurface(
+                minWidth: 1240,
+                child: Column(
+                  children: List.generate(pagedRecords.length, (index) {
+                    final absoluteIndex = pageStartIndex + index;
+                    final isSelected = _selectedIndices.contains(absoluteIndex);
+                    return _PrenatalCard(
+                      record: pagedRecords[index],
+                      isSelectionMode: _isSelectionMode,
+                      isSelected: isSelected,
+                      index: absoluteIndex,
+                      onSelectionChanged: (idx, selected) {
+                        setState(() {
+                          if (selected) {
+                            _selectedIndices.add(idx);
+                          } else {
+                            _selectedIndices.remove(idx);
+                          }
+                        });
+                      },
+                      onEdit: (record) =>
+                          _showEditPrenatalModal(context, record),
+                      onView: (record) => _onViewButtonPressed(context, record),
+                    );
+                  }),
+                ),
               ),
             ),
           if (records.isNotEmpty)
@@ -7250,7 +7031,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                       'Showing ${pageStartIndex + 1}-$pageEndIndex of ${records.length} records',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.72),
+                        color: AppColors.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -7261,7 +7042,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: _darkDeepTeal,
+                      color: AppColors.surfaceLight,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: _primaryAqua.withValues(alpha: 0.25),
@@ -7269,14 +7050,14 @@ class _PrenatalPageState extends State<PrenatalPage> {
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<int>(
-                        dropdownColor: _darkDeepTeal,
+                        dropdownColor: AppColors.surfaceLight,
                         value: effectiveRowsPerPage,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
-                        iconEnabledColor: Colors.white,
+                        iconEnabledColor: AppColors.textSecondary,
                         items: const [
                           DropdownMenuItem(value: 10, child: Text('10 / page')),
                           DropdownMenuItem(value: 20, child: Text('20 / page')),
@@ -7303,7 +7084,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                           }
                         : null,
                     icon: const Icon(Icons.chevron_left),
-                    color: Colors.white,
+                    color: AppColors.textSecondary,
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -7311,7 +7092,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: _darkDeepTeal,
+                      color: AppColors.surfaceLight,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: _primaryAqua.withValues(alpha: 0.25),
@@ -7320,7 +7101,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                     child: Text(
                       '$currentPage / $totalPages',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -7336,7 +7117,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                           }
                         : null,
                     icon: const Icon(Icons.chevron_right),
-                    color: Colors.white,
+                    color: AppColors.textSecondary,
                   ),
                 ],
               ),
@@ -7348,57 +7129,24 @@ class _PrenatalPageState extends State<PrenatalPage> {
 
   // Search bar - matches patient.dart style
   Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: TextField(
-        controller: _searchController,
-        style: const TextStyle(color: _lightOffWhite, fontSize: 14),
-        onChanged: (value) {
-          setState(() {
-            _searchQuery = value;
-            _currentPage = 1;
-          });
-          _scheduleSharedPatientSearch(value);
-        },
-        decoration: InputDecoration(
-          hintText: 'Search by name, age, contact, address...',
-          hintStyle: const TextStyle(color: _mutedCoolGray, fontSize: 13),
-          prefixIcon: Icon(Icons.search_rounded, color: _primaryAqua, size: 20),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(
-                    Icons.clear,
-                    color: _mutedCoolGray,
-                    size: 18,
-                  ),
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() {
-                      _searchQuery = '';
-                      _currentPage = 1;
-                    });
-                    _scheduleSharedPatientSearch('');
-                  },
-                )
-              : null,
-          filled: true,
-          fillColor: Colors.white,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
-      ),
+    return WebSearchField(
+      controller: _searchController,
+      hintText: 'Search by name, age, contact, address...',
+      onChanged: (value) {
+        setState(() {
+          _searchQuery = value;
+          _currentPage = 1;
+        });
+        _scheduleSharedPatientSearch(value);
+      },
+      onClear: () {
+        _searchController.clear();
+        setState(() {
+          _searchQuery = '';
+          _currentPage = 1;
+        });
+        _scheduleSharedPatientSearch('');
+      },
     );
   }
 

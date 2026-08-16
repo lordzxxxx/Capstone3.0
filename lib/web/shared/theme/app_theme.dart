@@ -357,6 +357,30 @@ class AppTheme {
           elevation: const WidgetStatePropertyAll(4),
         ),
       ),
+      dataTableTheme: DataTableThemeData(
+        headingRowColor: const WidgetStatePropertyAll(AppColors.surfaceSubtle),
+        dataRowColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.hovered)) {
+            return AppColors.surfaceSubtle.withValues(alpha: 0.72);
+          }
+          return AppColors.surfaceLight;
+        }),
+        headingTextStyle: const TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+        ),
+        dataTextStyle: const TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+        headingRowHeight: 48,
+        dataRowMinHeight: 46,
+        dataRowMaxHeight: 68,
+        horizontalMargin: 16,
+        columnSpacing: 24,
+      ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,

@@ -13,6 +13,7 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_histo
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 
 /// CHO referral review/approval workspace — reached from the sidebar
@@ -321,13 +322,20 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           style: const TextStyle(color: ChoColors.muted),
         ),
         const SizedBox(height: 14),
-        ...records.map(
-          (record) => _ReferralCard(
-            record: record,
-            mode: mode,
-            onReview: () => _review(record),
-            onAdvance: () => _advance(record),
-            onDetails: () => _details(record),
+        WebTableSurface(
+          minWidth: 1120,
+          child: Column(
+            children: records
+                .map(
+                  (record) => _ReferralCard(
+                    record: record,
+                    mode: mode,
+                    onReview: () => _review(record),
+                    onAdvance: () => _advance(record),
+                    onDetails: () => _details(record),
+                  ),
+                )
+                .toList(growable: false),
           ),
         ),
       ],
@@ -768,36 +776,21 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
     required ValueChanged<String> onChanged,
   }) {
     final safeValue = values.containsKey(value) ? value : values.keys.first;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: ChoColors.text,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 6),
-        DropdownButtonFormField<String>(
-          initialValue: safeValue,
-          isExpanded: true,
-          dropdownColor: const Color(0xFFF7FAFC),
-          style: const TextStyle(color: Color(0xFF12252B)),
-          decoration: _lightDecoration(''),
-          items: values.entries
-              .map(
-                (entry) => DropdownMenuItem(
-                  value: entry.key,
-                  child: Text(entry.value, overflow: TextOverflow.ellipsis),
-                ),
-              )
-              .toList(),
-          onChanged: (item) {
-            if (item != null) onChanged(item);
-          },
-        ),
-      ],
+    return WebFilterDropdown<String>(
+      label: label,
+      value: safeValue,
+      width: double.infinity,
+      items: values.entries
+          .map(
+            (entry) => DropdownMenuItem<String>(
+              value: entry.key,
+              child: Text(entry.value, overflow: TextOverflow.ellipsis),
+            ),
+          )
+          .toList(growable: false),
+      onChanged: (item) {
+        if (item != null) onChanged(item);
+      },
     );
   }
 

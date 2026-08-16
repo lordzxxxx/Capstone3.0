@@ -9,6 +9,7 @@ import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/services/firestore_rest_reader.dart';
 
@@ -163,25 +164,37 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                     widget.section != ChoSupportSection.dataQuality)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: SizedBox(
-                      width: 420,
-                      child: TextField(
-                        controller: _search,
-                        onChanged: (value) {
-                          _debounce?.cancel();
-                          _debounce = Timer(
-                            const Duration(milliseconds: 300),
-                            () {
-                              if (mounted)
-                                setState(() => _query = value.toLowerCase());
+                    child: WebFilterSurface(
+                      padding: const EdgeInsets.all(10),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final width = constraints.maxWidth > 420
+                              ? 420.0
+                              : constraints.maxWidth;
+                          return WebSearchField(
+                            controller: _search,
+                            width: width,
+                            hintText: 'Search this workspace',
+                            onChanged: (value) {
+                              _debounce?.cancel();
+                              _debounce = Timer(
+                                const Duration(milliseconds: 300),
+                                () {
+                                  if (mounted) {
+                                    setState(
+                                      () => _query = value.toLowerCase(),
+                                    );
+                                  }
+                                },
+                              );
+                            },
+                            onClear: () {
+                              _search.clear();
+                              _debounce?.cancel();
+                              setState(() => _query = '');
                             },
                           );
                         },
-                        decoration: const InputDecoration(
-                          labelText: 'Search',
-                          prefixIcon: Icon(Icons.search),
-                          border: OutlineInputBorder(),
-                        ),
                       ),
                     ),
                   ),
@@ -277,12 +290,8 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
             icon: _icon,
           );
         }
-        return Container(
-          decoration: BoxDecoration(
-            color: ChoColors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: ChoColors.aqua.withValues(alpha: 0.18)),
-          ),
+        return WebTableSurface(
+          minWidth: 760,
           child: Column(
             children: docs.map((doc) {
               final row = doc.data();
@@ -387,11 +396,8 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                 message: 'No authorized BHW user records are available.',
               )
             else
-              Container(
-                decoration: BoxDecoration(
-                  color: ChoColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              WebTableSurface(
+                minWidth: 980,
                 child: Column(
                   children: docs.map((doc) {
                     final row = doc.data();

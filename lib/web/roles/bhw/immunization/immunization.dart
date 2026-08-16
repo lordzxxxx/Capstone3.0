@@ -21,6 +21,8 @@ import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
@@ -802,67 +804,27 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                 ],
               ),
             const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: _cardBackground,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFD9E5F2), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: _mutedCoolGray.withValues(alpha: 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                    _currentPage = 1;
-                    _selectedIndices.clear();
-                  });
-                  _scheduleSharedPatientSearch(value);
-                },
-                style: const TextStyle(color: _lightOffWhite),
-                cursorColor: _primaryAqua,
-                decoration: InputDecoration(
-                  hintText:
-                      'Search by patient name, patient ID, vaccine type, or status...',
-                  hintStyle: const TextStyle(color: _mutedCoolGray),
-                  prefixIcon: const Icon(Icons.search, color: _primaryAqua),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, color: _mutedCoolGray),
-                          onPressed: () {
-                            setState(() {
-                              _searchController.clear();
-                              _searchQuery = '';
-                              _currentPage = 1;
-                              _selectedIndices.clear();
-                            });
-                            _scheduleSharedPatientSearch('');
-                          },
-                        )
-                      : null,
-                  filled: true,
-                  fillColor: _cardBackground,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFD9E5F2)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFD9E5F2)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: _primaryAqua, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.all(16),
-                ),
-              ),
+            WebSearchField(
+              controller: _searchController,
+              hintText:
+                  'Search by patient name, patient ID, vaccine type, or status...',
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                  _currentPage = 1;
+                  _selectedIndices.clear();
+                });
+                _scheduleSharedPatientSearch(value);
+              },
+              onClear: () {
+                setState(() {
+                  _searchController.clear();
+                  _searchQuery = '';
+                  _currentPage = 1;
+                  _selectedIndices.clear();
+                });
+                _scheduleSharedPatientSearch('');
+              },
             ),
             if (_searchQuery.trim().isNotEmpty ||
                 _isSearchingSharedPatients) ...[
@@ -1079,228 +1041,186 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           child: Column(
             children: [
               // Filters and Search Header
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Search Bar
-                    _buildSearchBar(),
-                    const SizedBox(height: 16),
+              WebFilterSurface(
+                padding: const EdgeInsets.all(12),
+                child: Padding(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Search Bar
+                      _buildSearchBar(),
+                      const SizedBox(height: 16),
 
-                    // Filters Row
-                    Row(
-                      children: [
-                        // Vaccine Filter Dropdown
-                        Expanded(
-                          flex: 2,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _darkDeepTeal,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: _primaryAqua.withValues(alpha: 0.45),
-                                width: 1.2,
+                      // Filters Row
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          // Vaccine Filter Dropdown
+                          WebFilterDropdown<String>(
+                            label: 'Vaccine',
+                            value: _selectedVaccineFilter,
+                            width: 360,
+                            items: _vaccineFilterOptions
+                                .map(
+                                  (option) => DropdownMenuItem<String>(
+                                    value: option,
+                                    child: Text(option),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (newValue) {
+                              if (newValue == null) return;
+                              setState(() {
+                                _selectedVaccineFilter = newValue;
+                                _currentPage = 1;
+                                _selectedIndices.clear();
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 16),
+
+                          // Date Range Filter
+                          SizedBox(
+                            width: 420,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.vaccines,
-                                  color: _primaryAqua,
-                                  size: 16,
+                              decoration: BoxDecoration(
+                                color: _darkDeepTeal,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: _primaryAqua.withValues(alpha: 0.45),
+                                  width: 1.2,
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      value: _selectedVaccineFilter,
-                                      isExpanded: true,
-                                      icon: const Icon(
-                                        Icons.arrow_drop_down,
-                                        color: _mutedCoolGray,
-                                        size: 16,
-                                      ),
-                                      style: const TextStyle(
-                                        color: _lightOffWhite,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      dropdownColor: _cardBackground,
-                                      borderRadius: BorderRadius.circular(8),
-                                      items: _vaccineFilterOptions.map((
-                                        String option,
-                                      ) {
-                                        return DropdownMenuItem<String>(
-                                          value: option,
-                                          child: Text(
-                                            option,
-                                            style: const TextStyle(
-                                              color: _lightOffWhite,
-                                              fontSize: 13,
-                                            ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.date_range,
+                                    color: _primaryAqua,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: _buildDatePickerButton(
+                                            context: context,
+                                            label: 'From',
+                                            date: _fromDate,
+                                            isFromDate: true,
                                           ),
-                                        );
-                                      }).toList(),
-                                      onChanged: (String? newValue) {
-                                        if (newValue != null) {
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: _buildDatePickerButton(
+                                            context: context,
+                                            label: 'To',
+                                            date: _toDate,
+                                            isFromDate: false,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (_fromDate != null || _toDate != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 10),
+                                      child: InkWell(
+                                        onTap: () {
                                           setState(() {
-                                            _selectedVaccineFilter = newValue;
+                                            _fromDate = null;
+                                            _toDate = null;
                                             _currentPage = 1;
                                             _selectedIndices.clear();
                                           });
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-
-                        // Date Range Filter
-                        Expanded(
-                          flex: 2,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _darkDeepTeal,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: _primaryAqua.withValues(alpha: 0.45),
-                                width: 1.2,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.date_range,
-                                  color: _primaryAqua,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: _buildDatePickerButton(
-                                          context: context,
-                                          label: 'From',
-                                          date: _fromDate,
-                                          isFromDate: true,
+                                        },
+                                        child: Icon(
+                                          Icons.clear,
+                                          size: 18,
+                                          color: Colors.red,
                                         ),
                                       ),
-                                      const SizedBox(width: 10),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+
+                          // Select Immunization Records Button
+                          SizedBox(
+                            width: 180,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _darkDeepTeal,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: _isSelectionMode
+                                      ? _primaryAqua.withValues(alpha: 0.65)
+                                      : _primaryAqua.withValues(alpha: 0.45),
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(8),
+                                  onTap: () {
+                                    setState(() {
+                                      _isSelectionMode = !_isSelectionMode;
+                                      if (!_isSelectionMode) {
+                                        _selectedIndices.clear();
+                                      }
+                                    });
+                                  },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        _isSelectionMode
+                                            ? Icons.close
+                                            : Icons.checklist,
+                                        color: _isSelectionMode
+                                            ? _primaryAqua
+                                            : _mutedCoolGray,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 8),
                                       Expanded(
-                                        child: _buildDatePickerButton(
-                                          context: context,
-                                          label: 'To',
-                                          date: _toDate,
-                                          isFromDate: false,
+                                        child: Text(
+                                          _isSelectionMode
+                                              ? 'Active'
+                                              : 'Select',
+                                          style: TextStyle(
+                                            color: _isSelectionMode
+                                                ? _primaryAqua
+                                                : _lightOffWhite,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                if (_fromDate != null || _toDate != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 10),
-                                    child: InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          _fromDate = null;
-                                          _toDate = null;
-                                          _currentPage = 1;
-                                          _selectedIndices.clear();
-                                        });
-                                      },
-                                      child: Icon(
-                                        Icons.clear,
-                                        size: 18,
-                                        color: Colors.red,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-
-                        // Select Immunization Records Button
-                        Expanded(
-                          flex: 1,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _darkDeepTeal,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: _isSelectionMode
-                                    ? _primaryAqua.withValues(alpha: 0.65)
-                                    : _primaryAqua.withValues(alpha: 0.45),
-                                width: 1.2,
-                              ),
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(8),
-                                onTap: () {
-                                  setState(() {
-                                    _isSelectionMode = !_isSelectionMode;
-                                    if (!_isSelectionMode) {
-                                      _selectedIndices.clear();
-                                    }
-                                  });
-                                },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      _isSelectionMode
-                                          ? Icons.close
-                                          : Icons.checklist,
-                                      color: _isSelectionMode
-                                          ? _primaryAqua
-                                          : _mutedCoolGray,
-                                      size: 18,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        _isSelectionMode ? 'Active' : 'Select',
-                                        style: TextStyle(
-                                          color: _isSelectionMode
-                                              ? _primaryAqua
-                                              : _lightOffWhite,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -1334,64 +1254,75 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                         message: 'Try adjusting your filters or search terms',
                       )
                     else ...[
-                      _buildImmunizationCardHeader(),
-                      _ImmunizationTable(
-                        records: displayRecords,
-                        startIndex: pageStartIndex,
-                        isSelectionMode: _isSelectionMode,
-                        selectedIndices: _selectedIndices,
-                        onSelectionChanged: (index, selected) {
-                          setState(() {
-                            if (selected) {
-                              _selectedIndices.add(index);
-                            } else {
-                              _selectedIndices.remove(index);
-                            }
-                          });
-                        },
-                        onEdit: (record) {
-                          _showEditDialog(context, record);
-                        },
-                        onDelete: (record) async {
-                          final confirmed = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              backgroundColor: _sidebarDark,
-                              title: Text(
-                                'Delete Immunization',
-                                style: TextStyle(
-                                  color: _primaryAqua,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              content: Text(
-                                'Are you sure you want to delete this record?',
-                                style: TextStyle(color: _lightOffWhite),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.pop(context, false),
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, true),
-                                  child: const Text(
-                                    'Delete',
-                                    style: TextStyle(color: Colors.red),
+                      WebTableSurface(
+                        minWidth: 1180,
+                        child: Column(
+                          children: [
+                            _buildImmunizationCardHeader(),
+                            _ImmunizationTable(
+                              records: displayRecords,
+                              startIndex: pageStartIndex,
+                              isSelectionMode: _isSelectionMode,
+                              selectedIndices: _selectedIndices,
+                              onSelectionChanged: (index, selected) {
+                                setState(() {
+                                  if (selected) {
+                                    _selectedIndices.add(index);
+                                  } else {
+                                    _selectedIndices.remove(index);
+                                  }
+                                });
+                              },
+                              onEdit: (record) {
+                                _showEditDialog(context, record);
+                              },
+                              onDelete: (record) async {
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    backgroundColor: _sidebarDark,
+                                    title: Text(
+                                      'Delete Immunization',
+                                      style: TextStyle(
+                                        color: _primaryAqua,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    content: Text(
+                                      'Are you sure you want to delete this record?',
+                                      style: TextStyle(color: _lightOffWhite),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
+                                        child: const Text(
+                                          'Delete',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              ],
+                                );
+                                if (confirmed == true) {
+                                  await _dbHelper.deleteRecord(record['id']);
+                                  await _loadRecords();
+                                }
+                              },
+                              onView: (record) {
+                                _showPatientImmunizationHistory(
+                                  context,
+                                  record,
+                                );
+                              },
                             ),
-                          );
-                          if (confirmed == true) {
-                            await _dbHelper.deleteRecord(record['id']);
-                            await _loadRecords();
-                          }
-                        },
-                        onView: (record) {
-                          _showPatientImmunizationHistory(context, record);
-                        },
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 12),
                       _buildImmunizationTablePagination(
@@ -1672,7 +1603,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                 ? () => setState(() => _currentPage = currentPage - 1)
                 : null,
             icon: const Icon(Icons.chevron_left_rounded),
-            color: canGoPrev ? _primaryAqua : Colors.white24,
+            color: canGoPrev ? _primaryAqua : AppColors.borderStrong,
             tooltip: 'Previous page',
           ),
           Text(
