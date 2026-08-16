@@ -3404,19 +3404,23 @@ class _ChoDashboardState extends State<ChoDashboard> {
               sectionsSpace: 2,
               centerSpaceColor: Colors.transparent,
               sections: entries
-                  .map(
-                    (entry) => PieChartSectionData(
+                  .map((entry) {
+                    final sliceColor = colors[entry.key] ?? _mutedCoolGray;
+                    final percentage = (entry.value / total * 100).round();
+                    return PieChartSectionData(
                       value: entry.value.toDouble(),
-                      color: colors[entry.key] ?? _mutedCoolGray,
+                      color: sliceColor,
                       radius: 48,
-                      title: '${(entry.value / total * 100).round()}%',
-                      titleStyle: const TextStyle(
-                        color: ChoColors.text,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
+                      // Tiny wedges cannot hold a readable label. The
+                      // legend below keeps their exact percentage visible.
+                      title: percentage >= 5 ? '$percentage%' : '',
+                      titleStyle: TextStyle(
+                        color: _pieLabelColor(sliceColor),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
                       ),
-                    ),
-                  )
+                    );
+                  })
                   .toList(growable: false),
             ),
           ),
@@ -3451,7 +3455,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                           ),
                         ),
                         Text(
-                          entry.value.toString(),
+                          '${entry.value} (${(entry.value / total * 100).round()}%)',
                           style: const TextStyle(
                             color: ChoColors.text,
                             fontSize: 10,
@@ -5427,6 +5431,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
     );
   }
 
+  Color _pieLabelColor(Color sliceColor) {
+    return sliceColor.computeLuminance() > 0.45 ? ChoColors.text : Colors.white;
+  }
+
   Widget _buildRiskDonutChart() {
     final labels = <String>['High', 'Moderate', 'Low', 'Unknown'];
     final colors = <Color>[
@@ -5471,15 +5479,18 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   );
                 }
                 final pct = (value / total * 100).round();
+                final sliceColor = colors[i];
                 return PieChartSectionData(
                   value: value,
-                  color: colors[i],
+                  color: sliceColor,
                   radius: 46,
-                  title: '$pct%',
-                  titleStyle: const TextStyle(
-                    color: ChoColors.text,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
+                  // Keep small slices uncluttered; their percentage remains
+                  // available in the legend below the chart.
+                  title: pct >= 5 ? '$pct%' : '',
+                  titleStyle: TextStyle(
+                    color: _pieLabelColor(sliceColor),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
                   ),
                 );
               }),
@@ -5504,11 +5515,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 ),
                 const SizedBox(width: 5),
                 Text(
-                  '${labels[i]} (${riskValues[i]})',
+                  '${labels[i]} (${riskValues[i]} · ${(riskValues[i] / total * 100).round()}%)',
                   style: const TextStyle(
                     color: _chartText,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
