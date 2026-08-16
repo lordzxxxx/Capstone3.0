@@ -1579,6 +1579,25 @@ class _PrenatalPageState extends State<PrenatalPage> {
 
     final registeredByController = TextEditingController();
     final additionalNoteController = TextEditingController();
+
+    // Gates the Save action so a patient record cannot be registered blank.
+    final formKey = GlobalKey<FormState>();
+
+    String? requiredValidator(String? value) {
+      return (value == null || value.trim().isEmpty) ? 'Required' : null;
+    }
+
+    String? ageValidator(String? value) {
+      if (value == null || value.trim().isEmpty) {
+        return 'Required';
+      }
+      final age = int.tryParse(value.trim());
+      if (age == null || age < 0 || age > 130) {
+        return 'Enter a valid age (0-130)';
+      }
+      return null;
+    }
+
     final modalTitle = patientSeed == null
         ? 'New Prenatal Registration'
         : 'Add Another Prenatal Visit';
@@ -1731,7 +1750,9 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
-                    child: Column(
+                    child: Form(
+                      key: formKey,
+                      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Patient Information Area
@@ -1748,6 +1769,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'First Name',
                                   icon: Icons.person_outline,
                                   hintText: 'Enter first name',
+                                  validator: requiredValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -1757,6 +1779,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'Surname',
                                   icon: Icons.person_outline,
                                   hintText: 'Enter surname',
+                                  validator: requiredValidator,
                                 ),
                               ),
                             ],
@@ -1771,6 +1794,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   icon: Icons.cake,
                                   hintText: 'Enter age',
                                   keyboardType: TextInputType.number,
+                                  validator: ageValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -1799,6 +1823,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             icon: Icons.phone,
                             hintText: 'e.g., +63 912 345 6789',
                             keyboardType: TextInputType.phone,
+                            validator: requiredValidator,
                           ),
                           const SizedBox(height: 16),
                           Row(
@@ -1910,6 +1935,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   icon: Icons.numbers,
                                   hintText: 'e.g., 1, 2, 3',
                                   keyboardType: TextInputType.number,
+                                  validator: requiredValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -1920,6 +1946,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   icon: Icons.numbers,
                                   hintText: 'e.g., 0, 1, 2',
                                   keyboardType: TextInputType.number,
+                                  validator: requiredValidator,
                                 ),
                               ),
                             ],
@@ -1986,6 +2013,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'AOG (Age of Gestation)',
                                   icon: Icons.calendar_view_week,
                                   hintText: 'e.g., 28 weeks',
+                                  validator: requiredValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -1995,6 +2023,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'WT (Weight)',
                                   icon: Icons.monitor_weight,
                                   hintText: 'e.g., 65 kg',
+                                  validator: requiredValidator,
                                 ),
                               ),
                             ],
@@ -2008,6 +2037,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'TEMP (Temperature)',
                                   icon: Icons.thermostat,
                                   hintText: 'e.g., 36.5Â°C',
+                                  validator: requiredValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -2017,6 +2047,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'BP (Blood Pressure)',
                                   icon: Icons.favorite,
                                   hintText: 'e.g., 120/80',
+                                  validator: requiredValidator,
                                 ),
                               ),
                             ],
@@ -2030,6 +2061,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'BMI (Body Mass Index)',
                                   icon: Icons.assessment,
                                   hintText: 'e.g., 22.5',
+                                  validator: requiredValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -2039,6 +2071,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'FH (Fundal Height)',
                                   icon: Icons.straighten,
                                   hintText: 'e.g., 28 cm',
+                                  validator: requiredValidator,
                                 ),
                               ),
                             ],
@@ -2052,6 +2085,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'DHB (Fetal Heart Beat)',
                                   icon: Icons.favorite_border,
                                   hintText: 'e.g., 140 bpm',
+                                  validator: requiredValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -2061,6 +2095,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'AT (Abdominal Tenderness)',
                                   icon: Icons.touch_app,
                                   hintText: 'e.g., None, Mild',
+                                  validator: requiredValidator,
                                 ),
                               ),
                             ],
@@ -2071,6 +2106,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             label: 'TCB (Total Bilirubin)',
                             icon: Icons.science,
                             hintText: 'e.g., 0.8 mg/dL',
+                            validator: requiredValidator,
                           ),
                         ]),
                         const SizedBox(height: 14),
@@ -2102,6 +2138,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             label: 'Registered By',
                             icon: Icons.person_pin,
                             hintText: 'Enter staff name or ID',
+                            validator: requiredValidator,
                           ),
                           const SizedBox(height: 16),
                           _buildTextField(
@@ -2119,6 +2156,37 @@ class _PrenatalPageState extends State<PrenatalPage> {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () async {
+                              final isFormValid =
+                                  formKey.currentState?.validate() ?? false;
+                              final isLmpDateValid = lmpDate != null;
+                              final isLmpDateNotFuture =
+                                  lmpDate == null ||
+                                  !lmpDate!.isAfter(DateTime.now());
+                              if (!isLmpDateValid) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('LMP date is required'),
+                                    backgroundColor: Colors.red,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              } else if (!isLmpDateNotFuture) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'LMP date cannot be in the future',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                              if (!isFormValid ||
+                                  !isLmpDateValid ||
+                                  !isLmpDateNotFuture) {
+                                return;
+                              }
+
                               // Create new prenatal record
                               final newRecord = {
                                 'patientName':
@@ -2212,35 +2280,50 @@ class _PrenatalPageState extends State<PrenatalPage> {
                               }
 
                               // Save to database (offline + Firebase sync)
-                              await _dbHelper.insertRecord(newRecord);
+                              try {
+                                await _dbHelper.insertRecord(newRecord);
 
-                              // Reload records
-                              await _loadRecords();
+                                // Reload records
+                                await _loadRecords();
 
-                              // Show AI Classification modal with loading spinner
-                              if (context.mounted && classification != null) {
-                                await _showPrenatalAIModal(
-                                  context,
-                                  classification,
-                                );
-                              }
+                                // Show AI Classification modal with loading spinner
+                                if (context.mounted &&
+                                    classification != null) {
+                                  await _showPrenatalAIModal(
+                                    context,
+                                    classification,
+                                  );
+                                }
 
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                              }
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Prenatal registration saved successfully!',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                }
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Prenatal registration saved successfully!',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
+                                      backgroundColor: Colors.green,
+                                      behavior: SnackBarBehavior.floating,
                                     ),
-                                    backgroundColor: Colors.green,
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Failed to save prenatal record: $e',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
                               }
                             },
                             style: ElevatedButton.styleFrom(
@@ -2263,6 +2346,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                         ),
                         const SizedBox(height: 16),
                       ],
+                      ),
                     ),
                   ),
                 ),
@@ -2382,6 +2466,24 @@ class _PrenatalPageState extends State<PrenatalPage> {
     );
     final updateButtonKey = GlobalKey();
 
+    // Gates the Save action so an update cannot be submitted blank.
+    final formKey = GlobalKey<FormState>();
+
+    String? requiredValidator(String? value) {
+      return (value == null || value.trim().isEmpty) ? 'Required' : null;
+    }
+
+    String? ageValidator(String? value) {
+      if (value == null || value.trim().isEmpty) {
+        return 'Required';
+      }
+      final age = int.tryParse(value.trim());
+      if (age == null || age < 0 || age > 130) {
+        return 'Enter a valid age (0-130)';
+      }
+      return null;
+    }
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -2442,7 +2544,9 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
-                    child: Column(
+                    child: Form(
+                      key: formKey,
+                      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Patient Information Section
@@ -2459,6 +2563,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'First Name',
                                   icon: Icons.person_outline,
                                   hintText: 'Enter first name',
+                                  validator: requiredValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -2468,6 +2573,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'Surname',
                                   icon: Icons.person,
                                   hintText: 'Enter surname',
+                                  validator: requiredValidator,
                                 ),
                               ),
                             ],
@@ -2482,6 +2588,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   icon: Icons.cake,
                                   hintText: 'Enter age',
                                   keyboardType: TextInputType.number,
+                                  validator: ageValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -2510,6 +2617,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             icon: Icons.phone,
                             hintText: 'e.g., +63 912 345 6789',
                             keyboardType: TextInputType.phone,
+                            validator: requiredValidator,
                           ),
                           const SizedBox(height: 16),
                           Row(
@@ -2618,6 +2726,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   icon: Icons.numbers,
                                   hintText: 'e.g., 1, 2, 3',
                                   keyboardType: TextInputType.number,
+                                  validator: requiredValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -2628,6 +2737,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   icon: Icons.numbers,
                                   hintText: 'e.g., 0, 1, 2',
                                   keyboardType: TextInputType.number,
+                                  validator: requiredValidator,
                                 ),
                               ),
                             ],
@@ -2693,6 +2803,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'AOG (Age of Gestation)',
                                   icon: Icons.calendar_view_week,
                                   hintText: 'e.g., 28 weeks',
+                                  validator: requiredValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -2702,6 +2813,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'WT (Weight)',
                                   icon: Icons.monitor_weight,
                                   hintText: 'e.g., 65 kg',
+                                  validator: requiredValidator,
                                 ),
                               ),
                             ],
@@ -2715,6 +2827,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'TEMP (Temperature)',
                                   icon: Icons.thermostat,
                                   hintText: 'e.g., 36.5Â°C',
+                                  validator: requiredValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -2724,6 +2837,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'BP (Blood Pressure)',
                                   icon: Icons.favorite,
                                   hintText: 'e.g., 120/80',
+                                  validator: requiredValidator,
                                 ),
                               ),
                             ],
@@ -2737,6 +2851,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'BMI (Body Mass Index)',
                                   icon: Icons.assessment,
                                   hintText: 'e.g., 22.5',
+                                  validator: requiredValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -2746,6 +2861,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'FH (Fundal Height)',
                                   icon: Icons.straighten,
                                   hintText: 'e.g., 28 cm',
+                                  validator: requiredValidator,
                                 ),
                               ),
                             ],
@@ -2759,6 +2875,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'DHB (Fetal Heart Beat)',
                                   icon: Icons.favorite_border,
                                   hintText: 'e.g., 140 bpm',
+                                  validator: requiredValidator,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -2768,6 +2885,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                   label: 'AT (Abdominal Tenderness)',
                                   icon: Icons.touch_app,
                                   hintText: 'e.g., None, Mild',
+                                  validator: requiredValidator,
                                 ),
                               ),
                             ],
@@ -2778,6 +2896,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             label: 'TCB (Total Bilirubin)',
                             icon: Icons.science,
                             hintText: 'e.g., 0.8 mg/dL',
+                            validator: requiredValidator,
                           ),
                         ]),
                         const SizedBox(height: 14),
@@ -2808,6 +2927,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             label: 'Registered By',
                             icon: Icons.person_pin,
                             hintText: 'Enter staff name or ID',
+                            validator: requiredValidator,
                           ),
                           const SizedBox(height: 16),
                           _buildTextField(
@@ -2827,6 +2947,37 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             child: ElevatedButton(
                               key: updateButtonKey,
                               onPressed: () async {
+                                final isFormValid =
+                                    formKey.currentState?.validate() ?? false;
+                                final isLmpDateValid = lmpDate != null;
+                                final isLmpDateNotFuture =
+                                    lmpDate == null ||
+                                    !lmpDate!.isAfter(DateTime.now());
+                                if (!isLmpDateValid) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('LMP date is required'),
+                                      backgroundColor: Colors.red,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                } else if (!isLmpDateNotFuture) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'LMP date cannot be in the future',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                                if (!isFormValid ||
+                                    !isLmpDateValid ||
+                                    !isLmpDateNotFuture) {
+                                  return;
+                                }
+
                                 // Update prenatal record
                                 final updatedRecord = {
                                   'id': record['id'], // Keep original ID
@@ -2912,37 +3063,55 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                 // Update in database
                                 final id = record['id']?.toString() ?? '';
                                 if (id.isNotEmpty) {
-                                  await _dbHelper.updateRecord(
-                                    id,
-                                    updatedRecord,
-                                  );
-                                  await _loadRecords();
-
-                                  // Show AI Classification modal with loading spinner
-                                  if (context.mounted &&
-                                      classification != null) {
-                                    await _showPrenatalAIModal(
-                                      context,
-                                      classification,
+                                  try {
+                                    await _dbHelper.updateRecord(
+                                      id,
+                                      updatedRecord,
                                     );
-                                  }
+                                    await _loadRecords();
 
-                                  if (context.mounted) {
-                                    Navigator.pop(context);
-                                  }
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Prenatal record updated successfully!',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                    // Show AI Classification modal with loading spinner
+                                    if (context.mounted &&
+                                        classification != null) {
+                                      await _showPrenatalAIModal(
+                                        context,
+                                        classification,
+                                      );
+                                    }
+
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                    }
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Prenatal record updated successfully!',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
+                                          backgroundColor: Colors.green,
+                                          behavior: SnackBarBehavior.floating,
                                         ),
-                                        backgroundColor: Colors.green,
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
-                                    );
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Failed to update prenatal record: $e',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
+                                      );
+                                    }
                                   }
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -2978,6 +3147,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                         ),
                         const SizedBox(height: 16),
                       ],
+                      ),
                     ),
                   ),
                 ),
@@ -3103,6 +3273,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
     String? hintText,
     TextInputType? keyboardType,
     int maxLines = 1,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3116,10 +3287,11 @@ class _PrenatalPageState extends State<PrenatalPage> {
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
+          validator: validator,
           style: const TextStyle(
             color: Colors.white,
             fontSize: 14,
@@ -3778,9 +3950,21 @@ class _PrenatalPageState extends State<PrenatalPage> {
             onPressed: () async {
               final id = record['id']?.toString() ?? '';
               if (id.isNotEmpty) {
-                await _dbHelper.deleteRecord(id);
-                await _loadRecords();
-                if (context.mounted) Navigator.pop(context);
+                try {
+                  await _dbHelper.deleteRecord(id);
+                  await _loadRecords();
+                  if (context.mounted) Navigator.pop(context);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to delete prenatal record: $e'),
+                        backgroundColor: Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                }
               }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
@@ -5673,7 +5857,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
         .toList();
 
     // Delete from database
-    await _dbHelper.deleteRecords(idsToDelete);
+    final succeededIds = await _dbHelper.deleteRecords(idsToDelete);
+    final failedCount = idsToDelete.length - succeededIds.length;
 
     setState(() {
       _selectedIndices.clear();
@@ -5683,13 +5868,19 @@ class _PrenatalPageState extends State<PrenatalPage> {
     // Reload records
     await _loadRecords();
 
+    if (!mounted) return;
+    final message = failedCount == 0
+        ? 'Successfully deleted $count record(s)'
+        : succeededIds.isEmpty
+        ? 'Failed to delete $count record(s)'
+        : 'Deleted ${succeededIds.length} of $count record(s); $failedCount failed';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Successfully deleted $count record(s)',
+          message,
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.green,
+        backgroundColor: failedCount == 0 ? Colors.green : Colors.red,
         behavior: SnackBarBehavior.floating,
       ),
     );

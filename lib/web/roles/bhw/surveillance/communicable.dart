@@ -1531,6 +1531,23 @@ class _CommunicablePageState extends State<CommunicablePage> {
       text: patient['nextVisit'],
     );
 
+    final formKey = GlobalKey<FormState>();
+
+    String? requiredValidator(String? value) {
+      return (value == null || value.trim().isEmpty) ? 'Required' : null;
+    }
+
+    String? ageValidator(String? value) {
+      if (value == null || value.trim().isEmpty) {
+        return 'Required';
+      }
+      final age = int.tryParse(value.trim());
+      if (age == null || age < 0 || age > 130) {
+        return 'Enter a valid age (0-130)';
+      }
+      return null;
+    }
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -1592,101 +1609,110 @@ class _CommunicablePageState extends State<CommunicablePage> {
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Row 1: Patient Name and Age
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildEditTextField(
-                              'Patient Name',
-                              nameController,
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Row 1: Patient Name and Age
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildEditTextField(
+                                'Patient Name',
+                                nameController,
+                                validator: requiredValidator,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildEditTextField('Age', ageController),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      // Row 2: Gender and Condition
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildEditTextField(
-                              'Gender',
-                              genderController,
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildEditTextField(
+                                'Age',
+                                ageController,
+                                validator: ageValidator,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildEditTextField(
-                              'Condition',
-                              conditionController,
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // Row 2: Gender and Condition
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildEditTextField(
+                                'Gender',
+                                genderController,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      // Row 3: Status and Treatment
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildEditTextField(
-                              'Status',
-                              statusController,
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildEditTextField(
+                                'Condition',
+                                conditionController,
+                                validator: requiredValidator,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildEditTextField(
-                              'Treatment',
-                              treatmentController,
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // Row 3: Status and Treatment
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildEditTextField(
+                                'Status',
+                                statusController,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      // Row 4: Blood Pressure and Blood Sugar
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildEditTextField(
-                              'Blood Pressure',
-                              bloodPressureController,
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildEditTextField(
+                                'Treatment',
+                                treatmentController,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildEditTextField(
-                              'Blood Sugar',
-                              bloodSugarController,
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // Row 4: Blood Pressure and Blood Sugar
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildEditTextField(
+                                'Blood Pressure',
+                                bloodPressureController,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      // Row 5: Last Visit and Next Visit
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildEditTextField(
-                              'Last Visit',
-                              lastVisitController,
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildEditTextField(
+                                'Blood Sugar',
+                                bloodSugarController,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildEditTextField(
-                              'Next Visit',
-                              nextVisitController,
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // Row 5: Last Visit and Next Visit
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildEditTextField(
+                                'Last Visit',
+                                lastVisitController,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildEditTextField(
+                                'Next Visit',
+                                nextVisitController,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1721,10 +1747,12 @@ class _CommunicablePageState extends State<CommunicablePage> {
                     const SizedBox(width: 12),
                     ElevatedButton(
                       onPressed: () async {
+                        if (!formKey.currentState!.validate()) {
+                          return;
+                        }
                         // Update patient data
                         patient['patientName'] = nameController.text;
-                        patient['age'] =
-                            int.tryParse(ageController.text) ?? patient['age'];
+                        patient['age'] = int.parse(ageController.text.trim());
                         patient['gender'] = genderController.text;
                         patient['condition'] = conditionController.text;
                         patient['currentStatus'] = statusController.text;
@@ -1786,7 +1814,11 @@ class _CommunicablePageState extends State<CommunicablePage> {
     );
   }
 
-  Widget _buildEditTextField(String label, TextEditingController controller) {
+  Widget _buildEditTextField(
+    String label,
+    TextEditingController controller, {
+    String? Function(String?)? validator,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1800,8 +1832,9 @@ class _CommunicablePageState extends State<CommunicablePage> {
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
           controller: controller,
+          validator: validator,
           style: const TextStyle(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             fillColor: _darkDeepTeal.withValues(alpha: 0.8),

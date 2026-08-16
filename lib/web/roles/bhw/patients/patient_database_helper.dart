@@ -474,7 +474,7 @@ class PatientDatabaseHelper {
         return 1;
       } catch (e) {
         print('Error updating Firebase on web: $e');
-        return 0;
+        rethrow;
       }
     }
 
@@ -511,7 +511,7 @@ class PatientDatabaseHelper {
         return 1;
       } catch (e) {
         print('Error deleting from Firebase on web: $e');
-        return 0;
+        rethrow;
       }
     }
 
@@ -539,24 +539,20 @@ class PatientDatabaseHelper {
     return await db.delete('patient_records', where: 'id = ?', whereArgs: [id]);
   }
 
-  // Delete multiple records
-  Future<void> deleteRecords(List<String> ids) async {
-    // On web, delete directly from Firebase
-    if (kIsWeb) {
-      for (String id in ids) {
-        try {
-          await deleteRecord(id);
-        } catch (e) {
-          print('Error deleting from Firebase on web: $e');
-        }
-      }
-      return;
-    }
-
-    // On mobile, delete from local database
+  // Delete multiple records. Returns the ids that failed to delete so
+  // callers can report an accurate per-record success/failure summary
+  // instead of assuming the whole batch succeeded.
+  Future<List<String>> deleteRecords(List<String> ids) async {
+    final failedIds = <String>[];
     for (String id in ids) {
-      await deleteRecord(id);
+      try {
+        await deleteRecord(id);
+      } catch (e) {
+        print('Error deleting record $id: $e');
+        failedIds.add(id);
+      }
     }
+    return failedIds;
   }
 
   // Sync local data to Firebase

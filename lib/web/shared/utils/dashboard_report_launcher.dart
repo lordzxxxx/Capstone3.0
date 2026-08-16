@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
@@ -436,6 +437,22 @@ Future<_OverallReportSelection?> _showOverallSelectionDialog(
   final provinceController = TextEditingController();
 
   try {
+    // Pre-fill from the signed-in user's own profile so the header doesn't
+    // default to "Barangay Not Specified" when the report data is already
+    // correctly barangay-scoped -- still user-editable, never fabricated.
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      try {
+        final userDoc = await getFirestoreInstance()
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+        final data = userDoc.data() ?? const <String, dynamic>{};
+        barangayController.text = (data['barangay'] ?? '').toString().trim();
+      } catch (_) {}
+    }
+    if (!context.mounted) return null;
+
     return await showDialog<_OverallReportSelection>(
       context: context,
       builder: (dialogContext) {

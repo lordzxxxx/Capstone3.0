@@ -1784,10 +1784,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
 
     final headers = _rows.first.keys.toList();
     final csvBuffer = StringBuffer();
-    csvBuffer.writeln(headers.join(','));
+    csvBuffer.writeln(headers.map(_escapeCsvField).join(','));
     for (final r in _rows) {
       final line = headers
-          .map((h) => HtmlEscape().convert('${r[h] ?? ''}'))
+          .map((h) => _escapeCsvField('${r[h] ?? ''}'))
           .join(',');
       csvBuffer.writeln(line);
     }
@@ -1805,6 +1805,17 @@ class _ChoDashboardState extends State<ChoDashboard> {
         colorText: Colors.white,
       );
     }
+  }
+
+  // RFC 4180 CSV field escaping: quote any field containing a comma, quote,
+  // or newline, doubling embedded quotes. HtmlEscape() previously used here
+  // escaped <,>,&,quotes as HTML entities but never quoted commas/newlines,
+  // silently shifting columns for values like an address with a comma.
+  String _escapeCsvField(String value) {
+    final needsQuoting =
+        value.contains(',') || value.contains('"') || value.contains('\n');
+    if (!needsQuoting) return value;
+    return '"${value.replaceAll('"', '""')}"';
   }
 
   String _doctorName(Map<String, dynamic> doctor) {

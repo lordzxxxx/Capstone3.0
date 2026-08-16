@@ -2509,14 +2509,24 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     );
     if (selected == null) return;
     final id = (patient['id'] ?? patient['patientId'] ?? '').toString();
-    final updated = await _dbHelper.updateRecord(id, {
-      ...patient,
-      'status': 'Follow-up',
-      'followUpDate': selected.toIso8601String(),
-      'followUpCompleted': false,
-    });
-    if (!mounted) return;
-    if (updated > 0) await _loadPatients();
+    try {
+      await _dbHelper.updateRecord(id, {
+        ...patient,
+        'status': 'Follow-up',
+        'followUpDate': selected.toIso8601String(),
+        'followUpCompleted': false,
+      });
+      if (!mounted) return;
+      await _loadPatients();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not schedule follow-up: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _archivePatient(Map<String, dynamic> patient) async {
@@ -2546,12 +2556,23 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     );
     if (confirmed != true) return;
     final id = (patient['id'] ?? patient['patientId'] ?? '').toString();
-    final updated = await _dbHelper.updateRecord(id, {
-      ...patient,
-      'status': 'Inactive',
-      'archivedAt': DateTime.now().toIso8601String(),
-    });
-    if (updated > 0 && mounted) await _loadPatients();
+    try {
+      await _dbHelper.updateRecord(id, {
+        ...patient,
+        'status': 'Inactive',
+        'archivedAt': DateTime.now().toIso8601String(),
+      });
+      if (!mounted) return;
+      await _loadPatients();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not archive patient: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _showDeleteConfirmation(Map<String, dynamic> patient) {
@@ -2591,6 +2612,14 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       _loadPatients();
     } catch (e) {
       print('Error deleting patient: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting patient: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -4213,8 +4242,6 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   }
 
   void _deleteSelectedRecords() async {
-    final count = _selectedIndices.length;
-
     try {
       // Get the actual patient IDs from filtered patients
       final patientIds = _selectedIndices
@@ -4226,27 +4253,58 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           .whereType<String>()
           .toList();
 
-      // Delete from database
-      await _dbHelper.deleteRecords(patientIds);
+      // Delete from database, tracking any per-record failures
+      final failedIds = await _dbHelper.deleteRecords(patientIds);
 
-      // Reload the patient list
+      // Reload the patient list to reflect the actual database state
       await _loadPatients();
 
+      final failedCount = failedIds.length;
+      final succeededCount = patientIds.length - failedCount;
+
       setState(() {
-        _selectedIndices.clear();
-        _isSelectionMode = false;
+        if (failedIds.isEmpty) {
+          _selectedIndices.clear();
+          _isSelectionMode = false;
+        } else {
+          // Keep the still-undeleted records selected so the user can retry
+          // without having to re-select everything.
+          final retryIndices = _filteredPatients
+              .asMap()
+              .entries
+              .where((entry) => failedIds.contains(entry.value['id']))
+              .map((entry) => entry.key);
+          _selectedIndices
+            ..clear()
+            ..addAll(retryIndices);
+        }
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Successfully deleted $count patient(s)',
-            style: TextStyle(fontWeight: FontWeight.bold),
+      if (failedIds.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Successfully deleted $succeededCount patient(s)',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
           ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              succeededCount > 0
+                  ? 'Deleted $succeededCount of ${patientIds.length} patients; $failedCount failed'
+                  : 'Failed to delete $failedCount patient(s)',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } catch (e) {
       print('Error deleting patients: $e');
       ScaffoldMessenger.of(context).showSnackBar(

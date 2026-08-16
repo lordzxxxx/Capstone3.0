@@ -2527,8 +2527,6 @@ class _CheckUpPageState extends State<CheckUpPage> {
   }
 
   void _deleteSelectedRecords() async {
-    final count = _selectedIndices.length;
-
     // Get IDs of records to delete
     final idsToDelete = _selectedIndices
         .map(
@@ -2539,28 +2537,73 @@ class _CheckUpPageState extends State<CheckUpPage> {
         .whereType<String>()
         .toList();
 
-    // Delete from database
-    await _dbHelper.deleteRecords(idsToDelete);
+    try {
+      // Delete from database, tracking any per-record failures
+      final failedIds = await _dbHelper.deleteRecords(idsToDelete);
 
-    setState(() {
-      _selectedIndices.clear();
-      _isSelectionMode = false;
-    });
+      // Reload records to reflect the actual database state
+      await _loadRecords();
 
-    // Reload records
-    await _loadRecords();
+      final failedCount = failedIds.length;
+      final succeededCount = idsToDelete.length - failedCount;
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Successfully deleted $count record(s)',
-            style: TextStyle(fontWeight: FontWeight.bold),
+      if (mounted) {
+        setState(() {
+          if (failedIds.isEmpty) {
+            _selectedIndices.clear();
+            _isSelectionMode = false;
+          } else {
+            // Keep the still-undeleted records selected so the user can
+            // retry without having to re-select everything.
+            final retryIndices = _filteredRecords
+                .asMap()
+                .entries
+                .where((entry) => failedIds.contains(entry.value['id']))
+                .map((entry) => entry.key);
+            _selectedIndices
+              ..clear()
+              ..addAll(retryIndices);
+          }
+        });
+      }
+
+      if (mounted) {
+        if (failedIds.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Successfully deleted $succeededCount record(s)',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                succeededCount > 0
+                    ? 'Deleted $succeededCount of ${idsToDelete.length} records; $failedCount failed'
+                    : 'Failed to delete $failedCount record(s)',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error deleting records: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting records: $e'),
+            backgroundColor: Colors.red,
           ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+        );
+      }
     }
   }
 }

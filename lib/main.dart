@@ -120,6 +120,13 @@ const Set<String> _choAdminWebRoles = <String>{
 };
 const Set<String> _doctorWebRoles = <String>{'doctor'};
 
+// Local QA/dev only: --dart-define=USE_FIREBASE_EMULATOR=true redirects
+// Auth/Firestore to the local emulator suite. Defaults to false so a normal
+// `flutter run`/`flutter build` always targets the real Firebase project.
+const bool kUseFirebaseEmulator = bool.fromEnvironment(
+  'USE_FIREBASE_EMULATOR',
+);
+
 Widget _guardWebPage({
   required Set<String> allowedRoles,
   required Widget child,
@@ -192,6 +199,16 @@ Future<void> _initializeWebServices() async {
   } catch (e) {
     print('❌ [FIREBASE] Initialization failed: $e');
     rethrow;
+  }
+
+  // Local-only QA/dev hook: point Auth/Firestore at the Firebase emulator
+  // suite instead of production. Requires an explicit dart-define AND
+  // non-release mode, so a release build can never reach a local emulator
+  // even if the define were mistakenly left set.
+  if (kUseFirebaseEmulator && !kReleaseMode) {
+    await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+    getFirestoreInstance().useFirestoreEmulator('localhost', 8085);
+    print('🧪 [EMULATOR] Connected to local Auth/Firestore emulators');
   }
 
   await _restoreFirebaseAuthSession();
@@ -860,7 +877,9 @@ class _WebNotFoundPage extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
               FilledButton(
-                onPressed: () => Get.offAllNamed(WebRoutes.landing),
+                onPressed: () => Get.offAllNamed(
+                  kIsWeb ? WebRoutes.landing : MobileRoutes.landing,
+                ),
                 child: const Text('Return to landing page'),
               ),
             ],

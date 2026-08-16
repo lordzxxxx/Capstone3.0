@@ -3,8 +3,23 @@ import 'dart:convert';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:http/http.dart' as http;
 import 'package:mycapstone_project/firebase_helper.dart';
+
+// Mirrors lib/main.dart's kUseFirebaseEmulator flag. Declared separately
+// (rather than imported) to avoid a dependency on the app entrypoint; both
+// read the same --dart-define, so they always agree at compile time.
+const bool _kUseFirebaseEmulator = bool.fromEnvironment(
+  'USE_FIREBASE_EMULATOR',
+);
+
+Uri _firestoreRestUri(String path, Map<String, String> queryParameters) {
+  if (_kUseFirebaseEmulator && !kReleaseMode) {
+    return Uri.http('localhost:8085', path, queryParameters);
+  }
+  return Uri.https('firestore.googleapis.com', path, queryParameters);
+}
 
 class FirestoreRestDocument {
   const FirestoreRestDocument({required this.id, required this.fields});
@@ -23,8 +38,7 @@ class FirestoreRestReader {
     String documentId,
   ) async {
     final request = await _requestContext();
-    final uri = Uri.https(
-      'firestore.googleapis.com',
+    final uri = _firestoreRestUri(
       '/v1/projects/${request.projectId}/databases/$kFirestoreDatabaseId/documents/$collectionId/$documentId',
       {'key': request.apiKey},
     );
@@ -54,8 +68,7 @@ class FirestoreRestReader {
   }) async {
     final request = await _requestContext();
     final results = <FirestoreRestDocument>[];
-    final uri = Uri.https(
-      'firestore.googleapis.com',
+    final uri = _firestoreRestUri(
       '/v1/projects/${request.projectId}/databases/$kFirestoreDatabaseId/documents${parentDocumentPath.trim().isEmpty ? '' : '/${parentDocumentPath.trim()}'}:runQuery',
       {'key': request.apiKey},
     );

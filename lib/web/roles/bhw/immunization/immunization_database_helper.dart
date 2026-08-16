@@ -220,7 +220,7 @@ class ImmunizationDatabaseHelper {
         return 1;
       } catch (e) {
         print('Error updating Firebase on web: $e');
-        return 0;
+        rethrow;
       }
     }
 
@@ -260,7 +260,7 @@ class ImmunizationDatabaseHelper {
         return 1;
       } catch (e) {
         print('Error deleting from Firebase on web: $e');
-        return 0;
+        rethrow;
       }
     }
 
@@ -292,24 +292,38 @@ class ImmunizationDatabaseHelper {
     );
   }
 
-  // Delete multiple records
-  Future<void> deleteRecords(List<String> ids) async {
+  // Delete multiple records. Returns the ids that were actually deleted;
+  // any id missing from the result failed to delete.
+  Future<List<String>> deleteRecords(List<String> ids) async {
+    final succeededIds = <String>[];
+
     // On web, delete directly from Firebase
     if (kIsWeb) {
       for (String id in ids) {
         try {
-          await deleteRecord(id);
+          final result = await deleteRecord(id);
+          if (result > 0) {
+            succeededIds.add(id);
+          }
         } catch (e) {
           print('Error deleting from Firebase on web: $e');
         }
       }
-      return;
+      return succeededIds;
     }
 
     // On mobile, delete from local database
     for (String id in ids) {
-      await deleteRecord(id);
+      try {
+        final result = await deleteRecord(id);
+        if (result > 0) {
+          succeededIds.add(id);
+        }
+      } catch (e) {
+        print('Error deleting immunization record $id: $e');
+      }
     }
+    return succeededIds;
   }
 
   // Sync local data to Firebase
