@@ -14,7 +14,6 @@ import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet
 import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const Color _primaryAqua = AppDesign.blue;
-const Color _secondaryIceBlue = AppDesign.blueSoft;
 const Color _darkDeepTeal = AppDesign.page;
 const Color _mutedCoolGray = AppDesign.muted;
 const Color _lightOffWhite = AppDesign.ink;
@@ -1638,14 +1637,7 @@ class _NonCommunicableTable extends StatelessWidget {
   }
 
   Color _getAvatarColor(int index) {
-    final colors = [
-      AppDesign.nonCommunicable,
-      const Color(0xFF1E5A7A),
-      const Color(0xFFFF6B6B),
-      const Color(0xFF4ECDC4),
-      const Color(0xFFFFBE5B),
-      const Color(0xFF845EC2),
-    ];
+    final colors = AppDesign.chartPalette;
     return colors[index % colors.length];
   }
 

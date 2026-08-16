@@ -1700,14 +1700,7 @@ class _CommunicableTable extends StatelessWidget {
   }
 
   Color _getAvatarColor(int index) {
-    final colors = [
-      AppDesign.communicable,
-      const Color(0xFF1E5A7A),
-      const Color(0xFFFF6B6B),
-      const Color(0xFF4ECDC4),
-      const Color(0xFFFFBE5B),
-      const Color(0xFF845EC2),
-    ];
+    final colors = AppDesign.chartPalette;
     return colors[index % colors.length];
   }
 

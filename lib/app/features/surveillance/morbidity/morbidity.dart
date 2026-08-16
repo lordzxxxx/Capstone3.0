@@ -763,16 +763,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
                         ..._diseaseData.asMap().entries.map((entry) {
                           final index = entry.key;
                           final disease = entry.value;
-                          final colors = [
-                            _primaryAqua,
-                            _secondaryIceBlue,
-                            Color(0xFF64B5F6),
-                            Color(0xFF81C784),
-                            Color(0xFFFFB74D),
-                            Color(0xFFE57373),
-                            Color(0xFF9575CD),
-                          ];
-                          final color = colors[index % colors.length];
+                          final color =
+                              AppDesign.chartPalette[index %
+                                  AppDesign.chartPalette.length];
 
                           return Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1002,17 +995,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
       charts.Series(
         id: 'Disease',
         colorFn: (DiseaseData row, _) {
-          final colors = [
-            _primaryAqua,
-            _secondaryIceBlue,
-            Color(0xFF64B5F6),
-            Color(0xFF81C784),
-            Color(0xFFFFB74D),
-            Color(0xFFE57373),
-            Color(0xFF9575CD),
-          ];
           return charts.ColorUtil.fromDartColor(
-            colors[_diseaseData.indexOf(row) % colors.length],
+            AppDesign.chartPalette[_diseaseData.indexOf(row) %
+                AppDesign.chartPalette.length],
           );
         },
         domainFn: (DiseaseData disease, _) => disease.name,
@@ -1385,14 +1370,7 @@ class _MorbidityTableState extends State<_MorbidityTable> {
   }
 
   Color _getAvatarColor(int index) {
-    final colors = [
-      AppDesign.morbidity,
-      const Color(0xFF1E5A7A),
-      const Color(0xFFFF6B6B),
-      const Color(0xFF4ECDC4),
-      const Color(0xFFFFBE5B),
-      const Color(0xFF845EC2),
-    ];
+    final colors = AppDesign.chartPalette;
     return colors[index % colors.length];
   }
 
@@ -1985,11 +1963,7 @@ void _showMorbidityDetails(BuildContext context, Map<String, dynamic> record) {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_darkDeepTeal, _secondaryIceBlue],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: _secondaryIceBlue,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),

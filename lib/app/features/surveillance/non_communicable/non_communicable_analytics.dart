@@ -22,9 +22,7 @@ class _NonCommunicableAnalyticsPageState
     extends State<NonCommunicableAnalyticsPage> {
   final _database = DatabaseHelper.instance;
   List<Map<String, dynamic>> _records = [];
-  List<Map<String, dynamic>> _realRecords = [];
   bool _loading = true;
-  bool _demo = false;
 
   @override
   void initState() {
@@ -47,25 +45,11 @@ class _NonCommunicableAnalyticsPageState
       }).toList();
       if (!mounted) return;
       setState(() {
-        _realRecords = records;
-        _demo = records.isEmpty;
-        _records = records.isEmpty ? _demoRecords() : records;
+        _records = records;
       });
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  void _toggleDemo() {
-    setState(() {
-      if (_demo && _realRecords.isNotEmpty) {
-        _demo = false;
-        _records = _realRecords;
-      } else {
-        _demo = true;
-        _records = _demoRecords();
-      }
-    });
   }
 
   String _v(Map<String, dynamic> row, String key) =>
@@ -74,57 +58,6 @@ class _NonCommunicableAnalyticsPageState
   DateTime? _date(Map<String, dynamic> row) =>
       DateTime.tryParse(_v(row, 'datetime')) ??
       DateTime.tryParse(_v(row, 'date'));
-
-  List<Map<String, dynamic>> _demoRecords() {
-    final now = DateTime.now();
-    const diseases = [
-      'Hypertension',
-      'Diabetes Mellitus',
-      'Heart Disease',
-      'Chronic Kidney Disease',
-      'Asthma',
-    ];
-    const barangays = ['Central', 'San Isidro', 'Mabini', 'Rizal', 'Maligaya'];
-    const severity = ['Mild', 'Moderate', 'Moderate', 'Severe'];
-    const control = ['Controlled', 'Under Monitoring', 'Uncontrolled'];
-    const followup = ['Completed', 'Pending', 'Missed'];
-    const medication = ['Regular', 'Irregular', 'Stopped'];
-    const referral = [
-      'Managed at Barangay',
-      'Referred to Hospital',
-      'Emergency Referral',
-    ];
-    const risks = [
-      'Smoking',
-      'Obesity',
-      'Physical Inactivity',
-      'High Cholesterol',
-      'Alcohol Consumption',
-    ];
-    return List.generate(90, (index) {
-      final date = DateTime(now.year, now.month - index % 12, 2 + index % 24);
-      return <String, dynamic>{
-        'id': 'demo-ncd-$index',
-        'diseaseType': 'Non-Communicable',
-        'condition': diseases[index % diseases.length],
-        'patient': 'Demo Patient ${index + 1}',
-        'datetime': date.toIso8601String(),
-        'age': '${18 + (index * 5) % 68}',
-        'gender': index.isEven ? 'Male' : 'Female',
-        'barangay': barangays[index % barangays.length],
-        'address': '${barangays[index % barangays.length]}, Demo City',
-        'ai_severity': severity[index % severity.length],
-        'status': control[index % control.length],
-        'followupStatus': followup[index % followup.length],
-        'medicationAdherence': medication[index % medication.length],
-        'referralOutcome': referral[index % referral.length],
-        'riskFactors':
-            '${risks[index % risks.length]}, ${risks[(index + 2) % risks.length]}',
-        'bmi': '${20 + index % 17}',
-        'bloodPressure': index % 4 == 0 ? '150/95' : '125/80',
-      };
-    });
-  }
 
   String _month(DateTime date) {
     const names = [
@@ -317,14 +250,6 @@ class _NonCommunicableAnalyticsPageState
         ),
         actions: [
           IconButton(
-            onPressed: _toggleDemo,
-            tooltip: _demo ? 'Show real data' : 'Show dummy data',
-            icon: Icon(
-              _demo ? Icons.storage_rounded : Icons.science_rounded,
-              color: _demo ? const Color(0xFFFFB74D) : _accent,
-            ),
-          ),
-          IconButton(
             onPressed: _loading ? null : _load,
             tooltip: 'Refresh',
             icon: const Icon(Icons.refresh_rounded),
@@ -339,7 +264,6 @@ class _NonCommunicableAnalyticsPageState
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
                 children: [
-                  if (_demo) _notice(),
                   _line(
                     'Monthly Non-Communicable Disease Cases',
                     'New NCD cases during the last 12 months',
@@ -420,26 +344,6 @@ class _NonCommunicableAnalyticsPageState
   }
 
   Widget _gap() => const SizedBox(height: 16);
-
-  Widget _notice() => Container(
-    margin: const EdgeInsets.only(bottom: 16),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: const Color(0xFFFFB74D).withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(
-        color: const Color(0xFFFFB74D).withValues(alpha: 0.35),
-      ),
-    ),
-    child: const Text(
-      'Showing demo non-communicable disease data for analytics.',
-      style: TextStyle(
-        color: _foreground,
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
-  );
 
   List<MapEntry<String, int>> _entries(
     Map<String, int> data, {

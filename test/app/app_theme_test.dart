@@ -19,6 +19,20 @@ void main() {
     expect(AppDesign.page, const Color(0xFFF5F7FA));
   });
 
+  test('chart palette stays within the blue brand system', () {
+    final approved = <Color>[
+      AppDesign.blue,
+      AppDesign.navy,
+      AppDesign.skyBlue,
+      AppDesign.communicable,
+      AppDesign.nonCommunicable,
+      Color(0xFFB8C9DB),
+    ];
+
+    expect(AppDesign.chartPalette, isNotEmpty);
+    expect(AppDesign.chartPalette.every(approved.contains), isTrue);
+  });
+
   test('compound clinical statuses use stable risk-first semantics', () {
     expect(
       AppDesign.statusColors('Completed with adverse event').foreground,

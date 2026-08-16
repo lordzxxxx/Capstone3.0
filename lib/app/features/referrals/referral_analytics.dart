@@ -55,51 +55,6 @@ class _ReferralAnalyticsPageState extends State<ReferralAnalyticsPage> {
         .snapshots();
   }
 
-  List<Map<String, dynamic>> _demoRecords() {
-    final now = DateTime.now();
-    final statuses = [
-      'Completed',
-      'Completed',
-      'Pending',
-      'In Progress',
-      'Accepted',
-      'Under Review',
-    ];
-    final reasons = [
-      'Specialist Evaluation',
-      'Diagnostic Imaging',
-      'Emergency Care',
-      'Maternal Screening',
-      'Surgical Consultation',
-      'Follow-up Treatment',
-      'Laboratory Testing',
-    ];
-    final categories = [
-      'Specialist Care',
-      'Hospital Admission',
-      'Diagnostic & Lab',
-      'Maternal & Neonatal',
-      'Urgent Intervention',
-    ];
-
-    return List.generate(64, (index) {
-      final daysAgo = (index * 2) % 45;
-      final status = statuses[index % statuses.length];
-      final reason = reasons[index % reasons.length];
-      final category = categories[index % categories.length];
-
-      return {
-        'id': 'demo-ref-$index',
-        'status': status,
-        'referralReason': reason,
-        'referralCategorySummary': category,
-        'createdAt': now.subtract(Duration(days: daysAgo, hours: index % 12)),
-        'patientName': 'Patient ${index + 1}',
-        'barangay': 'Barangay ${((index % 5) + 1)}',
-      };
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,10 +87,7 @@ class _ReferralAnalyticsPageState extends State<ReferralAnalyticsPage> {
                           .toList(growable: false)
                     : <Map<String, dynamic>>[];
 
-                final records = docRecords.isEmpty
-                    ? _demoRecords()
-                    : docRecords;
-                return _ReferralAnalyticsBody(records: records);
+                return _ReferralAnalyticsBody(records: docRecords);
               },
             ),
     );
@@ -388,17 +340,8 @@ class _ReferralDistribution extends StatelessWidget {
                 final entry = item.value;
                 final ratio = total == 0 ? 0.0 : entry.value / total;
 
-                final palette = const <Color>[
-                  Color(0xFF2563EB), // Vibrant Blue
-                  Color(0xFF0D9488), // Teal
-                  Color(0xFF7C3AED), // Purple
-                  Color(0xFFD97706), // Amber / Orange
-                  Color(0xFF059669), // Emerald Green
-                  Color(0xFFDC2626), // Rose Red
-                  Color(0xFF0284C7), // Sky Blue
-                  Color(0xFFDB2777), // Pink
-                ];
-                final barColor = palette[index % palette.length];
+                final barColor = AppDesign
+                    .chartPalette[index % AppDesign.chartPalette.length];
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 14),

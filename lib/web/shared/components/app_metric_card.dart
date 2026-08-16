@@ -28,11 +28,11 @@ class AppMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = Container(
-      constraints: BoxConstraints(minHeight: compact ? 112 : 140),
+      constraints: BoxConstraints(minHeight: compact ? 104 : 124),
       padding: EdgeInsets.all(compact ? 14 : AppSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(compact ? 12 : 16),
+        borderRadius: BorderRadius.circular(compact ? 10 : 14),
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
@@ -56,10 +56,10 @@ class AppMetricCard extends StatelessWidget {
             child: Icon(
               icon,
               color: AppColors.primary,
-              size: compact ? 19 : 21,
+              size: compact ? 18 : 20,
             ),
           ),
-          SizedBox(height: compact ? AppSpacing.sm : AppSpacing.md),
+          SizedBox(height: compact ? 6 : AppSpacing.sm),
           Text(
             value,
             maxLines: 2,

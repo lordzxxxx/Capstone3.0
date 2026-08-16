@@ -20,9 +20,7 @@ class MortalityAnalyticsPage extends StatefulWidget {
 class _MortalityAnalyticsPageState extends State<MortalityAnalyticsPage> {
   final _database = MortalityDatabaseHelper.instance;
   List<Map<String, dynamic>> _records = [];
-  List<Map<String, dynamic>> _realRecords = [];
   bool _loading = true;
-  bool _demo = false;
 
   @override
   void initState() {
@@ -39,25 +37,11 @@ class _MortalityAnalyticsPageState extends State<MortalityAnalyticsPage> {
       final records = await _database.getAllRecords();
       if (!mounted) return;
       setState(() {
-        _realRecords = records;
-        _demo = records.isEmpty;
-        _records = records.isEmpty ? _demoRecords() : records;
+        _records = records;
       });
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  void _toggleDemo() {
-    setState(() {
-      if (_demo && _realRecords.isNotEmpty) {
-        _demo = false;
-        _records = _realRecords;
-      } else {
-        _demo = true;
-        _records = _demoRecords();
-      }
-    });
   }
 
   String _v(Map<String, dynamic> row, String key) =>
@@ -69,41 +53,6 @@ class _MortalityAnalyticsPageState extends State<MortalityAnalyticsPage> {
       if (value != null) return value;
     }
     return null;
-  }
-
-  List<Map<String, dynamic>> _demoRecords() {
-    final now = DateTime.now();
-    const causes = [
-      'Heart Disease',
-      'Stroke',
-      'Pneumonia',
-      'Cancer',
-      'Diabetes',
-    ];
-    const places = ['Hospital', 'Home', 'Health Center', 'Other'];
-    const barangays = ['Central', 'San Isidro', 'Mabini', 'Rizal', 'Maligaya'];
-    const populations = [8200, 6700, 5400, 7100, 4900];
-    return List.generate(72, (index) {
-      final date = DateTime(
-        now.year - index % 4,
-        1 + index % 12,
-        2 + index % 24,
-      );
-      final barangayIndex = index % barangays.length;
-      return <String, dynamic>{
-        'id': 'demo-mortality-$index',
-        'name': 'Demo Record ${index + 1}',
-        'date': date.toIso8601String(),
-        'dateReported': date.toIso8601String(),
-        'month': '${date.month}',
-        'age': '${index % 11 == 0 ? 0 : 8 + (index * 7) % 83}',
-        'gender': index.isEven ? 'Male' : 'Female',
-        'causeOfDeath': causes[index % causes.length],
-        'place': places[index % places.length],
-        'barangay': barangays[barangayIndex],
-        'population': populations[barangayIndex],
-      };
-    });
   }
 
   String _month(DateTime date) {
@@ -283,14 +232,6 @@ class _MortalityAnalyticsPageState extends State<MortalityAnalyticsPage> {
         ),
         actions: [
           IconButton(
-            onPressed: _toggleDemo,
-            tooltip: _demo ? 'Show real data' : 'Show dummy data',
-            icon: Icon(
-              _demo ? Icons.storage_rounded : Icons.science_rounded,
-              color: _demo ? const Color(0xFFFFB74D) : _accent,
-            ),
-          ),
-          IconButton(
             onPressed: _loading ? null : _load,
             tooltip: 'Refresh',
             icon: const Icon(Icons.refresh_rounded),
@@ -305,8 +246,6 @@ class _MortalityAnalyticsPageState extends State<MortalityAnalyticsPage> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
                 children: [
-                  if (_demo)
-                    _notice('Showing demo mortality data for analytics.'),
                   _line(
                     'Monthly Mortality Trend',
                     'Deaths recorded during the last 12 months',
@@ -376,26 +315,6 @@ class _MortalityAnalyticsPageState extends State<MortalityAnalyticsPage> {
   }
 
   Widget _gap() => const SizedBox(height: 16);
-
-  Widget _notice(String message) => Container(
-    margin: const EdgeInsets.only(bottom: 16),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: const Color(0xFFFFB74D).withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(
-        color: const Color(0xFFFFB74D).withValues(alpha: 0.35),
-      ),
-    ),
-    child: Text(
-      message,
-      style: const TextStyle(
-        color: _foreground,
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
-  );
 
   List<MapEntry<String, int>> _entries(
     Map<String, int> data, {

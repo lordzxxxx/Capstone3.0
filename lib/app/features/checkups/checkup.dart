@@ -18,7 +18,6 @@ import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const Color _primaryAqua = AppDesign.blue;
-const Color _secondaryIceBlue = AppDesign.blueSoft;
 const Color _darkDeepTeal = AppDesign.page;
 const Color _mutedCoolGray = AppDesign.muted;
 const Color _lightOffWhite = AppDesign.ink;
@@ -1958,14 +1957,7 @@ class _CheckUpTable extends StatelessWidget {
   }
 
   Color _getAvatarColor(int index) {
-    final colors = [
-      AppDesign.checkUp,
-      const Color(0xFF1E5A7A), // Ice Blue
-      const Color(0xFFFF6B6B), // Red
-      const Color(0xFF4ECDC4), // Teal
-      const Color(0xFFFFBE5B), // Gold
-      const Color(0xFF845EC2), // Purple
-    ];
+    final colors = AppDesign.chartPalette;
     return colors[index % colors.length];
   }
 

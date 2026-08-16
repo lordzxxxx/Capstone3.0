@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:mycapstone_project/app/core/services/mobile_sync_bootstrap.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/firebase_app_check_bootstrap.dart';
@@ -84,6 +85,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart'
     as web_mortality;
 import 'package:mycapstone_project/web/shared/utils/auth_guard_middleware.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_route_middleware.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_role_gate.dart';
 import 'package:mycapstone_project/web/roles/cho/dashboard/cho_dashboard.dart'
     as web_cho_dashboard;
 import 'package:mycapstone_project/web/roles/cho/portal/cho_module_workspace.dart'
@@ -103,8 +105,37 @@ import 'package:mycapstone_project/web/roles/cho/referrals/cho_referral_manageme
 import 'package:mycapstone_project/web/roles/bhw/referrals/referrals.dart'
     as web_doctor_referrals;
 
+const Set<String> _bhwWebRoles = <String>{'bhw'};
+const Set<String> _choWebRoles = <String>{
+  'cho',
+  'cho_super_admin',
+  'super_admin',
+  'admin',
+};
+const Set<String> _choAdminWebRoles = <String>{
+  'cho_super_admin',
+  'super_admin',
+  'admin',
+};
+const Set<String> _doctorWebRoles = <String>{'doctor'};
+
+Widget _guardWebPage({
+  required Set<String> allowedRoles,
+  required Widget child,
+}) {
+  return WebRoleGate(allowedRoles: allowedRoles, child: child);
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Keep browser URLs canonical and shareable. Without this, Flutter's
+  // default hash strategy turns `/bhw/prenatal?view=insights` into
+  // `/#/bhw/prenatal?view=insights`, which breaks direct links and makes
+  // refresh/deep-link handling inconsistent with the route definitions.
+  if (kIsWeb) {
+    usePathUrlStrategy();
+  }
 
   if (kIsWeb) {
     // Do not build Firebase-backed routes until Firebase Web has finished
@@ -275,8 +306,15 @@ class MyApp extends StatelessWidget {
                 page: () => const web_forgot.ForgotPassword(),
               ),
               GetPage(
+                name: WebRoutes.notFound,
+                page: () => const _WebNotFoundPage(),
+              ),
+              GetPage(
                 name: WebRoutes.bhwDashboard,
-                page: () => const web_bhw_dashboard.HomePage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _bhwWebRoles,
+                  child: const web_bhw_dashboard.HomePage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
@@ -286,179 +324,269 @@ class MyApp extends StatelessWidget {
                   final openRegistration =
                       arguments is Map &&
                       arguments['openRegistrationOnLoad'] == true;
-                  return web_bhw_patients.PatientRecordPage(
-                    openRegistrationOnLoad: openRegistration,
+                  return _guardWebPage(
+                    allowedRoles: _bhwWebRoles,
+                    child: web_bhw_patients.PatientRecordPage(
+                      openRegistrationOnLoad: openRegistration,
+                    ),
                   );
                 },
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.bhwCheckups,
-                page: () => const web_checkup.CheckUpPage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _bhwWebRoles,
+                  child: const web_checkup.CheckUpPage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.bhwPrenatal,
-                page: () => const web_prenatal.PrenatalPage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _bhwWebRoles,
+                  child: const web_prenatal.PrenatalPage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.bhwImmunization,
-                page: () => const web_bhw_immunization.ImmunizationPage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _bhwWebRoles,
+                  child: const web_bhw_immunization.ImmunizationPage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.bhwCommunicable,
-                page: () => const web_communicable.CommunicablePage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _bhwWebRoles,
+                  child: const web_communicable.CommunicablePage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.bhwNonCommunicable,
-                page: () => const web_noncommunicable.NonCommunicablePage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _bhwWebRoles,
+                  child: const web_noncommunicable.NonCommunicablePage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.bhwMorbidity,
-                page: () => const web_morbidity.MorbidityPage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _bhwWebRoles,
+                  child: const web_morbidity.MorbidityPage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.bhwMortality,
-                page: () => const web_mortality.MortalityPage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _bhwWebRoles,
+                  child: const web_mortality.MortalityPage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.bhwReferrals,
-                page: () => const web_referrals.BhwReferralPage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _bhwWebRoles,
+                  child: const web_referrals.BhwReferralPage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.bhwSummary,
-                page: () => const web_bhw_summary.HealthMetricsPage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _bhwWebRoles,
+                  child: const web_bhw_summary.HealthMetricsPage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.bhwAnalytics,
-                page: () => const web_bhw_analytics.BHWAnalyticsPage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _bhwWebRoles,
+                  child: const web_bhw_analytics.BHWAnalyticsPage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.bhwProfile,
-                page: () => const web_bhw_profile.BHWProfilePage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _bhwWebRoles,
+                  child: const web_bhw_profile.BHWProfilePage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choDashboard,
-                page: () => const web_cho_dashboard.ChoDashboard(),
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: const web_cho_dashboard.ChoDashboard(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choPatients,
-                page: () => web_cho_module.ChoModuleWorkspace(
-                  config: web_cho_config.ChoModuleConfig.patients,
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: web_cho_module.ChoModuleWorkspace(
+                    config: web_cho_config.ChoModuleConfig.patients,
+                  ),
                 ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choCheckups,
-                page: () => web_cho_module.ChoModuleWorkspace(
-                  config: web_cho_config.ChoModuleConfig.checkups,
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: web_cho_module.ChoModuleWorkspace(
+                    config: web_cho_config.ChoModuleConfig.checkups,
+                  ),
                 ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choPrenatal,
-                page: () => web_cho_module.ChoModuleWorkspace(
-                  config: web_cho_config.ChoModuleConfig.prenatal,
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: web_cho_module.ChoModuleWorkspace(
+                    config: web_cho_config.ChoModuleConfig.prenatal,
+                  ),
                 ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choImmunization,
-                page: () => web_cho_module.ChoModuleWorkspace(
-                  config: web_cho_config.ChoModuleConfig.immunization,
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: web_cho_module.ChoModuleWorkspace(
+                    config: web_cho_config.ChoModuleConfig.immunization,
+                  ),
                 ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choMorbidity,
-                page: () => web_cho_module.ChoModuleWorkspace(
-                  config: web_cho_config.ChoModuleConfig.morbidity,
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: web_cho_module.ChoModuleWorkspace(
+                    config: web_cho_config.ChoModuleConfig.morbidity,
+                  ),
                 ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choMortality,
-                page: () => web_cho_module.ChoModuleWorkspace(
-                  config: web_cho_config.ChoModuleConfig.mortality,
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: web_cho_module.ChoModuleWorkspace(
+                    config: web_cho_config.ChoModuleConfig.mortality,
+                  ),
                 ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choReferrals,
-                page: () => const web_cho_referrals.CHOPreferralPage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: const web_cho_referrals.CHOPreferralPage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choBhwManagement,
-                page: () => const web_cho_support.ChoSupportCenter(
-                  section: web_cho_support.ChoSupportSection.bhwManagement,
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: const web_cho_support.ChoSupportCenter(
+                    section: web_cho_support.ChoSupportSection.bhwManagement,
+                  ),
                 ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choReports,
-                page: () => const web_cho_analytics.AnalyticsPage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: const web_cho_analytics.AnalyticsPage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choAnnouncements,
-                page: () => const web_cho_support.ChoSupportCenter(
-                  section: web_cho_support.ChoSupportSection.announcements,
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: const web_cho_support.ChoSupportCenter(
+                    section: web_cho_support.ChoSupportSection.announcements,
+                  ),
                 ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choDataQuality,
-                page: () => const web_cho_support.ChoSupportCenter(
-                  section: web_cho_support.ChoSupportSection.dataQuality,
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: const web_cho_support.ChoSupportCenter(
+                    section: web_cho_support.ChoSupportSection.dataQuality,
+                  ),
                 ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choAuditLogs,
-                page: () => const web_cho_support.ChoSupportCenter(
-                  section: web_cho_support.ChoSupportSection.auditLogs,
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: const web_cho_support.ChoSupportCenter(
+                    section: web_cho_support.ChoSupportSection.auditLogs,
+                  ),
                 ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choNotifications,
-                page: () => const web_cho_support.ChoSupportCenter(
-                  section: web_cho_support.ChoSupportSection.notifications,
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: const web_cho_support.ChoSupportCenter(
+                    section: web_cho_support.ChoSupportSection.notifications,
+                  ),
                 ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choProfile,
-                page: () => const web_cho_support.ChoSupportCenter(
-                  section: web_cho_support.ChoSupportSection.profile,
+                page: () => _guardWebPage(
+                  allowedRoles: _choWebRoles,
+                  child: const web_cho_support.ChoSupportCenter(
+                    section: web_cho_support.ChoSupportSection.profile,
+                  ),
                 ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choSuperAdmin,
-                page: () => const web_cho_super_admin.ChoSuperAdminCenter(),
+                page: () => _guardWebPage(
+                  allowedRoles: _choAdminWebRoles,
+                  child: const web_cho_super_admin.ChoSuperAdminCenter(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.choRoleManager,
-                page: () => const web_cho_role_manager.RoleManager(),
+                page: () => _guardWebPage(
+                  allowedRoles: _choAdminWebRoles,
+                  child: const web_cho_role_manager.RoleManager(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
                 name: WebRoutes.doctorReferrals,
-                page: () => const web_doctor_referrals.ReferralsPage(),
+                page: () => _guardWebPage(
+                  allowedRoles: _doctorWebRoles,
+                  child: const web_doctor_referrals.ReferralsPage(),
+                ),
                 middlewares: [AuthGuardMiddleware()],
               ),
               // Compatibility aliases for existing links and bookmarks.

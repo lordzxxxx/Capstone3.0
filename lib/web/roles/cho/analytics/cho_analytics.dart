@@ -982,28 +982,6 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     );
   }
 
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: ChoColors.muted),
-      floatingLabelStyle: const TextStyle(color: _primaryAqua),
-      filled: true,
-      fillColor: _panelSurface,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: ChoColors.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: ChoColors.borderStrong),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _primaryAqua, width: 1.5),
-      ),
-    );
-  }
-
   Widget _buildSummaryGrid() {
     final diseaseCounts = _diseaseCounts().entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -1368,8 +1346,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                 label: Text(_showAllHeatmapEntries ? 'Show fewer' : 'Show all'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _primaryAqua,
+                  backgroundColor: ChoColors.surface,
                   side: const BorderSide(color: _primaryAqua),
-                  minimumSize: const Size(120, 48),
+                  minimumSize: const Size(120, 44),
                 ),
               ),
             ],
@@ -1392,7 +1371,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   crossAxisCount: columns,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  mainAxisExtent: columns == 1 ? 108 : 116,
+                  mainAxisExtent: columns == 1 ? 96 : 104,
                 ),
                 itemBuilder: (context, index) {
                   final entry = visibleHeatmap[index];
@@ -1401,9 +1380,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                       : (entry.caseCount / maxCases).clamp(0.0, 1.0);
                   return Container(
                     decoration: BoxDecoration(
-                      color: entry.caseCount > 0
-                          ? ChoColors.surface
-                          : ChoColors.surfaceAlt,
+                      color: ChoColors.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: ChoColors.border),
                     ),
@@ -1725,8 +1702,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   label: const Text('Clear filters'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _primaryAqua,
+                    backgroundColor: ChoColors.surface,
                     side: const BorderSide(color: _primaryAqua),
-                    minimumSize: const Size(132, 48),
+                    minimumSize: const Size(132, 44),
                   ),
                 ),
             ],
@@ -1831,6 +1809,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     label: const Text('Previous'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _primaryAqua,
+                      backgroundColor: ChoColors.surface,
                       side: const BorderSide(color: _primaryAqua),
                     ),
                   ),
@@ -1865,6 +1844,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     iconAlignment: IconAlignment.end,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _primaryAqua,
+                      backgroundColor: ChoColors.surface,
                       side: const BorderSide(color: _primaryAqua),
                     ),
                   ),

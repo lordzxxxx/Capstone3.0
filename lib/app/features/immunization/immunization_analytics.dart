@@ -21,9 +21,7 @@ class ImmunizationAnalyticsPage extends StatefulWidget {
 class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
   final _database = ImmunizationDatabaseHelper.instance;
   List<Map<String, dynamic>> _records = [];
-  List<Map<String, dynamic>> _realRecords = [];
   bool _loading = true;
-  bool _demo = false;
 
   @override
   void initState() {
@@ -40,25 +38,11 @@ class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
       final records = await _database.getAllRecords();
       if (!mounted) return;
       setState(() {
-        _realRecords = records;
-        _demo = records.isEmpty;
-        _records = records.isEmpty ? _demoRecords() : records;
+        _records = records;
       });
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  void _toggleDemoData() {
-    setState(() {
-      if (_demo && _realRecords.isNotEmpty) {
-        _demo = false;
-        _records = _realRecords;
-      } else {
-        _demo = true;
-        _records = _demoRecords();
-      }
-    });
   }
 
   String _v(Map<String, dynamic> record, String key) =>
@@ -89,43 +73,6 @@ class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
       'Dec',
     ];
     return names[date.month - 1];
-  }
-
-  List<Map<String, dynamic>> _demoRecords() {
-    final now = DateTime.now();
-    const vaccines = ['BCG', 'Hepatitis B', 'Pentavalent', 'OPV', 'MMR'];
-    const barangays = ['Central', 'San Isidro', 'Mabini', 'Rizal', 'Maligaya'];
-    const events = ['', '', '', 'Fever', 'Swelling', 'Rash'];
-    const statuses = [
-      'Fully Immunized',
-      'Fully Immunized',
-      'Partially Immunized',
-      'Not Yet Immunized',
-    ];
-    return List.generate(60, (index) {
-      final administered = DateTime(
-        now.year,
-        now.month - index % 6,
-        2 + index % 24,
-      );
-      final due = DateTime(
-        now.year,
-        now.month + (index % 5) - 2,
-        3 + index % 23,
-      );
-      return <String, dynamic>{
-        'id': 'demo-immunization-$index',
-        'patientName': 'Demo Child ${index + 1}',
-        'age': '${2 + index % 58} months',
-        'vaccine': vaccines[index % vaccines.length],
-        'administrationDate': administered.toIso8601String(),
-        'nextDoseDueDate': due.toIso8601String(),
-        'status': statuses[index % statuses.length],
-        'barangay': barangays[index % barangays.length],
-        'adverseEvents': events[index % events.length],
-        'stockRemaining': 35 + (index * 13) % 120,
-      };
-    });
   }
 
   Map<String, int> _countBy(String key, {String fallback = 'Not specified'}) {
@@ -328,14 +275,6 @@ class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
         ),
         actions: [
           IconButton(
-            onPressed: _toggleDemoData,
-            tooltip: _demo ? 'Show real data' : 'Show dummy data',
-            icon: Icon(
-              _demo ? Icons.storage_rounded : Icons.science_rounded,
-              color: _demo ? const Color(0xFFFFB74D) : _aqua,
-            ),
-          ),
-          IconButton(
             onPressed: _loading ? null : _load,
             tooltip: 'Refresh analytics',
             icon: const Icon(Icons.refresh_rounded),
@@ -350,7 +289,6 @@ class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
                 children: [
-                  if (_demo) _demoBanner(),
                   _linePanel(
                     'Monthly Immunizations Administered',
                     'Vaccination performance over the last six months',
@@ -424,22 +362,6 @@ class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
   }
 
   Widget _gap() => const SizedBox(height: 16);
-
-  Widget _demoBanner() => Container(
-    margin: const EdgeInsets.only(bottom: 16),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: const Color(0xFFFFB74D).withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(
-        color: const Color(0xFFFFB74D).withValues(alpha: 0.35),
-      ),
-    ),
-    child: const Text(
-      'Showing analytics demo data because no immunization records are available.',
-      style: TextStyle(color: _text, fontSize: 12, fontWeight: FontWeight.w600),
-    ),
-  );
 
   List<MapEntry<String, int>> _entries(Map<String, int> data) {
     final values = data.entries.where((entry) => entry.value > 0).toList();
