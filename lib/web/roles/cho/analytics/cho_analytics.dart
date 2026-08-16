@@ -724,20 +724,20 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: _primaryAqua))
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildHeader(),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
                   _buildFilters(),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
                   _buildSummaryGrid(),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
                   _buildTrendSection(),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
                   _buildHeatmapSection(),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
                   _buildRecentRecordsSection(),
                   const SizedBox(height: 20),
                   _buildExportSection(),
@@ -757,10 +757,10 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: _panelSurface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
       ),
       child: Wrap(
@@ -839,10 +839,10 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
   Widget _buildFilters() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _panelSurface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
       ),
       child: Wrap(
@@ -934,40 +934,49 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     final heatmap = _heatmapEntries();
     final topHeat = heatmap.isEmpty ? null : heatmap.first;
 
-    return GridView.count(
-      crossAxisCount: MediaQuery.of(context).size.width > 1200 ? 4 : 2,
-      crossAxisSpacing: 14,
-      mainAxisSpacing: 14,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.8,
-      children: [
-        _buildMetricCard(
-          'Visible records',
-          '${_records.length}',
-          Icons.dataset_outlined,
-        ),
-        _buildMetricCard(
-          'Tracked diseases',
-          '${diseaseCounts.length}',
-          Icons.coronavirus_outlined,
-        ),
-        _buildMetricCard(
-          'Leading disease',
-          diseaseCounts.isEmpty ? 'None' : diseaseCounts.first.key,
-          Icons.trending_up_outlined,
-        ),
-        _buildMetricCard(
-          'Highest-load barangay',
-          topHeat == null ? 'None' : topHeat.barangay,
-          Icons.location_city_outlined,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 1000
+            ? 4
+            : constraints.maxWidth >= 600
+            ? 2
+            : 1;
+        return GridView.count(
+          crossAxisCount: columns,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          childAspectRatio: columns == 1 ? 2.5 : 2.1,
+          children: [
+            _buildMetricCard(
+              'Visible records',
+              '${_records.length}',
+              Icons.dataset_outlined,
+            ),
+            _buildMetricCard(
+              'Tracked diseases',
+              '${diseaseCounts.length}',
+              Icons.coronavirus_outlined,
+            ),
+            _buildMetricCard(
+              'Leading disease',
+              diseaseCounts.isEmpty ? 'None' : diseaseCounts.first.key,
+              Icons.trending_up_outlined,
+            ),
+            _buildMetricCard(
+              'Highest-load barangay',
+              topHeat == null ? 'None' : topHeat.barangay,
+              Icons.location_city_outlined,
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildMetricCard(String label, String value, IconData icon) {
-    return AppMetricCard(label: label, value: value, icon: icon);
+    return AppMetricCard(label: label, value: value, icon: icon, compact: true);
   }
 
   Widget _buildTrendSection() {
@@ -979,10 +988,10 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       ..sort((a, b) => b.value.compareTo(a.value));
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _panelSurface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
       ),
       child: Column(
@@ -1001,7 +1010,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             'Track disease movement by $_selectedPeriodMode and compare burden between barangays.',
             style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72)),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
               final isStacked = constraints.maxWidth < 980;
@@ -1178,10 +1187,10 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
         .toList();
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _panelSurface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
       ),
       child: Column(
@@ -1200,76 +1209,85 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             'Color intensity reflects case concentration. Ranking combines total cases and severity score for rapid intervention planning.',
             style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72)),
           ),
-          const SizedBox(height: 20),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: heatmap.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.35,
-            ),
-            itemBuilder: (context, index) {
-              final entry = heatmap[index];
-              final intensity = entry.caseCount == 0
-                  ? 0.08
-                  : (entry.caseCount / maxCases).clamp(0.12, 1.0);
-              final color = Color.lerp(
-                ChoColors.ice.withValues(alpha: 0.15),
-                ChoColors.aqua.withValues(alpha: 0.90),
-                intensity,
-              )!;
-              return Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: _lightOffWhite.withValues(alpha: 0.08),
-                  ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 1000
+                  ? 4
+                  : constraints.maxWidth >= 600
+                  ? 2
+                  : 1;
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: heatmap.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columns,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: columns == 1 ? 2.8 : 1.35,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      entry.barangay,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                itemBuilder: (context, index) {
+                  final entry = heatmap[index];
+                  final intensity = entry.caseCount == 0
+                      ? 0.08
+                      : (entry.caseCount / maxCases).clamp(0.12, 1.0);
+                  final color = Color.lerp(
+                    ChoColors.ice.withValues(alpha: 0.15),
+                    ChoColors.aqua.withValues(alpha: 0.90),
+                    intensity,
+                  )!;
+                  return Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _lightOffWhite.withValues(alpha: 0.08),
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      entry.district,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.78),
-                        fontSize: 12,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          entry.barangay,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          entry.district,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.78),
+                            fontSize: 12,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${entry.caseCount} cases',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        Text(
+                          'Severity score ${entry.severityScore}',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.78),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
-                    const Spacer(),
-                    Text(
-                      '${entry.caseCount} cases',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                    Text(
-                      'Severity score ${entry.severityScore}',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.78),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),
@@ -1345,10 +1363,10 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     final firstVisible = _records.isEmpty ? 0 : startIndex + 1;
     final lastVisible = startIndex + pageRecords.length;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _panelSurface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
       ),
       child: Column(
@@ -1494,10 +1512,10 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
   Widget _buildExportSection() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _panelSurface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
       ),
       child: Wrap(

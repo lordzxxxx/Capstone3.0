@@ -261,7 +261,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
             .toList()
           ..sort();
     return ListView(
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 32),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
       children: [
         ChoPageHeader(
           title: widget.config.title,
@@ -276,7 +276,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         ChoViewTabs(
           tabs: widget.config.tabs,
           selectedIndex: _tab,
@@ -285,7 +285,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
             _page = 1;
           }),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         if (_tab == 0) _summary(docs) else _records(rows, barangays, statuses),
       ],
     );
@@ -352,12 +352,12 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
             ),
           ],
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: ChoColors.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: ChoColors.aqua.withValues(alpha: 0.18)),
           ),
           child: Column(
@@ -376,7 +376,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
                 'Current authorized-area distribution • live saved records',
                 style: TextStyle(color: ChoColors.muted, fontSize: 12),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
               if (ranked.isEmpty)
                 const ChoEmptyState(
                   title: 'No barangay information',
@@ -388,7 +388,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
                     .take(10)
                     .map(
                       (entry) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.only(bottom: 8),
                         child: Row(
                           children: [
                             SizedBox(
@@ -446,17 +446,17 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
     final end = (start + _rowsPerPage).clamp(0, rows.length);
     final pageRows = rows.sublist(start, end);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: ChoColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: ChoColors.aqua.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _filters(barangays, statuses),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           if (pageRows.isEmpty)
             ChoEmptyState(
               title: 'No matching records',
@@ -478,7 +478,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
                 ),
               ),
             ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(

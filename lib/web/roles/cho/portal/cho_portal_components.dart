@@ -44,7 +44,7 @@ class ChoPageHeader extends StatelessWidget {
       label: '$title page',
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: ChoColors.surface,
           borderRadius: BorderRadius.circular(12),
@@ -58,8 +58,8 @@ class ChoPageHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: ChoColors.aqua.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
@@ -69,7 +69,7 @@ class ChoPageHeader extends StatelessWidget {
                   ),
                   child: Icon(icon, color: ChoColors.aqua, size: 22),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,7 +88,7 @@ class ChoPageHeader extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: AppTheme.displayFontFamily,
                           color: ChoColors.text,
-                          fontSize: compact ? 23 : 28,
+                          fontSize: compact ? 22 : 26,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -116,7 +116,7 @@ class ChoPageHeader extends StatelessWidget {
                 children: [
                   heading,
                   if (actions.isNotEmpty) ...[
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 14),
                     actionBar,
                   ],
                 ],
@@ -125,7 +125,7 @@ class ChoPageHeader extends StatelessWidget {
             return Row(
               children: [
                 Expanded(child: heading),
-                const SizedBox(width: 20),
+                const SizedBox(width: 16),
                 actionBar,
               ],
             );
@@ -223,6 +223,7 @@ class ChoKpiCard extends StatelessWidget {
         icon: icon,
         supportingText: supportingText,
         onTap: onTap,
+        compact: true,
       ),
     );
   }
@@ -242,10 +243,10 @@ class ChoKpiGrid extends StatelessWidget {
             : constraints.maxWidth >= 700
             ? 2
             : 1;
-        final width = (constraints.maxWidth - (14 * (columns - 1))) / columns;
+        final width = (constraints.maxWidth - (12 * (columns - 1))) / columns;
         return Wrap(
-          spacing: 14,
-          runSpacing: 14,
+          spacing: 12,
+          runSpacing: 12,
           children: children
               .map((child) => SizedBox(width: width, child: child))
               .toList(growable: false),
@@ -344,11 +345,11 @@ class ChoEmptyState extends StatelessWidget {
         ? '${message.substring(0, 320)}…'
         : message;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 55, horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
       child: Center(
         child: Column(
           children: [
-            Icon(icon, color: ChoColors.muted, size: 48),
+            Icon(icon, color: ChoColors.muted, size: 40),
             const SizedBox(height: 14),
             Text(
               title,

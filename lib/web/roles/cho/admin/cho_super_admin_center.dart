@@ -15,14 +15,16 @@ import 'package:mycapstone_project/web/shared/widgets/barangay_logo_image.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:universal_html/html.dart' as html;
 
 const Color _primaryAqua = AppColors.primary;
-const Color _darkDeepTeal = AppColors.backgroundDark;
-const Color _lightOffWhite = AppColors.textOnDark;
-const Color _panelSurface = AppColors.surfaceDark;
-const Color _sidebarDark = AppColors.backgroundDark;
-const Color _mutedCoolGray = AppColors.textOnDarkMuted;
+// Super-admin uses the same light CHO content surfaces as the other CHO
+// workspaces. The shared navy remains reserved for navigation chrome.
+const Color _lightOffWhite = AppColors.textPrimary;
+const Color _panelSurface = AppColors.surfaceLight;
+const Color _sidebarDark = AppColors.surfaceSubtle;
+const Color _mutedCoolGray = AppColors.textSecondary;
 
 class _SelectedBrandingFile {
   final Uint8List bytes;
@@ -1065,22 +1067,22 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
       case 'disabled':
-        return Colors.redAccent;
+        return AppColors.error;
       case 'pending':
-        return Colors.orangeAccent;
+        return AppColors.warning;
       default:
-        return Colors.greenAccent;
+        return AppColors.success;
     }
   }
 
   Color _approvalColor(String status) {
     switch (status.toLowerCase()) {
       case 'approved':
-        return Colors.greenAccent;
+        return AppColors.success;
       case 'rejected':
-        return Colors.redAccent;
+        return AppColors.error;
       default:
-        return Colors.orangeAccent;
+        return AppColors.warning;
     }
   }
 
@@ -1096,11 +1098,11 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     final requiresBarangay = role == 'BHW';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _panelSurface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
       ),
       child: Column(
@@ -1256,8 +1258,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                       : 'Approve user',
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.greenAccent,
-                  side: const BorderSide(color: Colors.greenAccent),
+                  foregroundColor: AppColors.success,
+                  side: const BorderSide(color: AppColors.success),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 16,
@@ -1317,10 +1319,10 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
         };
 
         return Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: _panelSurface,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
           ),
           child: Column(
@@ -1339,10 +1341,10 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                 'System-embedded registry used as the single source of truth for onboarding, logo mapping, e-sign metadata, and barangay asset governance.',
                 style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72)),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
               ...grouped.entries.map((entry) {
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 18),
+                  padding: const EdgeInsets.only(bottom: 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1369,7 +1371,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
                               color: _sidebarDark,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: _primaryAqua.withValues(alpha: 0.14),
                               ),
@@ -1415,8 +1417,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                                                 : 'Placeholder active',
                                             style: TextStyle(
                                               color: profile.hasCustomLogo
-                                                  ? Colors.greenAccent
-                                                  : Colors.orangeAccent,
+                                                  ? AppColors.success
+                                                  : AppColors.warning,
                                               fontSize: 12,
                                               fontWeight: FontWeight.w700,
                                             ),
@@ -1509,10 +1511,11 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     }
 
     return Scaffold(
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: ChoColors.background,
       appBar: AppBar(
         title: const Text('CHO Super Admin Center'),
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppColors.backgroundDark,
+        foregroundColor: AppColors.textOnDark,
         actions: [
           TextButton.icon(
             onPressed: () {
@@ -1534,7 +1537,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
             return Center(
               child: Text(
                 'Failed to load users: ${snapshot.error}',
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: ChoColors.text),
               ),
             );
           }
@@ -1559,7 +1562,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
           }).length;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1570,45 +1573,52 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                     fontSize: 16,
                   ),
                 ),
-                const SizedBox(height: 24),
-                GridView.count(
-                  crossAxisCount: MediaQuery.of(context).size.width > 1200
-                      ? 4
-                      : 2,
-                  crossAxisSpacing: 14,
-                  mainAxisSpacing: 14,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  childAspectRatio: 1.8,
-                  children: [
-                    _buildStatCard(
-                      label: 'Registered users',
-                      value: docs.length.toString(),
-                      icon: Icons.groups_2_outlined,
-                    ),
-                    _buildStatCard(
-                      label: 'BHW accounts',
-                      value: activeBhw.toString(),
-                      icon: Icons.health_and_safety_outlined,
-                    ),
-                    _buildStatCard(
-                      label: 'CHO governance roles',
-                      value: choScoped.toString(),
-                      icon: Icons.admin_panel_settings_outlined,
-                    ),
-                    _buildStatCard(
-                      label: 'Pending approvals',
-                      value: pendingApprovals.toString(),
-                      icon: Icons.rule_folder_outlined,
-                    ),
-                  ],
+                const SizedBox(height: 14),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final columns = constraints.maxWidth >= 1000
+                        ? 4
+                        : constraints.maxWidth >= 600
+                        ? 2
+                        : 1;
+                    return GridView.count(
+                      crossAxisCount: columns,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      childAspectRatio: columns == 1 ? 3.2 : 1.8,
+                      children: [
+                        _buildStatCard(
+                          label: 'Registered users',
+                          value: docs.length.toString(),
+                          icon: Icons.groups_2_outlined,
+                        ),
+                        _buildStatCard(
+                          label: 'BHW accounts',
+                          value: activeBhw.toString(),
+                          icon: Icons.health_and_safety_outlined,
+                        ),
+                        _buildStatCard(
+                          label: 'CHO governance roles',
+                          value: choScoped.toString(),
+                          icon: Icons.admin_panel_settings_outlined,
+                        ),
+                        _buildStatCard(
+                          label: 'Pending approvals',
+                          value: pendingApprovals.toString(),
+                          icon: Icons.rule_folder_outlined,
+                        ),
+                      ],
+                    );
+                  },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: _panelSurface,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: _primaryAqua.withValues(alpha: 0.16),
                     ),
@@ -1776,7 +1786,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 14),
                       Text(
                         '${filteredDocs.length} user${filteredDocs.length == 1 ? '' : 's'} matched',
                         style: TextStyle(
@@ -1788,7 +1798,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 _buildBarangayDirectory(docs),
               ],
             ),

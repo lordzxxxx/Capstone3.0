@@ -2269,16 +2269,16 @@ class _ChoDashboardState extends State<ChoDashboard> {
         : ((_referralsCompleted / _referralReports) * 100).round();
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: _panelTeal,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.22)),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -2321,7 +2321,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               const Text(
                 'City Health Operations\nCommand Center',
                 style: TextStyle(
@@ -2341,7 +2341,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   height: 1.5,
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
@@ -2369,10 +2369,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
 
           final snapshot = Container(
             constraints: const BoxConstraints(maxWidth: 420),
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.055),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.black.withValues(alpha: 0.10)),
             ),
             child: Column(
@@ -2384,7 +2384,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       allSynced
                           ? Icons.cloud_done_rounded
                           : Icons.cloud_sync_rounded,
-                      color: allSynced ? Colors.greenAccent : _primaryAqua,
+                      color: allSynced ? AppColors.success : _primaryAqua,
                       size: 20,
                     ),
                     const SizedBox(width: 9),
@@ -2402,21 +2402,21 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 12),
                 _buildHeroMetric(
                   'Active population view',
                   _safeMetricText(_totalPatients),
                   'patient records',
                   _primaryAqua,
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 _buildHeroMetric(
                   'Referral completion',
                   '$completionRate%',
                   '${_safeMetricText(_referralsCompleted)} completed cases',
                   AppColors.success,
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 _buildHeroMetric(
                   'Clinical attention',
                   _safeMetricText(_highRiskPatients + _followUpPatients),
@@ -2432,7 +2432,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 overview,
-                const SizedBox(height: 20),
+                const SizedBox(height: 14),
                 snapshot,
               ],
             );
@@ -2949,16 +2949,16 @@ class _ChoDashboardState extends State<ChoDashboard> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: ChoColors.surface,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ChoColors.border),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -2971,18 +2971,18 @@ class _ChoDashboardState extends State<ChoDashboard> {
               final header = Row(
                 children: <Widget>[
                   Container(
-                    width: 48,
-                    height: 48,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
                       color: _primaryAqua,
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       Icons.diversity_3_outlined,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3059,14 +3059,14 @@ class _ChoDashboardState extends State<ChoDashboard> {
               );
             },
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           if (selectedBarangay == null)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 38, horizontal: 20),
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
               decoration: BoxDecoration(
                 color: ChoColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: ChoColors.border),
               ),
               child: Column(
@@ -3271,7 +3271,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
   }) {
     return Container(
       height: 300,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: ChoColors.surfaceAlt,
         borderRadius: BorderRadius.circular(17),
@@ -4018,19 +4018,19 @@ class _ChoDashboardState extends State<ChoDashboard> {
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 9),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: color.withValues(alpha: 0.18)),
             ),
             child: Icon(icon, color: color, size: 22),
@@ -6069,7 +6069,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         elevation: 0,
       ),
       body: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: ListView(
           children: [
             _buildExecutiveHero(),
@@ -6135,7 +6135,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               ),
             ),
             _buildAnalyticsFilterBar(),
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             const Text(
               'Program Performance Snapshot',
               style: TextStyle(
@@ -6221,13 +6221,13 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 );
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
             _buildBarangayDemographicsExplorer(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
             _buildDoctorAvailabilityPlanner(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
             _buildPowerBiCharts(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
             const Text(
               'Population Follow-up Queue',
               style: TextStyle(

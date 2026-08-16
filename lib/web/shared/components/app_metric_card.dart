@@ -28,17 +28,17 @@ class AppMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = Container(
-      constraints: BoxConstraints(minHeight: compact ? 124 : 140),
-      padding: EdgeInsets.all(compact ? AppSpacing.md : AppSpacing.lg),
+      constraints: BoxConstraints(minHeight: compact ? 112 : 140),
+      padding: EdgeInsets.all(compact ? 14 : AppSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(compact ? 12 : 16),
         border: Border.all(color: AppColors.border),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x120B1F3A),
-            blurRadius: 14,
-            offset: Offset(0, 5),
+            color: const Color(0x120B1F3A),
+            blurRadius: compact ? 10 : 14,
+            offset: Offset(0, compact ? 3 : 5),
           ),
         ],
       ),

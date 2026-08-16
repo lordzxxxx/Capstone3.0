@@ -6,11 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
+import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
+import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
-
-const Color _primaryAqua = Color(0xFF2F80ED);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
 
 class RoleManager extends StatefulWidget {
   const RoleManager({super.key});
@@ -115,28 +113,39 @@ class _RoleManagerState extends State<RoleManager> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Role Manager'),
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: ChoColors.navBackground,
+        foregroundColor: ChoColors.navText,
       ),
-      backgroundColor: _darkDeepTeal,
+      backgroundColor: ChoColors.background,
       body: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _darkDeepTeal,
-                borderRadius: BorderRadius.circular(8),
+                color: ChoColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ChoColors.border),
               ),
-              child: Row(
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  const Expanded(
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 360),
                     child: Text(
                       'Manage user roles (writes to users/{uid}.role)',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(
+                        color: ChoColors.text,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  ElevatedButton.icon(
+                  FilledButton.icon(
                     onPressed: () async {
                       final email = await _promptForEmail(context);
                       if (email != null && email.isNotEmpty) {
@@ -145,14 +154,12 @@ class _RoleManagerState extends State<RoleManager> {
                     },
                     icon: const Icon(Icons.person_add),
                     label: const Text('Invite'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _primaryAqua,
-                    ),
+                    style: AppButtonStyles.primary(),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: getFirestoreInstance()
@@ -180,7 +187,13 @@ class _RoleManagerState extends State<RoleManager> {
                       final role = (data['role'] ?? '').toString();
                       String selected = role.isNotEmpty ? role : 'none';
                       return Card(
-                        color: Colors.white,
+                        color: ChoColors.surface,
+                        elevation: 0,
+                        margin: const EdgeInsets.only(bottom: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: ChoColors.border),
+                        ),
                         child: ListTile(
                           title: Text(email.toString()),
                           subtitle: Text('Role: $selected'),
@@ -191,6 +204,8 @@ class _RoleManagerState extends State<RoleManager> {
                               children: [
                                 DropdownButton<String>(
                                   value: selected,
+                                  dropdownColor: ChoColors.surface,
+                                  style: const TextStyle(color: ChoColors.text),
                                   items: const [
                                     DropdownMenuItem(
                                       value: 'none',
@@ -219,6 +234,7 @@ class _RoleManagerState extends State<RoleManager> {
                                 const SizedBox(width: 8),
                                 IconButton(
                                   icon: const Icon(Icons.delete_outline),
+                                  color: ChoColors.muted,
                                   onPressed: () async {
                                     // remove role field only
                                     await getFirestoreInstance()

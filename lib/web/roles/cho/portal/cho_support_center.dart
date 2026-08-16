@@ -143,7 +143,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
               onRetry: _verifyAccess,
             )
           : ListView(
-              padding: const EdgeInsets.fromLTRB(18, 12, 18, 32),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
               children: [
                 ChoPageHeader(
                   title: _title,
@@ -158,11 +158,11 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                       ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 if (widget.section != ChoSupportSection.profile &&
                     widget.section != ChoSupportSection.dataQuality)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.only(bottom: 12),
                     child: SizedBox(
                       width: 420,
                       child: TextField(
@@ -196,7 +196,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                     selectedIndex: _bhwTab,
                     onChanged: (value) => setState(() => _bhwTab = value),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                 ],
                 if (_error != null)
                   ChoErrorState(message: _error!, onRetry: _verifyAccess)
@@ -280,7 +280,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
         return Container(
           decoration: BoxDecoration(
             color: ChoColors.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: ChoColors.aqua.withValues(alpha: 0.18)),
           ),
           child: Column(
@@ -380,7 +380,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             if (docs.isEmpty)
               const ChoEmptyState(
                 title: 'No BHW accounts found',
@@ -390,7 +390,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
               Container(
                 decoration: BoxDecoration(
                   color: ChoColors.surface,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   children: docs.map((doc) {
@@ -526,7 +526,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
       builder: (dialogContext) => Dialog(
         backgroundColor: ChoColors.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: ChoColors.border),
         ),
         child: ConstrainedBox(
@@ -537,7 +537,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 22, 14, 16),
+                padding: const EdgeInsets.fromLTRB(18, 16, 12, 12),
                 child: Row(
                   children: [
                     const CircleAvatar(
@@ -581,7 +581,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
               const Divider(height: 1, color: ChoColors.border),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(18),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1179,20 +1179,20 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
           ),
         ];
         return Container(
-          padding: const EdgeInsets.all(22),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: ChoColors.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const CircleAvatar(
-                radius: 34,
+                radius: 26,
                 backgroundColor: ChoColors.surfaceAlt,
-                child: Icon(Icons.person, color: ChoColors.aqua, size: 34),
+                child: Icon(Icons.person, color: ChoColors.aqua, size: 28),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
               ...fields.map(
                 (field) => ListTile(
                   contentPadding: EdgeInsets.zero,

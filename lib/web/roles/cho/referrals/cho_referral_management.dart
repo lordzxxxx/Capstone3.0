@@ -137,7 +137,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
     final active = records.where((record) => record.isActive).toList();
     final completed = records.where((record) => record.isClosed).toList();
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -155,13 +155,13 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           ChoViewTabs(
             tabs: _tabs,
             selectedIndex: _view,
             onChanged: (value) => setState(() => _view = value),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           switch (_view) {
             0 => _insights(records),
             1 => _queue(
@@ -239,7 +239,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
             ),
           ],
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
         _chartGrid([
           _ChartPanel(
             title: 'Referral Trend',
@@ -1089,11 +1089,11 @@ class _ChartPanel extends StatelessWidget {
   final Widget child;
   @override
   Widget build(BuildContext context) => Container(
-    height: 330,
-    padding: const EdgeInsets.all(18),
+    height: 300,
+    padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
       color: ChoColors.surface,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(12),
       border: Border.all(color: ChoColors.aqua.withValues(alpha: 0.16)),
     ),
     child: Column(
