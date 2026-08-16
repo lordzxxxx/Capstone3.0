@@ -1669,16 +1669,17 @@ class _HomePageState extends State<HomePage> {
         return;
       }
 
-      // Generate color for each symptom - Enhanced vibrant palette
+      // Keep symptom series within the shared blue-based chart palette so the
+      // dashboard remains readable and consistent with the other modules.
       final colors = [
-        const Color(0xFF00D4FF), // bright cyan
-        const Color(0xFFFF4757), // vibrant red
-        const Color(0xFF2ED8B6), // bright teal
-        const Color(0xFFFFC107), // golden yellow
-        const Color(0xFF00E5A0), // bright mint
-        const Color(0xFF9D84FF), // vibrant lavender
-        const Color(0xFFFF6B9D), // bright pink
-        const Color(0xFF1FB871), // bright green
+        _primaryAqua,
+        _secondaryIceBlue,
+        const Color(0xFF5B8CC9),
+        const Color(0xFF1F5A91),
+        const Color(0xFF8FAFD6),
+        const Color(0xFF6D99C7),
+        const Color(0xFFB8C9DB),
+        const Color(0xFFD6E3F0),
       ];
 
       final symptomColors = <String, Color>{};
@@ -4064,10 +4065,10 @@ class _HomePageState extends State<HomePage> {
     final maxY = (maxSource <= 0 ? 5.0 : maxSource.toDouble()) * 1.2;
     final interval = ((maxY / 4).clamp(1, maxY)).toDouble();
     const seriesColors = <Color>[
-      Colors.redAccent,
-      Colors.orangeAccent,
-      Colors.lightGreenAccent,
-      Colors.cyanAccent,
+      _primaryAqua,
+      _secondaryIceBlue,
+      Color(0xFF5B8CC9),
+      Color(0xFF8FAFD6),
     ];
     final Widget chartContent = _isLoadingMorbidityTrends
         ? Center(
@@ -4078,10 +4079,7 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 10),
                 Text(
                   'Syncing disease trends...',
-                  style: TextStyle(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: _mutedCoolGray, fontSize: 12),
                 ),
               ],
             ),
@@ -4090,10 +4088,7 @@ class _HomePageState extends State<HomePage> {
         ? Center(
             child: Text(
               'No disease trend data yet',
-              style: TextStyle(
-                color: Colors.black.withValues(alpha: 0.65),
-                fontSize: 12,
-              ),
+              style: TextStyle(color: _mutedCoolGray, fontSize: 12),
             ),
           )
         : LineChart(
@@ -4107,7 +4102,7 @@ class _HomePageState extends State<HomePage> {
                 drawVerticalLine: false,
                 horizontalInterval: interval,
                 getDrawingHorizontalLine: (_) => FlLine(
-                  color: Colors.black.withValues(alpha: 0.10),
+                  color: _secondaryIceBlue.withValues(alpha: 0.16),
                   strokeWidth: 1,
                 ),
               ),
@@ -4142,10 +4137,7 @@ class _HomePageState extends State<HomePage> {
                     interval: interval,
                     getTitlesWidget: (value, _) => Text(
                       value.toInt().toString(),
-                      style: TextStyle(
-                        color: Colors.black.withValues(alpha: 0.65),
-                        fontSize: 10,
-                      ),
+                      style: TextStyle(color: _mutedCoolGray, fontSize: 10),
                     ),
                   ),
                 ),
@@ -4166,10 +4158,7 @@ class _HomePageState extends State<HomePage> {
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           monthLabels[idx],
-                          style: TextStyle(
-                            color: Colors.black.withValues(alpha: 0.72),
-                            fontSize: 10,
-                          ),
+                          style: TextStyle(color: _mutedCoolGray, fontSize: 10),
                         ),
                       );
                     },
@@ -4220,7 +4209,7 @@ class _HomePageState extends State<HomePage> {
             height: 320,
             padding: const EdgeInsets.fromLTRB(10, 14, 14, 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF0B1F3A),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _primaryAqua.withValues(alpha: 0.22),
@@ -4254,10 +4243,7 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(width: 6),
                     Text(
                       shortLabel,
-                      style: TextStyle(
-                        color: Colors.black.withValues(alpha: 0.75),
-                        fontSize: 10,
-                      ),
+                      style: TextStyle(color: _mutedCoolGray, fontSize: 10),
                     ),
                   ],
                 );
@@ -5474,7 +5460,11 @@ class _HomePageState extends State<HomePage> {
                 ..._topDiagnoses.take(3).toList().asMap().entries.map((e) {
                   final index = e.key;
                   final diagnosis = e.value;
-                  final colors = [_primaryAqua, _accentPurple, _accentGreen];
+                  final colors = <Color>[
+                    _primaryAqua,
+                    _secondaryIceBlue,
+                    const Color(0xFF5B8CC9),
+                  ];
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(

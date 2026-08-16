@@ -2,9 +2,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart' show RouteSettings;
 import 'package:get/get.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 
 /// Blocks direct/URL navigation into a protected web route when no Firebase
-/// user session exists, redirecting to the landing page instead.
+/// user session exists, redirecting to the login page instead.
 ///
 /// This is a navigation-level convenience, not a security boundary: the
 /// real boundary is Firestore/Storage security rules, which already deny
@@ -29,6 +30,6 @@ class AuthGuardMiddleware extends GetMiddleware {
     if (signedIn) {
       return null;
     }
-    return const RouteSettings(name: '/');
+    return const RouteSettings(name: WebRoutes.login);
   }
 }

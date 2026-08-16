@@ -40,6 +40,17 @@ const Color _darkDeepTeal = Color(0xFF071A33);
 const Color _lightOffWhite = Color(0xFF0B1F3A);
 const Color _mutedCoolGray = Color(0xFF4B6075);
 const Color _sidebarDark = Color(0xFF0D274D);
+const List<Color> _mortalityChartPalette = <Color>[
+  _primaryAqua,
+  _secondaryIceBlue,
+  Color(0xFF5B8CC9),
+  Color(0xFF1F5A91),
+  Color(0xFF8FAFD6),
+  Color(0xFFB8C9DB),
+];
+
+charts.Color _toChartsColor(Color color) =>
+    charts.Color(r: color.red, g: color.green, b: color.blue, a: color.alpha);
 
 class MortalityPage extends StatefulWidget {
   const MortalityPage({super.key, this.initialPatient});
@@ -1766,44 +1777,9 @@ class _MortalityPageState extends State<MortalityPage> {
                               data: _causeData,
                               labelAccessorFn: (CauseData data, _) => '',
                               colorFn: (CauseData data, int? index) {
-                                final colors = [
-                                  charts.Color(
-                                    r: 255,
-                                    g: 87,
-                                    b: 34,
-                                    a: 255,
-                                  ), // Deep orange
-                                  charts.Color(
-                                    r: 63,
-                                    g: 81,
-                                    b: 181,
-                                    a: 255,
-                                  ), // Indigo
-                                  charts.Color(
-                                    r: 76,
-                                    g: 175,
-                                    b: 80,
-                                    a: 255,
-                                  ), // Green
-                                  charts.Color(
-                                    r: 233,
-                                    g: 30,
-                                    b: 99,
-                                    a: 255,
-                                  ), // Pink
-                                  charts.Color(
-                                    r: 0,
-                                    g: 188,
-                                    b: 212,
-                                    a: 255,
-                                  ), // Cyan
-                                  charts.Color(
-                                    r: 156,
-                                    g: 39,
-                                    b: 176,
-                                    a: 255,
-                                  ), // Purple
-                                ];
+                                final colors = _mortalityChartPalette
+                                    .map(_toChartsColor)
+                                    .toList(growable: false);
                                 return colors[(index ?? 0) % colors.length];
                               },
                             ),
@@ -1844,14 +1820,6 @@ class _MortalityPageState extends State<MortalityPage> {
                                 ) {
                                   int idx = entry.key;
                                   CauseData cause = entry.value;
-                                  final colors = [
-                                    Color(0xFFFF5722),
-                                    Color(0xFF3F51B5),
-                                    Color(0xFF4CAF50),
-                                    Color(0xFFE91E63),
-                                    Color(0xFF00BCD4),
-                                    Color(0xFF9C27B0),
-                                  ];
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 10,
@@ -1874,14 +1842,17 @@ class _MortalityPageState extends State<MortalityPage> {
                                             height: 20,
                                             decoration: BoxDecoration(
                                               color:
-                                                  colors[idx % colors.length],
+                                                  _mortalityChartPalette[idx %
+                                                      _mortalityChartPalette
+                                                          .length],
                                               borderRadius:
                                                   BorderRadius.circular(4),
                                               boxShadow: [
                                                 BoxShadow(
                                                   color:
-                                                      colors[idx %
-                                                              colors.length]
+                                                      _mortalityChartPalette[idx %
+                                                              _mortalityChartPalette
+                                                                  .length]
                                                           .withValues(
                                                             alpha: 0.5,
                                                           ),
@@ -1970,8 +1941,7 @@ class _MortalityPageState extends State<MortalityPage> {
                       [
                         charts.Series<AgeDistribution, String>(
                           id: 'Ages',
-                          colorFn: (_, _) =>
-                              charts.Color(r: 129, g: 199, b: 132, a: 255),
+                          colorFn: (_, _) => _toChartsColor(_secondaryIceBlue),
                           domainFn: (AgeDistribution dist, _) => dist.ageRange,
                           measureFn: (AgeDistribution dist, _) => dist.count,
                           data: _ageDistributions,

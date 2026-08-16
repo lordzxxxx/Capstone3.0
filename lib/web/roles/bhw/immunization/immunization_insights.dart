@@ -586,7 +586,10 @@ class ImmunizationInsights extends StatelessWidget {
               final entry = entries[spot.x.toInt()];
               return LineTooltipItem(
                 '${entry.key}\n${entry.value} $unit${entry.value == 1 ? '' : 's'}',
-                const TextStyle(color: _text, fontWeight: FontWeight.w600),
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               );
             }).toList(),
           ),
@@ -650,7 +653,10 @@ class ImmunizationInsights extends StatelessWidget {
                   : '${entry.value}';
               return BarTooltipItem(
                 '${entry.key}\n$value $unit${entry.value == 1 || percentageScale ? '' : 's'}',
-                const TextStyle(color: _text, fontWeight: FontWeight.w600),
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               );
             },
           ),
@@ -691,13 +697,16 @@ class ImmunizationInsights extends StatelessWidget {
               sectionsSpace: 3,
               sections: List.generate(visible.length, (index) {
                 final entry = visible[index];
+                final sliceColor = _palette[index % _palette.length];
                 return PieChartSectionData(
                   value: entry.value.toDouble(),
-                  color: _palette[index % _palette.length],
+                  color: sliceColor,
                   radius: 68,
                   title: '${(entry.value / total * 100).round()}%',
-                  titleStyle: const TextStyle(
-                    color: Colors.white,
+                  titleStyle: TextStyle(
+                    color: sliceColor.computeLuminance() > 0.42
+                        ? _text
+                        : Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),

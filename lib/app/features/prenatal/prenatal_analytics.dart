@@ -20,7 +20,6 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
   final PrenatalDatabaseHelper _database = PrenatalDatabaseHelper.instance;
   List<Map<String, dynamic>> _records = [];
   bool _isLoading = true;
-  bool _isUsingDemoData = false;
   DateTime? _lastUpdated;
 
   @override
@@ -395,68 +394,14 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
       final records = await _database.getAllRecords();
       if (!mounted) return;
       setState(() {
-        _isUsingDemoData = records.isEmpty;
-        _records = records.isEmpty ? _buildDemoRecords() : records;
+        // An empty result is rendered as an empty state. Never replace real
+        // application data with fabricated analytics records.
+        _records = records;
         _lastUpdated = DateTime.now();
       });
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  List<Map<String, dynamic>> _buildDemoRecords() {
-    final now = DateTime.now();
-    const barangays = [
-      'Barangay Central',
-      'Barangay San Isidro',
-      'Barangay Mabini',
-      'Barangay Rizal',
-      'Barangay Maligaya',
-    ];
-    const risks = ['Low Risk', 'Low Risk', 'Moderate Risk', 'High Risk'];
-    const statuses = ['Ongoing', 'Ongoing', 'Completed', 'Missed'];
-    const complications = [
-      '',
-      'Anemia',
-      'Hypertension',
-      'Gestational Diabetes',
-      'Pre-eclampsia',
-    ];
-    const referrals = ['Pending', 'Referred', 'Completed'];
-
-    return List.generate(36, (index) {
-      final visitDate = DateTime(
-        now.year,
-        now.month - (index % 6),
-        2 + index % 24,
-      );
-      final dueDate = DateTime(
-        now.year,
-        now.month + (index % 6),
-        5 + index % 22,
-      );
-      final risk = risks[index % risks.length];
-      final weeks = 7 + (index * 3) % 33;
-      return <String, dynamic>{
-        'id': 'demo-prenatal-$index',
-        'patientName': 'Demo Patient ${index + 1}',
-        'age': '${16 + (index * 3) % 29}',
-        'barangay': barangays[index % barangays.length],
-        'address': '${barangays[index % barangays.length]}, Demo City',
-        'registrationDate': visitDate.toIso8601String(),
-        'eddDate': dueDate.toIso8601String(),
-        'dueDate': dueDate.toIso8601String(),
-        'gestationalAge': '$weeks weeks',
-        'aog': '$weeks weeks',
-        'riskLevel': risk,
-        'ai_severity': risk,
-        'ai_category': complications[index % complications.length],
-        'status': statuses[index % statuses.length],
-        'previousComplications': complications[index % complications.length],
-        'preExistingConditions': index % 7 == 0 ? 'Hypertension' : '',
-        'referralStatus': referrals[index % referrals.length],
-      };
-    });
   }
 
   String _value(Map<String, dynamic> record, String key) =>
@@ -546,42 +491,6 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                       fontSize: 13,
                     ),
                   ),
-                  if (_isUsingDemoData) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppDesign.blueSoft.withValues(alpha: 0.55),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: AppDesign.blue.withValues(alpha: 0.35),
-                        ),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(
-                            Icons.science_outlined,
-                            color: AppDesign.blue,
-                            size: 19,
-                          ),
-                          SizedBox(width: 9),
-                          Expanded(
-                            child: Text(
-                              'Showing demo data because no prenatal records are available.',
-                              style: TextStyle(
-                                color: _lightOffWhite,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 16),
                   GridView.count(
                     crossAxisCount: 2,
@@ -931,13 +840,16 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                   sections: List.generate(entries.length, (index) {
                     final entry = entries[index];
                     final share = total == 0 ? 0.0 : entry.value / total * 100;
+                    final sliceColor = palette[index % palette.length];
                     return PieChartSectionData(
                       value: entry.value.toDouble(),
-                      color: palette[index % palette.length],
+                      color: sliceColor,
                       radius: 64,
                       title: '${share.toStringAsFixed(0)}%',
-                      titleStyle: const TextStyle(
-                        color: Colors.white,
+                      titleStyle: TextStyle(
+                        color: sliceColor.computeLuminance() > 0.42
+                            ? _lightOffWhite
+                            : Colors.white,
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),

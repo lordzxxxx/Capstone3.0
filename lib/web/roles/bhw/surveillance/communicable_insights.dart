@@ -8,13 +8,15 @@ const _accent = Color(0xFF2F80ED);
 const _panel = Colors.white;
 const _foreground = Color(0xFF0B1F3A);
 const _muted = Color(0xFF4B6075);
+Color _chartLabelColor(Color background) =>
+    background.computeLuminance() > 0.42 ? _foreground : Colors.white;
 const _palette = <Color>[
   Color(0xFF2F80ED),
-  Color(0xFF5EC7FF),
-  Color(0xFFFFB74D),
-  Color(0xFF66BB6A),
-  Color(0xFFEC407A),
-  Color(0xFF7E57C2),
+  Color(0xFF163B66),
+  Color(0xFF5B8CC9),
+  Color(0xFF1F5A91),
+  Color(0xFF8FAFD6),
+  Color(0xFFB8C9DB),
 ];
 
 /// Analytics calculated exclusively from the communicable records supplied by
@@ -65,31 +67,31 @@ class CommunicableInsights extends StatelessWidget {
               'Active Cases',
               '$active',
               Icons.monitor_heart_outlined,
-              const Color(0xFFFFB74D),
+              const Color(0xFF163B66),
             ),
             _Metric(
               'Recovered',
               '$recovered',
               Icons.health_and_safety_outlined,
-              const Color(0xFF66BB6A),
+              const Color(0xFF5B8CC9),
             ),
             _Metric(
               'Recovery Rate',
               '$recoveryRate%',
               Icons.trending_up_rounded,
-              const Color(0xFF5EC7FF),
+              const Color(0xFF1F5A91),
             ),
             _Metric(
               'Disease Types',
               '${diseaseGroups.length}',
               Icons.biotech_outlined,
-              const Color(0xFF7E57C2),
+              const Color(0xFF8FAFD6),
             ),
             _Metric(
               'Follow-ups Due',
               '$followUps',
               Icons.event_repeat_rounded,
-              const Color(0xFFEC407A),
+              const Color(0xFFB8C9DB),
             ),
           ],
         ),
@@ -436,21 +438,21 @@ class CommunicableInsights extends StatelessWidget {
             PieChartData(
               centerSpaceRadius: 42,
               sectionsSpace: 3,
-              sections: List.generate(
-                visible.length,
-                (index) => PieChartSectionData(
+              sections: List.generate(visible.length, (index) {
+                final sliceColor = _palette[index % _palette.length];
+                return PieChartSectionData(
                   value: visible[index].value.toDouble(),
-                  color: _palette[index % _palette.length],
+                  color: sliceColor,
                   radius: 62,
                   title:
                       '${(visible[index].value / total * 100).toStringAsFixed(0)}%',
-                  titleStyle: const TextStyle(
-                    color: Colors.white,
+                  titleStyle: TextStyle(
+                    color: _chartLabelColor(sliceColor),
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
-                ),
-              ),
+                );
+              }),
             ),
             duration: const Duration(milliseconds: 450),
           ),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:community_charts_flutter/community_charts_flutter.dart'
     as charts;
@@ -34,6 +35,7 @@ const Color _lightOffWhite = AppDesign.ink;
 const Color _panelTop = AppDesign.surface;
 const Color _panelBottom = AppDesign.surface;
 const Color _panelStroke = AppDesign.border;
+const Duration _analyticsSyncTimeout = Duration(seconds: 8);
 
 String _formatRelativeTime(DateTime dateTime) {
   final now = DateTime.now();
@@ -143,13 +145,13 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       _mortalityDB.syncFromFirebase,
     ];
 
-    for (final sync in syncOperations) {
-      try {
-        await sync();
-      } catch (_) {
-        // Preserve offline analytics by falling back to the local cache.
-      }
-    }
+    await Future.wait(
+      syncOperations.map(
+        (sync) => sync().timeout(_analyticsSyncTimeout).catchError((_) {
+          // Preserve offline analytics by falling back to the local cache.
+        }),
+      ),
+    );
   }
 
   Future<void> _seedSharedModuleData() async {
@@ -613,20 +615,21 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         actions: [
-          IconButton(
-            icon: _isSeeding
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: _primaryAqua,
-                    ),
-                  )
-                : const Icon(Icons.science_rounded),
-            tooltip: 'Seed assigned barangay test data',
-            onPressed: _isSeeding ? null : _seedSharedModuleData,
-          ),
+          if (kDebugMode)
+            IconButton(
+              icon: _isSeeding
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: _primaryAqua,
+                      ),
+                    )
+                  : const Icon(Icons.science_rounded),
+              tooltip: 'Seed assigned barangay test data',
+              onPressed: _isSeeding ? null : _seedSharedModuleData,
+            ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh Data',

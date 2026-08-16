@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +12,7 @@ import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helpe
 
 bool _mobileSyncBootstrapInitialized = false;
 const String _mobileSyncCacheOwnerUidKey = 'mobile_sync_cache_owner_uid';
+const Duration _mobileSyncStartupTimeout = Duration(seconds: 20);
 
 void _startAllMobileSyncListeners() {
   DatabaseHelper.instance.startConnectivityListener();
@@ -56,17 +59,38 @@ Future<void> initializeMobileOfflineSync() async {
   // Firebase Auth is restored during app startup before this function is
   // called. Keep this first event for callers that initialize sync directly
   // in tests or from another entrypoint.
-  await FirebaseAuth.instance.authStateChanges().first;
+  try {
+    await FirebaseAuth.instance.authStateChanges().first.timeout(
+      const Duration(seconds: 8),
+    );
+  } on TimeoutException {
+    // The startup shell remains usable with the local cache. Auth listeners
+    // continue below and will begin synchronization once Firebase emits a
+    // session event.
+  }
 
   if (FirebaseAuth.instance.currentUser != null) {
-    await syncMobileOfflineDataAfterLogin();
+    // Sync runs in the background so an unavailable network cannot keep the
+    // application on its startup loader.
+    _syncMobileOfflineDataInBackground();
   }
 
   FirebaseAuth.instance.authStateChanges().listen((user) async {
     if (user != null) {
-      await syncMobileOfflineDataAfterLogin();
+      _syncMobileOfflineDataInBackground();
     }
   });
+}
+
+void _syncMobileOfflineDataInBackground() {
+  unawaited(
+    syncMobileOfflineDataAfterLogin()
+        .timeout(_mobileSyncStartupTimeout)
+        .catchError((_) {
+          // Local cached data remains available; connectivity listeners retry
+          // synchronization when the device is online again.
+        }),
+  );
 }
 
 Future<void> syncMobileOfflineDataAfterLogin() async {

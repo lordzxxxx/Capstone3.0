@@ -2203,13 +2203,16 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                   );
                 }
                 final percent = ((slice.value / total) * 100).round();
+                final labelColor = slice.color.computeLuminance() > 0.42
+                    ? _lightOffWhite
+                    : Colors.white;
                 return PieChartSectionData(
                   value: slice.value.toDouble(),
                   color: slice.color,
                   radius: 50,
                   title: '$percent%',
-                  titleStyle: const TextStyle(
-                    color: Colors.white,
+                  titleStyle: TextStyle(
+                    color: labelColor,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -2846,7 +2849,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                       text:
                           '${point.count} ${point.count == 1 ? 'record' : 'records'}',
                       style: const TextStyle(
-                        color: _lightOffWhite,
+                        color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                       ),

@@ -616,13 +616,16 @@ class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
                 sectionsSpace: 3,
                 sections: List.generate(entries.length, (index) {
                   final entry = entries[index];
+                  final sliceColor = colors[index % colors.length];
                   return PieChartSectionData(
                     value: entry.value.toDouble(),
-                    color: colors[index % colors.length],
+                    color: sliceColor,
                     radius: 62,
                     title: '${(entry.value / total * 100).toStringAsFixed(0)}%',
-                    titleStyle: const TextStyle(
-                      color: Colors.white,
+                    titleStyle: TextStyle(
+                      color: sliceColor.computeLuminance() > 0.42
+                          ? _text
+                          : Colors.white,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),

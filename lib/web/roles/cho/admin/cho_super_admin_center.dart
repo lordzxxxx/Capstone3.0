@@ -1027,7 +1027,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     required String value,
     required IconData icon,
   }) {
-    return AppMetricCard(label: label, value: value, icon: icon);
+    return AppMetricCard(label: label, value: value, icon: icon, compact: true);
   }
 
   Widget _buildChip(String label, Color color) {

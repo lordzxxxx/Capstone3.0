@@ -583,21 +583,23 @@ class _MortalityAnalyticsPageState extends State<MortalityAnalyticsPage> {
               PieChartData(
                 centerSpaceRadius: 44,
                 sectionsSpace: 3,
-                sections: List.generate(
-                  entries.length,
-                  (index) => PieChartSectionData(
+                sections: List.generate(entries.length, (index) {
+                  final sliceColor = colors[index % colors.length];
+                  return PieChartSectionData(
                     value: entries[index].value.toDouble(),
-                    color: colors[index % colors.length],
+                    color: sliceColor,
                     radius: 62,
                     title:
                         '${(entries[index].value / total * 100).toStringAsFixed(0)}%',
-                    titleStyle: const TextStyle(
-                      color: Colors.white,
+                    titleStyle: TextStyle(
+                      color: sliceColor.computeLuminance() > 0.42
+                          ? _foreground
+                          : Colors.white,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
-                  ),
-                ),
+                  );
+                }),
               ),
             ),
           ),

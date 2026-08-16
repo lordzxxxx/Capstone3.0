@@ -2624,7 +2624,7 @@ class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
   }
 
   Widget _buildSummaryCard(String label, String value, IconData icon) {
-    return AppMetricCard(label: label, value: value, icon: icon);
+    return AppMetricCard(label: label, value: value, icon: icon, compact: true);
   }
 
   Widget _buildDoctorListSection() {
