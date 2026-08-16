@@ -13,8 +13,6 @@ import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/features/auth/cho_access_session.dart';
-import 'package:mycapstone_project/web/features/auth/login.dart';
-import 'package:mycapstone_project/web/roles/cho/referrals/referral.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
@@ -29,9 +27,7 @@ import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 // the near-white text-on-dark color (now dark navy text-on-light).
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _secondaryIceBlue = Color(0xFF163B66);
-const Color _darkDeepTeal = Color(0xFFF5F7FA);
 const Color _panelTeal = Colors.white;
-const Color _panelTealAlt = Color(0xFFF1F5F7);
 const Color _mutedCoolGray = Color(0xFF546E7A);
 const Color _lightOffWhite = Color(0xFF0A1F24);
 const Color _chartText = Color(0xFF4B6075);
@@ -4468,23 +4464,16 @@ class _ChoDashboardState extends State<ChoDashboard> {
     required String title,
     required String subtitle,
     required Widget child,
-    double contentHeight = 190,
+    double contentHeight = 180,
   }) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: ChoColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.07)),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 18,
-              offset: const Offset(0, 9),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: ChoColors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -5574,7 +5563,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               title: 'Checkup Trend',
               subtitle:
                   'Monthly activity in ${_analyticsWindowLabel().toLowerCase()}',
-              contentHeight: 250,
+              contentHeight: 190,
               child: _buildCheckupTrendChart(),
             ),
           ),
@@ -5584,7 +5573,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               title: 'Disease Trend Analysis',
               subtitle:
                   'Top diseases in ${_analyticsWindowLabel().toLowerCase()}',
-              contentHeight: 250,
+              contentHeight: 190,
               child: _buildDiseaseTrendChart(),
             ),
           ),
@@ -5594,7 +5583,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               title: 'Service Load',
               subtitle:
                   'Cross-program volume in ${_analyticsWindowLabel().toLowerCase()}',
-              contentHeight: 250,
+              contentHeight: 190,
               child: _buildServiceLoadChart(),
             ),
           ),
@@ -5604,7 +5593,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               title: 'Referral Trend',
               subtitle:
                   'Monthly referrals in ${_analyticsWindowLabel().toLowerCase()}',
-              contentHeight: 250,
+              contentHeight: 190,
               child: _buildReferralTrendChart(),
             ),
           ),
@@ -5613,7 +5602,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             child: _buildAnalyticsPanel(
               title: 'Referral Status Mix',
               subtitle: 'Submitted, assigned, in-treatment, and completed',
-              contentHeight: 250,
+              contentHeight: 190,
               child: _buildReferralStatusChart(),
             ),
           ),
@@ -5623,7 +5612,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               title: 'Referrals by Barangay',
               subtitle:
                   'Top barangays sending referrals in ${_analyticsWindowLabel().toLowerCase()}',
-              contentHeight: 250,
+              contentHeight: 190,
               child: _buildReferralBarangayChart(),
             ),
           ),
@@ -5632,7 +5621,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             child: _buildAnalyticsPanel(
               title: 'Patient Risk Split',
               subtitle: 'Risk-level distribution for filtered patients',
-              contentHeight: 250,
+              contentHeight: 190,
               child: _buildRiskDonutChart(),
             ),
           ),
@@ -5641,7 +5630,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             child: _buildAnalyticsPanel(
               title: '30/60/90 Forecast',
               subtitle: 'Projected service demand from filtered records',
-              contentHeight: 250,
+              contentHeight: 190,
               child: _buildForecastChart(),
             ),
           ),
@@ -5650,7 +5639,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             child: _buildAnalyticsPanel(
               title: 'Coverage Gaps',
               subtitle: 'Data and scheduling backlog in selected window',
-              contentHeight: 250,
+              contentHeight: 190,
               child: _buildCoverageGapChart(),
             ),
           ),
@@ -5659,7 +5648,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             child: _buildAnalyticsPanel(
               title: 'Overdue Follow-up',
               subtitle: 'Priority pressure from filtered patients',
-              contentHeight: 250,
+              contentHeight: 190,
               child: _buildOverdueFollowUpChart(),
             ),
           ),

@@ -19,7 +19,6 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.da
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
-import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 import 'package:mycapstone_project/web/shared/utils/report_download.dart';
@@ -29,7 +28,6 @@ import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 // Names are historical (page was dark-themed); values now point at the
 // white-card system used across the rest of the app.
 const Color _primaryAqua = ChoColors.aqua;
-const Color _secondaryIceBlue = ChoColors.ice;
 const Color _darkDeepTeal = ChoColors.background;
 const Color _panelSurface = ChoColors.surface;
 const Color _panelAlt = ChoColors.surfaceAlt;
@@ -69,6 +67,16 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   String _selectedBarangayFilter = 'ALL';
   String _selectedPeriodMode = 'Monthly';
   List<_NormalizedHealthRecord> _records = <_NormalizedHealthRecord>[];
+  final TextEditingController _heatmapSearchController =
+      TextEditingController();
+  final TextEditingController _activitySearchController =
+      TextEditingController();
+  String _heatmapSearch = '';
+  String _heatmapDistrictFilter = 'ALL';
+  bool _showAllHeatmapEntries = false;
+  String _activitySearch = '';
+  String _activitySourceFilter = 'ALL';
+  String _activitySeverityFilter = 'ALL';
   int _recentActivityPage = 1;
   static const int _recentActivityPageSize = 10;
 
@@ -84,6 +92,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _heatmapSearchController.dispose();
+    _activitySearchController.dispose();
     super.dispose();
   }
 
@@ -321,6 +331,61 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       return b.severityScore.compareTo(a.severityScore);
     });
     return list;
+  }
+
+  List<_HeatmapEntry> _filteredHeatmapEntries() {
+    final query = _heatmapSearch.trim().toLowerCase();
+    final availableDistricts = _heatmapEntries()
+        .map((entry) => entry.district)
+        .toSet();
+    final selectedDistrict = availableDistricts.contains(_heatmapDistrictFilter)
+        ? _heatmapDistrictFilter
+        : 'ALL';
+    return _heatmapEntries()
+        .where((entry) {
+          final matchesSearch =
+              query.isEmpty ||
+              entry.barangay.toLowerCase().contains(query) ||
+              entry.district.toLowerCase().contains(query);
+          final matchesDistrict =
+              selectedDistrict == 'ALL' || entry.district == selectedDistrict;
+          return matchesSearch && matchesDistrict;
+        })
+        .toList(growable: false);
+  }
+
+  List<_NormalizedHealthRecord> _filteredActivityRecords() {
+    final query = _activitySearch.trim().toLowerCase();
+    final availableSources = _records
+        .map((record) => record.sourceLabel)
+        .toSet();
+    final availableSeverities = _records
+        .map((record) => record.severityLabel)
+        .where((value) => value.trim().isNotEmpty)
+        .toSet();
+    final selectedSource = availableSources.contains(_activitySourceFilter)
+        ? _activitySourceFilter
+        : 'ALL';
+    final selectedSeverity =
+        availableSeverities.contains(_activitySeverityFilter)
+        ? _activitySeverityFilter
+        : 'ALL';
+    return _records
+        .where((record) {
+          final matchesSearch =
+              query.isEmpty ||
+              record.sourceLabel.toLowerCase().contains(query) ||
+              record.patientLabel.toLowerCase().contains(query) ||
+              record.diseaseLabel.toLowerCase().contains(query) ||
+              record.barangay.toLowerCase().contains(query);
+          final matchesSource =
+              selectedSource == 'ALL' || record.sourceLabel == selectedSource;
+          final matchesSeverity =
+              selectedSeverity == 'ALL' ||
+              record.severityLabel == selectedSeverity;
+          return matchesSearch && matchesSource && matchesSeverity;
+        })
+        .toList(growable: false);
   }
 
   Map<String, int> _trendBuckets() {
@@ -918,12 +983,21 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: _lightOffWhite),
+      labelStyle: const TextStyle(color: ChoColors.muted),
+      floatingLabelStyle: const TextStyle(color: _primaryAqua),
       filled: true,
-      fillColor: _darkDeepTeal,
+      fillColor: _panelSurface,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
+        borderSide: BorderSide(color: ChoColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: ChoColors.borderStrong),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _primaryAqua, width: 1.5),
       ),
     );
   }
@@ -1181,107 +1255,235 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       1,
       (max, item) => item.caseCount > max ? item.caseCount : max,
     );
-    final ranking = heatmap
+    final filteredHeatmap = _filteredHeatmapEntries();
+    final visibleHeatmap = _showAllHeatmapEntries
+        ? filteredHeatmap
+        : filteredHeatmap.take(8).toList(growable: false);
+    final ranking = filteredHeatmap
         .where((entry) => entry.caseCount > 0)
         .take(10)
-        .toList();
+        .toList(growable: false);
+    final districts = heatmap.map((entry) => entry.district).toSet().toList()
+      ..sort();
+    final districtValue = districts.contains(_heatmapDistrictFilter)
+        ? _heatmapDistrictFilter
+        : 'ALL';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _panelSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+        border: Border.all(color: ChoColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Barangay Heatmap Intelligence',
-            style: TextStyle(
-              color: _lightOffWhite,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Barangay Heatmap Intelligence',
+                      style: TextStyle(
+                        color: ChoColors.text,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      'Compare case concentration and severity without losing the underlying values.',
+                      style: TextStyle(color: ChoColors.muted),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${filteredHeatmap.length} barangays',
+                style: const TextStyle(
+                  color: ChoColors.muted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Color intensity reflects case concentration. Ranking combines total cases and severity score for rapid intervention planning.',
-            style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SizedBox(
+                width: 260,
+                child: TextField(
+                  controller: _heatmapSearchController,
+                  onChanged: (value) => setState(() {
+                    _heatmapSearch = value;
+                  }),
+                  decoration: _inputDecoration('Search barangay or district')
+                      .copyWith(
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          color: _primaryAqua,
+                        ),
+                      ),
+                  style: const TextStyle(color: ChoColors.text),
+                ),
+              ),
+              SizedBox(
+                width: 210,
+                child: DropdownButtonFormField<String>(
+                  initialValue: districtValue,
+                  dropdownColor: _panelSurface,
+                  style: const TextStyle(color: ChoColors.text),
+                  decoration: _inputDecoration('District'),
+                  items: <String>['ALL', ...districts]
+                      .map(
+                        (value) => DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(
+                            value == 'ALL' ? 'All districts' : value,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() => _heatmapDistrictFilter = value);
+                  },
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: filteredHeatmap.length <= 8
+                    ? null
+                    : () => setState(
+                        () => _showAllHeatmapEntries = !_showAllHeatmapEntries,
+                      ),
+                icon: Icon(
+                  _showAllHeatmapEntries
+                      ? Icons.unfold_less_rounded
+                      : Icons.unfold_more_rounded,
+                  size: 18,
+                ),
+                label: Text(_showAllHeatmapEntries ? 'Show fewer' : 'Show all'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _primaryAqua,
+                  side: const BorderSide(color: _primaryAqua),
+                  minimumSize: const Size(120, 48),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {
               final columns = constraints.maxWidth >= 1000
                   ? 4
-                  : constraints.maxWidth >= 600
+                  : constraints.maxWidth >= 700
+                  ? 3
+                  : constraints.maxWidth >= 440
                   ? 2
                   : 1;
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: heatmap.length,
+                itemCount: visibleHeatmap.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: columns,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: columns == 1 ? 2.8 : 1.35,
+                  mainAxisExtent: columns == 1 ? 108 : 116,
                 ),
                 itemBuilder: (context, index) {
-                  final entry = heatmap[index];
-                  final intensity = entry.caseCount == 0
-                      ? 0.08
-                      : (entry.caseCount / maxCases).clamp(0.12, 1.0);
-                  final color = Color.lerp(
-                    ChoColors.ice.withValues(alpha: 0.15),
-                    ChoColors.aqua.withValues(alpha: 0.90),
-                    intensity,
-                  )!;
+                  final entry = visibleHeatmap[index];
+                  final progress = entry.caseCount == 0
+                      ? 0.0
+                      : (entry.caseCount / maxCases).clamp(0.0, 1.0);
                   return Container(
-                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: color,
+                      color: entry.caseCount > 0
+                          ? ChoColors.surface
+                          : ChoColors.surfaceAlt,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _lightOffWhite.withValues(alpha: 0.08),
-                      ),
+                      border: Border.all(color: ChoColors.border),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Text(
-                          entry.barangay,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                        Container(
+                          width: 4,
+                          height: double.infinity,
+                          decoration: BoxDecoration(
+                            color: entry.caseCount > 0
+                                ? _primaryAqua
+                                : ChoColors.borderStrong,
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          entry.district,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.78),
-                            fontSize: 12,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '${entry.caseCount} cases',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                        Text(
-                          'Severity score ${entry.severityScore}',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.78),
-                            fontSize: 12,
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(10, 9, 10, 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  entry.barangay,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: ChoColors.text,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  entry.district,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: ChoColors.muted,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Row(
+                                  children: [
+                                    Text(
+                                      '${entry.caseCount} cases',
+                                      style: const TextStyle(
+                                        color: _primaryAqua,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      'Score ${entry.severityScore}',
+                                      style: const TextStyle(
+                                        color: ChoColors.muted,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: progress,
+                                    minHeight: 4,
+                                    color: _primaryAqua,
+                                    backgroundColor: ChoColors.border,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -1291,28 +1493,51 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               );
             },
           ),
-          const SizedBox(height: 20),
+          if (filteredHeatmap.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Text(
+                'No barangays match the current search and district filter.',
+                style: TextStyle(color: ChoColors.muted),
+              ),
+            ),
+          const SizedBox(height: 14),
           if (ranking.isNotEmpty)
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: _darkDeepTeal,
-                borderRadius: BorderRadius.circular(18),
+                color: ChoColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ChoColors.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Priority Ranking',
-                    style: TextStyle(
-                      color: _lightOffWhite,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  const Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Priority Ranking',
+                          style: TextStyle(
+                            color: ChoColors.text,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'Cases / score',
+                        style: TextStyle(
+                          color: ChoColors.muted,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   ...ranking.asMap().entries.map(
                     (entry) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         children: [
                           SizedBox(
@@ -1328,12 +1553,12 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                           Expanded(
                             child: Text(
                               entry.value.barangay,
-                              style: const TextStyle(color: _lightOffWhite),
+                              style: const TextStyle(color: ChoColors.text),
                             ),
                           ),
                           Text(
                             '${entry.value.caseCount} / ${entry.value.severityScore}',
-                            style: const TextStyle(color: _mutedCoolGray),
+                            style: const TextStyle(color: ChoColors.muted),
                           ),
                         ],
                       ),
@@ -1348,97 +1573,286 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   }
 
   Widget _buildRecentRecordsSection() {
-    final pageCount = _records.isEmpty
+    final filteredRecords = _filteredActivityRecords();
+    final pageCount = filteredRecords.isEmpty
         ? 1
-        : (_records.length + _recentActivityPageSize - 1) ~/
+        : (filteredRecords.length + _recentActivityPageSize - 1) ~/
               _recentActivityPageSize;
     final page = _recentActivityPage.clamp(1, pageCount);
-    final startIndex = _records.isEmpty
+    final startIndex = filteredRecords.isEmpty
         ? 0
         : (page - 1) * _recentActivityPageSize;
-    final pageRecords = _records
+    final pageRecords = filteredRecords
         .skip(startIndex)
         .take(_recentActivityPageSize)
         .toList(growable: false);
-    final firstVisible = _records.isEmpty ? 0 : startIndex + 1;
+    final firstVisible = filteredRecords.isEmpty ? 0 : startIndex + 1;
     final lastVisible = startIndex + pageRecords.length;
+    final sourceOptions =
+        _records.map((record) => record.sourceLabel).toSet().toList()..sort();
+    final severityOptions =
+        _records
+            .map((record) => record.severityLabel)
+            .where((value) => value.trim().isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+    final sourceValue = sourceOptions.contains(_activitySourceFilter)
+        ? _activitySourceFilter
+        : 'ALL';
+    final severityValue = severityOptions.contains(_activitySeverityFilter)
+        ? _activitySeverityFilter
+        : 'ALL';
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _panelSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+        border: Border.all(color: ChoColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Recent Activity and Drilldown',
-            style: TextStyle(
-              color: _lightOffWhite,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Recent Activity and Drilldown',
+                      style: TextStyle(
+                        color: ChoColors.text,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      'Review the latest encoded records across modules and drill down to patient-level detail.',
+                      style: TextStyle(color: ChoColors.muted),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${filteredRecords.length} matching records',
+                style: const TextStyle(
+                  color: ChoColors.muted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: ChoColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: ChoColors.border),
+            ),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                SizedBox(
+                  width: 260,
+                  child: TextField(
+                    controller: _activitySearchController,
+                    onChanged: (value) => setState(() {
+                      _activitySearch = value;
+                      _recentActivityPage = 1;
+                    }),
+                    decoration: _inputDecoration('Search records').copyWith(
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: _primaryAqua,
+                      ),
+                    ),
+                    style: const TextStyle(color: ChoColors.text),
+                  ),
+                ),
+                SizedBox(
+                  width: 180,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: sourceValue,
+                    dropdownColor: _panelSurface,
+                    style: const TextStyle(color: ChoColors.text),
+                    decoration: _inputDecoration('Source'),
+                    items: <String>['ALL', ...sourceOptions]
+                        .map(
+                          (value) => DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(
+                              value == 'ALL' ? 'All sources' : value,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        _activitySourceFilter = value;
+                        _recentActivityPage = 1;
+                      });
+                    },
+                  ),
+                ),
+                SizedBox(
+                  width: 180,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: severityValue,
+                    dropdownColor: _panelSurface,
+                    style: const TextStyle(color: ChoColors.text),
+                    decoration: _inputDecoration('Severity / status'),
+                    items: <String>['ALL', ...severityOptions]
+                        .map(
+                          (value) => DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(
+                              value == 'ALL' ? 'All statuses' : value,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        _activitySeverityFilter = value;
+                        _recentActivityPage = 1;
+                      });
+                    },
+                  ),
+                ),
+                if (_activitySearch.isNotEmpty ||
+                    _activitySourceFilter != 'ALL' ||
+                    _activitySeverityFilter != 'ALL')
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      _activitySearchController.clear();
+                      setState(() {
+                        _activitySearch = '';
+                        _activitySourceFilter = 'ALL';
+                        _activitySeverityFilter = 'ALL';
+                        _recentActivityPage = 1;
+                      });
+                    },
+                    icon: const Icon(Icons.clear_all_rounded, size: 18),
+                    label: const Text('Clear filters'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _primaryAqua,
+                      side: const BorderSide(color: _primaryAqua),
+                      minimumSize: const Size(132, 48),
+                    ),
+                  ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Review the latest encoded records across modules and drill down to patient-level detail for compliance and monitoring.',
-            style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72)),
-          ),
-          const SizedBox(height: 18),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SpringDataMotion(
-              dataKey: pageRecords,
-              child: DataTable(
-                headingTextStyle: const TextStyle(
-                  color: _lightOffWhite,
-                  fontWeight: FontWeight.w800,
-                ),
-                dataTextStyle: const TextStyle(
-                  color: _lightOffWhite,
-                  fontWeight: FontWeight.w500,
-                ),
-                headingRowColor: WidgetStatePropertyAll(
-                  _darkDeepTeal.withValues(alpha: 0.85),
-                ),
-                dataRowColor: const WidgetStatePropertyAll(_panelAlt),
-                dividerThickness: 0.6,
-                columns: const [
-                  DataColumn(label: Text('Source')),
-                  DataColumn(label: Text('Patient')),
-                  DataColumn(label: Text('Disease / Condition')),
-                  DataColumn(label: Text('Barangay')),
-                  DataColumn(label: Text('Severity')),
-                  DataColumn(label: Text('Date')),
-                ],
-                rows: pageRecords.map((record) {
-                  return DataRow(
-                    cells: [
-                      DataCell(Text(record.sourceLabel)),
-                      DataCell(Text(record.patientLabel)),
-                      DataCell(Text(record.diseaseLabel)),
-                      DataCell(Text(record.barangay)),
-                      DataCell(Text(record.severityLabel)),
-                      DataCell(
-                        Text(
-                          record.recordDate.toIso8601String().split('T').first,
+          const SizedBox(height: 12),
+          if (pageRecords.isEmpty)
+            const ChoEmptyState(
+              title: 'No matching activity',
+              message: 'Try another search term or filter.',
+              icon: Icons.manage_search_rounded,
+            )
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // Let the table use the available desktop width. Keep a
+                // readable minimum for narrow windows and scroll only then.
+                final tableWidth = constraints.maxWidth < 960
+                    ? 960.0
+                    : constraints.maxWidth;
+                return Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: ChoColors.border),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: tableWidth,
+                      child: SpringDataMotion(
+                        dataKey: pageRecords,
+                        child: DataTable(
+                          horizontalMargin: 14,
+                          columnSpacing: 24,
+                          headingRowHeight: 44,
+                          dataRowMinHeight: 44,
+                          dataRowMaxHeight: 54,
+                          headingTextStyle: const TextStyle(
+                            color: ChoColors.text,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                          dataTextStyle: const TextStyle(
+                            color: ChoColors.text,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
+                          headingRowColor: const WidgetStatePropertyAll(
+                            ChoColors.surfaceAlt,
+                          ),
+                          dividerThickness: 0.6,
+                          columns: const [
+                            DataColumn(label: Text('Source')),
+                            DataColumn(label: Text('Patient')),
+                            DataColumn(label: Text('Disease / Condition')),
+                            DataColumn(label: Text('Barangay')),
+                            DataColumn(label: Text('Severity')),
+                            DataColumn(label: Text('Date')),
+                          ],
+                          rows: pageRecords.asMap().entries.map((entry) {
+                            final record = entry.value;
+                            return DataRow.byIndex(
+                              index: entry.key,
+                              color: WidgetStatePropertyAll(
+                                entry.key.isEven
+                                    ? ChoColors.surface
+                                    : ChoColors.background,
+                              ),
+                              cells: [
+                                DataCell(Text(record.sourceLabel)),
+                                DataCell(Text(record.patientLabel)),
+                                DataCell(Text(record.diseaseLabel)),
+                                DataCell(Text(record.barangay)),
+                                DataCell(Text(record.severityLabel)),
+                                DataCell(
+                                  Text(
+                                    record.recordDate
+                                        .toIso8601String()
+                                        .split('T')
+                                        .first,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
                         ),
                       ),
-                    ],
-                  );
-                }).toList(),
-              ),
+                    ),
+                  ),
+                );
+              },
             ),
-          ),
           const SizedBox(height: 16),
           LayoutBuilder(
             builder: (context, constraints) {
               final summary = Text(
-                'Showing $firstVisible–$lastVisible of ${_records.length} activities',
+                'Showing $firstVisible–$lastVisible of ${filteredRecords.length} matching activities',
                 style: const TextStyle(
-                  color: _lightOffWhite,
+                  color: ChoColors.muted,
                   fontWeight: FontWeight.w600,
+                  fontSize: 12,
                 ),
               );
               final controls = Row(
@@ -1451,7 +1865,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     icon: const Icon(Icons.chevron_left_rounded, size: 18),
                     label: const Text('Previous'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _lightOffWhite,
+                      foregroundColor: _primaryAqua,
+                      side: const BorderSide(color: _primaryAqua),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1470,7 +1885,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     child: Text(
                       'Page $page of $pageCount',
                       style: const TextStyle(
-                        color: _lightOffWhite,
+                        color: ChoColors.text,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1484,7 +1899,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     label: const Text('Next'),
                     iconAlignment: IconAlignment.end,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _lightOffWhite,
+                      foregroundColor: _primaryAqua,
+                      side: const BorderSide(color: _primaryAqua),
                     ),
                   ),
                 ],
