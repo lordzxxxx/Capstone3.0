@@ -99,27 +99,6 @@ class LandingPage extends StatelessWidget {
             height: 1.45,
           ),
         ),
-        const SizedBox(height: 20),
-        Wrap(
-          alignment: compact ? WrapAlignment.center : WrapAlignment.start,
-          spacing: 8,
-          runSpacing: 8,
-          children: const [
-            _FeatureChip(
-              icon: Icons.favorite_outline,
-              label: 'Health Monitoring',
-            ),
-            _FeatureChip(
-              icon: Icons.analytics_outlined,
-              label: 'Advanced Analytics',
-            ),
-            _FeatureChip(
-              icon: Icons.shield_outlined,
-              label: 'Secure & Private',
-            ),
-            _FeatureChip(icon: Icons.cloud_outlined, label: 'Cloud Sync'),
-          ],
-        ),
       ],
     );
   }
@@ -191,42 +170,6 @@ class LandingPage extends StatelessWidget {
         border: Border.all(color: AppDesign.border),
       ),
       child: Image.asset(asset, fit: BoxFit.contain),
-    );
-  }
-}
-
-class _FeatureChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _FeatureChip({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: Colors.white),
-            const SizedBox(width: 7),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

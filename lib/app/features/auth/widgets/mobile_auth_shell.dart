@@ -182,53 +182,6 @@ class _AuthHero extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          const Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _TrustPill(icon: Icons.shield_outlined, label: 'Secure access'),
-              _TrustPill(icon: Icons.cloud_done_outlined, label: 'Cloud sync'),
-              _TrustPill(
-                icon: Icons.health_and_safety_outlined,
-                label: 'Health monitoring',
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TrustPill extends StatelessWidget {
-  const _TrustPill({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppDesign.surface.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppDesign.surface.withValues(alpha: 0.20)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: AppDesign.surface, size: 15),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppDesign.surface,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
         ],
       ),
     );

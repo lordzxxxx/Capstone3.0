@@ -1044,8 +1044,6 @@ class _LandingPageState extends State<LandingPage>
           ),
           textAlign: TextAlign.center,
         ),
-        SizedBox(height: _responsive(subtitleSize, 0.9, 12, 24)),
-        _buildFeatureGrid(desktop: isDesktop, compact: logoSize < 150),
       ],
     );
     return Padding(
@@ -1177,130 +1175,6 @@ class _LandingPageState extends State<LandingPage>
         ),
       ),
     );
-  }
-
-  Widget _buildFeatureGrid({required bool desktop, required bool compact}) {
-    final gap = compact ? 8.0 : 12.0;
-    final features = <(IconData, String)>[
-      (Icons.health_and_safety_rounded, 'Health Monitoring'),
-      (Icons.analytics_rounded, 'Advanced Analytics'),
-      (Icons.security_rounded, 'Secure & Private'),
-      (Icons.cloud_sync_rounded, 'Cloud Sync'),
-    ];
-
-    Widget cell((IconData, String) feature) {
-      return _buildFeatureBadge(
-        feature.$1,
-        feature.$2,
-        compact: compact,
-        stretch: true,
-      );
-    }
-
-    if (desktop) {
-      return Row(
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          Expanded(child: cell(features[0])),
-          SizedBox(width: gap),
-          Expanded(child: cell(features[1])),
-          SizedBox(width: gap),
-          Expanded(child: cell(features[2])),
-          SizedBox(width: gap),
-          Expanded(child: cell(features[3])),
-        ],
-      );
-    }
-
-    // Mobile/tablet uses a deliberate 2 × 2 grid rather than implicit wrap.
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            Expanded(child: cell(features[0])),
-            SizedBox(width: gap),
-            Expanded(child: cell(features[1])),
-          ],
-        ),
-        SizedBox(height: gap),
-        Row(
-          children: [
-            Expanded(child: cell(features[2])),
-            SizedBox(width: gap),
-            Expanded(child: cell(features[3])),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeatureBadge(
-    IconData icon,
-    String label, {
-    required bool compact,
-    bool stretch = false,
-  }) {
-    final iconSize = compact ? 28.0 : 30.0;
-    final textSize = compact ? 11.5 : 12.0;
-    final badge = Container(
-      height: compact ? 44 : 52,
-      width: stretch ? double.infinity : null,
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 7,
-        vertical: compact ? 7 : 9,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.16),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: stretch
-            ? MainAxisAlignment.center
-            : MainAxisAlignment.start,
-        mainAxisSize: stretch ? MainAxisSize.max : MainAxisSize.min,
-        children: [
-          Container(
-            width: iconSize,
-            height: iconSize,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  _primaryAquaBright.withValues(alpha: 0.9),
-                  _primaryAqua.withValues(alpha: 0.7),
-                ],
-              ),
-            ),
-            child: Icon(icon, color: _darkDeepTeal, size: compact ? 15 : 18),
-          ),
-          SizedBox(width: compact ? 7 : 10),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              softWrap: false,
-              style: _body(
-                size: textSize,
-                weight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-    return stretch ? SizedBox(width: double.infinity, child: badge) : badge;
   }
 
   Widget _buildActionButton({

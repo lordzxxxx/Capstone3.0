@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mycapstone_project/app/features/auth/login.dart';
 import 'package:mycapstone_project/app/features/auth/reset_password_service.dart';
-import 'package:mycapstone_project/app/features/auth/verification_code.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 
 const Color _primaryAqua = AppDesign.blue;
-const Color _secondaryIceBlue = AppDesign.navySoft;
 const Color _darkDeepTeal = AppDesign.ink;
-const Color _mutedCoolGray = AppDesign.subtle;
-const Color _lightOffWhite = AppDesign.ink;
-const Color _sidebarDark = Colors.white;
 const Color _panelSurface = AppDesign.page;
 
 class ForgotPassword extends StatefulWidget {
@@ -125,25 +119,12 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _panelSurface,
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: _primaryAqua.withValues(alpha: 0.18),
-                        ),
-                      ),
-                      child: Text(
-                        'Secure Recovery',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: _primaryAqua,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.4,
-                        ),
+                    child: Text(
+                      'Secure Recovery',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: _primaryAqua,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.4,
                       ),
                     ),
                   ),

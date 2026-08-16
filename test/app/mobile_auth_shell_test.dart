@@ -21,8 +21,8 @@ void main() {
     );
 
     expect(find.text('AI-DSUHIS'), findsOneWidget);
-    expect(find.text('Secure access'), findsOneWidget);
-    expect(find.text('Cloud sync'), findsOneWidget);
+    expect(find.text('Secure access'), findsNothing);
+    expect(find.text('Cloud sync'), findsNothing);
     expect(find.text('Welcome back'), findsOneWidget);
     expect(find.text('Form content'), findsOneWidget);
     expect(find.byType(SingleChildScrollView), findsOneWidget);

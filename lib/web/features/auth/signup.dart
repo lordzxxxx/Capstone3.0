@@ -21,8 +21,6 @@ import 'package:mycapstone_project/web/shared/widgets/barangay_logo_image.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
-const Color _primaryAquaBright = Color(0xFF4EA1FF);
-const Color _secondaryIceBlue = Color(0xFF163B66);
 const Color _darkDeepTeal = Color(0xFF071A33);
 const Color _mutedCoolGray = Color(0xFF4B6075);
 const Color _lightOffWhite = Color(0xFFF8FBFF);
@@ -878,19 +876,6 @@ class _SignupState extends State<Signup> {
     }
   }
 
-  Widget _buildBackdropOrb({required double size, required Color color}) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
-        ),
-      ),
-    );
-  }
-
   Widget _buildBrandMark(double size) {
     // Pre-processed white-on-transparent PNG (derived from newlogo.png's
     // luminance) — avoids ColorFilter.matrix, whose offset-scale behavior
@@ -906,72 +891,6 @@ class _SignupState extends State<Signup> {
           color: Colors.white,
           size: size * 0.68,
         ),
-      ),
-    );
-  }
-
-  Widget _buildInfoPill(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.14),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: _primaryAqua),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.9),
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeroMetric(String value, String label) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 132),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: _lightOffWhite,
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.68),
-              fontSize: 12.5,
-              height: 1.35,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1140,37 +1059,6 @@ class _SignupState extends State<Signup> {
         _buildHeroPanel(isCompact: true),
         const SizedBox(height: 16),
         _buildSignupCard(context, isCompact: true),
-      ],
-    );
-  }
-
-  // Feature item widget
-  Widget _buildFeatureItem(IconData icon, String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          ),
-          child: Icon(icon, color: _primaryAqua, size: 24),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 14,
-              color: _lightOffWhite,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
-            ),
-          ),
-        ),
       ],
     );
   }

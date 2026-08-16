@@ -1267,7 +1267,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Barangay Heatmap Intelligence',
+                      'Barangay Case Heatmap',
                       style: TextStyle(
                         color: ChoColors.text,
                         fontSize: 20,

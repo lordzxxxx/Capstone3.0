@@ -555,33 +555,6 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: _lightOffWhite.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _lightOffWhite.withValues(alpha: 0.12)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.auto_graph_rounded,
-                size: 16,
-                color: _primaryAqua,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'AI-assisted reporting workspace',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: _lightOffWhite,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
         Text(
           'Generate cleaner, faster health summaries for $userName.',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -602,17 +575,17 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
           spacing: 10,
           runSpacing: 10,
           children: [
-            _PillTag(
+            _ContextItem(
               icon: _currentPeriodIcon,
               label: _effectivePeriod,
               accent: _primaryAqua,
             ),
-            _PillTag(
+            _ContextItem(
               icon: Icons.event_available_rounded,
               label: _currentPeriodLabel,
               accent: _signalGreen,
             ),
-            const _PillTag(
+            const _ContextItem(
               icon: Icons.save_rounded,
               label: 'Auto-save history',
               accent: _signalAmber,
@@ -1338,12 +1311,12 @@ class _SurfaceCard extends StatelessWidget {
   }
 }
 
-class _PillTag extends StatelessWidget {
+class _ContextItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color accent;
 
-  const _PillTag({
+  const _ContextItem({
     required this.icon,
     required this.label,
     required this.accent,
@@ -1351,27 +1324,25 @@ class _PillTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: accent.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: accent),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: _lightOffWhite,
-              fontWeight: FontWeight.w600,
-            ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: accent),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            color: _lightOffWhite,
+            fontWeight: FontWeight.w600,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 2),
+        Container(
+          width: 4,
+          height: 4,
+          decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+        ),
+      ],
     );
   }
 }

@@ -796,21 +796,13 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: _aqua.withValues(alpha: .10),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: _aqua.withValues(alpha: .24)),
-          ),
-          child: const Text(
-            'BHW ACCOUNT ONBOARDING',
-            style: TextStyle(
-              color: _blue,
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.1,
-            ),
+        const Text(
+          'BHW ACCOUNT ONBOARDING',
+          style: TextStyle(
+            color: _blue,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.1,
           ),
         ),
         const SizedBox(height: 16),

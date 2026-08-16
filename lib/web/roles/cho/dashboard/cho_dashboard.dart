@@ -2285,40 +2285,6 @@ class _ChoDashboardState extends State<ChoDashboard> {
           final overview = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: _primaryAqua.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: _primaryAqua.withValues(alpha: 0.28),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Icon(
-                      Icons.auto_graph_rounded,
-                      size: 15,
-                      color: _primaryAqua,
-                    ),
-                    SizedBox(width: 7),
-                    Text(
-                      'LIVE HEALTH INTELLIGENCE',
-                      style: TextStyle(
-                        color: _primaryAqua,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
               const Text(
                 'City Health Operations\nCommand Center',
                 style: TextStyle(
@@ -2351,7 +2317,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   ),
                   _buildHeroAction(
                     icon: Icons.refresh_rounded,
-                    label: 'Refresh intelligence',
+                    label: 'Refresh data',
                     onTap: _refreshSync,
                   ),
                   _buildHeroAction(
@@ -4078,35 +4044,6 @@ class _ChoDashboardState extends State<ChoDashboard> {
         final headerCopy = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: _lightOffWhite.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: filterBorderColor),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.insights_rounded,
-                    size: 12,
-                    color: _lightOffWhite.withValues(alpha: 0.82),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Live Analytics Scope',
-                    style: TextStyle(
-                      color: _lightOffWhite.withValues(alpha: 0.86),
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
             const Text(
               'Statistics Analysis Filter',
               style: TextStyle(
@@ -4480,24 +4417,27 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     ),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE7F7EF),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: const Text(
-                    'LIVE',
-                    style: TextStyle(
-                      color: Color(0xFF16875A),
-                      fontSize: 8,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF16875A),
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 5),
+                    const Text(
+                      'Live data',
+                      style: TextStyle(
+                        color: Color(0xFF16875A),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -6033,7 +5973,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       drawer: const ChoNavigationDrawer(current: ChoDestination.dashboard),
       appBar: AppBar(
         title: const Text(
-          'CHO Intelligence Center',
+          'CHO Operations Dashboard',
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         backgroundColor: ChoColors.navBackground,
