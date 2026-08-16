@@ -464,14 +464,18 @@ Future<_OverallReportSelection?> _showOverallSelectionDialog(
             );
 
             return AlertDialog(
-              backgroundColor: _launcherSidebarDark,
+              backgroundColor: AppColors.surfaceLight,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
+                side: const BorderSide(
+                  color: _launcherPrimaryAqua,
+                  width: 1.5,
+                ),
               ),
               title: const Text(
                 'Generate Overall Health Report',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -482,10 +486,10 @@ Future<_OverallReportSelection?> _showOverallSelectionDialog(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
+                      const Text(
                         'This will generate one consolidated PDF from the homepage using the table-style layout based on your reference forms.',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.72),
+                          color: AppColors.textSecondary,
                           height: 1.45,
                         ),
                       ),
@@ -500,17 +504,15 @@ Future<_OverallReportSelection?> _showOverallSelectionDialog(
                             showCheckmark: false,
                             label: Text(period.label),
                             labelStyle: TextStyle(
-                              color: isSelected ? Colors.white : Colors.white70,
+                              color: isSelected
+                                  ? Colors.white
+                                  : _launcherPrimaryAqua,
                               fontWeight: FontWeight.w700,
                             ),
-                            selectedColor: _launcherPrimaryAqua.withValues(
-                              alpha: 0.35,
-                            ),
-                            backgroundColor: _launcherDarkDeepTeal,
-                            side: BorderSide(
-                              color: isSelected
-                                  ? _launcherPrimaryAqua
-                                  : Colors.white24,
+                            selectedColor: _launcherPrimaryAqua,
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(
+                              color: _launcherPrimaryAqua,
                             ),
                             onSelected: (_) {
                               setDialogState(() {
@@ -589,6 +591,9 @@ Future<_OverallReportSelection?> _showOverallSelectionDialog(
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
+                  style: TextButton.styleFrom(
+                    foregroundColor: _launcherPrimaryAqua,
+                  ),
                   child: const Text('Cancel'),
                 ),
                 FilledButton.icon(
@@ -667,7 +672,7 @@ Widget _buildOverallDropdownField<T>({
       Text(
         label,
         style: const TextStyle(
-          color: Colors.white,
+          color: AppColors.textPrimary,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -675,18 +680,18 @@ Widget _buildOverallDropdownField<T>({
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: _launcherDarkDeepTeal,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white24),
+          border: Border.all(color: _launcherPrimaryAqua.withValues(alpha: 0.4)),
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<T>(
             value: value,
             items: items,
             onChanged: onChanged,
-            dropdownColor: _launcherDarkDeepTeal,
-            style: const TextStyle(color: Colors.white),
-            iconEnabledColor: Colors.white70,
+            dropdownColor: Colors.white,
+            style: const TextStyle(color: AppColors.textPrimary),
+            iconEnabledColor: _launcherPrimaryAqua,
             isExpanded: true,
           ),
         ),
@@ -701,20 +706,22 @@ Widget _buildOverallTextField({
 }) {
   return TextField(
     controller: controller,
-    style: const TextStyle(color: Colors.white),
+    style: const TextStyle(color: AppColors.textPrimary),
     decoration: InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.white70),
+      labelStyle: const TextStyle(color: AppColors.textSecondary),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.white24),
+        borderSide: BorderSide(
+          color: _launcherPrimaryAqua.withValues(alpha: 0.4),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _launcherPrimaryAqua),
+        borderSide: const BorderSide(color: _launcherPrimaryAqua, width: 1.5),
       ),
       filled: true,
-      fillColor: _launcherDarkDeepTeal,
+      fillColor: Colors.white,
     ),
   );
 }
