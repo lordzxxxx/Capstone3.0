@@ -16,6 +16,7 @@ class _ReferralAnalyticsPageState extends State<ReferralAnalyticsPage> {
   final FirebaseFirestore _firestore = getFirestoreInstance();
   UserAccessScope _scope = UserAccessScope.unauthenticated;
   bool _isLoadingScope = true;
+  String? _scopeError;
 
   @override
   void initState() {
@@ -26,9 +27,12 @@ class _ReferralAnalyticsPageState extends State<ReferralAnalyticsPage> {
   Future<void> _loadScope() async {
     setState(() {
       _isLoadingScope = true;
+      _scopeError = null;
     });
     try {
-      final scope = await UserAccessScopeService.instance.loadCurrentScope();
+      final scope = await UserAccessScopeService.instance
+          .loadCurrentScope()
+          .timeout(const Duration(seconds: 15));
       if (!mounted) return;
       setState(() {
         _scope = scope;
@@ -38,21 +42,26 @@ class _ReferralAnalyticsPageState extends State<ReferralAnalyticsPage> {
       if (!mounted) return;
       setState(() {
         _isLoadingScope = false;
+        _scopeError = 'Referral access could not be loaded.';
       });
     }
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _referralsStream() {
     final referrals = _firestore.collection('referrals');
-    if (_scope.canViewAllBarangays) return referrals.snapshots();
+    if (_scope.canViewAllBarangays) {
+      return referrals.snapshots().timeout(const Duration(seconds: 15));
+    }
     if (_scope.role == 'doctor') {
       return referrals
           .where('assignedDoctorUid', isEqualTo: _scope.userId)
-          .snapshots();
+          .snapshots()
+          .timeout(const Duration(seconds: 15));
     }
     return referrals
         .where('createdByUid', isEqualTo: _scope.userId)
-        .snapshots();
+        .snapshots()
+        .timeout(const Duration(seconds: 15));
   }
 
   @override
@@ -78,9 +87,20 @@ class _ReferralAnalyticsPageState extends State<ReferralAnalyticsPage> {
       ),
       body: _isLoadingScope
           ? const Center(child: CircularProgressIndicator())
+          : _scopeError != null
+          ? _ReferralAnalyticsError(onRetry: _loadScope)
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: _referralsStream(),
               builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return _ReferralAnalyticsError(
+                    onRetry: _loadScope,
+                    message: 'Referral analytics could not be loaded.',
+                  );
+                }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
                 final docRecords = (snapshot.hasData && snapshot.data != null)
                     ? snapshot.data!.docs
                           .map((document) => document.data())
@@ -90,6 +110,53 @@ class _ReferralAnalyticsPageState extends State<ReferralAnalyticsPage> {
                 return _ReferralAnalyticsBody(records: docRecords);
               },
             ),
+    );
+  }
+}
+
+class _ReferralAnalyticsError extends StatelessWidget {
+  const _ReferralAnalyticsError({
+    required this.onRetry,
+    this.message = 'Referral access could not be loaded.',
+  });
+
+  final VoidCallback onRetry;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              color: AppDesign.blue,
+              size: 36,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppDesign.ink,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: onRetry,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppDesign.blue,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

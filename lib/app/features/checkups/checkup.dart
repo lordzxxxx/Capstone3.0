@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/core/services/disease_prediction_api_service.dart';
 import 'package:mycapstone_project/app/core/services/health_ai_classifier.dart';
@@ -981,39 +981,40 @@ class _CheckUpPageState extends State<CheckUpPage> {
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         actions: [
-          PopupMenuButton(
-            icon: const Icon(Icons.more_vert),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                child: const Text('Seed Sample Data'),
-                onTap: () => _seedSampleData(),
-              ),
-              PopupMenuItem(
-                child: const Text('View Data in Console'),
-                onTap: () {
-                  print('=== CHECK-UP RECORDS DATA ===');
-                  print('Total Records: ${_records.length}');
-                  for (var i = 0; i < _records.length; i++) {
-                    print('\nRecord ${i + 1}:');
-                    _records[i].forEach((key, value) {
-                      print('  $key: $value');
-                    });
-                  }
-                  print('=============================');
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Data printed to console! Check Debug Console.',
+          if (kDebugMode)
+            PopupMenuButton(
+              icon: const Icon(Icons.more_vert),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  child: const Text('Seed Sample Data'),
+                  onTap: () => _seedSampleData(),
+                ),
+                PopupMenuItem(
+                  child: const Text('View Data in Console'),
+                  onTap: () {
+                    print('=== CHECK-UP RECORDS DATA ===');
+                    print('Total Records: ${_records.length}');
+                    for (var i = 0; i < _records.length; i++) {
+                      print('\nRecord ${i + 1}:');
+                      _records[i].forEach((key, value) {
+                        print('  $key: $value');
+                      });
+                    }
+                    print('=============================');
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Data printed to console! Check Debug Console.',
+                          ),
+                          duration: Duration(seconds: 2),
                         ),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
         ],
       ),
       body: _isLoading

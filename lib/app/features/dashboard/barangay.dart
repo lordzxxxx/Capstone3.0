@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helper.dart';
 import 'package:mycapstone_project/app/features/immunization/immunization_database_helper.dart';
@@ -931,22 +931,23 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
           ),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.add_circle),
-            label: const Text('Seed 100 Sample Records'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _warningOrange,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+        if (kDebugMode)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.add_circle),
+              label: const Text('Seed 100 Sample Records'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _warningOrange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
+              onPressed: _seedBarangayData,
             ),
-            onPressed: _seedBarangayData,
           ),
-        ),
       ],
     );
   }

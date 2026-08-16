@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -1222,22 +1223,28 @@ class _CommunicablePageState extends State<CommunicablePage> {
                   });
                 },
               ),
-              const Divider(color: _primaryAqua),
-              ListTile(
-                title: const Text(
-                  'Seed 100 Sample Data',
-                  style: TextStyle(color: Colors.white),
+              if (kDebugMode) const Divider(color: _primaryAqua),
+              if (kDebugMode)
+                ListTile(
+                  title: const Text(
+                    'Seed 100 Sample Data',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  subtitle: Text(
+                    'Generate 100 complete patient records',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  trailing: const Icon(
+                    Icons.arrow_forward,
+                    color: _primaryAqua,
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _seedSampleData();
+                  },
                 ),
-                subtitle: Text(
-                  'Generate 100 complete patient records',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
-                ),
-                trailing: const Icon(Icons.arrow_forward, color: _primaryAqua),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await _seedSampleData();
-                },
-              ),
             ],
           ),
         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'dart:math' as math;
 import 'package:mycapstone_project/app/features/patients/patient_database_helper.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls.dart';
@@ -287,10 +288,11 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           PopupMenuButton(
             icon: const Icon(Icons.more_vert),
             itemBuilder: (context) => [
-              PopupMenuItem(
-                child: const Text('Seed Sample Data'),
-                onTap: () => _seedSampleData(),
-              ),
+              if (kDebugMode)
+                PopupMenuItem(
+                  child: const Text('Seed Sample Data'),
+                  onTap: () => _seedSampleData(),
+                ),
               PopupMenuItem(child: const Text('Settings'), onTap: () {}),
             ],
           ),
@@ -370,13 +372,14 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                                   style: TextStyle(color: _lightOffWhite),
                                 ),
                               ),
-                              PopupMenuItem<String>(
-                                value: 'seed',
-                                child: Text(
-                                  'Seed 100 Sample Records',
-                                  style: TextStyle(color: Color(0xFFF39C12)),
+                              if (kDebugMode)
+                                PopupMenuItem<String>(
+                                  value: 'seed',
+                                  child: Text(
+                                    'Seed 100 Sample Records',
+                                    style: TextStyle(color: Color(0xFFF39C12)),
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),

@@ -5,6 +5,7 @@ import 'package:mycapstone_project/web/roles/bhw/prenatal/prenatal_database_help
 import 'package:mycapstone_project/app/core/services/health_ai_classifier.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
@@ -841,25 +842,25 @@ class _PrenatalPageState extends State<PrenatalPage> {
               ),
             ),
           const SizedBox(width: 12),
-          // Three-dots menu for extra actions like seeding sample data
-          PopupMenuButton<String>(
-            color: _darkDeepTeal,
-            icon: Icon(Icons.more_vert, color: Colors.white),
-            onSelected: (value) async {
-              if (value == 'seed_100') {
-                await _confirmAndSeedSamples(context);
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'seed_100',
-                child: Text(
-                  'Seed 100 sample records',
-                  style: TextStyle(color: Colors.white),
+          if (kDebugMode)
+            PopupMenuButton<String>(
+              color: _darkDeepTeal,
+              icon: Icon(Icons.more_vert, color: Colors.white),
+              onSelected: (value) async {
+                if (value == 'seed_100') {
+                  await _confirmAndSeedSamples(context);
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'seed_100',
+                  child: Text(
+                    'Seed 100 sample records',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );

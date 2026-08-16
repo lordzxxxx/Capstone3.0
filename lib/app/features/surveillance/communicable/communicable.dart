@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:get/get.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/features/patients/patient.dart';
@@ -442,7 +443,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                 ? 'Exit Selection Mode'
                 : 'Select Multiple',
           ),
-          if (widget.listOnly != true)
+          if (widget.listOnly != true && kDebugMode)
             PopupMenuButton(
               icon: const Icon(Icons.more_vert),
               itemBuilder: (context) => [

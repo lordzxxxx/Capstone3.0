@@ -23,7 +23,7 @@ class HealthMetricsPage extends StatefulWidget {
 }
 
 class _HealthMetricsPageState extends State<HealthMetricsPage> {
-  late final Future<UserAccessScope> _accessScopeFuture;
+  late Future<UserAccessScope> _accessScopeFuture;
   bool _loading = false;
   String _summary = '';
   String _summaryTitle = '';
@@ -35,7 +35,13 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
   @override
   void initState() {
     super.initState();
-    _accessScopeFuture = UserAccessScopeService.instance.loadCurrentScope();
+    _reloadAccessScope();
+  }
+
+  void _reloadAccessScope() {
+    _accessScopeFuture = UserAccessScopeService.instance
+        .loadCurrentScope()
+        .timeout(const Duration(seconds: 15));
   }
 
   Future<void> _generate() async {
@@ -464,8 +470,19 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                     FutureBuilder<UserAccessScope>(
                       future: _accessScopeFuture,
                       builder: (context, accessScopeSnapshot) {
+                        if (accessScopeSnapshot.hasError) {
+                          return _summaryDataMessage(
+                            'Saved summaries are unavailable right now.',
+                            onRetry: () => setState(_reloadAccessScope),
+                          );
+                        }
                         if (!accessScopeSnapshot.hasData) {
-                          return const SizedBox();
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: LinearProgressIndicator(
+                              color: AppDesign.blue,
+                            ),
+                          );
                         }
 
                         final currentUserId =
@@ -487,10 +504,23 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return const SizedBox();
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8),
+                                child: LinearProgressIndicator(
+                                  color: AppDesign.blue,
+                                ),
+                              );
+                            }
+                            if (snapshot.hasError) {
+                              return _summaryDataMessage(
+                                'Saved summaries could not be loaded.',
+                                onRetry: () => setState(_reloadAccessScope),
+                              );
                             }
                             if (!snapshot.hasData) {
-                              return const SizedBox();
+                              return _summaryDataMessage(
+                                'No saved summaries are available yet.',
+                              );
                             }
 
                             final docs = snapshot.data!.docs.where((doc) {
@@ -575,6 +605,25 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
             const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _summaryDataMessage(String message, {VoidCallback? onRetry}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(message, style: const TextStyle(color: _lightOffWhite)),
+          ),
+          if (onRetry != null)
+            TextButton(
+              onPressed: onRetry,
+              style: TextButton.styleFrom(foregroundColor: AppDesign.blue),
+              child: const Text('Retry'),
+            ),
+        ],
       ),
     );
   }

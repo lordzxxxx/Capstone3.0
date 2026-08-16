@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:community_charts_flutter/community_charts_flutter.dart'
     as charts;
 import 'package:mycapstone_project/app/features/surveillance/morbidity/morbidity_database_helper.dart';
@@ -236,27 +237,30 @@ class _MorbidityPageState extends State<MorbidityPage> {
                                   ),
                           ),
                           const SizedBox(width: 12),
-                          GestureDetector(
-                            onTap: () async {
-                              await _dbHelper.seedData();
-                              _loadData();
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('100 sample records seeded.'),
-                                  ),
-                                );
-                              }
-                            },
-                            child: Tooltip(
-                              message: 'Seed 100 test records',
-                              child: Icon(
-                                Icons.grain,
-                                color: _primaryAqua,
-                                size: 24,
+                          if (kDebugMode)
+                            GestureDetector(
+                              onTap: () async {
+                                await _dbHelper.seedData();
+                                _loadData();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        '100 sample records seeded.',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: Tooltip(
+                                message: 'Seed 100 test records',
+                                child: Icon(
+                                  Icons.grain,
+                                  color: _primaryAqua,
+                                  size: 24,
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),

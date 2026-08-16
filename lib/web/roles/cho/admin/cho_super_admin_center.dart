@@ -1516,18 +1516,19 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
         ],
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: _firestore.collection('users').snapshots(),
+        stream: _firestore
+            .collection('users')
+            .snapshots()
+            .timeout(const Duration(seconds: 15)),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Failed to load users: ${snapshot.error}',
-                style: const TextStyle(color: ChoColors.text),
-              ),
+            return ChoErrorState(
+              message: 'User administration data could not be loaded.',
+              onRetry: () => setState(() {}),
             );
           }
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const ChoLoadingSkeleton();
           }
 
           final docs = snapshot.data!.docs;

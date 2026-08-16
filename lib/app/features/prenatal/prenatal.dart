@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helper.dart';
 import 'package:mycapstone_project/app/core/services/health_ai_classifier.dart';
 import 'dart:convert';
@@ -181,31 +182,32 @@ class _PrenatalPageState extends State<PrenatalPage> {
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.bug_report),
-            tooltip: 'View Data in Console',
-            onPressed: () {
-              print('=== PRENATAL RECORDS DATA ===');
-              print('Total Records: ${_prenatalRecords.length}');
-              for (var i = 0; i < _prenatalRecords.length; i++) {
-                print('\nRecord ${i + 1}:');
-                _prenatalRecords[i].forEach((key, value) {
-                  print('  $key: $value');
-                });
-              }
-              print('=============================');
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Data printed to console! Check Debug Console.',
+          if (kDebugMode)
+            IconButton(
+              icon: const Icon(Icons.bug_report),
+              tooltip: 'View Data in Console',
+              onPressed: () {
+                print('=== PRENATAL RECORDS DATA ===');
+                print('Total Records: ${_prenatalRecords.length}');
+                for (var i = 0; i < _prenatalRecords.length; i++) {
+                  print('\nRecord ${i + 1}:');
+                  _prenatalRecords[i].forEach((key, value) {
+                    print('  $key: $value');
+                  });
+                }
+                print('=============================');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Data printed to console! Check Debug Console.',
+                      ),
+                      duration: Duration(seconds: 2),
                     ),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              }
-            },
-          ),
+                  );
+                }
+              },
+            ),
         ],
       ),
       body: _isLoading
@@ -382,13 +384,14 @@ class _PrenatalPageState extends State<PrenatalPage> {
                       style: TextStyle(color: _lightOffWhite),
                     ),
                   ),
-                  PopupMenuItem<String>(
-                    value: 'seed',
-                    child: Text(
-                      'Seed 100 Sample Records',
-                      style: TextStyle(color: Color(0xFFF39C12)),
+                  if (kDebugMode)
+                    PopupMenuItem<String>(
+                      value: 'seed',
+                      child: Text(
+                        'Seed 100 Sample Records',
+                        style: TextStyle(color: Color(0xFFF39C12)),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),

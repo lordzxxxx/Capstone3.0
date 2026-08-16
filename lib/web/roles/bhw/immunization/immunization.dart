@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/web/roles/bhw/immunization/immunization_database_helper.dart';
@@ -5404,10 +5405,11 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             icon: const Icon(Icons.more_vert_outlined),
             color: _mutedCoolGray,
             itemBuilder: (context) => [
-              PopupMenuItem(
-                child: const Text('Seed Sample Data'),
-                onTap: () => _seedSampleData(),
-              ),
+              if (kDebugMode)
+                PopupMenuItem(
+                  child: const Text('Seed Sample Data'),
+                  onTap: () => _seedSampleData(),
+                ),
               PopupMenuItem(
                 child: const Text('Refresh Data'),
                 onTap: () => _loadRecords(),

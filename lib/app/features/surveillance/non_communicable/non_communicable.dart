@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:get/get.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/features/patients/patient.dart';
@@ -419,19 +420,20 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                 ? 'Exit Selection Mode'
                 : 'Select Multiple',
           ),
-          PopupMenuButton<String>(
-            onSelected: (String value) {
-              if (value == 'seed') {
-                _seedNonCommunicableData();
-              }
-            },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'seed',
-                child: Text('Seed 100 Sample Records'),
-              ),
-            ],
-          ),
+          if (kDebugMode)
+            PopupMenuButton<String>(
+              onSelected: (String value) {
+                if (value == 'seed') {
+                  _seedNonCommunicableData();
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(
+                  value: 'seed',
+                  child: Text('Seed 100 Sample Records'),
+                ),
+              ],
+            ),
         ],
       ),
       body: RefreshIndicator(

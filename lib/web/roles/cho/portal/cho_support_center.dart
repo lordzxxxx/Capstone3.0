@@ -1155,8 +1155,18 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
         message: 'Sign in with a CHO account to view profile settings.',
       );
     return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      future: _firestore.collection('users').doc(user.uid).get(),
+      future: _firestore
+          .collection('users')
+          .doc(user.uid)
+          .get()
+          .timeout(const Duration(seconds: 15)),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return ChoErrorState(
+            message: 'Profile information could not be loaded.',
+            onRetry: () => setState(() {}),
+          );
+        }
         if (!snapshot.hasData) return const ChoLoadingSkeleton();
         final row = snapshot.data?.data() ?? <String, dynamic>{};
         final fields = <MapEntry<String, String>>[
