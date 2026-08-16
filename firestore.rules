@@ -274,6 +274,19 @@ service cloud.firestore {
         (isBhwRole() && data.createdByUid == request.auth.uid && sameBarangay(data));
     }
 
+    function isAllowedDoctorReferralTransition(currentStatus, nextStatus) {
+      return
+        (currentStatus in [
+            'approved', 'assigned', 'hospital_assigned', 'doctor_assigned'
+          ] &&
+          nextStatus in ['doctor_assigned', 'waiting_consultation', 'consulted']) ||
+        (currentStatus == 'waiting_consultation' &&
+          nextStatus in ['waiting_consultation', 'consulted']) ||
+        (currentStatus in ['in_treatment', 'consulted'] &&
+          nextStatus in ['consulted', 'completed']) ||
+        (currentStatus == 'completed' && nextStatus == 'completed');
+    }
+
     function canUpdateReferral(existingData, newData) {
       let role = userRole();
       let changed = newData.diff(existingData).affectedKeys();
@@ -314,7 +327,10 @@ service cloud.firestore {
       let recordsConsultation = changed.hasOnly([
         'doctorDiagnosis', 'doctorTreatment', 'doctorMedication',
         'doctorNotes', 'status', 'doctorUpdatedAt', 'updatedAt'
-      ]);
+      ]) && isAllowedDoctorReferralTransition(
+        existingData.status,
+        newData.status
+      );
       return role in [
           'CHO', 'cho', 'CHO_SUPER_ADMIN', 'cho_super_admin',
           'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'

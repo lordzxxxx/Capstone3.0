@@ -19,35 +19,30 @@ class MobileSessionGate extends StatefulWidget {
 }
 
 class _MobileSessionGateState extends State<MobileSessionGate> {
-  late Stream<User?> _authStream;
+  late Future<User?> _initialAuthState;
 
   @override
   void initState() {
     super.initState();
-    _authStream = _createAuthStream();
+    _initialAuthState = _restoreInitialAuthState();
   }
 
-  Stream<User?> _createAuthStream() {
-    return FirebaseAuth.instance.authStateChanges().timeout(
+  Future<User?> _restoreInitialAuthState() {
+    return FirebaseAuth.instance.authStateChanges().first.timeout(
       const Duration(seconds: 8),
-      onTimeout: (sink) {
-        sink.addError(
-          TimeoutException('Firebase session restoration timed out'),
-        );
-      },
     );
   }
 
   void _retry() {
     setState(() {
-      _authStream = _createAuthStream();
+      _initialAuthState = _restoreInitialAuthState();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: _authStream,
+    return FutureBuilder<User?>(
+      future: _initialAuthState,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return _SessionRestoreError(onRetry: _retry);
@@ -56,11 +51,17 @@ class _MobileSessionGateState extends State<MobileSessionGate> {
           return const _SessionRestoreLoading();
         }
 
-        final user = snapshot.data;
-        if (user != null) {
-          return HomePage(user: user);
-        }
-        return const LandingPage();
+        return StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          initialData: snapshot.data,
+          builder: (context, authSnapshot) {
+            if (authSnapshot.hasError) {
+              return _SessionRestoreError(onRetry: _retry);
+            }
+            final user = authSnapshot.data;
+            return user != null ? HomePage(user: user) : const LandingPage();
+          },
+        );
       },
     );
   }

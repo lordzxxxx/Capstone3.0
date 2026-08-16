@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mycapstone_project/app/features/auth/login.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
@@ -37,6 +36,12 @@ class _ReferralsPageState extends State<ReferralsPage> {
     'Lack of Specialist',
     'Financial Constraint',
     'Others',
+  ];
+  static const List<String> _doctorCareStatuses = <String>[
+    'doctor_assigned',
+    'waiting_consultation',
+    'consulted',
+    'completed',
   ];
 
   final FirebaseFirestore _firestore = getFirestoreInstance();
@@ -479,10 +484,10 @@ class _ReferralsPageState extends State<ReferralsPage> {
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
-    } catch (e) {
+    } catch (_) {
       Get.snackbar(
         'Submission failed',
-        'Could not submit referral: $e',
+        'The referral could not be submitted. Check your connection and try again.',
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
@@ -833,7 +838,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
     final notesController = TextEditingController(
       text: (data['doctorNotes'] ?? '').toString(),
     );
-    String status = (data['status'] ?? 'assigned').toString();
+    String status = _normalizedDoctorCareStatus(data['status']);
 
     await showDialog<void>(
       context: context,
@@ -883,19 +888,14 @@ class _ReferralsPageState extends State<ReferralsPage> {
                       dropdownColor: _panelAlt,
                       style: const TextStyle(color: _lightOffWhite),
                       decoration: _inputDecoration('Case status'),
-                      items:
-                          const <String>[
-                                'assigned',
-                                'in_treatment',
-                                'completed',
-                              ]
-                              .map(
-                                (value) => DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value.replaceAll('_', ' ')),
-                                ),
-                              )
-                              .toList(),
+                      items: _allowedDoctorCareStatuses(status)
+                          .map(
+                            (value) => DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value.replaceAll('_', ' ')),
+                            ),
+                          )
+                          .toList(),
                       onChanged: (value) {
                         if (value == null) return;
                         setDialogState(() => status = value);
@@ -952,6 +952,39 @@ class _ReferralsPageState extends State<ReferralsPage> {
     treatmentController.dispose();
     medicationController.dispose();
     notesController.dispose();
+  }
+
+  String _normalizedDoctorCareStatus(Object? value) {
+    switch (value?.toString().trim().toLowerCase()) {
+      case 'assigned':
+      case 'hospital_assigned':
+      case 'doctor_assigned':
+        return 'doctor_assigned';
+      case 'waiting_consultation':
+        return 'waiting_consultation';
+      case 'in_treatment':
+      case 'consulted':
+        return 'consulted';
+      case 'completed':
+        return 'completed';
+      default:
+        return 'doctor_assigned';
+    }
+  }
+
+  List<String> _allowedDoctorCareStatuses(String currentStatus) {
+    switch (_normalizedDoctorCareStatus(currentStatus)) {
+      case 'doctor_assigned':
+        return _doctorCareStatuses.take(3).toList(growable: false);
+      case 'waiting_consultation':
+        return _doctorCareStatuses.skip(1).take(2).toList(growable: false);
+      case 'consulted':
+        return _doctorCareStatuses.skip(2).toList(growable: false);
+      case 'completed':
+        return const <String>['completed'];
+      default:
+        return const <String>['doctor_assigned'];
+    }
   }
 
   String? _requiredValidator(String label, String? value) {
@@ -1520,7 +1553,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
               value: _autoAssignDoctor,
-              activeColor: _primaryAqua,
+              activeThumbColor: _primaryAqua,
               title: const Text(
                 'Use AI auto-assignment',
                 style: TextStyle(color: _lightOffWhite),
@@ -1620,7 +1653,11 @@ class _ReferralsPageState extends State<ReferralsPage> {
               Checkbox(
                 value: selected,
                 onChanged: (value) => onChanged(value ?? false),
-                activeColor: _primaryAqua,
+                fillColor: WidgetStateProperty.resolveWith(
+                  (states) => states.contains(WidgetState.selected)
+                      ? _primaryAqua
+                      : Colors.transparent,
+                ),
                 checkColor: _darkDeepTeal,
                 side: BorderSide(color: _primaryAqua.withValues(alpha: 0.36)),
               ),
@@ -2021,9 +2058,29 @@ class _ReferralsPageState extends State<ReferralsPage> {
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(
-                    child: Text(
-                      'Could not load referrals: ${snapshot.error}',
-                      style: const TextStyle(color: _lightOffWhite),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.cloud_off_outlined,
+                            color: _primaryAqua,
+                            size: 42,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Referral records could not be loaded. Check your connection and try again.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: _lightOffWhite),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () => setState(() {}),
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }

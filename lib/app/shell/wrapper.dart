@@ -11,13 +11,33 @@ class Wrapper extends StatefulWidget {
 }
 
 class _WrapperState extends State<Wrapper> {
+  late Future<User?> _initialAuthState;
+
+  @override
+  void initState() {
+    super.initState();
+    _initialAuthState = _restoreInitialAuthState();
+  }
+
+  Future<User?> _restoreInitialAuthState() {
+    // Bound only the first restoration event. The auth stream is intentionally
+    // long-lived and must not time out while the user remains signed in.
+    return FirebaseAuth.instance.authStateChanges().first.timeout(
+      const Duration(seconds: 15),
+    );
+  }
+
+  void _retryInitialAuthState() {
+    setState(() {
+      _initialAuthState = _restoreInitialAuthState();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: StreamBuilder(
-        stream: FirebaseAuth.instance.authStateChanges().timeout(
-          const Duration(seconds: 15),
-        ),
+      body: FutureBuilder<User?>(
+        future: _initialAuthState,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
@@ -31,7 +51,7 @@ class _WrapperState extends State<Wrapper> {
                   ),
                   const SizedBox(height: 12),
                   FilledButton(
-                    onPressed: () => setState(() {}),
+                    onPressed: _retryInitialAuthState,
                     child: const Text('Retry'),
                   ),
                 ],
@@ -41,11 +61,22 @@ class _WrapperState extends State<Wrapper> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasData) {
-            return HomePage(user: snapshot.data);
-          } else {
-            return const Login();
-          }
+          return StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            initialData: snapshot.data,
+            builder: (context, authSnapshot) {
+              if (authSnapshot.hasError) {
+                return Center(
+                  child: FilledButton(
+                    onPressed: _retryInitialAuthState,
+                    child: const Text('Retry authentication'),
+                  ),
+                );
+              }
+              final user = authSnapshot.data;
+              return user != null ? HomePage(user: user) : const Login();
+            },
+          );
         },
       ),
     );

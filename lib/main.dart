@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show kDebugMode, kIsWeb, kReleaseMode;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -202,6 +203,11 @@ Future<void> _initializeWebServices() async {
     // authorization/error state when they are attempted.
     await activateFirebaseAppCheck().timeout(const Duration(seconds: 5));
   } catch (e) {
+    // A release build without a configured/working App Check provider would
+    // otherwise leave the public shell running while protected backend calls
+    // fail later and less clearly. Development may continue without it, but
+    // production must fail the startup gate and expose its retry/error UI.
+    if (kReleaseMode) rethrow;
     print('⚠️ [APP_CHECK] Web activation skipped: $e');
   }
 
@@ -870,7 +876,14 @@ Future<void> _initDynamicLinks() async {
   if (kIsWeb) return;
   try {
     final dynamicLinks = getFirebaseDynamicLinks();
-    final initialLink = await dynamicLinks?.getInitialLink();
+    // Fetching the launch link is a one-time startup operation. Some platform
+    // implementations can leave it pending when the device service is
+    // unavailable, so never let it hold the startup gate indefinitely.
+    final initialLink = dynamicLinks == null
+        ? null
+        : await dynamicLinks
+              .getInitialLink()
+              .timeout(const Duration(seconds: 8));
     if (initialLink?.link != null) {
       // Handle the deep link, e.g., parse parameters and navigate
       // ignore: avoid_print

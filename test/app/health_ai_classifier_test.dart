@@ -44,19 +44,25 @@ Map<String, Map<String, int>> _reportAccuracy(
     confusion.putIfAbsent(r.testCase.expectedCategory, () => {});
     confusion[r.testCase.expectedCategory]![r.actual.category] =
         (confusion[r.testCase.expectedCategory]![r.actual.category] ?? 0) + 1;
-    perCategory.putIfAbsent(r.testCase.expectedCategory, () => []).add(r.correct);
+    perCategory
+        .putIfAbsent(r.testCase.expectedCategory, () => [])
+        .add(r.correct);
     if (r.correct) correct++;
   }
   // ignore: avoid_print
   print('=== $setName: accuracy report (n=${results.length}) ===');
   // ignore: avoid_print
-  print('Overall: $correct/${results.length} = '
-      '${(100 * correct / results.length).toStringAsFixed(1)}%');
+  print(
+    'Overall: $correct/${results.length} = '
+    '${(100 * correct / results.length).toStringAsFixed(1)}%',
+  );
   for (final entry in perCategory.entries) {
     final c = entry.value.where((v) => v).length;
     // ignore: avoid_print
-    print('  ${entry.key}: $c/${entry.value.length} '
-        '(${(100 * c / entry.value.length).toStringAsFixed(1)}%)');
+    print(
+      '  ${entry.key}: $c/${entry.value.length} '
+      '(${(100 * c / entry.value.length).toStringAsFixed(1)}%)',
+    );
   }
   return confusion;
 }
@@ -70,7 +76,9 @@ void _reportPrecisionRecallF1(
   // ignore: avoid_print
   print('--- Confusion matrix (rows=expected, cols=actual) ---');
   // ignore: avoid_print
-  print('expected \\ actual  |  ${categories.map((c) => c.substring(0, 4)).join('  ')}');
+  print(
+    'expected \\ actual  |  ${categories.map((c) => c.substring(0, 4)).join('  ')}',
+  );
   for (final expected in categories) {
     final row = confusion[expected] ?? {};
     final cells = categories.map((a) => (row[a] ?? 0).toString().padLeft(4));
@@ -99,9 +107,11 @@ void _reportPrecisionRecallF1(
         : 2 * precision * recall / (precision + recall);
     f1s.add(f1);
     // ignore: avoid_print
-    print('  $cat: precision=${precision.toStringAsFixed(2)} '
-        'recall=${recall.toStringAsFixed(2)} f1=${f1.toStringAsFixed(2)} '
-        'support=$support');
+    print(
+      '  $cat: precision=${precision.toStringAsFixed(2)} '
+      'recall=${recall.toStringAsFixed(2)} f1=${f1.toStringAsFixed(2)} '
+      'support=$support',
+    );
   }
   final macroF1 = f1s.isEmpty ? 0.0 : f1s.reduce((a, b) => a + b) / f1s.length;
   // ignore: avoid_print
@@ -172,7 +182,11 @@ List<_EvalCase> _taxonomySweepCases() {
   addAll('prenatal', 'Prenatal Care', '28');
   addAll('pediatric', 'Pediatric Care', '10');
 
-  for (final phrase in ['general checkup', 'follow-up visit', 'routine monitoring']) {
+  for (final phrase in [
+    'general checkup',
+    'follow-up visit',
+    'routine monitoring',
+  ]) {
     cases.add(
       _EvalCase(
         {'symptoms': phrase, 'details': '', 'age': '40'},
@@ -182,8 +196,11 @@ List<_EvalCase> _taxonomySweepCases() {
     );
   }
   cases.add(
-    _EvalCase({'symptoms': '', 'details': '', 'age': '40'}, 'Routine Checkup',
-        'empty record'),
+    _EvalCase(
+      {'symptoms': '', 'details': '', 'age': '40'},
+      'Routine Checkup',
+      'empty record',
+    ),
   );
 
   return cases;
@@ -250,7 +267,14 @@ List<_EvalCase> _independentValidationCases() {
   // Structured-field prenatal cases (field design, not keyword list).
   cases.addAll([
     _EvalCase(
-      {'symptoms': '', 'details': '', 'age': '29', 'gravida': '1', 'para': '0', 'lmp': '2026-01-15'},
+      {
+        'symptoms': '',
+        'details': '',
+        'age': '29',
+        'gravida': '1',
+        'para': '0',
+        'lmp': '2026-01-15',
+      },
       'Prenatal Care',
       'structured field: lmp',
     ),
@@ -364,6 +388,31 @@ void main() {
         expectStructurallyValid(result);
       }
     });
+  });
+
+  group('HealthAIClassifier natural-language normalization', () {
+    test(
+      'maps common disease wording to existing categories without fuzzy matching',
+      () async {
+        final classifier = HealthAIClassifier.instance;
+        await classifier.initialize();
+
+        final respiratory = await classifier.classify({
+          'symptoms': 'Been running a temperature and coughing since Tuesday',
+          'age': '33',
+        });
+        final diabetes = await classifier.classify({
+          'symptoms':
+              "Sugar levels have been high lately, doctor says I'm diabetic",
+          'age': '49',
+        });
+
+        expect(respiratory.category, 'Communicable Disease');
+        expect(diabetes.category, 'Non-Communicable Disease');
+        expectStructurallyValid(respiratory);
+        expectStructurallyValid(diabetes);
+      },
+    );
   });
 
   group('Structured prenatal fields route to the rule-based path', () {
@@ -589,7 +638,9 @@ void main() {
       };
 
       final first = await classifier.classify(Map<String, dynamic>.from(input));
-      final second = await classifier.classify(Map<String, dynamic>.from(input));
+      final second = await classifier.classify(
+        Map<String, dynamic>.from(input),
+      );
 
       expect(second.category, first.category);
       expect(second.severity, first.severity);
@@ -621,8 +672,7 @@ void main() {
       await classifier.initialize();
 
       final result = await classifier.classify({
-        'symptoms':
-            'fever, cough, diabetes, hypertension, pregnant, prenatal',
+        'symptoms': 'fever, cough, diabetes, hypertension, pregnant, prenatal',
         'details': '',
         'age': '30',
       });
@@ -651,37 +701,129 @@ void main() {
     // classifier's own reference taxonomy, not invented for this test.
     final cases = <Map<String, dynamic>>[
       // Communicable Disease (age 5-85 band)
-      {'symptoms': 'fever, cough, sore throat', 'age': '30', 'expected': 'Communicable Disease'},
-      {'symptoms': 'measles, chickenpox, rash', 'age': '22', 'expected': 'Communicable Disease'},
-      {'symptoms': 'dengue, chills, body pain', 'age': '40', 'expected': 'Communicable Disease'},
-      {'symptoms': 'tuberculosis, cough, viral infection', 'age': '50', 'expected': 'Communicable Disease'},
-      {'symptoms': 'typhoid, diarrhea', 'age': '35', 'expected': 'Communicable Disease'},
+      {
+        'symptoms': 'fever, cough, sore throat',
+        'age': '30',
+        'expected': 'Communicable Disease',
+      },
+      {
+        'symptoms': 'measles, chickenpox, rash',
+        'age': '22',
+        'expected': 'Communicable Disease',
+      },
+      {
+        'symptoms': 'dengue, chills, body pain',
+        'age': '40',
+        'expected': 'Communicable Disease',
+      },
+      {
+        'symptoms': 'tuberculosis, cough, viral infection',
+        'age': '50',
+        'expected': 'Communicable Disease',
+      },
+      {
+        'symptoms': 'typhoid, diarrhea',
+        'age': '35',
+        'expected': 'Communicable Disease',
+      },
       // Non-Communicable Disease (age 30-90 band)
-      {'symptoms': 'diabetes, hypertension', 'age': '55', 'expected': 'Non-Communicable Disease'},
-      {'symptoms': 'asthma, chronic', 'age': '48', 'expected': 'Non-Communicable Disease'},
-      {'symptoms': 'arthritis, gout', 'age': '62', 'expected': 'Non-Communicable Disease'},
-      {'symptoms': 'migraine, epilepsy', 'age': '39', 'expected': 'Non-Communicable Disease'},
-      {'symptoms': 'kidney disease, anemia', 'age': '70', 'expected': 'Non-Communicable Disease'},
+      {
+        'symptoms': 'diabetes, hypertension',
+        'age': '55',
+        'expected': 'Non-Communicable Disease',
+      },
+      {
+        'symptoms': 'asthma, chronic',
+        'age': '48',
+        'expected': 'Non-Communicable Disease',
+      },
+      {
+        'symptoms': 'arthritis, gout',
+        'age': '62',
+        'expected': 'Non-Communicable Disease',
+      },
+      {
+        'symptoms': 'migraine, epilepsy',
+        'age': '39',
+        'expected': 'Non-Communicable Disease',
+      },
+      {
+        'symptoms': 'kidney disease, anemia',
+        'age': '70',
+        'expected': 'Non-Communicable Disease',
+      },
       // Emergency (age 20-85 band)
-      {'symptoms': 'chest pain, heart attack', 'age': '58', 'expected': 'Emergency'},
-      {'symptoms': 'severe bleeding, trauma', 'age': '33', 'expected': 'Emergency'},
-      {'symptoms': 'stroke, unresponsive', 'age': '65', 'expected': 'Emergency'},
-      {'symptoms': 'anaphylaxis, severe allergic reaction', 'age': '27', 'expected': 'Emergency'},
+      {
+        'symptoms': 'chest pain, heart attack',
+        'age': '58',
+        'expected': 'Emergency',
+      },
+      {
+        'symptoms': 'severe bleeding, trauma',
+        'age': '33',
+        'expected': 'Emergency',
+      },
+      {
+        'symptoms': 'stroke, unresponsive',
+        'age': '65',
+        'expected': 'Emergency',
+      },
+      {
+        'symptoms': 'anaphylaxis, severe allergic reaction',
+        'age': '27',
+        'expected': 'Emergency',
+      },
       {'symptoms': 'seizure, convulsion', 'age': '44', 'expected': 'Emergency'},
       // Prenatal Care (age 18-45 band) -- via free-text keywords only, no
       // structured fields, so this exercises the ML path's own prenatal
       // keyword recognition rather than the field-based routing rule.
-      {'symptoms': 'pregnant, prenatal, morning sickness', 'age': '26', 'expected': 'Prenatal Care'},
-      {'symptoms': 'antenatal, trimester, contractions', 'age': '31', 'expected': 'Prenatal Care'},
-      {'symptoms': 'gestational, fetal movement concern', 'age': '24', 'expected': 'Prenatal Care'},
+      {
+        'symptoms': 'pregnant, prenatal, morning sickness',
+        'age': '26',
+        'expected': 'Prenatal Care',
+      },
+      {
+        'symptoms': 'antenatal, trimester, contractions',
+        'age': '31',
+        'expected': 'Prenatal Care',
+      },
+      {
+        'symptoms': 'gestational, fetal movement concern',
+        'age': '24',
+        'expected': 'Prenatal Care',
+      },
       // Pediatric Care (age 1-18 band)
-      {'symptoms': 'infant, vaccination, growth monitoring', 'age': '2', 'expected': 'Pediatric Care'},
-      {'symptoms': 'child, toddler, immunization', 'age': '6', 'expected': 'Pediatric Care'},
-      {'symptoms': 'newborn, developmental', 'age': '1', 'expected': 'Pediatric Care'},
+      {
+        'symptoms': 'infant, vaccination, growth monitoring',
+        'age': '2',
+        'expected': 'Pediatric Care',
+      },
+      {
+        'symptoms': 'child, toddler, immunization',
+        'age': '6',
+        'expected': 'Pediatric Care',
+      },
+      {
+        'symptoms': 'newborn, developmental',
+        'age': '1',
+        'expected': 'Pediatric Care',
+      },
       // Routine Checkup (age 1-90 band; no category keywords at all)
-      {'symptoms': 'general checkup', 'age': '40', 'expected': 'Routine Checkup'},
-      {'symptoms': 'follow-up visit', 'age': '52', 'expected': 'Routine Checkup'},
-      {'symptoms': 'routine monitoring', 'age': '29', 'expected': 'Routine Checkup'},
+      {
+        'symptoms': 'general checkup',
+        'age': '40',
+        'expected': 'Routine Checkup',
+      },
+      {
+        'symptoms': 'follow-up visit',
+        'age': '52',
+        'expected': 'Routine Checkup',
+      },
+      {
+        'symptoms': 'routine monitoring',
+        'age': '29',
+        'expected': 'Routine Checkup',
+      },
     ];
 
     test('empirical category accuracy across the taxonomy-derived test set '
@@ -719,8 +861,10 @@ void main() {
       // ignore: avoid_print
       print('=== Category classification accuracy report ===');
       // ignore: avoid_print
-      print('Overall: $correctCount/${cases.length} = '
-          '${(overallAccuracy * 100).toStringAsFixed(1)}%');
+      print(
+        'Overall: $correctCount/${cases.length} = '
+        '${(overallAccuracy * 100).toStringAsFixed(1)}%',
+      );
       for (final entry in perCategory.entries) {
         final correct = entry.value.where((v) => v).length;
         // ignore: avoid_print
@@ -827,7 +971,8 @@ void main() {
       expect(
         order[severe.severity]!,
         greaterThanOrEqualTo(order[normal.severity]!),
-        reason: 'normal=${normal.severity} (${normal.method}), '
+        reason:
+            'normal=${normal.severity} (${normal.method}), '
             'severe=${severe.severity} (${severe.method}) -- severe vitals '
             'must not be rated as less urgent than normal vitals',
       );
@@ -835,29 +980,32 @@ void main() {
   });
 
   group('Expanded evaluation: Set A (full keywordDatabase taxonomy sweep)', () {
-    test('accuracy, confusion matrix, precision/recall/F1 across every '
-        'keyword the classifier itself defines (not a hand-picked sample)',
-        () async {
-      final classifier = HealthAIClassifier.instance;
-      await classifier.initialize();
+    test(
+      'accuracy, confusion matrix, precision/recall/F1 across every '
+      'keyword the classifier itself defines (not a hand-picked sample)',
+      () async {
+        final classifier = HealthAIClassifier.instance;
+        await classifier.initialize();
 
-      final cases = _taxonomySweepCases();
-      final results = await _runCases(classifier, cases);
-      for (final r in results) {
-        expectStructurallyValid(r.actual);
-      }
-      final confusion = _reportAccuracy(results, 'Set A (taxonomy sweep)');
-      _reportPrecisionRecallF1(confusion, HealthAIClassifier.categories);
+        final cases = _taxonomySweepCases();
+        final results = await _runCases(classifier, cases);
+        for (final r in results) {
+          expectStructurallyValid(r.actual);
+        }
+        final confusion = _reportAccuracy(results, 'Set A (taxonomy sweep)');
+        _reportPrecisionRecallF1(confusion, HealthAIClassifier.categories);
 
-      final overallAccuracy =
-          results.where((r) => r.correct).length / results.length;
-      expect(
-        overallAccuracy,
-        greaterThanOrEqualTo(0.90),
-        reason: 'Set A accuracy dropped below the 90% target: '
-            '${(overallAccuracy * 100).toStringAsFixed(1)}%',
-      );
-    });
+        final overallAccuracy =
+            results.where((r) => r.correct).length / results.length;
+        expect(
+          overallAccuracy,
+          greaterThanOrEqualTo(0.90),
+          reason:
+              'Set A accuracy dropped below the 90% target: '
+              '${(overallAccuracy * 100).toStringAsFixed(1)}%',
+        );
+      },
+    );
   });
 
   group('Expanded evaluation: Set B (independent validation set)', () {
@@ -881,9 +1029,11 @@ void main() {
         print('--- Set B failures (documented, not hidden) ---');
         for (final f in failures) {
           // ignore: avoid_print
-          print('  expected=${f.testCase.expectedCategory} '
-              'actual=${f.actual.category} source="${f.testCase.source}" '
-              'input=${f.testCase.input}');
+          print(
+            '  expected=${f.testCase.expectedCategory} '
+            'actual=${f.actual.category} source="${f.testCase.source}" '
+            'input=${f.testCase.input}',
+          );
         }
       }
     });
@@ -894,7 +1044,10 @@ void main() {
       final classifier = HealthAIClassifier.instance;
       await classifier.initialize();
 
-      final allCases = [..._taxonomySweepCases(), ..._independentValidationCases()];
+      final allCases = [
+        ..._taxonomySweepCases(),
+        ..._independentValidationCases(),
+      ];
       final results = await _runCases(classifier, allCases);
       _reportConfidenceBands(results);
 
@@ -908,9 +1061,11 @@ void main() {
         final lowAcc = low.where((r) => r.correct).length / low.length;
         final highAcc = high.where((r) => r.correct).length / high.length;
         // ignore: avoid_print
-        print('Low-confidence band accuracy=${(lowAcc * 100).toStringAsFixed(1)}% '
-            'vs high-confidence band accuracy=${(highAcc * 100).toStringAsFixed(1)}% '
-            '(n_low=${low.length}, n_high=${high.length})');
+        print(
+          'Low-confidence band accuracy=${(lowAcc * 100).toStringAsFixed(1)}% '
+          'vs high-confidence band accuracy=${(highAcc * 100).toStringAsFixed(1)}% '
+          '(n_low=${low.length}, n_high=${high.length})',
+        );
       }
     });
   });
@@ -957,11 +1112,7 @@ void main() {
       return score;
     }
 
-    String expectedSeverityLabel(
-      int score, {
-      int? systolic,
-      int? diastolic,
-    }) {
+    String expectedSeverityLabel(int score, {int? systolic, int? diastolic}) {
       if (triggersVitalsEmergency(systolic: systolic, diastolic: diastolic)) {
         return 'Critical';
       }
@@ -984,8 +1135,16 @@ void main() {
         {'systolic': 85, 'diastolic': 60, 'temp': 37.0}, // low BP (+2)
         {'systolic': 118, 'diastolic': 76, 'temp': 38.5}, // mild fever (+1)
         {'systolic': 118, 'diastolic': 76, 'temp': 40.0}, // high fever (+2)
-        {'systolic': 165, 'diastolic': 80, 'temp': 40.0}, // severe BP + high fever (+4, Critical)
-        {'systolic': 145, 'diastolic': 80, 'temp': 38.5}, // mild BP + mild fever (+2, High)
+        {
+          'systolic': 165,
+          'diastolic': 80,
+          'temp': 40.0,
+        }, // severe BP + high fever (+4, Critical)
+        {
+          'systolic': 145,
+          'diastolic': 80,
+          'temp': 38.5,
+        }, // mild BP + mild fever (+2, High)
       ];
 
       var correct = 0;
@@ -1005,29 +1164,37 @@ void main() {
         );
         final result = await classifier.classify({
           'symptoms': 'checkup',
-          'details': 'BP: ${v['systolic']}/${v['diastolic']}, Temp: ${v['temp']}',
+          'details':
+              'BP: ${v['systolic']}/${v['diastolic']}, Temp: ${v['temp']}',
           'age': '40',
         });
         expectStructurallyValid(result);
 
         if (result.severity == expected) {
           correct++;
-        } else if (_severityOrder[result.severity]! < _severityOrder[expected]!) {
+        } else if (_severityOrder[result.severity]! <
+            _severityOrder[expected]!) {
           underTriage++;
-          details.add('UNDER-TRIAGE: vitals=$v expected=$expected '
-              'actual=${result.severity}');
+          details.add(
+            'UNDER-TRIAGE: vitals=$v expected=$expected '
+            'actual=${result.severity}',
+          );
         } else {
           overTriage++;
-          details.add('OVER-TRIAGE: vitals=$v expected=$expected '
-              'actual=${result.severity}');
+          details.add(
+            'OVER-TRIAGE: vitals=$v expected=$expected '
+            'actual=${result.severity}',
+          );
         }
       }
 
       // ignore: avoid_print
       print('=== Severity accuracy report (n=${vitalCases.length}) ===');
       // ignore: avoid_print
-      print('Correct: $correct/${vitalCases.length} '
-          '(${(100 * correct / vitalCases.length).toStringAsFixed(1)}%)');
+      print(
+        'Correct: $correct/${vitalCases.length} '
+        '(${(100 * correct / vitalCases.length).toStringAsFixed(1)}%)',
+      );
       // ignore: avoid_print
       print('Under-triage (safety-sensitive): $underTriage');
       // ignore: avoid_print
@@ -1040,7 +1207,8 @@ void main() {
       expect(
         underTriage,
         0,
-        reason: 'Under-triage is safety-sensitive and must not occur on '
+        reason:
+            'Under-triage is safety-sensitive and must not occur on '
             'these documented-threshold boundary cases: $details',
       );
     });
@@ -1055,7 +1223,11 @@ void main() {
       await classifier.initialize();
 
       final escalationCases = <Map<String, dynamic>>[
-        {'symptoms': 'anaphylaxis, severe allergic reaction', 'details': '', 'age': '27'},
+        {
+          'symptoms': 'anaphylaxis, severe allergic reaction',
+          'details': '',
+          'age': '27',
+        },
         {'symptoms': 'seizure, convulsion', 'details': '', 'age': '44'},
         {'symptoms': 'stroke, unresponsive', 'details': '', 'age': '65'},
         {'symptoms': 'chest pain, heart attack', 'details': '', 'age': '58'},
@@ -1080,29 +1252,33 @@ void main() {
         expect(
           isEscalated,
           isTrue,
-          reason: 'Expected an escalated (Critical/Emergency) result for '
+          reason:
+              'Expected an escalated (Critical/Emergency) result for '
               'input=$input but got category=${result.category} '
               'severity=${result.severity}',
         );
         final precautions =
             (result.recoveryPlan?['precautions'] as List?)?.cast<String>() ??
             const <String>[];
-        final hasEscalationText = precautions.any(
-          (p) =>
-              p.toLowerCase().contains('immediate') ||
-              p.toLowerCase().contains('emergency'),
-        ) ||
-            HealthAIClassifier.categoryFallbackTreatment[result.category]
-                    ?['precautions']
-                ?.cast<String>()
-                .any((p) => p.toLowerCase().contains('emergency')) ==
+        final hasEscalationText =
+            precautions.any(
+              (p) =>
+                  p.toLowerCase().contains('immediate') ||
+                  p.toLowerCase().contains('emergency'),
+            ) ||
+            HealthAIClassifier
+                    .categoryFallbackTreatment[result.category]?['precautions']
+                    ?.cast<String>()
+                    .any((p) => p.toLowerCase().contains('emergency')) ==
                 true;
         if (hasEscalationText) escalationCorrect++;
       }
 
       // ignore: avoid_print
-      print('=== Referral/escalation correctness: '
-          '$escalationCorrect/${escalationCases.length} ===');
+      print(
+        '=== Referral/escalation correctness: '
+        '$escalationCorrect/${escalationCases.length} ===',
+      );
     });
 
     test('a routine, low-risk record does not trigger an emergency '

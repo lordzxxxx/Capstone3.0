@@ -616,6 +616,12 @@ class HealthAIClassifier {
     'sob': 'shortness of breath',
     'htn': 'hypertension',
     'dm': 'diabetes',
+    // Common, semantically specific BHW/patient wording. These normalize
+    // directly to existing taxonomy terms instead of introducing broad or
+    // fuzzy matching that could manufacture a clinical category.
+    'diabetic': 'diabetes',
+    'coughing': 'cough',
+    'running a temperature': 'fever',
   };
 
   /// Conservative text normalization applied before keyword matching:

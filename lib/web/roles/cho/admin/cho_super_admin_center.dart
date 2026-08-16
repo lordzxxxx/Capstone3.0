@@ -8,8 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
-import 'package:mycapstone_project/web/roles/cho/dashboard/cho_dashboard.dart';
-import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/barangay_branding_service.dart';
 import 'package:mycapstone_project/web/shared/widgets/barangay_logo_image.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
@@ -1516,10 +1514,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
         ],
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: _firestore
-            .collection('users')
-            .snapshots()
-            .timeout(const Duration(seconds: 15)),
+        stream: _firestore.collection('users').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return ChoErrorState(

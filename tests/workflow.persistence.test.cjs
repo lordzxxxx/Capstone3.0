@@ -185,13 +185,31 @@ describe('connected workflow: real Firestore persistence and retrieval', () => {
     // writes: doctorDiagnosis/doctorTreatment/doctorMedication/
     // doctorNotes/status/doctorUpdatedAt/updatedAt -- this is the field
     // allowlist added to firestore.rules this session after the emulator
-    // test found doctors could otherwise write unrelated fields). ---
+    // test found doctors could otherwise write unrelated fields).
+    //
+    // The status moves to 'consulted' first, not straight to 'completed':
+    // isAllowedDoctorReferralTransition() (and the matching
+    // referrals.dart dropdown, which only offers a status one step ahead
+    // of the current one) requires a documented consultation before a
+    // case can be marked complete, so this mirrors the two real, separate
+    // dialog saves a doctor performs rather than one combined write. ---
     await assertSucceeds(
       doctorDb.doc('referrals/workflow-referral-1').update({
         doctorDiagnosis: 'Confirmed communicable illness, stable',
         doctorTreatment: 'Supportive care plan documented by physician',
         doctorMedication: 'Prescribed by physician (out of AI scope)',
         doctorNotes: 'Follow-up in one week',
+        status: 'consulted',
+        assignedDoctorUid: 'doctor-1',
+        doctorUpdatedAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    );
+
+    // --- Doctor: a second, later save closes out the case (the "mark
+    // completed" follow-up action, only reachable once consulted). ---
+    await assertSucceeds(
+      doctorDb.doc('referrals/workflow-referral-1').update({
         status: 'completed',
         assignedDoctorUid: 'doctor-1',
         doctorUpdatedAt: new Date(),

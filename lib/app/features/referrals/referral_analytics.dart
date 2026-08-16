@@ -50,18 +50,16 @@ class _ReferralAnalyticsPageState extends State<ReferralAnalyticsPage> {
   Stream<QuerySnapshot<Map<String, dynamic>>> _referralsStream() {
     final referrals = _firestore.collection('referrals');
     if (_scope.canViewAllBarangays) {
-      return referrals.snapshots().timeout(const Duration(seconds: 15));
+      return referrals.snapshots();
     }
     if (_scope.role == 'doctor') {
       return referrals
           .where('assignedDoctorUid', isEqualTo: _scope.userId)
-          .snapshots()
-          .timeout(const Duration(seconds: 15));
+          .snapshots();
     }
     return referrals
         .where('createdByUid', isEqualTo: _scope.userId)
-        .snapshots()
-        .timeout(const Duration(seconds: 15));
+        .snapshots();
   }
 
   @override

@@ -8,7 +8,6 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
-import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/utils/referral_pdf.dart';
@@ -3376,7 +3375,7 @@ class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Could not load referrals: ${fallbackSnapshot.error}',
+                                    'Referral records could not be loaded. Check your connection and try again.',
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       color: _lightOffWhite,
@@ -3413,7 +3412,7 @@ class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Could not load referrals: ${snapshot.error}',
+                            'Referral records could not be loaded. Check your connection and try again.',
                             textAlign: TextAlign.center,
                             style: const TextStyle(color: _lightOffWhite),
                           ),

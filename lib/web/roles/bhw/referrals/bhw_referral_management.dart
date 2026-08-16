@@ -968,8 +968,10 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
       _snack('Referral submitted to CHO for review.');
       _clearDraft();
       setState(() => _view = 2);
-    } catch (error) {
-      _snack('Could not submit referral: $error');
+    } catch (_) {
+      _snack(
+        'The referral could not be submitted. Check your connection and try again.',
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

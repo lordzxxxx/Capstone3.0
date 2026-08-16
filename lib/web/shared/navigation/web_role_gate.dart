@@ -29,6 +29,25 @@ class WebRoleGate extends StatefulWidget {
   static bool isAllowed(String role, Set<String> roles) =>
       roles.contains(normalizeRole(role));
 
+  static String fallbackForRole(
+    Object? role, {
+    String defaultRoute = WebRoutes.landing,
+  }) {
+    switch (normalizeRole(role)) {
+      case 'bhw':
+        return WebRoutes.bhwDashboard;
+      case 'doctor':
+        return WebRoutes.doctorReferrals;
+      case 'cho':
+      case 'cho_super_admin':
+      case 'super_admin':
+      case 'admin':
+        return WebRoutes.choDashboard;
+      default:
+        return defaultRoute;
+    }
+  }
+
   @override
   State<WebRoleGate> createState() => _WebRoleGateState();
 }
@@ -80,7 +99,12 @@ class _WebRoleGateState extends State<WebRoleGate> {
                 });
                 return;
               }
-              Get.offAllNamed(widget.fallbackRoute);
+              Get.offAllNamed(
+                WebRoleGate.fallbackForRole(
+                  role,
+                  defaultRoute: widget.fallbackRoute,
+                ),
+              );
             },
           );
         }

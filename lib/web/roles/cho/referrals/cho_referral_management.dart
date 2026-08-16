@@ -119,7 +119,8 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return ChoErrorState(
-                    message: snapshot.error.toString(),
+                    message:
+                        'Referral records could not be loaded. Check your connection and try again.',
                     onRetry: _loadScope,
                   );
                 }

@@ -371,6 +371,38 @@ describe('doctor scope', () => {
       ref.update({assignedDoctorUid: 'doctor-1', assignedHospital: 'Self-assigned Hospital'}),
     );
   });
+
+  it('allows only forward consultation states for the assigned doctor', async () => {
+    await seed('users/doctor-1', doctorProfile('doctor-1', 'doctor-1@example.test'));
+    await seed('referrals/forward-only-1', {
+      patientName: 'Test Patient',
+      status: 'doctor_assigned',
+      barangay: 'Barangay 10',
+      barangayCode: 'barangay_10',
+      createdByUid: 'bhw-1',
+      assignedDoctorUid: 'doctor-1',
+    });
+    const ref = testEnv
+      .authenticatedContext('doctor-1', {email: 'doctor-1@example.test'})
+      .firestore()
+      .doc('referrals/forward-only-1');
+
+    await assertSucceeds(
+      ref.update({
+        status: 'consulted',
+        doctorNotes: 'Consultation completed.',
+        doctorUpdatedAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    );
+    await assertFails(
+      ref.update({
+        status: 'approved',
+        doctorUpdatedAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    );
+  });
 });
 
 describe('doctor notes are protected (append-only clinical log)', () => {

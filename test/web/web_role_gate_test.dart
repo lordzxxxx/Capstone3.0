@@ -16,5 +16,15 @@ void main() {
       expect(WebRoleGate.isAllowed('bhw', choRoles), isFalse);
       expect(WebRoleGate.isAllowed('doctor', choRoles), isFalse);
     });
+
+    test('returns an authenticated user to their permitted portal', () {
+      expect(WebRoleGate.fallbackForRole('bhw'), '/bhw/dashboard');
+      expect(WebRoleGate.fallbackForRole('CHO'), '/cho/dashboard');
+      expect(WebRoleGate.fallbackForRole('doctor'), '/doctor/referrals');
+      expect(
+        WebRoleGate.fallbackForRole('unknown', defaultRoute: '/aidsuhis'),
+        '/aidsuhis',
+      );
+    });
   });
 }
