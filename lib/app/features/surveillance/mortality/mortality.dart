@@ -690,7 +690,7 @@ class _MortalityPageState extends State<MortalityPage>
                 domainAxis: charts.NumericAxisSpec(
                   renderSpec: charts.GridlineRendererSpec(
                     labelStyle: charts.TextStyleSpec(
-                      color: charts.Color.white,
+                      color: charts.ColorUtil.fromDartColor(AppDesign.muted),
                       fontSize: 11,
                     ),
                   ),
@@ -701,7 +701,7 @@ class _MortalityPageState extends State<MortalityPage>
                   ),
                   renderSpec: charts.GridlineRendererSpec(
                     labelStyle: charts.TextStyleSpec(
-                      color: charts.Color.white,
+                      color: charts.ColorUtil.fromDartColor(AppDesign.muted),
                       fontSize: 11,
                     ),
                   ),
@@ -743,7 +743,9 @@ class _MortalityPageState extends State<MortalityPage>
                                   labelAccessorFn: (CauseData data, _) =>
                                       '${data.percentage.toStringAsFixed(1)}%',
                                   colorFn: (CauseData data, _) =>
-                                      charts.MaterialPalette.teal.shadeDefault,
+                                      charts.ColorUtil.fromDartColor(
+                                        AppDesign.blue,
+                                      ),
                                 ),
                               ],
                               animate: true,
@@ -806,22 +808,18 @@ class _MortalityPageState extends State<MortalityPage>
                                 charts.Series<AgeDistribution, String>(
                                   id: 'Ages',
                                   colorFn: (AgeDistribution data, _) {
-                                    // Color gradient based on count
                                     if (data.count > 3) {
-                                      return charts
-                                          .MaterialPalette
-                                          .green
-                                          .shadeDefault;
+                                      return charts.ColorUtil.fromDartColor(
+                                        AppDesign.navy,
+                                      );
                                     } else if (data.count > 1) {
-                                      return charts
-                                          .MaterialPalette
-                                          .yellow
-                                          .shadeDefault;
+                                      return charts.ColorUtil.fromDartColor(
+                                        AppDesign.blue,
+                                      );
                                     } else {
-                                      return charts
-                                          .MaterialPalette
-                                          .gray
-                                          .shadeDefault;
+                                      return charts.ColorUtil.fromDartColor(
+                                        AppDesign.skyBlue,
+                                      );
                                     }
                                   },
                                   domainFn: (AgeDistribution dist, _) =>
@@ -844,7 +842,9 @@ class _MortalityPageState extends State<MortalityPage>
                                     ),
                                 renderSpec: charts.GridlineRendererSpec(
                                   labelStyle: charts.TextStyleSpec(
-                                    color: charts.Color.white,
+                                    color: charts.ColorUtil.fromDartColor(
+                                      AppDesign.muted,
+                                    ),
                                     fontSize: 11,
                                   ),
                                 ),
@@ -852,7 +852,9 @@ class _MortalityPageState extends State<MortalityPage>
                               domainAxis: charts.OrdinalAxisSpec(
                                 renderSpec: charts.SmallTickRendererSpec(
                                   labelStyle: charts.TextStyleSpec(
-                                    color: charts.Color.white,
+                                    color: charts.ColorUtil.fromDartColor(
+                                      AppDesign.muted,
+                                    ),
                                     fontSize: 11,
                                   ),
                                 ),

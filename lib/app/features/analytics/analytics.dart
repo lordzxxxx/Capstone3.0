@@ -67,6 +67,8 @@ String _compactChartLabelAscii(String value, {int maxLength = 12}) {
   ).replaceAll('â€¦', '...');
 }
 
+charts.Color _chartColor(Color color) => charts.ColorUtil.fromDartColor(color);
+
 class AnalyticsPage extends StatefulWidget {
   const AnalyticsPage({super.key});
 
@@ -1183,15 +1185,15 @@ class _BuildBMIChartState extends State<_BuildBMIChart>
                     colorFn: (BarData data, _) {
                       switch (data.label) {
                         case 'Under':
-                          return charts.MaterialPalette.indigo.shadeDefault;
+                          return _chartColor(AppDesign.navy);
                         case 'Normal':
-                          return charts.MaterialPalette.green.shadeDefault;
+                          return _chartColor(AppDesign.blue);
                         case 'Over':
-                          return charts.MaterialPalette.yellow.shadeDefault;
+                          return _chartColor(AppDesign.skyBlue);
                         case 'Obese':
-                          return charts.MaterialPalette.red.shadeDefault;
+                          return _chartColor(AppDesign.teal);
                         default:
-                          return charts.MaterialPalette.blue.shadeDefault;
+                          return _chartColor(AppDesign.blue);
                       }
                     },
                     domainFn: (BarData data, _) => data.label,
@@ -1217,18 +1219,18 @@ class _BuildBMIChartState extends State<_BuildBMIChart>
                   showAxisLine: false,
                   renderSpec: charts.GridlineRendererSpec(
                     labelStyle: charts.TextStyleSpec(
-                      color: charts.Color.white,
+                      color: _chartColor(AppDesign.muted),
                       fontSize: isCompact ? 8 : 10,
                     ),
                     lineStyle: charts.LineStyleSpec(
-                      color: charts.Color(r: 255, g: 255, b: 255, a: 64),
+                      color: _chartColor(AppDesign.chartGrid),
                     ),
                   ),
                 ),
                 domainAxis: charts.OrdinalAxisSpec(
                   renderSpec: charts.SmallTickRendererSpec(
                     labelStyle: charts.TextStyleSpec(
-                      color: charts.Color.white,
+                      color: _chartColor(AppDesign.muted),
                       fontSize: isCompact ? 8 : 10,
                     ),
                   ),
@@ -1356,13 +1358,8 @@ class _BuildBPChartState extends State<_BuildBPChart>
       }
     }
 
-    _systolicData = systolicData.isEmpty
-        ? [LineData(0, 120), LineData(1, 118), LineData(2, 122)]
-        : systolicData;
-
-    _diastolicData = diastolicData.isEmpty
-        ? [LineData(0, 80), LineData(1, 78), LineData(2, 82)]
-        : diastolicData;
+    _systolicData = systolicData;
+    _diastolicData = diastolicData;
 
     // Trigger animation
     _animationController.forward(from: 0.0);
@@ -1385,6 +1382,7 @@ class _BuildBPChartState extends State<_BuildBPChart>
     final latestDiastolic = _diastolicData.isNotEmpty
         ? _diastolicData.last.value.toString()
         : '--';
+    final hasData = _systolicData.isNotEmpty && _diastolicData.isNotEmpty;
 
     return Column(
       children: [
@@ -1393,90 +1391,99 @@ class _BuildBPChartState extends State<_BuildBPChart>
           isUpdating: _isUpdating,
         ),
         const SizedBox(height: 12),
-        Expanded(
-          child: ScaleTransition(
-            scale: Tween<double>(
-              begin: 0.95,
-              end: 1.0,
-            ).animate(_animationController),
-            child: Container(
-              padding: EdgeInsets.fromLTRB(
-                isCompact ? 4 : 8,
-                10,
-                isCompact ? 10 : 12,
-                4,
-              ),
-              decoration: BoxDecoration(
-                color: _lightOffWhite.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: _lightOffWhite.withValues(alpha: 0.08),
+        if (hasData)
+          Expanded(
+            child: ScaleTransition(
+              scale: Tween<double>(
+                begin: 0.95,
+                end: 1.0,
+              ).animate(_animationController),
+              child: Container(
+                padding: EdgeInsets.fromLTRB(
+                  isCompact ? 4 : 8,
+                  10,
+                  isCompact ? 10 : 12,
+                  4,
                 ),
-              ),
-              child: charts.LineChart(
-                [
-                  charts.Series<LineData, int>(
-                    id: 'Systolic',
-                    colorFn: (_, _) => charts.MaterialPalette.red.shadeDefault,
-                    domainFn: (LineData data, _) => data.day,
-                    measureFn: (LineData data, _) => data.value,
-                    data: _systolicData,
-                  ),
-                  charts.Series<LineData, int>(
-                    id: 'Diastolic',
-                    colorFn: (_, _) => charts.MaterialPalette.blue.shadeDefault,
-                    domainFn: (LineData data, _) => data.day,
-                    measureFn: (LineData data, _) => data.value,
-                    data: _diastolicData,
-                  ),
-                ],
-                animate: true,
-                animationDuration: const Duration(milliseconds: 800),
-                defaultRenderer: charts.LineRendererConfig(includePoints: true),
-                primaryMeasureAxis: charts.NumericAxisSpec(
-                  showAxisLine: false,
-                  renderSpec: charts.GridlineRendererSpec(
-                    labelStyle: charts.TextStyleSpec(
-                      color: charts.Color.white,
-                      fontSize: isCompact ? 8 : 10,
-                    ),
-                    lineStyle: charts.LineStyleSpec(
-                      color: charts.Color(r: 255, g: 255, b: 255, a: 64),
-                    ),
+                decoration: BoxDecoration(
+                  color: _lightOffWhite.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: _lightOffWhite.withValues(alpha: 0.08),
                   ),
                 ),
-                domainAxis: charts.NumericAxisSpec(
-                  renderSpec: charts.SmallTickRendererSpec(
-                    labelStyle: charts.TextStyleSpec(
-                      color: charts.Color.white,
-                      fontSize: isCompact ? 8 : 10,
+                child: charts.LineChart(
+                  [
+                    charts.Series<LineData, int>(
+                      id: 'Systolic',
+                      colorFn: (_, _) => _chartColor(AppDesign.navy),
+                      domainFn: (LineData data, _) => data.day,
+                      measureFn: (LineData data, _) => data.value,
+                      data: _systolicData,
+                    ),
+                    charts.Series<LineData, int>(
+                      id: 'Diastolic',
+                      colorFn: (_, _) => _chartColor(AppDesign.blue),
+                      domainFn: (LineData data, _) => data.day,
+                      measureFn: (LineData data, _) => data.value,
+                      data: _diastolicData,
+                    ),
+                  ],
+                  animate: true,
+                  animationDuration: const Duration(milliseconds: 800),
+                  defaultRenderer: charts.LineRendererConfig(
+                    includePoints: true,
+                  ),
+                  primaryMeasureAxis: charts.NumericAxisSpec(
+                    showAxisLine: false,
+                    renderSpec: charts.GridlineRendererSpec(
+                      labelStyle: charts.TextStyleSpec(
+                        color: _chartColor(AppDesign.muted),
+                        fontSize: isCompact ? 8 : 10,
+                      ),
+                      lineStyle: charts.LineStyleSpec(
+                        color: _chartColor(AppDesign.chartGrid),
+                      ),
+                    ),
+                  ),
+                  domainAxis: charts.NumericAxisSpec(
+                    renderSpec: charts.SmallTickRendererSpec(
+                      labelStyle: charts.TextStyleSpec(
+                        color: _chartColor(AppDesign.muted),
+                        fontSize: isCompact ? 8 : 10,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
+          )
+        else
+          const Expanded(
+            child: _ChartEmptyState('No blood pressure data available'),
           ),
-        ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _LegendPill(
-                label: 'Systolic',
-                value: '$latestSystolic mmHg',
-                color: Colors.red,
-              ),
-              _LegendPill(
-                label: 'Diastolic',
-                value: '$latestDiastolic mmHg',
-                color: Colors.blue,
-              ),
-            ],
+        if (hasData) ...[
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _LegendPill(
+                  label: 'Systolic',
+                  value: '$latestSystolic mmHg',
+                  color: AppDesign.navy,
+                ),
+                _LegendPill(
+                  label: 'Diastolic',
+                  value: '$latestDiastolic mmHg',
+                  color: AppDesign.blue,
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -1610,28 +1617,28 @@ class _BuildDemographicsChartState extends State<_BuildDemographicsChart>
                     label: '0-17 years',
                     value: _age0to18,
                     total: total,
-                    color: Colors.blue,
+                    color: AppDesign.navy,
                   ),
                   const SizedBox(height: 10),
                   _DemographicItem(
                     label: '18-34 years',
                     value: _age18to35,
                     total: total,
-                    color: Colors.green,
+                    color: AppDesign.blue,
                   ),
                   const SizedBox(height: 10),
                   _DemographicItem(
                     label: '35-64 years',
                     value: _age35to65,
                     total: total,
-                    color: Colors.orange,
+                    color: AppDesign.skyBlue,
                   ),
                   const SizedBox(height: 10),
                   _DemographicItem(
                     label: '65+ years',
                     value: _age65plus,
                     total: total,
-                    color: Colors.red,
+                    color: AppDesign.teal,
                   ),
                 ],
               ),
@@ -1896,22 +1903,22 @@ class _BuildImmunizationChartState extends State<_BuildImmunizationChart>
                 defaultRenderer: charts.BarRendererConfig<String>(
                   cornerStrategy: const charts.ConstCornerStrategy(10),
                 ),
-                primaryMeasureAxis: const charts.NumericAxisSpec(
+                primaryMeasureAxis: charts.NumericAxisSpec(
                   showAxisLine: false,
                   renderSpec: charts.GridlineRendererSpec(
                     labelStyle: charts.TextStyleSpec(
-                      color: charts.Color.white,
+                      color: _chartColor(AppDesign.muted),
                       fontSize: 10,
                     ),
                     lineStyle: charts.LineStyleSpec(
-                      color: charts.Color(r: 255, g: 255, b: 255, a: 64),
+                      color: _chartColor(AppDesign.chartGrid),
                     ),
                   ),
                 ),
-                domainAxis: const charts.OrdinalAxisSpec(
+                domainAxis: charts.OrdinalAxisSpec(
                   renderSpec: charts.SmallTickRendererSpec(
                     labelStyle: charts.TextStyleSpec(
-                      color: charts.Color.white,
+                      color: _chartColor(AppDesign.muted),
                       fontSize: 10,
                     ),
                   ),
@@ -1940,11 +1947,11 @@ class _StatisticsGrid extends StatefulWidget {
 }
 
 class _StatisticsGridState extends State<_StatisticsGrid> {
-  late double _avgBPSystolic;
-  late double _avgBPDiastolic;
-  late double _avgHeartRate;
-  late double _avgBMI;
-  late double _avgTemp;
+  double? _avgBPSystolic;
+  double? _avgBPDiastolic;
+  double? _avgHeartRate;
+  double? _avgBMI;
+  double? _avgTemp;
 
   @override
   void initState() {
@@ -2037,11 +2044,11 @@ class _StatisticsGridState extends State<_StatisticsGrid> {
     }
 
     setState(() {
-      _avgBPSystolic = bpCount > 0 ? bpSystolicSum / bpCount : 120;
-      _avgBPDiastolic = bpCount > 0 ? bpDiastolicSum / bpCount : 80;
-      _avgHeartRate = hrCount > 0 ? hrSum / hrCount : 72;
-      _avgBMI = bmiCount > 0 ? bmiSum / bmiCount : 23.4;
-      _avgTemp = tempCount > 0 ? tempSum / tempCount : 37.0;
+      _avgBPSystolic = bpCount > 0 ? bpSystolicSum / bpCount : null;
+      _avgBPDiastolic = bpCount > 0 ? bpDiastolicSum / bpCount : null;
+      _avgHeartRate = hrCount > 0 ? hrSum / hrCount : null;
+      _avgBMI = bmiCount > 0 ? bmiSum / bmiCount : null;
+      _avgTemp = tempCount > 0 ? tempSum / tempCount : null;
     });
   }
 
@@ -2050,36 +2057,33 @@ class _StatisticsGridState extends State<_StatisticsGrid> {
     final cards = <Widget>[
       _StatisticCard(
         title: 'Avg. Blood Pressure',
-        value:
-            '${_avgBPSystolic.toStringAsFixed(0)}/${_avgBPDiastolic.toStringAsFixed(0)}',
+        value: _avgBPSystolic == null || _avgBPDiastolic == null
+            ? '--'
+            : '${_avgBPSystolic!.toStringAsFixed(0)}/${_avgBPDiastolic!.toStringAsFixed(0)}',
         unit: 'mmHg',
-        trend: '+2.5%',
         icon: Icons.favorite_border,
         color: AppDesign.navy,
       ),
       _StatisticCard(
         title: 'Avg. Heart Rate',
-        value: _avgHeartRate.toStringAsFixed(0),
+        value: _avgHeartRate?.toStringAsFixed(0) ?? '--',
         unit: 'bpm',
-        trend: '-1.2%',
         icon: Icons.favorite,
         color: AppDesign.blue,
       ),
       _StatisticCard(
         title: 'Avg. BMI',
-        value: _avgBMI.toStringAsFixed(1),
+        value: _avgBMI?.toStringAsFixed(1) ?? '--',
         unit: 'kg/m²',
-        trend: '+0.8%',
         icon: Icons.scale,
         color: AppDesign.blue,
       ),
       _StatisticCard(
         title: 'Avg. Temperature',
-        value: _avgTemp.toStringAsFixed(1),
+        value: _avgTemp?.toStringAsFixed(1) ?? '--',
         unit: '°C',
-        trend: '-0.5%',
         icon: Icons.thermostat,
-        color: Colors.blue,
+        color: AppDesign.skyBlue,
       ),
     ];
 
@@ -2108,7 +2112,7 @@ class _StatisticCard extends StatelessWidget {
   final String title;
   final String value;
   final String unit;
-  final String trend;
+  final String? trend;
   final IconData icon;
   final Color color;
 
@@ -2116,14 +2120,14 @@ class _StatisticCard extends StatelessWidget {
     required this.title,
     required this.value,
     required this.unit,
-    required this.trend,
+    this.trend,
     required this.icon,
     required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isTrendPositive = !trend.contains('-');
+    final isTrendPositive = trend != null && !trend!.contains('-');
     final displayUnit = unit.contains('kg/m')
         ? 'kg/m2'
         : unit.contains('C')
@@ -2161,34 +2165,43 @@ class _StatisticCard extends StatelessWidget {
                 ),
                 child: Icon(icon, color: color, size: 16),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isTrendPositive
-                      ? Colors.red.withValues(alpha: 0.15)
-                      : Colors.green.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isTrendPositive ? Icons.trending_up : Icons.trending_down,
-                      size: 12,
-                      color: isTrendPositive ? Colors.red : Colors.green,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      trend,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: isTrendPositive ? Colors.red : Colors.green,
+              if (trend != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: (isTrendPositive ? AppDesign.blue : AppDesign.navy)
+                        .withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isTrendPositive
+                            ? Icons.trending_up
+                            : Icons.trending_down,
+                        size: 12,
+                        color: isTrendPositive
+                            ? AppDesign.blue
+                            : AppDesign.navy,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Text(
+                        trend!,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isTrendPositive
+                              ? AppDesign.blue
+                              : AppDesign.navy,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 12),
