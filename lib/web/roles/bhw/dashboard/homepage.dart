@@ -3911,7 +3911,6 @@ class _HomePageState extends State<HomePage> {
     final now = DateTime.now();
     final timeFormatted =
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-    final systemStatus = 'All systems operational';
     final greeting = _getTimeBasedGreeting();
 
     return StatefulBuilder(
@@ -3984,43 +3983,6 @@ class _HomePageState extends State<HomePage> {
                               fontSize: 14,
                               color: _lightOffWhite,
                               fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _accentGreen.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: _accentGreen.withValues(alpha: 0.5),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: _accentGreen,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  systemStatus,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: _accentGreen,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
                             ),
                           ),
                         ],
