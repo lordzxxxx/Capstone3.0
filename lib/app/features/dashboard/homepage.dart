@@ -2216,68 +2216,68 @@ class _HomePageState extends State<HomePage> {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Greeting and Username (Left side)
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Greeting
-                              Text(
-                                greeting,
-                                style: TextStyle(
-                                  color: _lightOffWhite,
-                                  fontSize: kIsWeb ? 24 : 22,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: -0.3,
-                                ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Greeting and Username block, reused in both layouts below.
+                        final greetingBlock = Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Greeting
+                            Text(
+                              greeting,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: _lightOffWhite,
+                                fontSize: kIsWeb ? 24 : 22,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.3,
                               ),
-                              const SizedBox(height: 6),
-                              // Username
-                              Text(
-                                userName,
-                                style: TextStyle(
-                                  color: _lightOffWhite.withValues(alpha: 0.9),
-                                  fontSize: kIsWeb ? 16 : 14,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.4,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 6),
+                            // Username
+                            Text(
+                              userName,
+                              style: TextStyle(
+                                color: _lightOffWhite.withValues(alpha: 0.9),
+                                fontSize: kIsWeb ? 16 : 14,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.4,
                               ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.location_on_outlined,
-                                    color: _primaryAqua,
-                                    size: 17,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      'Assigned Barangay: $assignedBarangay',
-                                      style: TextStyle(
-                                        color: _lightOffWhite.withValues(
-                                          alpha: 0.76,
-                                        ),
-                                        fontSize: kIsWeb ? 14 : 12.5,
-                                        fontWeight: FontWeight.w500,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on_outlined,
+                                  color: _primaryAqua,
+                                  size: 17,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'Assigned Barangay: $assignedBarangay',
+                                    style: TextStyle(
+                                      color: _lightOffWhite.withValues(
+                                        alpha: 0.76,
                                       ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
+                                      fontSize: kIsWeb ? 14 : 12.5,
+                                      fontWeight: FontWeight.w500,
                                     ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        // Date (Right side)
-                        Container(
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+
+                        // Date pill, reused in both layouts below.
+                        final dateChip = Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 8,
@@ -2309,8 +2309,32 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ],
                           ),
-                        ),
-                      ],
+                        );
+
+                        // On narrow phones the date pill doesn't fit beside the
+                        // greeting without squeezing it into a multi-line wrap,
+                        // so stack the pill below instead of beside it.
+                        if (constraints.maxWidth < 340) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              greetingBlock,
+                              const SizedBox(height: 12),
+                              dateChip,
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: greetingBlock),
+                            const SizedBox(width: 16),
+                            dateChip,
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),
