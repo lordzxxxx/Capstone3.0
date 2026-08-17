@@ -547,7 +547,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           Text(
             'Filters',
             style: TextStyle(
-              color: _darkDeepTeal,
+              color: AppDesign.ink,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -562,7 +562,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
               Text(
                 'Status:',
                 style: TextStyle(
-                  color: _darkDeepTeal,
+                  color: AppDesign.ink,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -611,7 +611,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
               Text(
                 'Date Range:',
                 style: TextStyle(
-                  color: _darkDeepTeal,
+                  color: AppDesign.ink,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -907,7 +907,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.navy,
         child: Container(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.85,
@@ -919,7 +919,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: _darkDeepTeal,
+                  color: AppDesign.navy,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
@@ -1420,7 +1420,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: _darkDeepTeal.withValues(alpha: 0.8),
+            color: AppDesign.navy.withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: _primaryAqua.withValues(alpha: 0.4)),
           ),
@@ -1489,7 +1489,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         ),
         content: Text(
           'Are you sure you want to delete ${patient['name']}? This action cannot be undone.',
-          style: TextStyle(color: _darkDeepTeal),
+          style: TextStyle(color: AppDesign.ink),
         ),
         actions: [
           TextButton(
@@ -1564,7 +1564,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                         ? 'Selection Mode Active'
                         : 'Select Patients',
                     style: TextStyle(
-                      color: _darkDeepTeal,
+                      color: AppDesign.ink,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1646,7 +1646,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                 Text(
                   '${_selectedIndices.length} patient(s) selected',
                   style: TextStyle(
-                    color: _darkDeepTeal,
+                    color: AppDesign.ink,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1755,7 +1755,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         ),
         content: Text(
           'Are you sure you want to delete ${_selectedIndices.length} selected patient(s)? This action cannot be undone.',
-          style: TextStyle(color: _darkDeepTeal),
+          style: TextStyle(color: AppDesign.ink),
         ),
         actions: [
           TextButton(
@@ -1910,7 +1910,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         ),
         content: Text(
           'Are you sure you want to delete the record for $patientName? This action cannot be undone.',
-          style: const TextStyle(color: _darkDeepTeal),
+          style: const TextStyle(color: AppDesign.ink),
         ),
         actions: [
           TextButton(
@@ -2604,7 +2604,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: _darkDeepTeal,
+              color: AppDesign.navy,
             ),
           ),
           const SizedBox(height: 8),
@@ -2762,7 +2762,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: AppDesign.ink,
             ),
           ),
           Row(
@@ -3139,7 +3139,7 @@ class _AddPatientModalState extends State<AddPatientModal> {
                         'I consent to the collection, storage, and processing of my personal and medical information for healthcare purposes in accordance with data privacy laws.',
                         style: const TextStyle(
                           fontSize: 13,
-                          color: Colors.white,
+                          color: AppDesign.ink,
                         ),
                       ),
                     ),
@@ -3591,9 +3591,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
 
   // Color scheme
   static const Color _primaryAqua = AppDesign.blue;
-  static const Color _darkDeepTeal = AppDesign.page;
   static const Color _mutedCoolGray = AppDesign.muted;
-  static const Color _lightOffWhite = AppDesign.ink;
 
   // Controllers - will be initialized with existing data
   late TextEditingController _firstNameController;
@@ -4009,7 +4007,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
                   Text(
                     '${_currentPage + 1}/$_totalPages',
                     style: TextStyle(
-                      color: _darkDeepTeal,
+                      color: AppDesign.navy,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -4243,7 +4241,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: _darkDeepTeal,
+              color: AppDesign.navy,
             ),
           ),
           const SizedBox(height: 8),
@@ -4401,7 +4399,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: AppDesign.ink,
             ),
           ),
           Row(
@@ -4762,7 +4760,7 @@ class _EditPatientModalState extends State<EditPatientModal> {
                 Expanded(
                   child: Text(
                     'I consent to the collection, storage, and processing of my personal and medical information for healthcare purposes.',
-                    style: TextStyle(fontSize: 13, color: _darkDeepTeal),
+                    style: TextStyle(fontSize: 13, color: AppDesign.ink),
                   ),
                 ),
               ],
@@ -4992,15 +4990,15 @@ class _EditPatientModalState extends State<EditPatientModal> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: _darkDeepTeal,
+        backgroundColor: AppDesign.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Discard Changes?',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: AppDesign.ink),
         ),
         content: const Text(
           'Are you sure you want to exit without saving changes?',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: AppDesign.muted),
         ),
         actions: [
           TextButton(

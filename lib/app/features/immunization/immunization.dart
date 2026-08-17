@@ -896,7 +896,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             colorScheme: ColorScheme.light(
               primary: _primaryAqua,
               onPrimary: Colors.white,
-              onSurface: _darkDeepTeal,
+              onSurface: AppDesign.ink,
             ),
           ),
           child: child!,
@@ -1378,7 +1378,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                               colorScheme: ColorScheme.light(
                                                 primary: _primaryAqua,
                                                 onPrimary: Colors.white,
-                                                onSurface: _darkDeepTeal,
+                                                onSurface: AppDesign.ink,
                                               ),
                                             ),
                                             child: child!,
@@ -1614,7 +1614,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             colorScheme: ColorScheme.light(
               primary: _primaryAqua,
               onPrimary: Colors.white,
-              onSurface: _darkDeepTeal,
+              onSurface: AppDesign.ink,
             ),
           ),
           child: child!,
@@ -1919,7 +1919,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             colorScheme: ColorScheme.light(
               primary: _primaryAqua,
               onPrimary: Colors.white,
-              onSurface: _darkDeepTeal,
+              onSurface: AppDesign.ink,
             ),
           ),
           child: child!,
@@ -2025,7 +2025,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                     isExpanded: true,
                     icon: Icon(Icons.arrow_drop_down, color: _primaryAqua),
                     style: TextStyle(
-                      color: _darkDeepTeal,
+                      color: AppDesign.ink,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -2079,7 +2079,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                   Text(
                     'Filter by Date Range',
                     style: TextStyle(
-                      color: _darkDeepTeal,
+                      color: AppDesign.ink,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -2304,7 +2304,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                       Text(
                         time,
                         style: TextStyle(
-                          color: _darkDeepTeal,
+                          color: AppDesign.ink,
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                         ),
@@ -2341,7 +2341,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                         Text(
                           patientName,
                           style: TextStyle(
-                            color: _darkDeepTeal,
+                            color: AppDesign.ink,
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
@@ -2376,7 +2376,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                         Text(
                           vaccine,
                           style: TextStyle(
-                            color: _darkDeepTeal,
+                            color: AppDesign.ink,
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
@@ -2736,7 +2736,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           return Container(
             height: MediaQuery.of(context).size.height,
             decoration: const BoxDecoration(
-              color: _lightOffWhite,
+              color: _darkDeepTeal,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
@@ -3266,7 +3266,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                         ? 'Selection Mode Active'
                         : 'Select Records',
                     style: TextStyle(
-                      color: _darkDeepTeal,
+                      color: AppDesign.ink,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -3349,7 +3349,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                   child: Text(
                     '${_selectedIndices.length} Record${_selectedIndices.length > 1 ? 's' : ''} Selected',
                     style: TextStyle(
-                      color: _darkDeepTeal,
+                      color: AppDesign.ink,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -3485,7 +3485,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
         ),
         content: Text(
           'Are you sure you want to delete ${_selectedIndices.length} selected record(s)? This action cannot be undone.',
-          style: TextStyle(color: _darkDeepTeal),
+          style: TextStyle(color: AppDesign.ink),
         ),
         actions: [
           TextButton(

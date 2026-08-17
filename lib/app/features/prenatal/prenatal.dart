@@ -584,7 +584,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
             colorScheme: ColorScheme.light(
               primary: _primaryAqua,
               onPrimary: Colors.white,
-              onSurface: _darkDeepTeal,
+              onSurface: AppDesign.ink,
             ),
           ),
           child: child!,
@@ -643,7 +643,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         ),
         content: Text(
           'Are you sure you want to delete ${_selectedIndices.length} selected record(s)? This action cannot be undone.',
-          style: const TextStyle(color: _darkDeepTeal),
+          style: const TextStyle(color: AppDesign.ink),
         ),
         actions: [
           TextButton(
@@ -882,7 +882,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         ),
         content: Text(
           'Are you sure you want to delete the record for $patientName? This action cannot be undone.',
-          style: const TextStyle(color: _darkDeepTeal),
+          style: const TextStyle(color: AppDesign.ink),
         ),
         actions: [
           TextButton(
@@ -940,7 +940,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         ),
         content: Text(
           'Are you sure you want to delete ${_selectedIndices.length} selected record(s)? This action cannot be undone.',
-          style: const TextStyle(color: _darkDeepTeal),
+          style: const TextStyle(color: AppDesign.ink),
         ),
         actions: [
           TextButton(
@@ -2670,7 +2670,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: _lightOffWhite,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -2961,7 +2961,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
             colorScheme: ColorScheme.light(
               primary: _primaryAqua,
               onPrimary: Colors.white,
-              onSurface: _darkDeepTeal,
+              onSurface: AppDesign.ink,
             ),
           ),
           child: child!,
@@ -3233,7 +3233,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                     isExpanded: true,
                     icon: Icon(Icons.arrow_drop_down, color: _primaryAqua),
                     style: TextStyle(
-                      color: _darkDeepTeal,
+                      color: AppDesign.ink,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -3287,7 +3287,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                   Text(
                     'Filter by Due Date Range',
                     style: TextStyle(
-                      color: _darkDeepTeal,
+                      color: AppDesign.ink,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -3519,7 +3519,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                     child: Text(
                       patientName,
                       style: TextStyle(
-                        color: _darkDeepTeal,
+                        color: AppDesign.ink,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -3660,7 +3660,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
         Text(
           value,
           style: TextStyle(
-            color: _darkDeepTeal,
+            color: AppDesign.ink,
             fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
@@ -3751,7 +3751,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                         ? 'Selection Mode Active'
                         : 'Select Records',
                     style: TextStyle(
-                      color: _darkDeepTeal,
+                      color: AppDesign.ink,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -3833,7 +3833,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                 Text(
                   '${_selectedIndices.length} record(s) selected',
                   style: TextStyle(
-                    color: _darkDeepTeal,
+                    color: AppDesign.ink,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),

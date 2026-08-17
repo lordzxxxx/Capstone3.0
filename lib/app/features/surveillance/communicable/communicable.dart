@@ -914,7 +914,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
       onLongPress: () => _showRecordActionModal(patient),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: AppDesign.surface,
           border: Border.all(
             color: _primaryAqua.withValues(alpha: 0.3),
             width: 2,
@@ -968,7 +968,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: AppDesign.navy,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -976,7 +976,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                           '${patient['age']} years • ${patient['gender']}',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.7),
+                            color: AppDesign.muted,
                           ),
                         ),
                       ],
@@ -1086,25 +1086,25 @@ class _CommunicablePageState extends State<CommunicablePage> {
                   _buildActionButton(
                     icon: Icons.visibility,
                     label: 'View',
-                    color: Colors.white,
+                    color: _primaryAqua,
                     onTap: () => _viewPatientDetails(patient),
                   ),
                   _buildActionButton(
                     icon: Icons.edit,
                     label: 'Edit',
-                    color: Colors.white,
+                    color: _primaryAqua,
                     onTap: () => _editPatient(patient),
                   ),
                   _buildActionButton(
                     icon: Icons.medical_services,
                     label: 'Treatment',
-                    color: Colors.white,
+                    color: _primaryAqua,
                     onTap: () => _manageTreatment(patient),
                   ),
                   _buildActionButton(
                     icon: Icons.history,
                     label: 'History',
-                    color: Colors.white,
+                    color: _primaryAqua,
                     onTap: () => _viewHistory(patient),
                   ),
                 ],
@@ -1126,7 +1126,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: isCompact ? 18 : 20, color: Colors.white),
+        Icon(icon, size: isCompact ? 18 : 20, color: AppDesign.muted),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -1136,7 +1136,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                 label,
                 style: TextStyle(
                   fontSize: isCompact ? 11 : 12,
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: AppDesign.muted,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1145,7 +1145,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                 value,
                 style: const TextStyle(
                   fontSize: 14,
-                  color: Colors.white,
+                  color: AppDesign.ink,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1170,7 +1170,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.white),
+          Icon(icon, size: 20, color: AppDesign.muted),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -1180,7 +1180,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                   label,
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: AppDesign.muted,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -1189,7 +1189,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppDesign.ink,
                   ),
                 ),
               ],

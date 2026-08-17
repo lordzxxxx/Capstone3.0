@@ -392,12 +392,12 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info, color: Colors.white, size: 20),
+                  const Icon(Icons.info, color: AppDesign.ink, size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Last updated: ${_lastUpdated != null ? _formatDateTime(_lastUpdated!) : "N/A"}',
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      style: const TextStyle(color: AppDesign.ink, fontSize: 13),
                     ),
                   ),
                 ],
@@ -487,7 +487,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
     return Text(
       title,
       style: const TextStyle(
-        color: Colors.white,
+        color: AppDesign.navy,
         fontSize: 18,
         fontWeight: FontWeight.bold,
         letterSpacing: 0.5,
@@ -573,7 +573,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
               Text(
                 label,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppDesign.ink,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -625,12 +625,12 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
         children: [
           Row(
             children: [
-              Icon(Icons.vaccines, color: Colors.white, size: 24),
+              Icon(Icons.vaccines, color: AppDesign.ink, size: 24),
               const SizedBox(width: 12),
               const Text(
                 'Immunization Coverage',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppDesign.ink,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
@@ -647,7 +647,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
                   Text(
                     '$_immunizedChildren / $totalImmunizationRecords',
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppDesign.ink,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -655,7 +655,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
                   const SizedBox(height: 4),
                   Text(
                     'Children Immunized',
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    style: const TextStyle(color: AppDesign.ink, fontSize: 12),
                   ),
                 ],
               ),
@@ -698,7 +698,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
         ),
         child: const Text(
           'No summary records yet',
-          style: TextStyle(color: Colors.white, fontSize: 13),
+          style: TextStyle(color: AppDesign.ink, fontSize: 13),
         ),
       );
     }
@@ -722,7 +722,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
               Text(
                 'Barangay Summary - ${_formatDateTime(DateTime.parse(record['recordDate'] ?? DateTime.now().toIso8601String()))}',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppDesign.ink,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
@@ -843,7 +843,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
               ),
               child: Row(
                 children: [
-                  Icon(concern['icon'], color: Colors.white, size: 28),
+                  Icon(concern['icon'], color: AppDesign.ink, size: 28),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -852,7 +852,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
                         Text(
                           concern['title'],
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppDesign.ink,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
@@ -861,7 +861,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
                         Text(
                           '${concern['count']} cases identified',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppDesign.ink,
                             fontSize: 12,
                           ),
                         ),

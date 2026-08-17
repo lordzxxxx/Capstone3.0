@@ -876,7 +876,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: _lightOffWhite.withValues(alpha: 0.12)),
           ),
-          child: const Row(
+          child: Row(
             children: [
               Icon(Icons.info_outline, color: _primaryAqua, size: 14),
               SizedBox(width: 6),
@@ -887,7 +887,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                   'under the attending physician.',
                   style: TextStyle(
                     fontSize: 10.5,
-                    color: Colors.white70,
+                    color: _lightOffWhite.withValues(alpha: 0.7),
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -3846,7 +3846,7 @@ class _NewCheckUpFullScreenModalState
                             modalTitle,
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(
-                                  color: Colors.white,
+                                  color: _lightOffWhite,
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),
@@ -3869,7 +3869,7 @@ class _NewCheckUpFullScreenModalState
                       child: IconButton(
                         icon: const Icon(
                           Icons.close,
-                          color: Colors.white,
+                          color: _lightOffWhite,
                           size: 24,
                         ),
                         onPressed: () => Navigator.of(context).pop(),
@@ -3896,7 +3896,7 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: TextFormField(
                                     controller: _firstNameController,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: _lightOffWhite),
                                     decoration: _buildInputDecoration(
                                       'First Name',
                                     ),
@@ -3909,7 +3909,7 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: TextFormField(
                                     controller: _surnameController,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: _lightOffWhite),
                                     decoration: _buildInputDecoration(
                                       'Surname',
                                     ),
@@ -3927,7 +3927,7 @@ class _NewCheckUpFullScreenModalState
                                   flex: 1,
                                   child: TextFormField(
                                     controller: _ageController,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: _lightOffWhite),
                                     decoration: _buildInputDecoration('Age'),
                                     keyboardType: TextInputType.number,
                                     validator: (v) => v == null || v.isEmpty
@@ -3940,7 +3940,7 @@ class _NewCheckUpFullScreenModalState
                                   flex: 2,
                                   child: TextFormField(
                                     controller: _addressController,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: _lightOffWhite),
                                     decoration: _buildInputDecoration(
                                       'Address',
                                     ),
@@ -3968,7 +3968,7 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: TextFormField(
                                     controller: _bloodPressureController,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: _lightOffWhite),
                                     decoration: _buildInputDecoration(
                                       'Blood Pressure (e.g., 120/80)',
                                     ),
@@ -3981,7 +3981,7 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: TextFormField(
                                     controller: _temperatureController,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: _lightOffWhite),
                                     decoration: _buildInputDecoration(
                                       'Temperature (°C)',
                                     ),
@@ -4002,7 +4002,7 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: TextFormField(
                                     controller: _heartRateController,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: _lightOffWhite),
                                     decoration: _buildInputDecoration(
                                       'Heart Rate (bpm)',
                                     ),
@@ -4016,7 +4016,7 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: TextFormField(
                                     controller: _respiratoryRateController,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: _lightOffWhite),
                                     decoration: _buildInputDecoration(
                                       'Respiratory Rate (brpm)',
                                     ),
@@ -4034,7 +4034,7 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: TextFormField(
                                     controller: _oxygenSaturationController,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: _lightOffWhite),
                                     decoration: _buildInputDecoration(
                                       'Oxygen Saturation (%)',
                                     ),
@@ -4048,7 +4048,7 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: TextFormField(
                                     controller: _weightController,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: _lightOffWhite),
                                     decoration: _buildInputDecoration(
                                       'Weight (kg)',
                                     ),
@@ -4063,7 +4063,7 @@ class _NewCheckUpFullScreenModalState
                             const SizedBox(height: 12),
                             TextFormField(
                               controller: _heightController,
-                              style: const TextStyle(color: Colors.white),
+                              style: const TextStyle(color: _lightOffWhite),
                               decoration: _buildInputDecoration('Height (cm)'),
                               keyboardType: TextInputType.numberWithOptions(
                                 decimal: true,
@@ -4083,7 +4083,7 @@ class _NewCheckUpFullScreenModalState
                           children: [
                             TextFormField(
                               controller: _symptomsController,
-                              style: const TextStyle(color: Colors.white),
+                              style: const TextStyle(color: _lightOffWhite),
                               decoration:
                                   _buildInputDecoration(
                                     'Symptoms / Known Conditions',
@@ -4103,7 +4103,7 @@ class _NewCheckUpFullScreenModalState
                             const SizedBox(height: 12),
                             TextFormField(
                               controller: _planController,
-                              style: const TextStyle(color: Colors.white),
+                              style: const TextStyle(color: _lightOffWhite),
                               decoration: _buildInputDecoration(
                                 'Treatment Plan',
                               ),
@@ -4147,7 +4147,7 @@ class _NewCheckUpFullScreenModalState
                                   children: [
                                     Icon(
                                       Icons.calendar_today,
-                                      color: Colors.white,
+                                      color: _lightOffWhite,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 12),
@@ -4158,7 +4158,7 @@ class _NewCheckUpFullScreenModalState
                                             : 'Tap to select date',
                                         style: TextStyle(
                                           color: _followUpDate != null
-                                              ? Colors.white
+                                              ? _lightOffWhite
                                               : _lightOffWhite.withValues(
                                                   alpha: 0.5,
                                                 ),
@@ -5182,7 +5182,7 @@ class _NewCheckUpFullScreenModalState
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: _lightOffWhite.withValues(alpha: 0.12)),
           ),
-          child: const Row(
+          child: Row(
             children: [
               Icon(Icons.info_outline, color: _primaryAqua, size: 14),
               SizedBox(width: 6),
@@ -5193,7 +5193,7 @@ class _NewCheckUpFullScreenModalState
                   'under the attending physician.',
                   style: TextStyle(
                     fontSize: 10.5,
-                    color: Colors.white70,
+                    color: _lightOffWhite.withValues(alpha: 0.7),
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -5471,32 +5471,32 @@ class _EditCheckUpFullScreenModalState
   InputDecoration _buildInputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: _lightOffWhite.withValues(alpha: 0.7)),
+      labelStyle: TextStyle(color: _darkDeepTeal.withValues(alpha: 0.7)),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
-          color: _lightOffWhite.withValues(alpha: 0.3),
+          color: _darkDeepTeal.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
-          color: _lightOffWhite.withValues(alpha: 0.3),
+          color: _darkDeepTeal.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
-          color: _lightOffWhite.withValues(alpha: 0.7),
+          color: _darkDeepTeal.withValues(alpha: 0.7),
           width: 2,
         ),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       filled: true,
       fillColor: Colors.transparent,
-      hintStyle: TextStyle(color: _lightOffWhite.withValues(alpha: 0.5)),
+      hintStyle: TextStyle(color: _darkDeepTeal.withValues(alpha: 0.5)),
       floatingLabelStyle: const TextStyle(color: Colors.white),
     );
   }
@@ -5578,6 +5578,7 @@ class _EditCheckUpFullScreenModalState
                       Expanded(
                         child: TextFormField(
                           controller: _firstNameController,
+                          style: const TextStyle(color: _darkDeepTeal),
                           decoration: _buildInputDecoration('First Name'),
                           validator: (value) =>
                               value?.isEmpty == true ? 'Required' : null,
@@ -5587,6 +5588,7 @@ class _EditCheckUpFullScreenModalState
                       Expanded(
                         child: TextFormField(
                           controller: _surnameController,
+                          style: const TextStyle(color: _darkDeepTeal),
                           decoration: _buildInputDecoration('Surname'),
                           validator: (value) =>
                               value?.isEmpty == true ? 'Required' : null,
@@ -5601,6 +5603,7 @@ class _EditCheckUpFullScreenModalState
                       Expanded(
                         child: TextFormField(
                           controller: _ageController,
+                          style: const TextStyle(color: _darkDeepTeal),
                           decoration: _buildInputDecoration('Age'),
                           keyboardType: TextInputType.number,
                         ),
@@ -5609,6 +5612,7 @@ class _EditCheckUpFullScreenModalState
                       Expanded(
                         child: TextFormField(
                           controller: _addressController,
+                          style: const TextStyle(color: _darkDeepTeal),
                           decoration: _buildInputDecoration('Address'),
                         ),
                       ),
@@ -5631,6 +5635,7 @@ class _EditCheckUpFullScreenModalState
                       Expanded(
                         child: TextFormField(
                           controller: _bloodPressureController,
+                          style: const TextStyle(color: _darkDeepTeal),
                           decoration: _buildInputDecoration('Blood Pressure'),
                         ),
                       ),
@@ -5638,6 +5643,7 @@ class _EditCheckUpFullScreenModalState
                       Expanded(
                         child: TextFormField(
                           controller: _temperatureController,
+                          style: const TextStyle(color: _darkDeepTeal),
                           decoration: _buildInputDecoration('Temperature (°C)'),
                           keyboardType: TextInputType.number,
                         ),
@@ -5651,6 +5657,7 @@ class _EditCheckUpFullScreenModalState
                       Expanded(
                         child: TextFormField(
                           controller: _heartRateController,
+                          style: const TextStyle(color: _darkDeepTeal),
                           decoration: _buildInputDecoration('Heart Rate (bpm)'),
                           keyboardType: TextInputType.number,
                         ),
@@ -5659,6 +5666,7 @@ class _EditCheckUpFullScreenModalState
                       Expanded(
                         child: TextFormField(
                           controller: _respiratoryRateController,
+                          style: const TextStyle(color: _darkDeepTeal),
                           decoration: _buildInputDecoration('Respiratory Rate'),
                           keyboardType: TextInputType.number,
                         ),
@@ -5672,6 +5680,7 @@ class _EditCheckUpFullScreenModalState
                       Expanded(
                         child: TextFormField(
                           controller: _oxygenSaturationController,
+                          style: const TextStyle(color: _darkDeepTeal),
                           decoration: _buildInputDecoration(
                             'Oxygen Saturation (%)',
                           ),
@@ -5682,6 +5691,7 @@ class _EditCheckUpFullScreenModalState
                       Expanded(
                         child: TextFormField(
                           controller: _weightController,
+                          style: const TextStyle(color: _darkDeepTeal),
                           decoration: _buildInputDecoration('Weight (kg)'),
                           keyboardType: TextInputType.number,
                         ),
@@ -5692,6 +5702,7 @@ class _EditCheckUpFullScreenModalState
 
                   TextFormField(
                     controller: _heightController,
+                    style: const TextStyle(color: _darkDeepTeal),
                     decoration: _buildInputDecoration('Height (cm)'),
                     keyboardType: TextInputType.number,
                   ),
@@ -5709,6 +5720,8 @@ class _EditCheckUpFullScreenModalState
 
                   DropdownButtonFormField<String>(
                     initialValue: _diseaseType,
+                    style: const TextStyle(color: _darkDeepTeal),
+                    dropdownColor: _lightOffWhite,
                     decoration: _buildInputDecoration('Disease Classification'),
                     items: const [
                       DropdownMenuItem(
@@ -5732,6 +5745,7 @@ class _EditCheckUpFullScreenModalState
 
                   TextFormField(
                     controller: _symptomsController,
+                    style: const TextStyle(color: _darkDeepTeal),
                     decoration: _buildInputDecoration('Symptoms'),
                     maxLines: 3,
                   ),
@@ -5739,6 +5753,7 @@ class _EditCheckUpFullScreenModalState
 
                   TextFormField(
                     controller: _planController,
+                    style: const TextStyle(color: _darkDeepTeal),
                     decoration: _buildInputDecoration('Treatment Plan'),
                     maxLines: 3,
                   ),
@@ -6375,7 +6390,7 @@ class _EditCheckUpFullScreenModalState
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: _lightOffWhite.withValues(alpha: 0.12)),
           ),
-          child: const Row(
+          child: Row(
             children: [
               Icon(Icons.info_outline, color: _primaryAqua, size: 14),
               SizedBox(width: 6),
@@ -6386,7 +6401,7 @@ class _EditCheckUpFullScreenModalState
                   'under the attending physician.',
                   style: TextStyle(
                     fontSize: 10.5,
-                    color: Colors.white70,
+                    color: _lightOffWhite.withValues(alpha: 0.7),
                     fontStyle: FontStyle.italic,
                   ),
                 ),

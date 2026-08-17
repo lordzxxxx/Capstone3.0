@@ -897,10 +897,10 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       onLongPress: () => _showRecordActionModal(patient),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: AppDesign.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: _primaryAqua.withValues(alpha: 0.3),
+            color: AppDesign.border,
             width: 1,
           ),
           boxShadow: [
@@ -939,7 +939,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppDesign.ink,
                       ),
                     ),
                   ),
@@ -953,7 +953,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: AppDesign.navy,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -961,7 +961,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                           '${patient['age']} years • ${patient['gender']}',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.7),
+                            color: AppDesign.muted,
                           ),
                         ),
                       ],
@@ -998,21 +998,21 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                     icon: Icons.medical_information,
                     label: 'Condition',
                     value: patient['condition'],
-                    color: Colors.white,
+                    color: AppDesign.ink,
                   ),
                   Divider(
                     height: 20,
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: AppDesign.border,
                   ),
                   _buildDetailRow(
                     icon: Icons.medication,
                     label: 'Treatment',
                     value: patient['treatment'],
-                    color: Colors.white,
+                    color: AppDesign.ink,
                   ),
                   Divider(
                     height: 20,
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: AppDesign.border,
                   ),
                   Row(
                     children: [
@@ -1021,7 +1021,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                           icon: Icons.calendar_today,
                           label: 'Last Visit',
                           value: _formatDate(patient['lastVisit']),
-                          color: Colors.white,
+                          color: AppDesign.ink,
                           isCompact: true,
                         ),
                       ),
@@ -1031,7 +1031,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                           icon: Icons.event,
                           label: 'Next Visit',
                           value: _formatDate(patient['nextVisit']),
-                          color: Colors.white,
+                          color: AppDesign.ink,
                           isCompact: true,
                         ),
                       ),
@@ -1041,13 +1041,13 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                       patient['notes'].toString().isNotEmpty) ...[
                     Divider(
                       height: 20,
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: AppDesign.border,
                     ),
                     _buildDetailRow(
                       icon: Icons.note,
                       label: 'Notes',
                       value: patient['notes'],
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ],
                 ],
@@ -1106,7 +1106,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: isCompact ? 18 : 20, color: Colors.white),
+        Icon(icon, size: isCompact ? 18 : 20, color: AppDesign.ink),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -1116,7 +1116,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                 label,
                 style: TextStyle(
                   fontSize: isCompact ? 11 : 12,
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: AppDesign.muted,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1125,7 +1125,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                 value,
                 style: const TextStyle(
                   fontSize: 14,
-                  color: Colors.white,
+                  color: AppDesign.ink,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1148,13 +1148,13 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Column(
           children: [
-            Icon(icon, color: Colors.white, size: 24),
+            Icon(icon, color: _primaryAqua, size: 24),
             const SizedBox(height: 4),
             Text(
               label,
               style: const TextStyle(
                 fontSize: 11,
-                color: Colors.white,
+                color: _primaryAqua,
                 fontWeight: FontWeight.w600,
               ),
             ),

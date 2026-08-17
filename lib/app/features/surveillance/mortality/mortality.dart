@@ -1072,7 +1072,7 @@ class _MortalityPageState extends State<MortalityPage>
                     'Cause of Death',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ),
                 ),
@@ -1081,7 +1081,7 @@ class _MortalityPageState extends State<MortalityPage>
                     'Percentage',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ),
                 ),
@@ -1090,7 +1090,7 @@ class _MortalityPageState extends State<MortalityPage>
                     'Progress',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ),
                 ),
@@ -1099,7 +1099,7 @@ class _MortalityPageState extends State<MortalityPage>
                     'Death Count',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ),
                 ),
@@ -1110,13 +1110,13 @@ class _MortalityPageState extends State<MortalityPage>
                     DataCell(
                       Text(
                         cause.cause,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppDesign.ink),
                       ),
                     ),
                     DataCell(
                       Text(
                         '${cause.percentage.toStringAsFixed(1)}%',
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppDesign.ink),
                       ),
                     ),
                     DataCell(
@@ -1134,7 +1134,7 @@ class _MortalityPageState extends State<MortalityPage>
                     DataCell(
                       Text(
                         cause.count.toString(),
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppDesign.ink),
                       ),
                     ),
                   ],
@@ -1150,7 +1150,7 @@ class _MortalityPageState extends State<MortalityPage>
   Widget _buildAgeTable() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: AppDesign.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.5),
@@ -1181,7 +1181,7 @@ class _MortalityPageState extends State<MortalityPage>
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppDesign.ink,
                       ),
                     ),
                   ],
@@ -1212,7 +1212,7 @@ class _MortalityPageState extends State<MortalityPage>
                     'Age Range',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ),
                 ),
@@ -1221,7 +1221,7 @@ class _MortalityPageState extends State<MortalityPage>
                     'Death Count',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ),
                 ),
@@ -1230,7 +1230,7 @@ class _MortalityPageState extends State<MortalityPage>
                     'Percentage',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppDesign.ink,
                     ),
                   ),
                 ),
@@ -1241,19 +1241,19 @@ class _MortalityPageState extends State<MortalityPage>
                     DataCell(
                       Text(
                         age.ageRange,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppDesign.ink),
                       ),
                     ),
                     DataCell(
                       Text(
                         age.count.toString(),
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppDesign.ink),
                       ),
                     ),
                     DataCell(
                       Text(
                         '${age.percentage.toStringAsFixed(1)}%',
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppDesign.ink),
                       ),
                     ),
                   ],

@@ -1228,233 +1228,238 @@ class _ReferralsPageState extends State<ReferralsPage> {
               style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72)),
             ),
             const SizedBox(height: 18),
-            _buildFormSectionTitle('Referral Type'),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: _referralCategoryOptions
-                  .map(
-                    (option) => _buildCheckboxOption(
-                      label: option,
-                      selected: _selectedReferralCategories.contains(option),
-                      onChanged: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedReferralCategories.add(option);
-                          } else {
-                            _selectedReferralCategories.remove(option);
-                          }
-                        });
-                      },
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 14),
-            TextFormField(
-              controller: _referralDateTimeController,
-              readOnly: true,
-              onTap: _pickReferralDateTime,
-              style: const TextStyle(color: _lightOffWhite),
-              decoration: _inputDecoration('Date & Time').copyWith(
-                suffixIcon: const Icon(
-                  Icons.event_outlined,
-                  color: _lightOffWhite,
-                ),
-              ),
-              validator: (value) => _requiredValidator('Date & Time', value),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _patientAddressController,
-              maxLines: 2,
-              style: const TextStyle(color: _lightOffWhite),
-              decoration: _inputDecoration('Address'),
-              validator: (value) => _requiredValidator('Address', value),
-            ),
-            const SizedBox(height: 14),
-            _buildFormSectionTitle("Patient's Name"),
-            TextFormField(
-              controller: _patientSurnameController,
-              style: const TextStyle(color: _lightOffWhite),
-              decoration: _inputDecoration('Surname'),
-              validator: (value) => _requiredValidator('Surname', value),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _patientFirstNameController,
-              style: const TextStyle(color: _lightOffWhite),
-              decoration: _inputDecoration('First Name'),
-              validator: (value) => _requiredValidator('First Name', value),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _patientMiddleNameController,
-              style: const TextStyle(color: _lightOffWhite),
-              decoration: _inputDecoration('Middle Name'),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _patientAgeController,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(color: _lightOffWhite),
-                    decoration: _inputDecoration('Age'),
-                    validator: (value) => _requiredValidator('Age', value),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextFormField(
-                    controller: _patientSexController,
-                    style: const TextStyle(color: _lightOffWhite),
-                    decoration: _inputDecoration('Sex'),
-                    validator: (value) => _requiredValidator('Sex', value),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _chiefComplaintController,
-              maxLines: 3,
-              style: const TextStyle(color: _lightOffWhite),
-              decoration: _inputDecoration('Chief Complaints'),
-              validator: (value) =>
-                  _requiredValidator('Chief Complaints', value),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _medicalHistoryController,
-              maxLines: 3,
-              style: const TextStyle(color: _lightOffWhite),
-              decoration: _inputDecoration('Medical History'),
-              validator: (value) =>
-                  _requiredValidator('Medical History', value),
-            ),
-            const SizedBox(height: 12),
-            _buildYesNoSelector(
-              label: 'Surgical Operations?',
-              value: _hasSurgicalOperations,
-              onChanged: (value) {
-                setState(() {
-                  _hasSurgicalOperations = value;
-                  if (!value) {
-                    _surgicalProcedureController.clear();
-                  }
-                });
-              },
-            ),
-            if (_hasSurgicalOperations == true) ...[
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _surgicalProcedureController,
-                style: const TextStyle(color: _lightOffWhite),
-                decoration: _inputDecoration('What procedure'),
-                validator: (value) => _hasSurgicalOperations == true
-                    ? _requiredValidator('What procedure', value)
-                    : null,
-              ),
-            ],
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _lastMealTimeController,
-              style: const TextStyle(color: _lightOffWhite),
-              decoration: _inputDecoration('Last Meal Time'),
-              validator: (value) => _requiredValidator('Last Meal Time', value),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _completeVitalSignsController,
-              maxLines: 3,
-              style: const TextStyle(color: _lightOffWhite),
-              decoration: _inputDecoration('Complete Vital Signs'),
-              validator: (value) =>
-                  _requiredValidator('Complete Vital Signs', value),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _impressionController,
-              maxLines: 3,
-              style: const TextStyle(color: _lightOffWhite),
-              decoration: _inputDecoration('Impression'),
-              validator: (value) => _requiredValidator('Impression', value),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _actionTakenController,
-              maxLines: 3,
-              style: const TextStyle(color: _lightOffWhite),
-              decoration: _inputDecoration('Action taken (phone/RECO)'),
-              validator: (value) =>
-                  _requiredValidator('Action taken (phone/RECO)', value),
-            ),
-            const SizedBox(height: 12),
-            _buildYesNoSelector(
-              label: 'Health Insurance Coverage?',
-              value: _hasHealthInsuranceCoverage,
-              onChanged: (value) {
-                setState(() {
-                  _hasHealthInsuranceCoverage = value;
-                  if (!value) {
-                    _healthInsuranceCoverageTypeController.clear();
-                  }
-                });
-              },
-            ),
-            if (_hasHealthInsuranceCoverage == true) ...[
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _healthInsuranceCoverageTypeController,
-                style: const TextStyle(color: _lightOffWhite),
-                decoration: _inputDecoration('State type of coverage'),
-                validator: (value) => _hasHealthInsuranceCoverage == true
-                    ? _requiredValidator('State type of coverage', value)
-                    : null,
-              ),
-            ],
-            const SizedBox(height: 16),
-            _buildFormSectionTitle('Reason for Referral'),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: _referralReasonOptions
-                  .map(
-                    (option) => _buildCheckboxOption(
-                      label: option,
-                      selected: _selectedReferralReasons.contains(option),
-                      onChanged: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedReferralReasons.add(option);
-                          } else {
-                            _selectedReferralReasons.remove(option);
-                            if (option == 'Others') {
-                              _referralReasonOtherController.clear();
+            _buildFormSection('Referral Type', [
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: _referralCategoryOptions
+                    .map(
+                      (option) => _buildCheckboxOption(
+                        label: option,
+                        selected: _selectedReferralCategories.contains(
+                          option,
+                        ),
+                        onChanged: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedReferralCategories.add(option);
+                            } else {
+                              _selectedReferralCategories.remove(option);
                             }
-                          }
-                        });
-                      },
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-            if (_selectedReferralReasons.contains('Others')) ...[
+                          });
+                        },
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _referralDateTimeController,
+                readOnly: true,
+                onTap: _pickReferralDateTime,
+                style: const TextStyle(color: _lightOffWhite),
+                decoration: _inputDecoration('Date & Time').copyWith(
+                  suffixIcon: const Icon(
+                    Icons.event_outlined,
+                    color: _lightOffWhite,
+                  ),
+                ),
+                validator: (value) => _requiredValidator('Date & Time', value),
+              ),
               const SizedBox(height: 12),
               TextFormField(
-                controller: _referralReasonOtherController,
+                controller: _patientAddressController,
                 maxLines: 2,
                 style: const TextStyle(color: _lightOffWhite),
-                decoration: _inputDecoration('Other reason for referral'),
-                validator: (value) =>
-                    _selectedReferralReasons.contains('Others')
-                    ? _requiredValidator('Other reason for referral', value)
-                    : null,
+                decoration: _inputDecoration('Address'),
+                validator: (value) => _requiredValidator('Address', value),
               ),
-            ],
-            const SizedBox(height: 18),
+            ]),
+            _buildFormSection("Patient's Name", [
+              TextFormField(
+                controller: _patientSurnameController,
+                style: const TextStyle(color: _lightOffWhite),
+                decoration: _inputDecoration('Surname'),
+                validator: (value) => _requiredValidator('Surname', value),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _patientFirstNameController,
+                style: const TextStyle(color: _lightOffWhite),
+                decoration: _inputDecoration('First Name'),
+                validator: (value) => _requiredValidator('First Name', value),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _patientMiddleNameController,
+                style: const TextStyle(color: _lightOffWhite),
+                decoration: _inputDecoration('Middle Name'),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _patientAgeController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: _lightOffWhite),
+                      decoration: _inputDecoration('Age'),
+                      validator: (value) => _requiredValidator('Age', value),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _patientSexController,
+                      style: const TextStyle(color: _lightOffWhite),
+                      decoration: _inputDecoration('Sex'),
+                      validator: (value) => _requiredValidator('Sex', value),
+                    ),
+                  ),
+                ],
+              ),
+            ]),
+            _buildFormSection('Clinical Information', [
+              TextFormField(
+                controller: _chiefComplaintController,
+                maxLines: 3,
+                style: const TextStyle(color: _lightOffWhite),
+                decoration: _inputDecoration('Chief Complaints'),
+                validator: (value) =>
+                    _requiredValidator('Chief Complaints', value),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _medicalHistoryController,
+                maxLines: 3,
+                style: const TextStyle(color: _lightOffWhite),
+                decoration: _inputDecoration('Medical History'),
+                validator: (value) =>
+                    _requiredValidator('Medical History', value),
+              ),
+              const SizedBox(height: 12),
+              _buildYesNoSelector(
+                label: 'Surgical Operations?',
+                value: _hasSurgicalOperations,
+                onChanged: (value) {
+                  setState(() {
+                    _hasSurgicalOperations = value;
+                    if (!value) {
+                      _surgicalProcedureController.clear();
+                    }
+                  });
+                },
+              ),
+              if (_hasSurgicalOperations == true) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _surgicalProcedureController,
+                  style: const TextStyle(color: _lightOffWhite),
+                  decoration: _inputDecoration('What procedure'),
+                  validator: (value) => _hasSurgicalOperations == true
+                      ? _requiredValidator('What procedure', value)
+                      : null,
+                ),
+              ],
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _lastMealTimeController,
+                style: const TextStyle(color: _lightOffWhite),
+                decoration: _inputDecoration('Last Meal Time'),
+                validator: (value) =>
+                    _requiredValidator('Last Meal Time', value),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _completeVitalSignsController,
+                maxLines: 3,
+                style: const TextStyle(color: _lightOffWhite),
+                decoration: _inputDecoration('Complete Vital Signs'),
+                validator: (value) =>
+                    _requiredValidator('Complete Vital Signs', value),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _impressionController,
+                maxLines: 3,
+                style: const TextStyle(color: _lightOffWhite),
+                decoration: _inputDecoration('Impression'),
+                validator: (value) => _requiredValidator('Impression', value),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _actionTakenController,
+                maxLines: 3,
+                style: const TextStyle(color: _lightOffWhite),
+                decoration: _inputDecoration('Action taken (phone/RECO)'),
+                validator: (value) =>
+                    _requiredValidator('Action taken (phone/RECO)', value),
+              ),
+              const SizedBox(height: 12),
+              _buildYesNoSelector(
+                label: 'Health Insurance Coverage?',
+                value: _hasHealthInsuranceCoverage,
+                onChanged: (value) {
+                  setState(() {
+                    _hasHealthInsuranceCoverage = value;
+                    if (!value) {
+                      _healthInsuranceCoverageTypeController.clear();
+                    }
+                  });
+                },
+              ),
+              if (_hasHealthInsuranceCoverage == true) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _healthInsuranceCoverageTypeController,
+                  style: const TextStyle(color: _lightOffWhite),
+                  decoration: _inputDecoration('State type of coverage'),
+                  validator: (value) => _hasHealthInsuranceCoverage == true
+                      ? _requiredValidator('State type of coverage', value)
+                      : null,
+                ),
+              ],
+            ]),
+            _buildFormSection('Reason for Referral', [
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: _referralReasonOptions
+                    .map(
+                      (option) => _buildCheckboxOption(
+                        label: option,
+                        selected: _selectedReferralReasons.contains(option),
+                        onChanged: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedReferralReasons.add(option);
+                            } else {
+                              _selectedReferralReasons.remove(option);
+                              if (option == 'Others') {
+                                _referralReasonOtherController.clear();
+                              }
+                            }
+                          });
+                        },
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+              if (_selectedReferralReasons.contains('Others')) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _referralReasonOtherController,
+                  maxLines: 2,
+                  style: const TextStyle(color: _lightOffWhite),
+                  decoration: _inputDecoration('Other reason for referral'),
+                  validator: (value) =>
+                      _selectedReferralReasons.contains('Others')
+                      ? _requiredValidator('Other reason for referral', value)
+                      : null,
+                ),
+              ],
+            ]),
+            const SizedBox(height: 4),
             _buildDoctorMatchingPanel(),
             const SizedBox(height: 16),
             Align(
@@ -1611,16 +1616,30 @@ class _ReferralsPageState extends State<ReferralsPage> {
     );
   }
 
-  Widget _buildFormSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: _lightOffWhite.withValues(alpha: 0.9),
-          fontSize: 15,
-          fontWeight: FontWeight.w700,
-        ),
+  Widget _buildFormSection(String title, List<Widget> children) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _darkDeepTeal,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _primaryAqua.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: _lightOffWhite.withValues(alpha: 0.9),
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...children,
+        ],
       ),
     );
   }
