@@ -3113,59 +3113,73 @@ class _HomePageState extends State<HomePage> {
                         Expanded(child: _buildKeyMetricsMonthPickerButton()),
                       ],
                     ),
-                    const SizedBox(height: 24),
-                    Column(
+                    const SizedBox(height: 16),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildMetricCard(
-                          title: 'Total Patients',
-                          value: _isLoadingMetrics
-                              ? '...'
-                              : '$_filteredPatientRegistrations',
-                          unit: _metricFilterScopeLabel(),
-                          icon: Icons.people_rounded,
-                          color: _primaryAqua,
-                          trend: '+12%',
-                          trendLabel: 'vs last month',
-                          isPositiveTrend: true,
+                        Expanded(
+                          child: _buildMetricCard(
+                            title: 'Total Patients',
+                            value: _isLoadingMetrics
+                                ? '...'
+                                : '$_filteredPatientRegistrations',
+                            unit: _metricFilterScopeLabel(),
+                            icon: Icons.people_rounded,
+                            color: _primaryAqua,
+                            trend: '+12%',
+                            trendLabel: 'vs last month',
+                            isPositiveTrend: true,
+                          ),
                         ),
-                        const SizedBox(height: 10),
-                        _buildMetricCard(
-                          title: 'Check-ups',
-                          value: _isLoadingMetrics
-                              ? '...'
-                              : '$_filteredCheckupRecords',
-                          unit: _metricFilterScopeLabel(),
-                          icon: Icons.assignment_turned_in_rounded,
-                          color: _darkDeepTeal,
-                          trend: '+8%',
-                          trendLabel: 'from last month',
-                          isPositiveTrend: true,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildMetricCard(
+                            title: 'Check-ups',
+                            value: _isLoadingMetrics
+                                ? '...'
+                                : '$_filteredCheckupRecords',
+                            unit: _metricFilterScopeLabel(),
+                            icon: Icons.assignment_turned_in_rounded,
+                            color: _darkDeepTeal,
+                            trend: '+8%',
+                            trendLabel: 'from last month',
+                            isPositiveTrend: true,
+                          ),
                         ),
-                        const SizedBox(height: 10),
-                        _buildMetricCard(
-                          title: 'Prenatal Care',
-                          value: _isLoadingMetrics
-                              ? '...'
-                              : '$_filteredPrenatalRecords',
-                          unit: _metricFilterScopeLabel(),
-                          icon: Icons.pregnant_woman_rounded,
-                          color: _primaryAqua,
-                          trend: '+15%',
-                          trendLabel: 'new this week',
-                          isPositiveTrend: true,
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _buildMetricCard(
+                            title: 'Prenatal Care',
+                            value: _isLoadingMetrics
+                                ? '...'
+                                : '$_filteredPrenatalRecords',
+                            unit: _metricFilterScopeLabel(),
+                            icon: Icons.pregnant_woman_rounded,
+                            color: _primaryAqua,
+                            trend: '+15%',
+                            trendLabel: 'new this week',
+                            isPositiveTrend: true,
+                          ),
                         ),
-                        const SizedBox(height: 10),
-                        _buildMetricCard(
-                          title: 'Immunizations',
-                          value: _isLoadingMetrics
-                              ? '...'
-                              : '$_filteredImmunizationRecords',
-                          unit: _metricFilterScopeLabel(),
-                          icon: Icons.vaccines_rounded,
-                          color: _darkDeepTeal,
-                          trend: '+10%',
-                          trendLabel: 'completion rate',
-                          isPositiveTrend: true,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildMetricCard(
+                            title: 'Immunizations',
+                            value: _isLoadingMetrics
+                                ? '...'
+                                : '$_filteredImmunizationRecords',
+                            unit: _metricFilterScopeLabel(),
+                            icon: Icons.vaccines_rounded,
+                            color: _darkDeepTeal,
+                            trend: '+10%',
+                            trendLabel: 'completion rate',
+                            isPositiveTrend: true,
+                          ),
                         ),
                       ],
                     ),
@@ -3196,6 +3210,7 @@ class _HomePageState extends State<HomePage> {
       value: value,
       icon: icon,
       supportingText: unit,
+      dense: true,
     );
   }
 

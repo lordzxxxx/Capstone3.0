@@ -14,6 +14,7 @@ class AppMetricCard extends StatelessWidget {
     required this.icon,
     this.supportingText,
     this.onTap,
+    this.dense = false,
   });
 
   final String label;
@@ -22,11 +23,14 @@ class AppMetricCard extends StatelessWidget {
   final String? supportingText;
   final VoidCallback? onTap;
 
+  /// Tighter padding/sizing for grids of cards packed several to a row.
+  final bool dense;
+
   @override
   Widget build(BuildContext context) {
     final content = Container(
-      constraints: const BoxConstraints(minHeight: 124),
-      padding: const EdgeInsets.all(14),
+      constraints: BoxConstraints(minHeight: dense ? 88 : 124),
+      padding: EdgeInsets.all(dense ? 10 : 14),
       decoration: BoxDecoration(
         color: AppDesign.surface,
         borderRadius: BorderRadius.circular(16),
@@ -44,16 +48,16 @@ class AppMetricCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: dense ? 30 : 38,
+            height: dense ? 30 : 38,
             decoration: BoxDecoration(
               color: AppDesign.blueSoft,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(dense ? 9 : 12),
               border: Border.all(color: AppDesign.border),
             ),
-            child: Icon(icon, color: AppDesign.blue, size: 20),
+            child: Icon(icon, color: AppDesign.blue, size: dense ? 16 : 20),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: dense ? 8 : 12),
           // Loose fit keeps this card compatible with horizontal metric
           // scrollers while still filling the available width in normal
           // bounded layouts.
@@ -67,34 +71,34 @@ class AppMetricCard extends StatelessWidget {
                   label,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppDesign.ink,
-                    fontSize: 13,
+                    fontSize: dense ? 11.5 : 13,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: dense ? 2 : 4),
                 Text(
                   value,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppDesign.blue,
-                    fontSize: 23,
+                    fontSize: dense ? 19 : 23,
                     fontWeight: FontWeight.w800,
                     height: 1.05,
                   ),
                 ),
                 if (supportingText != null &&
                     supportingText!.trim().isNotEmpty) ...[
-                  const SizedBox(height: 3),
+                  SizedBox(height: dense ? 2 : 3),
                   Text(
                     supportingText!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppDesign.muted,
-                      fontSize: 11,
+                      fontSize: dense ? 10 : 11,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
