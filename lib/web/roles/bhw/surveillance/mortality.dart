@@ -2612,7 +2612,7 @@ class _MortalityPageState extends State<MortalityPage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: _sidebarDark,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.3),
@@ -2770,7 +2770,7 @@ class _MortalityPageState extends State<MortalityPage> {
                           }
                         : null,
                     icon: const Icon(Icons.chevron_right),
-                    color: Colors.white,
+                    color: _lightOffWhite,
                   ),
                 ],
               ),
