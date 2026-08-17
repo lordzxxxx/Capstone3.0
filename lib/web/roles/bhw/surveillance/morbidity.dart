@@ -294,6 +294,12 @@ class _MorbidityPageState extends State<MorbidityPage> {
               ),
             ),
           ),
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
+            tooltip: 'Refresh Data',
+            onPressed: () => setState(() {}),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: ColoredBox(

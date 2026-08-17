@@ -825,6 +825,13 @@ class _PrenatalPageState extends State<PrenatalPage> {
             ),
           ),
           const SizedBox(width: 12),
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh Data',
+            onPressed: () => _loadRecords(),
+            color: Colors.white70,
+          ),
+          const SizedBox(width: 12),
           if (_isSelectionMode)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

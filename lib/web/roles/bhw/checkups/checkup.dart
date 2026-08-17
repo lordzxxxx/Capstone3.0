@@ -1690,6 +1690,13 @@ class _CheckUpPageState extends State<CheckUpPage> {
             ),
           ),
           const SizedBox(width: 12),
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh Data',
+            onPressed: () => _loadRecords(),
+            color: Colors.white70,
+          ),
+          const SizedBox(width: 12),
           if (kDebugMode)
             PopupMenuButton(
               icon: const Icon(Icons.more_vert_outlined, color: Colors.white),

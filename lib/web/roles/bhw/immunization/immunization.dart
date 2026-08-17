@@ -961,6 +961,13 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             ),
           ),
           const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh Data',
+            onPressed: () => _loadRecords(),
+            color: Colors.white70,
+          ),
+          const SizedBox(width: 8),
           // Selection Mode Info
           if (_isSelectionMode)
             Container(

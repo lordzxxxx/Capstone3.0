@@ -494,95 +494,128 @@ Future<_OverallReportSelection?> _showOverallSelectionDialog(
                         ),
                       ),
                       const SizedBox(height: 18),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: ReportPeriod.values.map((period) {
-                          final isSelected = period == selectedPeriod;
-                          return ChoiceChip(
-                            selected: isSelected,
-                            showCheckmark: false,
-                            label: Text(period.label),
-                            labelStyle: TextStyle(
-                              color: isSelected
-                                  ? Colors.white
-                                  : _launcherPrimaryAqua,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            selectedColor: _launcherPrimaryAqua,
-                            backgroundColor: Colors.white,
-                            side: const BorderSide(
-                              color: _launcherPrimaryAqua,
-                            ),
-                            onSelected: (_) {
-                              setDialogState(() {
-                                selectedPeriod = period;
-                                selectedMonth = _normalizeMonthForOverallPeriod(
-                                  selectedMonth,
-                                  selectedPeriod,
-                                );
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 16),
-                      if (selectedPeriod != ReportPeriod.yearly) ...[
-                        _buildOverallDropdownField<int>(
-                          label: selectedPeriod == ReportPeriod.quarterly
-                              ? 'Quarter'
-                              : 'Month',
-                          value: selectedMonth,
-                          items: _monthOptionsForOverallPeriod(selectedPeriod)
-                              .map(
-                                (month) => DropdownMenuItem<int>(
-                                  value: month,
-                                  child: Text(
-                                    _monthLabelForOverallPeriod(
-                                      month,
-                                      selectedPeriod,
-                                    ),
+                      _buildOverallDialogSection(
+                        title: 'Report Scope',
+                        subtitle:
+                            'Choose the official reporting window for the generated PDF.',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: ReportPeriod.values.map((period) {
+                                final isSelected = period == selectedPeriod;
+                                return ChoiceChip(
+                                  selected: isSelected,
+                                  showCheckmark: false,
+                                  avatar: Icon(
+                                    period.icon,
+                                    size: 18,
+                                    color: isSelected
+                                        ? _launcherPrimaryAqua
+                                        : AppColors.textSecondary,
                                   ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (value) {
-                            if (value == null) return;
-                            setDialogState(() => selectedMonth = value);
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                      ],
-                      _buildOverallDropdownField<int>(
-                        label: 'Year',
-                        value: selectedYear,
-                        items: _overallYearOptions()
-                            .map(
-                              (year) => DropdownMenuItem<int>(
-                                value: year,
-                                child: Text(year.toString()),
+                                  label: Text(period.label),
+                                  labelStyle: TextStyle(
+                                    color: isSelected
+                                        ? AppColors.textPrimary
+                                        : AppColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  backgroundColor: Colors.black.withValues(
+                                    alpha: 0.04,
+                                  ),
+                                  selectedColor: _launcherPrimaryAqua
+                                      .withValues(alpha: 0.16),
+                                  side: BorderSide(
+                                    color: isSelected
+                                        ? _launcherPrimaryAqua
+                                        : AppColors.textSecondary.withValues(
+                                            alpha: 0.25,
+                                          ),
+                                  ),
+                                  onSelected: (_) {
+                                    setDialogState(() {
+                                      selectedPeriod = period;
+                                      selectedMonth =
+                                          _normalizeMonthForOverallPeriod(
+                                            selectedMonth,
+                                            selectedPeriod,
+                                          );
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 16),
+                            if (selectedPeriod != ReportPeriod.yearly) ...[
+                              _buildOverallDropdownField<int>(
+                                label: selectedPeriod == ReportPeriod.quarterly
+                                    ? 'Quarter'
+                                    : 'Month',
+                                value: selectedMonth,
+                                items:
+                                    _monthOptionsForOverallPeriod(
+                                      selectedPeriod,
+                                    ).map((month) {
+                                      return DropdownMenuItem<int>(
+                                        value: month,
+                                        child: Text(
+                                          _monthLabelForOverallPeriod(
+                                            month,
+                                            selectedPeriod,
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  setDialogState(() => selectedMonth = value);
+                                },
                               ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setDialogState(() => selectedYear = value);
-                        },
+                              const SizedBox(height: 14),
+                            ],
+                            _buildOverallDropdownField<int>(
+                              label: 'Year',
+                              value: selectedYear,
+                              items: _overallYearOptions().map((year) {
+                                return DropdownMenuItem<int>(
+                                  value: year,
+                                  child: Text(year.toString()),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                if (value == null) return;
+                                setDialogState(() => selectedYear = value);
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 18),
-                      _buildOverallTextField(
-                        controller: barangayController,
-                        label: 'Barangay',
-                      ),
-                      const SizedBox(height: 12),
-                      _buildOverallTextField(
-                        controller: municipalityController,
-                        label: 'Municipality / City',
-                      ),
-                      const SizedBox(height: 12),
-                      _buildOverallTextField(
-                        controller: provinceController,
-                        label: 'Province',
+                      const SizedBox(height: 14),
+                      _buildOverallDialogSection(
+                        title: 'Document Details',
+                        subtitle:
+                            'These values appear in the report header and body.',
+                        child: Column(
+                          children: [
+                            _buildOverallTextField(
+                              controller: barangayController,
+                              label: 'Barangay',
+                            ),
+                            const SizedBox(height: 12),
+                            _buildOverallTextField(
+                              controller: municipalityController,
+                              label: 'Municipality / City',
+                            ),
+                            const SizedBox(height: 12),
+                            _buildOverallTextField(
+                              controller: provinceController,
+                              label: 'Province',
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -660,43 +693,82 @@ String _monthLabelForOverallPeriod(int month, ReportPeriod period) {
   return DateFormat.MMMM().format(DateTime(2024, month));
 }
 
+// Mirrors bhw_report_generation.dart's _buildDialogSection exactly (the
+// canonical per-module "Generate Official Report" reference dialog, e.g.
+// /bhw/checkups?view=insights), so this dialog reads as the same design
+// system rather than a one-off. Duplicated locally rather than shared
+// because that helper is file-private and used by several other report
+// dialogs already -- reusing it here without changing its signature would
+// require making it public, which is a wider change than this fix needs.
+Widget _buildOverallDialogSection({
+  required String title,
+  required String subtitle,
+  required Widget child,
+}) {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.black.withValues(alpha: 0.04),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: _launcherPrimaryAqua.withValues(alpha: 0.2)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+        ),
+        const SizedBox(height: 14),
+        child,
+      ],
+    ),
+  );
+}
+
 Widget _buildOverallDropdownField<T>({
   required String label,
   required T value,
   required List<DropdownMenuItem<T>> items,
   required ValueChanged<T?> onChanged,
 }) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        label,
-        style: const TextStyle(
-          color: AppColors.textPrimary,
-          fontWeight: FontWeight.w700,
+  return DropdownButtonFormField<T>(
+    initialValue: value,
+    isExpanded: true,
+    dropdownColor: Colors.white,
+    iconEnabledColor: AppColors.textPrimary,
+    style: const TextStyle(color: AppColors.textPrimary),
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: AppColors.textSecondary),
+      filled: true,
+      fillColor: Colors.black.withValues(alpha: 0.04),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 16,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: AppColors.textSecondary.withValues(alpha: 0.22),
         ),
       ),
-      const SizedBox(height: 8),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _launcherPrimaryAqua.withValues(alpha: 0.4)),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<T>(
-            value: value,
-            items: items,
-            onChanged: onChanged,
-            dropdownColor: Colors.white,
-            style: const TextStyle(color: AppColors.textPrimary),
-            iconEnabledColor: _launcherPrimaryAqua,
-            isExpanded: true,
-          ),
-        ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _launcherPrimaryAqua, width: 1.5),
       ),
-    ],
+    ),
+    items: items,
+    onChanged: onChanged,
   );
 }
 
@@ -710,18 +782,22 @@ Widget _buildOverallTextField({
     decoration: InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: AppColors.textSecondary),
+      filled: true,
+      fillColor: Colors.black.withValues(alpha: 0.04),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 16,
+      ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(
-          color: _launcherPrimaryAqua.withValues(alpha: 0.4),
+          color: AppColors.textSecondary.withValues(alpha: 0.22),
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: _launcherPrimaryAqua, width: 1.5),
       ),
-      filled: true,
-      fillColor: Colors.white,
     ),
   );
 }

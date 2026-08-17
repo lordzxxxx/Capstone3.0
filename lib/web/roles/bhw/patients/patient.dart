@@ -873,6 +873,12 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
             ),
           ),
           const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh Data',
+            onPressed: () => _loadPatients(),
+            color: Colors.white70,
+          ),
           if (_isSelectionMode)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

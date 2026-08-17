@@ -401,6 +401,12 @@ class _CommunicablePageState extends State<CommunicablePage> {
             ),
           ),
           const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh Data',
+            onPressed: () => _loadPatients(),
+            color: Colors.white70,
+          ),
           if (_isSelectionMode) const SizedBox(width: 12),
           if (_isSelectionMode)
             Container(
