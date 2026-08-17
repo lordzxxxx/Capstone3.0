@@ -1,9 +1,10 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
-import 'package:mycapstone_project/web/features/auth/login.dart';
+import 'package:get/get.dart';
 import 'package:mycapstone_project/web/features/auth/signup.dart';
 import 'package:mycapstone_project/web/features/auth/bhw_registration.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 import 'package:mycapstone_project/web/shared/widgets/liquid_glass_navbar.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
@@ -1131,7 +1132,7 @@ class _LandingPageState extends State<LandingPage>
               icon: Icons.login_rounded,
               isPrimary: true,
               onPressed: () {
-                replaceWithAuthPage(context, const Login());
+                Get.toNamed(WebRoutes.bhwLogin);
               },
             ),
             const SizedBox(height: 16),
@@ -1141,7 +1142,7 @@ class _LandingPageState extends State<LandingPage>
               icon: Icons.health_and_safety,
               isPrimary: false,
               onPressed: () {
-                replaceWithAuthPage(context, const Login());
+                Get.toNamed(WebRoutes.choLogin);
               },
             ),
             const SizedBox(height: 16),

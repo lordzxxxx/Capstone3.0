@@ -53,7 +53,12 @@ class _RoleCheckResult {
 }
 
 class Login extends StatefulWidget {
-  const Login({super.key});
+  const Login({super.key, this.expectedRole});
+
+  /// Which portal this login entry point is for ('bhw' or 'cho'), set when
+  /// arriving via the dedicated /bhw/login or /cho/login routes. Null for
+  /// the generic /login route, which accepts any verified role as before.
+  final String? expectedRole;
 
   @override
   State<Login> createState() => _LoginState();
@@ -226,6 +231,25 @@ class _LoginState extends State<Login> {
 
   bool _isDoctorRole(String role) => _normalizeRole(role) == 'doctor';
 
+  /// Display label for the portal this login entry point is for, empty for
+  /// the generic /login route.
+  String get _portalName => switch (widget.expectedRole) {
+    'bhw' => 'BHW',
+    'cho' => 'CHO',
+    _ => '',
+  };
+
+  /// Whether the verified role belongs to the portal the user entered
+  /// through. CHO Super Admin accounts count as CHO. Always true when this
+  /// page has no expected role (the generic /login route).
+  bool _matchesExpectedPortal(String role) {
+    return switch (widget.expectedRole) {
+      'bhw' => _isBhwRole(role),
+      'cho' => _isChoRole(role) || _isChoSuperAdminRole(role),
+      _ => true,
+    };
+  }
+
   bool _isChoOrBhwRole(String role) {
     return _isChoRole(role) ||
         _isBhwRole(role) ||
@@ -280,16 +304,23 @@ class _LoginState extends State<Login> {
         ? 'Referral Center'
         : 'Dashboard';
 
+    var message = isSuperAdmin
+        ? 'Your CHO Super Admin account is verified. Continue to the governance center.'
+        : isCho
+        ? 'Your CHO account is verified. Continue to the CHO dashboard.'
+        : isDoctor
+        ? 'Your doctor account is verified. Continue to the referral center.'
+        : 'Your account is verified. Continue to the dashboard.';
+    if (!_matchesExpectedPortal(normalizedRole)) {
+      message =
+          'This account isn\'t registered with the $_portalName portal. '
+          '$message';
+    }
+
     final proceedToDashboard = await showLoginSuccessSweetAlert(
       context: context,
       title: 'Login successful',
-      message: isSuperAdmin
-          ? 'Your CHO Super Admin account is verified. Continue to the governance center.'
-          : isCho
-          ? 'Your CHO account is verified. Continue to the CHO dashboard.'
-          : isDoctor
-          ? 'Your doctor account is verified. Continue to the referral center.'
-          : 'Your account is verified. Continue to the dashboard.',
+      message: message,
       confirmButtonText: 'Open $dashboardLabel',
     );
 
@@ -1120,7 +1151,7 @@ class _LoginState extends State<Login> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Welcome back',
+              _portalName.isEmpty ? 'Welcome back' : '$_portalName Portal Login',
               style: TextStyle(
                 fontFamily: 'Manrope',
                 fontSize: isCompact ? 28 : 34,
@@ -1131,7 +1162,9 @@ class _LoginState extends State<Login> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Sign in to securely access the AI-DSUHIS platform.',
+              _portalName.isEmpty
+                  ? 'Sign in to securely access the AI-DSUHIS platform.'
+                  : 'Sign in with your $_portalName account to continue.',
               style: TextStyle(
                 fontSize: 14,
                 color: _mutedCoolGray,

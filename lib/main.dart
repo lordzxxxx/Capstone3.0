@@ -321,6 +321,14 @@ class MyApp extends StatelessWidget {
                 page: () => const web_login.Login(),
               ),
               GetPage(
+                name: WebRoutes.bhwLogin,
+                page: () => const web_login.Login(expectedRole: 'bhw'),
+              ),
+              GetPage(
+                name: WebRoutes.choLogin,
+                page: () => const web_login.Login(expectedRole: 'cho'),
+              ),
+              GetPage(
                 name: WebRoutes.signup,
                 page: () => const web_signup.Signup(),
               ),
