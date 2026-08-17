@@ -2,10 +2,7 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mycapstone_project/web/features/auth/signup.dart';
-import 'package:mycapstone_project/web/features/auth/bhw_registration.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
-import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 import 'package:mycapstone_project/web/shared/widgets/liquid_glass_navbar.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/shared/privacy_notice.dart';
@@ -1154,11 +1151,10 @@ class _LandingPageState extends State<LandingPage>
               onPressed: () async {
                 final selectedRole = await _showRoleSelectionDialog(context);
                 if (selectedRole == null || !context.mounted) return;
-                replaceWithAuthPage(
-                  context,
+                Get.toNamed(
                   selectedRole == 'BHW'
-                      ? const BhwRegistrationPage()
-                      : Signup(preselectedRole: selectedRole),
+                      ? WebRoutes.bhwSignup
+                      : WebRoutes.choSignup,
                 );
               },
             ),

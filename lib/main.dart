@@ -55,6 +55,8 @@ import 'package:mycapstone_project/app/theme/app_theme.dart' as app_theme;
 import 'package:mycapstone_project/web/features/auth/landing.dart' as web;
 import 'package:mycapstone_project/web/features/auth/login.dart' as web_login;
 import 'package:mycapstone_project/web/features/auth/signup.dart' as web_signup;
+import 'package:mycapstone_project/web/features/auth/bhw_registration.dart'
+    as web_bhw_registration;
 import 'package:mycapstone_project/web/features/auth/forgot.dart' as web_forgot;
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
@@ -331,6 +333,14 @@ class MyApp extends StatelessWidget {
               GetPage(
                 name: WebRoutes.signup,
                 page: () => const web_signup.Signup(),
+              ),
+              GetPage(
+                name: WebRoutes.bhwSignup,
+                page: () => const web_bhw_registration.BhwRegistrationPage(),
+              ),
+              GetPage(
+                name: WebRoutes.choSignup,
+                page: () => const web_signup.Signup(preselectedRole: 'CHO'),
               ),
               GetPage(
                 name: WebRoutes.forgotPassword,
