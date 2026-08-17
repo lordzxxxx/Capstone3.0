@@ -67,9 +67,10 @@ class PatientFirstServiceSelector extends StatefulWidget {
 class _PatientFirstServiceSelectorState
     extends State<PatientFirstServiceSelector> {
   static const _accent = Color(0xFF2F80ED);
-  static const _background = Color(0xFF081D22);
-  static const _surface = Color(0xFF0D274D);
-  static const _text = Color(0xFFF5F5F5);
+  static const _background = Colors.white;
+  static const _surface = Color(0xFFF5F7FA);
+  static const _text = Color(0xFF0B1F3A);
+  static const _cardBorder = Color(0xFFE2E8F0);
 
   final TextEditingController _controller = TextEditingController();
   Timer? _debounce;
@@ -120,10 +121,10 @@ class _PatientFirstServiceSelectorState
           decoration: BoxDecoration(
             color: _background,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: _accent.withValues(alpha: 0.35)),
+            border: Border.all(color: _accent.withValues(alpha: 0.3)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.35),
+                color: Colors.black.withValues(alpha: 0.12),
                 blurRadius: 28,
                 offset: const Offset(0, 14),
               ),
@@ -292,7 +293,7 @@ class _PatientFirstServiceSelectorState
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Column(
         children: [
@@ -336,7 +337,7 @@ class _PatientFirstServiceSelectorState
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Row(
         children: [
