@@ -63,6 +63,11 @@ class _PrenatalPageState extends State<PrenatalPage> {
   ];
 
   String _selectedStatusFilter = 'All Cases';
+  String _selectedBarangay = 'All';
+  String _selectedRiskLevel = 'All';
+  String _selectedAgeGroup = 'All';
+  String _sortField = 'Name';
+  bool _sortAscending = true;
   final List<String> _statusFilterOptions = [
     'All Cases',
     'Active',
@@ -93,6 +98,15 @@ class _PrenatalPageState extends State<PrenatalPage> {
   List<Map<String, dynamic>> _prenatalRecords = [];
   final PrenatalDatabaseHelper _dbHelper = PrenatalDatabaseHelper.instance;
 
+  // Insights Date Filter State
+  DashboardDateFilterMode _insightsDateFilterMode =
+      DashboardDateFilterMode.allTime;
+  DateTime? _insightsCustomDate;
+  DateTime? _insightsSelectedMonth;
+  DateTime _insightsRangeStart =
+      DateTime.now().subtract(const Duration(days: 6));
+  DateTime _insightsRangeEnd = DateTime.now();
+
   // AI Classifier
   final HealthAIClassifier _aiClassifier = HealthAIClassifier.instance;
   final PatientCenteredHistoryService _patientHistoryService =
@@ -101,6 +115,9 @@ class _PrenatalPageState extends State<PrenatalPage> {
   @override
   void initState() {
     super.initState();
+    _insightsSelectedMonth ??= DateTime.now();
+    _insightsRangeStart = DateTime.now().subtract(const Duration(days: 6));
+    _insightsRangeEnd = DateTime.now();
     _activeView = healthModuleViewFromUrl();
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => persistHealthModuleView(WebRoutes.bhwPrenatal, _activeView),
@@ -961,46 +978,141 @@ class _PrenatalPageState extends State<PrenatalPage> {
   List<Map<String, dynamic>> _getFilteredRecords() {
     final filtered = _prenatalRecords.where((record) {
       // Status filter
-      bool statusMatch = true;
-      if (_selectedStatusFilter != 'All Cases') {
-        statusMatch = record['status'] == _selectedStatusFilter;
+      if (_selectedStatusFilter != 'All Cases' &&
+          _selectedStatusFilter != 'All') {
+        final status = (record['status'] ?? '').toString().trim().toLowerCase();
+        if (status != _selectedStatusFilter.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // Barangay filter
+      if (_selectedBarangay != 'All') {
+        final barangay = (record['address'] ?? record['barangay'] ?? '')
+            .toString()
+            .toLowerCase();
+        if (!barangay.contains(_selectedBarangay.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Risk Level filter
+      if (_selectedRiskLevel != 'All') {
+        final risk = (record['riskLevel'] ?? record['risk'] ?? '')
+            .toString()
+            .trim()
+            .toLowerCase();
+        if (risk != _selectedRiskLevel.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // Age Group filter
+      if (_selectedAgeGroup != 'All') {
+        final age = int.tryParse(record['age']?.toString() ?? '') ?? -1;
+        if (age >= 0) {
+          switch (_selectedAgeGroup) {
+            case '0–17':
+              if (age > 17) return false;
+              break;
+            case '18–34':
+              if (age < 18 || age > 34) return false;
+              break;
+            case '35+':
+              if (age < 35) return false;
+              break;
+          }
+        }
       }
 
       // Date range filter
-      bool dateMatch = true;
       if (_fromDate != null || _toDate != null) {
         try {
-          final dueDate = DateTime.parse(record['dueDate'] ?? '');
-          if (_fromDate != null && dueDate.isBefore(_fromDate!)) {
-            dateMatch = false;
-          }
-          if (_toDate != null && dueDate.isAfter(_toDate!)) {
-            dateMatch = false;
+          final rawDate = record['registrationDate'] ??
+              record['dueDate'] ??
+              record['date'] ??
+              record['createdAt'];
+          final parsedDate = DateTime.tryParse(
+            rawDate?.toString().split(' ')[0] ?? '',
+          );
+          if (parsedDate != null) {
+            if (_fromDate != null && parsedDate.isBefore(_fromDate!)) {
+              return false;
+            }
+            if (_toDate != null && parsedDate.isAfter(_toDate!)) {
+              return false;
+            }
           }
         } catch (e) {
-          dateMatch = false;
+          // continue
         }
       }
 
       // Search filter
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
-        final name = (record['patientName'] ?? '').toString().toLowerCase();
+        final name = (record['patientName'] ??
+                '${record['firstName'] ?? ''} ${record['surname'] ?? ''}')
+            .toString()
+            .toLowerCase();
+        final id = (record['patientId'] ?? record['id'] ?? '')
+            .toString()
+            .toLowerCase();
         final age = (record['age'] ?? '').toString().toLowerCase();
         final contact = (record['contactNumber'] ?? '')
             .toString()
             .toLowerCase();
         final address = (record['address'] ?? '').toString().toLowerCase();
+        final risk = (record['riskLevel'] ?? '').toString().toLowerCase();
         if (!name.contains(query) &&
+            !id.contains(query) &&
             !age.contains(query) &&
             !contact.contains(query) &&
-            !address.contains(query)) {
+            !address.contains(query) &&
+            !risk.contains(query)) {
           return false;
         }
       }
 
-      return statusMatch && dateMatch;
+      return true;
     }).toList();
+
+    // Sort records based on _sortField and _sortAscending
+    filtered.sort((a, b) {
+      int comparison = 0;
+      switch (_sortField) {
+        case 'Registration Date':
+          final aDate = (a['registrationDate'] ?? a['createdAt'] ?? '')
+              .toString();
+          final bDate = (b['registrationDate'] ?? b['createdAt'] ?? '')
+              .toString();
+          comparison = aDate.compareTo(bDate);
+          break;
+        case 'Due Date':
+          final aDate = (a['dueDate'] ?? a['eddDate'] ?? '').toString();
+          final bDate = (b['dueDate'] ?? b['eddDate'] ?? '').toString();
+          comparison = aDate.compareTo(bDate);
+          break;
+        case 'Age':
+          final aAge = int.tryParse(a['age']?.toString() ?? '') ?? 0;
+          final bAge = int.tryParse(b['age']?.toString() ?? '') ?? 0;
+          comparison = aAge.compareTo(bAge);
+          break;
+        case 'Name':
+        default:
+          final aName = (a['patientName'] ??
+                  '${a['firstName'] ?? ''} ${a['surname'] ?? ''}')
+              .toString()
+              .toLowerCase();
+          final bName = (b['patientName'] ??
+                  '${b['firstName'] ?? ''} ${b['surname'] ?? ''}')
+              .toString()
+              .toLowerCase();
+          comparison = aName.compareTo(bName);
+          break;
+      }
+      return _sortAscending ? comparison : -comparison;
+    });
 
     return CurrentTableRecordUtils.collapseToLatestPerEntity(
       filtered,
@@ -1677,37 +1789,40 @@ class _PrenatalPageState extends State<PrenatalPage> {
           child: Container(
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height,
-            decoration: BoxDecoration(
-              color: _sidebarDark,
-              border: Border.all(
-                color: _primaryAqua.withValues(alpha: 0.2),
-                width: 1.2,
-              ),
-            ),
+            color: const Color(0xFFF5F7FA),
             child: Column(
               children: [
-                // Modal Header
+                // Modal Header Bar
                 Container(
-                  height: 86,
+                  height: 76,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 28,
+                    horizontal: 24,
                     vertical: 12,
                   ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [_sidebarDark, _darkDeepTeal],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
+                  decoration: const BoxDecoration(
+                    color: _darkDeepTeal,
                     border: Border(
                       bottom: BorderSide(
-                        color: _primaryAqua.withValues(alpha: 0.28),
-                        width: 1.2,
+                        color: Color(0x20FFFFFF),
+                        width: 1,
                       ),
                     ),
                   ),
                   child: Row(
                     children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: _primaryAqua.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.pregnant_woman_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -1717,16 +1832,17 @@ class _PrenatalPageState extends State<PrenatalPage> {
                               modalTitle,
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.2,
                               ),
                             ),
-                            Text(
+                            const SizedBox(height: 2),
+                            const Text(
                               'Maternal assessment and prenatal care planning',
                               style: TextStyle(
-                                color: _lightOffWhite.withValues(alpha: 0.72),
-                                fontSize: 12.5,
+                                color: Colors.white70,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -1734,21 +1850,17 @@ class _PrenatalPageState extends State<PrenatalPage> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: _primaryAqua.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _primaryAqua.withValues(alpha: 0.2),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        tooltip: 'Close modal',
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.close_rounded,
-                            color: Colors.white,
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                        ),
+                        icon: const Icon(Icons.close_rounded, size: 20),
                       ),
                     ],
                   ),
@@ -1756,605 +1868,743 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 // Form Content
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 20,
+                    ),
                     child: Form(
                       key: formKey,
-                      child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Patient Information Area
-                        _buildSectionHeader(
-                          'Patient Information',
-                          Icons.person,
-                        ),
-                        _buildDarkFormCard([
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: firstNameController,
-                                  label: 'First Name',
-                                  icon: Icons.person_outline,
-                                  hintText: 'Enter first name',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: surnameController,
-                                  label: 'Surname',
-                                  icon: Icons.person_outline,
-                                  hintText: 'Enter surname',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: ageController,
-                                  label: 'Age',
-                                  icon: Icons.cake,
-                                  hintText: 'Enter age',
-                                  keyboardType: TextInputType.number,
-                                  validator: ageValidator,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: patientIdController,
-                                  label: 'Patient ID',
-                                  icon: Icons.badge,
-                                  hintText: 'e.g., PAT-2026-001',
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: addressController,
-                            label: 'Address',
-                            icon: Icons.home,
-                            hintText: 'Enter complete address',
-                            maxLines: 2,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: contactNumberController,
-                            label: 'Contact Number',
-                            icon: Icons.phone,
-                            hintText: 'e.g., +63 912 345 6789',
-                            keyboardType: TextInputType.phone,
-                            validator: requiredValidator,
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: civilStatusController,
-                                  label: 'Civil Status',
-                                  icon: Icons.favorite,
-                                  hintText: 'e.g., Single, Married',
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: religionController,
-                                  label: 'Religion',
-                                  icon: Icons.church,
-                                  hintText: 'Enter religion',
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: philhealthNumberController,
-                                  label: 'Philhealth Number',
-                                  icon: Icons.medical_information,
-                                  hintText: 'Enter Philhealth #',
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: philhealthMemberController,
-                                  label: 'Philhealth Member',
-                                  icon: Icons.card_membership,
-                                  hintText: 'Member name',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ]),
-                        const SizedBox(height: 14),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isWide = constraints.maxWidth >= 900;
 
-                        // Pregnancy Detail Area
-                        _buildSectionHeader(
-                          'Pregnancy Detail',
-                          Icons.child_care,
-                        ),
-                        _buildDarkFormCard([
-                          _buildDatePickerField(
-                            context: context,
-                            label: 'Last Menstrual Period (LMP)',
-                            date: lmpDate,
-                            icon: Icons.calendar_today,
-                            onTap: () async {
-                              final picked = await _showDatePickerModal(
-                                context,
-                              );
-                              if (picked != null) {
-                                setModalState(() => lmpDate = picked);
-                              }
-                            },
-                            dark: true,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildDatePickerField(
-                            context: context,
-                            label: 'Estimated Due Date (EDD)',
-                            date: eddDate,
-                            icon: Icons.event,
-                            onTap: () async {
-                              final picked = await _showDatePickerModal(
-                                context,
-                              );
-                              if (picked != null) {
-                                setModalState(() => eddDate = picked);
-                              }
-                            },
-                            dark: true,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildDatePickerField(
-                            context: context,
-                            label: 'Last Date of Delivery',
-                            date: lastDeliveryDate,
-                            icon: Icons.child_friendly,
-                            onTap: () async {
-                              final picked = await _showDatePickerModal(
-                                context,
-                              );
-                              if (picked != null) {
-                                setModalState(() => lastDeliveryDate = picked);
-                              }
-                            },
-                            dark: true,
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
+                          final patientInfoSection = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: gravidaController,
-                                  label: 'Gravida (Number of Pregnancy)',
-                                  icon: Icons.numbers,
-                                  hintText: 'e.g., 1, 2, 3',
-                                  keyboardType: TextInputType.number,
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: paraController,
-                                  label: 'Para (Number of Live Births)',
-                                  icon: Icons.numbers,
-                                  hintText: 'e.g., 0, 1, 2',
-                                  keyboardType: TextInputType.number,
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _buildDropdownField(
-                            label: 'Risk Level',
-                            value: selectedRiskLevel,
-                            icon: Icons.warning_amber,
-                            items: _prenatalRiskLevelOptions,
-                            onChanged: (value) {
-                              if (value != null) {
-                                setModalState(() => selectedRiskLevel = value);
-                              }
-                            },
-                            dark: true,
-                          ),
-                        ]),
-                        const SizedBox(height: 14),
-
-                        // Medical History Area
-                        _buildSectionHeader(
-                          'Medical History',
-                          Icons.medical_services,
-                        ),
-                        _buildDarkFormCard([
-                          _buildTextField(
-                            controller: bloodTypeController,
-                            label: 'Blood Type',
-                            icon: Icons.bloodtype,
-                            hintText: 'e.g., A+, B-, O+, AB+',
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: allergiesController,
-                            label: 'Allergies',
-                            icon: Icons.health_and_safety,
-                            hintText: 'List any known allergies',
-                            maxLines: 2,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: preExistingConditionsController,
-                            label: 'Pre-existing Medical Conditions',
-                            icon: Icons.local_hospital,
-                            hintText: 'e.g., Diabetes, Hypertension, Asthma',
-                            maxLines: 3,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: previousComplicationsController,
-                            label: 'Previous Pregnancy Complications',
-                            icon: Icons.warning,
-                            hintText:
-                                'List any complications from previous pregnancies',
-                            maxLines: 3,
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: aogController,
-                                  label: 'AOG (Age of Gestation)',
-                                  icon: Icons.calendar_view_week,
-                                  hintText: 'e.g., 28 weeks',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: wtController,
-                                  label: 'WT (Weight)',
-                                  icon: Icons.monitor_weight,
-                                  hintText: 'e.g., 65 kg',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: tempController,
-                                  label: 'TEMP (Temperature)',
-                                  icon: Icons.thermostat,
-                                  hintText: 'e.g., 36.5Â°C',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: bpController,
-                                  label: 'BP (Blood Pressure)',
-                                  icon: Icons.favorite,
-                                  hintText: 'e.g., 120/80',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: bmiController,
-                                  label: 'BMI (Body Mass Index)',
-                                  icon: Icons.assessment,
-                                  hintText: 'e.g., 22.5',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: fhController,
-                                  label: 'FH (Fundal Height)',
-                                  icon: Icons.straighten,
-                                  hintText: 'e.g., 28 cm',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: dhbController,
-                                  label: 'DHB (Fetal Heart Beat)',
-                                  icon: Icons.favorite_border,
-                                  hintText: 'e.g., 140 bpm',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: atController,
-                                  label: 'AT (Abdominal Tenderness)',
-                                  icon: Icons.touch_app,
-                                  hintText: 'e.g., None, Mild',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: tcbController,
-                            label: 'TCB (Total Bilirubin)',
-                            icon: Icons.science,
-                            hintText: 'e.g., 0.8 mg/dL',
-                            validator: requiredValidator,
-                          ),
-                        ]),
-                        const SizedBox(height: 14),
-
-                        // Registration Details Area
-                        _buildSectionHeader(
-                          'Registration Details',
-                          Icons.app_registration,
-                        ),
-                        _buildDarkFormCard([
-                          _buildDatePickerField(
-                            context: context,
-                            label: 'Registration Date',
-                            date: registrationDate,
-                            icon: Icons.calendar_month,
-                            onTap: () async {
-                              final picked = await _showDatePickerModal(
-                                context,
-                              );
-                              if (picked != null) {
-                                setModalState(() => registrationDate = picked);
-                              }
-                            },
-                            dark: true,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: registeredByController,
-                            label: 'Registered By',
-                            icon: Icons.person_pin,
-                            hintText: 'Enter staff name or ID',
-                            validator: requiredValidator,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: additionalNoteController,
-                            label: 'Additional Note',
-                            icon: Icons.note,
-                            hintText: 'Enter any additional notes or remarks',
-                            maxLines: 4,
-                          ),
-                        ]),
-                        const SizedBox(height: 32),
-
-                        // Submit Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              final isFormValid =
-                                  formKey.currentState?.validate() ?? false;
-                              final isLmpDateValid = lmpDate != null;
-                              final isLmpDateNotFuture =
-                                  lmpDate == null ||
-                                  !lmpDate!.isAfter(DateTime.now());
-                              if (!isLmpDateValid) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('LMP date is required'),
-                                    backgroundColor: Colors.red,
-                                    behavior: SnackBarBehavior.floating,
+                              if (patientSeed != null)
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
                                   ),
-                                );
-                              } else if (!isLmpDateNotFuture) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'LMP date cannot be in the future',
+                                  decoration: BoxDecoration(
+                                    color: _primaryAqua.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: _primaryAqua.withValues(
+                                        alpha: 0.25,
+                                      ),
                                     ),
-                                    backgroundColor: Colors.red,
-                                    behavior: SnackBarBehavior.floating,
                                   ),
-                                );
-                              }
-                              if (!isFormValid ||
-                                  !isLmpDateValid ||
-                                  !isLmpDateNotFuture) {
-                                return;
-                              }
-
-                              // Create new prenatal record
-                              final newRecord = {
-                                'patientName':
-                                    '${firstNameController.text} ${surnameController.text}',
-                                'age': ageController.text,
-                                'address': addressController.text,
-                                'patientId':
-                                    (patientSeed?['patientId'] ??
-                                            patientSeed?['id'] ??
-                                            patientIdController.text)
-                                        .toString(),
-                                'linkedPatientId':
-                                    (patientSeed?['linkedPatientId'] ??
-                                            patientSeed?['patientId'] ??
-                                            patientSeed?['id'] ??
-                                            '')
-                                        .toString(),
-                                'contactNumber': contactNumberController.text,
-                                'civilStatus': civilStatusController.text,
-                                'religion': religionController.text,
-                                'philhealthNumber':
-                                    philhealthNumberController.text,
-                                'philhealthMember':
-                                    philhealthMemberController.text,
-                                'lmpDate': lmpDate?.toIso8601String() ?? '',
-                                'eddDate': eddDate?.toIso8601String() ?? '',
-                                'lastDeliveryDate':
-                                    lastDeliveryDate?.toIso8601String() ?? '',
-                                'gravida': gravidaController.text,
-                                'para': paraController.text,
-                                'riskLevel': selectedRiskLevel,
-                                'bloodType': bloodTypeController.text,
-                                'allergies': allergiesController.text,
-                                'preExistingConditions':
-                                    preExistingConditionsController.text,
-                                'previousComplications':
-                                    previousComplicationsController.text,
-                                'aog': aogController.text,
-                                'wt': wtController.text,
-                                'at': atController.text,
-                                'temp': tempController.text,
-                                'bp': bpController.text,
-                                'bmi': bmiController.text,
-                                'fh': fhController.text,
-                                'dhb': dhbController.text,
-                                'tcb': tcbController.text,
-                                'registrationDate':
-                                    registrationDate?.toIso8601String() ?? '',
-                                'registeredBy': registeredByController.text,
-                                'additionalNote': additionalNoteController.text,
-                                'gestationalAge': aogController.text,
-                                'dueDate': eddDate?.toIso8601String() ?? '',
-                                'status': selectedRiskLevel,
-                              };
-
-                              // AI Classification
-                              ClassificationResult? classification;
-                              try {
-                                print(
-                                  'ðŸ¤– [AI] Starting prenatal classification...',
-                                );
-                                classification = await _aiClassifier.classify(
-                                  newRecord,
-                                );
-                                print(
-                                  'âœ… [AI] Prenatal classification complete: ${classification.category}',
-                                );
-
-                                newRecord['ai_category'] =
-                                    classification.category;
-                                newRecord['ai_severity'] =
-                                    classification.severity;
-                                newRecord['ai_confidence'] = classification
-                                    .confidence
-                                    .toString();
-                                newRecord['ai_method'] = classification.method;
-                                if (classification.keywords != null) {
-                                  newRecord['ai_keywords'] = classification
-                                      .keywords!
-                                      .join(', ');
-                                }
-                                if (classification.recoveryPlan != null) {
-                                  newRecord['ai_recovery_plan'] = jsonEncode(
-                                    classification.recoveryPlan,
-                                  );
-                                }
-                              } catch (e) {
-                                print(
-                                  'âŒ AI prenatal classification failed: $e',
-                                );
-                              }
-
-                              // Save to database (offline + Firebase sync)
-                              try {
-                                await _dbHelper.insertRecord(newRecord);
-
-                                // Reload records
-                                await _loadRecords();
-
-                                // Show AI Classification modal with loading spinner
-                                if (context.mounted &&
-                                    classification != null) {
-                                  await _showPrenatalAIModal(
-                                    context,
-                                    classification,
-                                  );
-                                }
-
-                                if (context.mounted) {
-                                  Navigator.pop(context);
-                                }
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Prenatal registration saved successfully!',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.verified_user_rounded,
+                                        color: _primaryAqua,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          'Linked to registered patient record (${firstNameController.text} ${surnameController.text})',
+                                          style: const TextStyle(
+                                            color: _lightOffWhite,
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
                                       ),
-                                      backgroundColor: Colors.green,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                }
-                              } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Failed to save prenatal record: $e',
+                                    ],
+                                  ),
+                                ),
+                              _buildSectionHeader(
+                                'Patient Information',
+                                Icons.person,
+                              ),
+                              _buildDarkFormCard([
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: firstNameController,
+                                        label: 'First Name',
+                                        icon: Icons.person_outline,
+                                        hintText: 'Enter first name',
+                                        validator: requiredValidator,
                                       ),
-                                      backgroundColor: Colors.red,
-                                      behavior: SnackBarBehavior.floating,
                                     ),
-                                  );
-                                }
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _primaryAqua,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: surnameController,
+                                        label: 'Surname',
+                                        icon: Icons.person_outline,
+                                        hintText: 'Enter surname',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: ageController,
+                                        label: 'Age',
+                                        icon: Icons.cake,
+                                        hintText: 'Enter age',
+                                        keyboardType: TextInputType.number,
+                                        validator: ageValidator,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: patientIdController,
+                                        label: 'Patient ID',
+                                        icon: Icons.badge,
+                                        hintText: 'e.g., PAT-2026-001',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: addressController,
+                                  label: 'Address',
+                                  icon: Icons.home,
+                                  hintText: 'Enter complete address',
+                                  maxLines: 2,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: contactNumberController,
+                                  label: 'Contact Number',
+                                  icon: Icons.phone,
+                                  hintText: 'e.g., +63 912 345 6789',
+                                  keyboardType: TextInputType.phone,
+                                  validator: requiredValidator,
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: civilStatusController,
+                                        label: 'Civil Status',
+                                        icon: Icons.favorite,
+                                        hintText: 'e.g., Single, Married',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: religionController,
+                                        label: 'Religion',
+                                        icon: Icons.church,
+                                        hintText: 'Enter religion',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: philhealthNumberController,
+                                        label: 'Philhealth Number',
+                                        icon: Icons.medical_information,
+                                        hintText: 'Enter Philhealth #',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: philhealthMemberController,
+                                        label: 'Philhealth Member',
+                                        icon: Icons.card_membership,
+                                        hintText: 'Member name',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ]),
+                            ],
+                          );
+
+                          final pregnancyDetailSection = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionHeader(
+                                'Pregnancy Detail',
+                                Icons.child_care,
                               ),
-                              elevation: 2,
-                            ),
-                            child: const Text(
-                              'Register Prenatal Patient',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                              _buildDarkFormCard([
+                                _buildDatePickerField(
+                                  context: context,
+                                  label: 'Last Menstrual Period (LMP)',
+                                  date: lmpDate,
+                                  icon: Icons.calendar_today,
+                                  onTap: () async {
+                                    final picked = await _showDatePickerModal(
+                                      context,
+                                    );
+                                    if (picked != null) {
+                                      setModalState(() => lmpDate = picked);
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDatePickerField(
+                                  context: context,
+                                  label: 'Estimated Due Date (EDD)',
+                                  date: eddDate,
+                                  icon: Icons.event,
+                                  onTap: () async {
+                                    final picked = await _showDatePickerModal(
+                                      context,
+                                    );
+                                    if (picked != null) {
+                                      setModalState(() => eddDate = picked);
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDatePickerField(
+                                  context: context,
+                                  label: 'Last Date of Delivery',
+                                  date: lastDeliveryDate,
+                                  icon: Icons.child_friendly,
+                                  onTap: () async {
+                                    final picked = await _showDatePickerModal(
+                                      context,
+                                    );
+                                    if (picked != null) {
+                                      setModalState(
+                                        () => lastDeliveryDate = picked,
+                                      );
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: gravidaController,
+                                        label: 'Gravida (Number of Pregnancy)',
+                                        icon: Icons.numbers,
+                                        hintText: 'e.g., 1, 2, 3',
+                                        keyboardType: TextInputType.number,
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: paraController,
+                                        label: 'Para (Number of Live Births)',
+                                        icon: Icons.numbers,
+                                        hintText: 'e.g., 0, 1, 2',
+                                        keyboardType: TextInputType.number,
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDropdownField(
+                                  label: 'Risk Level',
+                                  value: selectedRiskLevel,
+                                  icon: Icons.warning_amber,
+                                  items: _prenatalRiskLevelOptions,
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      setModalState(
+                                        () => selectedRiskLevel = value,
+                                      );
+                                    }
+                                  },
+                                ),
+                              ]),
+                            ],
+                          );
+
+                          final medicalHistorySection = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionHeader(
+                                'Medical History & Vitals',
+                                Icons.medical_services,
                               ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                              _buildDarkFormCard([
+                                _buildTextField(
+                                  controller: bloodTypeController,
+                                  label: 'Blood Type',
+                                  icon: Icons.bloodtype,
+                                  hintText: 'e.g., A+, B-, O+, AB+',
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: allergiesController,
+                                  label: 'Allergies',
+                                  icon: Icons.health_and_safety,
+                                  hintText: 'List any known allergies',
+                                  maxLines: 2,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: preExistingConditionsController,
+                                  label: 'Pre-existing Medical Conditions',
+                                  icon: Icons.local_hospital,
+                                  hintText:
+                                      'e.g., Diabetes, Hypertension, Asthma',
+                                  maxLines: 3,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: previousComplicationsController,
+                                  label: 'Previous Pregnancy Complications',
+                                  icon: Icons.warning,
+                                  hintText:
+                                      'List any complications from previous pregnancies',
+                                  maxLines: 3,
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: aogController,
+                                        label: 'AOG (Age of Gestation)',
+                                        icon: Icons.calendar_view_week,
+                                        hintText: 'e.g., 28 weeks',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: wtController,
+                                        label: 'WT (Weight)',
+                                        icon: Icons.monitor_weight,
+                                        hintText: 'e.g., 65 kg',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: tempController,
+                                        label: 'TEMP (Temperature)',
+                                        icon: Icons.thermostat,
+                                        hintText: 'e.g., 36.5°C',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: bpController,
+                                        label: 'BP (Blood Pressure)',
+                                        icon: Icons.favorite,
+                                        hintText: 'e.g., 120/80',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: bmiController,
+                                        label: 'BMI (Body Mass Index)',
+                                        icon: Icons.assessment,
+                                        hintText: 'e.g., 22.5',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: fhController,
+                                        label: 'FH (Fundal Height)',
+                                        icon: Icons.straighten,
+                                        hintText: 'e.g., 28 cm',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: dhbController,
+                                        label: 'DHB (Fetal Heart Beat)',
+                                        icon: Icons.favorite_border,
+                                        hintText: 'e.g., 140 bpm',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: atController,
+                                        label: 'AT (Abdominal Tenderness)',
+                                        icon: Icons.touch_app,
+                                        hintText: 'e.g., None, Mild',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: tcbController,
+                                  label: 'TCB (Total Bilirubin)',
+                                  icon: Icons.science,
+                                  hintText: 'e.g., 0.8 mg/dL',
+                                  validator: requiredValidator,
+                                ),
+                              ]),
+                            ],
+                          );
+
+                          final registrationDetailsSection = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionHeader(
+                                'Registration Details',
+                                Icons.app_registration,
+                              ),
+                              _buildDarkFormCard([
+                                _buildDatePickerField(
+                                  context: context,
+                                  label: 'Registration Date',
+                                  date: registrationDate,
+                                  icon: Icons.calendar_month,
+                                  onTap: () async {
+                                    final picked = await _showDatePickerModal(
+                                      context,
+                                    );
+                                    if (picked != null) {
+                                      setModalState(
+                                        () => registrationDate = picked,
+                                      );
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: registeredByController,
+                                  label: 'Registered By',
+                                  icon: Icons.person_pin,
+                                  hintText: 'Enter staff name or ID',
+                                  validator: requiredValidator,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: additionalNoteController,
+                                  label: 'Additional Note',
+                                  icon: Icons.note,
+                                  hintText:
+                                      'Enter any additional notes or remarks',
+                                  maxLines: 4,
+                                ),
+                              ]),
+                            ],
+                          );
+
+                          if (isWide) {
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      patientInfoSection,
+                                      const SizedBox(height: 16),
+                                      pregnancyDetailSection,
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      medicalHistorySection,
+                                      const SizedBox(height: 16),
+                                      registrationDetailsSection,
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              patientInfoSection,
+                              const SizedBox(height: 16),
+                              pregnancyDetailSection,
+                              const SizedBox(height: 16),
+                              medicalHistorySection,
+                              const SizedBox(height: 16),
+                              registrationDetailsSection,
+                            ],
+                          );
+                        },
                       ),
                     ),
+                  ),
+                ),
+                // Bottom Action Bar
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      top: BorderSide(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        width: 1,
+                      ),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 8,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _lightOffWhite,
+                          side: BorderSide(
+                            color: Colors.black.withValues(alpha: 0.18),
+                            width: 1.2,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.close_rounded, size: 16),
+                        label: const Text(
+                          'Cancel',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 12),
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _primaryAqua,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 2,
+                        ),
+                        icon: const Icon(Icons.check_circle_rounded, size: 18),
+                        label: const Text(
+                          'Register Prenatal Patient',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
+                        ),
+                        onPressed: () async {
+                          final isFormValid =
+                              formKey.currentState?.validate() ?? false;
+                          final isLmpDateValid = lmpDate != null;
+                          final isLmpDateNotFuture =
+                              lmpDate == null ||
+                              !lmpDate!.isAfter(DateTime.now());
+                          if (!isLmpDateValid) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('LMP date is required'),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          } else if (!isLmpDateNotFuture) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'LMP date cannot be in the future',
+                                ),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                          if (!isFormValid ||
+                              !isLmpDateValid ||
+                              !isLmpDateNotFuture) {
+                            return;
+                          }
+
+                          // Create new prenatal record
+                          final newRecord = {
+                            'patientName':
+                                '${firstNameController.text} ${surnameController.text}',
+                            'age': ageController.text,
+                            'address': addressController.text,
+                            'patientId':
+                                (patientSeed?['patientId'] ??
+                                        patientSeed?['id'] ??
+                                        patientIdController.text)
+                                    .toString(),
+                            'linkedPatientId':
+                                (patientSeed?['linkedPatientId'] ??
+                                        patientSeed?['patientId'] ??
+                                        patientSeed?['id'] ??
+                                        '')
+                                    .toString(),
+                            'contactNumber': contactNumberController.text,
+                            'civilStatus': civilStatusController.text,
+                            'religion': religionController.text,
+                            'philhealthNumber':
+                                philhealthNumberController.text,
+                            'philhealthMember':
+                                philhealthMemberController.text,
+                            'lmpDate': lmpDate?.toIso8601String() ?? '',
+                            'eddDate': eddDate?.toIso8601String() ?? '',
+                            'lastDeliveryDate':
+                                lastDeliveryDate?.toIso8601String() ?? '',
+                            'gravida': gravidaController.text,
+                            'para': paraController.text,
+                            'riskLevel': selectedRiskLevel,
+                            'bloodType': bloodTypeController.text,
+                            'allergies': allergiesController.text,
+                            'preExistingConditions':
+                                preExistingConditionsController.text,
+                            'previousComplications':
+                                previousComplicationsController.text,
+                            'aog': aogController.text,
+                            'wt': wtController.text,
+                            'at': atController.text,
+                            'temp': tempController.text,
+                            'bp': bpController.text,
+                            'bmi': bmiController.text,
+                            'fh': fhController.text,
+                            'dhb': dhbController.text,
+                            'tcb': tcbController.text,
+                            'registrationDate':
+                                registrationDate?.toIso8601String() ?? '',
+                            'registeredBy': registeredByController.text,
+                            'additionalNote': additionalNoteController.text,
+                            'gestationalAge': aogController.text,
+                            'dueDate': eddDate?.toIso8601String() ?? '',
+                            'status': selectedRiskLevel,
+                          };
+
+                          // AI Classification
+                          ClassificationResult? classification;
+                          try {
+                            classification = await _aiClassifier.classify(
+                              newRecord,
+                            );
+
+                            newRecord['ai_category'] = classification.category;
+                            newRecord['ai_severity'] = classification.severity;
+                            newRecord['ai_confidence'] = classification
+                                .confidence
+                                .toString();
+                            newRecord['ai_method'] = classification.method;
+                            if (classification.keywords != null) {
+                              newRecord['ai_keywords'] = classification
+                                  .keywords!
+                                  .join(', ');
+                            }
+                            if (classification.recoveryPlan != null) {
+                              newRecord['ai_recovery_plan'] = jsonEncode(
+                                classification.recoveryPlan,
+                              );
+                            }
+                          } catch (e) {
+                            // ignore
+                          }
+
+                          // Save to database (offline + Firebase sync)
+                          try {
+                            await _dbHelper.insertRecord(newRecord);
+
+                            // Reload records
+                            await _loadRecords();
+
+                            // Show AI Classification modal with loading spinner
+                            if (context.mounted && classification != null) {
+                              await _showPrenatalAIModal(
+                                context,
+                                classification,
+                              );
+                            }
+
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Prenatal registration saved successfully!',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  backgroundColor: Colors.green,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Failed to save prenatal record: $e',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -2494,668 +2744,756 @@ class _PrenatalPageState extends State<PrenatalPage> {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Dialog.fullscreen(
-          backgroundColor: _darkDeepTeal,
-          child: Scaffold(
-            backgroundColor: _darkDeepTeal,
-            appBar: AppBar(
-              backgroundColor: _sidebarDark,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              leading: IconButton(
-                tooltip: 'Close editor',
-                icon: const Icon(Icons.close_rounded),
-                onPressed: () => Navigator.pop(context),
-              ),
-              title: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Edit Prenatal Record',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+        builder: (context, setModalState) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero,
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            color: const Color(0xFFF5F7FA),
+            child: Column(
+              children: [
+                // Modal Header Bar
+                Container(
+                  height: 76,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
                   ),
-                  Text(
-                    'Update maternal information and prenatal observations',
-                    style: TextStyle(fontSize: 12, color: Colors.white60),
-                  ),
-                ],
-              ),
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 18),
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      final button = updateButtonKey.currentWidget;
-                      if (button is ElevatedButton) {
-                        button.onPressed?.call();
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _primaryAqua,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 14,
+                  decoration: const BoxDecoration(
+                    color: _darkDeepTeal,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Color(0x20FFFFFF),
+                        width: 1,
                       ),
                     ),
-                    icon: const Icon(Icons.save_rounded),
-                    label: const Text('Save Changes'),
                   ),
-                ),
-              ],
-            ),
-            body: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Form Content - Complete form with ALL fields
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Form(
-                      key: formKey,
-                      child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Patient Information Section
-                        _buildSectionHeaderDark(
-                          'Patient Information',
-                          Icons.person,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: _primaryAqua.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        _buildDarkFormCard([
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: firstNameController,
-                                  label: 'First Name',
-                                  icon: Icons.person_outline,
-                                  hintText: 'Enter first name',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: surnameController,
-                                  label: 'Surname',
-                                  icon: Icons.person,
-                                  hintText: 'Enter surname',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: ageController,
-                                  label: 'Age',
-                                  icon: Icons.cake,
-                                  hintText: 'Enter age',
-                                  keyboardType: TextInputType.number,
-                                  validator: ageValidator,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: patientIdController,
-                                  label: 'Patient ID',
-                                  icon: Icons.badge,
-                                  hintText: 'e.g., PAT-2026-001',
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: addressController,
-                            label: 'Address',
-                            icon: Icons.home,
-                            hintText: 'Enter complete address',
-                            maxLines: 2,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: contactNumberController,
-                            label: 'Contact Number',
-                            icon: Icons.phone,
-                            hintText: 'e.g., +63 912 345 6789',
-                            keyboardType: TextInputType.phone,
-                            validator: requiredValidator,
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: civilStatusController,
-                                  label: 'Civil Status',
-                                  icon: Icons.favorite,
-                                  hintText: 'e.g., Single, Married',
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: religionController,
-                                  label: 'Religion',
-                                  icon: Icons.church,
-                                  hintText: 'Enter religion',
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: philhealthNumberController,
-                                  label: 'Philhealth Number',
-                                  icon: Icons.medical_information,
-                                  hintText: 'Enter Philhealth #',
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: philhealthMemberController,
-                                  label: 'Philhealth Member',
-                                  icon: Icons.card_membership,
-                                  hintText: 'Member name',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ]),
-                        const SizedBox(height: 14),
-
-                        // Pregnancy Detail Section
-                        _buildSectionHeaderDark(
-                          'Pregnancy Detail',
-                          Icons.child_care,
+                        child: const Icon(
+                          Icons.edit_note_rounded,
+                          color: Colors.white,
+                          size: 22,
                         ),
-                        _buildDarkFormCard([
-                          _buildDatePickerField(
-                            context: context,
-                            label: 'Last Menstrual Period (LMP)',
-                            date: lmpDate,
-                            icon: Icons.calendar_today,
-                            onTap: () async {
-                              final picked = await _showDatePickerModal(
-                                context,
-                              );
-                              if (picked != null) {
-                                setModalState(() => lmpDate = picked);
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildDatePickerField(
-                            context: context,
-                            label: 'Estimated Due Date (EDD)',
-                            date: eddDate,
-                            icon: Icons.event,
-                            onTap: () async {
-                              final picked = await _showDatePickerModal(
-                                context,
-                              );
-                              if (picked != null) {
-                                setModalState(() => eddDate = picked);
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildDatePickerField(
-                            context: context,
-                            label: 'Last Date of Delivery',
-                            date: lastDeliveryDate,
-                            icon: Icons.child_friendly,
-                            onTap: () async {
-                              final picked = await _showDatePickerModal(
-                                context,
-                              );
-                              if (picked != null) {
-                                setModalState(() => lastDeliveryDate = picked);
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: gravidaController,
-                                  label: 'Gravida (Number of Pregnancy)',
-                                  icon: Icons.numbers,
-                                  hintText: 'e.g., 1, 2, 3',
-                                  keyboardType: TextInputType.number,
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: paraController,
-                                  label: 'Para (Number of Live Births)',
-                                  icon: Icons.numbers,
-                                  hintText: 'e.g., 0, 1, 2',
-                                  keyboardType: TextInputType.number,
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _buildDropdownField(
-                            label: 'Risk Level',
-                            value: selectedRiskLevel,
-                            icon: Icons.warning_amber,
-                            items: _prenatalRiskLevelOptions,
-                            onChanged: (value) {
-                              if (value != null) {
-                                setModalState(() => selectedRiskLevel = value);
-                              }
-                            },
-                          ),
-                        ]),
-                        const SizedBox(height: 14),
-
-                        // Medical History Section
-                        _buildSectionHeaderDark(
-                          'Medical History',
-                          Icons.medical_services,
-                        ),
-                        _buildDarkFormCard([
-                          _buildTextField(
-                            controller: bloodTypeController,
-                            label: 'Blood Type',
-                            icon: Icons.bloodtype,
-                            hintText: 'e.g., A+, B-, O+, AB+',
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: allergiesController,
-                            label: 'Allergies',
-                            icon: Icons.health_and_safety,
-                            hintText: 'List any known allergies',
-                            maxLines: 2,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: preExistingConditionsController,
-                            label: 'Pre-existing Medical Conditions',
-                            icon: Icons.local_hospital,
-                            hintText: 'e.g., Diabetes, Hypertension, Asthma',
-                            maxLines: 3,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: previousComplicationsController,
-                            label: 'Previous Pregnancy Complications',
-                            icon: Icons.warning,
-                            hintText:
-                                'List any complications from previous pregnancies',
-                            maxLines: 3,
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: aogController,
-                                  label: 'AOG (Age of Gestation)',
-                                  icon: Icons.calendar_view_week,
-                                  hintText: 'e.g., 28 weeks',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: wtController,
-                                  label: 'WT (Weight)',
-                                  icon: Icons.monitor_weight,
-                                  hintText: 'e.g., 65 kg',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: tempController,
-                                  label: 'TEMP (Temperature)',
-                                  icon: Icons.thermostat,
-                                  hintText: 'e.g., 36.5Â°C',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: bpController,
-                                  label: 'BP (Blood Pressure)',
-                                  icon: Icons.favorite,
-                                  hintText: 'e.g., 120/80',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: bmiController,
-                                  label: 'BMI (Body Mass Index)',
-                                  icon: Icons.assessment,
-                                  hintText: 'e.g., 22.5',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: fhController,
-                                  label: 'FH (Fundal Height)',
-                                  icon: Icons.straighten,
-                                  hintText: 'e.g., 28 cm',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: dhbController,
-                                  label: 'DHB (Fetal Heart Beat)',
-                                  icon: Icons.favorite_border,
-                                  hintText: 'e.g., 140 bpm',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: atController,
-                                  label: 'AT (Abdominal Tenderness)',
-                                  icon: Icons.touch_app,
-                                  hintText: 'e.g., None, Mild',
-                                  validator: requiredValidator,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: tcbController,
-                            label: 'TCB (Total Bilirubin)',
-                            icon: Icons.science,
-                            hintText: 'e.g., 0.8 mg/dL',
-                            validator: requiredValidator,
-                          ),
-                        ]),
-                        const SizedBox(height: 14),
-
-                        // Registration Details Section
-                        _buildSectionHeaderDark(
-                          'Registration Details',
-                          Icons.app_registration,
-                        ),
-                        _buildDarkFormCard([
-                          _buildDatePickerField(
-                            context: context,
-                            label: 'Registration Date',
-                            date: registrationDate,
-                            icon: Icons.calendar_month,
-                            onTap: () async {
-                              final picked = await _showDatePickerModal(
-                                context,
-                              );
-                              if (picked != null) {
-                                setModalState(() => registrationDate = picked);
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: registeredByController,
-                            label: 'Registered By',
-                            icon: Icons.person_pin,
-                            hintText: 'Enter staff name or ID',
-                            validator: requiredValidator,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: additionalNoteController,
-                            label: 'Additional Note',
-                            icon: Icons.note,
-                            hintText: 'Enter any additional notes or remarks',
-                            maxLines: 4,
-                          ),
-                        ]),
-                        const SizedBox(height: 32),
-
-                        Offstage(
-                          offstage: true,
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              key: updateButtonKey,
-                              onPressed: () async {
-                                final isFormValid =
-                                    formKey.currentState?.validate() ?? false;
-                                final isLmpDateValid = lmpDate != null;
-                                final isLmpDateNotFuture =
-                                    lmpDate == null ||
-                                    !lmpDate!.isAfter(DateTime.now());
-                                if (!isLmpDateValid) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('LMP date is required'),
-                                      backgroundColor: Colors.red,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                } else if (!isLmpDateNotFuture) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'LMP date cannot be in the future',
-                                      ),
-                                      backgroundColor: Colors.red,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                }
-                                if (!isFormValid ||
-                                    !isLmpDateValid ||
-                                    !isLmpDateNotFuture) {
-                                  return;
-                                }
-
-                                // Update prenatal record
-                                final updatedRecord = {
-                                  'id': record['id'], // Keep original ID
-                                  'patientName':
-                                      '${firstNameController.text} ${surnameController.text}',
-                                  'age': ageController.text,
-                                  'address': addressController.text,
-                                  'patientId': patientIdController.text,
-                                  'contactNumber': contactNumberController.text,
-                                  'civilStatus': civilStatusController.text,
-                                  'religion': religionController.text,
-                                  'philhealthNumber':
-                                      philhealthNumberController.text,
-                                  'philhealthMember':
-                                      philhealthMemberController.text,
-                                  'lmpDate': lmpDate?.toIso8601String() ?? '',
-                                  'eddDate': eddDate?.toIso8601String() ?? '',
-                                  'lastDeliveryDate':
-                                      lastDeliveryDate?.toIso8601String() ?? '',
-                                  'gravida': gravidaController.text,
-                                  'para': paraController.text,
-                                  'riskLevel': selectedRiskLevel,
-                                  'bloodType': bloodTypeController.text,
-                                  'allergies': allergiesController.text,
-                                  'preExistingConditions':
-                                      preExistingConditionsController.text,
-                                  'previousComplications':
-                                      previousComplicationsController.text,
-                                  'aog': aogController.text,
-                                  'wt': wtController.text,
-                                  'at': atController.text,
-                                  'temp': tempController.text,
-                                  'bp': bpController.text,
-                                  'bmi': bmiController.text,
-                                  'fh': fhController.text,
-                                  'dhb': dhbController.text,
-                                  'tcb': tcbController.text,
-                                  'registrationDate':
-                                      registrationDate?.toIso8601String() ?? '',
-                                  'registeredBy': registeredByController.text,
-                                  'additionalNote':
-                                      additionalNoteController.text,
-                                  'gestationalAge': aogController.text,
-                                  'dueDate': eddDate?.toIso8601String() ?? '',
-                                  'status': selectedRiskLevel,
-                                };
-
-                                // AI Classification on edited record
-                                ClassificationResult? classification;
-                                try {
-                                  print(
-                                    'ðŸ¤– [AI] Starting prenatal re-classification...',
-                                  );
-                                  classification = await _aiClassifier.classify(
-                                    updatedRecord,
-                                  );
-                                  print(
-                                    'âœ… [AI] Prenatal re-classification complete: ${classification.category}',
-                                  );
-
-                                  updatedRecord['ai_category'] =
-                                      classification.category;
-                                  updatedRecord['ai_severity'] =
-                                      classification.severity;
-                                  updatedRecord['ai_confidence'] =
-                                      classification.confidence.toString();
-                                  updatedRecord['ai_method'] =
-                                      classification.method;
-                                  if (classification.keywords != null) {
-                                    updatedRecord['ai_keywords'] =
-                                        classification.keywords!.join(', ');
-                                  }
-                                  if (classification.recoveryPlan != null) {
-                                    updatedRecord['ai_recovery_plan'] =
-                                        jsonEncode(classification.recoveryPlan);
-                                  }
-                                } catch (e) {
-                                  print(
-                                    'âŒ AI prenatal re-classification failed: $e',
-                                  );
-                                }
-
-                                // Update in database
-                                final id = record['id']?.toString() ?? '';
-                                if (id.isNotEmpty) {
-                                  try {
-                                    await _dbHelper.updateRecord(
-                                      id,
-                                      updatedRecord,
-                                    );
-                                    await _loadRecords();
-
-                                    // Show AI Classification modal with loading spinner
-                                    if (context.mounted &&
-                                        classification != null) {
-                                      await _showPrenatalAIModal(
-                                        context,
-                                        classification,
-                                      );
-                                    }
-
-                                    if (context.mounted) {
-                                      Navigator.pop(context);
-                                    }
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Prenatal record updated successfully!',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          backgroundColor: Colors.green,
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Failed to update prenatal record: $e',
-                                          ),
-                                          backgroundColor: Colors.red,
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
-                                      );
-                                    }
-                                  }
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Error: Record ID not found',
-                                      ),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _primaryAqua,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 2,
-                              ),
-                              child: const Text(
-                                'Update Prenatal Record',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Edit Prenatal Record',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.2,
                               ),
                             ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Update maternal information and clinical measurements',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        tooltip: 'Close modal',
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                      ],
+                        icon: const Icon(Icons.close_rounded, size: 20),
+                      ),
+                    ],
+                  ),
+                ),
+                // Form Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 20,
+                    ),
+                    child: Form(
+                      key: formKey,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isWide = constraints.maxWidth >= 900;
+
+                          final patientInfoSection = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionHeaderDark(
+                                'Patient Information',
+                                Icons.person,
+                              ),
+                              _buildDarkFormCard([
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: firstNameController,
+                                        label: 'First Name',
+                                        icon: Icons.person_outline,
+                                        hintText: 'Enter first name',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: surnameController,
+                                        label: 'Surname',
+                                        icon: Icons.person_outline,
+                                        hintText: 'Enter surname',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: ageController,
+                                        label: 'Age',
+                                        icon: Icons.cake,
+                                        hintText: 'Enter age',
+                                        keyboardType: TextInputType.number,
+                                        validator: ageValidator,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: patientIdController,
+                                        label: 'Patient ID',
+                                        icon: Icons.badge,
+                                        hintText: 'e.g., PAT-2026-001',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: addressController,
+                                  label: 'Address',
+                                  icon: Icons.home,
+                                  hintText: 'Enter complete address',
+                                  maxLines: 2,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: contactNumberController,
+                                  label: 'Contact Number',
+                                  icon: Icons.phone,
+                                  hintText: 'e.g., +63 912 345 6789',
+                                  keyboardType: TextInputType.phone,
+                                  validator: requiredValidator,
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: civilStatusController,
+                                        label: 'Civil Status',
+                                        icon: Icons.favorite,
+                                        hintText: 'e.g., Single, Married',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: religionController,
+                                        label: 'Religion',
+                                        icon: Icons.church,
+                                        hintText: 'Enter religion',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: philhealthNumberController,
+                                        label: 'Philhealth Number',
+                                        icon: Icons.medical_information,
+                                        hintText: 'Enter Philhealth #',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: philhealthMemberController,
+                                        label: 'Philhealth Member',
+                                        icon: Icons.card_membership,
+                                        hintText: 'Member name',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ]),
+                            ],
+                          );
+
+                          final pregnancyDetailSection = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionHeaderDark(
+                                'Pregnancy Detail',
+                                Icons.child_care,
+                              ),
+                              _buildDarkFormCard([
+                                _buildDatePickerField(
+                                  context: context,
+                                  label: 'Last Menstrual Period (LMP)',
+                                  date: lmpDate,
+                                  icon: Icons.calendar_today,
+                                  onTap: () async {
+                                    final picked = await _showDatePickerModal(
+                                      context,
+                                    );
+                                    if (picked != null) {
+                                      setModalState(() => lmpDate = picked);
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDatePickerField(
+                                  context: context,
+                                  label: 'Estimated Due Date (EDD)',
+                                  date: eddDate,
+                                  icon: Icons.event,
+                                  onTap: () async {
+                                    final picked = await _showDatePickerModal(
+                                      context,
+                                    );
+                                    if (picked != null) {
+                                      setModalState(() => eddDate = picked);
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDatePickerField(
+                                  context: context,
+                                  label: 'Last Date of Delivery',
+                                  date: lastDeliveryDate,
+                                  icon: Icons.child_friendly,
+                                  onTap: () async {
+                                    final picked = await _showDatePickerModal(
+                                      context,
+                                    );
+                                    if (picked != null) {
+                                      setModalState(
+                                        () => lastDeliveryDate = picked,
+                                      );
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: gravidaController,
+                                        label: 'Gravida (Number of Pregnancy)',
+                                        icon: Icons.numbers,
+                                        hintText: 'e.g., 1, 2, 3',
+                                        keyboardType: TextInputType.number,
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: paraController,
+                                        label: 'Para (Number of Live Births)',
+                                        icon: Icons.numbers,
+                                        hintText: 'e.g., 0, 1, 2',
+                                        keyboardType: TextInputType.number,
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDropdownField(
+                                  label: 'Risk Level',
+                                  value: selectedRiskLevel,
+                                  icon: Icons.warning_amber,
+                                  items: _prenatalRiskLevelOptions,
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      setModalState(
+                                        () => selectedRiskLevel = value,
+                                      );
+                                    }
+                                  },
+                                ),
+                              ]),
+                            ],
+                          );
+
+                          final medicalHistorySection = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionHeaderDark(
+                                'Medical History',
+                                Icons.medical_services,
+                              ),
+                              _buildDarkFormCard([
+                                _buildTextField(
+                                  controller: bloodTypeController,
+                                  label: 'Blood Type',
+                                  icon: Icons.bloodtype,
+                                  hintText: 'e.g., A+, B-, O+, AB+',
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: allergiesController,
+                                  label: 'Allergies',
+                                  icon: Icons.health_and_safety,
+                                  hintText: 'List any known allergies',
+                                  maxLines: 2,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: preExistingConditionsController,
+                                  label: 'Pre-existing Medical Conditions',
+                                  icon: Icons.local_hospital,
+                                  hintText:
+                                      'e.g., Diabetes, Hypertension, Asthma',
+                                  maxLines: 3,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: previousComplicationsController,
+                                  label: 'Previous Pregnancy Complications',
+                                  icon: Icons.warning,
+                                  hintText:
+                                      'List any complications from previous pregnancies',
+                                  maxLines: 3,
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: aogController,
+                                        label: 'AOG (Age of Gestation)',
+                                        icon: Icons.calendar_view_week,
+                                        hintText: 'e.g., 28 weeks',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: wtController,
+                                        label: 'WT (Weight)',
+                                        icon: Icons.monitor_weight,
+                                        hintText: 'e.g., 65 kg',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: tempController,
+                                        label: 'TEMP (Temperature)',
+                                        icon: Icons.thermostat,
+                                        hintText: 'e.g., 36.5°C',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: bpController,
+                                        label: 'BP (Blood Pressure)',
+                                        icon: Icons.favorite,
+                                        hintText: 'e.g., 120/80',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: bmiController,
+                                        label: 'BMI (Body Mass Index)',
+                                        icon: Icons.assessment,
+                                        hintText: 'e.g., 22.5',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: fhController,
+                                        label: 'FH (Fundal Height)',
+                                        icon: Icons.straighten,
+                                        hintText: 'e.g., 28 cm',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: dhbController,
+                                        label: 'DHB (Fetal Heart Beat)',
+                                        icon: Icons.favorite_border,
+                                        hintText: 'e.g., 140 bpm',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: atController,
+                                        label: 'AT (Abdominal Tenderness)',
+                                        icon: Icons.touch_app,
+                                        hintText: 'e.g., None, Mild',
+                                        validator: requiredValidator,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: tcbController,
+                                  label: 'TCB (Total Bilirubin)',
+                                  icon: Icons.science,
+                                  hintText: 'e.g., 0.8 mg/dL',
+                                  validator: requiredValidator,
+                                ),
+                              ]),
+                            ],
+                          );
+
+                          final registrationDetailsSection = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionHeaderDark(
+                                'Registration Details',
+                                Icons.app_registration,
+                              ),
+                              _buildDarkFormCard([
+                                _buildDatePickerField(
+                                  context: context,
+                                  label: 'Registration Date',
+                                  date: registrationDate,
+                                  icon: Icons.calendar_month,
+                                  onTap: () async {
+                                    final picked = await _showDatePickerModal(
+                                      context,
+                                    );
+                                    if (picked != null) {
+                                      setModalState(
+                                        () => registrationDate = picked,
+                                      );
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: registeredByController,
+                                  label: 'Registered By',
+                                  icon: Icons.person_pin,
+                                  hintText: 'Enter staff name or ID',
+                                  validator: requiredValidator,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: additionalNoteController,
+                                  label: 'Additional Note',
+                                  icon: Icons.note,
+                                  hintText:
+                                      'Enter any additional notes or remarks',
+                                  maxLines: 4,
+                                ),
+                              ]),
+                            ],
+                          );
+
+                          if (isWide) {
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      patientInfoSection,
+                                      const SizedBox(height: 16),
+                                      pregnancyDetailSection,
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      medicalHistorySection,
+                                      const SizedBox(height: 16),
+                                      registrationDetailsSection,
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              patientInfoSection,
+                              const SizedBox(height: 16),
+                              pregnancyDetailSection,
+                              const SizedBox(height: 16),
+                              medicalHistorySection,
+                              const SizedBox(height: 16),
+                              registrationDetailsSection,
+                            ],
+                          );
+                        },
                       ),
                     ),
+                  ),
+                ),
+                // Bottom Action Bar
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      top: BorderSide(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        width: 1,
+                      ),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 8,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _lightOffWhite,
+                          side: BorderSide(
+                            color: Colors.black.withValues(alpha: 0.18),
+                            width: 1.2,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.close_rounded, size: 16),
+                        label: const Text(
+                          'Cancel',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 12),
+                      FilledButton.icon(
+                        key: updateButtonKey,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _primaryAqua,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 2,
+                        ),
+                        icon: const Icon(Icons.save_rounded, size: 18),
+                        label: const Text(
+                          'Save Changes',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
+                        ),
+                        onPressed: () async {
+                          final isFormValid =
+                              formKey.currentState?.validate() ?? false;
+                          final isLmpDateValid = lmpDate != null;
+                          final isLmpDateNotFuture =
+                              lmpDate == null ||
+                              !lmpDate!.isAfter(DateTime.now());
+                          if (!isLmpDateValid) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('LMP date is required'),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          } else if (!isLmpDateNotFuture) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'LMP date cannot be in the future',
+                                ),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                          if (!isFormValid ||
+                              !isLmpDateValid ||
+                              !isLmpDateNotFuture) {
+                            return;
+                          }
+
+                          final updatedRecord = {
+                            'id': record['id'],
+                            'patientName':
+                                '${firstNameController.text} ${surnameController.text}',
+                            'age': ageController.text,
+                            'address': addressController.text,
+                            'patientId': patientIdController.text,
+                            'contactNumber': contactNumberController.text,
+                            'civilStatus': civilStatusController.text,
+                            'religion': religionController.text,
+                            'philhealthNumber':
+                                philhealthNumberController.text,
+                            'philhealthMember':
+                                philhealthMemberController.text,
+                            'lmpDate': lmpDate?.toIso8601String() ?? '',
+                            'eddDate': eddDate?.toIso8601String() ?? '',
+                            'lastDeliveryDate':
+                                lastDeliveryDate?.toIso8601String() ?? '',
+                            'gravida': gravidaController.text,
+                            'para': paraController.text,
+                            'riskLevel': selectedRiskLevel,
+                            'bloodType': bloodTypeController.text,
+                            'allergies': allergiesController.text,
+                            'preExistingConditions':
+                                preExistingConditionsController.text,
+                            'previousComplications':
+                                previousComplicationsController.text,
+                            'aog': aogController.text,
+                            'wt': wtController.text,
+                            'at': atController.text,
+                            'temp': tempController.text,
+                            'bp': bpController.text,
+                            'bmi': bmiController.text,
+                            'fh': fhController.text,
+                            'dhb': dhbController.text,
+                            'tcb': tcbController.text,
+                            'registrationDate':
+                                registrationDate?.toIso8601String() ?? '',
+                            'registeredBy': registeredByController.text,
+                            'additionalNote': additionalNoteController.text,
+                            'gestationalAge': aogController.text,
+                            'dueDate': eddDate?.toIso8601String() ?? '',
+                            'status': selectedRiskLevel,
+                          };
+
+                          if (record['id'] != null) {
+                            try {
+                              await _dbHelper.updateRecord(
+                                record['id'].toString(),
+                                updatedRecord,
+                              );
+                              await _loadRecords();
+
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                              }
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Prenatal record updated successfully!',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    backgroundColor: Colors.green,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Failed to update prenatal record: $e',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Error: Record ID not found'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -3198,24 +3536,25 @@ class _PrenatalPageState extends State<PrenatalPage> {
 
   Widget _buildSectionHeader(String title, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12, top: 8),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _primaryAqua.withValues(alpha: 0.25),
-              borderRadius: BorderRadius.circular(8),
+              color: _primaryAqua.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: Colors.white, size: 20),
+            child: Icon(icon, color: _primaryAqua, size: 20),
           ),
           const SizedBox(width: 10),
           Text(
             title,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+            style: const TextStyle(
+              color: _lightOffWhite,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.2,
             ),
           ),
         ],
@@ -3225,19 +3564,20 @@ class _PrenatalPageState extends State<PrenatalPage> {
 
   Widget _buildFormCard(List<Widget> children) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.2),
-          width: 1.5,
+          color: _primaryAqua.withValues(alpha: 0.16),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: _mutedCoolGray.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -3248,29 +3588,9 @@ class _PrenatalPageState extends State<PrenatalPage> {
     );
   }
 
-  // Dark themed form card for modals that should remain dark
+  // Modern clean form card for modals
   Widget _buildDarkFormCard(List<Widget> children) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _sidebarDark,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: children.map((w) {
-          return DefaultTextStyle.merge(
-            style: const TextStyle(color: Colors.white),
-            child: IconTheme.merge(
-              data: const IconThemeData(color: Colors.white70),
-              child: w,
-            ),
-          );
-        }).toList(),
-      ),
-    );
+    return _buildFormCard(children);
   }
 
   Widget _buildTextField({
@@ -3288,51 +3608,62 @@ class _PrenatalPageState extends State<PrenatalPage> {
         Text(
           label,
           style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+            color: _mutedCoolGray,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
           validator: validator,
           style: const TextStyle(
-            color: Colors.white,
+            color: _lightOffWhite,
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: TextStyle(
-              color: Colors.white.withValues(alpha: 0.5),
-              fontSize: 14,
+              color: _mutedCoolGray.withValues(alpha: 0.55),
+              fontSize: 13.5,
               fontWeight: FontWeight.normal,
             ),
-            prefixIcon: Icon(icon, color: Colors.white, size: 20),
+            prefixIcon: Icon(icon, color: _primaryAqua, size: 20),
             filled: true,
-            fillColor: const Color(0xFF0B1F3A),
+            fillColor: Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.black.withValues(alpha: 0.12),
+                width: 1,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.black.withValues(alpha: 0.12),
+                width: 1,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: _primaryAqua, width: 2),
             ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+            ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
-              vertical: 10,
+              vertical: 12,
             ),
           ),
         ),
@@ -3353,48 +3684,55 @@ class _PrenatalPageState extends State<PrenatalPage> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            color: dark ? Colors.white : _mutedCoolGray,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+          style: const TextStyle(
+            color: _mutedCoolGray,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: dark ? _darkDeepTeal : _lightOffWhite,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: date != null
-                    ? _primaryAqua
-                    : (dark
-                          ? Colors.white.withValues(alpha: 0.2)
-                          : _mutedCoolGray.withValues(alpha: 0.3)),
-                width: date != null ? 2 : 1,
+                    ? _primaryAqua.withValues(alpha: 0.5)
+                    : Colors.black.withValues(alpha: 0.12),
+                width: date != null ? 1.5 : 1,
               ),
             ),
             child: Row(
               children: [
-                Icon(icon, color: dark ? Colors.white : _primaryAqua, size: 20),
+                Icon(icon, color: _primaryAqua, size: 20),
                 const SizedBox(width: 12),
-                Text(
-                  date != null
-                      ? '${date.day}/${date.month}/${date.year}'
-                      : 'Select Date',
-                  style: TextStyle(
-                    color: dark
-                        ? Colors.white
-                        : (date != null ? _darkDeepTeal : _mutedCoolGray),
-                    fontSize: 14,
-                    fontWeight: date != null
-                        ? FontWeight.w600
-                        : FontWeight.normal,
+                Expanded(
+                  child: Text(
+                    date != null
+                        ? '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}'
+                        : 'Select Date',
+                    style: TextStyle(
+                      color: date != null
+                          ? _lightOffWhite
+                          : _mutedCoolGray.withValues(alpha: 0.6),
+                      fontSize: 14,
+                      fontWeight: date != null
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
                   ),
                 ),
+                if (date != null)
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: _primaryAqua,
+                    size: 16,
+                  ),
               ],
             ),
           ),
@@ -3419,54 +3757,64 @@ class _PrenatalPageState extends State<PrenatalPage> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            color: dark ? Colors.white : _mutedCoolGray,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+          style: const TextStyle(
+            color: _mutedCoolGray,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
           ),
         ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          decoration: BoxDecoration(
-            color: dark ? _darkDeepTeal : _lightOffWhite,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: dark
-                  ? Colors.white.withValues(alpha: 0.2)
-                  : _mutedCoolGray.withValues(alpha: 0.3),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          value: safeValue,
+          icon: const Icon(Icons.arrow_drop_down_rounded, color: _primaryAqua),
+          dropdownColor: Colors.white,
+          style: const TextStyle(
+            color: _lightOffWhite,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: _primaryAqua, size: 20),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Colors.black.withValues(alpha: 0.12),
+                width: 1,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Colors.black.withValues(alpha: 0.12),
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: _primaryAqua, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
             ),
           ),
-          child: Row(
-            children: [
-              Icon(icon, color: dark ? Colors.white : _primaryAqua, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: safeValue,
-                    isExpanded: true,
-                    icon: Icon(
-                      Icons.arrow_drop_down,
-                      color: dark ? Colors.white : _primaryAqua,
-                    ),
-                    style: TextStyle(
-                      color: dark ? Colors.white : _darkDeepTeal,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    items: dropdownItems.map((String item) {
-                      return DropdownMenuItem<String>(
-                        value: item,
-                        child: Text(item),
-                      );
-                    }).toList(),
-                    onChanged: onChanged,
-                  ),
+          items: dropdownItems.map((item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(
+                item,
+                style: const TextStyle(
+                  color: _lightOffWhite,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-            ],
-          ),
+            );
+          }).toList(),
+          onChanged: onChanged,
         ),
       ],
     );
@@ -3654,7 +4002,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildDatePickerButton(
+                      child: _buildLegacyDatePickerButton(
                         context: context,
                         label: 'From Date',
                         date: _fromDate,
@@ -3663,7 +4011,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildDatePickerButton(
+                      child: _buildLegacyDatePickerButton(
                         context: context,
                         label: 'To Date',
                         date: _toDate,
@@ -3680,7 +4028,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
     );
   }
 
-  Widget _buildDatePickerButton({
+  Widget _buildLegacyDatePickerButton({
     required BuildContext context,
     required String label,
     required DateTime? date,
@@ -5376,30 +5724,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
   }
 
   Widget _buildSectionHeaderDark(String title, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: _primaryAqua.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: _primaryAqua, size: 20),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
+    return _buildSectionHeader(title, icon);
   }
 
   Widget _buildDetailRowDark(
@@ -5893,6 +6218,532 @@ class _PrenatalPageState extends State<PrenatalPage> {
     );
   }
 
+  DateTime? _coercePrenatalRecordDate(Map<String, dynamic> record) {
+    return _prenatalDate(record['registrationDate']) ??
+        _prenatalDate(record['lmpDate']) ??
+        _prenatalDate(record['dueDate']) ??
+        _prenatalDate(record['createdAt']) ??
+        _prenatalDate(record['updatedAt']) ??
+        _prenatalDate(record['date']) ??
+        _prenatalDate(record['consultationDate']) ??
+        _prenatalDate(record['timestamp']);
+  }
+
+  bool _matchesInsightsDateFilter(DateTime? date) {
+    if (_insightsDateFilterMode == DashboardDateFilterMode.allTime) return true;
+    if (date == null) return false;
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
+    switch (_insightsDateFilterMode) {
+      case DashboardDateFilterMode.today:
+        return !date.isBefore(todayStart) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.last7Days:
+        final start = todayStart.subtract(const Duration(days: 6));
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.last30Days:
+        final start = todayStart.subtract(const Duration(days: 29));
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.thisMonth:
+        final targetMonth = _insightsSelectedMonth ?? now;
+        return date.year == targetMonth.year && date.month == targetMonth.month;
+      case DashboardDateFilterMode.last6Months:
+        final start = DateTime(now.year, now.month - 5, 1);
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.customDay:
+        final target = _insightsCustomDate ?? now;
+        final start = DateTime(target.year, target.month, target.day);
+        final end = DateTime(target.year, target.month, target.day, 23, 59, 59);
+        return !date.isBefore(start) && !date.isAfter(end);
+      case DashboardDateFilterMode.customRange:
+        final start = DateTime(
+          _insightsRangeStart.year,
+          _insightsRangeStart.month,
+          _insightsRangeStart.day,
+        );
+        final end = DateTime(
+          _insightsRangeEnd.year,
+          _insightsRangeEnd.month,
+          _insightsRangeEnd.day,
+          23,
+          59,
+          59,
+        );
+        return !date.isBefore(start) && !date.isAfter(end);
+      case DashboardDateFilterMode.allTime:
+        return true;
+    }
+  }
+
+  String _monthLabelShort(int month) {
+    const labels = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    if (month < 1 || month > 12) return '';
+    return labels[month - 1];
+  }
+
+  String _monthLabelLong(int month) {
+    const labels = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    if (month < 1 || month > 12) return '';
+    return labels[month - 1];
+  }
+
+  String _activeInsightsWindowLabel([DashboardDateFilterMode? mode]) {
+    final activeMode = mode ?? _insightsDateFilterMode;
+    final now = DateTime.now();
+    try {
+      switch (activeMode) {
+        case DashboardDateFilterMode.today:
+          return 'Today (${_monthLabelShort(now.month)} ${now.day}, ${now.year})';
+        case DashboardDateFilterMode.last7Days:
+          final start = now.subtract(const Duration(days: 6));
+          return 'Last 7 Days (${_monthLabelShort(start.month)} ${start.day} - ${_monthLabelShort(now.month)} ${now.day})';
+        case DashboardDateFilterMode.last30Days:
+          final start = now.subtract(const Duration(days: 29));
+          return 'Last 30 Days (${_monthLabelShort(start.month)} ${start.day} - ${_monthLabelShort(now.month)} ${now.day})';
+        case DashboardDateFilterMode.thisMonth:
+          final target = _insightsSelectedMonth ?? now;
+          return '${_monthLabelLong(target.month)} ${target.year}';
+        case DashboardDateFilterMode.last6Months:
+          final start = DateTime(now.year, now.month - 5, 1);
+          return 'Last 6 Months (${_monthLabelShort(start.month)} ${start.year} - ${_monthLabelShort(now.month)} ${now.year})';
+        case DashboardDateFilterMode.customDay:
+          final d = _insightsCustomDate ?? now;
+          return '${_monthLabelLong(d.month)} ${d.day}, ${d.year}';
+        case DashboardDateFilterMode.customRange:
+          final s = _insightsRangeStart;
+          final e = _insightsRangeEnd;
+          return '${_monthLabelShort(s.month)} ${s.day} - ${_monthLabelShort(e.month)} ${e.day}, ${e.year}';
+        case DashboardDateFilterMode.allTime:
+          return 'All Time History';
+      }
+    } catch (_) {}
+    return 'All Time History';
+  }
+
+  Widget _buildInsightsFilterBar() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWideHeader = constraints.maxWidth > 760;
+        final filterBorderColor = Colors.black.withValues(alpha: 0.12);
+
+        final headerCopy = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Maternal & Prenatal Insights Filter',
+              style: TextStyle(
+                color: _lightOffWhite,
+                fontSize: 15.5,
+                fontWeight: FontWeight.w800,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Filter pregnancy cohorts, risk distributions, visits, and complications by date. Currently showing ${_activeInsightsWindowLabel().toLowerCase()}.',
+              maxLines: isWideHeader ? 2 : 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: _mutedCoolGray, fontSize: 11, height: 1.35),
+            ),
+          ],
+        );
+
+        final activeWindowCard = Container(
+          width: isWideHeader ? 230 : double.infinity,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: _primaryAqua.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.filter_alt_rounded, size: 13, color: _primaryAqua),
+                  SizedBox(width: 5),
+                  Text(
+                    'Active Window',
+                    style: TextStyle(
+                      color: _primaryAqua,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _activeInsightsWindowLabel(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _lightOffWhite,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Charts & counts auto-synced',
+                style: TextStyle(color: _mutedCoolGray, fontSize: 9.5),
+              ),
+            ],
+          ),
+        );
+
+        final filterChips = <Widget>[
+          _buildInsightsFilterChip(
+            'All Time',
+            Icons.all_inclusive_rounded,
+            DashboardDateFilterMode.allTime,
+          ),
+          _buildInsightsFilterChip(
+            'Today',
+            Icons.today_rounded,
+            DashboardDateFilterMode.today,
+          ),
+          _buildInsightsFilterChip(
+            'Last 7 Days',
+            Icons.calendar_view_week_rounded,
+            DashboardDateFilterMode.last7Days,
+          ),
+          _buildInsightsFilterChip(
+            'Last 30 Days',
+            Icons.date_range_rounded,
+            DashboardDateFilterMode.last30Days,
+          ),
+          _buildInsightsFilterChip(
+            'This Month',
+            Icons.calendar_month_rounded,
+            DashboardDateFilterMode.thisMonth,
+          ),
+          _buildInsightsFilterChip(
+            'Last 6 Months',
+            Icons.stacked_bar_chart_rounded,
+            DashboardDateFilterMode.last6Months,
+          ),
+          OutlinedButton.icon(
+            onPressed: _showInsightsDateFilterPickerModal,
+            icon: const Icon(Icons.tune_rounded, size: 14),
+            label: Text(
+              _insightsDateFilterMode == DashboardDateFilterMode.customDay ||
+                      _insightsDateFilterMode ==
+                          DashboardDateFilterMode.customRange
+                  ? 'Custom (${_activeInsightsWindowLabel()})'
+                  : 'Pick Date / Range...',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: (_insightsDateFilterMode ==
+                          DashboardDateFilterMode.customDay ||
+                      _insightsDateFilterMode ==
+                          DashboardDateFilterMode.customRange)
+                  ? _primaryAqua
+                  : _lightOffWhite,
+              backgroundColor: (_insightsDateFilterMode ==
+                          DashboardDateFilterMode.customDay ||
+                      _insightsDateFilterMode ==
+                          DashboardDateFilterMode.customRange)
+                  ? _primaryAqua.withValues(alpha: 0.12)
+                  : Colors.white,
+              side: BorderSide(
+                color: (_insightsDateFilterMode ==
+                            DashboardDateFilterMode.customDay ||
+                        _insightsDateFilterMode ==
+                            DashboardDateFilterMode.customRange)
+                    ? _primaryAqua
+                    : filterBorderColor,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ];
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _primaryAqua.withValues(alpha: 0.15)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isWideHeader)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: headerCopy),
+                    const SizedBox(width: 16),
+                    activeWindowCard,
+                  ],
+                )
+              else ...[
+                headerCopy,
+                const SizedBox(height: 10),
+                activeWindowCard,
+              ],
+              const SizedBox(height: 14),
+              Wrap(spacing: 8, runSpacing: 8, children: filterChips),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInsightsFilterChip(
+    String label,
+    IconData icon,
+    DashboardDateFilterMode mode,
+  ) {
+    final isSelected = _insightsDateFilterMode == mode;
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () {
+        if (isSelected) return;
+        setState(() {
+          _insightsDateFilterMode = mode;
+          if (mode == DashboardDateFilterMode.thisMonth) {
+            _insightsSelectedMonth = DateTime.now();
+          }
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? _primaryAqua : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? _primaryAqua
+                : Colors.black.withValues(alpha: 0.12),
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: _primaryAqua.withValues(alpha: 0.28),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected ? Colors.white : _lightOffWhite,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected ? Colors.white : _lightOffWhite,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showInsightsDateFilterPickerModal() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _primaryAqua.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.date_range_rounded,
+                  color: _primaryAqua,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Filter Prenatal Insights',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: _lightOffWhite,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(
+                  Icons.event_available_rounded,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'Specific Calendar Date',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: const Text('Filter records for a specific day'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final now = DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _insightsCustomDate ?? now,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2035),
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _insightsDateFilterMode =
+                        DashboardDateFilterMode.customDay;
+                    _insightsCustomDate = picked;
+                  });
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.calendar_month_rounded,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'Select Month & Year',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  'Pick target month (Current: ${_monthLabelLong((_insightsSelectedMonth ?? DateTime.now()).month)})',
+                ),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final target = _insightsSelectedMonth ?? DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: target,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2035),
+                    initialDatePickerMode: DatePickerMode.year,
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _insightsDateFilterMode =
+                        DashboardDateFilterMode.thisMonth;
+                    _insightsSelectedMonth =
+                        DateTime(picked.year, picked.month);
+                  });
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.date_range_outlined,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'Custom Date Range',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: const Text('Select custom start and end dates'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final picked = await showDateRangePicker(
+                    context: context,
+                    initialDateRange: DateTimeRange(
+                      start: _insightsRangeStart,
+                      end: _insightsRangeEnd,
+                    ),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2035),
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _insightsDateFilterMode =
+                        DashboardDateFilterMode.customRange;
+                    _insightsRangeStart = picked.start;
+                    _insightsRangeEnd = picked.end;
+                  });
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(
+                  Icons.all_inclusive_rounded,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'Quick: All Time Records',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  setState(() {
+                    _insightsDateFilterMode =
+                        DashboardDateFilterMode.allTime;
+                  });
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // Statistics Dashboard - matches patient.dart style
   Widget _buildStatisticsDashboard() {
     final latestPregnancies = _latestPregnancyRecords();
@@ -5904,13 +6755,13 @@ class _PrenatalPageState extends State<PrenatalPage> {
     final charts = <Widget>[
       _buildPrenatalChartCard(
         title: 'Monthly Prenatal Visits',
-        subtitle: 'Visits recorded during the last six months',
+        subtitle: 'Visits recorded during ${_activeInsightsWindowLabel().toLowerCase()}',
         icon: Icons.show_chart_rounded,
         child: _buildPrenatalMonthlyLineChart(),
       ),
       _buildPrenatalChartCard(
         title: 'Pregnancy Risk Distribution',
-        subtitle: 'Current maternal risk classification',
+        subtitle: 'Current maternal risk classification for ${_activeInsightsWindowLabel().toLowerCase()}',
         icon: Icons.health_and_safety_outlined,
         child: _buildPrenatalRiskPieChart(),
       ),
@@ -5920,14 +6771,14 @@ class _PrenatalPageState extends State<PrenatalPage> {
         icon: Icons.location_on_outlined,
         child: _buildPrenatalBarChart(
           _highRiskByBarangay(),
-          emptyMessage: 'No high-risk pregnancies are currently recorded.',
+          emptyMessage: 'No high-risk pregnancies are currently recorded for this period.',
           tooltipUnit: 'case',
           colors: const [_secondaryIceBlue, _primaryAqua],
         ),
       ),
       _buildPrenatalChartCard(
         title: 'Gestational Age Distribution',
-        subtitle: 'Pregnancies grouped by trimester',
+        subtitle: 'Pregnancies grouped by trimester in ${_activeInsightsWindowLabel().toLowerCase()}',
         icon: Icons.calendar_view_month_rounded,
         child: _buildPrenatalBarChart(
           _gestationalAgeDistribution(),
@@ -5944,7 +6795,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
       ),
       _buildPrenatalChartCard(
         title: 'Maternal Age Distribution',
-        subtitle: 'Prenatal patients grouped by maternal age',
+        subtitle: 'Prenatal patients grouped by maternal age in ${_activeInsightsWindowLabel().toLowerCase()}',
         icon: Icons.groups_2_outlined,
         child: _buildPrenatalBarChart(
           _maternalAgeDistribution(),
@@ -5959,7 +6810,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         icon: Icons.monitor_heart_outlined,
         child: _buildPrenatalBarChart(
           _pregnancyComplicationDistribution(),
-          emptyMessage: 'No pregnancy complications are currently recorded.',
+          emptyMessage: 'No pregnancy complications are currently recorded for this period.',
           tooltipUnit: 'case',
           colors: const [_primaryAqua, Color(0xFF8FAFD6)],
         ),
@@ -5969,6 +6820,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildInsightsFilterBar(),
+        const SizedBox(height: 20),
         LayoutBuilder(
           builder: (context, constraints) {
             final columns = constraints.maxWidth >= 1100
@@ -5982,7 +6835,9 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 : (constraints.maxWidth - spacing * (columns - 1)) / columns;
             final cards = <Widget>[
               _buildWebMetricCard(
-                title: 'Total Prenatal',
+                title: _insightsDateFilterMode == DashboardDateFilterMode.allTime
+                    ? 'Total Prenatal'
+                    : 'Prenatal Cases',
                 value: '$total',
                 icon: Icons.pregnant_woman_outlined,
               ),
@@ -6034,12 +6889,19 @@ class _PrenatalPageState extends State<PrenatalPage> {
   }
 
   List<Map<String, dynamic>> _latestPregnancyRecords() {
-    return CurrentTableRecordUtils.collapseToLatestPerEntity(
+    final collapsed = CurrentTableRecordUtils.collapseToLatestPerEntity(
       _prenatalRecords,
       idKeys: const ['linkedPatientId', 'patientId', 'patientCode'],
       nameKeys: const ['patientName', 'patient'],
-      dateKeys: const ['registrationDate', 'updatedAt', 'createdAt'],
+      dateKeys: const ['registrationDate', 'updatedAt', 'createdAt', 'lmpDate', 'dueDate', 'date'],
     );
+    if (_insightsDateFilterMode == DashboardDateFilterMode.allTime) {
+      return collapsed;
+    }
+    return collapsed.where((record) {
+      final date = _coercePrenatalRecordDate(record);
+      return _matchesInsightsDateFilter(date);
+    }).toList(growable: false);
   }
 
   DateTime? _prenatalDate(dynamic raw) {
@@ -6964,7 +7826,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: _sidebarDark,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border, width: 1),
       ),
@@ -6991,61 +7853,10 @@ class _PrenatalPageState extends State<PrenatalPage> {
               ),
             ),
 
-          // Filters wrap into a readable light toolbar on smaller screens.
+          // Unified Filter Section
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: WebFilterSurface(
-              padding: const EdgeInsets.all(10),
-              children: [
-                WebFilterDropdown<String>(
-                  label: 'Status',
-                  value: _selectedStatusFilter,
-                  items: _statusFilterOptions
-                      .map(
-                        (option) => DropdownMenuItem<String>(
-                          value: option,
-                          child: Text(option),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (newValue) {
-                    if (newValue == null) return;
-                    setState(() {
-                      _selectedStatusFilter = newValue;
-                      _currentPage = 1;
-                    });
-                  },
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => _selectDate(context, true),
-                  icon: const Icon(Icons.calendar_today_rounded, size: 17),
-                  label: Text(
-                    _fromDate == null
-                        ? 'From date'
-                        : '${_fromDate!.day}/${_fromDate!.month}/${_fromDate!.year}',
-                  ),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => _selectDate(context, false),
-                  icon: const Icon(Icons.calendar_today_rounded, size: 17),
-                  label: Text(
-                    _toDate == null
-                        ? 'To date'
-                        : '${_toDate!.day}/${_toDate!.month}/${_toDate!.year}',
-                  ),
-                ),
-                if (_fromDate != null || _toDate != null)
-                  OutlinedButton.icon(
-                    onPressed: _clearDateFilters,
-                    icon: const Icon(Icons.clear_rounded, size: 17),
-                    label: const Text('Clear dates'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFB42318),
-                      side: const BorderSide(color: Color(0xFFB42318)),
-                    ),
-                  ),
-              ],
-            ),
+            child: _buildFilterSection(),
           ),
 
           const Divider(color: AppColors.border, height: 1),
@@ -7328,325 +8139,462 @@ class _PrenatalPageState extends State<PrenatalPage> {
 
   // Search bar - matches patient.dart style
   Widget _buildSearchBar() {
-    return WebSearchField(
-      controller: _searchController,
-      hintText: 'Search by name, age, contact, address...',
-      onChanged: (value) {
-        setState(() {
-          _searchQuery = value;
-          _currentPage = 1;
-        });
-        _scheduleSharedPatientSearch(value);
-      },
-      onClear: () {
-        _searchController.clear();
-        setState(() {
-          _searchQuery = '';
-          _currentPage = 1;
-        });
-        _scheduleSharedPatientSearch('');
-      },
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: TextField(
+        controller: _searchController,
+        style: const TextStyle(color: Color(0xFF0F172A), fontSize: 13),
+        decoration: InputDecoration(
+          hintText:
+              'Search by name, Patient ID, barangay, risk level, or contact...',
+          hintStyle: TextStyle(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.5),
+            fontSize: 13,
+          ),
+          prefixIcon: Icon(
+            Icons.search,
+            color: _primaryAqua.withValues(alpha: 0.8),
+            size: 18,
+          ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear, color: Colors.grey, size: 18),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                      _currentPage = 1;
+                    });
+                    _scheduleSharedPatientSearch('');
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
+        ),
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+            _currentPage = 1;
+          });
+          _scheduleSharedPatientSearch(value);
+        },
+      ),
     );
   }
 
   Widget _buildFilterSection() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _lightOffWhite.withValues(alpha: 0.3),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Title Section
-          Icon(Icons.tune_rounded, color: Colors.white, size: 20),
-          const SizedBox(width: 12),
-          Text(
-            'Filter Results',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
-            ),
-          ),
-          const SizedBox(width: 32),
-
-          // Status Filter
-          Expanded(
-            flex: 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Status',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.3,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Primary Filter Bar - Status + Date Range
+        Row(
+          children: [
+            // Status Dropdown Container
+            Expanded(
+              flex: 2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEDF3FA),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF2F80ED).withValues(alpha: 0.3),
+                    width: 1,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: _lightOffWhite.withValues(alpha: 0.3),
-                      width: 1,
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedStatusFilter,
+                    icon: const Icon(
+                      Icons.filter_list,
+                      color: Color(0xFF2F80ED),
+                      size: 20,
                     ),
-                    borderRadius: BorderRadius.circular(8),
-                    color: _darkDeepTeal,
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedStatusFilter,
-                      isExpanded: true,
-                      icon: Icon(
-                        Icons.arrow_drop_down,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      dropdownColor: _darkDeepTeal,
-                      items: _statusFilterOptions.map((String option) {
-                        return DropdownMenuItem<String>(
-                          value: option,
-                          child: Text(option),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() => _selectedStatusFilter = newValue);
-                        }
-                      },
+                    isExpanded: true,
+                    dropdownColor: Colors.white,
+                    style: const TextStyle(
+                      color: Color(0xFF0F172A),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 32),
-
-          // Date Picker - From
-          Expanded(
-            flex: 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'From Date',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _fromDate ?? DateTime.now(),
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
-                        builder: (context, child) {
-                          return Theme(
-                            data: Theme.of(context).copyWith(
-                              colorScheme: ColorScheme.light(
-                                primary: _primaryAqua,
-                                onPrimary: Colors.white,
-                                onSurface: _darkDeepTeal,
-                              ),
-                            ),
-                            child: child!,
-                          );
-                        },
+                    items: _statusFilterOptions.map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
                       );
-                      if (picked != null) {
-                        setState(() => _fromDate = picked);
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedStatusFilter = newValue;
+                          _currentPage = 1;
+                        });
                       }
                     },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: _lightOffWhite.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                        color: _darkDeepTeal,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.calendar_today_rounded,
-                            color: Colors.white,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _fromDate != null
-                                  ? '${_fromDate!.day}/${_fromDate!.month}/${_fromDate!.year}'
-                                  : 'Select Date',
-                              style: TextStyle(
-                                color: _fromDate != null
-                                    ? Colors.white
-                                    : _mutedCoolGray,
-                                fontSize: 12,
-                                fontWeight: _fromDate != null
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-          const SizedBox(width: 16),
-
-          // Date Picker - To
-          Expanded(
-            flex: 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'To Date',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _toDate ?? DateTime.now(),
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
-                        builder: (context, child) {
-                          return Theme(
-                            data: Theme.of(context).copyWith(
-                              colorScheme: ColorScheme.light(
-                                primary: _primaryAqua,
-                                onPrimary: Colors.white,
-                                onSurface: _darkDeepTeal,
-                              ),
-                            ),
-                            child: child!,
-                          );
-                        },
-                      );
-                      if (picked != null) {
-                        setState(() => _toDate = picked);
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: _lightOffWhite.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                        color: _darkDeepTeal,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.calendar_today_rounded,
-                            color: Colors.white,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _toDate != null
-                                  ? '${_toDate!.day}/${_toDate!.month}/${_toDate!.year}'
-                                  : 'Select Date',
-                              style: TextStyle(
-                                color: _toDate != null
-                                    ? Colors.white
-                                    : _mutedCoolGray,
-                                fontSize: 12,
-                                fontWeight: _toDate != null
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (_fromDate != null || _toDate != null) ...[
             const SizedBox(width: 16),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _clearDateFilters,
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.red.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
+            // Date Range Container
+            Expanded(
+              flex: 2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2F80ED).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF2F80ED).withValues(alpha: 0.25),
+                    width: 1,
                   ),
-                  child: Icon(Icons.clear, color: Colors.red, size: 18),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.date_range,
+                      size: 16,
+                      color: Color(0xFF2F80ED),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildDatePickerButton(
+                        label: 'From',
+                        date: _fromDate,
+                        onTap: () => _selectDateForPrenatal(true),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: _buildDatePickerButton(
+                        label: 'To',
+                        date: _toDate,
+                        onTap: () => _selectDateForPrenatal(false),
+                      ),
+                    ),
+                    if (_fromDate != null || _toDate != null)
+                      IconButton(
+                        icon: const Icon(
+                          Icons.clear,
+                          size: 16,
+                          color: Colors.red,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _fromDate = null;
+                            _toDate = null;
+                            _currentPage = 1;
+                          });
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                  ],
                 ),
               ),
             ),
           ],
-        ],
+        ),
+        const SizedBox(height: 12),
+        // Advanced Filters
+        _buildPrenatalAdvancedFilters(),
+      ],
+    );
+  }
+
+  Widget _buildPrenatalAdvancedFilters() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double itemWidth = constraints.maxWidth < 700
+            ? (constraints.maxWidth - 24) / 2
+            : constraints.maxWidth < 1100
+            ? (constraints.maxWidth - 48) / 4
+            : (constraints.maxWidth - 64) / 5;
+        final responsiveWidth = itemWidth.clamp(132.0, 178.0);
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceLight,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _registryDropdown(
+                label: 'Barangay',
+                value: _selectedBarangay,
+                items: const [
+                  'All',
+                  'Barangay 1',
+                  'Barangay 2',
+                  'Barangay 3',
+                  'Barangay 4',
+                  'Barangay 5',
+                  'Barangay 6',
+                  'Barangay 7',
+                  'Barangay 8',
+                ],
+                width: responsiveWidth,
+                onChanged: (val) => setState(() {
+                  _selectedBarangay = val ?? 'All';
+                  _currentPage = 1;
+                }),
+              ),
+              _registryDropdown(
+                label: 'Risk Level',
+                value: _selectedRiskLevel,
+                items: const [
+                  'All',
+                  'Active',
+                  'High Risk',
+                  'Follow Up',
+                  'Completed',
+                ],
+                width: responsiveWidth,
+                onChanged: (val) => setState(() {
+                  _selectedRiskLevel = val ?? 'All';
+                  _currentPage = 1;
+                }),
+              ),
+              _registryDropdown(
+                label: 'Age Group',
+                value: _selectedAgeGroup,
+                items: const ['All', '0–17', '18–34', '35+'],
+                width: responsiveWidth,
+                onChanged: (val) => setState(() {
+                  _selectedAgeGroup = val ?? 'All';
+                  _currentPage = 1;
+                }),
+              ),
+              _registryDropdown(
+                label: 'Sort By',
+                value: _sortField,
+                items: const ['Name', 'Registration Date', 'Due Date', 'Age'],
+                width: responsiveWidth,
+                onChanged: (val) => setState(() {
+                  _sortField = val ?? 'Name';
+                  _currentPage = 1;
+                }),
+              ),
+              IconButton.filledTonal(
+                tooltip: _sortAscending ? 'Ascending' : 'Descending',
+                icon: Icon(
+                  _sortAscending
+                      ? Icons.arrow_upward_rounded
+                      : Icons.arrow_downward_rounded,
+                  size: 18,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFEDF3FA),
+                  foregroundColor: const Color(0xFF2F80ED),
+                  padding: const EdgeInsets.all(10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                ),
+                onPressed: () =>
+                    setState(() => _sortAscending = !_sortAscending),
+              ),
+              if (_selectedBarangay != 'All' ||
+                  _selectedRiskLevel != 'All' ||
+                  _selectedAgeGroup != 'All' ||
+                  _sortField != 'Name' ||
+                  !_sortAscending ||
+                  _selectedStatusFilter != 'All Cases' ||
+                  _fromDate != null ||
+                  _toDate != null)
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _selectedBarangay = 'All';
+                      _selectedRiskLevel = 'All';
+                      _selectedAgeGroup = 'All';
+                      _sortField = 'Name';
+                      _sortAscending = true;
+                      _selectedStatusFilter = 'All Cases';
+                      _fromDate = null;
+                      _toDate = null;
+                      _currentPage = 1;
+                    });
+                  },
+                  icon: const Icon(
+                    Icons.filter_alt_off_outlined,
+                    size: 15,
+                    color: AppColors.textSecondary,
+                  ),
+                  label: const Text(
+                    'Clear Filters',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _registryDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    double width = 140,
+  }) {
+    return SizedBox(
+      width: width,
+      child: DropdownButtonFormField<String>(
+        value: items.contains(value) ? value : items.first,
+        isDense: true,
+        style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(
+            fontSize: 11,
+            color: AppColors.textSecondary,
+          ),
+          floatingLabelStyle: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFF2F80ED),
+            fontWeight: FontWeight.w700,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 8,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: const BorderSide(color: Color(0xFF2F80ED), width: 1.5),
+          ),
+        ),
+        items: items
+            .map(
+              (item) => DropdownMenuItem(
+                value: item,
+                child: Text(
+                  item,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            )
+            .toList(),
+        onChanged: onChanged,
       ),
     );
+  }
+
+  Widget _buildDatePickerButton({
+    required String label,
+    required DateTime? date,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: const Color(0xFF2F80ED).withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              date == null ? label : '${date.day}/${date.month}',
+              style: TextStyle(
+                color: date == null
+                    ? const Color(0xFF0F172A).withValues(alpha: 0.6)
+                    : const Color(0xFF0F172A),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const Icon(
+              Icons.calendar_today,
+              size: 12,
+              color: Color(0xFF2F80ED),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectDateForPrenatal(bool isFromDate) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: _primaryAqua,
+              onPrimary: Colors.white,
+              onSurface: _darkDeepTeal,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (isFromDate) {
+          _fromDate = picked;
+          if (_toDate != null && _toDate!.isBefore(_fromDate!)) {
+            _toDate = picked;
+          }
+        } else {
+          _toDate = picked;
+        }
+        _currentPage = 1;
+      });
+    }
   }
 }
 
@@ -7754,20 +8702,42 @@ class _PrenatalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final patientName = _safe(record['patientName'], 'Unknown');
-    final age = _safe(record['age']);
-    final patientId = _safe(record['patientId'], '-');
-    final contactNumber = _safe(record['contactNumber']);
+    final patientName = _safe(
+      record['patientName'] ?? record['patient'] ?? record['name'],
+      'Unknown Patient',
+    );
+    final age = _safe(record['age'], 'N/A');
+    final patientId = _safe(
+      record['patientId'] ?? record['id'] ?? record['linkedPatientId'],
+      '-',
+    );
+    final contactNumber = _safe(
+      record['contactNumber'] ?? record['phone'] ?? record['contact'],
+    );
     final gestationalAge = _safe(
-      record['gestationalAge'],
-      _safe(record['aog']),
+      record['gestationalAge'] ?? record['aog'],
+      'N/A',
     );
-    final dueDate = _formatDate(record['dueDate']);
+    final dueDate = _formatDate(
+      record['dueDate'] ?? record['eddDate'] ?? record['edd'],
+    );
+    final lmpDate = _formatDate(record['lmpDate'] ?? record['lmp']);
+    final gravida = _safe(record['gravida'], '');
+    final para = _safe(record['para'], '');
+    final gpInfo = (gravida.isNotEmpty || para.isNotEmpty)
+        ? ' (G$gravida P$para)'
+        : '';
+    final bp = _safe(record['bp'] ?? record['bloodPressure'], '');
     final status = _safe(
-      record['status'],
-      _safe(record['riskLevel'], 'Active'),
+      record['status'] ?? record['riskLevel'],
+      'Active',
     );
-    final registration = _formatDateTimeParts(record['registrationDate']);
+    final registration = _formatDateTimeParts(
+      record['registrationDate'] ??
+          record['createdAt'] ??
+          record['date'] ??
+          record['timestamp'],
+    );
 
     final dateLabel = registration['date'] ?? 'N/A';
     final timeLabel = registration['time'] ?? '';
@@ -7894,22 +8864,24 @@ class _PrenatalCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Female, $age years',
+                      'Female, $age years$gpInfo',
                       style: const TextStyle(
                         color: mutedText,
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'ID: $patientId',
-                      style: const TextStyle(
-                        color: Color(0xFF8BDCF0),
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
+                    if (patientId != '-') ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        'ID: $patientId',
+                        style: const TextStyle(
+                          color: _primaryAqua,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -7920,30 +8892,59 @@ class _PrenatalCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      status,
-                      style: TextStyle(
-                        color: statusColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: statusColor.withValues(alpha: 0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            status,
+                            style: TextStyle(
+                              color: statusColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (bp.isNotEmpty && bp != 'N/A') ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            'BP: $bp',
+                            style: const TextStyle(
+                              color: rowText,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Gestational Age: $gestationalAge',
                       style: const TextStyle(
                         color: rowText,
-                        fontSize: 13,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w700,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
-                      'Due: $dueDate   Contact: $contactNumber',
+                      'Due: $dueDate  |  LMP: $lmpDate  |  Contact: $contactNumber',
                       style: const TextStyle(
                         color: mutedText,
                         fontSize: 10.5,

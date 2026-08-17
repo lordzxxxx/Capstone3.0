@@ -50,6 +50,31 @@ const Color _brightCyan = Color(0xFF2F80ED); // Shared dashboard blue
 const Color _bgDarkTeal = Color(0xFFF5F7FA); // Analytics-aligned background
 const Color _offWhiteOpacity = Color(0xFF0D274D); // primary text
 
+enum DashboardDateFilterMode {
+  today,
+  last7Days,
+  last30Days,
+  thisMonth,
+  last6Months,
+  customDay,
+  customRange,
+  allTime,
+}
+
+class _TrendData {
+  final String title;
+  final String subtitle;
+  final List<String> labels;
+  final List<int> counts;
+
+  const _TrendData({
+    required this.title,
+    required this.subtitle,
+    required this.labels,
+    required this.counts,
+  });
+}
+
 class HomePage extends StatefulWidget {
   final User? user;
   const HomePage({super.key, this.user});
@@ -66,6 +91,20 @@ class _HomePageState extends State<HomePage> {
   final _immunizationHelper = ImmunizationDatabaseHelper.instance;
   final _patientHelper = PatientDatabaseHelper.instance;
 
+  // Raw scoped datasets loaded from Firestore for fast filtering without redundant network requests
+  List<Map<String, dynamic>> _rawPatients = [];
+  List<Map<String, dynamic>> _rawCheckups = [];
+  List<Map<String, dynamic>> _rawPrenatal = [];
+  List<Map<String, dynamic>> _rawMorbidity = [];
+  List<Map<String, dynamic>> _rawReferrals = [];
+
+  // Active Date Filter state
+  DashboardDateFilterMode _dateFilterMode = DashboardDateFilterMode.thisMonth;
+  DateTime? _selectedCustomDate;
+  DateTime? _selectedMonthDate;
+  DateTime _selectedRangeStart = DateTime.now().subtract(const Duration(days: 6));
+  DateTime _selectedRangeEnd = DateTime.now();
+
   int _totalPatients = 0;
   int _checkupsThisMonth = 0;
   int _prenatalRecords = 0;
@@ -76,6 +115,13 @@ class _HomePageState extends State<HomePage> {
   int _filteredImmunizationRecords = 0;
   bool _isLoadingMetrics = true;
   DateTime? _keyMetricsSelectedDate;
+  DashboardDateFilterMode _keyMetricsFilterMode = DashboardDateFilterMode.thisMonth;
+  DateTime? _keyMetricsSpecificDate;
+  DateTime _keyMetricsRangeStart = DateTime.now().subtract(const Duration(days: 6));
+  DateTime _keyMetricsRangeEnd = DateTime.now();
+
+  // Actionable Health Insights for active window
+  List<Map<String, dynamic>> _actionableInsights = const [];
 
   // Disease Trend data
   Map<String, Map<String, int>> _symptomDateData =
@@ -158,13 +204,18 @@ class _HomePageState extends State<HomePage> {
   int _aiGeneratedAlerts = 0;
   List<String> _consultationMonthLabels = const [];
   List<int> _monthlyConsultationCounts = const [];
+  String _trendChartTitle = 'Monthly Consultation Trend';
+  String _trendChartSubtitle = 'Check-up volume during the selected period';
   Map<String, int> _referralStatusCounts = const {};
   List<Map<String, dynamic>> _recentHighRiskAlerts = const [];
 
   @override
   void initState() {
     super.initState();
+    _selectedMonthDate ??= DateTime.now();
     _keyMetricsSelectedDate ??= DateTime.now();
+    _selectedRangeStart = DateTime.now().subtract(const Duration(days: 6));
+    _selectedRangeEnd = DateTime.now();
     _loadExecutiveOverview();
     _checkAdminInvite();
   }
@@ -295,232 +346,13 @@ class _HomePageState extends State<HomePage> {
         }
       }
 
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final tomorrow = today.add(const Duration(days: 1));
-      final monthStarts = List<DateTime>.generate(
-        6,
-        (index) => DateTime(now.year, now.month - (5 - index), 1),
-      );
-      final monthKeys = monthStarts
-          .map((date) => '${date.year}-${date.month}')
-          .toList(growable: false);
-      final consultationCounts = <String, int>{
-        for (final key in monthKeys) key: 0,
-      };
+      _rawPatients = patients;
+      _rawCheckups = checkups;
+      _rawPrenatal = prenatal;
+      _rawMorbidity = morbidity;
+      _rawReferrals = referrals;
 
-      var consultationsToday = 0;
-      var aiAlerts = 0;
-      final highRiskIdentities = <String>{};
-      final highRiskAlerts = <Map<String, dynamic>>[];
-
-      for (final checkup in checkups) {
-        final date = _coerceOverviewDate(checkup);
-        if (date != null) {
-          if (!date.isBefore(today) && date.isBefore(tomorrow)) {
-            consultationsToday++;
-          }
-          final key = '${date.year}-${date.month}';
-          if (consultationCounts.containsKey(key)) {
-            consultationCounts[key] = consultationCounts[key]! + 1;
-          }
-        }
-
-        final hasAiGuidance = _dashboardText(checkup, const [
-          'ai_category',
-          'ai_method',
-        ], fallback: '').isNotEmpty;
-        final riskValue = _dashboardText(checkup, const [
-          'ai_severity',
-          'severity',
-          'riskLevel',
-        ], fallback: '');
-        if (_isHighRiskValue(riskValue)) {
-          if (hasAiGuidance) aiAlerts++;
-          highRiskIdentities.add(_patientIdentity(checkup));
-          highRiskAlerts.add({
-            'title': _dashboardText(checkup, const [
-              'patientName',
-              'patient',
-              'name',
-            ], fallback: 'Check-up patient'),
-            'subtitle': 'Check-up flagged as $riskValue',
-            'timestamp': date,
-            'source': hasAiGuidance ? 'AI guidance' : 'Check-up',
-          });
-        }
-      }
-
-      var activePregnancies = 0;
-      for (final record in prenatal) {
-        final status = _dashboardText(record, const [
-          'status',
-          'recordStatus',
-        ], fallback: 'active').toLowerCase();
-        if (!status.contains('completed') &&
-            !status.contains('closed') &&
-            !status.contains('inactive')) {
-          activePregnancies++;
-        }
-        final riskValue = _dashboardText(record, const [
-          'riskLevel',
-          'ai_severity',
-          'severity',
-        ], fallback: '');
-        if (_isHighRiskValue(riskValue)) {
-          highRiskIdentities.add(_patientIdentity(record));
-          highRiskAlerts.add({
-            'title': _dashboardText(record, const [
-              'patientName',
-              'name',
-            ], fallback: 'Prenatal patient'),
-            'subtitle': 'Prenatal case flagged as $riskValue',
-            'timestamp': _coerceOverviewDate(record),
-            'source': 'Prenatal',
-          });
-        }
-        final hasAiGuidance = _dashboardText(record, const [
-          'ai_category',
-          'ai_method',
-        ], fallback: '').isNotEmpty;
-        if (hasAiGuidance && _isHighRiskValue(riskValue)) {
-          aiAlerts++;
-        }
-      }
-
-      for (final record in morbidity) {
-        final disease = _dashboardText(record, const [
-          'disease',
-          'diagnosis',
-          'condition',
-        ], fallback: 'Unspecified');
-
-        final riskValue = _dashboardText(record, const [
-          'severity',
-          'riskLevel',
-        ], fallback: '');
-        if (_isHighRiskValue(riskValue)) {
-          highRiskIdentities.add(_patientIdentity(record));
-          highRiskAlerts.add({
-            'title': _dashboardText(record, const [
-              'patientName',
-              'name',
-            ], fallback: disease),
-            'subtitle': '$disease • $riskValue severity',
-            'timestamp': _coerceOverviewDate(record),
-            'source': 'Morbidity',
-          });
-        }
-      }
-
-      final referralCounts = <String, int>{};
-      var pendingReferrals = 0;
-      for (final referral in referrals) {
-        final status = _dashboardText(referral, const [
-          'status',
-          'referralStatus',
-        ], fallback: 'Submitted');
-        referralCounts[status] = (referralCounts[status] ?? 0) + 1;
-        final normalized = status.toLowerCase();
-        if (!normalized.contains('completed') &&
-            !normalized.contains('closed') &&
-            !normalized.contains('cancel')) {
-          pendingReferrals++;
-        }
-      }
-
-      final systemActivity = <Map<String, dynamic>>[];
-      void addActivities(
-        List<Map<String, dynamic>> records, {
-        required String title,
-        required IconData icon,
-        required Color color,
-        required List<String> detailKeys,
-      }) {
-        for (final record in records) {
-          final timestamp = _coerceOverviewDate(record);
-          if (timestamp == null) continue;
-          systemActivity.add({
-            'title': title,
-            'subtitle': _dashboardText(
-              record,
-              detailKeys,
-              fallback: 'Record updated',
-            ),
-            'timestamp': timestamp,
-            'icon': icon,
-            'color': color,
-          });
-        }
-      }
-
-      addActivities(
-        patients,
-        title: 'Patient registered',
-        icon: Icons.person_add_alt_1_rounded,
-        color: _primaryAqua,
-        detailKeys: const ['patientName', 'name'],
-      );
-      addActivities(
-        checkups,
-        title: 'Consultation recorded',
-        icon: Icons.medical_services_rounded,
-        color: _accentGreen,
-        detailKeys: const ['patientName', 'patient', 'disease', 'type'],
-      );
-      addActivities(
-        prenatal,
-        title: 'Prenatal record updated',
-        icon: Icons.pregnant_woman_rounded,
-        color: _accentPurple,
-        detailKeys: const ['patientName', 'name', 'status'],
-      );
-      addActivities(
-        morbidity,
-        title: 'Morbidity case updated',
-        icon: Icons.monitor_heart_rounded,
-        color: _accentOrange,
-        detailKeys: const ['disease', 'condition', 'patientName'],
-      );
-      addActivities(
-        referrals,
-        title: 'Referral status updated',
-        icon: Icons.assignment_ind_rounded,
-        color: const Color(0xFFF59E0B),
-        detailKeys: const ['patientName', 'status', 'referralReason'],
-      );
-      systemActivity.sort((a, b) {
-        final aDate = a['timestamp'] as DateTime;
-        final bDate = b['timestamp'] as DateTime;
-        return bDate.compareTo(aDate);
-      });
-
-      highRiskAlerts.sort((a, b) {
-        final aDate = a['timestamp'] as DateTime?;
-        final bDate = b['timestamp'] as DateTime?;
-        return (bDate ?? DateTime(1970)).compareTo(aDate ?? DateTime(1970));
-      });
-
-      if (!mounted) return;
-      setState(() {
-        _totalPatients = patients.length;
-        _consultationsToday = consultationsToday;
-        _activePregnancies = activePregnancies;
-        _highRiskPatients = highRiskIdentities.length;
-        _pendingReferrals = pendingReferrals;
-        _aiGeneratedAlerts = aiAlerts;
-        _consultationMonthLabels = monthStarts
-            .map((date) => _monthLabelShort(date.month))
-            .toList(growable: false);
-        _monthlyConsultationCounts = monthKeys
-            .map((key) => consultationCounts[key] ?? 0)
-            .toList(growable: false);
-        _referralStatusCounts = referralCounts;
-        _recentHighRiskAlerts = highRiskAlerts.take(6).toList(growable: false);
-        _recentActivity = systemActivity.take(10).toList(growable: false);
-        _isLoadingExecutiveOverview = false;
-        _isLoadingActivity = false;
-      });
+      _recomputeDashboardMetrics();
     } catch (error) {
       if (kDebugMode) {
         debugPrint('BHW executive dashboard load failed: $error');
@@ -532,6 +364,643 @@ class _HomePageState extends State<HomePage> {
         _executiveOverviewError = error.toString();
       });
     }
+  }
+
+  DateTime? _coerceRecordDate(Map<String, dynamic> record) {
+    return _coerceOverviewDate(record) ??
+        _resolveMetricDate(record, const [
+          'datetime',
+          'date',
+          'registrationDate',
+          'consultationDate',
+          'administrationDate',
+          'diagnosisDate',
+          'recordDate',
+          'createdAt',
+          'updatedAt',
+          'timestamp',
+          'lmpDate',
+          'dueDate',
+        ]);
+  }
+
+  bool _matchesDateFilter(DateTime? date) {
+    if (_dateFilterMode == DashboardDateFilterMode.allTime) return true;
+    if (date == null) return false;
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
+    switch (_dateFilterMode) {
+      case DashboardDateFilterMode.today:
+        return !date.isBefore(todayStart) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.last7Days:
+        final start = todayStart.subtract(const Duration(days: 6));
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.last30Days:
+        final start = todayStart.subtract(const Duration(days: 29));
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.thisMonth:
+        final targetMonth = _selectedMonthDate ?? now;
+        return date.year == targetMonth.year && date.month == targetMonth.month;
+      case DashboardDateFilterMode.last6Months:
+        final start = DateTime(now.year, now.month - 5, 1);
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.customDay:
+        final target = _selectedCustomDate ?? now;
+        final start = DateTime(target.year, target.month, target.day);
+        final end = DateTime(target.year, target.month, target.day, 23, 59, 59);
+        return !date.isBefore(start) && !date.isAfter(end);
+      case DashboardDateFilterMode.customRange:
+        final start = DateTime(
+          _selectedRangeStart.year,
+          _selectedRangeStart.month,
+          _selectedRangeStart.day,
+        );
+        final end = DateTime(
+          _selectedRangeEnd.year,
+          _selectedRangeEnd.month,
+          _selectedRangeEnd.day,
+          23,
+          59,
+          59,
+        );
+        return !date.isBefore(start) && !date.isAfter(end);
+      case DashboardDateFilterMode.allTime:
+        return true;
+    }
+  }
+
+  String _activeWindowLabel([DashboardDateFilterMode? mode]) {
+    final activeMode = mode ?? _dateFilterMode;
+    final now = DateTime.now();
+    try {
+      switch (activeMode) {
+        case DashboardDateFilterMode.today:
+          return 'Today (${_monthLabelShort(now.month)} ${now.day}, ${now.year})';
+        case DashboardDateFilterMode.last7Days:
+          final start = now.subtract(const Duration(days: 6));
+          return 'Last 7 Days (${_monthLabelShort(start.month)} ${start.day} - ${_monthLabelShort(now.month)} ${now.day})';
+        case DashboardDateFilterMode.last30Days:
+          final start = now.subtract(const Duration(days: 29));
+          return 'Last 30 Days (${_monthLabelShort(start.month)} ${start.day} - ${_monthLabelShort(now.month)} ${now.day})';
+        case DashboardDateFilterMode.thisMonth:
+          final target = _selectedMonthDate ?? now;
+          return '${_monthLabelLong(target.month)} ${target.year}';
+        case DashboardDateFilterMode.last6Months:
+          final start = DateTime(now.year, now.month - 5, 1);
+          return 'Last 6 Months (${_monthLabelShort(start.month)} ${start.year} - ${_monthLabelShort(now.month)} ${now.year})';
+        case DashboardDateFilterMode.customDay:
+          final d = _selectedCustomDate ?? now;
+          return '${_monthLabelLong(d.month)} ${d.day}, ${d.year}';
+        case DashboardDateFilterMode.customRange:
+          final s = _selectedRangeStart;
+          final e = _selectedRangeEnd;
+          return '${_monthLabelShort(s.month)} ${s.day} - ${_monthLabelShort(e.month)} ${e.day}, ${e.year}';
+        case DashboardDateFilterMode.allTime:
+          return 'All Time History';
+      }
+    } catch (_) {}
+    return 'This Month';
+  }
+
+  void _recomputeDashboardMetrics() {
+    final filteredPatients = _rawPatients
+        .where((p) => _matchesDateFilter(_coerceRecordDate(p)))
+        .toList(growable: false);
+    final filteredCheckups = _rawCheckups
+        .where((c) => _matchesDateFilter(_coerceRecordDate(c)))
+        .toList(growable: false);
+    final filteredPrenatal = _rawPrenatal
+        .where((p) => _matchesDateFilter(_coerceRecordDate(p)))
+        .toList(growable: false);
+    final filteredMorbidity = _rawMorbidity
+        .where((m) => _matchesDateFilter(_coerceRecordDate(m)))
+        .toList(growable: false);
+    final filteredReferrals = _rawReferrals
+        .where((r) => _matchesDateFilter(_coerceRecordDate(r)))
+        .toList(growable: false);
+
+    final consultationsInWindow = filteredCheckups.length;
+
+    var activePregnanciesInWindow = 0;
+    for (final record in filteredPrenatal) {
+      final status = _dashboardText(record, const [
+        'status',
+        'recordStatus',
+      ], fallback: 'active').toLowerCase();
+      if (!status.contains('completed') &&
+          !status.contains('closed') &&
+          !status.contains('inactive')) {
+        activePregnanciesInWindow++;
+      }
+    }
+
+    var aiAlertsInWindow = 0;
+    final highRiskIdentities = <String>{};
+    final highRiskAlerts = <Map<String, dynamic>>[];
+
+    for (final checkup in filteredCheckups) {
+      final date = _coerceRecordDate(checkup);
+      final hasAiGuidance = _dashboardText(checkup, const [
+        'ai_category',
+        'ai_method',
+      ], fallback: '').isNotEmpty;
+      final riskValue = _dashboardText(checkup, const [
+        'ai_severity',
+        'severity',
+        'riskLevel',
+      ], fallback: '');
+      if (_isHighRiskValue(riskValue)) {
+        if (hasAiGuidance) aiAlertsInWindow++;
+        highRiskIdentities.add(_patientIdentity(checkup));
+        highRiskAlerts.add({
+          'title': _dashboardText(checkup, const [
+            'patientName',
+            'patient',
+            'name',
+          ], fallback: 'Check-up patient'),
+          'subtitle': 'Check-up flagged as $riskValue',
+          'timestamp': date,
+          'source': hasAiGuidance ? 'AI guidance' : 'Check-up',
+        });
+      }
+    }
+
+    for (final record in filteredPrenatal) {
+      final riskValue = _dashboardText(record, const [
+        'riskLevel',
+        'ai_severity',
+        'severity',
+      ], fallback: '');
+      if (_isHighRiskValue(riskValue)) {
+        highRiskIdentities.add(_patientIdentity(record));
+        highRiskAlerts.add({
+          'title': _dashboardText(record, const [
+            'patientName',
+            'name',
+          ], fallback: 'Prenatal patient'),
+          'subtitle': 'Prenatal case flagged as $riskValue',
+          'timestamp': _coerceRecordDate(record),
+          'source': 'Prenatal',
+        });
+      }
+      final hasAiGuidance = _dashboardText(record, const [
+        'ai_category',
+        'ai_method',
+      ], fallback: '').isNotEmpty;
+      if (hasAiGuidance && _isHighRiskValue(riskValue)) {
+        aiAlertsInWindow++;
+      }
+    }
+
+    for (final record in filteredMorbidity) {
+      final disease = _dashboardText(record, const [
+        'disease',
+        'diagnosis',
+        'condition',
+      ], fallback: 'Unspecified');
+
+      final riskValue = _dashboardText(record, const [
+        'severity',
+        'riskLevel',
+      ], fallback: '');
+      if (_isHighRiskValue(riskValue)) {
+        highRiskIdentities.add(_patientIdentity(record));
+        highRiskAlerts.add({
+          'title': _dashboardText(record, const [
+            'patientName',
+            'name',
+          ], fallback: disease),
+          'subtitle': '$disease • $riskValue severity',
+          'timestamp': _coerceRecordDate(record),
+          'source': 'Morbidity',
+        });
+      }
+    }
+
+    final referralCounts = <String, int>{};
+    var pendingReferralsInWindow = 0;
+    for (final referral in filteredReferrals) {
+      final status = _dashboardText(referral, const [
+        'status',
+        'referralStatus',
+      ], fallback: 'Submitted');
+      referralCounts[status] = (referralCounts[status] ?? 0) + 1;
+      final normalized = status.toLowerCase();
+      if (!normalized.contains('completed') &&
+          !normalized.contains('closed') &&
+          !normalized.contains('cancel')) {
+        pendingReferralsInWindow++;
+      }
+    }
+
+    final systemActivity = <Map<String, dynamic>>[];
+    void addActivities(
+      List<Map<String, dynamic>> records, {
+      required String title,
+      required IconData icon,
+      required Color color,
+      required List<String> detailKeys,
+    }) {
+      for (final record in records) {
+        final timestamp = _coerceRecordDate(record);
+        if (timestamp == null) continue;
+        systemActivity.add({
+          'title': title,
+          'subtitle': _dashboardText(
+            record,
+            detailKeys,
+            fallback: 'Record updated',
+          ),
+          'timestamp': timestamp,
+          'icon': icon,
+          'color': color,
+        });
+      }
+    }
+
+    addActivities(
+      filteredPatients,
+      title: 'Patient registered',
+      icon: Icons.person_add_alt_1_rounded,
+      color: _primaryAqua,
+      detailKeys: const ['patientName', 'name'],
+    );
+    addActivities(
+      filteredCheckups,
+      title: 'Consultation recorded',
+      icon: Icons.medical_services_rounded,
+      color: _accentGreen,
+      detailKeys: const ['patientName', 'patient', 'disease', 'type'],
+    );
+    addActivities(
+      filteredPrenatal,
+      title: 'Prenatal record updated',
+      icon: Icons.pregnant_woman_rounded,
+      color: _accentPurple,
+      detailKeys: const ['patientName', 'name', 'status'],
+    );
+    addActivities(
+      filteredMorbidity,
+      title: 'Morbidity case updated',
+      icon: Icons.monitor_heart_rounded,
+      color: _accentOrange,
+      detailKeys: const ['disease', 'condition', 'patientName'],
+    );
+    addActivities(
+      filteredReferrals,
+      title: 'Referral status updated',
+      icon: Icons.assignment_ind_rounded,
+      color: const Color(0xFFF59E0B),
+      detailKeys: const ['patientName', 'status', 'referralReason'],
+    );
+
+    systemActivity.sort((a, b) {
+      final aDate = a['timestamp'] as DateTime;
+      final bDate = b['timestamp'] as DateTime;
+      return bDate.compareTo(aDate);
+    });
+
+    highRiskAlerts.sort((a, b) {
+      final aDate = a['timestamp'] as DateTime?;
+      final bDate = b['timestamp'] as DateTime?;
+      return (bDate ?? DateTime(1970)).compareTo(aDate ?? DateTime(1970));
+    });
+
+    final trendData = _generateConsultationTrendData(filteredCheckups);
+
+    final insights = _generateActionableHealthInsights(
+      patients: filteredPatients,
+      checkups: filteredCheckups,
+      prenatal: filteredPrenatal,
+      morbidity: filteredMorbidity,
+      referrals: filteredReferrals,
+      highRiskCount: highRiskIdentities.length,
+      pendingReferralsCount: pendingReferralsInWindow,
+      aiAlertsCount: aiAlertsInWindow,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _totalPatients = _dateFilterMode == DashboardDateFilterMode.allTime
+          ? _rawPatients.length
+          : filteredPatients.length;
+      _consultationsToday = consultationsInWindow;
+      _activePregnancies = activePregnanciesInWindow;
+      _highRiskPatients = highRiskIdentities.length;
+      _pendingReferrals = pendingReferralsInWindow;
+      _aiGeneratedAlerts = aiAlertsInWindow;
+      _consultationMonthLabels = trendData.labels;
+      _monthlyConsultationCounts = trendData.counts;
+      _trendChartTitle = trendData.title;
+      _trendChartSubtitle = trendData.subtitle;
+      _referralStatusCounts = referralCounts;
+      _recentHighRiskAlerts = highRiskAlerts.take(6).toList(growable: false);
+      _recentActivity = systemActivity.take(10).toList(growable: false);
+      _actionableInsights = insights;
+      _isLoadingExecutiveOverview = false;
+      _isLoadingActivity = false;
+    });
+  }
+
+  _TrendData _generateConsultationTrendData(List<Map<String, dynamic>> checkups) {
+    final now = DateTime.now();
+
+    if (_dateFilterMode == DashboardDateFilterMode.today ||
+        _dateFilterMode == DashboardDateFilterMode.customDay) {
+      final targetDate = _dateFilterMode == DashboardDateFilterMode.today
+          ? now
+          : (_selectedCustomDate ?? now);
+      final slotLabels = ['8 AM', '10 AM', '12 PM', '2 PM', '4 PM', '6 PM+'];
+      final slotCounts = List<int>.filled(slotLabels.length, 0);
+
+      for (final c in checkups) {
+        final d = _coerceRecordDate(c);
+        if (d != null &&
+            d.year == targetDate.year &&
+            d.month == targetDate.month &&
+            d.day == targetDate.day) {
+          final hour = d.hour;
+          if (hour < 9) {
+            slotCounts[0]++;
+          } else if (hour < 11) {
+            slotCounts[1]++;
+          } else if (hour < 13) {
+            slotCounts[2]++;
+          } else if (hour < 15) {
+            slotCounts[3]++;
+          } else if (hour < 17) {
+            slotCounts[4]++;
+          } else {
+            slotCounts[5]++;
+          }
+        }
+      }
+
+      return _TrendData(
+        title: 'Intraday Consultation Activity',
+        subtitle:
+            'Consultations recorded by time interval for ${_monthLabelShort(targetDate.month)} ${targetDate.day}, ${targetDate.year}',
+        labels: slotLabels,
+        counts: slotCounts,
+      );
+    }
+
+    if (_dateFilterMode == DashboardDateFilterMode.last7Days) {
+      final days = List<DateTime>.generate(
+        7,
+        (index) => now.subtract(Duration(days: 6 - index)),
+      );
+      final labels = days
+          .map((d) => '${_monthLabelShort(d.month)} ${d.day}')
+          .toList(growable: false);
+      final counts = List<int>.filled(7, 0);
+
+      for (final c in checkups) {
+        final d = _coerceRecordDate(c);
+        if (d != null) {
+          for (var i = 0; i < days.length; i++) {
+            if (d.year == days[i].year &&
+                d.month == days[i].month &&
+                d.day == days[i].day) {
+              counts[i]++;
+              break;
+            }
+          }
+        }
+      }
+
+      return _TrendData(
+        title: '7-Day Daily Consultation Volume',
+        subtitle: 'Daily consultations over the last 7 days',
+        labels: labels,
+        counts: counts,
+      );
+    }
+
+    if (_dateFilterMode == DashboardDateFilterMode.last30Days ||
+        (_dateFilterMode == DashboardDateFilterMode.customRange &&
+            _selectedRangeEnd.difference(_selectedRangeStart).inDays <= 31)) {
+      final startDate = _dateFilterMode == DashboardDateFilterMode.last30Days
+          ? now.subtract(const Duration(days: 29))
+          : _selectedRangeStart;
+      final endDate = _dateFilterMode == DashboardDateFilterMode.last30Days
+          ? now
+          : _selectedRangeEnd;
+      final totalDays = endDate.difference(startDate).inDays + 1;
+      final safeDays = totalDays.clamp(1, 31);
+
+      final days = List<DateTime>.generate(
+        safeDays,
+        (index) => startDate.add(Duration(days: index)),
+      );
+      final labels = days
+          .map((d) => '${_monthLabelShort(d.month)} ${d.day}')
+          .toList(growable: false);
+      final counts = List<int>.filled(safeDays, 0);
+
+      for (final c in checkups) {
+        final d = _coerceRecordDate(c);
+        if (d != null) {
+          for (var i = 0; i < days.length; i++) {
+            if (d.year == days[i].year &&
+                d.month == days[i].month &&
+                d.day == days[i].day) {
+              counts[i]++;
+              break;
+            }
+          }
+        }
+      }
+
+      return _TrendData(
+        title: 'Daily Consultation Trend',
+        subtitle:
+            'Daily consultations across ${_activeWindowLabel().toLowerCase()}',
+        labels: labels,
+        counts: counts,
+      );
+    }
+
+    if (_dateFilterMode == DashboardDateFilterMode.thisMonth) {
+      final target = _selectedMonthDate ?? now;
+      final daysInMonth = DateTime(target.year, target.month + 1, 0).day;
+      final weekLabels = [
+        'Week 1',
+        'Week 2',
+        'Week 3',
+        'Week 4',
+        if (daysInMonth > 28) 'Week 5',
+      ];
+      final weekCounts = List<int>.filled(weekLabels.length, 0);
+
+      for (final c in checkups) {
+        final d = _coerceRecordDate(c);
+        if (d != null && d.year == target.year && d.month == target.month) {
+          final weekIndex = ((d.day - 1) ~/ 7).clamp(0, weekLabels.length - 1);
+          weekCounts[weekIndex]++;
+        }
+      }
+
+      return _TrendData(
+        title: 'Weekly Consultation Breakdown',
+        subtitle:
+            'Weekly consultations for ${_monthLabelLong(target.month)} ${target.year}',
+        labels: weekLabels,
+        counts: weekCounts,
+      );
+    }
+
+    // Default / Last 6 Months / All Time
+    final monthStarts = List<DateTime>.generate(
+      6,
+      (index) => DateTime(now.year, now.month - (5 - index), 1),
+    );
+    final monthKeys = monthStarts
+        .map((date) => '${date.year}-${date.month}')
+        .toList(growable: false);
+    final counts = <String, int>{for (final k in monthKeys) k: 0};
+
+    for (final c in checkups) {
+      final d = _coerceRecordDate(c);
+      if (d != null) {
+        final key = '${d.year}-${d.month}';
+        if (counts.containsKey(key)) {
+          counts[key] = counts[key]! + 1;
+        }
+      }
+    }
+
+    return _TrendData(
+      title: 'Monthly Consultation Trend',
+      subtitle: 'Check-up volume over the last 6 months',
+      labels: monthStarts.map((d) => _monthLabelShort(d.month)).toList(),
+      counts: monthKeys.map((k) => counts[k] ?? 0).toList(),
+    );
+  }
+
+  List<Map<String, dynamic>> _generateActionableHealthInsights({
+    required List<Map<String, dynamic>> patients,
+    required List<Map<String, dynamic>> checkups,
+    required List<Map<String, dynamic>> prenatal,
+    required List<Map<String, dynamic>> morbidity,
+    required List<Map<String, dynamic>> referrals,
+    required int highRiskCount,
+    required int pendingReferralsCount,
+    required int aiAlertsCount,
+  }) {
+    final insights = <Map<String, dynamic>>[];
+
+    // 1. High-risk Alert Insight
+    if (highRiskCount > 0) {
+      insights.add({
+        'icon': Icons.warning_amber_rounded,
+        'title':
+            '$highRiskCount High-Risk ${highRiskCount == 1 ? 'Case' : 'Cases'} Detected',
+        'message':
+            '$highRiskCount patients require immediate clinical prioritization and monitoring during this reporting period.',
+        'severity': 'critical',
+        'color': _accentRed,
+      });
+    } else {
+      insights.add({
+        'icon': Icons.check_circle_outline_rounded,
+        'title': 'No High-Risk Flags',
+        'message':
+            'No high-risk patient flags recorded in this period. Standard health monitoring continues.',
+        'severity': 'success',
+        'color': _accentGreen,
+      });
+    }
+
+    // 2. Consultation Load Insight
+    if (checkups.isNotEmpty) {
+      insights.add({
+        'icon': Icons.medical_services_outlined,
+        'title': '${checkups.length} Consultations Recorded',
+        'message':
+            'Consultation services are actively ongoing with ${checkups.length} check-up ${checkups.length == 1 ? 'session' : 'sessions'} in this period.',
+        'severity': 'info',
+        'color': _primaryAqua,
+      });
+    } else {
+      insights.add({
+        'icon': Icons.assignment_late_outlined,
+        'title': 'No Consultations in Period',
+        'message':
+            'Zero consultations recorded for this date window. Check community scheduling or pending walk-ins.',
+        'severity': 'warning',
+        'color': _accentOrange,
+      });
+    }
+
+    // 3. Prenatal Care Insight
+    if (prenatal.isNotEmpty) {
+      insights.add({
+        'icon': Icons.pregnant_woman_rounded,
+        'title':
+            '${prenatal.length} Maternal / Prenatal ${prenatal.length == 1 ? 'Record' : 'Records'}',
+        'message':
+            'Active prenatal care monitoring maintained. Ensure scheduled trimester follow-ups.',
+        'severity': 'info',
+        'color': _accentPurple,
+      });
+    }
+
+    // 4. Morbidity Surveillance Insight
+    if (morbidity.isNotEmpty) {
+      final diseaseCounts = <String, int>{};
+      for (final m in morbidity) {
+        final disease = _dashboardText(
+          m,
+          const ['disease', 'diagnosis', 'condition'],
+          fallback: 'General Illness',
+        );
+        diseaseCounts[disease] = (diseaseCounts[disease] ?? 0) + 1;
+      }
+      final sortedDiseases = diseaseCounts.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      if (sortedDiseases.isNotEmpty) {
+        final top = sortedDiseases.first;
+        insights.add({
+          'icon': Icons.coronavirus_outlined,
+          'title': 'Top Condition: ${top.key}',
+          'message':
+              '${top.value} case(s) reported in this window. Monitor community spread and stock appropriate supplies.',
+          'severity': 'warning',
+          'color': _accentOrange,
+        });
+      }
+    }
+
+    // 5. Referral Workflow Insight
+    if (pendingReferralsCount > 0) {
+      insights.add({
+        'icon': Icons.assignment_ind_outlined,
+        'title':
+            '$pendingReferralsCount Pending ${pendingReferralsCount == 1 ? 'Referral' : 'Referrals'}',
+        'message':
+            '$pendingReferralsCount patient referrals are awaiting doctor or CHO confirmation and treatment follow-through.',
+        'severity': 'warning',
+        'color': const Color(0xFFF59E0B),
+      });
+    }
+
+    // 6. AI Decision Support
+    if (aiAlertsCount > 0) {
+      insights.add({
+        'icon': Icons.psychology_alt_rounded,
+        'title':
+            '$aiAlertsCount AI Decision-Support ${aiAlertsCount == 1 ? 'Alert' : 'Alerts'}',
+        'message':
+            'Clinical AI algorithms flagged $aiAlertsCount records for potential risk escalation or treatment review.',
+        'severity': 'info',
+        'color': _primaryAqua,
+      });
+    }
+
+    return insights;
   }
 
   bool _isAdminInvite = false;
@@ -979,8 +1448,56 @@ class _HomePageState extends State<HomePage> {
 
   bool _matchesKeyMetricFilter(DateTime? date) {
     if (date == null) return false;
-    final selectedDate = _effectiveKeyMetricsSelectedDate;
-    return date.year == selectedDate.year && date.month == selectedDate.month;
+    final cleanDate = DateTime(date.year, date.month, date.day);
+    switch (_keyMetricsFilterMode) {
+      case DashboardDateFilterMode.today:
+        final now = DateTime.now();
+        return cleanDate.year == now.year &&
+            cleanDate.month == now.month &&
+            cleanDate.day == now.day;
+      case DashboardDateFilterMode.customDay:
+        if (_keyMetricsSpecificDate == null) return true;
+        final target = _keyMetricsSpecificDate!;
+        return cleanDate.year == target.year &&
+            cleanDate.month == target.month &&
+            cleanDate.day == target.day;
+      case DashboardDateFilterMode.thisMonth:
+        final selectedDate = _effectiveKeyMetricsSelectedDate;
+        return cleanDate.year == selectedDate.year &&
+            cleanDate.month == selectedDate.month;
+      case DashboardDateFilterMode.last7Days:
+        final now = DateTime.now();
+        final start = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
+        final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+        return !date.isBefore(start) && !date.isAfter(end);
+      case DashboardDateFilterMode.last30Days:
+        final now = DateTime.now();
+        final start = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 29));
+        final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+        return !date.isBefore(start) && !date.isAfter(end);
+      case DashboardDateFilterMode.last6Months:
+        final now = DateTime.now();
+        final start = DateTime(now.year, now.month - 5, 1);
+        final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+        return !date.isBefore(start) && !date.isAfter(end);
+      case DashboardDateFilterMode.customRange:
+        final start = DateTime(
+          _keyMetricsRangeStart.year,
+          _keyMetricsRangeStart.month,
+          _keyMetricsRangeStart.day,
+        );
+        final end = DateTime(
+          _keyMetricsRangeEnd.year,
+          _keyMetricsRangeEnd.month,
+          _keyMetricsRangeEnd.day,
+          23,
+          59,
+          59,
+        );
+        return !date.isBefore(start) && !date.isAfter(end);
+      case DashboardDateFilterMode.allTime:
+        return true;
+    }
   }
 
   String _metricFilterScopeLabel() {
@@ -1010,8 +1527,32 @@ class _HomePageState extends State<HomePage> {
   }
 
   String _formatKeyMetricsSelectedDate() {
-    final selectedDate = _effectiveKeyMetricsSelectedDate;
-    return _monthYearLabel(selectedDate);
+    switch (_keyMetricsFilterMode) {
+      case DashboardDateFilterMode.today:
+        final now = DateTime.now();
+        return 'Today (${_monthLabelLong(now.month)} ${now.day}, ${now.year})';
+      case DashboardDateFilterMode.customDay:
+        if (_keyMetricsSpecificDate != null) {
+          final d = _keyMetricsSpecificDate!;
+          return '${_monthLabelLong(d.month)} ${d.day}, ${d.year}';
+        }
+        return 'Selected Date';
+      case DashboardDateFilterMode.thisMonth:
+        final selectedDate = _effectiveKeyMetricsSelectedDate;
+        return _monthYearLabel(selectedDate);
+      case DashboardDateFilterMode.last7Days:
+        return 'Last 7 Days';
+      case DashboardDateFilterMode.last30Days:
+        return 'Last 30 Days';
+      case DashboardDateFilterMode.last6Months:
+        return 'Last 6 Months';
+      case DashboardDateFilterMode.customRange:
+        final s = _keyMetricsRangeStart;
+        final e = _keyMetricsRangeEnd;
+        return '${_monthLabelLong(s.month)} ${s.day} - ${_monthLabelLong(e.month)} ${e.day}, ${e.year}';
+      case DashboardDateFilterMode.allTime:
+        return 'All Time History';
+    }
   }
 
   String _metricCountLabel(Object? value) {
@@ -1040,15 +1581,137 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _pickKeyMetricsDate() async {
-    final selectedDate = _effectiveKeyMetricsSelectedDate;
-    final picked = await _pickMonthYear(
-      initialDate: selectedDate,
-      helpText: 'Select month',
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _primaryAqua.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.date_range_rounded, color: _primaryAqua, size: 20),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Filter Analytics Date',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: _lightOffWhite,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.today_rounded, color: _primaryAqua),
+                title: const Text('Today', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text('Show records for ${_monthLabelLong(DateTime.now().month)} ${DateTime.now().day}, ${DateTime.now().year}'),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  setState(() {
+                    _keyMetricsFilterMode = DashboardDateFilterMode.today;
+                    _keyMetricsSpecificDate = DateTime.now();
+                  });
+                  _loadMetrics();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.calendar_view_week_rounded, color: _primaryAqua),
+                title: const Text('Last 7 Days', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Show records for the past 7 days'),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  setState(() {
+                    _keyMetricsFilterMode = DashboardDateFilterMode.last7Days;
+                    _keyMetricsRangeEnd = DateTime.now();
+                    _keyMetricsRangeStart = DateTime.now().subtract(const Duration(days: 6));
+                  });
+                  _loadMetrics();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.calendar_month_rounded, color: _primaryAqua),
+                title: const Text('This Month / Select Month', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text('Current: ${_formatKeyMetricsSelectedDate()}'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final selectedDate = _effectiveKeyMetricsSelectedDate;
+                  final picked = await _pickMonthYear(
+                    initialDate: selectedDate,
+                    helpText: 'Select month',
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _keyMetricsFilterMode = DashboardDateFilterMode.thisMonth;
+                    _keyMetricsSelectedDate = _normalizeToMonth(picked);
+                  });
+                  _loadMetrics();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.event_available_rounded, color: _primaryAqua),
+                title: const Text('Specific Date', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Pick any calendar date'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final now = DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _keyMetricsSpecificDate ?? now,
+                    firstDate: DateTime(2000),
+                    lastDate: now,
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _keyMetricsFilterMode = DashboardDateFilterMode.customDay;
+                    _keyMetricsSpecificDate = picked;
+                  });
+                  _loadMetrics();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.date_range_outlined, color: _primaryAqua),
+                title: const Text('Custom Date Range', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Select start and end dates'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final now = DateTime.now();
+                  final picked = await showDateRangePicker(
+                    context: context,
+                    initialDateRange: DateTimeRange(
+                      start: _keyMetricsRangeStart.isAfter(now)
+                          ? now.subtract(const Duration(days: 7))
+                          : _keyMetricsRangeStart,
+                      end: _keyMetricsRangeEnd.isAfter(now)
+                          ? now
+                          : _keyMetricsRangeEnd,
+                    ),
+                    firstDate: DateTime(2000),
+                    lastDate: now,
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _keyMetricsFilterMode = DashboardDateFilterMode.customRange;
+                    _keyMetricsRangeStart = picked.start;
+                    _keyMetricsRangeEnd = picked.end;
+                  });
+                  _loadMetrics();
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
-
-    if (picked == null || !mounted) return;
-    setState(() => _keyMetricsSelectedDate = _normalizeToMonth(picked));
-    _loadMetrics();
   }
 
   DateTime _normalizeToMonth(DateTime date) {
@@ -2268,6 +2931,8 @@ class _HomePageState extends State<HomePage> {
                   if (_executiveOverviewError != null)
                     _buildExecutiveOverviewError()
                   else ...[
+                    _buildAnalyticsFilterBar(),
+                    const SizedBox(height: 24),
                     _buildExecutiveKpiGrid(),
                     const SizedBox(height: 28),
                     _buildExecutiveAnalytics(),
@@ -2874,42 +3539,453 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildAnalyticsFilterBar() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWideHeader = constraints.maxWidth > 760;
+        final filterBorderColor = _lightOffWhite.withValues(alpha: 0.12);
+
+        final headerCopy = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Barangay Insights & Analytics Filter',
+              style: TextStyle(
+                color: _lightOffWhite,
+                fontSize: 15.5,
+                fontWeight: FontWeight.w800,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Choose the reporting window for every KPI card, consultation trend, risk alert, and clinical insight. The active range is ${_activeWindowLabel().toLowerCase()}.',
+              maxLines: isWideHeader ? 2 : 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: _lightOffWhite.withValues(alpha: 0.74),
+                fontSize: 11,
+                height: 1.35,
+              ),
+            ),
+          ],
+        );
+
+        final activeWindowCard = Container(
+          width: isWideHeader ? 230 : double.infinity,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: _primaryAqua.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.filter_alt_rounded, size: 13, color: _primaryAqua),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Active Window',
+                    style: TextStyle(
+                      color: _primaryAqua,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _activeWindowLabel(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _lightOffWhite,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'KPIs, charts, and insights auto-synced',
+                style: TextStyle(
+                  color: _lightOffWhite.withValues(alpha: 0.65),
+                  fontSize: 9.5,
+                ),
+              ),
+            ],
+          ),
+        );
+
+        final filterChips = <Widget>[
+          _buildFilterChip('Today', Icons.today_rounded, DashboardDateFilterMode.today),
+          _buildFilterChip('Last 7 Days', Icons.calendar_view_week_rounded, DashboardDateFilterMode.last7Days),
+          _buildFilterChip('Last 30 Days', Icons.date_range_rounded, DashboardDateFilterMode.last30Days),
+          _buildFilterChip('This Month', Icons.calendar_month_rounded, DashboardDateFilterMode.thisMonth),
+          _buildFilterChip('Last 6 Months', Icons.stacked_bar_chart_rounded, DashboardDateFilterMode.last6Months),
+          _buildFilterChip('All Time', Icons.all_inclusive_rounded, DashboardDateFilterMode.allTime),
+          OutlinedButton.icon(
+            onPressed: _showDateFilterPickerModal,
+            icon: const Icon(Icons.tune_rounded, size: 14),
+            label: Text(
+              _dateFilterMode == DashboardDateFilterMode.customDay ||
+                      _dateFilterMode == DashboardDateFilterMode.customRange
+                  ? 'Custom (${_activeWindowLabel()})'
+                  : 'Pick Date / Range...',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: (_dateFilterMode == DashboardDateFilterMode.customDay ||
+                      _dateFilterMode == DashboardDateFilterMode.customRange)
+                  ? _primaryAqua
+                  : _lightOffWhite,
+              backgroundColor: (_dateFilterMode == DashboardDateFilterMode.customDay ||
+                      _dateFilterMode == DashboardDateFilterMode.customRange)
+                  ? _primaryAqua.withValues(alpha: 0.12)
+                  : Colors.white,
+              side: BorderSide(
+                color: (_dateFilterMode == DashboardDateFilterMode.customDay ||
+                        _dateFilterMode == DashboardDateFilterMode.customRange)
+                    ? _primaryAqua
+                    : filterBorderColor,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ];
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _primaryAqua.withValues(alpha: 0.15)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isWideHeader)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: headerCopy),
+                    const SizedBox(width: 16),
+                    activeWindowCard,
+                  ],
+                )
+              else ...[
+                headerCopy,
+                const SizedBox(height: 10),
+                activeWindowCard,
+              ],
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: filterChips,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFilterChip(String label, IconData icon, DashboardDateFilterMode mode) {
+    final isSelected = _dateFilterMode == mode;
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () {
+        if (isSelected) return;
+        setState(() {
+          _dateFilterMode = mode;
+          if (mode == DashboardDateFilterMode.thisMonth) {
+            _selectedMonthDate = DateTime.now();
+          }
+        });
+        _recomputeDashboardMetrics();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? _primaryAqua : _darkDeepTeal.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? _primaryAqua : Colors.black.withValues(alpha: 0.08),
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: _primaryAqua.withValues(alpha: 0.28),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected ? Colors.white : _lightOffWhite,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected ? Colors.white : _lightOffWhite,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showDateFilterPickerModal() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _primaryAqua.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.date_range_rounded, color: _primaryAqua, size: 20),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Choose Date for Insights',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: _lightOffWhite,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.event_available_rounded, color: _primaryAqua),
+                title: const Text('Specific Calendar Date', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Pick any specific day'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final now = DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _selectedCustomDate ?? now,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2035),
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _dateFilterMode = DashboardDateFilterMode.customDay;
+                    _selectedCustomDate = picked;
+                  });
+                  _recomputeDashboardMetrics();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.calendar_month_rounded, color: _primaryAqua),
+                title: const Text('Select Month & Year', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text('Pick a target month (Current: ${_monthLabelLong((_selectedMonthDate ?? DateTime.now()).month)})'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final target = _selectedMonthDate ?? DateTime.now();
+                  final picked = await _pickMonthYear(
+                    initialDate: target,
+                    helpText: 'Select Month & Year for Dashboard',
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _dateFilterMode = DashboardDateFilterMode.thisMonth;
+                    _selectedMonthDate = picked;
+                  });
+                  _recomputeDashboardMetrics();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.date_range_outlined, color: _primaryAqua),
+                title: const Text('Custom Date Range', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Select custom start and end dates'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final picked = await showDateRangePicker(
+                    context: context,
+                    initialDateRange: DateTimeRange(
+                      start: _selectedRangeStart,
+                      end: _selectedRangeEnd,
+                    ),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2035),
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _dateFilterMode = DashboardDateFilterMode.customRange;
+                    _selectedRangeStart = picked.start;
+                    _selectedRangeEnd = picked.end;
+                  });
+                  _recomputeDashboardMetrics();
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.today_rounded, color: _accentGreen),
+                title: const Text('Quick: Today', style: TextStyle(fontWeight: FontWeight.w600)),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  setState(() {
+                    _dateFilterMode = DashboardDateFilterMode.today;
+                  });
+                  _recomputeDashboardMetrics();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.all_inclusive_rounded, color: _accentPurple),
+                title: const Text('Quick: All Time', style: TextStyle(fontWeight: FontWeight.w600)),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  setState(() {
+                    _dateFilterMode = DashboardDateFilterMode.allTime;
+                  });
+                  _recomputeDashboardMetrics();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActionableInsightsPanel() {
+    return _buildExecutivePanel(
+      title: 'Actionable Health Insights',
+      subtitle: 'Data-driven clinical guidance for ${_activeWindowLabel().toLowerCase()}',
+      icon: Icons.insights_rounded,
+      child: _actionableInsights.isEmpty
+          ? _buildNoExecutiveData('No insights available for the selected period.')
+          : Column(
+              children: _actionableInsights.map((insight) {
+                final Color color = (insight['color'] as Color?) ?? _primaryAqua;
+                final IconData icon = (insight['icon'] as IconData?) ?? Icons.insights_rounded;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.07),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: color.withValues(alpha: 0.22)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(icon, color: color, size: 18),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              insight['title']?.toString() ?? 'Insight',
+                              style: const TextStyle(
+                                color: _lightOffWhite,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              insight['message']?.toString() ?? '',
+                              style: TextStyle(
+                                color: Colors.black.withValues(alpha: 0.72),
+                                fontSize: 11.5,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+    );
+  }
+
   Widget _buildExecutiveKpiGrid() {
+    final subtitlePeriod = _activeWindowLabel();
     final metrics = <Map<String, dynamic>>[
       {
         'title': 'Total Registered Patients',
         'value': _totalPatients,
-        'subtitle': 'Visible in your access scope',
+        'subtitle': _dateFilterMode == DashboardDateFilterMode.allTime
+            ? 'Total visible registry'
+            : 'Registrations in $subtitlePeriod',
         'icon': Icons.groups_2_rounded,
       },
       {
-        'title': 'Consultations Today',
+        'title': 'Consultations',
         'value': _consultationsToday,
-        'subtitle': 'Check-ups recorded today',
+        'subtitle': 'Recorded in $subtitlePeriod',
         'icon': Icons.medical_services_rounded,
       },
       {
         'title': 'Active Pregnancies',
         'value': _activePregnancies,
-        'subtitle': 'Open prenatal care records',
+        'subtitle': 'Open prenatal care in $subtitlePeriod',
         'icon': Icons.pregnant_woman_rounded,
       },
       {
         'title': 'High-risk Patients',
         'value': _highRiskPatients,
-        'subtitle': 'Unique patients requiring attention',
+        'subtitle': 'Flagged in $subtitlePeriod',
         'icon': Icons.warning_amber_rounded,
       },
       {
         'title': 'Pending Referrals',
         'value': _pendingReferrals,
-        'subtitle': 'Not completed or closed',
+        'subtitle': 'Open referrals in $subtitlePeriod',
         'icon': Icons.assignment_late_rounded,
       },
       {
         'title': 'AI-generated Alerts',
         'value': _aiGeneratedAlerts,
-        'subtitle': 'AI-guided records requiring attention',
+        'subtitle': 'AI guidance in $subtitlePeriod',
         'icon': Icons.psychology_alt_rounded,
       },
     ];
@@ -3049,11 +4125,11 @@ class _HomePageState extends State<HomePage> {
         ? 1
         : counts.reduce((a, b) => a > b ? a : b).clamp(1, 1000000);
     return _buildExecutivePanel(
-      title: 'Monthly Consultation Trend',
-      subtitle: 'Check-up volume during the last six months',
+      title: _trendChartTitle,
+      subtitle: _trendChartSubtitle,
       icon: Icons.show_chart_rounded,
       child: counts.isEmpty
-          ? _buildNoExecutiveData('No consultation history is available.')
+          ? _buildNoExecutiveData('No consultation history is available for this period.')
           : SizedBox(
               height: 250,
               child: LineChart(
@@ -3295,10 +4371,11 @@ class _HomePageState extends State<HomePage> {
   Widget _buildExecutiveAnalytics() {
     final panels = <Widget>[
       _buildMonthlyConsultationTrend(),
+      _buildActionableInsightsPanel(),
       _buildRecentHighRiskAlerts(),
       _buildDistributionPanel(
         title: 'Referral Status Summary',
-        subtitle: 'Current workflow status of submitted referrals',
+        subtitle: 'Workflow status for referrals in ${_activeWindowLabel().toLowerCase()}',
         icon: Icons.assignment_ind_rounded,
         values: _referralStatusCounts,
       ),

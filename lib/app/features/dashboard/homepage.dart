@@ -37,6 +37,17 @@ const Color _darkDeepTeal = AppDesign.ink;
 const Color _mutedCoolGray = AppDesign.muted;
 const Color _lightOffWhite = Colors.white;
 
+enum DashboardDateFilterMode {
+  today,
+  last7Days,
+  last30Days,
+  thisMonth,
+  last6Months,
+  customDay,
+  customRange,
+  allTime,
+}
+
 class HomePage extends StatefulWidget {
   final User? user;
   const HomePage({super.key, this.user});
@@ -76,6 +87,10 @@ class _HomePageState extends State<HomePage> {
   int _highRiskCases = 0;
   bool _isLoadingMetrics = true;
   DateTime? _keyMetricsSelectedDate;
+  DashboardDateFilterMode _keyMetricsFilterMode = DashboardDateFilterMode.thisMonth;
+  DateTime? _keyMetricsSpecificDate;
+  DateTime _keyMetricsRangeStart = DateTime.now().subtract(const Duration(days: 6));
+  DateTime _keyMetricsRangeEnd = DateTime.now();
   int _filteredPatientRegistrations = 0;
   int _filteredCheckupRecords = 0;
   int _filteredPrenatalRecords = 0;
@@ -803,19 +818,84 @@ class _HomePageState extends State<HomePage> {
     return fallback;
   }
 
-  String _formatKeyMetricsSelectedMonth() {
-    final selected = _effectiveKeyMetricsSelectedDate;
-    return '${_getMonthName(selected.month)} ${selected.year}';
+  String _formatKeyMetricsSelectedDate() {
+    final now = DateTime.now();
+    switch (_keyMetricsFilterMode) {
+      case DashboardDateFilterMode.today:
+        return 'Today (${_getMonthName(now.month)} ${now.day}, ${now.year})';
+      case DashboardDateFilterMode.last7Days:
+        final start = now.subtract(const Duration(days: 6));
+        return 'Last 7 Days (${_getMonthName(start.month)} ${start.day} - ${_getMonthName(now.month)} ${now.day})';
+      case DashboardDateFilterMode.last30Days:
+        final start = now.subtract(const Duration(days: 29));
+        return 'Last 30 Days (${_getMonthName(start.month)} ${start.day} - ${_getMonthName(now.month)} ${now.day})';
+      case DashboardDateFilterMode.thisMonth:
+        final selected = _effectiveKeyMetricsSelectedDate;
+        return '${_getMonthName(selected.month)} ${selected.year}';
+      case DashboardDateFilterMode.last6Months:
+        final start = DateTime(now.year, now.month - 5, 1);
+        return 'Last 6 Months (${_getMonthName(start.month)} ${start.year} - ${_getMonthName(now.month)} ${now.year})';
+      case DashboardDateFilterMode.customDay:
+        final d = _keyMetricsSpecificDate ?? now;
+        return '${_getMonthName(d.month)} ${d.day}, ${d.year}';
+      case DashboardDateFilterMode.customRange:
+        final s = _keyMetricsRangeStart;
+        final e = _keyMetricsRangeEnd;
+        return '${_getMonthName(s.month)} ${s.day} - ${_getMonthName(e.month)} ${e.day}, ${e.year}';
+      case DashboardDateFilterMode.allTime:
+        return 'All Time History';
+    }
   }
 
   String _metricFilterScopeLabel() {
-    return _formatKeyMetricsSelectedMonth();
+    return _formatKeyMetricsSelectedDate();
   }
 
   bool _matchesKeyMetricFilter(DateTime? date) {
+    if (_keyMetricsFilterMode == DashboardDateFilterMode.allTime) return true;
     if (date == null) return false;
-    final selectedDate = _effectiveKeyMetricsSelectedDate;
-    return date.year == selectedDate.year && date.month == selectedDate.month;
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
+    switch (_keyMetricsFilterMode) {
+      case DashboardDateFilterMode.today:
+        return !date.isBefore(todayStart) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.last7Days:
+        final start = todayStart.subtract(const Duration(days: 6));
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.last30Days:
+        final start = todayStart.subtract(const Duration(days: 29));
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.thisMonth:
+        final selectedDate = _effectiveKeyMetricsSelectedDate;
+        return date.year == selectedDate.year && date.month == selectedDate.month;
+      case DashboardDateFilterMode.last6Months:
+        final start = DateTime(now.year, now.month - 5, 1);
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.customDay:
+        final target = _keyMetricsSpecificDate ?? now;
+        final start = DateTime(target.year, target.month, target.day);
+        final end = DateTime(target.year, target.month, target.day, 23, 59, 59);
+        return !date.isBefore(start) && !date.isAfter(end);
+      case DashboardDateFilterMode.customRange:
+        final start = DateTime(
+          _keyMetricsRangeStart.year,
+          _keyMetricsRangeStart.month,
+          _keyMetricsRangeStart.day,
+        );
+        final end = DateTime(
+          _keyMetricsRangeEnd.year,
+          _keyMetricsRangeEnd.month,
+          _keyMetricsRangeEnd.day,
+          23,
+          59,
+          59,
+        );
+        return !date.isBefore(start) && !date.isAfter(end);
+      case DashboardDateFilterMode.allTime:
+        return true;
+    }
   }
 
   DateTime? _resolveMetricDate(
@@ -1060,21 +1140,130 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> _pickKeyMetricsMonth() async {
-    final selectedDate = _effectiveKeyMetricsSelectedDate;
-    final picked = await _pickMonthYear(
-      initialDate: selectedDate,
-      helpText: 'Select month',
+  Future<void> _pickKeyMetricsDate() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.date_range_rounded, color: _primaryAqua),
+              SizedBox(width: 8),
+              Text('Filter Metrics Date', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.today_rounded, color: _primaryAqua),
+                title: const Text('Today'),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  setState(() => _keyMetricsFilterMode = DashboardDateFilterMode.today);
+                  _loadMetrics();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.calendar_view_week_rounded, color: _primaryAqua),
+                title: const Text('Last 7 Days'),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  setState(() => _keyMetricsFilterMode = DashboardDateFilterMode.last7Days);
+                  _loadMetrics();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.date_range_rounded, color: _primaryAqua),
+                title: const Text('Last 30 Days'),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  setState(() => _keyMetricsFilterMode = DashboardDateFilterMode.last30Days);
+                  _loadMetrics();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.calendar_month_rounded, color: _primaryAqua),
+                title: const Text('Specific Month & Year'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final selectedDate = _effectiveKeyMetricsSelectedDate;
+                  final picked = await _pickMonthYear(
+                    initialDate: selectedDate,
+                    helpText: 'Select month',
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _keyMetricsFilterMode = DashboardDateFilterMode.thisMonth;
+                    _keyMetricsSelectedDate = _normalizeToMonth(picked);
+                  });
+                  _loadMetrics();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.event_available_rounded, color: _primaryAqua),
+                title: const Text('Specific Calendar Day'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final now = DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _keyMetricsSpecificDate ?? now,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2035),
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _keyMetricsFilterMode = DashboardDateFilterMode.customDay;
+                    _keyMetricsSpecificDate = picked;
+                  });
+                  _loadMetrics();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.tune_rounded, color: _primaryAqua),
+                title: const Text('Custom Date Range'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final picked = await showDateRangePicker(
+                    context: context,
+                    initialDateRange: DateTimeRange(
+                      start: _keyMetricsRangeStart,
+                      end: _keyMetricsRangeEnd,
+                    ),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2035),
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _keyMetricsFilterMode = DashboardDateFilterMode.customRange;
+                    _keyMetricsRangeStart = picked.start;
+                    _keyMetricsRangeEnd = picked.end;
+                  });
+                  _loadMetrics();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.all_inclusive_rounded, color: _primaryAqua),
+                title: const Text('All Time History'),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  setState(() => _keyMetricsFilterMode = DashboardDateFilterMode.allTime);
+                  _loadMetrics();
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
-
-    if (picked == null || !mounted) return;
-    setState(() => _keyMetricsSelectedDate = _normalizeToMonth(picked));
-    _loadMetrics();
   }
 
   Widget _buildKeyMetricsMonthPickerButton() {
     return OutlinedButton.icon(
-      onPressed: _pickKeyMetricsMonth,
+      onPressed: _pickKeyMetricsDate,
       style: OutlinedButton.styleFrom(
         foregroundColor: AppDesign.navySoft,
         side: const BorderSide(color: AppDesign.border),
@@ -1084,7 +1273,7 @@ class _HomePageState extends State<HomePage> {
       ),
       icon: const Icon(Icons.calendar_month_rounded, size: 14),
       label: Text(
-        _formatKeyMetricsSelectedMonth(),
+        _formatKeyMetricsSelectedDate(),
         style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
       ),
     );

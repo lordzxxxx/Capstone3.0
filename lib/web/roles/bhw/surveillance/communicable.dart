@@ -60,7 +60,10 @@ Widget _buildHighlightedVitalLabelText(
     spans.add(
       TextSpan(
         text: text.substring(match.start, match.end),
-        style: baseStyle.copyWith(color: const Color(0xFF60A5FA)),
+        style: baseStyle.copyWith(
+          color: const Color(0xFF2F80ED),
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
     start = match.end;
@@ -838,18 +841,50 @@ class _CommunicablePageState extends State<CommunicablePage> {
   }
 
   Widget _buildPatientCard(Map<String, dynamic> patient) {
-    final patientId = patient['id']?.toString() ?? '';
+    final patientId = patient['id']?.toString() ??
+        patient['patientId']?.toString() ??
+        patient['linkedPatientId']?.toString() ??
+        '';
     final isSelected =
         patientId.isNotEmpty && _getSelectedPatientIds.contains(patientId);
-    final patientName = patient['patientName']?.toString() ?? 'Unknown';
-    final age = patient['age']?.toString() ?? 'N/A';
-    final gender = patient['gender']?.toString() ?? 'N/A';
-    final condition = patient['condition']?.toString().trim() ?? 'No details';
-    final treatment =
-        patient['treatment']?.toString().trim() ?? 'No treatment plan';
-    final lastVisit = _formatDate(patient['lastVisit']?.toString() ?? 'N/A');
-    final nextVisit = _formatDate(patient['nextVisit']?.toString() ?? 'N/A');
-    final status = patient['currentStatus']?.toString() ?? 'Pending';
+    final patientName = (patient['patientName'] ??
+            patient['name'] ??
+            patient['patient'] ??
+            patient['fullName'])
+        ?.toString() ??
+        'Unknown Patient';
+    final age = (patient['age'])?.toString() ?? 'N/A';
+    final gender =
+        (patient['gender'] ?? patient['sex'])?.toString() ?? 'Unknown';
+    final condition = (patient['condition'] ??
+            patient['disease'] ??
+            patient['diagnosis'] ??
+            patient['caseClassification'])
+        ?.toString()
+        .trim() ??
+        'No details';
+    final treatment = (patient['treatment'] ??
+            patient['medication'] ??
+            patient['plan'] ??
+            patient['remarks'])
+        ?.toString()
+        .trim() ??
+        'No treatment plan';
+    final lastVisit = _formatDate(
+      patient['lastVisit'] ??
+          patient['date'] ??
+          patient['lastCheckup'] ??
+          patient['consultationDate'] ??
+          patient['createdAt'],
+    );
+    final nextVisit = _formatDate(
+      patient['nextVisit'] ??
+          patient['nextAppointment'] ??
+          patient['followUpDate'],
+    );
+    final status =
+        (patient['currentStatus'] ?? patient['status'])?.toString() ??
+        'Pending';
     final statusColor = _getStatusColor(status);
 
     const rowBg = Colors.white;
@@ -925,9 +960,9 @@ class _CommunicablePageState extends State<CommunicablePage> {
                         ),
                         softWrap: true,
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
-                        '$age years old',
+                        '$age years old | $gender',
                         style: const TextStyle(
                           color: mutedText,
                           fontSize: 11,
@@ -935,16 +970,18 @@ class _CommunicablePageState extends State<CommunicablePage> {
                         ),
                         softWrap: true,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        gender,
-                        style: const TextStyle(
-                          color: mutedText,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
+                      if (patientId.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          'ID: $patientId',
+                          style: const TextStyle(
+                            color: _primaryAqua,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          softWrap: true,
                         ),
-                        softWrap: true,
-                      ),
+                      ],
                     ],
                   ),
                 ),

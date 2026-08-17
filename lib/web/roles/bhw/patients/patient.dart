@@ -2217,12 +2217,17 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   ) {
     final firstName = _safePatientValue(patient['firstName'], '');
     final surname = _safePatientValue(patient['surname'], '');
-    final legacyPatientName = '$firstName $surname'.trim().isEmpty
+    final middleName = _safePatientValue(patient['middleName'], '');
+    final constructedName = [firstName, middleName, surname]
+        .where((s) => s.isNotEmpty)
+        .join(' ')
+        .trim();
+    final legacyPatientName = constructedName.isEmpty
         ? 'Unknown'
-        : '$firstName $surname'.trim();
+        : constructedName;
     final patientName = _safePatientValue(
       patient['fullName'],
-      legacyPatientName,
+      _safePatientValue(patient['name'], legacyPatientName),
     );
     final patientId = _safePatientValue(
       patient['patientId'],
@@ -2233,16 +2238,35 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       patient['sex'],
       _safePatientValue(patient['gender']),
     );
-    final barangay = _safePatientValue(patient['barangay']);
-    final householdId = _safePatientValue(patient['householdId']);
+    final barangay = _safePatientValue(
+      patient['barangay'],
+      _safePatientValue(
+        patient['assignedBarangay'],
+        _safePatientValue(patient['address']),
+      ),
+    );
+    final householdId = _safePatientValue(
+      patient['householdId'],
+      _safePatientValue(
+        patient['householdNo'],
+        _safePatientValue(patient['householdNumber']),
+      ),
+    );
     final status = _safePatientValue(patient['status'], 'Active');
     final lastVisitParts = _formatPatientDateTimeParts(
-      patient['lastVisit'] ?? patient['lastCheckup'] ?? patient['updatedAt'],
+      patient['lastVisit'] ??
+          patient['lastCheckup'] ??
+          patient['updatedAt'] ??
+          patient['createdAt'] ??
+          patient['registrationDate'],
     );
     final lastVisit = lastVisitParts['date'] ?? 'N/A';
     final assignedBhw = _safePatientValue(
       patient['assignedBhw'],
-      _safePatientValue(patient['registeredBy'], 'Current BHW'),
+      _safePatientValue(
+        patient['registeredBy'],
+        _safePatientValue(patient['bhwName'], 'Current BHW'),
+      ),
     );
 
     final statusColor = _getPatientStatusColor(status);

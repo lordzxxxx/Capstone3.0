@@ -21,7 +21,9 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient_history_dialog
 import 'package:mycapstone_project/web/roles/bhw/patients/shared_patient_search_panel.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
+import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF071A33);
@@ -48,6 +50,13 @@ class _MorbidityPageState extends State<MorbidityPage> {
   String _searchQuery = '';
   String _statusFilter = 'All';
   String _severityFilter = 'All';
+  String _selectedBarangay = 'All';
+  String _selectedClassification = 'All';
+  String _selectedAgeGroup = 'All';
+  String _sortField = 'Name';
+  bool _sortAscending = true;
+  DateTime? _fromDate;
+  DateTime? _toDate;
   int _currentPage = 1;
   int _rowsPerPage = 10;
   List<Map<String, dynamic>> _reportRecords = const [];
@@ -56,9 +65,21 @@ class _MorbidityPageState extends State<MorbidityPage> {
   Timer? _sharedPatientSearchDebounce;
   late HealthModuleView _activeView;
 
+  // Insights Date Filter State
+  DashboardDateFilterMode _insightsDateFilterMode =
+      DashboardDateFilterMode.allTime;
+  DateTime? _insightsCustomDate;
+  DateTime? _insightsSelectedMonth;
+  DateTime _insightsRangeStart =
+      DateTime.now().subtract(const Duration(days: 6));
+  DateTime _insightsRangeEnd = DateTime.now();
+
   @override
   void initState() {
     super.initState();
+    _insightsSelectedMonth ??= DateTime.now();
+    _insightsRangeStart = DateTime.now().subtract(const Duration(days: 6));
+    _insightsRangeEnd = DateTime.now();
     _activeView = healthModuleViewFromUrl();
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => persistHealthModuleView(WebRoutes.bhwMorbidity, _activeView),
@@ -252,6 +273,545 @@ class _MorbidityPageState extends State<MorbidityPage> {
     );
   }
 
+  DateTime? _parseRecordDate(dynamic value) {
+    if (value is DateTime) return value;
+    if (value == null) return null;
+    try {
+      final dynamic converted = (value as dynamic).toDate();
+      if (converted is DateTime) return converted;
+    } catch (_) {}
+    final text = value.toString().trim();
+    if (text.isEmpty) return null;
+    final parsed = DateTime.tryParse(text);
+    if (parsed != null) return parsed;
+    return null;
+  }
+
+  DateTime? _coerceMorbidityDate(Map<String, dynamic> record) {
+    return _parseRecordDate(record['reportedDate']) ??
+        _parseRecordDate(record['dateReported']) ??
+        _parseRecordDate(record['datetime']) ??
+        _parseRecordDate(record['date']) ??
+        _parseRecordDate(record['consultationDate']) ??
+        _parseRecordDate(record['createdAt']) ??
+        _parseRecordDate(record['timestamp']);
+  }
+
+  bool _matchesInsightsDateFilter(DateTime? date) {
+    if (_insightsDateFilterMode == DashboardDateFilterMode.allTime) return true;
+    if (date == null) return false;
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
+    switch (_insightsDateFilterMode) {
+      case DashboardDateFilterMode.today:
+        return !date.isBefore(todayStart) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.last7Days:
+        final start = todayStart.subtract(const Duration(days: 6));
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.last30Days:
+        final start = todayStart.subtract(const Duration(days: 29));
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.thisMonth:
+        final targetMonth = _insightsSelectedMonth ?? now;
+        return date.year == targetMonth.year && date.month == targetMonth.month;
+      case DashboardDateFilterMode.last6Months:
+        final start = DateTime(now.year, now.month - 5, 1);
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case DashboardDateFilterMode.customDay:
+        final target = _insightsCustomDate ?? now;
+        final start = DateTime(target.year, target.month, target.day);
+        final end = DateTime(target.year, target.month, target.day, 23, 59, 59);
+        return !date.isBefore(start) && !date.isAfter(end);
+      case DashboardDateFilterMode.customRange:
+        final start = DateTime(
+          _insightsRangeStart.year,
+          _insightsRangeStart.month,
+          _insightsRangeStart.day,
+        );
+        final end = DateTime(
+          _insightsRangeEnd.year,
+          _insightsRangeEnd.month,
+          _insightsRangeEnd.day,
+          23,
+          59,
+          59,
+        );
+        return !date.isBefore(start) && !date.isAfter(end);
+      case DashboardDateFilterMode.allTime:
+        return true;
+    }
+  }
+
+  String _monthLabelShort(int month) {
+    const labels = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    if (month < 1 || month > 12) return '';
+    return labels[month - 1];
+  }
+
+  String _monthLabelLong(int month) {
+    const labels = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    if (month < 1 || month > 12) return '';
+    return labels[month - 1];
+  }
+
+  String _activeInsightsWindowLabel([DashboardDateFilterMode? mode]) {
+    final activeMode = mode ?? _insightsDateFilterMode;
+    final now = DateTime.now();
+    try {
+      switch (activeMode) {
+        case DashboardDateFilterMode.today:
+          return 'Today (${_monthLabelShort(now.month)} ${now.day}, ${now.year})';
+        case DashboardDateFilterMode.last7Days:
+          final start = now.subtract(const Duration(days: 6));
+          return 'Last 7 Days (${_monthLabelShort(start.month)} ${start.day} - ${_monthLabelShort(now.month)} ${now.day})';
+        case DashboardDateFilterMode.last30Days:
+          final start = now.subtract(const Duration(days: 29));
+          return 'Last 30 Days (${_monthLabelShort(start.month)} ${start.day} - ${_monthLabelShort(now.month)} ${now.day})';
+        case DashboardDateFilterMode.thisMonth:
+          final target = _insightsSelectedMonth ?? now;
+          return '${_monthLabelLong(target.month)} ${target.year}';
+        case DashboardDateFilterMode.last6Months:
+          final start = DateTime(now.year, now.month - 5, 1);
+          return 'Last 6 Months (${_monthLabelShort(start.month)} ${start.year} - ${_monthLabelShort(now.month)} ${now.year})';
+        case DashboardDateFilterMode.customDay:
+          final d = _insightsCustomDate ?? now;
+          return '${_monthLabelLong(d.month)} ${d.day}, ${d.year}';
+        case DashboardDateFilterMode.customRange:
+          final s = _insightsRangeStart;
+          final e = _insightsRangeEnd;
+          return '${_monthLabelShort(s.month)} ${s.day} - ${_monthLabelShort(e.month)} ${e.day}, ${e.year}';
+        case DashboardDateFilterMode.allTime:
+          return 'All Time History';
+      }
+    } catch (_) {}
+    return 'All Time History';
+  }
+
+  Widget _buildInsightsFilterBar() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWideHeader = constraints.maxWidth > 760;
+        final filterBorderColor = Colors.black.withValues(alpha: 0.12);
+
+        final headerCopy = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Morbidity Surveillance & Disease Filter',
+              style: TextStyle(
+                color: _lightOffWhite,
+                fontSize: 15.5,
+                fontWeight: FontWeight.w800,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Filter diagnosis counts, active follow-ups, severe cases, and disease breakdowns by date. Currently showing ${_activeInsightsWindowLabel().toLowerCase()}.',
+              maxLines: isWideHeader ? 2 : 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: _mutedCoolGray, fontSize: 11, height: 1.35),
+            ),
+          ],
+        );
+
+        final activeWindowCard = Container(
+          width: isWideHeader ? 230 : double.infinity,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: _primaryAqua.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.filter_alt_rounded, size: 13, color: _primaryAqua),
+                  SizedBox(width: 5),
+                  Text(
+                    'Active Window',
+                    style: TextStyle(
+                      color: _primaryAqua,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _activeInsightsWindowLabel(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _lightOffWhite,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Morbidity metrics auto-synced',
+                style: TextStyle(color: _mutedCoolGray, fontSize: 9.5),
+              ),
+            ],
+          ),
+        );
+
+        final filterChips = <Widget>[
+          _buildInsightsFilterChip(
+            'All Time',
+            Icons.all_inclusive_rounded,
+            DashboardDateFilterMode.allTime,
+          ),
+          _buildInsightsFilterChip(
+            'Today',
+            Icons.today_rounded,
+            DashboardDateFilterMode.today,
+          ),
+          _buildInsightsFilterChip(
+            'Last 7 Days',
+            Icons.calendar_view_week_rounded,
+            DashboardDateFilterMode.last7Days,
+          ),
+          _buildInsightsFilterChip(
+            'Last 30 Days',
+            Icons.date_range_rounded,
+            DashboardDateFilterMode.last30Days,
+          ),
+          _buildInsightsFilterChip(
+            'This Month',
+            Icons.calendar_month_rounded,
+            DashboardDateFilterMode.thisMonth,
+          ),
+          _buildInsightsFilterChip(
+            'Last 6 Months',
+            Icons.stacked_bar_chart_rounded,
+            DashboardDateFilterMode.last6Months,
+          ),
+          OutlinedButton.icon(
+            onPressed: _showInsightsDateFilterPickerModal,
+            icon: const Icon(Icons.tune_rounded, size: 14),
+            label: Text(
+              _insightsDateFilterMode == DashboardDateFilterMode.customDay ||
+                      _insightsDateFilterMode ==
+                          DashboardDateFilterMode.customRange
+                  ? 'Custom (${_activeInsightsWindowLabel()})'
+                  : 'Pick Date / Range...',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: (_insightsDateFilterMode ==
+                          DashboardDateFilterMode.customDay ||
+                      _insightsDateFilterMode ==
+                          DashboardDateFilterMode.customRange)
+                  ? _primaryAqua
+                  : _lightOffWhite,
+              backgroundColor: (_insightsDateFilterMode ==
+                          DashboardDateFilterMode.customDay ||
+                      _insightsDateFilterMode ==
+                          DashboardDateFilterMode.customRange)
+                  ? _primaryAqua.withValues(alpha: 0.12)
+                  : Colors.white,
+              side: BorderSide(
+                color: (_insightsDateFilterMode ==
+                            DashboardDateFilterMode.customDay ||
+                        _insightsDateFilterMode ==
+                            DashboardDateFilterMode.customRange)
+                    ? _primaryAqua
+                    : filterBorderColor,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ];
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _primaryAqua.withValues(alpha: 0.15)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isWideHeader)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: headerCopy),
+                    const SizedBox(width: 16),
+                    activeWindowCard,
+                  ],
+                )
+              else ...[
+                headerCopy,
+                const SizedBox(height: 10),
+                activeWindowCard,
+              ],
+              const SizedBox(height: 14),
+              Wrap(spacing: 8, runSpacing: 8, children: filterChips),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInsightsFilterChip(
+    String label,
+    IconData icon,
+    DashboardDateFilterMode mode,
+  ) {
+    final isSelected = _insightsDateFilterMode == mode;
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () {
+        if (isSelected) return;
+        setState(() {
+          _insightsDateFilterMode = mode;
+          if (mode == DashboardDateFilterMode.thisMonth) {
+            _insightsSelectedMonth = DateTime.now();
+          }
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? _primaryAqua : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? _primaryAqua
+                : Colors.black.withValues(alpha: 0.12),
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: _primaryAqua.withValues(alpha: 0.28),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected ? Colors.white : _lightOffWhite,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected ? Colors.white : _lightOffWhite,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showInsightsDateFilterPickerModal() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _primaryAqua.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.date_range_rounded,
+                  color: _primaryAqua,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Filter Morbidity Insights',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: _lightOffWhite,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(
+                  Icons.event_available_rounded,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'Specific Calendar Date',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: const Text('Filter records for a specific day'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final now = DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _insightsCustomDate ?? now,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2035),
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _insightsDateFilterMode =
+                        DashboardDateFilterMode.customDay;
+                    _insightsCustomDate = picked;
+                  });
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.calendar_month_rounded,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'Select Month & Year',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  'Pick target month (Current: ${_monthLabelLong((_insightsSelectedMonth ?? DateTime.now()).month)})',
+                ),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final target = _insightsSelectedMonth ?? DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: target,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2035),
+                    initialDatePickerMode: DatePickerMode.year,
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _insightsDateFilterMode =
+                        DashboardDateFilterMode.thisMonth;
+                    _insightsSelectedMonth =
+                        DateTime(picked.year, picked.month);
+                  });
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.date_range_outlined,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'Custom Date Range',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: const Text('Select custom start and end dates'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final picked = await showDateRangePicker(
+                    context: context,
+                    initialDateRange: DateTimeRange(
+                      start: _insightsRangeStart,
+                      end: _insightsRangeEnd,
+                    ),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2035),
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _insightsDateFilterMode =
+                        DashboardDateFilterMode.customRange;
+                    _insightsRangeStart = picked.start;
+                    _insightsRangeEnd = picked.end;
+                  });
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(
+                  Icons.all_inclusive_rounded,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'Quick: All Time Records',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  setState(() {
+                    _insightsDateFilterMode =
+                        DashboardDateFilterMode.allTime;
+                  });
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -303,7 +863,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
         ],
       ),
       body: ColoredBox(
-        color: Color(0xFFF5F7FA),
+        color: const Color(0xFFF5F7FA),
         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: _morbidityStream(),
           builder: (context, snapshot) {
@@ -326,7 +886,10 @@ class _MorbidityPageState extends State<MorbidityPage> {
             final records = _normalizeRecords(snapshot.data!.docs);
             final filteredRecords = _applyFilters(records);
             _reportRecords = filteredRecords;
-            final summary = _summarizeRecords(records);
+            final insightsRecords = records
+                .where((r) => _matchesInsightsDateFilter(_coerceMorbidityDate(r)))
+                .toList(growable: false);
+            final summary = _summarizeRecords(insightsRecords);
             final effectiveRowsPerPage = _rowsPerPage > 0 ? _rowsPerPage : 10;
             final totalPages = filteredRecords.isEmpty
                 ? 1
@@ -365,11 +928,13 @@ class _MorbidityPageState extends State<MorbidityPage> {
                   ),
                   const SizedBox(height: 16),
                   if (_activeView == HealthModuleView.insights) ...[
-                    if (records.isEmpty)
+                    _buildInsightsFilterBar(),
+                    const SizedBox(height: 20),
+                    if (insightsRecords.isEmpty)
                       const ModuleEmptyState(
-                        title: 'No morbidity insights yet',
+                        title: 'No morbidity insights for this period',
                         message:
-                            'Linked check-up morbidity entries will appear here when records become available.',
+                            'Try selecting a different date range to view morbidity trends and case records.',
                         icon: Icons.analytics_outlined,
                       )
                     else ...[
@@ -517,6 +1082,8 @@ class _MorbidityPageState extends State<MorbidityPage> {
               _safeText(record['disease']),
               _safeText(record['caseClassification']),
               _safeText(record['remarks']),
+              _safeText(record['severity']),
+              _safeText(record['status']),
             ].any(
               (value) =>
                   value.toLowerCase().contains(_searchQuery.toLowerCase()),
@@ -532,8 +1099,98 @@ class _MorbidityPageState extends State<MorbidityPage> {
           : _safeText(record['severity']).toLowerCase() ==
                 _severityFilter.toLowerCase();
 
-      return searchMatch && statusMatch && severityMatch;
+      final classificationMatch = _selectedClassification == 'All'
+          ? true
+          : _safeText(record['caseClassification']).toLowerCase() ==
+                _selectedClassification.toLowerCase();
+
+      final source = record['sourceRecord'] is Map
+          ? Map<String, dynamic>.from(record['sourceRecord'] as Map)
+          : <String, dynamic>{};
+      final barangay = _safeText(
+        record['barangay'] ??
+            record['address'] ??
+            source['barangay'] ??
+            source['address'],
+      ).toLowerCase();
+      final barangayMatch = _selectedBarangay == 'All'
+          ? true
+          : barangay.contains(_selectedBarangay.toLowerCase());
+
+      bool ageMatch = true;
+      if (_selectedAgeGroup != 'All') {
+        final age =
+            int.tryParse(_safeText(record['age'] ?? source['age'])) ?? -1;
+        if (age >= 0) {
+          switch (_selectedAgeGroup) {
+            case '0–17':
+              if (age > 17) ageMatch = false;
+              break;
+            case '18–59':
+              if (age < 18 || age > 59) ageMatch = false;
+              break;
+            case '60+':
+              if (age < 60) ageMatch = false;
+              break;
+          }
+        }
+      }
+
+      bool dateMatch = true;
+      if (_fromDate != null || _toDate != null) {
+        final d = _coerceMorbidityDate(record);
+        if (d != null) {
+          if (_fromDate != null && d.isBefore(_fromDate!)) {
+            dateMatch = false;
+          }
+          if (_toDate != null && d.isAfter(_toDate!)) {
+            dateMatch = false;
+          }
+        }
+      }
+
+      return searchMatch &&
+          statusMatch &&
+          severityMatch &&
+          classificationMatch &&
+          barangayMatch &&
+          ageMatch &&
+          dateMatch;
     }).toList();
+
+    // Sort
+    filtered.sort((a, b) {
+      int comparison = 0;
+      switch (_sortField) {
+        case 'Date Recorded':
+          final aDate = _coerceMorbidityDate(a) ?? DateTime(1970);
+          final bDate = _coerceMorbidityDate(b) ?? DateTime(1970);
+          comparison = aDate.compareTo(bDate);
+          break;
+        case 'Disease':
+          final aDisease = _safeText(a['disease']).toLowerCase();
+          final bDisease = _safeText(b['disease']).toLowerCase();
+          comparison = aDisease.compareTo(bDisease);
+          break;
+        case 'Severity':
+          final aSev = _safeText(a['severity']).toLowerCase();
+          final bSev = _safeText(b['severity']).toLowerCase();
+          comparison = aSev.compareTo(bSev);
+          break;
+        case 'Classification':
+          final aClass = _safeText(a['caseClassification']).toLowerCase();
+          final bClass = _safeText(b['caseClassification']).toLowerCase();
+          comparison = aClass.compareTo(bClass);
+          break;
+        case 'Name':
+        default:
+          final aName = _safeText(a['patientName']).toLowerCase();
+          final bName = _safeText(b['patientName']).toLowerCase();
+          comparison = aName.compareTo(bName);
+          break;
+      }
+      return _sortAscending ? comparison : -comparison;
+    });
 
     return CurrentTableRecordUtils.collapseToLatestPerEntity(
       filtered,
@@ -1086,85 +1743,62 @@ class _MorbidityPageState extends State<MorbidityPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '$filteredCount of $totalCount morbidity records shown',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: _mutedCoolGray),
-        ),
-        const SizedBox(height: 16),
-        WebFilterSurface(
-          padding: const EdgeInsets.all(10),
-          children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final searchField = WebSearchField(
-                  controller: _searchController,
-                  hintText:
-                      'Search patient, disease, classification, or linked IDs',
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                      _currentPage = 1;
-                    });
-                    _scheduleSharedPatientSearch(value);
-                  },
-                  onClear: () {
-                    _searchController.clear();
-                    setState(() {
-                      _searchQuery = '';
-                      _currentPage = 1;
-                    });
-                    _scheduleSharedPatientSearch('');
-                  },
-                );
-                final statusFilter = _FilterDropdown(
-                  label: 'Status',
-                  value: _statusFilter,
-                  options: _statusOptions,
-                  onChanged: (value) => setState(() {
-                    _statusFilter = value;
-                    _currentPage = 1;
-                  }),
-                );
-                final severityFilter = _FilterDropdown(
-                  label: 'Severity',
-                  value: _severityFilter,
-                  options: _severityOptions,
-                  onChanged: (value) => setState(() {
-                    _severityFilter = value;
-                    _currentPage = 1;
-                  }),
-                );
-
-                if (constraints.maxWidth < 820) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      searchField,
-                      const SizedBox(height: 12),
-                      statusFilter,
-                      const SizedBox(height: 12),
-                      severityFilter,
-                    ],
-                  );
-                }
-
-                return Row(
-                  children: [
-                    Expanded(flex: 5, child: searchField),
-                    const SizedBox(width: 12),
-                    Expanded(flex: 2, child: statusFilter),
-                    const SizedBox(width: 12),
-                    Expanded(flex: 2, child: severityFilter),
-                  ],
-                );
-              },
+        // Top Search Bar
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _primaryAqua.withValues(alpha: 0.3),
+              width: 1,
             ),
-          ],
+          ),
+          child: TextField(
+            controller: _searchController,
+            style: const TextStyle(color: Color(0xFF0F172A), fontSize: 13),
+            decoration: InputDecoration(
+              hintText:
+                  'Search by patient, disease, classification, remarks, or linked IDs...',
+              hintStyle: TextStyle(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.5),
+                fontSize: 13,
+              ),
+              prefixIcon: Icon(
+                Icons.search,
+                color: _primaryAqua.withValues(alpha: 0.8),
+                size: 18,
+              ),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon:
+                          const Icon(Icons.clear, color: Colors.grey, size: 18),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchQuery = '';
+                          _currentPage = 1;
+                        });
+                        _scheduleSharedPatientSearch('');
+                      },
+                    )
+                  : null,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+            ),
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+                _currentPage = 1;
+              });
+              _scheduleSharedPatientSearch(value);
+            },
+          ),
         ),
         if (_searchQuery.trim().isNotEmpty || _isSearchingSharedPatients) ...[
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           SharedPatientSearchPanel(
             query: _searchQuery,
             results: _sharedPatientMatches,
@@ -1173,8 +1807,433 @@ class _MorbidityPageState extends State<MorbidityPage> {
             onPrimaryAction: _showSharedPatientTimeline,
           ),
         ],
+        const SizedBox(height: 12),
+        // Primary Filter Bar - Status + Date Range
+        Row(
+          children: [
+            // Status Dropdown Container
+            Expanded(
+              flex: 2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEDF3FA),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF2F80ED).withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _statusFilter,
+                    icon: const Icon(
+                      Icons.filter_list,
+                      color: Color(0xFF2F80ED),
+                      size: 20,
+                    ),
+                    isExpanded: true,
+                    dropdownColor: Colors.white,
+                    style: const TextStyle(
+                      color: Color(0xFF0F172A),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    items: _statusOptions.map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _statusFilter = newValue;
+                          _currentPage = 1;
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Date Range Container
+            Expanded(
+              flex: 2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2F80ED).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF2F80ED).withValues(alpha: 0.25),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.date_range,
+                      size: 16,
+                      color: Color(0xFF2F80ED),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildDatePickerButton(
+                        label: 'From',
+                        date: _fromDate,
+                        onTap: () => _selectDateForMorbidity(true),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: _buildDatePickerButton(
+                        label: 'To',
+                        date: _toDate,
+                        onTap: () => _selectDateForMorbidity(false),
+                      ),
+                    ),
+                    if (_fromDate != null || _toDate != null)
+                      IconButton(
+                        icon: const Icon(
+                          Icons.clear,
+                          size: 16,
+                          color: Colors.red,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _fromDate = null;
+                            _toDate = null;
+                            _currentPage = 1;
+                          });
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Advanced Filters
+        _buildMorbidityAdvancedFilters(),
       ],
     );
+  }
+
+  Widget _buildMorbidityAdvancedFilters() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double itemWidth = constraints.maxWidth < 700
+            ? (constraints.maxWidth - 24) / 2
+            : constraints.maxWidth < 1100
+            ? (constraints.maxWidth - 48) / 4
+            : (constraints.maxWidth - 64) / 5;
+        final responsiveWidth = itemWidth.clamp(132.0, 178.0);
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceLight,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _registryDropdown(
+                label: 'Barangay',
+                value: _selectedBarangay,
+                items: const [
+                  'All',
+                  'Barangay 1',
+                  'Barangay 2',
+                  'Barangay 3',
+                  'Barangay 4',
+                  'Barangay 5',
+                  'Barangay 6',
+                  'Barangay 7',
+                  'Barangay 8',
+                ],
+                width: responsiveWidth,
+                onChanged: (val) {
+                  setState(() {
+                    _selectedBarangay = val ?? 'All';
+                    _currentPage = 1;
+                  });
+                },
+              ),
+              _registryDropdown(
+                label: 'Classification',
+                value: _selectedClassification,
+                items: const [
+                  'All',
+                  'General',
+                  'Communicable',
+                  'Non-Communicable',
+                ],
+                width: responsiveWidth,
+                onChanged: (val) {
+                  setState(() {
+                    _selectedClassification = val ?? 'All';
+                    _currentPage = 1;
+                  });
+                },
+              ),
+              _registryDropdown(
+                label: 'Severity',
+                value: _severityFilter,
+                items: _severityOptions,
+                width: responsiveWidth,
+                onChanged: (val) {
+                  setState(() {
+                    _severityFilter = val ?? 'All';
+                    _currentPage = 1;
+                  });
+                },
+              ),
+              _registryDropdown(
+                label: 'Age Group',
+                value: _selectedAgeGroup,
+                items: const ['All', '0–17', '18–59', '60+'],
+                width: responsiveWidth,
+                onChanged: (val) {
+                  setState(() {
+                    _selectedAgeGroup = val ?? 'All';
+                    _currentPage = 1;
+                  });
+                },
+              ),
+              _registryDropdown(
+                label: 'Sort By',
+                value: _sortField,
+                items: const [
+                  'Name',
+                  'Date Recorded',
+                  'Disease',
+                  'Severity',
+                  'Classification',
+                ],
+                width: responsiveWidth,
+                onChanged: (val) {
+                  setState(() {
+                    _sortField = val ?? 'Name';
+                    _currentPage = 1;
+                  });
+                },
+              ),
+              IconButton.filledTonal(
+                tooltip: _sortAscending ? 'Ascending' : 'Descending',
+                icon: Icon(
+                  _sortAscending
+                      ? Icons.arrow_upward_rounded
+                      : Icons.arrow_downward_rounded,
+                  size: 18,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFEDF3FA),
+                  foregroundColor: const Color(0xFF2F80ED),
+                  padding: const EdgeInsets.all(10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                ),
+                onPressed: () {
+                  setState(() => _sortAscending = !_sortAscending);
+                },
+              ),
+              if (_selectedBarangay != 'All' ||
+                  _selectedClassification != 'All' ||
+                  _severityFilter != 'All' ||
+                  _selectedAgeGroup != 'All' ||
+                  _sortField != 'Name' ||
+                  !_sortAscending ||
+                  _statusFilter != 'All' ||
+                  _fromDate != null ||
+                  _toDate != null)
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _selectedBarangay = 'All';
+                      _selectedClassification = 'All';
+                      _severityFilter = 'All';
+                      _selectedAgeGroup = 'All';
+                      _sortField = 'Name';
+                      _sortAscending = true;
+                      _statusFilter = 'All';
+                      _fromDate = null;
+                      _toDate = null;
+                      _currentPage = 1;
+                    });
+                  },
+                  icon: const Icon(
+                    Icons.filter_alt_off_outlined,
+                    size: 15,
+                    color: AppColors.textSecondary,
+                  ),
+                  label: const Text(
+                    'Clear Filters',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _registryDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    double width = 140,
+  }) {
+    return SizedBox(
+      width: width,
+      child: DropdownButtonFormField<String>(
+        value: items.contains(value) ? value : items.first,
+        isDense: true,
+        style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(
+            fontSize: 11,
+            color: AppColors.textSecondary,
+          ),
+          floatingLabelStyle: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFF2F80ED),
+            fontWeight: FontWeight.w700,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 8,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: const BorderSide(color: Color(0xFF2F80ED), width: 1.5),
+          ),
+        ),
+        items: items
+            .map(
+              (item) => DropdownMenuItem(
+                value: item,
+                child: Text(
+                  item,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            )
+            .toList(),
+        onChanged: onChanged,
+      ),
+    );
+  }
+
+  Widget _buildDatePickerButton({
+    required String label,
+    required DateTime? date,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: const Color(0xFF2F80ED).withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              date == null ? label : '${date.day}/${date.month}',
+              style: TextStyle(
+                color: date == null
+                    ? const Color(0xFF0F172A).withValues(alpha: 0.6)
+                    : const Color(0xFF0F172A),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const Icon(
+              Icons.calendar_today,
+              size: 12,
+              color: Color(0xFF2F80ED),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectDateForMorbidity(bool isFromDate) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: _primaryAqua,
+              onPrimary: Colors.white,
+              onSurface: _darkDeepTeal,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (isFromDate) {
+          _fromDate = picked;
+          if (_toDate != null && _toDate!.isBefore(_fromDate!)) {
+            _toDate = picked;
+          }
+        } else {
+          _toDate = picked;
+        }
+        _currentPage = 1;
+      });
+    }
   }
 
   Map<String, dynamic> _buildLinkedCheckupPayload(Map<String, dynamic> record) {
@@ -1651,140 +2710,250 @@ class _MorbidityPageState extends State<MorbidityPage> {
               return Dialog(
                 backgroundColor: Colors.transparent,
                 insetPadding: const EdgeInsets.symmetric(
-                  horizontal: 28,
+                  horizontal: 24,
                   vertical: 24,
                 ),
                 child: Container(
-                  constraints: const BoxConstraints(maxWidth: 720),
+                  constraints: const BoxConstraints(maxWidth: 1050),
                   decoration: BoxDecoration(
-                    color: _darkDeepTeal,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: _primaryAqua.withValues(alpha: 0.3),
-                      width: 1.5,
-                    ),
+                    color: const Color(0xFFF5F7FA),
+                    borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Edit Linked Morbidity Record',
-                                    style: TextStyle(
-                                      color: _lightOffWhite,
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w700,
+                        // Modal Header Bar
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 22,
+                            vertical: 16,
+                          ),
+                          decoration: const BoxDecoration(
+                            color: _darkDeepTeal,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: _primaryAqua.withValues(alpha: 0.18),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.edit_note_rounded,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Edit Linked Morbidity Record',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.2,
+                                      ),
                                     ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Check-up ID: ${linkedCheckupId.isEmpty ? '-' : linkedCheckupId}',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: isSaving
+                                    ? null
+                                    : () => Navigator.of(dialogContext).pop(),
+                                icon: const Icon(Icons.close_rounded, size: 20),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: Colors.white.withValues(
+                                    alpha: 0.1,
                                   ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    'Check-up ID: ${linkedCheckupId.isEmpty ? '-' : linkedCheckupId}',
-                                    style: const TextStyle(
-                                      color: _mutedCoolGray,
-                                      fontSize: 13,
-                                    ),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Form Body
+                        Flexible(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(20),
+                            child: Container(
+                              padding: const EdgeInsets.all(18),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: _primaryAqua.withValues(alpha: 0.16),
+                                  width: 1.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.04),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
-                            ),
-                            IconButton(
-                              onPressed: isSaving
-                                  ? null
-                                  : () => Navigator.of(dialogContext).pop(),
-                              icon: const Icon(Icons.close_rounded),
-                              color: _lightOffWhite,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _buildEditTextField(
-                          controller: diseaseController,
-                          label: 'Symptoms',
-                        ),
-                        const SizedBox(height: 14),
-                        _buildEditTextField(
-                          controller: linkedPatientIdController,
-                          label: 'Linked Patient ID',
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildEditDropdown(
-                                label: 'Case Classification',
-                                value: classification,
-                                items: _classificationOptions,
-                                onChanged: (value) => setDialogState(() {
-                                  classification = value;
-                                }),
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final isWide = constraints.maxWidth >= 650;
+
+                                  final leftColumn = Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _buildEditTextField(
+                                        controller: diseaseController,
+                                        label:
+                                            'Symptoms / Diagnosed Condition',
+                                      ),
+                                      const SizedBox(height: 14),
+                                      _buildEditDropdown(
+                                        label: 'Case Classification',
+                                        value: classification,
+                                        items: _classificationOptions,
+                                        onChanged: (value) => setDialogState(
+                                          () {
+                                            classification = value;
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(height: 14),
+                                      _buildEditDropdown(
+                                        label: 'Severity',
+                                        value: severity,
+                                        items: _editableSeverityOptions,
+                                        onChanged: (value) => setDialogState(
+                                          () {
+                                            severity = value;
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  );
+
+                                  final rightColumn = Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _buildEditTextField(
+                                        controller: linkedPatientIdController,
+                                        label: 'Linked Patient ID',
+                                      ),
+                                      const SizedBox(height: 14),
+                                      _buildEditDropdown(
+                                        label: 'Status',
+                                        value: status,
+                                        items: _editableStatusOptions,
+                                        onChanged: (value) => setDialogState(
+                                          () {
+                                            status = value;
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(height: 14),
+                                      _buildEditTextField(
+                                        controller: remarksController,
+                                        label: 'Remarks',
+                                        maxLines: 3,
+                                      ),
+                                    ],
+                                  );
+
+                                  if (isWide) {
+                                    return Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(child: leftColumn),
+                                        const SizedBox(width: 18),
+                                        Expanded(child: rightColumn),
+                                      ],
+                                    );
+                                  }
+
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      leftColumn,
+                                      const SizedBox(height: 14),
+                                      rightColumn,
+                                    ],
+                                  );
+                                },
                               ),
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: _buildEditDropdown(
-                                label: 'Severity',
-                                value: severity,
-                                items: _editableSeverityOptions,
-                                onChanged: (value) => setDialogState(() {
-                                  severity = value;
-                                }),
+                          ),
+                        ),
+                        // Bottom Actions
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border(
+                              top: BorderSide(
+                                color: Colors.black.withValues(alpha: 0.08),
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        _buildEditDropdown(
-                          label: 'Status',
-                          value: status,
-                          items: _editableStatusOptions,
-                          onChanged: (value) => setDialogState(() {
-                            status = value;
-                          }),
-                        ),
-                        const SizedBox(height: 14),
-                        _buildEditTextField(
-                          controller: remarksController,
-                          label: 'Remarks',
-                          maxLines: 4,
-                        ),
-                        const SizedBox(height: 12),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              OutlinedButton(
+                              OutlinedButton.icon(
                                 onPressed: isSaving
                                     ? null
                                     : () => Navigator.of(dialogContext).pop(),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: _lightOffWhite,
                                   side: BorderSide(
-                                    color: _primaryAqua.withValues(alpha: 0.24),
+                                    color: Colors.black.withValues(alpha: 0.18),
+                                    width: 1.2,
                                   ),
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 14,
+                                    horizontal: 18,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
-                                child: const Text('Cancel'),
+                                icon: const Icon(Icons.close_rounded, size: 16),
+                                label: const Text(
+                                  'Cancel',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
                               ),
-                              ElevatedButton.icon(
+                              const SizedBox(width: 12),
+                              FilledButton.icon(
                                 onPressed: isSaving
                                     ? null
                                     : () async {
@@ -1918,20 +3087,27 @@ class _MorbidityPageState extends State<MorbidityPage> {
                                         height: 16,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          color: _darkDeepTeal,
+                                          color: Colors.white,
                                         ),
                                       )
-                                    : const Icon(Icons.save_rounded),
+                                    : const Icon(Icons.save_rounded, size: 18),
                                 label: Text(
                                   isSaving ? 'Saving...' : 'Save Changes',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
-                                style: ElevatedButton.styleFrom(
+                                style: FilledButton.styleFrom(
                                   backgroundColor: _primaryAqua,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 18,
-                                    vertical: 14,
+                                    horizontal: 22,
+                                    vertical: 12,
                                   ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  elevation: 2,
                                 ),
                               ),
                             ],
@@ -2083,16 +3259,27 @@ class _MorbidityPageState extends State<MorbidityPage> {
   InputDecoration _buildEditFieldDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.white),
+      labelStyle: const TextStyle(
+        color: _mutedCoolGray,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
       filled: true,
-      fillColor: _darkDeepTeal,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+        borderSide: BorderSide(
+          color: Colors.black.withValues(alpha: 0.12),
+          width: 1,
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+        borderSide: BorderSide(
+          color: Colors.black.withValues(alpha: 0.12),
+          width: 1,
+        ),
       ),
       focusedBorder: const OutlineInputBorder(
         borderRadius: BorderRadius.all(Radius.circular(12)),
@@ -2109,7 +3296,11 @@ class _MorbidityPageState extends State<MorbidityPage> {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      style: const TextStyle(color: _lightOffWhite),
+      style: const TextStyle(
+        color: _lightOffWhite,
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+      ),
       decoration: _buildEditFieldDecoration(label),
     );
   }
@@ -2122,7 +3313,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
   }) {
     return DropdownButtonFormField<String>(
       initialValue: value,
-      dropdownColor: _darkDeepTeal,
+      dropdownColor: Colors.white,
       style: const TextStyle(
         color: _lightOffWhite,
         fontSize: 14,
@@ -2132,7 +3323,16 @@ class _MorbidityPageState extends State<MorbidityPage> {
       decoration: _buildEditFieldDecoration(label),
       items: items
           .map(
-            (item) => DropdownMenuItem<String>(value: item, child: Text(item)),
+            (item) => DropdownMenuItem<String>(
+              value: item,
+              child: Text(
+                item,
+                style: const TextStyle(
+                  color: _lightOffWhite,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           )
           .toList(),
       onChanged: (nextValue) {
@@ -2481,18 +3681,46 @@ class _MorbidityRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final patientName = _safe(record['patientName'], 'Unknown');
-    final linkedCheckupId = _safe(record['linkedCheckupId'], '-');
-    final linkedPatientId = _safe(record['linkedPatientId'], 'Not linked');
-    final disease = _safe(record['disease'], 'Unspecified');
+    final patientName = _safe(
+      record['patientName'] ?? record['patient'] ?? record['name'],
+      'Unknown Patient',
+    );
+    final linkedCheckupId = _safe(
+      record['linkedCheckupId'] ?? record['checkupId'] ?? record['checkup_id'],
+      '-',
+    );
+    final linkedPatientId = _safe(
+      record['linkedPatientId'] ?? record['patientId'] ?? record['patient_id'],
+      'Not linked',
+    );
+    final disease = _safe(
+      record['disease'] ?? record['condition'] ?? record['diagnosis'],
+      'Unspecified',
+    );
     final caseClassification = _safe(
-      record['caseClassification'],
+      record['caseClassification'] ??
+          record['classification'] ??
+          record['type'],
       'Case classification not set',
     );
-    final severity = _safe(record['severity'], 'N/A');
-    final status = _safe(record['status'], 'Pending');
-    final remarks = _safe(record['remarks'], 'No remarks recorded');
-    final reportDateText = _formatReportedDate(record['reportedDate']);
+    final severity = _safe(
+      record['severity'] ?? record['ai_severity'],
+      'N/A',
+    );
+    final status = _safe(
+      record['status'] ?? record['caseStatus'],
+      'Pending',
+    );
+    final remarks = _safe(
+      record['remarks'] ?? record['notes'] ?? record['description'],
+      'No remarks recorded',
+    );
+    final reportDateText = _formatReportedDate(
+      record['reportedDate'] ??
+          record['date'] ??
+          record['createdAt'] ??
+          record['timestamp'],
+    );
     const rowText = Color(0xFF0B1F3A);
     const mutedText = Color(0xFF4B6075);
 

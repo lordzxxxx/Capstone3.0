@@ -2,7 +2,18 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
 
-class PatientOperationalSummary extends StatelessWidget {
+enum PatientDateFilterMode {
+  today,
+  last7Days,
+  last30Days,
+  thisMonth,
+  last6Months,
+  customDay,
+  customRange,
+  allTime,
+}
+
+class PatientOperationalSummary extends StatefulWidget {
   const PatientOperationalSummary({
     super.key,
     required this.patients,
@@ -14,10 +25,32 @@ class PatientOperationalSummary extends StatelessWidget {
   final ValueChanged<Map<String, dynamic>> onViewPatient;
   final VoidCallback onViewAll;
 
+  @override
+  State<PatientOperationalSummary> createState() =>
+      _PatientOperationalSummaryState();
+}
+
+class _PatientOperationalSummaryState extends State<PatientOperationalSummary> {
   static const _accent = Color(0xFF2F80ED);
   static const _surface = Colors.white;
   static const _text = Color(0xFF0B1F3A);
   static const _muted = Color(0xFF4B6075);
+  static const _primaryAqua = Color(0xFF008895);
+
+  PatientDateFilterMode _dateFilterMode = PatientDateFilterMode.allTime;
+  DateTime? _selectedCustomDate;
+  DateTime? _selectedMonthDate;
+  DateTime _selectedRangeStart =
+      DateTime.now().subtract(const Duration(days: 6));
+  DateTime _selectedRangeEnd = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedMonthDate ??= DateTime.now();
+    _selectedRangeStart = DateTime.now().subtract(const Duration(days: 6));
+    _selectedRangeEnd = DateTime.now();
+  }
 
   String _textValue(dynamic value) => value?.toString().trim() ?? '';
 
@@ -38,7 +71,163 @@ class PatientOperationalSummary extends StatelessWidget {
     } catch (_) {
       // The value is not a Firestore Timestamp.
     }
-    return DateTime.tryParse(value.toString());
+    final text = value.toString().trim();
+    if (text.isEmpty) return null;
+    final parsed = DateTime.tryParse(text);
+    if (parsed != null) return parsed;
+
+    final normalized = text.contains('T') ? text.split('T').first : text;
+    final slashParts = normalized.split('/');
+    if (slashParts.length == 3) {
+      final first = int.tryParse(slashParts[0]);
+      final second = int.tryParse(slashParts[1]);
+      final third = int.tryParse(slashParts[2]);
+      if (first != null && second != null && third != null) {
+        if (slashParts[0].length == 4) {
+          return DateTime(first, second, third);
+        }
+        return DateTime(third, first, second);
+      }
+    }
+    final dashParts = normalized.split('-');
+    if (dashParts.length == 3) {
+      final first = int.tryParse(dashParts[0]);
+      final second = int.tryParse(dashParts[1]);
+      final third = int.tryParse(dashParts[2]);
+      if (first != null && second != null && third != null) {
+        if (dashParts[0].length == 4) {
+          return DateTime(first, second, third);
+        }
+        return DateTime(third, first, second);
+      }
+    }
+    return null;
+  }
+
+  DateTime? _coercePatientDate(Map<String, dynamic> patient) {
+    return _date(patient['registrationDate']) ??
+        _date(patient['createdAt']) ??
+        _date(patient['date']) ??
+        _date(patient['updatedAt']) ??
+        _date(patient['timestamp']);
+  }
+
+  bool _matchesDateFilter(DateTime? date) {
+    if (_dateFilterMode == PatientDateFilterMode.allTime) return true;
+    if (date == null) return false;
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
+    switch (_dateFilterMode) {
+      case PatientDateFilterMode.today:
+        return !date.isBefore(todayStart) && !date.isAfter(todayEnd);
+      case PatientDateFilterMode.last7Days:
+        final start = todayStart.subtract(const Duration(days: 6));
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case PatientDateFilterMode.last30Days:
+        final start = todayStart.subtract(const Duration(days: 29));
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case PatientDateFilterMode.thisMonth:
+        final targetMonth = _selectedMonthDate ?? now;
+        return date.year == targetMonth.year && date.month == targetMonth.month;
+      case PatientDateFilterMode.last6Months:
+        final start = DateTime(now.year, now.month - 5, 1);
+        return !date.isBefore(start) && !date.isAfter(todayEnd);
+      case PatientDateFilterMode.customDay:
+        final target = _selectedCustomDate ?? now;
+        final start = DateTime(target.year, target.month, target.day);
+        final end = DateTime(target.year, target.month, target.day, 23, 59, 59);
+        return !date.isBefore(start) && !date.isAfter(end);
+      case PatientDateFilterMode.customRange:
+        final start = DateTime(
+          _selectedRangeStart.year,
+          _selectedRangeStart.month,
+          _selectedRangeStart.day,
+        );
+        final end = DateTime(
+          _selectedRangeEnd.year,
+          _selectedRangeEnd.month,
+          _selectedRangeEnd.day,
+          23,
+          59,
+          59,
+        );
+        return !date.isBefore(start) && !date.isAfter(end);
+      case PatientDateFilterMode.allTime:
+        return true;
+    }
+  }
+
+  String _monthLabelShort(int month) {
+    const labels = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    if (month < 1 || month > 12) return '';
+    return labels[month - 1];
+  }
+
+  String _monthLabelLong(int month) {
+    const labels = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    if (month < 1 || month > 12) return '';
+    return labels[month - 1];
+  }
+
+  String _activeWindowLabel([PatientDateFilterMode? mode]) {
+    final activeMode = mode ?? _dateFilterMode;
+    final now = DateTime.now();
+    try {
+      switch (activeMode) {
+        case PatientDateFilterMode.today:
+          return 'Today (${_monthLabelShort(now.month)} ${now.day}, ${now.year})';
+        case PatientDateFilterMode.last7Days:
+          final start = now.subtract(const Duration(days: 6));
+          return 'Last 7 Days (${_monthLabelShort(start.month)} ${start.day} - ${_monthLabelShort(now.month)} ${now.day})';
+        case PatientDateFilterMode.last30Days:
+          final start = now.subtract(const Duration(days: 29));
+          return 'Last 30 Days (${_monthLabelShort(start.month)} ${start.day} - ${_monthLabelShort(now.month)} ${now.day})';
+        case PatientDateFilterMode.thisMonth:
+          final target = _selectedMonthDate ?? now;
+          return '${_monthLabelLong(target.month)} ${target.year}';
+        case PatientDateFilterMode.last6Months:
+          final start = DateTime(now.year, now.month - 5, 1);
+          return 'Last 6 Months (${_monthLabelShort(start.month)} ${start.year} - ${_monthLabelShort(now.month)} ${now.year})';
+        case PatientDateFilterMode.customDay:
+          final d = _selectedCustomDate ?? now;
+          return '${_monthLabelLong(d.month)} ${d.day}, ${d.year}';
+        case PatientDateFilterMode.customRange:
+          final s = _selectedRangeStart;
+          final e = _selectedRangeEnd;
+          return '${_monthLabelShort(s.month)} ${s.day} - ${_monthLabelShort(e.month)} ${e.day}, ${e.year}';
+        case PatientDateFilterMode.allTime:
+          return 'All Time History';
+      }
+    } catch (_) {}
+    return 'All Time History';
   }
 
   bool _hasText(Map<String, dynamic> patient, List<String> keys) =>
@@ -77,9 +266,393 @@ class PatientOperationalSummary extends StatelessWidget {
       _truthy(patient['isPwd']) ||
       _hasText(patient, const ['disability', 'pwdType']);
 
+  Widget _buildAnalyticsFilterBar() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWideHeader = constraints.maxWidth > 760;
+        final filterBorderColor = Colors.black.withValues(alpha: 0.12);
+
+        final headerCopy = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Patient Insights & Registry Filter',
+              style: TextStyle(
+                color: _text,
+                fontSize: 15.5,
+                fontWeight: FontWeight.w800,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Filter patient demographics, registration statistics, age distribution, and alerts by date. Currently showing ${_activeWindowLabel().toLowerCase()}.',
+              maxLines: isWideHeader ? 2 : 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: _muted, fontSize: 11, height: 1.35),
+            ),
+          ],
+        );
+
+        final activeWindowCard = Container(
+          width: isWideHeader ? 230 : double.infinity,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: _accent.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _accent.withValues(alpha: 0.2)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.filter_alt_rounded, size: 13, color: _accent),
+                  SizedBox(width: 5),
+                  Text(
+                    'Active Window',
+                    style: TextStyle(
+                      color: _accent,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _activeWindowLabel(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _text,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Metrics and charts auto-synced',
+                style: TextStyle(color: _muted, fontSize: 9.5),
+              ),
+            ],
+          ),
+        );
+
+        final filterChips = <Widget>[
+          _buildFilterChip(
+            'All Time',
+            Icons.all_inclusive_rounded,
+            PatientDateFilterMode.allTime,
+          ),
+          _buildFilterChip(
+            'Today',
+            Icons.today_rounded,
+            PatientDateFilterMode.today,
+          ),
+          _buildFilterChip(
+            'Last 7 Days',
+            Icons.calendar_view_week_rounded,
+            PatientDateFilterMode.last7Days,
+          ),
+          _buildFilterChip(
+            'Last 30 Days',
+            Icons.date_range_rounded,
+            PatientDateFilterMode.last30Days,
+          ),
+          _buildFilterChip(
+            'This Month',
+            Icons.calendar_month_rounded,
+            PatientDateFilterMode.thisMonth,
+          ),
+          _buildFilterChip(
+            'Last 6 Months',
+            Icons.stacked_bar_chart_rounded,
+            PatientDateFilterMode.last6Months,
+          ),
+          OutlinedButton.icon(
+            onPressed: _showDateFilterPickerModal,
+            icon: const Icon(Icons.tune_rounded, size: 14),
+            label: Text(
+              _dateFilterMode == PatientDateFilterMode.customDay ||
+                      _dateFilterMode == PatientDateFilterMode.customRange
+                  ? 'Custom (${_activeWindowLabel()})'
+                  : 'Pick Date / Range...',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: (_dateFilterMode ==
+                          PatientDateFilterMode.customDay ||
+                      _dateFilterMode == PatientDateFilterMode.customRange)
+                  ? _accent
+                  : _text,
+              backgroundColor: (_dateFilterMode ==
+                          PatientDateFilterMode.customDay ||
+                      _dateFilterMode == PatientDateFilterMode.customRange)
+                  ? _accent.withValues(alpha: 0.12)
+                  : Colors.white,
+              side: BorderSide(
+                color: (_dateFilterMode == PatientDateFilterMode.customDay ||
+                        _dateFilterMode == PatientDateFilterMode.customRange)
+                    ? _accent
+                    : filterBorderColor,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ];
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _accent.withValues(alpha: 0.15)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isWideHeader)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: headerCopy),
+                    const SizedBox(width: 16),
+                    activeWindowCard,
+                  ],
+                )
+              else ...[
+                headerCopy,
+                const SizedBox(height: 10),
+                activeWindowCard,
+              ],
+              const SizedBox(height: 14),
+              Wrap(spacing: 8, runSpacing: 8, children: filterChips),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFilterChip(
+    String label,
+    IconData icon,
+    PatientDateFilterMode mode,
+  ) {
+    final isSelected = _dateFilterMode == mode;
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () {
+        if (isSelected) return;
+        setState(() {
+          _dateFilterMode = mode;
+          if (mode == PatientDateFilterMode.thisMonth) {
+            _selectedMonthDate = DateTime.now();
+          }
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? _accent : _surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? _accent
+                : Colors.black.withValues(alpha: 0.12),
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: _accent.withValues(alpha: 0.28),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected ? Colors.white : _text,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected ? Colors.white : _text,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showDateFilterPickerModal() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _accent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.date_range_rounded,
+                  color: _accent,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Filter Patient Insights',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: _text,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(
+                  Icons.event_available_rounded,
+                  color: _accent,
+                ),
+                title: const Text(
+                  'Specific Calendar Date',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: const Text('Filter records for a specific day'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final now = DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _selectedCustomDate ?? now,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2035),
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _dateFilterMode = PatientDateFilterMode.customDay;
+                    _selectedCustomDate = picked;
+                  });
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.calendar_month_rounded,
+                  color: _accent,
+                ),
+                title: const Text(
+                  'Select Month & Year',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  'Pick target month (Current: ${_monthLabelLong((_selectedMonthDate ?? DateTime.now()).month)})',
+                ),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final target = _selectedMonthDate ?? DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: target,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2035),
+                    initialDatePickerMode: DatePickerMode.year,
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _dateFilterMode = PatientDateFilterMode.thisMonth;
+                    _selectedMonthDate = DateTime(picked.year, picked.month);
+                  });
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.date_range_outlined,
+                  color: _accent,
+                ),
+                title: const Text(
+                  'Custom Date Range',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: const Text('Select custom start and end dates'),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final picked = await showDateRangePicker(
+                    context: context,
+                    initialDateRange: DateTimeRange(
+                      start: _selectedRangeStart,
+                      end: _selectedRangeEnd,
+                    ),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2035),
+                  );
+                  if (picked == null || !mounted) return;
+                  setState(() {
+                    _dateFilterMode = PatientDateFilterMode.customRange;
+                    _selectedRangeStart = picked.start;
+                    _selectedRangeEnd = picked.end;
+                  });
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.all_inclusive_rounded, color: _primaryAqua),
+                title: const Text(
+                  'Quick: All Time Registry',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  setState(() {
+                    _dateFilterMode = PatientDateFilterMode.allTime;
+                  });
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (patients.isEmpty) {
+    if (widget.patients.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
@@ -111,81 +684,102 @@ class PatientOperationalSummary extends StatelessWidget {
       );
     }
 
+    final filteredPatients = widget.patients
+        .where((patient) => _matchesDateFilter(_coercePatientDate(patient)))
+        .toList(growable: false);
+
     final now = DateTime.now();
-    final male = patients
+    final male = filteredPatients
         .where((patient) => _sex(patient).startsWith('male'))
         .length;
-    final female = patients
+    final female = filteredPatients
         .where((patient) => _sex(patient).startsWith('female'))
         .length;
-    final recent = [...patients]
+    final recent = [...filteredPatients]
       ..sort(
-        (left, right) => (_date(right['registrationDate']) ?? DateTime(1900))
-            .compareTo(_date(left['registrationDate']) ?? DateTime(1900)),
+        (left, right) => (_coercePatientDate(right) ?? DateTime(1900))
+            .compareTo(_coercePatientDate(left) ?? DateTime(1900)),
       );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildAnalyticsFilterBar(),
+        const SizedBox(height: 20),
         _sectionTitle(
           'Patient Overview',
-          'Patients assigned to the current BHW workspace.',
+          'Patients registered in the active reporting window: ${_activeWindowLabel().toLowerCase()}.',
         ),
         _metricGrid(context, [
-          _Metric('Total Registered Patients', patients.length, Icons.people),
+          _Metric(
+            _dateFilterMode == PatientDateFilterMode.allTime
+                ? 'Total Registered Patients'
+                : 'Patients in Window',
+            filteredPatients.length,
+            Icons.people,
+          ),
           _Metric('Male Patients', male, Icons.male_rounded),
           _Metric('Female Patients', female, Icons.female_rounded),
           _Metric(
             'Senior Citizens',
-            patients.where((patient) => _age(patient) >= 60).length,
+            filteredPatients
+                .where((patient) => _age(patient) >= 60)
+                .length,
             Icons.elderly_rounded,
           ),
           _Metric(
             'Children (0–5)',
-            patients
-                .where((patient) => _age(patient) >= 0 && _age(patient) <= 5)
+            filteredPatients
+                .where(
+                  (patient) =>
+                      _age(patient) >= 0 && _age(patient) <= 5,
+                )
                 .length,
             Icons.child_care_rounded,
           ),
           _Metric(
             'Pregnant Women',
-            patients.where(_isPregnant).length,
+            filteredPatients.where(_isPregnant).length,
             Icons.pregnant_woman_rounded,
           ),
           _Metric(
             'Persons With Disabilities',
-            patients.where(_isPwd).length,
+            filteredPatients.where(_isPwd).length,
             Icons.accessible_rounded,
           ),
           _Metric(
             'High-Risk Patients',
-            patients.where(_isHighRisk).length,
+            filteredPatients.where(_isHighRisk).length,
             Icons.warning_amber_rounded,
             color: Colors.orange,
           ),
         ]),
         _gap,
-        _sectionTitle('Registration Summary', 'Patient registry maintenance.'),
+        _sectionTitle(
+          'Registration Summary',
+          'Patient registry maintenance for ${_activeWindowLabel().toLowerCase()}.',
+        ),
         _metricGrid(context, [
           _Metric(
             'New Patients This Month',
-            patients.where((patient) {
-              final date = _date(patient['registrationDate']);
+            filteredPatients.where((patient) {
+              final date = _coercePatientDate(patient);
               return date?.year == now.year && date?.month == now.month;
             }).length,
             Icons.person_add_alt_1_rounded,
           ),
           _Metric(
             'Updated Patient Records',
-            patients.where(_wasUpdated).length,
+            filteredPatients.where(_wasUpdated).length,
             Icons.edit_note_rounded,
           ),
           _Metric(
             'Inactive Patients',
-            patients
+            filteredPatients
                 .where(
                   (patient) =>
-                      _textValue(patient['status']).toLowerCase() == 'inactive',
+                      _textValue(patient['status']).toLowerCase() ==
+                      'inactive',
                 )
                 .length,
             Icons.person_off_outlined,
@@ -193,29 +787,29 @@ class PatientOperationalSummary extends StatelessWidget {
           ),
         ]),
         _gap,
-        _householdSummary(),
+        _householdSummary(filteredPatients),
         _gap,
-        _healthSummary(),
+        _healthSummary(filteredPatients),
         _gap,
-        _followUpSummary(),
+        _followUpSummary(filteredPatients),
         _gap,
-        _patientAlerts(),
+        _patientAlerts(filteredPatients),
         _gap,
         _sectionTitle(
           'Demographic Overview',
-          'Simple assigned-patient counts.',
+          'Assigned patient counts for ${_activeWindowLabel().toLowerCase()}.',
         ),
         _responsivePair(
           context,
           _chartCard(
             title: 'Age Distribution',
-            subtitle: 'Registered patients grouped by age range',
+            subtitle: 'Patients grouped by age range in ${_activeWindowLabel().toLowerCase()}',
             icon: Icons.bar_chart_rounded,
-            chart: _ageChart(),
+            chart: _ageChart(filteredPatients),
           ),
           _chartCard(
             title: 'Sex Distribution',
-            subtitle: 'Registered patients grouped by recorded sex',
+            subtitle: 'Patients grouped by recorded sex in ${_activeWindowLabel().toLowerCase()}',
             icon: Icons.donut_large_rounded,
             chart: _sexChart(male, female),
           ),
@@ -298,16 +892,21 @@ class PatientOperationalSummary extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
+                  metric.title,
+                  style: const TextStyle(
+                    color: _muted,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
                   '${metric.value}',
                   style: const TextStyle(
                     color: _text,
-                    fontSize: 23,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
                   ),
-                ),
-                Text(
-                  metric.title,
-                  style: const TextStyle(color: _muted, fontSize: 12),
                 ),
               ],
             ),
@@ -317,22 +916,20 @@ class PatientOperationalSummary extends StatelessWidget {
     ),
   );
 
-  Widget _responsivePair(BuildContext context, Widget first, Widget second) =>
+  Widget _responsivePair(BuildContext context, Widget left, Widget right) =>
       LayoutBuilder(
         builder: (context, constraints) {
-          if (constraints.maxWidth < 820) {
-            return Column(
-              children: [first, const SizedBox(height: 12), second],
+          if (constraints.maxWidth >= 900) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: left),
+                const SizedBox(width: 16),
+                Expanded(child: right),
+              ],
             );
           }
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: first),
-              const SizedBox(width: 12),
-              Expanded(child: second),
-            ],
-          );
+          return Column(children: [left, const SizedBox(height: 16), right]);
         },
       );
 
@@ -342,34 +939,19 @@ class PatientOperationalSummary extends StatelessWidget {
     required IconData icon,
     required Widget chart,
   }) => Container(
-    height: 360,
-    padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+    padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
       color: _surface,
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: _accent.withValues(alpha: 0.18)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.12),
-          blurRadius: 18,
-          offset: const Offset(0, 8),
-        ),
-      ],
+      border: Border.all(color: const Color(0xFFD9E5F2)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(9),
-              decoration: BoxDecoration(
-                color: _accent.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: _accent, size: 21),
-            ),
-            const SizedBox(width: 12),
+            Icon(icon, color: _accent, size: 20),
+            const SizedBox(width: 9),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,43 +960,42 @@ class PatientOperationalSummary extends StatelessWidget {
                     title,
                     style: const TextStyle(
                       color: _text,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: TextStyle(color: _muted, fontSize: 11.5),
+                    style: const TextStyle(color: _muted, fontSize: 11.5),
                   ),
                 ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 20),
-        Expanded(child: chart),
+        const SizedBox(height: 22),
+        SizedBox(height: 210, child: chart),
       ],
     ),
   );
 
-  Widget _ageChart() {
+  Widget _ageChart(List<Map<String, dynamic>> records) {
     final counts = [
-      patients
+      records
           .where((patient) => _age(patient) >= 0 && _age(patient) <= 5)
           .length,
-      patients
+      records
           .where((patient) => _age(patient) >= 6 && _age(patient) <= 17)
           .length,
-      patients
+      records
           .where((patient) => _age(patient) >= 18 && _age(patient) <= 59)
           .length,
-      patients.where((patient) => _age(patient) >= 60).length,
+      records.where((patient) => _age(patient) >= 60).length,
     ];
     if (counts.every((count) => count == 0)) {
       return const Center(
         child: Text(
-          'No patient age data recorded in Firebase.',
+          'No patient age data recorded for this period.',
           textAlign: TextAlign.center,
           style: TextStyle(color: _muted),
         ),
@@ -514,7 +1095,7 @@ class PatientOperationalSummary extends StatelessWidget {
     if (total == 0) {
       return const Center(
         child: Text(
-          'No patient sex data recorded in Firebase.',
+          'No patient sex data recorded for this period.',
           textAlign: TextAlign.center,
           style: TextStyle(color: _muted),
         ),
@@ -575,8 +1156,11 @@ class PatientOperationalSummary extends StatelessWidget {
   Widget _recentCard(List<Map<String, dynamic>> recent) => _listCard(
     title: 'Recent Registrations',
     icon: Icons.person_add_alt_1_rounded,
-    emptyText: 'No patient registrations yet.',
-    trailing: TextButton(onPressed: onViewAll, child: const Text('View All')),
+    emptyText: 'No patient registrations in this period.',
+    trailing: TextButton(
+      onPressed: widget.onViewAll,
+      child: const Text('View All'),
+    ),
     children: recent
         .map(
           (patient) => ListTile(
@@ -586,12 +1170,12 @@ class PatientOperationalSummary extends StatelessWidget {
               style: const TextStyle(color: _text, fontWeight: FontWeight.w700),
             ),
             subtitle: Text(
-              '${_textValue(patient['age'])} years • ${_textValue(patient['sex'] ?? patient['gender'])} • ${_textValue(patient['barangay'])}\n${_formatDate(_date(patient['registrationDate']))}',
+              '${_textValue(patient['age'])} years • ${_textValue(patient['sex'] ?? patient['gender'])} • ${_textValue(patient['barangay'])}\n${_formatDate(_coercePatientDate(patient))}',
               style: const TextStyle(color: _muted),
             ),
             isThreeLine: true,
             trailing: TextButton(
-              onPressed: () => onViewPatient(patient),
+              onPressed: () => widget.onViewPatient(patient),
               child: const Text('View Profile'),
             ),
           ),
@@ -599,16 +1183,16 @@ class PatientOperationalSummary extends StatelessWidget {
         .toList(growable: false),
   );
 
-  Widget _householdSummary() {
+  Widget _householdSummary(List<Map<String, dynamic>> records) {
     final households = <String>{};
-    for (final patient in patients) {
+    for (final patient in records) {
       final household = _textValue(patient['householdId']);
       if (household.isNotEmpty) households.add(household);
     }
     return _listCard(
       title: 'Household Summary',
       icon: Icons.home_work_outlined,
-      emptyText: 'No household assignments recorded yet.',
+      emptyText: 'No household assignments recorded in this period.',
       children: households.isEmpty
           ? const []
           : [
@@ -622,7 +1206,7 @@ class PatientOperationalSummary extends StatelessWidget {
                   ),
                 ),
                 subtitle: Text(
-                  '${patients.length} registered patient${patients.length == 1 ? '' : 's'} linked to household records.',
+                  '${records.length} registered patient${records.length == 1 ? '' : 's'} linked to household records.',
                   style: const TextStyle(color: _muted),
                 ),
               ),
@@ -630,20 +1214,20 @@ class PatientOperationalSummary extends StatelessWidget {
     );
   }
 
-  Widget _healthSummary() {
-    final withHistory = patients
+  Widget _healthSummary(List<Map<String, dynamic>> records) {
+    final withHistory = records
         .where(
           (patient) =>
               _hasText(patient, const ['medicalHistory', 'healthHistory']),
         )
         .length;
-    final withAllergies = patients
+    final withAllergies = records
         .where((patient) => _hasText(patient, const ['allergies', 'allergy']))
         .length;
     return _listCard(
       title: 'Health Summary',
       icon: Icons.health_and_safety_outlined,
-      emptyText: 'No health information recorded yet.',
+      emptyText: 'No health information recorded in this period.',
       children: [
         ListTile(
           contentPadding: EdgeInsets.zero,
@@ -660,8 +1244,8 @@ class PatientOperationalSummary extends StatelessWidget {
     );
   }
 
-  Widget _followUpSummary() {
-    final scheduled = patients
+  Widget _followUpSummary(List<Map<String, dynamic>> records) {
+    final scheduled = records
         .where(
           (patient) => _hasText(patient, const [
             'followup',
@@ -675,7 +1259,7 @@ class PatientOperationalSummary extends StatelessWidget {
     return _listCard(
       title: 'Follow-up Summary',
       icon: Icons.event_available_outlined,
-      emptyText: 'No follow-up schedule recorded yet.',
+      emptyText: 'No follow-up schedule recorded in this period.',
       children: [
         ListTile(
           contentPadding: EdgeInsets.zero,
@@ -692,12 +1276,12 @@ class PatientOperationalSummary extends StatelessWidget {
     );
   }
 
-  Widget _patientAlerts() {
-    final alerts = patients.where(_isHighRisk).toList(growable: false);
+  Widget _patientAlerts(List<Map<String, dynamic>> records) {
+    final alerts = records.where(_isHighRisk).toList(growable: false);
     return _listCard(
       title: 'Patient Alerts',
       icon: Icons.notifications_active_outlined,
-      emptyText: 'No high-risk patient alerts at this time.',
+      emptyText: 'No high-risk patient alerts in this period.',
       children: alerts
           .take(5)
           .map(
@@ -721,7 +1305,7 @@ class PatientOperationalSummary extends StatelessWidget {
                 style: const TextStyle(color: _muted),
               ),
               trailing: TextButton(
-                onPressed: () => onViewPatient(patient),
+                onPressed: () => widget.onViewPatient(patient),
                 child: const Text('View Profile'),
               ),
             ),
