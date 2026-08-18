@@ -605,7 +605,13 @@ class CommunicableInsights extends StatelessWidget {
   }
 
   String _disease(Map<String, dynamic> record) {
-    for (final key in const ['condition', 'diagnosis', 'type', 'ai_category']) {
+    for (final key in const [
+      'disease',
+      'condition',
+      'diagnosis',
+      'type',
+      'ai_category',
+    ]) {
       final value = _value(record, key);
       final normalized = value.toLowerCase();
       const classificationLabels = {

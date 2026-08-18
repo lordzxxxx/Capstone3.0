@@ -20,6 +20,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.d
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
@@ -754,25 +755,19 @@ class _CheckUpPageState extends State<CheckUpPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      drawer: WebAppSidebar(
-        userName: userName,
-        activeItem: WebSidebarItem.checkups,
-      ),
-      body: Column(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Main Content Area
+          WebAppSidebar(
+            userName: userName,
+            activeItem: WebSidebarItem.checkups,
+          ),
           Expanded(
-            child: Column(
-              children: [
-                // Top Bar
-                _buildTopBar(context),
-                // Main scrollable content
-                Expanded(
-                  child: _isLoading
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
+            child: _isLoading
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                               CircularProgressIndicator(
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   _primaryAqua,
@@ -1302,9 +1297,6 @@ class _CheckUpPageState extends State<CheckUpPage> {
                               _buildSelectionActionCard(),
                           ],
                         ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -1742,65 +1734,36 @@ class _CheckUpPageState extends State<CheckUpPage> {
   }
 
   Widget _buildTopBar(BuildContext context) {
-    return Container(
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      decoration: BoxDecoration(color: _darkDeepTeal),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.menu_rounded),
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-            color: Colors.white,
-            iconSize: 28,
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'Check-up Dashboard',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Spacer(),
-          FilledButton.icon(
-            onPressed: _isLoading ? null : _generateCheckupReport,
-            style: AppButtonStyles.report(),
-            icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-            label: const Text(
-              'Generate',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(width: 12),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh Data',
-            onPressed: () => _loadRecords(),
-            color: Colors.white70,
-          ),
-          const SizedBox(width: 12),
-          if (kDebugMode)
-            PopupMenuButton(
-              icon: const Icon(Icons.more_vert_outlined, color: Colors.white),
-              color: _mutedCoolGray,
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  child: const Text('Seed Sample Data'),
-                  onTap: () => _seedSampleData(),
-                ),
-                PopupMenuItem(
-                  child: const Text('View Data in Console'),
-                  onTap: () {
-                    print('=== CHECK-UP RECORDS DATA ===');
-                    print('Total Records: ${_records.length}');
-                    for (var i = 0; i < _records.length; i++) {
-                      print('\nRecord ${i + 1}:');
-                      _records[i].forEach((key, value) {
-                        print('  $key: $value');
-                      });
-                    }
-                    print('=============================');
+    return WebAppTopBar(
+      title: 'Check-up Dashboard',
+      scaffoldKey: _scaffoldKey,
+      isLoading: _isLoading,
+      onGenerateReport: _generateCheckupReport,
+      onRefresh: () => _loadRecords(),
+      actions: [
+        if (kDebugMode) ...[
+          const SizedBox(width: 4),
+          PopupMenuButton(
+            icon: const Icon(Icons.more_vert_outlined, color: Colors.white),
+            color: _darkDeepTeal,
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                child: const Text('Seed Sample Data', style: TextStyle(color: Colors.white)),
+                onTap: () => _seedSampleData(),
+              ),
+              PopupMenuItem(
+                child: const Text('View Data in Console', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  print('=== CHECK-UP RECORDS DATA ===');
+                  print('Total Records: ${_records.length}');
+                  for (var i = 0; i < _records.length; i++) {
+                    print('\nRecord ${i + 1}:');
+                    _records[i].forEach((key, value) {
+                      print('  $key: $value');
+                    });
+                  }
+                  print('=============================');
+                  if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
@@ -1809,12 +1772,13 @@ class _CheckUpPageState extends State<CheckUpPage> {
                         duration: Duration(seconds: 2),
                       ),
                     );
-                  },
-                ),
-              ],
-            ),
+                  }
+                },
+              ),
+            ],
+          ),
         ],
-      ),
+      ],
     );
   }
 

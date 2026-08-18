@@ -1320,41 +1320,50 @@ class DatabaseHelper {
     ];
 
     final List<String> statuses = [
-      'Active Case',
-      'Under Treatment',
-      'Recovering',
+      'Active',
       'Recovered',
+      'Under Treatment',
       'Monitoring',
+      'Death',
+      'Recovered',
+      'Active',
     ];
 
-    final List<String> addresses = [
-      'Barangay Del Carmen, Rosario',
-      'Barangay Sagcahan, Kawit',
-      'Barangay Binakayan, Noveleta',
-      'Barangay Kanluran, Imus',
-      'Barangay Silang, Dasmariñas',
-      'Barangay Salawag, Maragondon',
-      'Barangay Paliparan, Magallanes',
-      'Barangay Pag-asa, Indang',
-      'Barangay Sampalukan, Silang',
+    final List<String> barangays = [
+      'Poblacion',
+      'Barangay 1',
+      'Barangay 2',
+      'Casisang',
+      'Sumpong',
+      'San Jose',
+      'Kalasungay',
+      'Dalwangan',
+    ];
+
+    final List<String> vaccinationCoverages = [
+      'Up to date',
+      'High',
+      'Medium',
+      'Low',
+      'Not Vaccinated',
     ];
 
     final List<String> treatments = [
-      'Antiviral medication and supportive care',
-      'Antibiotics and rest',
-      'Quarantine and monitoring',
-      'Fever management and hydration',
-      'Hospitalization if severe',
-      'Specialized treatment protocol',
-      'Contact tracing initiated',
-      'Isolation precautions enforced',
+      'Antiviral medication, supportive care, and strict isolation protocol',
+      'Directly Observed Therapy (DOTS) antimicrobial regimen',
+      'Intensive hydration, antipyretic therapy, and platelet monitoring',
+      'Fever management, bed rest, and electrolyte rehydration',
+      'Hospitalization, oxygen therapy, and IV antibiotics',
+      'Oral rehydration solution (ORS) and zinc supplementation',
+      'Post-exposure rabies prophylaxis and wound debridement',
+      'Antihistamines, calamine lotion, and symptomatic monitoring',
     ];
 
     final samples = <Map<String, dynamic>>[];
     final random = DateTime.now().millisecondsSinceEpoch;
 
     for (int i = 0; i < 100; i++) {
-      final daysAgo = i % 150; // Spread over 5 months
+      final daysAgo = (i * 4) % 360; // Spread across all 12 months
       final recordDate = DateTime.now().subtract(Duration(days: daysAgo));
       final recordTime = DateTime(
         recordDate.year,
@@ -1366,41 +1375,65 @@ class DatabaseHelper {
 
       final disease = communicableDiseases[i % communicableDiseases.length];
       final symptom = symptoms[i % symptoms.length];
-      final temp = 37.5 + (i % 3).toDouble();
-      final bp = '${120 + (i % 20)}/${80 + (i % 15)}';
-      final hr = 80 + (i % 40);
+      final status = statuses[i % statuses.length];
+      final barangay = barangays[i % barangays.length];
+      final vaxCoverage = vaccinationCoverages[i % vaccinationCoverages.length];
+      final temp = 37.4 + (i % 4) * 0.5;
+      final bp = '${110 + (i % 25)}/${70 + (i % 15)}';
+      final hr = 78 + (i % 35);
+      final age = (i % 5 == 0)
+          ? 1 + (i % 5) // 0-5 pediatric
+          : (i % 5 == 1)
+              ? 6 + (i % 12) // 6-17 teen
+              : (i % 4 == 0)
+                  ? 18 + (i % 27) // 18-44 young adult
+                  : (i % 3 == 0)
+                      ? 45 + (i % 20) // 45-64 middle age
+                      : 65 + (i % 18); // 65+ senior
+      final gender = i.isEven ? 'Male' : 'Female';
+      final severities = ['Mild', 'Moderate', 'Severe', 'Critical'];
+      final severity = severities[i % severities.length];
+      final nextVisitDate = recordDate.add(Duration(days: 3 + (i % 14)));
 
       samples.add({
         'id': 'communicable_${random}_$i',
         'datetime': recordTime.toString(),
-        'type': 'Disease Investigation',
+        'date': recordDate.toIso8601String(),
+        'time': recordTime.toIso8601String(),
+        'type': disease,
+        'condition': disease,
+        'diagnosis': disease,
+        'disease': disease,
         'diseaseType': 'Communicable',
         'patient': patientNames[i % patientNames.length],
+        'patientName': patientNames[i % patientNames.length],
+        'patientId': 'TEST-C-${1001 + i}',
         'details':
-            'Confirmed case of $disease. Patient presents with $symptom. Contact tracing status: ${i % 3 == 0
-                ? "Completed"
-                : i % 3 == 1
-                ? "In Progress"
-                : "Pending"}.',
+            'Confirmed case of $disease. Patient presents with $symptom. Severity: $severity. Vital signs: Temp ${temp.toStringAsFixed(1)}°C, BP $bp, HR $hr bpm.',
         'plan': treatments[i % treatments.length],
-        'status': statuses[i % statuses.length],
-        'address': addresses[i % addresses.length],
+        'status': status,
+        'currentStatus': status,
+        'address': '$barangay, Malaybalay City',
+        'barangay': barangay,
         'vitalsigns':
             'Temp: ${temp.toStringAsFixed(1)}°C | BP: $bp | HR: $hr bpm',
         'symptoms': symptom,
-        'followup': recordTime
-            .add(Duration(days: 3 + (i % 5)))
-            .toString()
-            .split(' ')[0],
-        'age': '${5 + (i * 2) % 75}',
+        'followup': nextVisitDate.toString().split(' ')[0],
+        'nextVisit': nextVisitDate.toString().split(' ')[0],
+        'lastVisit': recordDate.toString().split(' ')[0],
+        'age': '$age',
+        'gender': gender,
+        'sex': gender,
+        'vaccinationCoverage': vaxCoverage,
+        'populationDensity': 850 + (i % 5) * 320,
         'createdBy': 'Disease Surveillance Officer',
-        'ai_category': 'Communicable Disease',
-        'ai_severity': ['Mild', 'Moderate', 'Severe', 'Critical'][(i % 4)],
-        'ai_confidence': '${85 + (i % 15)}%',
-        'ai_method': 'Epidemiological Analysis',
-        'ai_keywords': '$disease, transmissible, isolation, contact tracing',
+        'ai_category': disease,
+        'ai_severity': severity,
+        'ai_confidence': '${82 + (i % 16)}%',
+        'ai_method': 'Epidemiological Surveillance and Triage',
+        'ai_keywords': '$disease, transmissible, isolation, contact tracing, surveillance',
         'ai_recovery_plan':
-            'Complete isolation protocol. Daily monitoring. Isolation to be lifted after negative test or 14 days symptom-free.',
+            'Complete isolation protocol. Daily symptom logging. Re-evaluation upon symptom resolution.',
         'synced': 1,
       });
     }
@@ -1580,33 +1613,89 @@ class DatabaseHelper {
     ];
 
     final List<String> statuses = [
-      'Stable',
-      'Under Treatment',
-      'Symptomatic',
       'Controlled',
-      'Monitoring',
-      'Recovering',
+      'Under Monitoring',
+      'Uncontrolled',
+      'Stable',
+      'Under Monitoring',
+      'Controlled',
       'Needs Adjustment',
-      'Well Managed',
     ];
 
-    final List<String> addresses = [
-      'Barangay Del Carmen, Rosario',
-      'Barangay Sagcahan, Kawit',
-      'Barangay Binakayan, Noveleta',
-      'Barangay Kanluran, Imus',
-      'Barangay Silang, Dasmariñas',
-      'Barangay Salawag, Maragondon',
-      'Barangay Paliparan, Magallanes',
-      'Barangay Pag-asa, Indang',
-      'Barangay Sampalukan, Silang',
+    final List<String> barangays = [
+      'Poblacion',
+      'Barangay 1',
+      'Barangay 2',
+      'Casisang',
+      'Sumpong',
+      'San Jose',
+      'Kalasungay',
+      'Dalwangan',
+    ];
+
+    final List<String> riskFactorsList = [
+      'Smoking, High Cholesterol',
+      'Obesity, Physical Inactivity',
+      'Physical Inactivity, High Sodium Diet',
+      'High Cholesterol, Family History',
+      'Alcohol Consumption, Smoking',
+      'Obesity, High Sodium Diet',
+      'Family History, Physical Inactivity',
+    ];
+
+    final List<String> bloodPressures = [
+      '120/80',
+      '130/85',
+      '140/90',
+      '155/95',
+      '165/100',
+      '125/82',
+      '138/88',
+      '148/94',
+      '170/105',
+    ];
+
+    final List<String> bmis = [
+      '21.8',
+      '24.2',
+      '26.7',
+      '28.9',
+      '31.4',
+      '33.8',
+      '35.2',
+      '23.0',
+      '27.5',
+    ];
+
+    final List<String> followups = [
+      'Completed',
+      'Pending',
+      'Missed',
+      'Completed',
+      'Pending',
+    ];
+
+    final List<String> adherence = [
+      'Regular',
+      'Regular',
+      'Irregular',
+      'Stopped',
+      'Regular',
+    ];
+
+    final List<String> referralOutcomes = [
+      'Managed at Barangay',
+      'Managed at Barangay',
+      'Referred to Hospital',
+      'Emergency Referral',
+      'Managed at Barangay',
     ];
 
     final samples = <Map<String, dynamic>>[];
     final random = DateTime.now().millisecondsSinceEpoch;
 
     for (int i = 0; i < 100; i++) {
-      final daysAgo = i % 180; // Spread over 6 months
+      final daysAgo = (i * 4 + 2) % 360; // Spread across all 12 months
       final recordDate = DateTime.now().subtract(Duration(days: daysAgo));
       final recordTime = DateTime(
         recordDate.year,
@@ -1619,40 +1708,60 @@ class DatabaseHelper {
       final disease =
           nonCommunicableDiseases[i % nonCommunicableDiseases.length];
       final symptom = symptoms[i % symptoms.length];
-      final temp = 36.5 + (i % 1).toDouble();
-      final bp = '${130 + (i % 40)}/${80 + (i % 25)}';
-      final hr = 70 + (i % 30);
-      final age = 40 + (i % 45);
+      final status = statuses[i % statuses.length];
+      final barangay = barangays[i % barangays.length];
+      final bp = bloodPressures[i % bloodPressures.length];
+      final bmi = bmis[i % bmis.length];
+      final risk = riskFactorsList[i % riskFactorsList.length];
+      final followupStatus = followups[i % followups.length];
+      final medAdherence = adherence[i % adherence.length];
+      final outcome = referralOutcomes[i % referralOutcomes.length];
+      final hr = 68 + (i % 25);
+      final age = 22 + (i * 3) % 58; // 22 to 80 years old
+      final gender = i.isEven ? 'Female' : 'Male';
+      final severities = ['Mild', 'Moderate', 'Severe', 'Critical'];
+      final severity = severities[i % severities.length];
+      final nextVisitDate = recordDate.add(Duration(days: 14 + (i % 30)));
 
       samples.add({
         'id': 'ncd_${random}_$i',
         'datetime': recordTime.toString(),
-        'type': 'Chronic Disease Management',
+        'date': recordDate.toIso8601String(),
+        'time': recordTime.toIso8601String(),
+        'type': disease,
+        'condition': disease,
+        'diagnosis': disease,
+        'disease': disease,
         'diseaseType': 'Non-Communicable',
         'patient': patientNames[i % patientNames.length],
+        'patientName': patientNames[i % patientNames.length],
+        'patientId': 'TEST-N-${1001 + i}',
         'details':
-            'Age: $age. Diagnosed with $disease. Current symptoms: $symptom. Disease duration: ${1 + (i % 20)} years.',
+            'Diagnosed with $disease. Status: $status. Risk factors: $risk. Blood pressure: $bp, BMI: $bmi. Adherence: $medAdherence.',
         'plan': treatments[i % treatments.length],
-        'status': statuses[i % statuses.length],
-        'address': addresses[i % addresses.length],
+        'status': status,
+        'currentStatus': status,
+        'address': '$barangay, Malaybalay City',
+        'barangay': barangay,
         'vitalsigns':
-            'Temp: ${temp.toStringAsFixed(1)}°C | BP: $bp | HR: $hr bpm | BMI: ${18 + (i % 15)}',
+            'BP: $bp | BMI: $bmi | HR: $hr bpm | Temp: 36.6°C',
+        'bloodPressure': bp,
+        'bmi': bmi,
+        'riskFactors': risk,
+        'followupStatus': followupStatus,
+        'medicationAdherence': medAdherence,
+        'referralOutcome': outcome,
         'symptoms': symptom,
-        'followup': recordTime
-            .add(Duration(days: 14 + (i % 30)))
-            .toString()
-            .split(' ')[0],
+        'followup': nextVisitDate.toString().split(' ')[0],
+        'nextVisit': nextVisitDate.toString().split(' ')[0],
+        'lastVisit': recordDate.toString().split(' ')[0],
         'age': '$age',
+        'gender': gender,
+        'sex': gender,
         'createdBy': 'Healthcare Provider',
-        'ai_category': [
-          'Metabolic',
-          'Cardiovascular',
-          'Respiratory',
-          'Mental Health',
-          'Musculoskeletal',
-        ][i % 5],
-        'ai_severity': ['Low', 'Moderate', 'High', 'Critical'][(i % 4)],
-        'ai_confidence': '${80 + (i % 18)}%',
+        'ai_category': disease,
+        'ai_severity': severity,
+        'ai_confidence': '${84 + (i % 14)}%',
         'ai_method': 'Clinical Assessment and Risk Stratification',
         'ai_keywords':
             '$disease, chronic, long-term management, comorbidity screening',

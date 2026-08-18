@@ -19,6 +19,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart'
 import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/roles/bhw/checkups/checkup_database_helper.dart';
@@ -2845,83 +2846,20 @@ class _HomePageState extends State<HomePage> {
         : user?.email?.split('@')[0] ?? 'User';
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _darkDeepTeal,
-      drawer: WebAppSidebar(
-        userName: userName,
-        activeItem: WebSidebarItem.dashboard,
-      ),
-      body: Column(
+      backgroundColor: const Color(0xFFF5F7FA),
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header Section
-          Container(
-            height: 70,
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            decoration: BoxDecoration(color: const Color(0xFF071A33)),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isNarrow = constraints.maxWidth < 680;
-                return Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.menu_rounded),
-                      onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                      color: Colors.white,
-                      iconSize: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      isNarrow ? 'BHW' : 'BHW Dashboard',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: _isLoadingExecutiveOverview
-                          ? null
-                          : _loadExecutiveOverview,
-                      tooltip: 'Refresh executive overview',
-                      icon: const Icon(Icons.refresh_rounded),
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 8),
-                    isNarrow
-                        ? IconButton(
-                            onPressed: () => showOverallHealthReportDialog(
-                              context: context,
-                            ),
-                            tooltip: 'Generate Overall PDF',
-                            icon: const Icon(Icons.picture_as_pdf_rounded),
-                            style: IconButton.styleFrom(
-                              backgroundColor: _primaryAqua,
-                              foregroundColor: Colors.white,
-                            ),
-                          )
-                        : FilledButton.icon(
-                            onPressed: () => showOverallHealthReportDialog(
-                              context: context,
-                            ),
-                            style: AppButtonStyles.report(),
-                            icon: const Icon(
-                              Icons.picture_as_pdf_rounded,
-                              size: 18,
-                            ),
-                            label: const Text(
-                              'Generate Overall PDF',
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                  ],
-                );
-              },
-            ),
+          WebAppSidebar(
+            userName: userName,
+            activeItem: WebSidebarItem.dashboard,
           ),
-          // Main Content Area - Two Column Layout for Web
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(28.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 24.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

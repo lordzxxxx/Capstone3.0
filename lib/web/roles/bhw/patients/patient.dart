@@ -16,6 +16,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/morbidity.dart';
 import 'package:mycapstone_project/web/roles/bhw/referrals/bhw_referral_management.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
@@ -292,15 +293,13 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      drawer: WebAppSidebar(
-        userName: userName,
-        activeItem: WebSidebarItem.patientRecords,
-      ),
-      body: Column(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Web Header Bar
-          _buildWebHeaderBar(context),
-          // Content Area
+          WebAppSidebar(
+            userName: userName,
+            activeItem: WebSidebarItem.patientRecords,
+          ),
           Expanded(
             child: _isLoading
                 ? const Center(
@@ -846,57 +845,12 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   }
 
   Widget _buildWebHeaderBar(BuildContext context) {
-    return Container(
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_darkDeepTeal, _darkDeepTeal.withValues(alpha: 0.95)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.menu_rounded),
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-            color: Colors.white,
-            iconSize: 36,
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'Patient Dashboard',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh Data',
-            onPressed: () => _loadPatients(),
-            color: Colors.white70,
-          ),
-          if (_isSelectionMode)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: _primaryAqua.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _primaryAqua, width: 1),
-              ),
-              child: Text(
-                '${_selectedIndices.length} selected',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-        ],
-      ),
+    return WebAppTopBar(
+      title: 'Patient Dashboard',
+      scaffoldKey: _scaffoldKey,
+      isLoading: _isLoading,
+      onRefresh: () => _loadPatients(),
+      selectionCount: _isSelectionMode ? _selectedIndices.length : null,
     );
   }
 

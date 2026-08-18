@@ -13,6 +13,7 @@ import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
+import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/utils/checkup_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/shared/utils/report_generation.dart';
@@ -820,51 +821,17 @@ class _MorbidityPageState extends State<MorbidityPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      drawer: WebAppSidebar(
-        userName: userName,
-        activeItem: WebSidebarItem.morbidity,
-      ),
-      appBar: AppBar(
-        toolbarHeight: 70,
-        backgroundColor: _darkDeepTeal,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 36),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
-        title: Text(
-          'Morbidity Dashboard',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          WebAppSidebar(
+            userName: userName,
+            activeItem: WebSidebarItem.morbidity,
           ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Center(
-              child: FilledButton.icon(
-                onPressed: _generateMorbidityReport,
-                style: AppButtonStyles.report(),
-                icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-                label: const Text(
-                  'Generate',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
-            tooltip: 'Refresh Data',
-            onPressed: () => setState(() {}),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: ColoredBox(
-        color: const Color(0xFFF5F7FA),
-        child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          Expanded(
+            child: ColoredBox(
+              color: const Color(0xFFF5F7FA),
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: _morbidityStream(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
@@ -960,6 +927,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
           },
         ),
       ),
+    ),
+  ],
+),
     );
   }
 

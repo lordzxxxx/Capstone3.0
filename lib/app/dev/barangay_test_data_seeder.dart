@@ -171,37 +171,139 @@ class BarangayTestDataSeeder {
 
   static List<Map<String, dynamic>> _communicable(DateTime now) {
     const diseases = [
-      'Dengue',
+      'Dengue Fever',
       'Tuberculosis',
       'Influenza',
       'COVID-19',
       'Measles',
+      'Chickenpox',
+      'Pneumonia',
+      'Acute Gastroenteritis',
+      'Hepatitis A',
+      'Hepatitis B',
+      'Typhoid Fever',
+      'Cholera',
+      'Leptospirosis',
+      'Hand Foot and Mouth Disease',
+      'Rabies Exposure',
+      'Scarlet Fever',
+      'Pertussis',
+      'Mumps',
+      'Malaria',
+      'Amoebiasis',
     ];
     const statuses = [
       'Active',
       'Recovered',
-      'Recovered',
+      'Under Treatment',
       'Monitoring',
       'Death',
+      'Recovered',
+      'Active',
+      'Completed',
     ];
-    return List.generate(30, (i) {
-      final date = _date(now, i + 2, spread: 330);
+    const symptomsList = [
+      'High Fever and Joint Pain',
+      'Chronic Cough and Night Sweats',
+      'Fever, Chills, and Sore Throat',
+      'Loss of Smell and Fatigue',
+      'Koplik Spots and Skin Rash',
+      'Itchy Blisters and Low-grade Fever',
+      'Chest Congestion and Productive Cough',
+      'Watery Diarrhea and Abdominal Cramps',
+      'Jaundice and Right Upper Quadrant Pain',
+      'Malaise and Dark Urine',
+      'Step-ladder Fever and Rose Spots',
+      'Rice-water Stools and Dehydration',
+      'Calf Muscle Pain and Conjunctival Suffusion',
+      'Oral Ulcers and Vesicles on Palms',
+      'Animal Bite Wound with Paresthesia',
+      'Strawberry Tongue and Sandpaper Rash',
+      'Paroxysmal Whooping Cough Spells',
+      'Painful Parotid Gland Swelling',
+      'Cyclical Fever and Shivering Chills',
+      'Mucoid Stool and Tenesmus',
+    ];
+    const vaccinationStatuses = [
+      'Up to date',
+      'High',
+      'Medium',
+      'Low',
+      'Not Vaccinated',
+    ];
+    const severities = ['Mild', 'Moderate', 'Severe', 'Critical'];
+    const barangayList = [
+      'Poblacion',
+      'Barangay 1',
+      'Barangay 2',
+      'Casisang',
+      'Sumpong',
+      'San Jose',
+      'Kalasungay',
+      'Dalwangan',
+    ];
+
+    return List.generate(60, (i) {
+      // Seasonal distribution: spread evenly across 12 months with recent clustering
+      final daysAgo = (i * 6) % 360;
+      final date = now.subtract(Duration(days: daysAgo));
       final disease = diseases[i % diseases.length];
+      final symptom = symptomsList[i % symptomsList.length];
+      final status = statuses[i % statuses.length];
+      final severity = severities[i % severities.length];
+      final age = (i % 6 == 0)
+          ? 1 + (i % 5) // 0-5 pediatric
+          : (i % 5 == 1)
+              ? 6 + (i % 12) // 6-17 teen
+              : (i % 4 == 0)
+                  ? 18 + (i % 27) // 18-44 young adult
+                  : (i % 3 == 0)
+                      ? 45 + (i % 20) // 45-64 middle age
+                      : 65 + (i % 18); // 65+ senior
+      final gender = i.isEven ? 'Male' : 'Female';
+      final barangay = barangayList[i % barangayList.length];
+      final temp = 37.4 + (i % 4) * 0.5;
+      final bp = '${110 + (i % 25)}/${70 + (i % 15)}';
+      final hr = 78 + (i % 35);
+      final nextVisitDate = date.add(Duration(days: 3 + (i % 14)));
+
       return {
         'datetime': date.toIso8601String(),
+        'date': date.toIso8601String(),
+        'time': date.toIso8601String(),
         'type': disease,
         'condition': disease,
+        'diagnosis': disease,
+        'disease': disease,
         'diseaseType': 'Communicable',
         'patient': 'Communicable Patient ${i + 1}',
+        'patientName': 'Communicable Patient ${i + 1}',
         'patientId': 'TEST-C-${1001 + i}',
-        'details': 'Confirmed $disease case for surveillance.',
-        'status': statuses[i % statuses.length],
-        'age': '${3 + i * 3 % 75}',
-        'gender': i.isEven ? 'Male' : 'Female',
-        'vaccinationCoverage': const ['High', 'Medium', 'Low'][i % 3],
-        'populationDensity': 900 + i % 4 * 350,
+        'details':
+            'Confirmed $disease case. Patient presents with $symptom. Severity: $severity. Vital signs: Temp ${temp.toStringAsFixed(1)}°C, BP $bp, HR $hr bpm.',
+        'plan':
+            'Prescribed targeted antimicrobial therapy, isolation precautions, hydration protocol, and scheduled follow-up on ${nextVisitDate.toIso8601String().split('T')[0]}.',
+        'status': status,
+        'currentStatus': status,
+        'symptoms': symptom,
+        'age': '$age',
+        'gender': gender,
+        'sex': gender,
+        'vitalsigns': 'Temp: ${temp.toStringAsFixed(1)}°C | BP: $bp | HR: $hr bpm',
+        'vaccinationCoverage': vaccinationStatuses[i % vaccinationStatuses.length],
+        'populationDensity': 850 + (i % 5) * 320,
         'ai_category': disease,
-        'ai_severity': const ['Mild', 'Moderate', 'Severe'][i % 3],
+        'ai_severity': severity,
+        'ai_confidence': '${82 + (i % 16)}%',
+        'ai_method': 'Epidemiological Surveillance and Clinical Triage',
+        'ai_recovery_plan':
+            'Standard isolation protocol, hydration therapy, daily symptom logging, and post-recovery clearance check.',
+        'followup': nextVisitDate.toIso8601String().split('T')[0],
+        'nextVisit': nextVisitDate.toIso8601String().split('T')[0],
+        'lastVisit': date.toIso8601String().split('T')[0],
+        'address': '$barangay, Malaybalay City',
+        'barangay': barangay,
+        'reportedBy': 'Assigned Surveillance Officer',
       };
     });
   }
@@ -209,74 +311,212 @@ class BarangayTestDataSeeder {
   static List<Map<String, dynamic>> _nonCommunicable(DateTime now) {
     const diseases = [
       'Hypertension',
-      'Diabetes Mellitus',
-      'Heart Disease',
+      'Type 2 Diabetes Mellitus',
+      'Coronary Heart Disease',
+      'Stroke',
+      'Bronchial Asthma',
+      'COPD',
+      'Osteoarthritis',
+      'Rheumatoid Arthritis',
       'Chronic Kidney Disease',
-      'Asthma',
+      'Dyslipidemia',
+      'Gouty Arthritis',
+      'Hypothyroidism',
+      'Hyperthyroidism',
+      'Breast Cancer Follow-up',
+      'Obesity',
+      'Diabetic Neuropathy',
+      'Heart Failure',
+      'Chronic Low Back Pain',
     ];
-    return List.generate(30, (i) {
-      final date = _date(now, i + 4, spread: 330);
+    const statuses = [
+      'Controlled',
+      'Under Monitoring',
+      'Uncontrolled',
+      'Stable',
+      'Under Monitoring',
+      'Controlled',
+      'Needs Adjustment',
+    ];
+    const riskFactorsList = [
+      'Smoking, High Cholesterol',
+      'Obesity, Physical Inactivity',
+      'Physical Inactivity, High Sodium Diet',
+      'High Cholesterol, Family History',
+      'Alcohol Consumption, Smoking',
+      'Obesity, High Sodium Diet',
+      'Family History, Physical Inactivity',
+    ];
+    const bloodPressures = [
+      '120/80',
+      '130/85',
+      '140/90',
+      '155/95',
+      '165/100',
+      '125/82',
+      '138/88',
+      '148/94',
+      '170/105',
+    ];
+    const bmis = ['21.8', '24.2', '26.7', '28.9', '31.4', '33.8', '35.2', '23.0', '27.5'];
+    const followups = ['Completed', 'Pending', 'Missed', 'Completed', 'Pending'];
+    const adherence = ['Regular', 'Regular', 'Irregular', 'Stopped', 'Regular'];
+    const referralOutcomes = [
+      'Managed at Barangay',
+      'Managed at Barangay',
+      'Referred to Hospital',
+      'Emergency Referral',
+      'Managed at Barangay',
+    ];
+    const severities = ['Mild', 'Moderate', 'Severe', 'Critical'];
+    const barangayList = [
+      'Poblacion',
+      'Barangay 1',
+      'Barangay 2',
+      'Casisang',
+      'Sumpong',
+      'San Jose',
+      'Kalasungay',
+      'Dalwangan',
+    ];
+
+    return List.generate(60, (i) {
+      final daysAgo = (i * 6 + 3) % 360;
+      final date = now.subtract(Duration(days: daysAgo));
       final disease = diseases[i % diseases.length];
+      final status = statuses[i % statuses.length];
+      final bp = bloodPressures[i % bloodPressures.length];
+      final bmi = bmis[i % bmis.length];
+      final risk = riskFactorsList[i % riskFactorsList.length];
+      final severity = severities[i % severities.length];
+      final followupStatus = followups[i % followups.length];
+      final medAdherence = adherence[i % adherence.length];
+      final outcome = referralOutcomes[i % referralOutcomes.length];
+      final barangay = barangayList[i % barangayList.length];
+      final age = 22 + (i * 3) % 58; // 22 to 80 years old
+      final gender = i.isEven ? 'Female' : 'Male';
+      final nextVisitDate = date.add(Duration(days: 14 + (i % 30)));
+
       return {
         'datetime': date.toIso8601String(),
+        'date': date.toIso8601String(),
+        'time': date.toIso8601String(),
         'type': disease,
         'condition': disease,
+        'diagnosis': disease,
+        'disease': disease,
         'diseaseType': 'Non-Communicable',
         'patient': 'NCD Patient ${i + 1}',
+        'patientName': 'NCD Patient ${i + 1}',
         'patientId': 'TEST-N-${1001 + i}',
-        'details': 'Ongoing management for $disease.',
-        'status': const [
-          'Controlled',
-          'Under Monitoring',
-          'Uncontrolled',
-        ][i % 3],
-        'age': '${25 + i * 2 % 60}',
-        'gender': i.isEven ? 'Female' : 'Male',
+        'details':
+            'Diagnosed with $disease. Status: $status. Risk factors: $risk. Blood pressure: $bp, BMI: $bmi. Adherence: $medAdherence.',
+        'plan':
+            'Maintenance pharmacotherapy, sodium-restricted diet, routine ambulatory monitoring, and scheduled consultation on ${nextVisitDate.toIso8601String().split('T')[0]}.',
+        'status': status,
+        'currentStatus': status,
+        'symptoms': 'Chronic management for $disease',
+        'age': '$age',
+        'gender': gender,
+        'sex': gender,
+        'bloodPressure': bp,
+        'bmi': bmi,
+        'vitalsigns': 'BP: $bp | BMI: $bmi | HR: ${68 + (i % 25)} bpm | Temp: 36.6°C',
+        'riskFactors': risk,
+        'followupStatus': followupStatus,
+        'medicationAdherence': medAdherence,
+        'referralOutcome': outcome,
         'ai_category': disease,
-        'ai_severity': const ['Mild', 'Moderate', 'Severe'][i % 3],
-        'followupStatus': const ['Completed', 'Pending', 'Missed'][i % 3],
-        'medicationAdherence': const ['Regular', 'Irregular', 'Stopped'][i % 3],
-        'referralOutcome': const [
-          'Managed at Barangay',
-          'Referred to Hospital',
-          'Emergency Referral',
-        ][i % 3],
-        'riskFactors': const [
-          'Smoking',
-          'Obesity',
-          'Physical Inactivity',
-          'High Cholesterol',
-        ][i % 4],
-        'bmi': '${21 + i % 15}',
-        'bloodPressure': i % 3 == 0 ? '150/95' : '125/80',
+        'ai_severity': severity,
+        'ai_confidence': '${84 + (i % 14)}%',
+        'ai_method': 'Chronic Disease Risk Stratification',
+        'ai_keywords': '$disease, chronic care, lifestyle intervention, medication compliance',
+        'ai_recovery_plan':
+            'Structured lifestyle modification, adherence counseling, routine glycemic/BP tracking, and periodic complication screenings.',
+        'followup': nextVisitDate.toIso8601String().split('T')[0],
+        'nextVisit': nextVisitDate.toIso8601String().split('T')[0],
+        'lastVisit': date.toIso8601String().split('T')[0],
+        'address': '$barangay, Malaybalay City',
+        'barangay': barangay,
+        'reportedBy': 'Assigned Health Worker',
       };
     });
   }
 
   static List<Map<String, dynamic>> _morbidity(DateTime now) {
-    const diseases = [
-      'Dengue',
+    const communicableDiseases = [
+      'Dengue Fever',
       'Pneumonia',
       'Influenza',
-      'Diabetes',
-      'Hypertension',
+      'Tuberculosis',
+      'Acute Gastroenteritis',
+      'COVID-19',
+      'Measles',
+      'Chickenpox',
     ];
-    return List.generate(30, (i) {
-      final date = _date(now, i, spread: 330);
+    const nonCommunicableDiseases = [
+      'Hypertension',
+      'Type 2 Diabetes Mellitus',
+      'Coronary Heart Disease',
+      'Bronchial Asthma',
+      'Chronic Kidney Disease',
+      'Osteoarthritis',
+      'COPD',
+      'Stroke',
+    ];
+    const severities = ['Mild', 'Moderate', 'Severe', 'Critical'];
+    const statuses = ['Active', 'Recovered', 'Under Treatment', 'Controlled'];
+    const barangays = [
+      'Poblacion',
+      'Barangay 1',
+      'Barangay 2',
+      'Casisang',
+      'Sumpong',
+      'San Jose',
+      'Kalasungay',
+      'Dalwangan',
+    ];
+
+    return List.generate(60, (i) {
+      final daysAgo = (i * 6) % 360;
+      final date = now.subtract(Duration(days: daysAgo));
+      final isCommunicable = i.isEven;
+      final disease = isCommunicable
+          ? communicableDiseases[(i ~/ 2) % communicableDiseases.length]
+          : nonCommunicableDiseases[(i ~/ 2) % nonCommunicableDiseases.length];
+      final classification = isCommunicable ? 'communicable' : 'non_communicable';
+      final diseaseType = isCommunicable ? 'Communicable' : 'Non-Communicable';
+      final severity = severities[i % severities.length];
+      final status = statuses[i % statuses.length];
+      final barangay = barangays[i % barangays.length];
+      final age = 5 + (i * 3) % 72;
+      final gender = i % 3 == 0 ? 'Female' : 'Male';
+
       return {
         'patientName': 'Morbidity Patient ${i + 1}',
         'patientId': 'TEST-M-${1001 + i}',
-        'age': '${8 + i * 3 % 75}',
-        'gender': i.isEven ? 'Male' : 'Female',
-        'disease': diseases[i % diseases.length],
-        'severity': const ['Mild', 'Moderate', 'Severe', 'Critical'][i % 4],
-        'status': const ['Active', 'Recovered', 'Under Treatment'][i % 3],
+        'age': '$age',
+        'gender': gender,
+        'sex': gender,
+        'disease': disease,
+        'condition': disease,
+        'diagnosis': disease,
+        'type': disease,
+        'classification': classification,
+        'diseaseType': diseaseType,
+        'severity': severity,
+        'ai_severity': severity,
+        'status': status,
+        'currentStatus': status,
         'healthFacility': 'Barangay Health Center',
         'reportedBy': 'Assigned Health Worker',
-        'treatment': 'Standard treatment and monitoring',
+        'treatment': 'Standard protocol treatment and monitoring for $disease',
         'dateReported': date.toIso8601String(),
         'date': date.toIso8601String(),
+        'datetime': date.toIso8601String(),
         'time': date.toIso8601String(),
+        'address': '$barangay, Malaybalay City',
+        'barangay': barangay,
       };
     });
   }

@@ -18,6 +18,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart'
 import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality_database_helper.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
@@ -1171,19 +1172,22 @@ class _MortalityPageState extends State<MortalityPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      drawer: WebAppSidebar(
-        userName: userName,
-        activeItem: WebSidebarItem.mortality,
-      ),
-      body: Column(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildTopBar(context),
+          WebAppSidebar(
+            userName: userName,
+            activeItem: WebSidebarItem.mortality,
+          ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _loadData,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 12.0,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2080,61 +2084,12 @@ class _MortalityPageState extends State<MortalityPage> {
   }
 
   Widget _buildTopBar(BuildContext context) {
-    return Container(
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      decoration: BoxDecoration(
-        color: _darkDeepTeal,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _scaffoldKey.currentState?.openDrawer(),
-              hoverColor: _primaryAqua.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: Icon(Icons.menu_rounded, color: Colors.white, size: 24),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'Mortality Monitoring',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Spacer(),
-          FilledButton.icon(
-            onPressed: _isLoadingMetrics ? null : _generateMortalityReport,
-            style: AppButtonStyles.report(),
-            icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-            label: const Text(
-              'Generate',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(width: 12),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh Data',
-            onPressed: _loadData,
-            color: Colors.white70,
-            iconSize: 28,
-          ),
-        ],
-      ),
+    return WebAppTopBar(
+      title: 'Mortality Monitoring',
+      scaffoldKey: _scaffoldKey,
+      isLoading: _isLoadingMetrics,
+      onGenerateReport: _generateMortalityReport,
+      onRefresh: () => _loadData(),
     );
   }
 

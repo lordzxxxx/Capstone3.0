@@ -94,7 +94,13 @@ class _NonCommunicableAnalyticsPageState
   }
 
   String _disease(Map<String, dynamic> row) {
-    for (final key in const ['condition', 'diagnosis', 'type', 'ai_category']) {
+    for (final key in const [
+      'disease',
+      'condition',
+      'diagnosis',
+      'type',
+      'ai_category',
+    ]) {
       final value = _v(row, key);
       if (value.isNotEmpty && !value.toLowerCase().contains('communicable'))
         return value;

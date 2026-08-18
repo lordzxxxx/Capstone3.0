@@ -17,12 +17,14 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
+import 'package:mycapstone_project/app/dev/barangay_test_data_seeder.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable_insights.dart';
 
@@ -317,16 +319,13 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      drawer: WebAppSidebar(
-        userName: userName,
-        activeItem: WebSidebarItem.nonCommunicable,
-      ),
-      body: Column(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Top Bar
-          _buildTopBar(context),
-
-          // Content Area
+          WebAppSidebar(
+            userName: userName,
+            activeItem: WebSidebarItem.nonCommunicable,
+          ),
           Expanded(
             child: RefreshIndicator(
               backgroundColor: const Color(0xFFF5F7FA),
@@ -336,7 +335,10 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 12.0,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -389,108 +391,53 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   }
 
   Widget _buildTopBar(BuildContext context) {
-    return Container(
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      decoration: BoxDecoration(
-        color: _darkDeepTeal,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _scaffoldKey.currentState?.openDrawer(),
-              hoverColor: _primaryAqua.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: Icon(Icons.menu_rounded, color: Colors.white, size: 24),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'Non-Communicable Disease Management',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Spacer(),
+    return WebAppTopBar(
+      title: 'Non-Communicable Disease Management',
+      scaffoldKey: _scaffoldKey,
+      onRefresh: () => _loadPatients(),
+      selectionCount: _isSelectionMode ? _getSelectedPatientIds.length : null,
+      actions: [
+        if (_isSelectionMode) ...[
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh Data',
-            onPressed: () => _loadPatients(),
-            color: Colors.white70,
-          ),
-          if (_isSelectionMode) const SizedBox(width: 12),
-          if (_isSelectionMode)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: _primaryAqua.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                '${_getSelectedPatientIds.length} selected',
-                style: const TextStyle(
-                  color: _primaryAqua,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          if (_isSelectionMode) const SizedBox(width: 12),
-          if (_isSelectionMode)
-            IconButton(
-              icon: const Icon(Icons.select_all_rounded),
-              tooltip: 'Select All',
-              onPressed: () {
-                setState(() {
-                  _getSelectedPatientIds.clear();
-                  for (final patient in _filteredPatients) {
-                    final patientId = patient['id'] as String? ?? '';
-                    if (patientId.isNotEmpty) {
-                      _getSelectedPatientIds.add(patientId);
-                    }
+            icon: const Icon(Icons.select_all_rounded),
+            tooltip: 'Select All',
+            onPressed: () {
+              setState(() {
+                _getSelectedPatientIds.clear();
+                for (final patient in _filteredPatients) {
+                  final patientId = patient['id'] as String? ?? '';
+                  if (patientId.isNotEmpty) {
+                    _getSelectedPatientIds.add(patientId);
                   }
-                });
-              },
-              color: _mutedCoolGray,
-              iconSize: 28,
-            ),
-          if (_isSelectionMode)
-            IconButton(
-              icon: const Icon(Icons.clear_rounded),
-              tooltip: 'Cancel Selection',
-              onPressed: () {
-                setState(() {
-                  _isSelectionMode = false;
-                  _getSelectedPatientIds.clear();
-                });
-              },
-              color: _mutedCoolGray,
-              iconSize: 28,
-            ),
-          if (_isSelectionMode)
-            IconButton(
-              icon: const Icon(Icons.delete_rounded),
-              tooltip: 'Delete Selected',
-              onPressed: _getSelectedPatientIds.isEmpty
-                  ? null
-                  : _showDeleteConfirmationModal,
-              color: _getSelectedPatientIds.isEmpty ? Colors.grey : Colors.red,
-              iconSize: 28,
-            ),
+                }
+              });
+            },
+            color: Colors.white70,
+            iconSize: 24,
+          ),
+          IconButton(
+            icon: const Icon(Icons.clear_rounded),
+            tooltip: 'Cancel Selection',
+            onPressed: () {
+              setState(() {
+                _isSelectionMode = false;
+                _getSelectedPatientIds.clear();
+              });
+            },
+            color: Colors.white70,
+            iconSize: 24,
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_rounded),
+            tooltip: 'Delete Selected',
+            onPressed: _getSelectedPatientIds.isEmpty
+                ? null
+                : _showDeleteConfirmationModal,
+            color: _getSelectedPatientIds.isEmpty ? Colors.grey : Colors.redAccent,
+            iconSize: 24,
+          ),
         ],
-      ),
+      ],
     );
   }
 
@@ -1884,14 +1831,34 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   }
 
   Future<void> _seedSampleData() async {
-    Get.snackbar(
-      'Policy enforced',
-      'Sample data initialization is disabled. Non-communicable datasets now populate only from actual barangay transactions.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.orange,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 3),
-    );
+    try {
+      Get.snackbar(
+        'Seeding Data',
+        'Generating sample non-communicable records for your barangay...',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: _primaryAqua,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+      final result = await BarangayTestDataSeeder.seed();
+      await _loadPatients();
+      Get.snackbar(
+        'Seeding Complete',
+        'Added test records for ${result.barangay}. Non-communicable analytics are now updated.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFF27AE60),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Seeding failed',
+        '$e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
   }
 
   Future<void> _showAddPatientDialog() async {

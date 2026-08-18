@@ -18,6 +18,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart'
 import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
@@ -36,10 +37,10 @@ import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _secondaryIceBlue = Color(0xFF163B66);
-const Color _darkDeepTeal = Color(0xFFF5F7FA);
+const Color _darkDeepTeal = Color(0xFF071A33);
 const Color _cardBackground = Colors.white;
 const Color _mutedCoolGray = Color(0xFF4B6075);
-const Color _lightOffWhite = Color(0xFF0B1F3A);
+const Color _lightOffWhite = Color(0xFFEBF3FC);
 const Color _sidebarDark = Colors.white;
 const Color _historyBackground = Color(0xFFF5F7FA);
 const Color _historySurface = Colors.white;
@@ -706,16 +707,13 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      drawer: WebAppSidebar(
-        userName: userName,
-        activeItem: WebSidebarItem.immunization,
-      ),
-      body: Column(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Fixed Web Header Bar
-          _buildWebHeaderBar(context),
-
-          // Content Area with proper web layout
+          WebAppSidebar(
+            userName: userName,
+            activeItem: WebSidebarItem.immunization,
+          ),
           Expanded(
             child: _isLoading
                 ? const Center(
@@ -916,90 +914,38 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
 
   // Web Header Bar
   Widget _buildWebHeaderBar(BuildContext context) {
-    return Container(
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 0),
-      decoration: BoxDecoration(
-        color: _secondaryIceBlue,
-        border: Border(
-          bottom: BorderSide(
-            color: _primaryAqua.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return WebAppTopBar(
+      title: 'Immunization Dashboard',
+      scaffoldKey: _scaffoldKey,
+      isLoading: _isLoading,
+      onGenerateReport: _generateImmunizationReport,
+      onRefresh: () => _loadRecords(),
+      selectionCount: _isSelectionMode ? _selectedIndices.length : null,
+      actions: [
+        if (kDebugMode) ...[
+          const SizedBox(width: 4),
+          PopupMenuButton(
+            icon: const Icon(Icons.more_vert_outlined, color: Colors.white70),
+            color: _darkDeepTeal,
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                child: const Text(
+                  'Seed Sample Data',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () => _seedSampleData(),
+              ),
+              PopupMenuItem(
+                child: const Text(
+                  'Refresh Data',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () => _loadRecords(),
+              ),
+            ],
           ),
         ],
-      ),
-      child: Row(
-        children: [
-          // Menu Button
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _scaffoldKey.currentState?.openDrawer(),
-              hoverColor: _primaryAqua.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Icon(Icons.menu_rounded, color: Colors.white, size: 28),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          // Title
-          Text(
-            'Immunization Dashboard',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh Data',
-            onPressed: () => _loadRecords(),
-            color: Colors.white70,
-          ),
-          const SizedBox(width: 8),
-          // Selection Mode Info
-          if (_isSelectionMode)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: _primaryAqua.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: _primaryAqua, width: 1.5),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    '${_selectedIndices.length}',
-                    style: const TextStyle(
-                      color: _primaryAqua,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'selected',
-                    style: TextStyle(
-                      color: _lightOffWhite,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -5676,65 +5622,6 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     );
   }
 
-  Widget _buildTopBar(BuildContext context) {
-    return Container(
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _scaffoldKey.currentState?.openDrawer(),
-              hoverColor: _primaryAqua.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: Icon(Icons.menu_rounded, color: _darkDeepTeal, size: 24),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Spacer(),
-          FilledButton.icon(
-            onPressed: _isLoading ? null : _generateImmunizationReport,
-            style: AppButtonStyles.report(),
-            icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-            label: const Text(
-              'Generate',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(width: 12),
-          PopupMenuButton(
-            icon: const Icon(Icons.more_vert_outlined),
-            color: _mutedCoolGray,
-            itemBuilder: (context) => [
-              if (kDebugMode)
-                PopupMenuItem(
-                  child: const Text('Seed Sample Data'),
-                  onTap: () => _seedSampleData(),
-                ),
-              PopupMenuItem(
-                child: const Text('Refresh Data'),
-                onTap: () => _loadRecords(),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _ImmunizationCard extends StatelessWidget {

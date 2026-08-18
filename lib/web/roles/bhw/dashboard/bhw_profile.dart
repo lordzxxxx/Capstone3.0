@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
 const Color _profileAqua = Color(0xFF2F80ED);
@@ -135,13 +136,13 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      drawer: WebAppSidebar(
-        userName: _displayName,
-        activeItem: WebSidebarItem.profile,
-      ),
-      body: Column(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildTopBar(),
+          WebAppSidebar(
+            userName: _displayName,
+            activeItem: WebSidebarItem.profile,
+          ),
           Expanded(
             child: _isLoading
                 ? const Center(
@@ -275,38 +276,11 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
   }
 
   Widget _buildTopBar() {
-    return Container(
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      decoration: BoxDecoration(
-        color: _profileDark,
-        border: Border(
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.07)),
-        ),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-            icon: const Icon(Icons.menu_rounded, color: Colors.white),
-          ),
-          const SizedBox(width: 10),
-          const Text(
-            'My Profile',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 21,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const Spacer(),
-          IconButton(
-            tooltip: 'Refresh profile',
-            onPressed: _loadProfile,
-            icon: const Icon(Icons.refresh_rounded, color: _profileAqua),
-          ),
-        ],
-      ),
+    return WebAppTopBar(
+      title: 'My Profile',
+      scaffoldKey: _scaffoldKey,
+      onRefresh: _loadProfile,
+      refreshTooltip: 'Refresh profile',
     );
   }
 

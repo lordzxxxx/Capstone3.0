@@ -15,6 +15,7 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_histo
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
@@ -137,46 +138,38 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: _background,
-      drawer: WebAppSidebar(
-        userName: userName,
-        activeItem: WebSidebarItem.referrals,
-      ),
-      appBar: AppBar(
-        backgroundColor: AppColors.backgroundDark,
-        title: const Text('BHW Referral Management'),
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
-        actions: [
-          IconButton(
-            onPressed: _loadScope,
-            tooltip: 'Refresh referrals',
-            icon: const Icon(Icons.refresh_rounded),
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          WebAppSidebar(
+            userName: userName,
+            activeItem: WebSidebarItem.referrals,
+          ),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator(color: _aqua))
+                : _error != null
+                ? _errorState()
+                : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: _stream,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return _errorState(message: snapshot.error.toString());
+                      }
+                      if (!snapshot.hasData) {
+                        return const Center(
+                          child: CircularProgressIndicator(color: _aqua),
+                        );
+                      }
+                      final records =
+                          snapshot.data!.docs.map(_BhwReferralRecord.new).toList()
+                            ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+                      return _workspace(records);
+                    },
+                  ),
           ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: _aqua))
-          : _error != null
-          ? _errorState()
-          : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _stream,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return _errorState(message: snapshot.error.toString());
-                }
-                if (!snapshot.hasData) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: _aqua),
-                  );
-                }
-                final records =
-                    snapshot.data!.docs.map(_BhwReferralRecord.new).toList()
-                      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-                return _workspace(records);
-              },
-            ),
     );
   }
 

@@ -19,6 +19,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart'
 import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
@@ -316,16 +317,13 @@ class _PrenatalPageState extends State<PrenatalPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      drawer: WebAppSidebar(
-        userName: userName,
-        activeItem: WebSidebarItem.prenatalCare,
-      ),
-      body: Column(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Web Header Bar
-          _buildWebHeaderBar(context),
-
-          // Content Area
+          WebAppSidebar(
+            userName: userName,
+            activeItem: WebSidebarItem.prenatalCare,
+          ),
           Expanded(
             child: _isLoading
                 ? const Center(
@@ -811,82 +809,33 @@ class _PrenatalPageState extends State<PrenatalPage> {
   }
 
   Widget _buildWebHeaderBar(BuildContext context) {
-    return Container(
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      decoration: BoxDecoration(color: _darkDeepTeal),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.menu_rounded),
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-            color: Colors.white,
-            iconSize: 36,
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'Prenatal Dashboard',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Spacer(),
-          FilledButton.icon(
-            onPressed: _isLoading ? null : _generatePrenatalReport,
-            style: AppButtonStyles.report(),
-            icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-            label: const Text(
-              'Generate',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(width: 12),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh Data',
-            onPressed: () => _loadRecords(),
-            color: Colors.white70,
-          ),
-          const SizedBox(width: 12),
-          if (_isSelectionMode)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: _primaryAqua.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _primaryAqua, width: 1),
+    return WebAppTopBar(
+      title: 'Prenatal Dashboard',
+      scaffoldKey: _scaffoldKey,
+      isLoading: _isLoading,
+      onGenerateReport: _generatePrenatalReport,
+      onRefresh: () => _loadRecords(),
+      selectionCount: _isSelectionMode ? _selectedIndices.length : null,
+      actions: [
+        if (kDebugMode) ...[
+          const SizedBox(width: 4),
+          PopupMenuButton<String>(
+            color: _darkDeepTeal,
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onSelected: (value) async {
+              if (value == 'seed_100') {
+                await _confirmAndSeedSamples(context);
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'seed_100',
+                child: Text('Seed Sample Data', style: TextStyle(color: Colors.white)),
               ),
-              child: Text(
-                '${_selectedIndices.length} selected',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          const SizedBox(width: 12),
-          if (kDebugMode)
-            PopupMenuButton<String>(
-              color: _darkDeepTeal,
-              icon: Icon(Icons.more_vert, color: Colors.white),
-              onSelected: (value) async {
-                if (value == 'seed_100') {
-                  await _confirmAndSeedSamples(context);
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'seed_100',
-                  child: Text(
-                    'Seed 100 sample records',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
+            ],
+          ),
         ],
-      ),
+      ],
     );
   }
 

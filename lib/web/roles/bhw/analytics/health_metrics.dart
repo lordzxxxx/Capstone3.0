@@ -9,6 +9,7 @@ import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/roles/bhw/analytics/ai_summary.dart'
     as ai;
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
@@ -423,39 +424,17 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppColors.backgroundLight,
-      drawer: WebAppSidebar(
-        userName: userName,
-        activeItem: WebSidebarItem.summaryGeneration,
-      ),
-      appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: Colors.white),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Summary Generation',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            Text(
-              'Operational reporting workspace',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.white70),
-            ),
-          ],
-        ),
-      ),
-      body: ColoredBox(
-        color: AppColors.backgroundLight,
-        child: SingleChildScrollView(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          WebAppSidebar(
+            userName: userName,
+            activeItem: WebSidebarItem.summaryGeneration,
+          ),
+          Expanded(
+            child: ColoredBox(
+              color: AppColors.backgroundLight,
+              child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Center(
             child: ConstrainedBox(
@@ -500,6 +479,9 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
           ),
         ),
       ),
+    ),
+  ],
+),
     );
   }
 
