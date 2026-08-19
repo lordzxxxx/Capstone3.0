@@ -3680,28 +3680,56 @@ class _NewCheckUpFullScreenModalState
                   '')
               .toString()
               .trim();
-      final nameParts = patientName.isEmpty
-          ? <String>[]
-          : patientName.split(RegExp(r'\s+'));
-      _firstNameController.text = nameParts.isNotEmpty ? nameParts.first : '';
-      _surnameController.text = nameParts.length > 1
-          ? nameParts.sublist(1).join(' ')
-          : '';
+      if (patientName.contains(',')) {
+        final commaParts = patientName.split(',');
+        _surnameController.text = commaParts.first.trim();
+        _firstNameController.text = commaParts.sublist(1).join(' ').trim();
+      } else {
+        final nameParts = patientName.isEmpty
+            ? <String>[]
+            : patientName.split(RegExp(r'\s+'));
+        _firstNameController.text = nameParts.isNotEmpty ? nameParts.first : '';
+        _surnameController.text = nameParts.length > 1
+            ? nameParts.sublist(1).join(' ')
+            : '';
+      }
     }
-    _ageController.text = (patientSeed['age'] ?? '').toString();
-    final fullAddress = [
-      (patientSeed['address'] ?? '').toString().trim(),
-      (patientSeed['barangay'] ?? '').toString().trim(),
-    ].where((p) => p.isNotEmpty).join(', ');
-    _addressController.text = fullAddress.isNotEmpty
-        ? fullAddress
-        : (patientSeed['address'] ?? '').toString();
-    _symptomsController.text =
-        (patientSeed['symptoms'] ??
-                patientSeed['chiefComplaint'] ??
-                patientSeed['disease'] ??
-                '')
-            .toString();
+    final ageStr = (patientSeed['age'] ?? '').toString().trim();
+    final ageNumMatch = RegExp(r'\d+').firstMatch(ageStr);
+    _ageController.text = ageNumMatch != null ? ageNumMatch.group(0)! : ageStr;
+
+    final addr = (patientSeed['address'] ?? '').toString().trim();
+    final brgy = (patientSeed['barangay'] ?? '').toString().trim();
+    if (addr.isNotEmpty && brgy.isNotEmpty) {
+      _addressController.text = addr.toLowerCase().contains(brgy.toLowerCase())
+          ? addr
+          : '$addr, $brgy';
+    } else if (addr.isNotEmpty) {
+      _addressController.text = addr;
+    } else {
+      _addressController.text = brgy;
+    }
+
+    final rawSymptoms = (patientSeed['symptoms'] ??
+            patientSeed['chiefComplaint'] ??
+            '')
+        .toString()
+        .trim();
+    final rawDiagnosis = (patientSeed['diagnosis'] ??
+            patientSeed['disease'] ??
+            '')
+        .toString()
+        .trim();
+    if (rawSymptoms.isNotEmpty &&
+        rawDiagnosis.isNotEmpty &&
+        rawSymptoms.toLowerCase() != rawDiagnosis.toLowerCase()) {
+      _symptomsController.text = '$rawSymptoms\nDiagnosis: $rawDiagnosis';
+    } else if (rawSymptoms.isNotEmpty) {
+      _symptomsController.text = rawSymptoms;
+    } else if (rawDiagnosis.isNotEmpty) {
+      _symptomsController.text = rawDiagnosis;
+    }
+
     _planController.text =
         (patientSeed['plan'] ??
                 patientSeed['treatment'] ??
@@ -3727,6 +3755,16 @@ class _NewCheckUpFullScreenModalState
         .toString();
     _heightController.text = (patientSeed['height'] ?? patientSeed['ht'] ?? '')
         .toString();
+
+    final followUpStr = (patientSeed['nextVisitDate'] ??
+            patientSeed['followUpDate'] ??
+            patientSeed['followup'] ??
+            '')
+        .toString()
+        .trim();
+    if (followUpStr.isNotEmpty) {
+      _followUpDate = DateTime.tryParse(followUpStr);
+    }
   }
 
   // Helper method to build section cards

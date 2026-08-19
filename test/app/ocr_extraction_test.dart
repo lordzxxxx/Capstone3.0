@@ -345,5 +345,285 @@ void main() {
       expect(seed['date'], '2026-08-15');
       expect(seed['visitDate'], '2026-08-15');
     });
+
+    test('accurately extracts and seeds realistic scanned Check-Up Form (CHK-2026) with stacked layout, hint instructions, and tabular vital signs', () {
+      const realisticScannedCheckup = '''
+        REPUBLIC OF THE PHILIPPINES
+        PROVINCE OF CAVITE - BARANGAY HEALTH CENTER
+        BARANGAY HEALTH CHECK-UP INTAKE FORM
+        FORM: CHK-2026
+
+        1. Patient Demographic Information
+        Full Name (Last Name, First Name, Middle Name)
+        Dela Cruz, Juan M.
+        Patient ID (PAT-YYYY-XXXX)
+        PAT-2026-0105
+        Date of Birth (YYYY-MM-DD)
+        1992-05-18
+        Age (yrs/mos)
+        34
+        Sex
+        [X] Male  [ ] Female
+        Civil Status
+        [ ] Single  [X] Married  [ ] Widowed  [ ] Separated
+        Contact Number (09XX-XXX-XXXX)
+        0917-888-9900
+        Residential Address (House / Street / Zone / Sitio)
+        45 Rizal Ave, Purok 3
+        Barangay (e.g. Barangay 01)
+        Barangay 01
+
+        2. Vital Signs & Clinical Measurements
+        Blood Pressure (BP) Body Temp (T) Pulse Rate (HR) Resp. Rate (RR) Oxygen Sat (SpO2) Weight (WT) Height (HT)
+        mmHg (e.g. 120/80) °C (e.g. 36.5) bpm cpm % (e.g. 98) kg cm
+        120/80 36.7 74 18 98 68 172
+
+        3. Chief Complaint & Subjective Symptoms
+        Chief Complaint / Reason for Visit / Symptoms
+        (Describe onset, duration, severity, and associated symptoms)
+        High fever for 3 days, body aches, and persistent dry cough
+        
+        4. Clinical Assessment & Diagnosis (Dx)
+        Clinical Diagnosis / Disease Condition (Dx)
+        (Primary diagnosis, ICD-10 or clinical impression)
+        Acute Viral Upper Respiratory Tract Infection
+
+        5. Treatment Plan, Medication (Rx) & Management
+        Treatment Plan / Prescribed Medications (Rx) / Home Care Advice
+        (Drug name, dosage, frequency, duration, precautions)
+        Paracetamol 500mg tab every 4 hours PRN, increase oral hydration, rest for 3 days
+
+        6. Encounter Metadata & Verification
+        Date of Visit (YYYY-MM-DD)
+        2026-08-18
+        Encounter Status
+        [X] Completed  [ ] Follow-Up Needed  [ ] Referred to Hospital
+        Next Visit Date (YYYY-MM-DD)
+        2026-08-25
+      ''';
+
+      final extraction = OcrExtraction.fromText(realisticScannedCheckup);
+      final seed = extraction.toFormSeed();
+
+      expect(seed['fullName'], 'Dela Cruz, Juan M.');
+      expect(seed['patientName'], 'Dela Cruz, Juan M.');
+      expect(seed['patientId'], 'PAT-2026-0105');
+      expect(seed['dateOfBirth'], '1992-05-18');
+      expect(seed['age'], '34');
+      expect(seed['gender'], 'Male');
+      expect(seed['sex'], 'Male');
+      expect(seed['civilStatus'], 'Married');
+      expect(seed['contactNumber'], '09178889900');
+      expect(seed['address'], '45 Rizal Ave, Purok 3');
+      expect(seed['barangay'], 'Barangay 01');
+      expect(seed['bloodPressure'], '120/80');
+      expect(seed['bp'], '120/80');
+      expect(seed['temperature'], '36.7');
+      expect(seed['temp'], '36.7');
+      expect(seed['heartRate'], '74');
+      expect(seed['hr'], '74');
+      expect(seed['respiratoryRate'], '18');
+      expect(seed['rr'], '18');
+      expect(seed['oxygenSaturation'], '98');
+      expect(seed['spo2'], '98');
+      expect(seed['weight'], '68');
+      expect(seed['wt'], '68');
+      expect(seed['height'], '172');
+      expect(seed['ht'], '172');
+      expect(seed['symptoms'], 'High fever for 3 days, body aches, and persistent dry cough');
+      expect(seed['chiefComplaint'], 'High fever for 3 days, body aches, and persistent dry cough');
+      expect(seed['disease'], 'Acute Viral Upper Respiratory Tract Infection');
+      expect(seed['diagnosis'], 'Acute Viral Upper Respiratory Tract Infection');
+      expect(seed['treatment'], 'Paracetamol 500mg tab every 4 hours PRN, increase oral hydration, rest for 3 days');
+      expect(seed['plan'], 'Paracetamol 500mg tab every 4 hours PRN, increase oral hydration, rest for 3 days');
+      expect(seed['date'], '2026-08-18');
+      expect(seed['visitDate'], '2026-08-18');
+      expect(seed['nextVisitDate'], '2026-08-25');
+      expect(seed['followUpDate'], '2026-08-25');
+    });
+
+    test('accurately extracts and seeds scanned Prenatal Care Form (PNC-2026)', () {
+      const prenatalText = '''
+        FORM: PNC-2026
+        Maternal Full Name: Maria Santos Cruz
+        Patient ID: PAT-2026-042
+        Age: 27
+        Date of Birth: 1999-03-12
+        Civil Status: Married
+        Contact Number: 0918-987-6543
+        PhilHealth ID / No.: 12-345678901-2
+        Residence Address: Zone 4, Sitio Riverside
+        Barangay: Barangay 02
+        Gravida (G): 2
+        Para (P): 1
+        Full Term (FT): 1
+        Premature (PT): 0
+        Abortion (AB): 0
+        Living Children (LC): 1
+        LMP: 2026-01-10
+        EDD: 2026-10-17
+        AOG: 31
+        Blood Type: O+
+        Pregnancy Risk Assessment Level: Low Risk
+        Fundal Height (FH): 28
+        Fetal Heart Beat (FHB): 142
+        Tetanus Toxoid (TT) Dose: TT3
+        Registration Date: 2026-08-16
+      ''';
+
+      final extraction = OcrExtraction.fromText(prenatalText);
+      final seed = extraction.toFormSeed();
+
+      expect(seed['patientName'], 'Maria Santos Cruz');
+      expect(seed['patientId'], 'PAT-2026-042');
+      expect(seed['age'], '27');
+      expect(seed['dateOfBirth'], '1999-03-12');
+      expect(seed['contactNumber'], '09189876543');
+      expect(seed['philhealthNumber'], '12-345678901-2');
+      expect(seed['philhealth'], '12-345678901-2');
+      expect(seed['barangay'], 'Barangay 02');
+      expect(seed['gravida'], '2');
+      expect(seed['para'], '1');
+      expect(seed['fullTerm'], '1');
+      expect(seed['premature'], '0');
+      expect(seed['abortion'], '0');
+      expect(seed['livingChildren'], '1');
+      expect(seed['lmpDate'], '2026-01-10');
+      expect(seed['eddDate'], '2026-10-17');
+      expect(seed['aog'], '31');
+      expect(seed['gestationalAge'], '31');
+      expect(seed['bloodType'], 'O+');
+      expect(seed['riskLevel'], 'Low Risk');
+      expect(seed['fh'], '28');
+      expect(seed['dhb'], '142');
+      expect(seed['fhb'], '142');
+      expect(seed['tcb'], 'TT3');
+      expect(seed['registrationDate'], '2026-08-16');
+    });
+
+    test('accurately extracts and seeds scanned Immunization Form (IMZ-2026)', () {
+      const imzText = '''
+        FORM: IMZ-2026
+        Patient / Child Full Name: Baby Gabriel Reyes
+        Patient ID: PAT-2026-088
+        Date of Birth: 2026-02-14
+        Age: 6
+        Sex: Male
+        Mother / Father / Guardian Full Name: Elena Reyes
+        Contact Number: 0920-555-1234
+        Residence Address: Purok 2, Brgy. 03
+        Barangay: Barangay 03
+        Vaccine / Antigen Type: Pentavalent
+        Dose Number: 2nd Dose
+        Batch / Lot Number: BATCH-PENTA-992
+        Expiration Date: 2027-12-31
+        Date Administered: 2026-08-14
+        Vaccinator Name & Title: Maria Dela Cruz BHW
+      ''';
+
+      final extraction = OcrExtraction.fromText(imzText);
+      final seed = extraction.toFormSeed();
+
+      expect(seed['patientName'], 'Baby Gabriel Reyes');
+      expect(seed['childName'], 'Baby Gabriel Reyes');
+      expect(seed['patientId'], 'PAT-2026-088');
+      expect(seed['dateOfBirth'], '2026-02-14');
+      expect(seed['gender'], 'Male');
+      expect(seed['sex'], 'Male');
+      expect(seed['guardianName'], 'Elena Reyes');
+      expect(seed['parentName'], 'Elena Reyes');
+      expect(seed['contactNumber'], '09205551234');
+      expect(seed['barangay'], 'Barangay 03');
+      expect(seed['vaccine'], 'Pentavalent');
+      expect(seed['antigen'], 'Pentavalent');
+      expect(seed['dose'], '2nd Dose');
+      expect(seed['doseNumber'], '2nd Dose');
+      expect(seed['batchNumber'], 'BATCH-PENTA-992');
+      expect(seed['lotNumber'], 'BATCH-PENTA-992');
+      expect(seed['expirationDate'], '2027-12-31');
+      expect(seed['administrationDate'], '2026-08-14');
+      expect(seed['registeredBy'], 'Maria Dela Cruz BHW');
+      expect(seed['administeredBy'], 'Maria Dela Cruz BHW');
+    });
+
+    test('accurately extracts and seeds scanned Mortality Form (MOR-2026)', () {
+      const morText = '''
+        FORM: MOR-2026
+        Full Name of Deceased: Pedro Alvarez Cruz
+        Patient / Record ID: REC-2026-104
+        Date of Birth: 1952-11-20
+        Age at Death: 73
+        Sex: Male
+        Civil Status: Widowed
+        Occupation: Retired Farmer
+        Usual Residence Address: Zone 1, Brgy. 04
+        Barangay: Barangay 04
+        Date of Death: 2026-08-12
+        Time of Death: 04:30 PM
+        Place of Death: Home / Residence
+        Immediate Cause of Death: Acute Myocardial Infarction
+        Reported By: Nurse Jane Santos
+      ''';
+
+      final extraction = OcrExtraction.fromText(morText);
+      final seed = extraction.toFormSeed();
+
+      expect(seed['patientName'], 'Pedro Alvarez Cruz');
+      expect(seed['name'], 'Pedro Alvarez Cruz');
+      expect(seed['patientId'], 'REC-2026-104');
+      expect(seed['dateOfBirth'], '1952-11-20');
+      expect(seed['age'], '73');
+      expect(seed['gender'], 'Male');
+      expect(seed['civilStatus'], 'Widowed');
+      expect(seed['occupation'], 'Retired Farmer');
+      expect(seed['barangay'], 'Barangay 04');
+      expect(seed['dateOfDeath'], '2026-08-12');
+      expect(seed['dateTimeOfDeath'], '2026-08-12');
+      expect(seed['timeOfDeath'], '04:30 PM');
+      expect(seed['placeOfDeath'], 'Home / Residence');
+      expect(seed['causeOfDeath'], 'Acute Myocardial Infarction');
+      expect(seed['cause'], 'Acute Myocardial Infarction');
+      expect(seed['reportedBy'], 'Nurse Jane Santos');
+    });
+
+    test('accurately extracts and seeds scanned Morbidity Form (MBD-2026)', () {
+      const mbdText = '''
+        FORM: MBD-2026
+        Patient Full Name: Ana Theresa Lim
+        Patient ID: PAT-2026-215
+        Date of Birth: 2005-09-08
+        Age: 20
+        Sex: Female
+        Contact Number: 0917-234-5678
+        PhilHealth No.: 22-998877665-0
+        Residence Address: Street 3, Brgy. 05
+        Barangay: Barangay 05
+        Disease / Diagnosis (Dx): Dengue Fever
+        Date of Onset of Symptoms: 2026-08-10
+        Symptoms / Chief Complaints: High grade fever, retro-orbital pain, skin petechiae
+        Treatment Plan: Oral Rehydration Therapy, close platelet monitoring
+        Date Reported: 2026-08-14
+        Reported By: Health Worker Roy
+      ''';
+
+      final extraction = OcrExtraction.fromText(mbdText);
+      final seed = extraction.toFormSeed();
+
+      expect(seed['patientName'], 'Ana Theresa Lim');
+      expect(seed['patientId'], 'PAT-2026-215');
+      expect(seed['dateOfBirth'], '2005-09-08');
+      expect(seed['age'], '20');
+      expect(seed['gender'], 'Female');
+      expect(seed['contactNumber'], '09172345678');
+      expect(seed['philhealthNumber'], '22-998877665-0');
+      expect(seed['barangay'], 'Barangay 05');
+      expect(seed['disease'], 'Dengue Fever');
+      expect(seed['diagnosis'], 'Dengue Fever');
+      expect(seed['dateOfOnset'], '2026-08-10');
+      expect(seed['symptoms'], 'High grade fever, retro-orbital pain, skin petechiae');
+      expect(seed['treatment'], 'Oral Rehydration Therapy, close platelet monitoring');
+      expect(seed['dateReported'], '2026-08-14');
+      expect(seed['reportedBy'], 'Health Worker Roy');
+    });
   });
 }

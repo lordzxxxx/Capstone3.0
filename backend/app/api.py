@@ -32,12 +32,15 @@ try:
         DiseaseInformation,
         ErrorResponse,
         HealthResponse,
+        OCRBatchResponse,
+        OCRFieldResult,
         PredictionRequest,
         PredictionResponse,
         RootStatusResponse,
         SymptomCatalogResponse,
         SymptomGuidanceResponse,
     )
+    from .ocr_service import TrOCRHandwritingEngine
 except ImportError:  # Supports ``uvicorn app.api:app`` from backend/.
     from config import Settings, get_settings
     from disease_service import DiseaseService
@@ -58,12 +61,15 @@ except ImportError:  # Supports ``uvicorn app.api:app`` from backend/.
         DiseaseInformation,
         ErrorResponse,
         HealthResponse,
+        OCRBatchResponse,
+        OCRFieldResult,
         PredictionRequest,
         PredictionResponse,
         RootStatusResponse,
         SymptomCatalogResponse,
         SymptomGuidanceResponse,
     )
+    from ocr_service import TrOCRHandwritingEngine
 
 DISCLAIMER = (
     "This application provides educational decision support only. It is not a "
@@ -576,7 +582,90 @@ def create_app() -> FastAPI:
         )
         return response
 
+    @application.post(
+        "/api/v1/ocr/handwriting",
+        response_model=OCRFieldResult,
+        summary="Extract handwritten text from an image ROI crop",
+        tags=["OCR"],
+    )
+    async def recognize_single_handwriting(
+        request: Request,
+    ) -> OCRFieldResult:
+        """Transcribes a single cropped handwritten image ROI using TrOCR."""
+        form = await request.form()
+        file_upload = form.get("file")
+        field_id = str(form.get("field_id", "field"))
+
+        if file_upload is None or not hasattr(file_upload, "read"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Form field 'file' containing image bytes is required.",
+            )
+
+        content = await file_upload.read()
+        engine = TrOCRHandwritingEngine.get_instance()
+        started = time.perf_counter()
+        
+        # Async offload to threadpool
+        import asyncio
+        text, confidence = await asyncio.to_thread(engine.recognize_single, content)
+        elapsed_ms = round((time.perf_counter() - started) * 1000.0, 2)
+
+        return OCRFieldResult(
+            field_id=field_id,
+            text=text,
+            confidence=confidence,
+            processing_time_ms=elapsed_ms,
+        )
+
+    @application.post(
+        "/api/v1/ocr/handwriting/batch",
+        response_model=OCRBatchResponse,
+        summary="Extract handwritten text from multiple image ROIs concurrently",
+        tags=["OCR"],
+    )
+    async def recognize_batch_handwriting(
+        request: Request,
+    ) -> OCRBatchResponse:
+        """Batch transcribes multiple cropped handwritten image ROIs."""
+        form = await request.form()
+        files = form.getlist("files")
+        field_ids = form.getlist("field_ids")
+
+        if not files:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="At least one image in 'files' is required.",
+            )
+
+        contents = [await f.read() for f in files if hasattr(f, "read")]
+        engine = TrOCRHandwritingEngine.get_instance()
+        started = time.perf_counter()
+
+        import asyncio
+        batch_results = await asyncio.to_thread(engine.recognize_batch, contents)
+        elapsed_ms = round((time.perf_counter() - started) * 1000.0, 2)
+
+        results: list[OCRFieldResult] = []
+        for idx, (text, conf) in enumerate(batch_results):
+            fid = str(field_ids[idx]) if idx < len(field_ids) else f"field_{idx}"
+            results.append(
+                OCRFieldResult(
+                    field_id=fid,
+                    text=text,
+                    confidence=conf,
+                    processing_time_ms=elapsed_ms,
+                )
+            )
+
+        return OCRBatchResponse(
+            success=True,
+            processing_time_ms=elapsed_ms,
+            results=results,
+        )
+
     return application
 
 
 app = create_app()
+

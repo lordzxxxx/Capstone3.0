@@ -762,55 +762,37 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: _darkDeepTeal,
-      drawer: const ChoNavigationDrawer(current: ChoDestination.reports),
-      appBar: AppBar(
-        // Keep reports aligned with the CHO portal shell. The page content is
-        // intentionally light, but the navigation bar stays the shared navy
-        // surface so its title and controls remain legible.
-        backgroundColor: ChoColors.navBackground,
-        foregroundColor: ChoColors.navText,
-        title: const Text(
-          'CHO Reports and Analytics',
-          style: TextStyle(
-            fontFamily: 'Manrope',
-            color: ChoColors.navText,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
-        actions: [
-          IconButton(
-            onPressed: _loadAnalytics,
-            icon: const Icon(Icons.refresh),
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ChoNavigationDrawer(current: ChoDestination.reports),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: _primaryAqua))
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(),
+                        const SizedBox(height: 14),
+                        _buildFilters(),
+                        const SizedBox(height: 14),
+                        _buildSummaryGrid(),
+                        const SizedBox(height: 14),
+                        _buildTrendSection(),
+                        const SizedBox(height: 14),
+                        _buildHeatmapSection(),
+                        const SizedBox(height: 14),
+                        _buildRecentRecordsSection(),
+                        const SizedBox(height: 20),
+                        _buildExportSection(),
+                      ],
+                    ),
+                  ),
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _primaryAqua))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 14),
-                  _buildFilters(),
-                  const SizedBox(height: 14),
-                  _buildSummaryGrid(),
-                  const SizedBox(height: 14),
-                  _buildTrendSection(),
-                  const SizedBox(height: 14),
-                  _buildHeatmapSection(),
-                  const SizedBox(height: 14),
-                  _buildRecentRecordsSection(),
-                  const SizedBox(height: 20),
-                  _buildExportSection(),
-                ],
-              ),
-            ),
     );
   }
 

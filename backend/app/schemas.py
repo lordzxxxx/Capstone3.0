@@ -130,3 +130,17 @@ class ErrorResponse(BaseModel):
     recognizedSymptoms: list[str] | None = None
     ignoredSymptoms: list[str] | None = None
     context: dict[str, Any] | None = None
+
+
+class OCRFieldResult(BaseModel):
+    field_id: str
+    text: str
+    confidence: float = Field(ge=0.0, le=1.0)
+    processing_time_ms: float = 0.0
+
+
+class OCRBatchResponse(BaseModel):
+    success: bool
+    processing_time_ms: float
+    results: list[OCRFieldResult]
+

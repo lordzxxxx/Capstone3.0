@@ -2323,7 +2323,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   _buildHeroAction(
                     icon: Icons.assignment_ind_outlined,
                     label: 'Referral workspace',
-                    onTap: () => Get.toNamed(WebRoutes.choReferrals),
+                    onTap: () => Get.offNamed(WebRoutes.choReferrals),
                     primary: true,
                   ),
                   _buildHeroAction(
@@ -3765,7 +3765,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: () => Get.toNamed(WebRoutes.choReferrals),
+                  onPressed: () => Get.offNamed(WebRoutes.choReferrals),
                   icon: const Icon(Icons.open_in_new_rounded, size: 16),
                   label: const Text('Open referrals'),
                 ),
@@ -5972,32 +5972,22 @@ class _ChoDashboardState extends State<ChoDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_authorized) {
-      return Scaffold(
-        backgroundColor: ChoColors.navBackground,
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
     return Scaffold(
       backgroundColor: ChoColors.background,
-      drawer: const ChoNavigationDrawer(current: ChoDestination.dashboard),
-      appBar: AppBar(
-        title: const Text(
-          'CHO Operations Dashboard',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        backgroundColor: ChoColors.navBackground,
-        foregroundColor: ChoColors.navText,
-        elevation: 0,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: ListView(
-          children: [
-            _buildExecutiveHero(),
-            const SizedBox(height: 14),
-            _buildOperationalInsights(),
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ChoNavigationDrawer(current: ChoDestination.dashboard),
+          Expanded(
+            child: !_authorized
+                ? const ChoLoadingSkeleton()
+                : Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                    child: ListView(
+                      children: [
+                        _buildExecutiveHero(),
+                        const SizedBox(height: 14),
+                        _buildOperationalInsights(),
             const SizedBox(height: 14),
             Container(
               width: double.infinity,
@@ -6173,11 +6163,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Get.back(),
-        backgroundColor: _primaryAqua,
-        child: const Icon(Icons.arrow_back),
-      ),
-    );
-  }
+    ),
+  ],
+),
+);
+}
 }

@@ -3277,25 +3277,12 @@ class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _darkDeepTeal,
-      drawer: const ChoNavigationDrawer(current: ChoDestination.referrals),
-      appBar: AppBar(
-        backgroundColor: _darkDeepTeal,
-        title: const Text('CHO Referral Receiving'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              _loadScope();
-              setState(() {
-                _referralsRecoveryAttempts = 0;
-                _referralsStream = _createReferralsStream();
-              });
-            },
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh referrals',
-          ),
-        ],
-      ),
-      body: _isLoading
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ChoNavigationDrawer(current: ChoDestination.referrals),
+          Expanded(
+            child: _isLoading
           ? const Center(child: CircularProgressIndicator(color: _primaryAqua))
           : _loadErrorMessage != null
           ? Center(
@@ -3441,6 +3428,9 @@ class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
                 return _buildReferralsContent(snapshot.data!.docs);
               },
             ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -304,6 +304,8 @@ class MyApp extends StatelessWidget {
       theme: kIsWeb ? AppTheme.light(isWeb: true) : app_theme.AppDesign.theme(),
       themeMode: ThemeMode.light,
       debugShowCheckedModeBanner: false,
+      defaultTransition: kIsWeb ? Transition.fadeIn : null,
+      transitionDuration: kIsWeb ? const Duration(milliseconds: 200) : null,
       // Move the root entry to the branded path while preserving direct deep
       // links such as /login and /bhw/dashboard.
       initialRoute: initialRoute,

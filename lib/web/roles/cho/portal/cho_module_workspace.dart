@@ -209,39 +209,79 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ChoColors.background,
-      drawer: ChoNavigationDrawer(current: widget.config.destination),
-      appBar: AppBar(
-        backgroundColor: ChoColors.navBackground,
-        foregroundColor: ChoColors.navText,
-        title: Text('${widget.config.title} • CHO'),
-        actions: [
-          const Center(child: ChoStatusBadge('City Health Office')),
-          const SizedBox(width: 12),
-          IconButton(
-            tooltip: 'Refresh data',
-            onPressed: _loadScope,
-            icon: const Icon(Icons.refresh_rounded),
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ChoNavigationDrawer(current: widget.config.destination),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${widget.config.title} • CHO',
+                              style: const TextStyle(
+                                fontFamily: 'Manrope',
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: ChoColors.text,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.config.description,
+                              style: const TextStyle(
+                                fontFamily: 'Manrope',
+                                fontSize: 12,
+                                color: ChoColors.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const ChoStatusBadge('City Health Office'),
+                      const SizedBox(width: 10),
+                      IconButton(
+                        tooltip: 'Refresh data',
+                        onPressed: _loadScope,
+                        icon: const Icon(Icons.refresh_rounded, color: ChoColors.text),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, color: ChoColors.border),
+                Expanded(
+                  child: _accessError != null
+                      ? ChoErrorState(message: _accessError!, onRetry: _loadScope)
+                      : _stream == null
+                      ? const ChoLoadingSkeleton()
+                      : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                          stream: _stream,
+                          builder: (context, snapshot) {
+                            if (snapshot.hasError) {
+                              return ChoErrorState(
+                                message: snapshot.error.toString(),
+                                onRetry: _loadScope,
+                              );
+                            }
+                            if (!snapshot.hasData) return const ChoLoadingSkeleton();
+                            return _content(snapshot.data!.docs);
+                          },
+                        ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(width: 8),
         ],
       ),
-      body: _accessError != null
-          ? ChoErrorState(message: _accessError!, onRetry: _loadScope)
-          : _stream == null
-          ? const ChoLoadingSkeleton()
-          : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _stream,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return ChoErrorState(
-                    message: snapshot.error.toString(),
-                    onRetry: _loadScope,
-                  );
-                }
-                if (!snapshot.hasData) return const ChoLoadingSkeleton();
-                return _content(snapshot.data!.docs);
-              },
-            ),
     );
   }
 

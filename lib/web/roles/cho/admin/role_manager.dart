@@ -7,6 +7,8 @@ import 'package:get/get.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
+import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
+import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
@@ -120,15 +122,15 @@ class _RoleManagerState extends State<RoleManager> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Role Manager'),
-        backgroundColor: ChoColors.navBackground,
-        foregroundColor: ChoColors.navText,
-      ),
       backgroundColor: ChoColors.background,
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ChoNavigationDrawer(current: ChoDestination.dashboard),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
           children: [
             Container(
               width: double.infinity,
@@ -315,8 +317,11 @@ class _RoleManagerState extends State<RoleManager> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  ],
+),
+);
+}
 
   Future<String?> _promptForEmail(BuildContext ctx) async {
     String? value;

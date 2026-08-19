@@ -89,66 +89,87 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
                   orElse: () => 'Barangay assignment unavailable',
                 );
 
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOutCubic,
-              width: isCollapsed ? 76.0 : 300.0,
-              height: double.infinity,
-              decoration: const BoxDecoration(
-                color: _BhwDrawerColors.background,
-                border: Border(
-                  right: BorderSide(
-                    color: _BhwDrawerColors.border,
-                    width: 1,
-                  ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 6,
-                    offset: Offset(2, 0),
-                  ),
-                ],
-              ),
-              child: ClipRect(
-                child: SizedBox(
+            return Hero(
+              tag: 'web_app_sidebar',
+              flightShuttleBuilder: (
+                flightContext,
+                animation,
+                flightDirection,
+                fromHeroContext,
+                toHeroContext,
+              ) {
+                return Material(
+                  type: MaterialType.transparency,
+                  child: toHeroContext.widget,
+                );
+              },
+              child: Material(
+                type: MaterialType.transparency,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 240),
+                  curve: Curves.easeInOutCubic,
                   width: isCollapsed ? 76.0 : 300.0,
                   height: double.infinity,
-                  child: SafeArea(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildBrandHeader(isCollapsed),
-                        _buildUserSection(
-                          widget.userName,
-                          assignedBarangay,
-                          isCollapsed,
-                        ),
-                        const SizedBox(height: 8),
-                        Expanded(
-                          child: ListView(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isCollapsed ? 8 : 10,
-                              vertical: 4,
-                            ),
-                            children: [
-                            _buildSectionHeader('OVERVIEW', isCollapsed),
-                            _buildSidebarItem(
-                              icon: Icons.dashboard_outlined,
-                              label: 'Dashboard',
-                              isActive:
-                                  widget.activeItem == WebSidebarItem.dashboard,
-                              isCollapsed: isCollapsed,
-                              onTap: _navigateTo(
-                                context,
-                                WebSidebarItem.dashboard,
-                                () => const HomePage(),
-                                routeName: WebRoutes.bhwDashboard,
-                              ),
-                            ),
-                            _buildSectionHeader('PATIENT SERVICES', isCollapsed),
-                            _buildSidebarItem(
-                              icon: Icons.people_alt_outlined,
+                  decoration: const BoxDecoration(
+                    color: _BhwDrawerColors.background,
+                    border: Border(
+                      right: BorderSide(
+                        color: _BhwDrawerColors.border,
+                        width: 1,
+                      ),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 6,
+                        offset: Offset(2, 0),
+                      ),
+                    ],
+                  ),
+                  child: ClipRect(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return OverflowBox(
+                          alignment: Alignment.topLeft,
+                          minWidth: isCollapsed ? 76.0 : 300.0,
+                          maxWidth: isCollapsed ? 76.0 : 300.0,
+                          minHeight: constraints.maxHeight,
+                          maxHeight: constraints.maxHeight,
+                          child: SafeArea(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildBrandHeader(isCollapsed),
+                                _buildUserSection(
+                                  widget.userName,
+                                  assignedBarangay,
+                                  isCollapsed,
+                                ),
+                                const SizedBox(height: 8),
+                                Expanded(
+                                  child: ListView(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isCollapsed ? 8 : 10,
+                                      vertical: 4,
+                                    ),
+                                    children: [
+                                      _buildSectionHeader('OVERVIEW', isCollapsed),
+                                      _buildSidebarItem(
+                                        icon: Icons.dashboard_outlined,
+                                        label: 'Dashboard',
+                                        isActive:
+                                            widget.activeItem == WebSidebarItem.dashboard,
+                                        isCollapsed: isCollapsed,
+                                        onTap: _navigateTo(
+                                          context,
+                                          WebSidebarItem.dashboard,
+                                          () => const HomePage(),
+                                          routeName: WebRoutes.bhwDashboard,
+                                        ),
+                                      ),
+                                      _buildSectionHeader('PATIENT SERVICES', isCollapsed),
+                                      _buildSidebarItem(
+                                        icon: Icons.people_alt_outlined,
                               label: 'Patient Records',
                               isActive:
                                   widget.activeItem ==
@@ -320,13 +341,17 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
                     ],
                   ),
                 ),
-              ),
-            ),
-          );
-        },
-      );
-    },
+              );
+            },
+          ),
+        ),
+      ),
+    ),
   );
+},
+);
+},
+);
 }
 
   VoidCallback _navigateTo(
@@ -341,14 +366,14 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
       if (widget.activeItem == targetItem) return;
 
       if (routeName != null) {
-        await Get.toNamed(routeName);
+        await Get.offNamed(routeName);
         return;
       }
 
       await navigator.pushReplacement(
         buildSidebarPageRoute(
           page: pageBuilder(),
-          begin: _pageOffsetFor(targetItem),
+          begin: Offset.zero,
           routeName: routeName,
         ),
       );
@@ -371,6 +396,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
       return Padding(
         padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               width: 38,
@@ -404,7 +430,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
               tooltip: 'Expand Menu',
               onPressed: _toggleCollapse,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             ),
           ],
         ),
@@ -414,6 +440,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 14, 8, 12),
       child: Row(
+        mainAxisSize: MainAxisSize.max,
         children: [
           Container(
             width: 38,
@@ -440,32 +467,34 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
           ),
           const SizedBox(width: 10),
           const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'AI-DSUHIS',
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    color: _BhwDrawerColors.text,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
+            child: ClipRect(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'AI-DSUHIS',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      color: _BhwDrawerColors.text,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                    ),
                   ),
-                ),
-                Text(
-                  'Barangay Health Portal',
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    color: _BhwDrawerColors.muted,
-                    fontSize: 10,
+                  Text(
+                    'Barangay Health Portal',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      color: _BhwDrawerColors.muted,
+                      fontSize: 10,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           IconButton(
@@ -500,10 +529,16 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
               color: _BhwDrawerColors.surface,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const CircleAvatar(
-              radius: 16,
-              backgroundColor: _BhwDrawerColors.surfaceAlt,
-              child: Icon(Icons.person, color: _BhwDrawerColors.aqua, size: 18),
+            child: const Center(
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: _BhwDrawerColors.surfaceAlt,
+                child: Icon(
+                  Icons.person,
+                  color: _BhwDrawerColors.aqua,
+                  size: 18,
+                ),
+              ),
             ),
           ),
         ),
@@ -527,33 +562,35 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    userName,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: const TextStyle(
-                      fontFamily: 'Manrope',
-                      color: _BhwDrawerColors.text,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+              child: ClipRect(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      userName,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
+                        color: _BhwDrawerColors.text,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
                     ),
-                  ),
-                  Text(
-                    'BHW • $assignedBarangay',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'Manrope',
-                      color: _BhwDrawerColors.muted,
-                      fontSize: 10,
-                      height: 1.2,
+                    Text(
+                      'BHW • $assignedBarangay',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
+                        color: _BhwDrawerColors.muted,
+                        fontSize: 10,
+                        height: 1.2,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -576,14 +613,18 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 14, 10, 6),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontFamily: 'Manrope',
-          color: _BhwDrawerColors.muted,
-          fontSize: 9,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 1.1,
+      child: ClipRect(
+        child: Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.clip,
+          style: const TextStyle(
+            fontFamily: 'Manrope',
+            color: _BhwDrawerColors.muted,
+            fontSize: 9,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.1,
+          ),
         ),
       ),
     );
@@ -596,164 +637,22 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
     required bool isCollapsed,
     bool isActive = false,
   }) {
-    final foreground = isActive
-        ? Colors.white
-        : _BhwDrawerColors.text.withValues(alpha: 0.92);
-
-    if (isCollapsed) {
-      return Semantics(
-        button: true,
-        selected: isActive,
-        label: '$label navigation item',
-        child: Tooltip(
-          message: label,
-          preferBelow: false,
-          waitDuration: const Duration(milliseconds: 100),
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 3),
-            decoration: BoxDecoration(
-              color: isActive ? _BhwDrawerColors.aqua : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(10),
-                hoverColor: _BhwDrawerColors.aqua.withValues(alpha: 0.18),
-                onTap: onTap,
-                child: SizedBox(
-                  height: 44,
-                  child: Center(
-                    child: Icon(icon, size: 22, color: foreground),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Semantics(
-      button: true,
-      selected: isActive,
-      label: '$label navigation item',
-      child: Tooltip(
-        message: label,
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 2),
-          decoration: BoxDecoration(
-            color: isActive ? _BhwDrawerColors.aqua : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            border: Border(
-              left: BorderSide(
-                color: isActive ? Colors.white : Colors.transparent,
-                width: 4,
-              ),
-            ),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(10),
-              hoverColor: _BhwDrawerColors.aqua.withValues(alpha: 0.18),
-              onTap: onTap,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 46),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Row(
-                    children: [
-                      Icon(icon, size: 20, color: foreground),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                          style: TextStyle(
-                            fontFamily: 'Manrope',
-                            color: foreground,
-                            fontSize: 13,
-                            height: 1.15,
-                            fontWeight: isActive
-                                ? FontWeight.w800
-                                : FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      if (isActive)
-                        const SizedBox(
-                          width: 4,
-                          height: 20,
-                          child: ColoredBox(color: Colors.white),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return _SidebarAnimatedItem(
+      icon: icon,
+      label: label,
+      onTap: onTap,
+      isCollapsed: isCollapsed,
+      isActive: isActive,
+      activeColor: _BhwDrawerColors.aqua,
+      inactiveTextColor: _BhwDrawerColors.text,
+      hoverColor: _BhwDrawerColors.aqua.withValues(alpha: 0.15),
     );
   }
 
   Widget _buildLogoutButton(BuildContext drawerContext, bool isCollapsed) {
-    if (isCollapsed) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: _BhwDrawerColors.border)),
-        ),
-        child: Tooltip(
-          message: 'Logout',
-          child: IconButton(
-            onPressed: () => _confirmAndLogout(drawerContext),
-            icon: const Icon(Icons.logout_rounded, size: 22),
-            color: Colors.redAccent,
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.red.withValues(alpha: 0.1),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: _BhwDrawerColors.border)),
-      ),
-      child: Semantics(
-        button: true,
-        label: 'Log out of the BHW portal',
-        child: SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () => _confirmAndLogout(drawerContext),
-            icon: const Icon(Icons.logout_rounded, size: 19),
-            label: const Text('Logout'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.red.shade700,
-              side: BorderSide(color: Colors.red.withValues(alpha: 0.35)),
-              backgroundColor: Colors.red.withValues(alpha: 0.06),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(11),
-              ),
-              textStyle: const TextStyle(
-                fontFamily: 'Manrope',
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ),
-      ),
+    return _AnimatedLogoutButton(
+      isCollapsed: isCollapsed,
+      onTap: () => _confirmAndLogout(drawerContext),
     );
   }
 
@@ -774,7 +673,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
           style: TextStyle(fontFamily: 'Manrope', color: _BhwDrawerColors.text),
         ),
         content: const Text(
-          'You will need to sign in again to access your assigned barangay records.',
+          'You will need to sign in again to access patient records.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: 'Manrope',
@@ -802,7 +701,6 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
     final rootNavigator = Navigator.of(drawerContext, rootNavigator: true);
     final messenger = ScaffoldMessenger.maybeOf(drawerContext);
     final userId = FirebaseAuth.instance.currentUser?.uid;
-    Navigator.of(drawerContext).pop();
     try {
       UserAccessScopeService.instance.clearCachedScope(userId: userId);
       await FirebaseAuth.instance.signOut();
@@ -826,5 +724,380 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
     } finally {
       WebAppSidebar._logoutInProgress = false;
     }
+  }
+}
+
+class _SidebarAnimatedItem extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool isCollapsed;
+  final bool isActive;
+  final Color activeColor;
+  final Color inactiveTextColor;
+  final Color hoverColor;
+
+  const _SidebarAnimatedItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    required this.isCollapsed,
+    this.isActive = false,
+    this.activeColor = _BhwDrawerColors.aqua,
+    this.inactiveTextColor = _BhwDrawerColors.text,
+    this.hoverColor = const Color(0x2600C0A3),
+  });
+
+  @override
+  State<_SidebarAnimatedItem> createState() => _SidebarAnimatedItemState();
+}
+
+class _SidebarAnimatedItemState extends State<_SidebarAnimatedItem> {
+  bool _isHovered = false;
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = widget.isActive
+        ? Colors.white
+        : (_isHovered
+            ? Colors.white
+            : widget.inactiveTextColor.withValues(alpha: 0.92));
+
+    final backgroundColor = widget.isActive
+        ? widget.activeColor
+        : (_isHovered ? widget.hoverColor : Colors.transparent);
+
+    final scale = _isPressed ? 0.95 : (_isHovered ? 1.01 : 1.0);
+    final translationX =
+        (!widget.isCollapsed && _isHovered && !widget.isActive) ? 3.0 : 0.0;
+
+    if (widget.isCollapsed) {
+      return Semantics(
+        button: true,
+        selected: widget.isActive,
+        label: '${widget.label} navigation item',
+        child: Tooltip(
+          message: widget.label,
+          preferBelow: false,
+          waitDuration: const Duration(milliseconds: 80),
+          child: MouseRegion(
+            onEnter: (_) => setState(() => _isHovered = true),
+            onExit: (_) => setState(() => _isHovered = false),
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTapDown: (_) => setState(() => _isPressed = true),
+              onTapUp: (_) async {
+                setState(() => _isPressed = false);
+                await Future<void>.delayed(const Duration(milliseconds: 60));
+                widget.onTap();
+              },
+              onTapCancel: () => setState(() => _isPressed = false),
+              child: AnimatedScale(
+                scale: scale,
+                duration: const Duration(milliseconds: 100),
+                curve: Curves.easeOutCubic,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  curve: Curves.easeOutCubic,
+                  margin: const EdgeInsets.symmetric(vertical: 3),
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: widget.isActive
+                        ? [
+                            BoxShadow(
+                              color: widget.activeColor.withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Center(
+                    child: AnimatedScale(
+                      scale: widget.isActive || _isHovered ? 1.08 : 1.0,
+                      duration: const Duration(milliseconds: 160),
+                      curve: Curves.easeOutCubic,
+                      child: Icon(widget.icon, size: 22, color: foreground),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Semantics(
+      button: true,
+      selected: widget.isActive,
+      label: '${widget.label} navigation item',
+      child: Tooltip(
+        message: widget.label,
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTapDown: (_) => setState(() => _isPressed = true),
+            onTapUp: (_) async {
+              setState(() => _isPressed = false);
+              await Future<void>.delayed(const Duration(milliseconds: 60));
+              widget.onTap();
+            },
+            onTapCancel: () => setState(() => _isPressed = false),
+            child: AnimatedScale(
+              scale: scale,
+              duration: const Duration(milliseconds: 100),
+              curve: Curves.easeOutCubic,
+              child: AnimatedSlide(
+                offset: Offset(translationX / 300.0, 0),
+                duration: const Duration(milliseconds: 140),
+                curve: Curves.easeOutCubic,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  curve: Curves.easeOutCubic,
+                  margin: const EdgeInsets.symmetric(vertical: 2),
+                  constraints: const BoxConstraints(minHeight: 46),
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: widget.isActive
+                        ? [
+                            BoxShadow(
+                              color: widget.activeColor.withValues(alpha: 0.28),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ]
+                        : (_isHovered
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : null),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOutCubic,
+                          width: widget.isActive ? 4 : 0,
+                          height: widget.isActive ? 22 : 0,
+                          margin:
+                              EdgeInsets.only(right: widget.isActive ? 8 : 0),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        AnimatedScale(
+                          scale: widget.isActive || _isHovered ? 1.06 : 1.0,
+                          duration: const Duration(milliseconds: 160),
+                          curve: Curves.easeOutCubic,
+                          child: Icon(widget.icon, size: 20, color: foreground),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ClipRect(
+                            child: AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 160),
+                              curve: Curves.easeOutCubic,
+                              style: TextStyle(
+                                fontFamily: 'Manrope',
+                                color: foreground,
+                                fontSize: 13,
+                                height: 1.15,
+                                fontWeight: widget.isActive
+                                    ? FontWeight.w800
+                                    : (_isHovered
+                                        ? FontWeight.w700
+                                        : FontWeight.w600),
+                              ),
+                              child: Text(
+                                widget.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
+                              ),
+                            ),
+                          ),
+                        ),
+                        AnimatedOpacity(
+                          opacity: widget.isActive ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 160),
+                          child: Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AnimatedLogoutButton extends StatefulWidget {
+  final bool isCollapsed;
+  final VoidCallback onTap;
+
+  const _AnimatedLogoutButton({
+    required this.isCollapsed,
+    required this.onTap,
+  });
+
+  @override
+  State<_AnimatedLogoutButton> createState() => _AnimatedLogoutButtonState();
+}
+
+class _AnimatedLogoutButtonState extends State<_AnimatedLogoutButton> {
+  bool _isHovered = false;
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _isPressed ? 0.95 : (_isHovered ? 1.01 : 1.0);
+
+    if (widget.isCollapsed) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: _BhwDrawerColors.border)),
+        ),
+        child: Tooltip(
+          message: 'Logout',
+          child: MouseRegion(
+            onEnter: (_) => setState(() => _isHovered = true),
+            onExit: (_) => setState(() => _isHovered = false),
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTapDown: (_) => setState(() => _isPressed = true),
+              onTapUp: (_) async {
+                setState(() => _isPressed = false);
+                await Future<void>.delayed(const Duration(milliseconds: 60));
+                widget.onTap();
+              },
+              onTapCancel: () => setState(() => _isPressed = false),
+              child: AnimatedScale(
+                scale: scale,
+                duration: const Duration(milliseconds: 100),
+                curve: Curves.easeOutCubic,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  curve: Curves.easeOutCubic,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: _isHovered ? 0.2 : 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.redAccent
+                          .withValues(alpha: _isHovered ? 0.6 : 0.2),
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.logout_rounded,
+                      size: 20,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: _BhwDrawerColors.border)),
+      ),
+      child: Semantics(
+        button: true,
+        label: 'Log out of the BHW portal',
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTapDown: (_) => setState(() => _isPressed = true),
+            onTapUp: (_) async {
+              setState(() => _isPressed = false);
+              await Future<void>.delayed(const Duration(milliseconds: 60));
+              widget.onTap();
+            },
+            onTapCancel: () => setState(() => _isPressed = false),
+            child: AnimatedScale(
+              scale: scale,
+              duration: const Duration(milliseconds: 100),
+              curve: Curves.easeOutCubic,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                curve: Curves.easeOutCubic,
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: _isHovered ? 0.12 : 0.06),
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(
+                    color: Colors.red.withValues(alpha: _isHovered ? 0.55 : 0.35),
+                  ),
+                  boxShadow: _isHovered
+                      ? [
+                          BoxShadow(
+                            color: Colors.red.withValues(alpha: 0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.logout_rounded,
+                      size: 19,
+                      color: Colors.red.shade700,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Logout',
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        color: Colors.red.shade700,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

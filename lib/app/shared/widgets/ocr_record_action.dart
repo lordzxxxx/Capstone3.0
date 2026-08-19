@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mycapstone_project/app/shared/services/ocr_document_scanner_service.dart';
+import 'package:mycapstone_project/app/shared/utils/ocr_fuzzy_matcher.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 
 typedef OcrRecordCallback = Future<void> Function(OcrExtraction extraction);
@@ -165,6 +167,12 @@ class OcrExtraction {
       seed['diagnosis'] = seed['disease'];
       seed['condition'] = seed['disease'];
     }
+    if (seed.containsKey('treatment')) {
+      seed['plan'] = seed['treatment'];
+      seed['treatmentPlan'] = seed['treatment'];
+      seed['medication'] = seed['treatment'];
+      seed['prescriptions'] = seed['treatment'];
+    }
     if (seed.containsKey('symptoms') && !seed.containsKey('disease')) {
       seed['disease'] = seed['symptoms'];
       seed['diagnosis'] = seed['symptoms'];
@@ -179,13 +187,74 @@ class OcrExtraction {
     if (seed.containsKey('place')) {
       seed['placeOfDeath'] = seed['place'];
     }
+    if (seed.containsKey('philhealthNumber')) {
+      seed['philhealth'] = seed['philhealthNumber'];
+    }
+    if (seed.containsKey('guardianName')) {
+      seed['parentName'] = seed['guardianName'];
+      seed['motherName'] = seed['guardianName'];
+    }
+    if (seed.containsKey('batchNumber')) {
+      seed['lotNumber'] = seed['batchNumber'];
+      seed['batch'] = seed['batchNumber'];
+    }
+    if (seed.containsKey('expirationDate')) {
+      seed['expiryDate'] = seed['expirationDate'];
+    }
+    if (seed.containsKey('lmp')) {
+      seed['lmpDate'] = seed['lmp'];
+    }
+    if (seed.containsKey('edd')) {
+      seed['eddDate'] = seed['edd'];
+      seed['dueDate'] = seed['edd'];
+    }
+    if (seed.containsKey('aog')) {
+      seed['gestationalAge'] = seed['aog'];
+    }
+    if (seed.containsKey('fundalHeight')) {
+      seed['fh'] = seed['fundalHeight'];
+    }
+    if (seed.containsKey('fetalHeartBeat')) {
+      seed['dhb'] = seed['fetalHeartBeat'];
+      seed['fhb'] = seed['fetalHeartBeat'];
+    }
+    if (seed.containsKey('tetanusToxoid')) {
+      seed['tcb'] = seed['tetanusToxoid'];
+      seed['tt'] = seed['tetanusToxoid'];
+    }
+    if (seed.containsKey('vaccine')) {
+      seed['antigen'] = seed['vaccine'];
+    }
+    if (seed.containsKey('dose')) {
+      seed['doseNumber'] = seed['dose'];
+    }
+    if (seed.containsKey('reportedBy')) {
+      seed['registeredBy'] = seed['reportedBy'];
+      seed['administeredBy'] = seed['reportedBy'];
+    }
+    if (seed.containsKey('time')) {
+      seed['timeOfDeath'] = seed['time'];
+      seed['timeAdministered'] = seed['time'];
+    }
+    if (seed.containsKey('nextVisitDate')) {
+      seed['followUpDate'] = seed['nextVisitDate'];
+      seed['followup'] = seed['nextVisitDate'];
+    }
+    if (seed.containsKey('dateOfOnset')) {
+      seed['onsetDate'] = seed['dateOfOnset'];
+    }
     if (seed.containsKey('date')) {
       seed['datetime'] = seed['date'];
       seed['visitDate'] = seed['date'];
       seed['administrationDate'] = seed['date'];
+      seed['registrationDate'] = seed['date'];
       seed['reportedDate'] = seed['date'];
       seed['dateReported'] = seed['date'];
       seed['dateTimeOfDeath'] = seed['date'];
+      seed['dateOfDeath'] = seed['date'];
+      if (!seed.containsKey('dateOfOnset')) {
+        seed['dateOfOnset'] = seed['date'];
+      }
     }
     return seed;
   }
@@ -235,11 +304,14 @@ class OcrExtraction {
       final validated = _validateField(key, normalized);
       final adjusted = validated ? confidence : confidence * 0.45;
       final current = values[key];
+      final currentValidated =
+          current != null && _validateField(key, current.value);
       final shouldReplace =
           current == null ||
+          (!currentValidated && validated) ||
           (hasExplicitSeparator && !current.hasExplicitSeparator) ||
           (hasExplicitSeparator == current.hasExplicitSeparator &&
-              adjusted > current.confidence);
+              adjusted >= current.confidence);
       if (shouldReplace) {
         values[key] = OcrFieldValue(
           key: key,
@@ -259,23 +331,135 @@ class OcrExtraction {
             0.0,
             1.0,
           );
+
+      // Skip lines that are only instruction hints or section headers
+      if (_isHintOrInstructionLine(line)) {
+        continue;
+      }
+
       _extractLabelValue(line, confidence.toDouble(), addField);
-      // Forms frequently place a label on one line and its value on the next.
-      // Join only when the current line is a known label without a value, so
-      // ordinary multi-line addresses and notes are not guessed together.
-      if (_isLabelOnlyLine(line) && index + 1 < lines.length) {
-        final nextLine = lines[index + 1];
-        if (!_looksLikeLabel(nextLine)) {
-          _extractLabelValue(
-            '$line: $nextLine',
-            (confidence * 0.9).clamp(0.0, 1.0).toDouble(),
-            addField,
-          );
+
+      // Forms frequently place a label on one line and its value on subsequent lines
+      if (_isLabelOnlyLine(line)) {
+        // Look ahead for the value line, skipping any hint/instruction lines
+        var lookAhead = index + 1;
+        while (lookAhead < lines.length &&
+            _isHintOrInstructionLine(lines[lookAhead])) {
+          lookAhead++;
+        }
+        if (lookAhead < lines.length && !_looksLikeLabel(lines[lookAhead])) {
+          // For narrative fields (Chief Complaint, Symptoms, Treatment, Plan, Diagnosis, Address),
+          // gather consecutive non-label, non-hint lines
+          final isNarrativeLabel = RegExp(
+            r'(?:chief\s*complaint|symptoms|clinical\s*diagnosis|diagnosis|disease|treatment|plan|rx|address|tirahan)',
+            caseSensitive: false,
+          ).hasMatch(line);
+
+          if (isNarrativeLabel) {
+            final valueParts = <String>[lines[lookAhead]];
+            var next = lookAhead + 1;
+            while (next < lines.length &&
+                !_isHintOrInstructionLine(lines[next]) &&
+                !_looksLikeLabel(lines[next])) {
+              valueParts.add(lines[next]);
+              next++;
+            }
+            final combinedValue = valueParts.join(' ').trim();
+            _extractLabelValue(
+              '$line: $combinedValue',
+              confidence.toDouble(),
+              addField,
+            );
+          } else {
+            _extractLabelValue(
+              '$line: ${lines[lookAhead]}',
+              confidence.toDouble(),
+              addField,
+            );
+          }
         }
       }
     }
 
     final allText = lines.join('\n');
+
+    // Parse horizontal Vital Signs table rows (e.g. "120/80 36.5 78 18 98 65 168")
+    for (final line in lines) {
+      if (_isHintOrInstructionLine(line)) continue;
+      final tableRowMatch = RegExp(
+        r'\b(\d{2,3}\s*[\/\\]\s*\d{2,3})\s+(3[5-9]\.\d|4[0-2]\.\d)\s+(\d{2,3})\s+(\d{1,2})\s+([89]\d|100)\s+(\d{2,3}(?:\.\d)?)\s+(\d{2,3}(?:\.\d)?)\b',
+      ).firstMatch(line);
+      if (tableRowMatch != null) {
+        addField('bloodPressure', tableRowMatch.group(1)!, 0.95, 'vital table', true);
+        addField('temperature', tableRowMatch.group(2)!, 0.95, 'vital table', true);
+        addField('heartRate', tableRowMatch.group(3)!, 0.95, 'vital table', true);
+        addField('respiratoryRate', tableRowMatch.group(4)!, 0.95, 'vital table', true);
+        addField('oxygenSaturation', tableRowMatch.group(5)!, 0.95, 'vital table', true);
+        addField('weight', tableRowMatch.group(6)!, 0.95, 'vital table', true);
+        addField('height', tableRowMatch.group(7)!, 0.95, 'vital table', true);
+        break;
+      }
+    }
+
+    // Fallback individual vital sign extractors
+    if (!values.containsKey('bloodPressure')) {
+      final bpMatch = RegExp(r'\b(\d{2,3}\s*[\/\\]\s*\d{2,3})\b').firstMatch(allText);
+      if (bpMatch != null) {
+        addField('bloodPressure', bpMatch.group(1)!, 0.85, 'vital pattern', false);
+      }
+    }
+    if (!values.containsKey('temperature')) {
+      final tempMatch = RegExp(r'\b(3[5-9]\.\d|4[0-2]\.\d)\b').firstMatch(allText);
+      if (tempMatch != null) {
+        addField('temperature', tempMatch.group(1)!, 0.85, 'vital pattern', false);
+      }
+    }
+    if (!values.containsKey('heartRate')) {
+      final hrMatch = RegExp(
+        r'(?:(?:hr|pulse|heart\s*rate)\s*[:=]?\s*|\b)([4-9]\d|1[0-9]\d)\s*(?:bpm)?\b',
+        caseSensitive: false,
+      ).firstMatch(allText);
+      if (hrMatch != null) {
+        addField('heartRate', hrMatch.group(1)!, 0.75, 'vital pattern', false);
+      }
+    }
+    if (!values.containsKey('respiratoryRate')) {
+      final rrMatch = RegExp(
+        r'(?:(?:rr|resp)\s*[:=]?\s*|\b)(1[0-9]|2[0-9]|3[0-9]|40)\s*(?:cpm|brpm)?\b',
+        caseSensitive: false,
+      ).firstMatch(allText);
+      if (rrMatch != null) {
+        addField('respiratoryRate', rrMatch.group(1)!, 0.75, 'vital pattern', false);
+      }
+    }
+    if (!values.containsKey('oxygenSaturation')) {
+      final spo2Match = RegExp(
+        r'(?:(?:spo2|o2|sat)\s*[:=]?\s*|\b)(8[5-9]|9\d|100)\s*%?',
+        caseSensitive: false,
+      ).firstMatch(allText);
+      if (spo2Match != null) {
+        addField('oxygenSaturation', spo2Match.group(1)!, 0.75, 'vital pattern', false);
+      }
+    }
+    if (!values.containsKey('weight')) {
+      final wtMatch = RegExp(
+        r'(?:(?:wt|weight)\s*[:=]?\s*|\b)(\d{2,3}(?:\.\d)?)\s*(?:kg|kilos)?\b',
+        caseSensitive: false,
+      ).firstMatch(allText);
+      if (wtMatch != null) {
+        addField('weight', wtMatch.group(1)!, 0.75, 'vital pattern', false);
+      }
+    }
+    if (!values.containsKey('height')) {
+      final htMatch = RegExp(
+        r'(?:(?:ht|height)\s*[:=]?\s*|\b)(1\d{2}(?:\.\d)?|2[01]\d(?:\.\d)?)\s*(?:cm)?\b',
+        caseSensitive: false,
+      ).firstMatch(allText);
+      if (htMatch != null) {
+        addField('height', htMatch.group(1)!, 0.75, 'vital pattern', false);
+      }
+    }
+
     void addGlobal(String key, RegExp pattern, {double confidence = 0.62}) {
       final match = pattern.firstMatch(allText);
       if (match != null) {
@@ -351,86 +535,138 @@ class OcrExtraction {
     )
     addField,
   ) {
-    final patterns = <String, RegExp>{
-      'patientId': _labelPattern(
-        r'(?:patient\s*(?:id|no|number|#)|record\s*(?:id|no|number|#)|identification|id\s*(?:no|number|#)?)',
-      ),
-      'dateOfBirth': _labelPattern(
-        r'(?:date\s*of\s*birth|birth\s*date|dob|b-?day|birthday|kapanganakan)',
-      ),
-      'firstName': _labelPattern(
-        r'(?:first\s*name|given\s*name|fn|f\.name|unang\s*pangalan)',
-      ),
-      'surname': _labelPattern(
-        r'(?:surname|last\s*name|family\s*name|ln|l\.name|apelyido)',
-      ),
-      'fullName': _labelPattern(
-        r'(?:full\s*name|patient\s*name|name\s*of\s*patient|pt\.?\s*name|p\.?\s*name|client\s*name|pangalan|patient(?![\s_]*(?:id|no|number|#))|name|pt(?![\s_]*(?:id|no|number|#)))',
-      ),
-      'date': _labelPattern(
-        r'(?:visit\s*date|date\s*of\s*visit|checkup\s*date|record\s*date|date|petsa)',
-      ),
-      'address': _labelPattern(
-        r'(?:residential\s*|home\s*)?address|tirahan|residence|addr',
-      ),
-      'barangay': _labelPattern(r'(?:barangay|brgy\.?|bgy\.?)'),
-      'contactNumber': _labelPattern(
-        r'(?:contact|phone|mobile|cell|cel|cp|tel|telephone)(?:\s*(?:number|no|#))?',
-      ),
-      'email': _labelPattern(r'(?:email|e-mail)'),
-      'age': _labelPattern(r'(?:age|edad|y/?o|yrs?\.?\s*old)'),
-      'gender': _labelPattern(r'(?:sex|gender|kasarian|m/?f|f/?m)'),
-      'civilStatus': _labelPattern(
-        r'(?:civil\s*status|marital\s*status|status|cs)',
-      ),
-      'symptoms': _labelPattern(
-        r'(?:symptoms?|chief\s*complaint|c/?c|complaint|reklamo|reason\s*(?:for\s*visit)?)',
-      ),
-      'disease': _labelPattern(
-        r'(?:disease|diagnosis|dx\.?|condition|impression|imp\.?|findings|karamdaman)',
-      ),
-      'bloodPressure': _labelPattern(r'(?:blood\s*pressure|b\.?p\.?|presyon)'),
-      'temperature': _labelPattern(
-        r'(?:body\s*temp(?:erature)?|temp\.?|t\.?|temperature|init)',
-      ),
-      'heartRate': _labelPattern(
-        r'(?:pulse(?:\s*rate)?|heart\s*rate|h\.?r\.?|p\.?r\.?|tibo)',
-      ),
-      'respiratoryRate': _labelPattern(
-        r'(?:resp(?:\.|\s*rate)?|respiratory\s*rate|r\.?r\.?)',
-      ),
-      'oxygenSaturation': _labelPattern(
-        r'(?:oxygen(?:\s*sat(?:uration)?)?|spo2|o2\s*sat|o2)',
-      ),
-      'weight': _labelPattern(r'(?:weight|wt\.?|timbang|kilos?)'),
-      'height': _labelPattern(r'(?:height|ht\.?|taas)'),
-      'treatment': _labelPattern(
-        r'(?:treatment(?:\s*plan)?|plan|rx|medication|reseta)',
-      ),
-      'vaccine': _labelPattern(
-        r'(?:vaccine|bakuna|immunization|antigen|dose)',
-      ),
-      'cause': _labelPattern(
-        r'(?:cause(?:\s*of\s*death)?|c\.?o\.?d\.?|death\s*cause|sanhi)',
-      ),
-      'place': _labelPattern(
-        r'(?:place(?:\s*of\s*death)?|p\.?o\.?d\.?|location|lugar)',
-      ),
+    if (_isLabelOnlyLine(line)) {
+      return;
+    }
+
+    final rawPatterns = <String, String>{
+      'patientId':
+          r'(?:patient\s*(?:id|no|number|#)|record\s*(?:id|no|number|#)|patient\s*/\s*record\s*id|identification|id\s*(?:no|number|#)?)',
+      'dateOfBirth':
+          r'(?:date\s*of\s*birth|birth\s*date|dob|b-?day|birthday|kapanganakan)',
+      'firstName':
+          r'(?:first\s*name|given\s*name|fn|f\.name|unang\s*pangalan)',
+      'surname':
+          r'(?:surname|last\s*name|family\s*name|ln|l\.name|apelyido)',
+      'fullName':
+          r'(?:maternal\s*full\s*name|full\s*name\s*of\s*deceased|name\s*of\s*deceased|patient\s*/\s*child\s*full\s*name|child\s*full\s*name|patient\s*full\s*name|full\s*name|patient\s*name|name\s*of\s*patient|pt\.?\s*name|p\.?\s*name|client\s*name|pangalan|patient(?![\s_]*(?:id|no|number|#))|name|pt(?![\s_]*(?:id|no|number|#)))',
+      'dateOfOnset':
+          r'(?:date\s*of\s*onset(?:\s*of\s*symptoms)?|onset\s*date|petsa\s*ng\s*simula)',
+      'date':
+          r'(?:date\s*of\s*visit|visit\s*date|checkup\s*date|registration\s*date|date\s*administered|date\s*reported|date\s*of\s*death|record\s*date|date|petsa)',
+      'time':
+          r'(?:time\s*of\s*death|time\s*administered|time\s*of\s*visit|time|oras)',
+      'address':
+          r'(?:residential\s*address|residence\s*address|usual\s*residence\s*address|residential|residence|usual\s*residence|home\s*address|address|tirahan|addr)',
+      'barangay': r'(?:barangay|brgy\.?|bgy\.?)',
+      'contactNumber':
+          r'(?:contact(?:\s*number)?|phone(?:\s*number)?|mobile(?:\s*number)?|cell|cel|cp|tel|telephone)(?:\s*(?:number|no|#))?',
+      'philhealthNumber':
+          r'(?:philhealth\s*(?:id|no\.?|number|#)?(?:\s*/\s*no\.?)?|philhealth\s*id|philhealth)',
+      'guardianName':
+          r'(?:mother\s*/\s*father\s*/\s*guardian(?:\s*full\s*name)?|mother\s*/\s*father\s*/\s*guardian|guardian\s*full\s*name|guardian\s*name|guardian|parent\s*name|parent|caregiver)',
+      'email': r'(?:email|e-mail)',
+      'age': r'(?:age\s*at\s*death|age|edad|y/?o|yrs?\.?\s*old)',
+      'gender': r'(?:sex|gender|kasarian|m/?f|f/?m)',
+      'civilStatus':
+          r'(?:civil\s*status|marital\s*status|status|cs)',
+      'occupation': r'(?:occupation|trabaho|work|hanapbuhay)',
+      'symptoms':
+          r'(?:chief\s*complaint(?:\s*/\s*reason\s*for\s*visit\s*/\s*symptoms)?|symptoms\s*/\s*chief\s*complaints\s*/\s*diagnostic\s*lab\s*findings|symptoms\s*/\s*chief\s*complaints|chief\s*complaint|reason\s*for\s*visit|symptoms?|c/?c|complaint|reklamo)',
+      'disease':
+          r'(?:clinical\s*diagnosis(?:\s*/\s*disease\s*condition\s*\(dx\))?|clinical\s*diagnosis\s*/\s*disease\s*condition|disease\s*/\s*diagnosis\s*\(dx\)|disease\s*/\s*diagnosis|disease|diagnosis|dx\.?|condition|impression|imp\.?|findings|karamdaman)',
+      'bloodPressure':
+          r'(?:blood\s*pressure(?:\s*\(bp\))?|b\.?p\.?|presyon)',
+      'temperature':
+          r'(?:body\s*temp(?:erature)?(?:\s*\(t\))?|temp\.?|t\.?|temperature|init)',
+      'heartRate':
+          r'(?:pulse(?:\s*rate)?(?:\s*\(hr\))?|heart\s*rate(?:\s*\(hr\))?|h\.?r\.?|p\.?r\.?|tibo)',
+      'respiratoryRate':
+          r'(?:resp(?:\.|\s*rate)?(?:\s*\(rr\))?|respiratory\s*rate(?:\s*\(rr\))?|r\.?r\.?)',
+      'oxygenSaturation':
+          r'(?:oxygen(?:\s*sat(?:uration)?)?(?:\s*\(spo2\))?|spo2|o2\s*sat|o2)',
+      'weight': r'(?:weight(?:\s*\(wt\))?|wt\.?|timbang|kilos?)',
+      'height': r'(?:height(?:\s*\(ht\))?|ht\.?|taas)',
+      'treatment':
+          r'(?:treatment\s*plan(?:\s*/\s*prescribed\s*medications\s*\(rx\)\s*/\s*home\s*care\s*advice)?|treatment\s*plan(?:\s*/\s*prescribed\s*medications\s*\(rx\))?|treatment\s*plan(?:\s*/\s*prescribed\s*medications)?|treatment\s*plan|prescribed\s*medications|treatment|plan|rx|medication|reseta)',
+      'vaccine':
+          r'(?:vaccine\s*/\s*antigen\s*type|vaccine\s*type|antigen\s*type|vaccine|bakuna|immunization|antigen)',
+      'dose': r'(?:dose\s*number|dose)',
+      'batchNumber':
+          r'(?:batch\s*/\s*lot\s*number|batch\s*/\s*lot|batch\s*number|lot\s*number|batch\s*no\.?|lot\s*no\.?|batch|lot)',
+      'expirationDate':
+          r'(?:expiration\s*date|expiry\s*date|exp\s*date|exp\.?)',
+      'gravida': r'(?:gravida\s*\(g\)|gravida|\bg\b)',
+      'para': r'(?:para\s*\(p\)|para|\bp\b)',
+      'fullTerm': r'(?:full\s*term\s*\(ft\)|full\s*term|\bft\b)',
+      'premature': r'(?:premature\s*\(pt\)|premature|\bpt\b)',
+      'abortion': r'(?:abortion\s*\(ab\)|abortion|\bab\b)',
+      'livingChildren':
+          r'(?:living\s*children\s*\(lc\)|living\s*children|\blc\b)',
+      'lmp': r'(?:last\s*menstrual\s*period|lmp)',
+      'edd': r'(?:expected\s*delivery\s*date|edd|due\s*date)',
+      'aog':
+          r'(?:gestation\s*wks|age\s*of\s*gestation|gestational\s*age|aog)',
+      'bloodType': r'(?:blood\s*type|blood\s*group|abo|rh)',
+      'riskLevel':
+          r'(?:pregnancy\s*risk\s*assessment\s*level|pregnancy\s*risk\s*level|risk\s*level|risk\s*assessment|risk)',
+      'fundalHeight':
+          r'(?:fundal\s*height\s*\(fh\)|fundal\s*height|fh)',
+      'fetalHeartBeat':
+          r'(?:fetal\s*heart\s*beat\s*\(fhb\)|fetal\s*heart\s*beat|fhb|dhb)',
+      'tetanusToxoid':
+          r'(?:tetanus\s*toxoid\s*\(tt\)\s*dose|tetanus\s*toxoid\s*\(tt\)|tetanus\s*toxoid|tt|tcb)',
+      'cause':
+          r'(?:immediate\s*cause(?:\s*of\s*death)?|cause(?:\s*of\s*death)?|c\.?o\.?d\.?|death\s*cause|sanhi)',
+      'place':
+          r'(?:place\s*of\s*death|place\s*of\s*delivery\s*planned|place|location|lugar)',
+      'nextVisitDate':
+          r'(?:next\s*visit\s*date|next\s*prenatal\s*visit\s*due\s*date|next\s*dose\s*due\s*date|follow-?up\s*date|next\s*visit)',
+      'reportedBy':
+          r'(?:reported\s*by|recorded\s*by|vaccinator\s*name\s*&\s*title|vaccinator\s*name|vaccinator|attending\s*health\s*worker|attending\s*midwife\s*/\s*bhw|attending\s*midwife|attending\s*bhw)',
     };
-    for (final entry in patterns.entries) {
-      final match = entry.value.firstMatch(line);
+
+    // First pass: Explicit separators (":", "#", "-", "=")
+    for (final entry in rawPatterns.entries) {
+      final pattern = RegExp(
+        r'^\s*(?:' + entry.value + r')\s*[:#\-=\uFF1A]\s*(.+)$',
+        caseSensitive: false,
+      );
+      final match = pattern.firstMatch(line);
       if (match != null) {
-        final hasExplicitSeparator = (match.group(1) ?? '').contains(
-          RegExp(r'[:#\-=./\uFF1A]'),
-        );
-        final rawValue = match.group(2)!.trim();
+        final rawValue = match.group(1)!.trim();
         final value = _valueBeforeNextLabel(rawValue);
         addField(
           entry.key,
           value,
           confidence,
           'label: ${entry.key}',
-          hasExplicitSeparator,
+          true,
+        );
+        final remainder = rawValue.substring(value.length).trim();
+        if (remainder.isNotEmpty) {
+          _extractLabelValue(remainder, confidence, addField);
+        }
+        return;
+      }
+    }
+
+    // Second pass: Whitespace separators
+    for (final entry in rawPatterns.entries) {
+      final pattern = RegExp(
+        r'^\s*(?:' + entry.value + r')\s+(.+)$',
+        caseSensitive: false,
+      );
+      final match = pattern.firstMatch(line);
+      if (match != null) {
+        final rawValue = match.group(1)!.trim();
+        final value = _valueBeforeNextLabel(rawValue);
+        addField(
+          entry.key,
+          value,
+          confidence,
+          'label: ${entry.key}',
+          false,
         );
         final remainder = rawValue.substring(value.length).trim();
         if (remainder.isNotEmpty) {
@@ -441,11 +677,43 @@ class OcrExtraction {
     }
   }
 
-  static RegExp _labelPattern(String labels) {
-    return RegExp(
-      r'^\s*(?:' + labels + r')(\s*[:#\-=./\uFF1A]\s*|\s+)(.+)$',
+  static String _stripFormHints(String text) {
+    return text
+        .replaceAll(
+          RegExp(
+            r'\((?:Last Name|First Name|Middle Name|PAT-YYYY|YYYY-MM-DD|yrs/mos|yrs|mos|09XX-XXX-XXXX|House\s*/\s*Street|e\.g\.\s*Barangay|Describe onset|Primary diagnosis|Drug name|mmHg\s*\(e\.g\.|°C\s*\(e\.g\.|kg\b|cm\b|bpm\b|cpm\b|Primary\s*diagnosis|ICD-10|Drug\s*name)[^)]*\)',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  static bool _isHintOrInstructionLine(String line) {
+    final trimmed = line.trim();
+    if (trimmed.isEmpty) return true;
+    final withoutHints = _stripFormHints(trimmed);
+    if (withoutHints.isEmpty) return true;
+    if (RegExp(
+      r'^\s*(?:republic\s*of\s*the\s*philippines|province\s*of|barangay\s*health\s*center|barangay\s*health\s*check-?up|form:\s*[A-Z0-9\-]+)',
       caseSensitive: false,
-    );
+    ).hasMatch(trimmed)) {
+      return true;
+    }
+    if (RegExp(
+      r'^\s*\d+\.\s*(?:Patient Demographic|Vital Signs|Chief Complaint|Clinical Assessment|Treatment Plan|Encounter Metadata|Verification|Maternal Health|Immunization Record|Mortality Notification|Morbidity Details)',
+      caseSensitive: false,
+    ).hasMatch(trimmed)) {
+      return true;
+    }
+    if (RegExp(
+      r'^\s*(?:mmHg|°C|bpm|cpm|%|kg|cm)(?:\s+(?:mmHg|°C|bpm|cpm|%|kg|cm))*\s*$',
+      caseSensitive: false,
+    ).hasMatch(trimmed)) {
+      return true;
+    }
+    return false;
   }
 
   static String _normalizeOcrLine(String line) {
@@ -455,6 +723,7 @@ class OcrExtraction {
         .replaceAll(RegExp(r'[\u2022\u25E6\u2023\u25AA]'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
+    normalized = _stripFormHints(normalized);
     normalized = normalized
         .replaceFirst(RegExp(r'^brgy\.?\s+', caseSensitive: false), 'Barangay ')
         .replaceFirst(
@@ -490,18 +759,80 @@ class OcrExtraction {
   }
 
   static bool _isLabelOnlyLine(String line) {
+    final cleaned = _stripFormHints(line);
     return RegExp(
-      r'^\s*(?:first\s*name|surname|last\s*name|family\s*name|full\s*name|patient\s*name|name|date|visit\s*date|date\s*of\s*visit|checkup\s*date|record\s*date|date\s*of\s*birth|birth\s*date|dob|b-?day|birthday|kapanganakan|address|tirahan|barangay|brgy|bgy|patient\s*(?:id|no|number|#)|record\s*(?:id|no|number|#)|contact|phone|mobile|cell|cel|cp|telephone|email|age|edad|sex|gender|kasarian|civil\s*status|marital\s*status|status|cs|symptoms?|chief\s*complaint|c/?c|disease|diagnosis|dx|condition|impression|findings|blood\s*pressure|b\.?p\.?|presyon|temperature|temp|init|heart\s*rate|pulse|hr|pr|respiratory\s*rate|rr|oxygen\s*saturation|spo2|o2|weight|wt|timbang|height|ht|taas|vaccine|bakuna|immunization|cause|place|location|lugar)\s*[:#\-=./\uFF1A]?\s*$',
+      r'^\s*(?:'
+      r'chief\s*complaint(?:\s*/\s*reason\s*for\s*visit\s*/\s*symptoms)?|'
+      r'symptoms\s*/\s*chief\s*complaints(?:\s*/\s*diagnostic\s*lab\s*findings)?|'
+      r'symptoms\s*/\s*known\s*conditions|'
+      r'symptoms?|chief\s*complaint|c/?c|complaint|reklamo|reason\s*for\s*visit|'
+      r'clinical\s*diagnosis(?:\s*/\s*disease\s*condition\s*\(dx\))?|'
+      r'disease\s*/\s*diagnosis\s*\(dx\)|'
+      r'disease\s*/\s*diagnosis|'
+      r'diagnosis(?:\s*\(dx\))?|disease|dx|condition|impression|imp\.?|findings|karamdaman|'
+      r'treatment\s*plan(?:\s*/\s*prescribed\s*medications\s*\(rx\)\s*/\s*home\s*care\s*advice)?|'
+      r'treatment\s*plan(?:\s*/\s*prescribed\s*medications\s*\(rx\))?|'
+      r'treatment\s*plan(?:\s*/\s*prescribed\s*medications)?|'
+      r'treatment\s*plan|prescribed\s*medications|treatment|plan|rx|medication|reseta|'
+      r'maternal\s*full\s*name|full\s*name\s*of\s*deceased|name\s*of\s*deceased|'
+      r'patient\s*/\s*child\s*full\s*name|child\s*full\s*name|patient\s*full\s*name|'
+      r'full\s*name|patient\s*name|name\s*of\s*patient|pt\.?\s*name|p\.?\s*name|client\s*name|pangalan|patient|name|pt|'
+      r'first\s*name|given\s*name|fn|unang\s*pangalan|'
+      r'surname|last\s*name|family\s*name|ln|apelyido|'
+      r'patient\s*(?:id|no|number|#)|record\s*(?:id|no|number|#)|patient\s*/\s*record\s*id|identification|id|'
+      r'date\s*of\s*birth|birth\s*date|dob|b-?day|birthday|kapanganakan|'
+      r'age\s*at\s*death|age|edad|'
+      r'sex|gender|kasarian|'
+      r'civil\s*status|marital\s*status|status|cs|'
+      r'contact(?:\s*number)?|phone(?:\s*number)?|mobile(?:\s*number)?|cell|cel|cp|tel|telephone|'
+      r'philhealth(?:\s*(?:id|no\.?|number|#))?|'
+      r'residential\s*address|residence\s*address|usual\s*residence\s*address|residential|residence|usual\s*residence|home\s*address|address|tirahan|addr|'
+      r'barangay|brgy\.?|bgy\.?|'
+      r'blood\s*pressure(?:\s*\(bp\))?|b\.?p\.?|presyon|'
+      r'body\s*temp(?:erature)?(?:\s*\(t\))?|temp\.?|t\.?|temperature|init|'
+      r'pulse(?:\s*rate)?(?:\s*\(hr\))?|heart\s*rate(?:\s*\(hr\))?|h\.?r\.?|p\.?r\.?|tibo|'
+      r'resp(?:\.|\s*rate)?(?:\s*\(rr\))?|respiratory\s*rate(?:\s*\(rr\))?|r\.?r\.?|'
+      r'oxygen(?:\s*sat(?:uration)?)?(?:\s*\(spo2\))?|spo2|o2\s*sat|o2|'
+      r'weight(?:\s*\(wt\))?|wt\.?|timbang|kilos?|'
+      r'height(?:\s*\(ht\))?|ht\.?|taas|'
+      r'date\s*of\s*visit|visit\s*date|checkup\s*date|registration\s*date|date\s*administered|date\s*reported|date\s*of\s*death|record\s*date|date|petsa|'
+      r'date\s*of\s*onset(?:\s*of\s*symptoms)?|onset\s*date|'
+      r'next\s*visit\s*date|next\s*prenatal\s*visit\s*due\s*date|next\s*dose\s*due\s*date|follow-?up\s*date|'
+      r'encounter\s*status|case\s*status|severity\s*level|classification|'
+      r'vaccine(?:\s*/\s*antigen\s*type)?|dose(?:\s*number)?|batch(?:\s*/\s*lot\s*number)?|expiration\s*date|'
+      r'gravida(?:\s*\(g\))?|para(?:\s*\(p\))?|full\s*term(?:\s*\(ft\))?|premature(?:\s*\(pt\))?|abortion(?:\s*\(ab\))?|living\s*children(?:\s*\(lc\))?|'
+      r'lmp|edd|aog|blood\s*type|pregnancy\s*risk\s*assessment\s*level|fundal\s*height(?:\s*\(fh\))?|fetal\s*heart\s*beat(?:\s*\(fhb\))?|tetanus\s*toxoid(?:\s*\(tt\))?|'
+      r'immediate\s*cause(?:\s*of\s*death)?|cause(?:\s*of\s*death)?|place(?:\s*of\s*death)?|reported\s*by|vaccinator(?:\s*name)?'
+      r')\s*[:#\-=\uFF1A]?\s*$',
       caseSensitive: false,
-    ).hasMatch(line);
+    ).hasMatch(cleaned);
   }
 
-  static bool _looksLikeLabel(String line) =>
-      _isLabelOnlyLine(line) ||
-      RegExp(
-        r'^\s*(?:first\s*name|surname|last\s*name|family\s*name|full\s*name|patient\s*name|name|date|visit\s*date|date\s*of\s*visit|record\s*date|date\s*of\s*birth|dob|b-?day|birthday|address|barangay|brgy|patient|record|id|contact|phone|mobile|cell|email|age|edad|sex|gender|kasarian|civil\s*status|symptoms?|diagnosis|dx|condition|blood\s*pressure|bp|temp|heart\s*rate|pulse|weight|height|vaccine)\b',
-        caseSensitive: false,
-      ).hasMatch(line);
+  static bool _looksLikeLabel(String line) {
+    if (_isLabelOnlyLine(line)) return true;
+    final cleaned = _stripFormHints(line);
+    // If it's a barangay value like "Barangay 01" or "Barangay San Antonio" without colon, it's a value, not a label
+    if (RegExp(
+          r'^\s*(?:barangay|brgy\.?|bgy\.?)\s+(?:\d+|[A-Za-z]+)',
+          caseSensitive: false,
+        ).hasMatch(cleaned) &&
+        !cleaned.contains(':')) {
+      return false;
+    }
+    return RegExp(
+      r'^\s*(?:'
+      r'chief\s*complaint|symptoms|clinical\s*diagnosis|disease|treatment\s*plan|prescribed|'
+      r'full\s*name|patient\s*name|first\s*name|surname|last\s*name|name|patient\b|'
+      r'patient\s*id|record\s*id|date\s*of\s*birth|dob|age\b|sex\b|gender\b|civil\s*status|'
+      r'contact|phone|mobile|philhealth|residential|residence|address|barangay|brgy|'
+      r'blood\s*pressure|body\s*temp|pulse\s*rate|heart\s*rate|resp|oxygen|weight|height|'
+      r'bp\b|temp\b|hr\b|rr\b|spo2\b|wt\b|ht\b|'
+      r'date\s*of\s*visit|visit\s*date|next\s*visit|follow-?up|date\b|'
+      r'vaccine|dose|batch|gravida|para|lmp|edd|aog|cause|place|reported\s*by'
+      r')\b',
+      caseSensitive: false,
+    ).hasMatch(cleaned);
+  }
 
   static String _cleanHandwrittenDigits(String s) {
     return s
@@ -515,6 +846,19 @@ class OcrExtraction {
 
   static String _normalizeValue(String key, String value) {
     var normalized = value.trim().replaceAll(RegExp(r'\s+'), ' ');
+    normalized = normalized.replaceFirst(RegExp(r'^[:#\-=./\uFF1A]+\s*'), '');
+
+    if (key == 'symptoms' ||
+        key == 'disease' ||
+        key == 'treatment' ||
+        key == 'address' ||
+        key == 'fullName' ||
+        key == 'guardianName') {
+      normalized = _stripFormHints(normalized);
+    }
+    if (key == 'symptoms' || key == 'disease') {
+      normalized = OcrFuzzyMatcher.snapClinicalTerm(normalized);
+    }
 
     if (key == 'contactNumber') {
       normalized = _cleanHandwrittenDigits(normalized);
@@ -526,7 +870,11 @@ class OcrExtraction {
       } else if (normalized.startsWith('9') && normalized.length == 10) {
         normalized = '0$normalized';
       }
-    } else if (key == 'dateOfBirth' || key == 'date') {
+    } else if (key == 'dateOfBirth' ||
+        key == 'date' ||
+        key == 'dateOfOnset' ||
+        key == 'nextVisitDate' ||
+        key == 'expirationDate') {
       normalized = _normalizeDate(normalized);
     } else if (key == 'age') {
       normalized = _normalizeAge(normalized);
@@ -555,9 +903,14 @@ class OcrExtraction {
 
   static String _normalizeName(String value) {
     var cleaned = value
-        .replaceAll(RegExp(r"""^[\s_.,~`\-|\'"#]+|[\s_.,~`\-|\'"#]+$"""), '')
+        .replaceAll(RegExp(r"""^[\s_.,~`\-|\'"#]+|[\s_~`\-|\'"#]+$"""), '')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
+    if (cleaned.endsWith('.') &&
+        !RegExp(r'\b[A-Za-z]\.$').hasMatch(cleaned) &&
+        !RegExp(r'\b(?:Jr|Sr)\.$', caseSensitive: false).hasMatch(cleaned)) {
+      cleaned = cleaned.substring(0, cleaned.length - 1).trim();
+    }
     if (cleaned.isEmpty) return value;
     final parts = cleaned.split(' ');
     final titleCased = parts.map((part) {
@@ -598,31 +951,40 @@ class OcrExtraction {
 
   static String _normalizeGender(String value) {
     final lower = value.toLowerCase().trim();
-    if (lower.contains('female') ||
-        lower.contains('babae') ||
-        lower.contains('girl') ||
-        lower.contains('woman') ||
+    // Check for checkbox marks first e.g. "[x] Female" or "[✓] Male"
+    final checkedMatch = RegExp(
+      r'(?:\[[xXvV✓✔\*\-\/]\]|\([xXvV✓✔\*\-\/]\))\s*(male|female|other)',
+      caseSensitive: false,
+    ).firstMatch(lower);
+    if (checkedMatch != null) {
+      final opt = checkedMatch.group(1)!.toLowerCase();
+      if (opt == 'female') return 'Female';
+      if (opt == 'male') return 'Male';
+      return 'Other';
+    }
+    final reverseCheckedMatch = RegExp(
+      r'(male|female|other)\s*(?:\[[xXvV✓✔\*\-\/]\]|\([xXvV✓✔\*\-\/]\))',
+      caseSensitive: false,
+    ).firstMatch(lower);
+    if (reverseCheckedMatch != null) {
+      final opt = reverseCheckedMatch.group(1)!.toLowerCase();
+      if (opt == 'female') return 'Female';
+      if (opt == 'male') return 'Male';
+      return 'Other';
+    }
+
+    if (lower == 'female' ||
+        lower == 'babae' ||
         lower == 'f' ||
-        lower.contains('[x] female') ||
-        lower.contains('(x) female') ||
-        lower.contains('[v] female') ||
-        lower.contains('[/] female') ||
-        lower.contains('f [x]') ||
-        lower.contains('f [v]')) {
+        lower.startsWith('f ') ||
+        lower.startsWith('female')) {
       return 'Female';
     }
-    if (lower.contains('male') ||
-        lower.contains('lalaki') ||
-        lower.contains('lalake') ||
-        lower.contains('boy') ||
-        lower.contains('man') ||
+    if (lower == 'male' ||
+        lower == 'lalaki' ||
         lower == 'm' ||
-        lower.contains('[x] male') ||
-        lower.contains('(x) male') ||
-        lower.contains('[v] male') ||
-        lower.contains('[/] male') ||
-        lower.contains('m [x]') ||
-        lower.contains('m [v]')) {
+        lower.startsWith('m ') ||
+        lower.startsWith('male')) {
       return 'Male';
     }
     if (lower.contains('other') || lower.contains('prefer not to say')) {
@@ -633,23 +995,45 @@ class OcrExtraction {
 
   static String _normalizeCivilStatus(String value) {
     final lower = value.toLowerCase().trim();
-    if (lower.contains('single') ||
-        lower.contains('binata') ||
-        lower.contains('dalaga') ||
+    // Check for checkbox marks first
+    final checkedMatch = RegExp(
+      r'(?:\[[xXvV✓✔\*\-\/]\]|\([xXvV✓✔\*\-\/]\))\s*(single|married|widowed|separated|divorced)',
+      caseSensitive: false,
+    ).firstMatch(lower);
+    if (checkedMatch != null) {
+      final opt = checkedMatch.group(1)!.toLowerCase();
+      if (opt == 'single') return 'Single';
+      if (opt == 'married') return 'Married';
+      if (opt.startsWith('widow')) return 'Widowed';
+      if (opt.startsWith('separat') || opt.startsWith('divorc')) return 'Separated';
+    }
+    final reverseCheckedMatch = RegExp(
+      r'(single|married|widowed|separated|divorced)\s*(?:\[[xXvV✓✔\*\-\/]\]|\([xXvV✓✔\*\-\/]\))',
+      caseSensitive: false,
+    ).firstMatch(lower);
+    if (reverseCheckedMatch != null) {
+      final opt = reverseCheckedMatch.group(1)!.toLowerCase();
+      if (opt == 'single') return 'Single';
+      if (opt == 'married') return 'Married';
+      if (opt.startsWith('widow')) return 'Widowed';
+      if (opt.startsWith('separat') || opt.startsWith('divorc')) return 'Separated';
+    }
+
+    if (lower == 'single' ||
+        lower == 'binata' ||
+        lower == 'dalaga' ||
         lower == 's') {
       return 'Single';
     }
-    if (lower.contains('married') ||
-        lower.contains('kasado') ||
-        lower == 'm') {
+    if (lower == 'married' || lower == 'kasado' || lower == 'm') {
       return 'Married';
     }
-    if (lower.contains('widow') || lower.contains('balo') || lower == 'w') {
+    if (lower.startsWith('widow') || lower == 'balo' || lower == 'w') {
       return 'Widowed';
     }
-    if (lower.contains('separat') ||
-        lower.contains('hiwalay') ||
-        lower.contains('divorc') ||
+    if (lower.startsWith('separat') ||
+        lower == 'hiwalay' ||
+        lower.startsWith('divorc') ||
         lower == 'sep') {
       return 'Separated';
     }
@@ -730,7 +1114,7 @@ class OcrExtraction {
     } else if (RegExp(r'^\d{1,2}$').hasMatch(normalized)) {
       normalized = 'Barangay ${normalized.padLeft(2, '0')}';
     }
-    return normalized;
+    return OcrFuzzyMatcher.snapBarangay(normalized);
   }
 
   static String _normalizeDate(String value) {
@@ -831,8 +1215,9 @@ class OcrExtraction {
       case 'firstName':
       case 'surname':
       case 'fullName':
+      case 'guardianName':
         return RegExp(
-          r"^[\p{L}][\p{L} .'-]{1,100}$",
+          r"^[\p{L}][\p{L} .,'-]{1,100}$",
           unicode: true,
         ).hasMatch(value);
       case 'barangay':
@@ -849,6 +1234,9 @@ class OcrExtraction {
         return age != null && age >= 0 && age <= 130;
       case 'dateOfBirth':
       case 'date':
+      case 'dateOfOnset':
+      case 'nextVisitDate':
+      case 'expirationDate':
         return RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value);
       case 'patientId':
         return RegExp(r'^[A-Za-z0-9][A-Za-z0-9_/#.-]{1,80}$').hasMatch(value);
@@ -871,6 +1259,24 @@ class OcrExtraction {
       case 'height':
         final numVal = double.tryParse(value);
         return numVal != null && numVal > 0 && numVal < 500;
+      case 'gravida':
+      case 'para':
+      case 'fullTerm':
+      case 'premature':
+      case 'abortion':
+      case 'livingChildren':
+      case 'aog':
+      case 'fundalHeight':
+      case 'fetalHeartBeat':
+      case 'dose':
+        final numVal = int.tryParse(value.replaceAll(RegExp(r'[^\d]'), ''));
+        return numVal != null || value.trim().isNotEmpty;
+      case 'bloodType':
+      case 'tetanusToxoid':
+      case 'riskLevel':
+        return value.trim().isNotEmpty;
+      case 'philhealthNumber':
+        return value.replaceAll(RegExp(r'[\s-]'), '').length >= 4;
       default:
         return value.trim().length >= 2;
     }
@@ -1135,12 +1541,7 @@ class OcrRecordCapture {
 
     var loadingDialogVisible = false;
     try {
-      final image = await ImagePicker().pickImage(
-        source: source,
-        maxWidth: 2400,
-        maxHeight: 3200,
-        imageQuality: 100,
-      );
+      final image = await OcrDocumentScannerService.scanDocument(source: source);
       if (image == null || !context.mounted) return;
       showDialog<void>(
         context: context,

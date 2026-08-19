@@ -24,14 +24,16 @@ import 'package:mycapstone_project/app/features/surveillance/morbidity/morbidity
 import 'package:mycapstone_project/app/features/surveillance/mortality/mortality_database_helper.dart';
 import 'package:mycapstone_project/app/features/referrals/referral_analytics.dart';
 import 'dart:async';
-import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:get/get.dart';
+import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
+import 'package:mycapstone_project/app/theme/app_theme.dart';
 
 const Color _primaryAqua = AppDesign.blue;
-const Color _secondaryIceBlue = AppDesign.blueSoft;
-const Color _darkDeepTeal = AppDesign.page;
+const Color _secondaryIceBlue = AppDesign.navySoft;
+const Color _darkDeepTeal = AppDesign.ink;
 const Color _mutedCoolGray = AppDesign.muted;
-const Color _lightOffWhite = AppDesign.ink;
+const Color _lightOffWhite = Colors.white;
 const Color _panelTop = AppDesign.surface;
 const Color _panelBottom = AppDesign.surface;
 const Color _panelStroke = AppDesign.border;
@@ -70,7 +72,8 @@ String _compactChartLabelAscii(String value, {int maxLength = 12}) {
 charts.Color _chartColor(Color color) => charts.ColorUtil.fromDartColor(color);
 
 class AnalyticsPage extends StatefulWidget {
-  const AnalyticsPage({super.key});
+  final bool embedded;
+  const AnalyticsPage({super.key, this.embedded = false});
 
   @override
   State<AnalyticsPage> createState() => _AnalyticsPageState();
@@ -223,162 +226,111 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     );
   }
 
-  Widget _buildManagementModulesSection(BuildContext context) {
-    final modules = <Map<String, dynamic>>[
-      {
-        'label': 'Check Up',
-        'icon': Icons.medical_services_outlined,
-        'color': AppDesign.checkUp,
-        'onTap': () => Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const CheckUpAnalyticsPage())),
-      },
-      {
-        'label': 'Morbidity',
-        'icon': Icons.healing_outlined,
-        'color': AppDesign.morbidity,
-        'onTap': () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const MorbidityPage(analyticsOnly: true),
-          ),
-        ),
-      },
-      {
-        'label': 'Prenatal Care',
-        'icon': Icons.pregnant_woman_rounded,
-        'color': AppDesign.prenatal,
-        'onTap': () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const PrenatalAnalyticsPage()),
-        ),
-      },
-      {
-        'label': 'Immunization',
-        'icon': Icons.vaccines_rounded,
-        'color': AppDesign.immunization,
-        'onTap': () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const ImmunizationAnalyticsPage()),
-        ),
-      },
-      {
-        'label': 'Patient Records',
-        'icon': Icons.folder_shared_rounded,
-        'color': AppDesign.patientRecords,
-        'onTap': () => Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const PatientAnalyticsPage())),
-      },
-      {
-        'label': 'Communicable',
-        'icon': Icons.coronavirus_rounded,
-        'color': AppDesign.communicable,
-        'onTap': () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const CommunicableAnalyticsPage()),
-        ),
-      },
-      {
-        'label': 'Non Communicable Disease',
-        'icon': Icons.biotech_rounded,
-        'color': AppDesign.nonCommunicable,
-        'onTap': () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const NonCommunicableAnalyticsPage(),
-          ),
-        ),
-      },
-      {
-        'label': 'Mortality',
-        'icon': Icons.sick_rounded,
-        'color': AppDesign.mortality,
-        'onTap': () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const MortalityAnalyticsPage()),
-        ),
-      },
-      {
-        'label': 'Referrals',
-        'icon': Icons.call_split_rounded,
-        'color': AppDesign.referrals,
-        'onTap': () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const ReferralAnalyticsPage()),
-        ),
-      },
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Management Modules',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: _lightOffWhite,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 18),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 18,
-            mainAxisSpacing: 18,
-            childAspectRatio: 1.15,
-          ),
-          itemCount: modules.length,
-          itemBuilder: (context, index) {
-            final module = modules[index];
-            return _buildHubStyleButton(
-              icon: module['icon'] as IconData,
-              label: module['label'] as String,
-              accent: _primaryAqua,
-              onTap: module['onTap'] as void Function(),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
   Widget _buildAnalyticsHubSection(BuildContext context) {
-    final categories = <Map<String, dynamic>>[
+    final hubCategories = <Map<String, dynamic>>[
       {
-        'title': 'Patient Metrics',
-        'subtitle':
-            'BMI, blood pressure, demographics and immunization insights',
-        'icon': Icons.bar_chart_rounded,
+        'title': 'Patient Management',
+        'subtitle': 'Check Up, Morbidity, Prenatal Care, Immunization',
+        'icon': Icons.local_hospital_rounded,
         'color': _primaryAqua,
         'buttons': <Map<String, dynamic>>[
           {
-            'label': 'BMI Distribution',
-            'icon': Icons.pie_chart_rounded,
-            'onTap': () => _scrollToSection(_patientMetricsSectionKey),
+            'label': 'Check Up',
+            'icon': Icons.medical_services,
+            'onTap': () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CheckUpAnalyticsPage()),
+            ),
           },
           {
-            'label': 'Blood Pressure',
-            'icon': Icons.monitor_heart_rounded,
-            'onTap': () => _scrollToSection(_patientMetricsSectionKey),
+            'label': 'Morbidity',
+            'icon': Icons.healing,
+            'onTap': () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const MorbidityPage(analyticsOnly: true),
+              ),
+            ),
           },
           {
-            'label': 'Demographics',
-            'icon': Icons.groups_rounded,
-            'onTap': () => _scrollToSection(_patientMetricsSectionKey),
+            'label': 'Prenatal Care',
+            'icon': Icons.pregnant_woman,
+            'onTap': () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const PrenatalAnalyticsPage()),
+            ),
           },
           {
             'label': 'Immunization',
-            'icon': Icons.vaccines_rounded,
-            'onTap': () => _scrollToSection(_patientMetricsSectionKey),
+            'icon': Icons.vaccines,
+            'onTap': () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const ImmunizationAnalyticsPage(),
+              ),
+            ),
           },
         ],
       },
       {
-        'title': 'Key Statistics',
-        'subtitle': 'Quick access to summary metrics and overview cards',
-        'icon': Icons.insights_rounded,
-        'color': AppDesign.teal,
+        'title': 'Records',
+        'subtitle': 'Patient Records',
+        'icon': Icons.folder_copy_rounded,
+        'color': AppDesign.blue,
         'buttons': <Map<String, dynamic>>[
           {
-            'label': 'Summary Overview',
-            'icon': Icons.dashboard_customize_rounded,
-            'onTap': () => _scrollToSection(_keyStatisticsSectionKey),
+            'label': 'Patient Records',
+            'icon': Icons.folder_special,
+            'onTap': () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const PatientAnalyticsPage()),
+            ),
+          },
+        ],
+      },
+      {
+        'title': 'Disease Monitoring',
+        'subtitle':
+            'Communicable Disease, Non Communicable Disease, Mortality',
+        'icon': Icons.monitor_heart_rounded,
+        'color': AppDesign.navy,
+        'buttons': <Map<String, dynamic>>[
+          {
+            'label': 'Communicable Disease',
+            'icon': Icons.coronavirus,
+            'onTap': () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const CommunicableAnalyticsPage(),
+              ),
+            ),
+          },
+          {
+            'label': 'Non Communicable Disease',
+            'icon': Icons.sick,
+            'onTap': () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const NonCommunicableAnalyticsPage(),
+              ),
+            ),
+          },
+          {
+            'label': 'Mortality',
+            'icon': Icons.airline_seat_flat,
+            'onTap': () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const MortalityAnalyticsPage(),
+              ),
+            ),
+          },
+        ],
+      },
+      {
+        'title': 'Coordination',
+        'subtitle': 'Referrals',
+        'icon': Icons.forward_to_inbox_rounded,
+        'color': AppDesign.blue,
+        'buttons': <Map<String, dynamic>>[
+          {
+            'label': 'Referrals',
+            'icon': Icons.forward_to_inbox_rounded,
+            'onTap': () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ReferralAnalyticsPage()),
+            ),
           },
         ],
       },
@@ -388,102 +340,68 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Analytics Hub',
+          'HUB',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _lightOffWhite,
+            color: _darkDeepTeal,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Choose a category to open the related analytics view.',
-          style: TextStyle(
-            color: _lightOffWhite.withValues(alpha: 0.72),
-            fontSize: 13,
-          ),
+          'Tap a category to open the related modules.',
+          style: TextStyle(color: AppDesign.muted, fontSize: 14),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: categories.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          itemCount: hubCategories.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
-            final category = categories[index];
+            final category = hubCategories[index];
             final buttons = category['buttons'] as List<Map<String, dynamic>>;
             return Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _panelBottom.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: (category['color'] as Color).withValues(alpha: 0.22),
-                  width: 1.2,
-                ),
+                color: AppDesign.surface,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppDesign.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppDesign.navy.withValues(alpha: 0.05),
+                    blurRadius: 14,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: (category['color'] as Color).withValues(
-                            alpha: 0.16,
-                          ),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          category['icon'] as IconData,
-                          color: category['color'] as Color,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              category['title'] as String,
-                              style: const TextStyle(
-                                color: _lightOffWhite,
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              category['subtitle'] as String,
-                              style: TextStyle(
-                                color: _lightOffWhite.withValues(alpha: 0.72),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  Text(
+                    category['title'] as String,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 1.12,
+                          crossAxisSpacing: 18,
+                          mainAxisSpacing: 18,
+                          childAspectRatio: 1.15,
                         ),
                     itemCount: buttons.length,
                     itemBuilder: (context, buttonIndex) {
                       final button = buttons[buttonIndex];
-                      return _buildHubStyleButton(
+                      return _buildHubIconButton(
                         icon: button['icon'] as IconData,
                         label: button['label'] as String,
-                        accent: category['color'] as Color,
                         onTap: button['onTap'] as void Function(),
                       );
                     },
@@ -497,10 +415,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     );
   }
 
-  Widget _buildHubStyleButton({
+  Widget _buildHubIconButton({
     required IconData icon,
     required String label,
-    Color accent = AppDesign.blue,
     required VoidCallback onTap,
   }) {
     return Material(
@@ -508,69 +425,110 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: AppDesign.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppDesign.border),
-            boxShadow: [
-              BoxShadow(
-                color: AppDesign.navy.withValues(alpha: 0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          child: Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: Container(
+                    width: 88,
+                    height: 88,
+                    decoration: BoxDecoration(
+                      color: _primaryAqua.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: _primaryAqua.withValues(alpha: 0.45),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _primaryAqua.withValues(alpha: 0.12),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(icon, color: _primaryAqua, size: 48),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _darkDeepTeal,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  height: 1.18,
+                ),
               ),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Center(
-                    child: Container(
-                      width: 88,
-                      height: 88,
-                      decoration: BoxDecoration(
-                        color: accent.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: accent.withValues(alpha: 0.45),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: accent.withValues(alpha: 0.12),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Icon(icon, color: accent, size: 48),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: _lightOffWhite,
-                      fontSize: 12.8,
-                      fontWeight: FontWeight.w800,
-                      height: 1.18,
-                      letterSpacing: 0.12,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppDesign.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+        border: Border.all(color: AppDesign.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppDesign.navy.withValues(alpha: 0.12),
+            blurRadius: 24,
+            offset: const Offset(0, -6),
           ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: SafeArea(
+        top: false,
+        child: BottomNavigationBar(
+          currentIndex: 1,
+          type: BottomNavigationBarType.fixed,
+          elevation: 0,
+          backgroundColor: AppDesign.surface,
+          selectedItemColor: _primaryAqua,
+          unselectedItemColor: AppDesign.subtle,
+          selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 12,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 11,
+          ),
+          onTap: (index) {
+            if (index == 0) {
+              Get.offAllNamed(MobileRoutes.dashboard, arguments: {'tab': 0});
+            } else if (index == 2) {
+              Get.offAllNamed(MobileRoutes.dashboard, arguments: {'tab': 2});
+            }
+          },
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard_rounded),
+              activeIcon: _ActiveNavigationIcon(icon: Icons.dashboard_rounded),
+              label: 'Dashboard',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.analytics_rounded),
+              activeIcon: _ActiveNavigationIcon(icon: Icons.analytics_rounded),
+              label: 'Analytics',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.hub_rounded),
+              activeIcon: _ActiveNavigationIcon(icon: Icons.hub_rounded),
+              label: 'Hub',
+            ),
+          ],
         ),
       ),
     );
@@ -578,79 +536,55 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final isCompact = screenWidth < 380;
-    final horizontalPadding = isCompact ? 14.0 : 16.0;
+    if (widget.embedded) {
+      if (_isLoading) {
+        return const Center(
+          child: CircularProgressIndicator(color: _primaryAqua),
+        );
+      }
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: _buildAnalyticsHubSection(context),
+      );
+    }
 
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: _darkDeepTeal,
-        appBar: AppBar(
-          backgroundColor: AppDesign.navy,
-          title: Text(
-            'Analytics',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          iconTheme: const IconThemeData(color: Colors.white),
-          elevation: 0,
-        ),
+        backgroundColor: AppDesign.page,
         body: const Center(
           child: CircularProgressIndicator(color: _primaryAqua),
         ),
+        bottomNavigationBar: _buildBottomNavBar(),
       );
     }
 
     return Scaffold(
-      backgroundColor: _darkDeepTeal,
-      appBar: AppBar(
-        backgroundColor: AppDesign.navy,
-        title: Text(
-          'Analytics',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
-        elevation: 0,
-        actions: [
-          if (kDebugMode)
-            IconButton(
-              icon: _isSeeding
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: _primaryAqua,
-                      ),
-                    )
-                  : const Icon(Icons.science_rounded),
-              tooltip: 'Seed assigned barangay test data',
-              onPressed: _isSeeding ? null : _seedSharedModuleData,
-            ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh Data',
-            onPressed: _loadAllData,
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
-          horizontalPadding,
-          isCompact ? 14 : 18,
-          horizontalPadding,
-          24,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [_buildManagementModulesSection(context)],
+      backgroundColor: AppDesign.page,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: _buildAnalyticsHubSection(context),
         ),
       ),
+      bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
+}
+
+class _ActiveNavigationIcon extends StatelessWidget {
+  const _ActiveNavigationIcon({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: const BoxDecoration(
+        color: AppDesign.blueSoft,
+        borderRadius: BorderRadius.all(Radius.circular(18)),
+      ),
+      child: Icon(icon, color: AppDesign.blue, size: 24),
     );
   }
 }

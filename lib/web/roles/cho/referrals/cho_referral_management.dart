@@ -97,40 +97,83 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ChoColors.background,
-      drawer: const ChoNavigationDrawer(current: ChoDestination.referrals),
-      appBar: AppBar(
-        backgroundColor: ChoColors.navBackground,
-        foregroundColor: ChoColors.navText,
-        title: const Text('CHO Referral Management'),
-        actions: [
-          IconButton(
-            onPressed: _loadScope,
-            tooltip: 'Refresh referrals',
-            icon: const Icon(Icons.refresh_rounded),
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ChoNavigationDrawer(current: ChoDestination.referrals),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'CHO Referral Management',
+                              style: TextStyle(
+                                fontFamily: 'Manrope',
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: ChoColors.text,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Coordinate, review, and track clinical referrals across all health facilities.',
+                              style: TextStyle(
+                                fontFamily: 'Manrope',
+                                fontSize: 12,
+                                color: ChoColors.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const ChoStatusBadge('City Health Office'),
+                      const SizedBox(width: 10),
+                      IconButton(
+                        onPressed: _loadScope,
+                        tooltip: 'Refresh referrals',
+                        icon: const Icon(Icons.refresh_rounded, color: ChoColors.text),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, color: ChoColors.border),
+                Expanded(
+                  child: _loadingScope
+                      ? const ChoLoadingSkeleton()
+                      : _accessError != null
+                      ? ChoErrorState(message: _accessError!, onRetry: _loadScope)
+                      : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                          stream: _stream,
+                          builder: (context, snapshot) {
+                            if (snapshot.hasError) {
+                              return ChoErrorState(
+                                message:
+                                    'Referral records could not be loaded. Check your connection and try again.',
+                                onRetry: _loadScope,
+                              );
+                            }
+                            if (!snapshot.hasData) return const ChoLoadingSkeleton();
+                            final records =
+                                snapshot.data!.docs.map(_ReferralRecord.new).toList()
+                                  ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+                            return _content(records);
+                          },
+                        ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      body: _loadingScope
-          ? const ChoLoadingSkeleton()
-          : _accessError != null
-          ? ChoErrorState(message: _accessError!, onRetry: _loadScope)
-          : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _stream,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return ChoErrorState(
-                    message:
-                        'Referral records could not be loaded. Check your connection and try again.',
-                    onRetry: _loadScope,
-                  );
-                }
-                if (!snapshot.hasData) return const ChoLoadingSkeleton();
-                final records =
-                    snapshot.data!.docs.map(_ReferralRecord.new).toList()
-                      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-                return _content(records);
-              },
-            ),
     );
   }
 

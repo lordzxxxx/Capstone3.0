@@ -15,6 +15,8 @@ import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
+import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
+import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:universal_html/html.dart' as html;
 
 const Color _primaryAqua = AppColors.primary;
@@ -1495,26 +1497,13 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
 
     return Scaffold(
       backgroundColor: ChoColors.background,
-      appBar: AppBar(
-        title: const Text('CHO Super Admin Center'),
-        backgroundColor: AppColors.backgroundDark,
-        foregroundColor: AppColors.textOnDark,
-        actions: [
-          TextButton.icon(
-            onPressed: () {
-              Get.toNamed(WebRoutes.choDashboard);
-            },
-            icon: const Icon(Icons.analytics_outlined, color: _primaryAqua),
-            label: const Text(
-              'CHO Dashboard',
-              style: TextStyle(color: _primaryAqua),
-            ),
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: _firestore.collection('users').snapshots(),
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ChoNavigationDrawer(current: ChoDestination.dashboard),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: _firestore.collection('users').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return ChoErrorState(
@@ -1726,6 +1715,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
           );
         },
       ),
-    );
-  }
+    ),
+  ],
+),
+);
+}
 }

@@ -130,22 +130,21 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ChoColors.background,
-      drawer: ChoNavigationDrawer(current: _destination),
-      appBar: AppBar(
-        backgroundColor: ChoColors.navBackground,
-        foregroundColor: ChoColors.navText,
-        title: Text('$_title • CHO'),
-      ),
-      body: _checkingAccess
-          ? const ChoLoadingSkeleton()
-          : !_authorized
-          ? ChoErrorState(
-              message: _error ?? 'Access denied.',
-              onRetry: _verifyAccess,
-            )
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
-              children: [
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ChoNavigationDrawer(current: _destination),
+          Expanded(
+            child: _checkingAccess
+                ? const ChoLoadingSkeleton()
+                : !_authorized
+                ? ChoErrorState(
+                    message: _error ?? 'Access denied.',
+                    onRetry: _verifyAccess,
+                  )
+                : ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                    children: [
                 ChoPageHeader(
                   title: _title,
                   description: _description,
@@ -217,6 +216,9 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                   _body(),
               ],
             ),
+          ),
+        ],
+      ),
     );
   }
 

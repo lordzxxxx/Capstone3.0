@@ -167,6 +167,9 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     final args = Get.arguments;
     _isOfflineMode = args is Map && args['offline'] == true;
+    if (args is Map && args['tab'] is int) {
+      _selectedBottomNavIndex = args['tab'] as int;
+    }
     _keyMetricsSelectedDate ??= DateTime.now();
     _initializeNotifications();
     _loadMetrics();
@@ -1604,10 +1607,6 @@ class _HomePageState extends State<HomePage> {
             fontSize: 11,
           ),
           onTap: (index) {
-            if (index == 1) {
-              Get.toNamed(MobileRoutes.analytics);
-              return;
-            }
             setState(() {
               _selectedBottomNavIndex = index;
             });
@@ -1638,6 +1637,8 @@ class _HomePageState extends State<HomePage> {
     switch (_selectedBottomNavIndex) {
       case 2:
         return _buildHubTab(context);
+      case 1:
+        return const AnalyticsPage(embedded: true);
       case 0:
       default:
         return _buildDashboardContent(context);
@@ -2087,7 +2088,9 @@ class _HomePageState extends State<HomePage> {
                         label: 'Analytics',
                         onTap: () {
                           Navigator.pop(context);
-                          Get.toNamed(MobileRoutes.analytics);
+                          setState(() {
+                            _selectedBottomNavIndex = 1;
+                          });
                         },
                       ),
                       _buildDrawerCardButton(
