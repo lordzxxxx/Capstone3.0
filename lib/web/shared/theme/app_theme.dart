@@ -50,6 +50,14 @@ class AppColors {
   static const Color success = Color(0xFF388E3C);
   static const Color warning = Color(0xFFF57C00);
   static const Color error = Color(0xFFD32F2F);
+
+  // Referral / clinical escalation — a distinct terracotta reserved for
+  // "send this patient up the chain" actions (BHW→CHO referrals). Kept out
+  // of the blue/navy routine palette so escalation never blends in with
+  // ordinary view/edit/export actions.
+  static const Color referral = Color(0xFFC1502B);
+  static const Color referralStrong = Color(0xFF9A3D1F);
+  static const Color referralTint = Color(0xFFFBEAE0);
 }
 
 /// Shared spacing scale. Mirrors the paddings/gaps already predominant

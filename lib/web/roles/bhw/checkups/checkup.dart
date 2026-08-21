@@ -4725,14 +4725,15 @@ class _CheckUpCard extends StatelessWidget {
     required IconData icon,
     required VoidCallback onTap,
     String? tooltip,
+    Color accent = const Color(0xFF163B66),
   }) {
     final button = Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF163B66),
+        color: accent,
         borderRadius: BorderRadius.circular(7),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF163B66).withValues(alpha: 0.28),
+            color: accent.withValues(alpha: 0.28),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -4860,10 +4861,10 @@ class _CheckUpCard extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.14),
+                            color: AppColors.referralTint,
                             borderRadius: BorderRadius.circular(999),
                             border: Border.all(
-                              color: Colors.orange.withValues(alpha: 0.5),
+                              color: AppColors.referral.withValues(alpha: 0.5),
                             ),
                           ),
                           child: Row(
@@ -4872,13 +4873,13 @@ class _CheckUpCard extends StatelessWidget {
                               Icon(
                                 Icons.warning_amber_rounded,
                                 size: 12,
-                                color: Colors.orange,
+                                color: AppColors.referral,
                               ),
                               SizedBox(width: 4),
                               Text(
                                 'Suggested Referral',
                                 style: TextStyle(
-                                  color: Colors.deepOrange,
+                                  color: AppColors.referralStrong,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -5001,6 +5002,7 @@ class _CheckUpCard extends StatelessWidget {
                         _buildActionButton(
                           icon: Icons.local_hospital_outlined,
                           tooltip: 'Refer to CHO',
+                          accent: AppColors.referral,
                           onTap: () => onRefer(record),
                         ),
                         const SizedBox(width: 6),
@@ -5799,9 +5801,9 @@ class _NewCheckUpFullScreenModalState
                   const SizedBox(width: 12),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.deepOrange,
+                      foregroundColor: AppColors.referralStrong,
                       side: const BorderSide(
-                        color: Colors.deepOrange,
+                        color: AppColors.referral,
                         width: 1.2,
                       ),
                       padding: const EdgeInsets.symmetric(

@@ -236,7 +236,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     decoration: BoxDecoration(
       color: AppColors.secondary,
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppColors.primary, width: 1.2),
+      border: Border.all(color: AppColors.referral, width: 1.2),
     ),
     child: LayoutBuilder(
       builder: (context, constraints) {
@@ -251,7 +251,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
                   const Text(
                     'BHW SERVICES / REFERRAL',
                     style: TextStyle(
-                      color: _aqua,
+                      color: AppColors.referral,
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                     ),
@@ -306,7 +306,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
             label: Text(_views[index]),
             style: TextButton.styleFrom(
               foregroundColor: selected ? Colors.white : _muted,
-              backgroundColor: selected ? _aqua : Colors.transparent,
+              backgroundColor: selected ? AppColors.referral : Colors.transparent,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -516,7 +516,9 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
                     const Spacer(),
                     FilledButton.icon(
                       onPressed: _submitting ? null : _submit,
-                      style: AppButtonStyles.primary(),
+                      style: AppButtonStyles.primary(
+                        background: AppColors.referral,
+                      ),
                       icon: _submitting
                           ? const SizedBox(
                               width: 18,

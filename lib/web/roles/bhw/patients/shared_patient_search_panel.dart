@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
 class SharedPatientSearchPanel extends StatelessWidget {
   const SharedPatientSearchPanel({
@@ -21,11 +22,11 @@ class SharedPatientSearchPanel extends StatelessWidget {
   final String? secondaryActionLabel;
   final void Function(Map<String, dynamic> patient)? onSecondaryAction;
 
-  static const Color _accent = Color(0xFF2F80ED);
-  static const Color _surface = Color(0xFF0D274D);
-  static const Color _surfaceAlt = Color(0xFF10343C);
-  static const Color _text = Color(0xFFF5F5F5);
-  static const Color _muted = Color(0xFF8BA3A8);
+  static const Color _accent = AppColors.primary;
+  static const Color _surface = AppColors.surfaceLight;
+  static const Color _surfaceAlt = AppColors.surfaceSubtle;
+  static const Color _text = AppColors.textPrimary;
+  static const Color _muted = AppColors.textSecondary;
 
   @override
   Widget build(BuildContext context) {
@@ -103,9 +104,9 @@ class SharedPatientSearchPanel extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: _surfaceAlt.withValues(alpha: 0.6),
+                color: _surfaceAlt,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                border: Border.all(color: AppColors.border),
               ),
               child: Text(
                 'No shared patient match was found for "$trimmedQuery".',
@@ -151,9 +152,9 @@ class SharedPatientSearchPanel extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _surfaceAlt.withValues(alpha: 0.72),
+        color: _surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
