@@ -2729,7 +2729,7 @@ class _MortalityPageState extends State<MortalityPage> {
                 _buildWebBarButton(
                   icon: Icons.download_rounded,
                   label: 'Export',
-                  onPressed: () {},
+                  onPressed: _generateMortalityReport,
                 ),
               ],
             ),

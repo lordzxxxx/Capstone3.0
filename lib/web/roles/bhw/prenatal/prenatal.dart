@@ -1116,79 +1116,13 @@ class _PrenatalPageState extends State<PrenatalPage> {
     });
   }
 
-  // Show AI Classification modal with loading spinner for prenatal records
+  // Show AI Classification results for a prenatal record. The classification
+  // itself has already finished by the time this is called, so this opens
+  // straight to the results — no artificial "Analyzing..." wait.
   Future<void> _showPrenatalAIModal(
     BuildContext context,
     ClassificationResult classification,
   ) async {
-    // Show loading spinner dialog for 3 seconds
-    if (context.mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (loadingContext) => Dialog(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: Center(
-            child: Container(
-              width: 280,
-              padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 28),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF0D274D), Color(0xFF163B66)],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryAqua.withValues(alpha: 0.3),
-                    blurRadius: 24,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 56,
-                    height: 56,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 4,
-                      valueColor: AlwaysStoppedAnimation<Color>(_primaryAqua),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Analyzing Prenatal Data...',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'AI is classifying your prenatal record',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await Future.delayed(const Duration(seconds: 3));
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
-    }
-
     final recoveryPlan = classification.recoveryPlan;
 
     if (!context.mounted) return;
@@ -1624,6 +1558,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
     DateTime? eddDate;
     DateTime? lastDeliveryDate;
     DateTime? registrationDate = DateTime.now();
+    bool isSaving = false;
 
     final gravidaController = TextEditingController();
     final paraController = TextEditingController();
@@ -2384,15 +2319,28 @@ class _PrenatalPageState extends State<PrenatalPage> {
                           ),
                           elevation: 2,
                         ),
-                        icon: const Icon(Icons.check_circle_rounded, size: 18),
-                        label: const Text(
-                          'Register Prenatal Patient',
-                          style: TextStyle(
+                        icon: isSaving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : const Icon(Icons.check_circle_rounded, size: 18),
+                        label: Text(
+                          isSaving ? 'Saving...' : 'Register Prenatal Patient',
+                          style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 14,
                           ),
                         ),
-                        onPressed: () async {
+                        onPressed: isSaving
+                            ? null
+                            : () async {
                           final isFormValid =
                               formKey.currentState?.validate() ?? false;
                           final isLmpDateValid = lmpDate != null;
@@ -2423,6 +2371,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
                               !isLmpDateNotFuture) {
                             return;
                           }
+
+                          setModalState(() => isSaving = true);
 
                           // Create new prenatal record
                           final newRecord = {
@@ -2550,6 +2500,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                 ),
                               );
                             }
+                            setModalState(() => isSaving = false);
                           }
                         },
                       ),
@@ -8115,6 +8066,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
                   icon: const Icon(Icons.clear, color: Colors.grey, size: 18),
+                  tooltip: 'Clear search',
                   onPressed: () {
                     _searchController.clear();
                     setState(() {
@@ -8245,6 +8197,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                           size: 16,
                           color: Colors.red,
                         ),
+                        tooltip: 'Clear dates',
                         onPressed: () {
                           setState(() {
                             _fromDate = null;

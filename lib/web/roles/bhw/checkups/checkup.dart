@@ -35,6 +35,7 @@ import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/web/shared/utils/checkup_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/shared/utils/report_generation.dart';
+import 'package:mycapstone_project/web/shared/utils/vital_risk_flags.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
@@ -466,6 +467,47 @@ class _CheckUpPageState extends State<CheckUpPage> {
         patientSeed: history.isNotEmpty ? history.first : record,
       ),
       onOpenRecord: (entry) => _showCheckUpDetails(context, entry),
+    );
+  }
+
+  void _openReferralForRecord(Map<String, dynamic> record) {
+    final patientSeed = _buildPatientHistorySeed(record);
+    final hasLinkedPatient =
+        (patientSeed['patientId'] as String?)?.isNotEmpty == true ||
+        (patientSeed['id']?.toString().isNotEmpty ?? false);
+
+    if (!hasLinkedPatient) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "This check-up isn't linked to a registered patient. Search for the patient to continue.",
+          ),
+        ),
+      );
+      Get.toNamed(WebRoutes.bhwReferrals);
+      return;
+    }
+
+    final referralSeed = <String, dynamic>{
+      ...patientSeed,
+      'age': record['age'],
+      'address': record['address'],
+      'barangay': record['barangay'],
+    };
+
+    final vitals = _safeCheckUpText(record['vitalsigns'], fallback: '');
+    final symptoms = _safeCheckUpText(record['symptoms'], fallback: '');
+    final observationsParts = <String>[
+      if (vitals.isNotEmpty) 'Vitals: $vitals',
+      if (symptoms.isNotEmpty) 'Symptoms: $symptoms',
+    ];
+
+    Get.toNamed(
+      WebRoutes.bhwReferrals,
+      arguments: {
+        'initialPatient': referralSeed,
+        'initialObservations': observationsParts.join('. '),
+      },
     );
   }
 
@@ -1131,6 +1173,10 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                                   onViewHistory: (record) =>
                                                       _showCheckUpHistory(
                                                         context,
+                                                        record,
+                                                      ),
+                                                  onRefer: (record) =>
+                                                      _openReferralForRecord(
                                                         record,
                                                       ),
                                                 ),
@@ -1904,7 +1950,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
           if (!_isSelectionMode) ...[
             _buildHeaderDivider(),
             SizedBox(
-              width: 112,
+              width: 150,
               child: Text(
                 'Actions',
                 textAlign: TextAlign.center,
@@ -3956,6 +4002,7 @@ class _CheckUpTable extends StatelessWidget {
   final Function(int, bool) onSelectionChanged;
   final Function(Map<String, dynamic>) onEdit;
   final Function(Map<String, dynamic>) onViewHistory;
+  final Function(Map<String, dynamic>) onRefer;
 
   const _CheckUpTable({
     required this.records,
@@ -3965,6 +4012,7 @@ class _CheckUpTable extends StatelessWidget {
     required this.onSelectionChanged,
     required this.onEdit,
     required this.onViewHistory,
+    required this.onRefer,
   });
 
   @override
@@ -3990,6 +4038,7 @@ class _CheckUpTable extends StatelessWidget {
           onSelectionChanged: onSelectionChanged,
           onEdit: onEdit,
           onViewHistory: onViewHistory,
+          onRefer: onRefer,
         );
       }),
     );
@@ -4645,6 +4694,7 @@ class _CheckUpCard extends StatelessWidget {
   final Function(int, bool) onSelectionChanged;
   final Function(Map<String, dynamic>) onEdit;
   final Function(Map<String, dynamic>) onViewHistory;
+  final Function(Map<String, dynamic>) onRefer;
 
   const _CheckUpCard({
     required this.record,
@@ -4654,6 +4704,7 @@ class _CheckUpCard extends StatelessWidget {
     required this.onSelectionChanged,
     required this.onEdit,
     required this.onViewHistory,
+    required this.onRefer,
   });
 
   String _safe(dynamic value, [String fallback = 'N/A']) {
@@ -4673,8 +4724,9 @@ class _CheckUpCard extends StatelessWidget {
   Widget _buildActionButton({
     required IconData icon,
     required VoidCallback onTap,
+    String? tooltip,
   }) {
-    return Container(
+    final button = Container(
       decoration: BoxDecoration(
         color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(7),
@@ -4699,6 +4751,7 @@ class _CheckUpCard extends StatelessWidget {
         ),
       ),
     );
+    return tooltip == null ? button : Tooltip(message: tooltip, child: button);
   }
 
   @override
@@ -4738,6 +4791,7 @@ class _CheckUpCard extends StatelessWidget {
           record['vital_signs'],
       'No vitals recorded',
     );
+    final abnormalVitalFlags = detectAbnormalVitalFlags(vitals);
 
     const rowBg = Colors.white;
     const rowText = Color(0xFF0B1F3A);
@@ -4796,6 +4850,44 @@ class _CheckUpCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (abnormalVitalFlags.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Tooltip(
+                        message: abnormalVitalFlags.join(', '),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: Colors.orange.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(
+                                Icons.warning_amber_rounded,
+                                size: 12,
+                                color: Colors.orange,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Suggested Referral',
+                                style: TextStyle(
+                                  color: Colors.deepOrange,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 2),
                     RichText(
                       text: TextSpan(
@@ -4889,23 +4981,32 @@ class _CheckUpCard extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(left: 8, right: 2),
                   child: SizedBox(
-                    width: 112,
+                    width: 150,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         _buildActionButton(
                           icon: Icons.history_rounded,
+                          tooltip: 'View history',
                           onTap: () => onViewHistory(record),
                         ),
                         const SizedBox(width: 6),
                         _buildActionButton(
                           icon: Icons.edit_rounded,
+                          tooltip: 'Edit record',
                           onTap: () => onEdit(record),
                         ),
                         const SizedBox(width: 6),
                         _buildActionButton(
+                          icon: Icons.local_hospital_outlined,
+                          tooltip: 'Refer to CHO',
+                          onTap: () => onRefer(record),
+                        ),
+                        const SizedBox(width: 6),
+                        _buildActionButton(
                           icon: Icons.picture_as_pdf_rounded,
+                          tooltip: 'Download PDF',
                           onTap: () => _generateCheckupPdf(context, record),
                         ),
                       ],
@@ -5696,6 +5797,39 @@ class _NewCheckUpFullScreenModalState
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   const SizedBox(width: 12),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.deepOrange,
+                      side: const BorderSide(
+                        color: Colors.deepOrange,
+                        width: 1.2,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    icon: const Icon(Icons.local_hospital_outlined, size: 18),
+                    label: const Text(
+                      'Save & Refer to CHO',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    onPressed: _isSaving
+                        ? null
+                        : () async {
+                            if (_formKey.currentState?.validate() ?? false) {
+                              final saved = await _buildAndSaveCheckupRecord();
+                              if (saved != null && context.mounted) {
+                                Navigator.of(context).pop(_diseaseType);
+                                _openReferralAfterSave(saved);
+                              }
+                            }
+                          },
+                  ),
+                  const SizedBox(width: 12),
                   FilledButton.icon(
                     style: FilledButton.styleFrom(
                       backgroundColor: _primaryAqua,
@@ -5731,153 +5865,9 @@ class _NewCheckUpFullScreenModalState
                         ? null
                         : () async {
                             if (_formKey.currentState?.validate() ?? false) {
-                              setState(() => _isSaving = true);
-                              try {
-                                List<String> vitalSignsParts = [];
-
-                                if (_bloodPressureController.text.isNotEmpty) {
-                                  vitalSignsParts.add(
-                                    'BP: ${_bloodPressureController.text}',
-                                  );
-                                }
-                                if (_temperatureController.text.isNotEmpty) {
-                                  vitalSignsParts.add(
-                                    'Temp: ${_temperatureController.text}°C',
-                                  );
-                                }
-                                if (_heartRateController.text.isNotEmpty) {
-                                  vitalSignsParts.add(
-                                    'HR: ${_heartRateController.text} bpm',
-                                  );
-                                }
-                                if (_respiratoryRateController
-                                    .text
-                                    .isNotEmpty) {
-                                  vitalSignsParts.add(
-                                    'RR: ${_respiratoryRateController.text} brpm',
-                                  );
-                                }
-                                if (_oxygenSaturationController
-                                    .text
-                                    .isNotEmpty) {
-                                  vitalSignsParts.add(
-                                    'O2: ${_oxygenSaturationController.text}%',
-                                  );
-                                }
-                                if (_weightController.text.isNotEmpty) {
-                                  vitalSignsParts.add(
-                                    'Weight: ${_weightController.text} kg',
-                                  );
-                                }
-                                if (_heightController.text.isNotEmpty) {
-                                  vitalSignsParts.add(
-                                    'Height: ${_heightController.text} cm',
-                                  );
-                                }
-
-                                String vitalSignsString =
-                                    vitalSignsParts.join(', ');
-
-                                final now = DateTime.now();
-                                final linkedPatientId = widget
-                                        .patientSeed?['linkedPatientId']
-                                        ?.toString()
-                                        .trim() ??
-                                    '';
-                                final patientId = widget
-                                        .patientSeed?['patientId']
-                                        ?.toString()
-                                        .trim() ??
-                                    '';
-                                final Map<String, dynamic> newRecord = {
-                                  if (linkedPatientId.isNotEmpty)
-                                    'linkedPatientId': linkedPatientId,
-                                  if (patientId.isNotEmpty)
-                                    'patientId': patientId,
-                                  'datetime':
-                                      '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-                                  'status': 'Completed',
-                                  'type': 'General',
-                                  'diseaseType': _diseaseType,
-                                  'patient':
-                                      '${_firstNameController.text} ${_surnameController.text}',
-                                  'patientName':
-                                      '${_firstNameController.text} ${_surnameController.text}',
-                                  'age': _ageController.text,
-                                  'address': _addressController.text,
-                                  'vitalsigns': vitalSignsString,
-                                  'symptoms': _symptomsController.text,
-                                  'details': vitalSignsString.isNotEmpty
-                                      ? '$vitalSignsString | ${_symptomsController.text}'
-                                      : 'Age: ${_ageController.text}, ${_symptomsController.text}',
-                                  'followup': _followUpDate != null
-                                      ? '${_followUpDate!.year}-${_followUpDate!.month.toString().padLeft(2, '0')}-${_followUpDate!.day.toString().padLeft(2, '0')}'
-                                      : 'N/A',
-                                };
-
-                                // AI Classification
-                                SymptomGuidanceResult? classification;
-                                try {
-                                  classification = await widget.guidanceApi
-                                      .getGuidanceFromText(
-                                    _symptomsController.text,
-                                  );
-                                  newRecord.addAll(
-                                    classification.toRecordFields(),
-                                  );
-                                  newRecord['ai_category'] =
-                                      classification.category;
-                                  newRecord['ai_severity'] =
-                                      classification.severity;
-                                  newRecord['ai_confidence'] =
-                                      classification.confidence.toString();
-                                  newRecord['ai_method'] =
-                                      classification.method;
-                                  if (classification.keywords != null) {
-                                    newRecord['ai_keywords'] =
-                                        classification.keywords!.join(', ');
-                                  }
-                                  if (classification.recoveryPlan != null) {
-                                    newRecord['ai_recovery_plan'] =
-                                        jsonEncode(
-                                      classification.recoveryPlan,
-                                    );
-                                  }
-                                } catch (e) {
-                                  newRecord.addAll(
-                                    _localHealthCategoryFallback(
-                                      _symptomsController.text,
-                                    ),
-                                  );
-                                }
-
-                                // Call the callback to save the record
-                                await widget.onSave(newRecord);
-
-                                // Show AI Classification modal
-                                if (context.mounted &&
-                                    classification != null) {
-                                  setState(() => _isSaving = false);
-                                  newRecord.remove('ai_confidence');
-                                  await _showSymptomGuidanceModal(
-                                    context,
-                                    classification,
-                                  );
-                                }
-
-                                if (context.mounted) {
-                                  Navigator.of(context).pop(_diseaseType);
-                                }
-                              } catch (e) {
-                                setState(() => _isSaving = false);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Error saving record: $e'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
+                              final saved = await _buildAndSaveCheckupRecord();
+                              if (saved != null && context.mounted) {
+                                Navigator.of(context).pop(_diseaseType);
                               }
                             }
                           },
@@ -5888,6 +5878,159 @@ class _NewCheckUpFullScreenModalState
           ],
         ),
       ),
+    );
+  }
+
+  /// Builds the check-up record from the current form state, saves it, and
+  /// runs the same AI-classification flow as the primary Save button. Shared
+  /// by "Save Record" and "Save & Refer to CHO" so both buttons behave
+  /// identically up to the point where the modal closes.
+  Future<Map<String, dynamic>?> _buildAndSaveCheckupRecord() async {
+    setState(() => _isSaving = true);
+    try {
+      List<String> vitalSignsParts = [];
+
+      if (_bloodPressureController.text.isNotEmpty) {
+        vitalSignsParts.add('BP: ${_bloodPressureController.text}');
+      }
+      if (_temperatureController.text.isNotEmpty) {
+        vitalSignsParts.add('Temp: ${_temperatureController.text}°C');
+      }
+      if (_heartRateController.text.isNotEmpty) {
+        vitalSignsParts.add('HR: ${_heartRateController.text} bpm');
+      }
+      if (_respiratoryRateController.text.isNotEmpty) {
+        vitalSignsParts.add('RR: ${_respiratoryRateController.text} brpm');
+      }
+      if (_oxygenSaturationController.text.isNotEmpty) {
+        vitalSignsParts.add('O2: ${_oxygenSaturationController.text}%');
+      }
+      if (_weightController.text.isNotEmpty) {
+        vitalSignsParts.add('Weight: ${_weightController.text} kg');
+      }
+      if (_heightController.text.isNotEmpty) {
+        vitalSignsParts.add('Height: ${_heightController.text} cm');
+      }
+
+      String vitalSignsString = vitalSignsParts.join(', ');
+
+      final now = DateTime.now();
+      final linkedPatientId =
+          widget.patientSeed?['linkedPatientId']?.toString().trim() ?? '';
+      final patientId =
+          widget.patientSeed?['patientId']?.toString().trim() ?? '';
+      final Map<String, dynamic> newRecord = {
+        if (linkedPatientId.isNotEmpty) 'linkedPatientId': linkedPatientId,
+        if (patientId.isNotEmpty) 'patientId': patientId,
+        'datetime':
+            '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+        'status': 'Completed',
+        'type': 'General',
+        'diseaseType': _diseaseType,
+        'patient': '${_firstNameController.text} ${_surnameController.text}',
+        'patientName':
+            '${_firstNameController.text} ${_surnameController.text}',
+        'age': _ageController.text,
+        'address': _addressController.text,
+        'vitalsigns': vitalSignsString,
+        'symptoms': _symptomsController.text,
+        'details': vitalSignsString.isNotEmpty
+            ? '$vitalSignsString | ${_symptomsController.text}'
+            : 'Age: ${_ageController.text}, ${_symptomsController.text}',
+        'followup': _followUpDate != null
+            ? '${_followUpDate!.year}-${_followUpDate!.month.toString().padLeft(2, '0')}-${_followUpDate!.day.toString().padLeft(2, '0')}'
+            : 'N/A',
+      };
+
+      // AI Classification
+      SymptomGuidanceResult? classification;
+      try {
+        classification = await widget.guidanceApi.getGuidanceFromText(
+          _symptomsController.text,
+        );
+        newRecord.addAll(classification.toRecordFields());
+        newRecord['ai_category'] = classification.category;
+        newRecord['ai_severity'] = classification.severity;
+        newRecord['ai_confidence'] = classification.confidence.toString();
+        newRecord['ai_method'] = classification.method;
+        if (classification.keywords != null) {
+          newRecord['ai_keywords'] = classification.keywords!.join(', ');
+        }
+        if (classification.recoveryPlan != null) {
+          newRecord['ai_recovery_plan'] = jsonEncode(
+            classification.recoveryPlan,
+          );
+        }
+      } catch (e) {
+        newRecord.addAll(
+          _localHealthCategoryFallback(_symptomsController.text),
+        );
+      }
+
+      // Call the callback to save the record
+      await widget.onSave(newRecord);
+
+      // Show AI Classification modal
+      if (context.mounted && classification != null) {
+        setState(() => _isSaving = false);
+        newRecord.remove('ai_confidence');
+        await _showSymptomGuidanceModal(context, classification);
+      }
+
+      return newRecord;
+    } catch (e) {
+      setState(() => _isSaving = false);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving record: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return null;
+    }
+  }
+
+  void _openReferralAfterSave(Map<String, dynamic> savedRecord) {
+    final patientId = (savedRecord['patientId'] ?? '').toString().trim();
+    final linkedPatientId = (savedRecord['linkedPatientId'] ?? '')
+        .toString()
+        .trim();
+    if (patientId.isEmpty && linkedPatientId.isEmpty) {
+      Get.snackbar(
+        'Patient not linked',
+        "This check-up isn't linked to a registered patient. Search for the patient to continue.",
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      Get.toNamed(WebRoutes.bhwReferrals);
+      return;
+    }
+
+    final referralSeed = <String, dynamic>{
+      'patientId': patientId.isNotEmpty ? patientId : linkedPatientId,
+      'linkedPatientId': linkedPatientId.isNotEmpty
+          ? linkedPatientId
+          : patientId,
+      'patientName': savedRecord['patientName'],
+      'age': savedRecord['age'],
+      'address': savedRecord['address'],
+    };
+
+    final vitals = (savedRecord['vitalsigns'] ?? '').toString();
+    final symptoms = (savedRecord['symptoms'] ?? '').toString();
+    final observationsParts = <String>[
+      if (vitals.isNotEmpty) 'Vitals: $vitals',
+      if (symptoms.isNotEmpty) 'Symptoms: $symptoms',
+    ];
+
+    Get.toNamed(
+      WebRoutes.bhwReferrals,
+      arguments: {
+        'initialPatient': referralSeed,
+        'initialObservations': observationsParts.join('. '),
+      },
     );
   }
 

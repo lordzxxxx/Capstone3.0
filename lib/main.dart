@@ -434,10 +434,22 @@ class MyApp extends StatelessWidget {
               ),
               GetPage(
                 name: WebRoutes.bhwReferrals,
-                page: () => _guardWebPage(
-                  allowedRoles: _bhwWebRoles,
-                  child: const web_referrals.BhwReferralPage(),
-                ),
+                page: () {
+                  final arguments = Get.arguments;
+                  final initialPatient = arguments is Map
+                      ? arguments['initialPatient'] as Map<String, dynamic>?
+                      : null;
+                  final initialObservations = arguments is Map
+                      ? arguments['initialObservations'] as String?
+                      : null;
+                  return _guardWebPage(
+                    allowedRoles: _bhwWebRoles,
+                    child: web_referrals.BhwReferralPage(
+                      initialPatient: initialPatient,
+                      initialObservations: initialObservations,
+                    ),
+                  );
+                },
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(

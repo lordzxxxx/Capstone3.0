@@ -72,6 +72,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   bool _isSelectionMode = false;
   final Set<int> _selectedIndices = {};
   bool _isDeleteDialogShowing = false;
+  bool _isDeletingRecords = false;
   int _currentPage = 1;
   int _rowsPerPage = 10;
   int _selectedPatientTab = 0;
@@ -1197,6 +1198,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
                   icon: const Icon(Icons.clear, color: Color(0xFF4B6075)),
+                  tooltip: 'Clear search',
                   onPressed: () {
                     _searchDebounce?.cancel();
                     setState(() {
@@ -1675,8 +1677,9 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   Widget _buildPatientIconActionButton({
     required IconData icon,
     required VoidCallback onTap,
+    String? tooltip,
   }) {
-    return Container(
+    final button = Container(
       decoration: BoxDecoration(
         color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(7),
@@ -1701,6 +1704,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         ),
       ),
     );
+    return tooltip == null ? button : Tooltip(message: tooltip, child: button);
   }
 
   Widget _buildRegistryCell(
@@ -2332,22 +2336,26 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                       children: [
                         _buildPatientIconActionButton(
                           icon: Icons.visibility_rounded,
+                          tooltip: 'View patient',
                           onTap: () => _showPatientDetails(patient),
                         ),
                         const SizedBox(width: 6),
                         _buildPatientIconActionButton(
                           icon: Icons.edit_rounded,
+                          tooltip: 'Edit patient',
                           onTap: () => _editPatient(patient),
                         ),
                         const SizedBox(width: 6),
                         _buildPatientIconActionButton(
                           icon: Icons.picture_as_pdf_rounded,
+                          tooltip: 'Download PDF',
                           onTap: () =>
                               _downloadPatientRecordPdf(context, patient),
                         ),
                         const SizedBox(width: 6),
                         _buildPatientIconActionButton(
                           icon: Icons.more_horiz_rounded,
+                          tooltip: 'More actions',
                           onTap: () => _showPatientActionMenu(patient),
                         ),
                       ],
@@ -4089,7 +4097,9 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
+                    onPressed: _isDeletingRecords
+                        ? null
+                        : () {
                       setState(() {
                         final allIndices = List.generate(
                           _filteredPatients.length,
@@ -4113,9 +4123,20 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _confirmDelete,
-                    icon: const Icon(Icons.delete, size: 18),
-                    label: const Text('Delete'),
+                    onPressed: _isDeletingRecords ? null : _confirmDelete,
+                    icon: _isDeletingRecords
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Icon(Icons.delete, size: 18),
+                    label: Text(_isDeletingRecords ? 'Deleting...' : 'Delete'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red[600],
                       foregroundColor: Colors.white,
@@ -4129,7 +4150,9 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {
+                    onPressed: _isDeletingRecords
+                        ? null
+                        : () {
                       setState(() {
                         _isSelectionMode = false;
                         _selectedIndices.clear();
@@ -4205,10 +4228,11 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              _deleteSelectedRecords();
               setState(() {
                 _isDeleteDialogShowing = false;
+                _isDeletingRecords = true;
               });
+              _deleteSelectedRecords();
             },
             child: Text(
               'Delete',
@@ -4297,6 +4321,10 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isDeletingRecords = false);
+      }
     }
   }
 

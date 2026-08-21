@@ -400,6 +400,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                       const SizedBox(width: 12),
                       IconButton(
                         onPressed: () => Navigator.of(dialogContext).pop(),
+                        tooltip: 'Close',
                         icon: const Icon(
                           Icons.close_rounded,
                           color: _historyAccent,
@@ -2026,6 +2027,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
 
     DateTime? administrationDate = DateTime.now();
     TimeOfDay? administrationTime = TimeOfDay.now();
+    bool isSaving = false;
     final doseNumberController = TextEditingController();
     String selectedRouteOfAdministration = 'Intramuscular (IM)';
     String selectedInjectionSite = 'Left Upper Arm';
@@ -2542,15 +2544,28 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                           ),
                           elevation: 2,
                         ),
-                        icon: const Icon(Icons.save_rounded, size: 18),
-                        label: const Text(
-                          'Save Immunization Record',
-                          style: TextStyle(
+                        icon: isSaving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : const Icon(Icons.save_rounded, size: 18),
+                        label: Text(
+                          isSaving ? 'Saving...' : 'Save Immunization Record',
+                          style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 14,
                           ),
                         ),
-                        onPressed: () async {
+                        onPressed: isSaving
+                            ? null
+                            : () async {
                           final isFormValid =
                               formKey.currentState?.validate() ?? false;
                           if (!isFormValid) {
@@ -2578,6 +2593,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                             );
                             return;
                           }
+
+                          setModalState(() => isSaving = true);
 
                           // Create new immunization record
                           final newRecord = {
@@ -2637,6 +2654,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
+                            setModalState(() => isSaving = false);
                             return;
                           }
 
@@ -4245,6 +4263,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     } catch (e) {
       administrationDate = DateTime.now();
     }
+    bool isSaving = false;
 
     TimeOfDay? administrationTime;
     try {
@@ -4337,6 +4356,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.white),
+                      tooltip: 'Close',
                       onPressed: () => Navigator.pop(context),
                     ),
                     const SizedBox(width: 8),
@@ -4630,7 +4650,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: () async {
+                                onPressed: isSaving
+                                    ? null
+                                    : () async {
                                   final isFormValid =
                                       formKey.currentState?.validate() ?? false;
                                   if (!isFormValid) {
@@ -4660,6 +4682,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                     );
                                     return;
                                   }
+
+                                  setModalState(() => isSaving = true);
 
                                   // Update immunization record
                                   final updatedRecord = {
@@ -4722,6 +4746,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                           behavior: SnackBarBehavior.floating,
                                         ),
                                       );
+                                      setModalState(() => isSaving = false);
                                       return;
                                     }
                                   }
@@ -4754,13 +4779,25 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   ),
                                   elevation: 2,
                                 ),
-                                child: const Text(
-                                  'Update Immunization Record',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                child: isSaving
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Colors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Update Immunization Record',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                               ),
                             ),
                             const SizedBox(height: 16),

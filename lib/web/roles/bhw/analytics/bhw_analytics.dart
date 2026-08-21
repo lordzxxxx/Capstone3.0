@@ -2178,7 +2178,9 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       return runningTotal + item.value;
     });
     if (total == 0) {
-      return _buildInsightEmptyState('No BMI measurements available yet.');
+      return _buildInsightEmptyState(
+        'No BMI measurements available yet. Record weight and height on check-up or patient forms to see this chart.',
+      );
     }
 
     return Column(
@@ -2236,7 +2238,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
     final hasData = points.any((point) => point.sampleCount > 0);
     if (!hasData) {
       return _buildInsightEmptyState(
-        'No blood pressure readings found in check-up records.',
+        'No blood pressure readings found in check-up records. Record blood pressure during check-ups to see this trend.',
       );
     }
 
@@ -2383,7 +2385,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
     );
     if (totalAgeCount == 0) {
       return _buildInsightEmptyState(
-        'No patient demographic records available yet.',
+        'No patient demographic records available yet. Register patients to see this breakdown.',
       );
     }
 

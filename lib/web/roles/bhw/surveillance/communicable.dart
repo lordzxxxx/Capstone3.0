@@ -331,8 +331,25 @@ class _CommunicablePageState extends State<CommunicablePage> {
                       onViewChanged: _setActiveView,
                       primaryColor: _primaryAqua,
                       recordsLabel: 'List of Records',
+                      actions: _resolvedView == HealthModuleView.insights
+                          ? const []
+                          : [
+                              if (!_isSelectionMode)
+                                IconButton(
+                                  icon: const Icon(Icons.checklist_rounded),
+                                  tooltip: 'Select records to delete',
+                                  color: _primaryAqua,
+                                  onPressed: () =>
+                                      setState(() => _isSelectionMode = true),
+                                ),
+                            ],
                     ),
                     const SizedBox(height: 20),
+                    if (_resolvedView != HealthModuleView.insights &&
+                        _isSelectionMode) ...[
+                      _buildSelectionToolbar(),
+                      const SizedBox(height: 16),
+                    ],
                     if (_resolvedView == HealthModuleView.insights)
                       if (_isLoadingMetrics)
                         const Center(
@@ -417,6 +434,62 @@ class _CommunicablePageState extends State<CommunicablePage> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildSelectionToolbar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Text(
+            '${_getSelectedPatientIds.length} selected',
+            style: const TextStyle(
+              color: Color(0xFF0B1F3A),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.select_all_rounded),
+            tooltip: 'Select all',
+            onPressed: () {
+              setState(() {
+                _getSelectedPatientIds.clear();
+                for (final patient in _filteredPatients) {
+                  final patientId = patient['id'] as String? ?? '';
+                  if (patientId.isNotEmpty) {
+                    _getSelectedPatientIds.add(patientId);
+                  }
+                }
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_rounded),
+            tooltip: 'Delete selected',
+            color: _getSelectedPatientIds.isEmpty ? Colors.grey : Colors.redAccent,
+            onPressed: _getSelectedPatientIds.isEmpty
+                ? null
+                : _showDeleteConfirmationModal,
+          ),
+          IconButton(
+            icon: const Icon(Icons.close_rounded),
+            tooltip: 'Cancel selection',
+            onPressed: () {
+              setState(() {
+                _isSelectionMode = false;
+                _getSelectedPatientIds.clear();
+              });
+            },
+          ),
+        ],
+      ),
     );
   }
 

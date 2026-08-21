@@ -14,6 +14,9 @@ import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
+import 'package:mycapstone_project/web/shared/utils/report_print.dart';
+import 'package:mycapstone_project/web/shared/utils/summary_docx.dart';
+import 'package:mycapstone_project/web/shared/utils/summary_pdf.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF071A33);
@@ -373,16 +376,22 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
     }
   }
 
+  // Scoped by `patientId` only (a single equality filter needs no composite
+  // Firestore index) rather than combining it with `orderBy(generatedAt)` and
+  // a small `limit`, which previously let another BHW's or another period's
+  // recent summaries crowd this BHW's own matching summary out of the
+  // fetched window — surfacing a false "no saved summaries yet" even when
+  // one existed. Sorting and period/type filtering happen client-side below.
   Stream<QuerySnapshot<Map<String, dynamic>>> _savedSummaryStream(
     UserAccessScope accessScope,
   ) {
     final firestore = getFirestoreInstance();
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
 
-    return buildScopedRecordQuery(
-      firestore,
-      'summary_records',
-      accessScope,
-    ).orderBy('generatedAt', descending: true).limit(24).snapshots();
+    return buildScopedRecordQuery(firestore, 'summary_records', accessScope)
+        .where('patientId', isEqualTo: currentUserId)
+        .limit(200)
+        .snapshots();
   }
 
   void _copySummaryToClipboard() {
@@ -403,6 +412,107 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
       _summaryTitle = '';
       _generatedAt = null;
     });
+  }
+
+  Future<List<MapEntry<String, String>>> _buildExportHeaderFields() async {
+    final scope = await _accessScopeFuture;
+    final user = FirebaseAuth.instance.currentUser;
+    final bhwName = user?.displayName?.trim().isNotEmpty == true
+        ? user!.displayName!.trim()
+        : (user?.email?.split('@').first ?? 'BHW');
+    final generatedAt = _effectiveGeneratedAt ?? DateTime.now();
+
+    return <MapEntry<String, String>>[
+      MapEntry('Barangay', scope.barangay.isEmpty ? 'Not specified' : scope.barangay),
+      MapEntry('Reporting Period', _currentPeriodLabel),
+      MapEntry('Prepared By', '$bhwName (Barangay Health Worker)'),
+      MapEntry('Generated', DateFormat.yMMMd().add_jm().format(generatedAt)),
+    ];
+  }
+
+  Future<void> _downloadSummaryDocx() async {
+    final summary = _effectiveSummary;
+    if (summary.isEmpty) return;
+
+    try {
+      final headerFields = await _buildExportHeaderFields();
+      final title = _effectiveSummaryTitle.isEmpty
+          ? 'Barangay Health Summary'
+          : _effectiveSummaryTitle;
+      final bytes = buildSummaryDocxBytes(
+        title: title,
+        headerLines: headerFields,
+        bodyText: summary,
+      );
+      final filename =
+          '${title.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_').toLowerCase()}.docx';
+      final downloaded = printReportFile(
+        bytes: bytes,
+        filename: filename,
+        mimeType:
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            downloaded
+                ? 'Summary downloaded as $filename'
+                : 'Download is not supported on this platform.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not generate the DOCX file: $e')),
+      );
+    }
+  }
+
+  Future<void> _printOrExportSummaryPdf() async {
+    final summary = _effectiveSummary;
+    if (summary.isEmpty) return;
+
+    final printTarget = prepareReportPrintTarget(
+      title: 'Preparing summary report...',
+    );
+    try {
+      final scope = await _accessScopeFuture;
+      final headerFields = await _buildExportHeaderFields();
+      final title = _effectiveSummaryTitle.isEmpty
+          ? 'Barangay Health Summary'
+          : _effectiveSummaryTitle;
+      final bytes = await buildSummaryPdfBytes(
+        title: title,
+        headerFields: headerFields,
+        bodyText: summary,
+        barangayName: scope.barangay,
+      );
+      final filename = buildSummaryPdfFilename(title);
+      final printed = printReportFile(
+        bytes: bytes,
+        filename: filename,
+        mimeType: 'application/pdf',
+        target: printTarget,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            printed
+                ? 'The summary PDF was opened in a print-ready view.'
+                : 'Printing is not supported on this platform.',
+          ),
+        ),
+      );
+    } catch (e) {
+      closeReportPrintTarget(printTarget);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not prepare the summary for printing: $e')),
+      );
+    }
   }
 
   void _loadSavedSummary(Map<String, dynamic> data) {
@@ -1096,7 +1206,18 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                     return data['patientId'] == currentUserId &&
                         data['type'] == _storageType &&
                         data['period'] == _storagePeriod;
-                  }).toList();
+                  }).toList()
+                    ..sort((a, b) {
+                      final aTimestamp = a.data()['generatedAt'];
+                      final bTimestamp = b.data()['generatedAt'];
+                      final aMs = aTimestamp is Timestamp
+                          ? aTimestamp.millisecondsSinceEpoch
+                          : 0;
+                      final bMs = bTimestamp is Timestamp
+                          ? bTimestamp.millisecondsSinceEpoch
+                          : 0;
+                      return bMs.compareTo(aMs);
+                    });
 
                   if (docs.isEmpty) {
                     return Container(
@@ -1192,6 +1313,25 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
           ),
           icon: const Icon(Icons.copy_rounded, size: 18),
           label: const Text('Copy'),
+        ),
+        FilledButton.icon(
+          onPressed: summary.isEmpty ? null : _downloadSummaryDocx,
+          style: AppButtonStyles.primary(),
+          icon: const Icon(Icons.description_rounded, size: 18),
+          label: const Text('Download DOCX'),
+        ),
+        OutlinedButton.icon(
+          onPressed: summary.isEmpty ? null : _printOrExportSummaryPdf,
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(color: _primaryAqua.withValues(alpha: 0.28)),
+            foregroundColor: _lightOffWhite,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          icon: const Icon(Icons.print_rounded, size: 18),
+          label: const Text('Print / Export PDF'),
         ),
         OutlinedButton.icon(
           onPressed: summary.isEmpty ? null : _clearSummary,

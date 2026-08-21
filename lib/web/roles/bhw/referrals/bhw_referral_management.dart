@@ -31,9 +31,13 @@ const _lightField = Colors.white;
 const _darkFieldText = AppColors.textPrimary;
 
 class BhwReferralPage extends StatefulWidget {
-  const BhwReferralPage({super.key, this.initialPatient});
+  const BhwReferralPage({super.key, this.initialPatient, this.initialObservations});
 
   final Map<String, dynamic>? initialPatient;
+
+  /// Pre-fills the Observations field (e.g. vitals/symptoms carried over from
+  /// the check-up that triggered this referral). Still fully editable.
+  final String? initialObservations;
 
   @override
   State<BhwReferralPage> createState() => _BhwReferralPageState();
@@ -118,7 +122,11 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
       });
       if (widget.initialPatient != null && _patient == null) {
         await _openPatient(widget.initialPatient!);
-        if (mounted) setState(() => _view = 1);
+        if (!mounted) return;
+        if (widget.initialObservations?.trim().isNotEmpty == true) {
+          _observationsController.text = widget.initialObservations!.trim();
+        }
+        setState(() => _view = 1);
       }
     } catch (error) {
       if (!mounted) return;

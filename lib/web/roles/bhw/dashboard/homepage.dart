@@ -993,9 +993,9 @@ class _HomePageState extends State<HomePage> {
       insights.add({
         'icon': Icons.psychology_alt_rounded,
         'title':
-            '$aiAlertsCount AI Decision-Support ${aiAlertsCount == 1 ? 'Alert' : 'Alerts'}',
+            '$aiAlertsCount ${aiAlertsCount == 1 ? 'Patient Needs' : 'Patients Need'} Follow-up',
         'message':
-            'Clinical AI algorithms flagged $aiAlertsCount records for potential risk escalation or treatment review.',
+            'Flagged by the system for possible risk — review these $aiAlertsCount record${aiAlertsCount == 1 ? '' : 's'} and decide if further action is needed.',
         'severity': 'info',
         'color': _primaryAqua,
       });
@@ -3921,9 +3921,9 @@ class _HomePageState extends State<HomePage> {
         'icon': Icons.assignment_late_rounded,
       },
       {
-        'title': 'AI-generated Alerts',
+        'title': 'Patients Flagged for Review',
         'value': _aiGeneratedAlerts,
-        'subtitle': 'AI guidance in $subtitlePeriod',
+        'subtitle': 'System-flagged records in $subtitlePeriod',
         'icon': Icons.psychology_alt_rounded,
       },
     ];
@@ -6600,7 +6600,7 @@ class _HomePageState extends State<HomePage> {
               Icon(Icons.trending_up_rounded, color: _lightOffWhite, size: 24),
               SizedBox(width: 10),
               Text(
-                'Performance Indicators',
+                'Monthly Targets',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -6611,7 +6611,7 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 6),
           Text(
-            'KPI matrix (actual versus target, normalized score)',
+            'How you\'re tracking against this month\'s goals',
             style: TextStyle(
               color: Colors.black.withValues(alpha: 0.6),
               fontSize: 12,
