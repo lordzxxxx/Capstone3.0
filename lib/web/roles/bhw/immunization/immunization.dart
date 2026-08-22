@@ -1030,10 +1030,10 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 vertical: 10,
                               ),
                               decoration: BoxDecoration(
-                                color: _darkDeepTeal,
+                                color: _primaryAqua.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: _primaryAqua.withValues(alpha: 0.45),
+                                  color: _primaryAqua.withValues(alpha: 0.25),
                                   width: 1.2,
                                 ),
                               ),
@@ -1102,12 +1102,14 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 vertical: 10,
                               ),
                               decoration: BoxDecoration(
-                                color: _darkDeepTeal,
+                                color: _isSelectionMode
+                                    ? _primaryAqua.withValues(alpha: 0.14)
+                                    : _primaryAqua.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
                                   color: _isSelectionMode
-                                      ? _primaryAqua.withValues(alpha: 0.65)
-                                      : _primaryAqua.withValues(alpha: 0.45),
+                                      ? _primaryAqua.withValues(alpha: 0.55)
+                                      : _primaryAqua.withValues(alpha: 0.25),
                                   width: 1.2,
                                 ),
                               ),
@@ -1130,9 +1132,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                         _isSelectionMode
                                             ? Icons.close
                                             : Icons.checklist,
-                                        color: _isSelectionMode
-                                            ? _primaryAqua
-                                            : _mutedCoolGray,
+                                        color: _primaryAqua,
                                         size: 18,
                                       ),
                                       const SizedBox(width: 8),
@@ -1144,7 +1144,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                           style: TextStyle(
                                             color: _isSelectionMode
                                                 ? _primaryAqua
-                                                : _lightOffWhite,
+                                                : _darkDeepTeal,
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -3255,10 +3255,10 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
-          color: _darkDeepTeal,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: _primaryAqua.withValues(alpha: 0.45),
+            color: _primaryAqua.withValues(alpha: 0.3),
             width: 1.2,
           ),
         ),
@@ -3270,7 +3270,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
               child: Text(
                 date != null ? '${date.day}/${date.month}/${date.year}' : label,
                 style: TextStyle(
-                  color: date != null ? _lightOffWhite : _mutedCoolGray,
+                  color: date != null ? _darkDeepTeal : _mutedCoolGray,
                   fontSize: 12,
                   fontWeight: date != null
                       ? FontWeight.w600
