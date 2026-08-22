@@ -662,7 +662,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
       context: drawerContext,
       useRootNavigator: true,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: _BhwDrawerColors.surface,
+        backgroundColor: AppColors.surfaceLight,
         icon: const Icon(
           Icons.logout_rounded,
           color: Colors.redAccent,
@@ -670,14 +670,14 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
         ),
         title: const Text(
           'Logout from BHW Portal?',
-          style: TextStyle(fontFamily: 'Manrope', color: _BhwDrawerColors.text),
+          style: TextStyle(fontFamily: 'Manrope', color: AppColors.textPrimary),
         ),
         content: const Text(
           'You will need to sign in again to access patient records.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: 'Manrope',
-            color: _BhwDrawerColors.muted,
+            color: AppColors.textSecondary,
             height: 1.4,
           ),
         ),
