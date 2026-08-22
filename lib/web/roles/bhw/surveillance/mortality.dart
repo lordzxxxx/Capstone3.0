@@ -592,19 +592,6 @@ class _MortalityPageState extends State<MortalityPage> {
           ),
           title: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _primaryAqua.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.date_range_rounded,
-                  color: _primaryAqua,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
               const Text(
                 'Filter Mortality Insights',
                 style: TextStyle(
@@ -4585,22 +4572,6 @@ class _MortalityPageState extends State<MortalityPage> {
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: _primaryAqua.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          isEditing
-                              ? Icons.drive_file_rename_outline_rounded
-                              : Icons.post_add_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,

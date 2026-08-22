@@ -57,19 +57,6 @@ class ChoPageHeader extends StatelessWidget {
             final heading = Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: ChoColors.aqua.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: ChoColors.aqua.withValues(alpha: 0.22),
-                    ),
-                  ),
-                  child: Icon(icon, color: ChoColors.aqua, size: 22),
-                ),
-                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

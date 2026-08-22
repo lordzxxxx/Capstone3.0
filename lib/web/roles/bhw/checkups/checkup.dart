@@ -31,6 +31,7 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/shared_patient_search_panel.dart';
+import 'package:mycapstone_project/web/roles/bhw/referrals/bhw_referral_management.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/web/shared/utils/checkup_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
@@ -378,7 +379,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
       if (!mounted || patientSeed == null) return;
     }
     print('➕ [CHECKUP] Add new check-up button pressed');
-    final result = await showDialog<String>(
+    final result = await showDialog<Object>(
       context: context,
       barrierDismissible: false,
       builder: (context) => _NewCheckUpFullScreenModal(
@@ -388,7 +389,10 @@ class _CheckUpPageState extends State<CheckUpPage> {
       ),
     );
 
-    if (result != null) {
+    if (result is _ReferralHandoff) {
+      print('✅ [CHECKUP] New record added, opening referral for it');
+      if (mounted) _openReferralAfterSave(result.record);
+    } else if (result != null) {
       print('✅ [CHECKUP] New record added for disease type: $result');
     }
   }
@@ -484,7 +488,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
           ),
         ),
       );
-      Get.toNamed(WebRoutes.bhwReferrals);
+      _openReferralOverlay();
       return;
     }
 
@@ -502,12 +506,71 @@ class _CheckUpPageState extends State<CheckUpPage> {
       if (symptoms.isNotEmpty) 'Symptoms: $symptoms',
     ];
 
-    Get.toNamed(
-      WebRoutes.bhwReferrals,
-      arguments: {
-        'initialPatient': referralSeed,
-        'initialObservations': observationsParts.join('. '),
-      },
+    _openReferralOverlay(
+      initialPatient: referralSeed,
+      initialObservations: observationsParts.join('. '),
+    );
+  }
+
+  /// Opens referral creation as a full-screen dialog over this page instead
+  /// of navigating to /bhw/referrals — the BHW stays on Check-ups the whole
+  /// time and the dialog just closes when the referral is submitted or
+  /// cancelled, so there's nothing to "go back" from.
+  void _openReferralOverlay({
+    Map<String, dynamic>? initialPatient,
+    String? initialObservations,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => BhwReferralPage(
+        embedded: true,
+        initialPatient: initialPatient,
+        initialObservations: initialObservations,
+        onClose: () => Navigator.of(dialogContext).pop(),
+      ),
+    );
+  }
+
+  /// Opens the referral overlay for a check-up record that was just saved
+  /// from the "Add Another Check-Up" modal (see [_ReferralHandoff]).
+  void _openReferralAfterSave(Map<String, dynamic> savedRecord) {
+    final patientId = (savedRecord['patientId'] ?? '').toString().trim();
+    final linkedPatientId = (savedRecord['linkedPatientId'] ?? '')
+        .toString()
+        .trim();
+    if (patientId.isEmpty && linkedPatientId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "This check-up isn't linked to a registered patient. Search for the patient to continue.",
+          ),
+        ),
+      );
+      _openReferralOverlay();
+      return;
+    }
+
+    final referralSeed = <String, dynamic>{
+      'patientId': patientId.isNotEmpty ? patientId : linkedPatientId,
+      'linkedPatientId': linkedPatientId.isNotEmpty
+          ? linkedPatientId
+          : patientId,
+      'patientName': savedRecord['patientName'],
+      'age': savedRecord['age'],
+      'address': savedRecord['address'],
+    };
+
+    final vitals = (savedRecord['vitalsigns'] ?? '').toString();
+    final symptoms = (savedRecord['symptoms'] ?? '').toString();
+    final observationsParts = <String>[
+      if (vitals.isNotEmpty) 'Vitals: $vitals',
+      if (symptoms.isNotEmpty) 'Symptoms: $symptoms',
+    ];
+
+    _openReferralOverlay(
+      initialPatient: referralSeed,
+      initialObservations: observationsParts.join('. '),
     );
   }
 
@@ -3268,19 +3331,6 @@ class _CheckUpDashboardHeaderState extends State<_CheckUpDashboardHeader> {
           ),
           title: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _primaryAqua.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.date_range_rounded,
-                  color: _primaryAqua,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
               const Text(
                 'Filter Check-up Insights',
                 style: TextStyle(
@@ -5024,6 +5074,14 @@ class _CheckUpCard extends StatelessWidget {
   }
 }
 
+/// Dialog result for "Save & Refer to CHO": tells the page that opened this
+/// modal to save succeeded and it should now open the referral overlay for
+/// [record], instead of the modal reaching for a context that's mid-pop.
+class _ReferralHandoff {
+  const _ReferralHandoff(this.record);
+  final Map<String, dynamic> record;
+}
+
 class _NewCheckUpFullScreenModal extends StatefulWidget {
   final Future<String> Function(Map<String, dynamic>) onSave;
   final SymptomGuidanceApiService guidanceApi;
@@ -5118,19 +5176,6 @@ class _NewCheckUpFullScreenModalState
               ),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: _primaryAqua.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.medical_services_rounded,
-                      color: Colors.white,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -5825,8 +5870,9 @@ class _NewCheckUpFullScreenModalState
                             if (_formKey.currentState?.validate() ?? false) {
                               final saved = await _buildAndSaveCheckupRecord();
                               if (saved != null && context.mounted) {
-                                Navigator.of(context).pop(_diseaseType);
-                                _openReferralAfterSave(saved);
+                                Navigator.of(
+                                  context,
+                                ).pop(_ReferralHandoff(saved));
                               }
                             }
                           },
@@ -5992,48 +6038,6 @@ class _NewCheckUpFullScreenModalState
       }
       return null;
     }
-  }
-
-  void _openReferralAfterSave(Map<String, dynamic> savedRecord) {
-    final patientId = (savedRecord['patientId'] ?? '').toString().trim();
-    final linkedPatientId = (savedRecord['linkedPatientId'] ?? '')
-        .toString()
-        .trim();
-    if (patientId.isEmpty && linkedPatientId.isEmpty) {
-      Get.snackbar(
-        'Patient not linked',
-        "This check-up isn't linked to a registered patient. Search for the patient to continue.",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
-      Get.toNamed(WebRoutes.bhwReferrals);
-      return;
-    }
-
-    final referralSeed = <String, dynamic>{
-      'patientId': patientId.isNotEmpty ? patientId : linkedPatientId,
-      'linkedPatientId': linkedPatientId.isNotEmpty
-          ? linkedPatientId
-          : patientId,
-      'patientName': savedRecord['patientName'],
-      'age': savedRecord['age'],
-      'address': savedRecord['address'],
-    };
-
-    final vitals = (savedRecord['vitalsigns'] ?? '').toString();
-    final symptoms = (savedRecord['symptoms'] ?? '').toString();
-    final observationsParts = <String>[
-      if (vitals.isNotEmpty) 'Vitals: $vitals',
-      if (symptoms.isNotEmpty) 'Symptoms: $symptoms',
-    ];
-
-    Get.toNamed(
-      WebRoutes.bhwReferrals,
-      arguments: {
-        'initialPatient': referralSeed,
-        'initialObservations': observationsParts.join('. '),
-      },
-    );
   }
 
   Future<void> _showSymptomGuidanceModal(
@@ -6405,19 +6409,6 @@ class _NewCheckUpFullScreenModalState
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: _primaryAqua.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.smart_toy_rounded,
-                        color: _primaryAqua,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
                     const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -7168,19 +7159,6 @@ class _EditCheckUpFullScreenModalState
               ),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: _primaryAqua.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.edit_note_rounded,
-                      color: Colors.white,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
                   const Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -8044,19 +8022,6 @@ class _EditCheckUpFullScreenModalState
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: _primaryAqua.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.smart_toy_rounded,
-                        color: _primaryAqua,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
                     const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

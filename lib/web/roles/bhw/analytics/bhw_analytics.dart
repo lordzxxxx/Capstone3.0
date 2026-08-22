@@ -1555,20 +1555,6 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            color: module.accent.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(
-                            module.icon,
-                            color: module.accent,
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1971,16 +1957,6 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            color: accent.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(icon, color: accent, size: 26),
-                        ),
-                        const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,

@@ -4200,8 +4200,6 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.warning, color: Colors.red),
-            const SizedBox(width: 8),
             Text('Confirm Delete'),
           ],
         ),

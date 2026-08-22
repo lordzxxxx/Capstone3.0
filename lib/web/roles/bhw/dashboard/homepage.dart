@@ -1590,15 +1590,6 @@ class _HomePageState extends State<HomePage> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _primaryAqua.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.date_range_rounded, color: _primaryAqua, size: 20),
-              ),
-              const SizedBox(width: 10),
               const Text(
                 'Filter Analytics Date',
                 style: TextStyle(
@@ -2704,8 +2695,6 @@ class _HomePageState extends State<HomePage> {
       builder: (context) => AlertDialog(
         title: const Row(
           children: [
-            Icon(Icons.notifications_active, color: Colors.white),
-            SizedBox(width: 12),
             Text('Notifications'),
           ],
         ),
@@ -2949,24 +2938,6 @@ class _HomePageState extends State<HomePage> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            gradient: LinearGradient(
-                              colors: [_primaryAqua, _secondaryIceBlue],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.settings_suggest_rounded,
-                            color: _lightOffWhite,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -3706,15 +3677,6 @@ class _HomePageState extends State<HomePage> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _primaryAqua.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.date_range_rounded, color: _primaryAqua, size: 20),
-              ),
-              const SizedBox(width: 10),
               const Text(
                 'Choose Date for Insights',
                 style: TextStyle(

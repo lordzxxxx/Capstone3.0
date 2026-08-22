@@ -47,7 +47,6 @@ const Color _historySurface = Colors.white;
 const Color _historyAccent = Color(0xFF2563EB);
 const Color _historyMuted = Color(0xFF4B6075);
 const Color _historyBorder = Color(0xFFE2E8F0);
-const Color _historySoftBlue = Color(0xFFDBEAFE);
 
 class ImmunizationPage extends StatefulWidget {
   const ImmunizationPage({super.key, this.initialPatient});
@@ -330,20 +329,6 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 58,
-                        height: 58,
-                        decoration: BoxDecoration(
-                          color: _historySoftBlue,
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: const Icon(
-                          Icons.history_rounded,
-                          color: _historyAccent,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -5133,8 +5118,6 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.warning, color: Colors.red),
-            const SizedBox(width: 8),
             Text('Confirm Delete'),
           ],
         ),

@@ -141,20 +141,6 @@ class PatientHistoryDialogs {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          color: _historySoftBlue,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          Icons.history_rounded,
-                          color: _primaryAqua,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -727,21 +713,6 @@ class PatientHistoryDialogs {
       ),
       child: Row(
         children: [
-          Container(
-            width: isCompact ? 44 : 52,
-            height: isCompact ? 44 : 52,
-            decoration: BoxDecoration(
-              color: _primaryAqua.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _primaryAqua.withValues(alpha: 0.24)),
-            ),
-            child: const Icon(
-              Icons.assignment_ind_outlined,
-              color: _primaryAqua,
-              size: 25,
-            ),
-          ),
-          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

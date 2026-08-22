@@ -674,19 +674,6 @@ class _MorbidityPageState extends State<MorbidityPage> {
           ),
           title: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _primaryAqua.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.date_range_rounded,
-                  color: _primaryAqua,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
               const Text(
                 'Filter Morbidity Insights',
                 style: TextStyle(
@@ -2712,20 +2699,6 @@ class _MorbidityPageState extends State<MorbidityPage> {
                           ),
                           child: Row(
                             children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: _primaryAqua.withValues(alpha: 0.18),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(
-                                  Icons.edit_note_rounded,
-                                  color: Colors.white,
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,

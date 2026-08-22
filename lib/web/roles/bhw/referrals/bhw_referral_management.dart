@@ -31,13 +31,28 @@ const _lightField = Colors.white;
 const _darkFieldText = AppColors.textPrimary;
 
 class BhwReferralPage extends StatefulWidget {
-  const BhwReferralPage({super.key, this.initialPatient, this.initialObservations});
+  const BhwReferralPage({
+    super.key,
+    this.initialPatient,
+    this.initialObservations,
+    this.embedded = false,
+    this.onClose,
+  });
 
   final Map<String, dynamic>? initialPatient;
 
   /// Pre-fills the Observations field (e.g. vitals/symptoms carried over from
   /// the check-up that triggered this referral). Still fully editable.
   final String? initialObservations;
+
+  /// When true, renders just the referral-creation transaction (no sidebar,
+  /// no Dashboard/Records/Follow-up tabs) so it can be dropped into a dialog
+  /// over the page that triggered it — e.g. Check-ups — instead of
+  /// navigating to a separate route. Closes via [onClose] once the referral
+  /// is submitted (or the BHW cancels), returning straight to that page
+  /// with no back-navigation involved.
+  final bool embedded;
+  final VoidCallback? onClose;
 
   @override
   State<BhwReferralPage> createState() => _BhwReferralPageState();
@@ -139,6 +154,8 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.embedded) return _embeddedBody();
+
     final user = FirebaseAuth.instance.currentUser;
     final userName = user?.displayName?.trim().isNotEmpty == true
         ? user!.displayName!.trim()
@@ -177,6 +194,79 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Full-screen dialog body used when this page is opened as a same-page
+  /// overlay (see [BhwReferralPage.embedded]) instead of a route. One
+  /// transaction — create this referral, then close — with no tabs, no
+  /// sidebar, and no navigation stack entry to back out of.
+  Widget _embeddedBody() {
+    final screenSize = MediaQuery.of(context).size;
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: EdgeInsets.zero,
+      child: Container(
+        width: screenSize.width,
+        height: screenSize.height,
+        color: _background,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(24, 18, 16, 18),
+              decoration: const BoxDecoration(
+                color: AppColors.secondary,
+                border: Border(
+                  bottom: BorderSide(color: Color(0x20FFFFFF), width: 1),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Refer to CHO',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Submitting keeps you on Check-ups — this closes automatically when done.',
+                          style: TextStyle(
+                            color: AppColors.textOnDarkMuted,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Close',
+                    onPressed: widget.onClose,
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator(color: _aqua))
+                  : _error != null
+                  ? _errorState()
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 38),
+                      child: _createReferral(),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -954,7 +1044,11 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
       if (!mounted) return;
       _snack('Referral submitted to CHO for review.');
       _clearDraft();
-      setState(() => _view = 2);
+      if (widget.embedded) {
+        widget.onClose?.call();
+      } else {
+        setState(() => _view = 2);
+      }
     } catch (_) {
       _snack(
         'The referral could not be submitted. Check your connection and try again.',

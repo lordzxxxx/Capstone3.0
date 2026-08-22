@@ -224,15 +224,6 @@ class _PatientFirstServiceSelectorState
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: _accent.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.person_search_rounded, color: _accent),
-          ),
-          const SizedBox(width: 13),
           Expanded(
             child: Text(
               'Select Patient for ${widget.serviceLabel}',

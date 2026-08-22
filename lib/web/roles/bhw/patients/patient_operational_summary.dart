@@ -519,19 +519,6 @@ class _PatientOperationalSummaryState extends State<PatientOperationalSummary> {
           ),
           title: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _accent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.date_range_rounded,
-                  color: _accent,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
               const Text(
                 'Filter Patient Insights',
                 style: TextStyle(

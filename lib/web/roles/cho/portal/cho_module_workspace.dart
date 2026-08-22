@@ -881,7 +881,6 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
           child: Column(
             children: [
               ListTile(
-                leading: Icon(widget.config.icon, color: ChoColors.aqua),
                 title: Text(
                   '${widget.config.title} Record',
                   style: const TextStyle(

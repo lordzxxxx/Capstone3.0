@@ -360,8 +360,6 @@ class _CanonicalPatientRegistrationModalState
       ),
       child: Row(
         children: [
-          const Icon(Icons.badge_outlined, color: _accent, size: 30),
-          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

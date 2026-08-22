@@ -1157,19 +1157,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: _primaryAqua.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.smart_toy_rounded,
-                        color: _primaryAqua,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
                     const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1694,19 +1681,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: _primaryAqua.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.pregnant_woman_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -2671,19 +2645,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: _primaryAqua.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.edit_note_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
                       const Expanded(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -6026,8 +5987,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.warning, color: Colors.red),
-            const SizedBox(width: 8),
             Text('Confirm Delete'),
           ],
         ),
@@ -6505,19 +6464,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
           ),
           title: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _primaryAqua.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.date_range_rounded,
-                  color: _primaryAqua,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
               const Text(
                 'Filter Prenatal Insights',
                 style: TextStyle(
