@@ -1303,6 +1303,14 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
               icon: Icon(
                 _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
               ),
+              style: IconButton.styleFrom(
+                backgroundColor: const Color(0xFFEDF3FA),
+                foregroundColor: const Color(0xFF2F80ED),
+                padding: const EdgeInsets.all(10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(9),
+                ),
+              ),
             ),
           ),
           TextButton.icon(

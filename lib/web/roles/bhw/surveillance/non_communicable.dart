@@ -1221,7 +1221,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
         child: Text(
           label,
           style: TextStyle(
-            color: const Color(0xFF0B1F3A),
+            color: Colors.white.withValues(alpha: 0.9),
             fontSize: 12,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.2,
