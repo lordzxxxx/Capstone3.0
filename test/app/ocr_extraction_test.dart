@@ -625,5 +625,123 @@ void main() {
       expect(seed['dateReported'], '2026-08-14');
       expect(seed['reportedBy'], 'Health Worker Roy');
     });
+
+    test('accurately extracts and seeds scanned Patient Master Registration Form (PAT-2026)', () {
+      const patText = '''
+        FORM: PAT-2026
+        Patient Full Name: Rodrigo Garcia Fernandez
+        Patient ID: PAT-2026-001
+        Date of Birth: 1988-11-24
+        Age: 37
+        Sex: [X] Male  [ ] Female
+        Civil Status: [X] Married  [ ] Single  [ ] Widowed  [ ] Separated
+        Contact Number: 0919-456-7890
+        PhilHealth ID / No.: 11-887766554-3
+        Blood Type: A+
+        Residential Address: Purok 4, Upper Casisang
+        Barangay: Casisang
+        Occupation: Teacher
+        Religion: Roman Catholic
+        Emergency Contact Person: Teresa Fernandez
+        Emergency Phone: 0917-111-2233
+        Registration Date: 2026-08-20
+        Registered By: BHW Maria Cruz
+      ''';
+
+      final extraction = OcrExtraction.fromText(patText);
+      final seed = extraction.toFormSeed();
+
+      expect(seed['patientName'], 'Rodrigo Garcia Fernandez');
+      expect(seed['fullName'], 'Rodrigo Garcia Fernandez');
+      expect(seed['patientId'], 'PAT-2026-001');
+      expect(seed['dateOfBirth'], '1988-11-24');
+      expect(seed['age'], '37');
+      expect(seed['gender'], 'Male');
+      expect(seed['civilStatus'], 'Married');
+      expect(seed['contactNumber'], '09194567890');
+      expect(seed['philhealthNumber'], '11-887766554-3');
+      expect(seed['bloodType'], 'A+');
+      expect(seed['address'], 'Purok 4, Upper Casisang');
+      expect(seed['barangay'], 'Casisang');
+      expect(seed['occupation'], 'Teacher');
+      expect(seed['emergencyContact'], 'Teresa Fernandez');
+      expect(seed['emergencyContactNumber'], '09171112233');
+      expect(seed['registrationDate'], '2026-08-20');
+      expect(seed['registeredBy'], 'BHW Maria Cruz');
+    });
+
+    test('extracts obstetric score from single-line G-P-FT-PT-AB-LC string', () {
+      const text = '''
+        Maternal Name: Ana Bautista
+        Obstetrical History: G3 P2 FT2 PT0 AB0 LC2
+        LMP: 2026-02-01
+        EDD: 2026-11-08
+      ''';
+
+      final extraction = OcrExtraction.fromText(text);
+      final seed = extraction.toFormSeed();
+
+      expect(seed['patientName'], 'Ana Bautista');
+      expect(seed['gravida'], '3');
+      expect(seed['para'], '2');
+      expect(seed['fullTerm'], '2');
+      expect(seed['premature'], '0');
+      expect(seed['abortion'], '0');
+      expect(seed['livingChildren'], '2');
+      expect(seed['lmpDate'], '2026-02-01');
+      expect(seed['eddDate'], '2026-11-08');
+    });
+
+    test('parses various handwritten checkbox styles and symbols', () {
+      const checkText = '''
+        Patient Name: Elena Bautista
+        Sex: (✓) Female [ ] Male
+        Civil Status: [•] Single [ ] Married
+        Place of Death: [X] Residence [ ] Hospital
+        Risk Level: (✔) High Risk [ ] Low Risk
+      ''';
+
+      final extraction = OcrExtraction.fromText(checkText);
+      final seed = extraction.toFormSeed();
+
+      expect(seed['gender'], 'Female');
+      expect(seed['civilStatus'], 'Single');
+      expect(seed['placeOfDeath'], 'Residence');
+      expect(seed['riskLevel'], 'High Risk');
+    });
+
+    test('normalizes day-month-year and dashed month handwritten dates', () {
+      const text = '''
+        Patient Name: Gabriel Santos
+        Date of Birth: 25-Aug-1995
+        Visit Date: 2026.08.18
+        Next Visit Date: 08/25/2026
+      ''';
+
+      final extraction = OcrExtraction.fromText(text);
+      final seed = extraction.toFormSeed();
+
+      expect(seed['dateOfBirth'], '1995-08-25');
+      expect(seed['visitDate'], '2026-08-18');
+      expect(seed['nextVisitDate'], '2026-08-25');
+    });
+
+    test('strips handwritten underline guides and empty guide boxes', () {
+      const text = '''
+        Patient Full Name: Juan Dela Cruz ___________
+        Age: 29 ________
+        Contact Number: 0917-555-4321 _________
+        Residential Address: Purok 1, Casisang ____________
+      ''';
+
+      final extraction = OcrExtraction.fromText(text);
+      final seed = extraction.toFormSeed();
+
+      expect(seed['patientName'], 'Juan Dela Cruz');
+      expect(seed['age'], '29');
+      expect(seed['contactNumber'], '09175554321');
+      expect(seed['address'], 'Purok 1, Casisang');
+    });
   });
 }
+

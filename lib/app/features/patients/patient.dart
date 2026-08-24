@@ -10,6 +10,7 @@ import 'package:mycapstone_project/app/features/patients/patient_history_dialogs
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
+import 'package:mycapstone_project/app/shared/services/clinical_form_pdf_service.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 
@@ -1880,6 +1881,18 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           label: 'Edit Record',
           icon: Icons.edit_outlined,
           onPressed: () => _editPatient(patient),
+        ),
+        MobileRecordAction(
+          label: 'Export Form PDF / Print',
+          icon: Icons.picture_as_pdf_outlined,
+          onPressed: () {
+            ClinicalFormPdfService.showExportDialog(
+              context,
+              formType: ClinicalFormType.patientRegistration,
+              record: patient,
+              patientName: patientName,
+            );
+          },
         ),
         MobileRecordAction(
           label: 'Delete Record',

@@ -14,6 +14,7 @@ import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
+import 'package:mycapstone_project/app/shared/services/clinical_form_pdf_service.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.blueSoft;
@@ -1893,8 +1894,8 @@ class _MortalityPageState extends State<MortalityPage>
           onPressed: () => _verifyRecord(record),
         ),
         MobileRecordAction(
-          label: 'Print Record',
-          icon: Icons.print_outlined,
+          label: 'Export Form PDF / Print',
+          icon: Icons.picture_as_pdf_outlined,
           onPressed: () => _printRecord(record),
         ),
       ],
@@ -2646,11 +2647,11 @@ class _MortalityPageState extends State<MortalityPage>
   }
 
   void _printRecord(Map<String, dynamic> record) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Printing death certificate for ${record['name']}'),
-        backgroundColor: const Color(0xFF607D8B),
-      ),
+    ClinicalFormPdfService.showExportDialog(
+      context,
+      formType: ClinicalFormType.mortality,
+      record: record,
+      patientName: record['name']?.toString(),
     );
   }
 }

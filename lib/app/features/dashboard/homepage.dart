@@ -30,6 +30,7 @@ import 'package:mycapstone_project/app/features/patients/patient_database_helper
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
+import 'package:mycapstone_project/app/shared/services/clinical_form_pdf_service.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.navySoft;
@@ -2352,6 +2353,28 @@ class _HomePageState extends State<HomePage> {
                           ),
                     ),
                   ),
+                  // PDF Forms Hub Icon
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: _lightOffWhite.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _lightOffWhite.withValues(alpha: 0.2),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.picture_as_pdf_outlined,
+                        color: _lightOffWhite,
+                        size: 24,
+                      ),
+                      onPressed: () => _showClinicalFormsHub(context),
+                      tooltip: 'Clinical Forms (PDF)',
+                      padding: const EdgeInsets.all(8),
+                    ),
+                  ),
                   // Notification Icon
                   Container(
                     decoration: BoxDecoration(
@@ -4066,6 +4089,130 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showClinicalFormsHub(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (bottomSheetContext) {
+        return Material(
+          color: AppDesign.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          clipBehavior: Clip.antiAlias,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              border: Border.all(color: AppDesign.border),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppDesign.muted.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppDesign.blue.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.picture_as_pdf_rounded,
+                        color: AppDesign.blue,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Clinical Forms & Templates (PDF)',
+                            style: TextStyle(
+                              color: AppDesign.ink,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Download or print official intake forms & blank templates',
+                            style: TextStyle(
+                              color: AppDesign.muted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ...[
+                  (ClinicalFormType.checkup, 'General Check-Up Form', 'CHK-2026', Icons.healing_rounded),
+                  (ClinicalFormType.prenatal, 'Prenatal Care Record', 'PNC-2026', Icons.pregnant_woman_rounded),
+                  (ClinicalFormType.immunization, 'EPI Immunization Card', 'IMZ-2026', Icons.vaccines_rounded),
+                  (ClinicalFormType.morbidity, 'Morbidity Surveillance Form', 'MBD-2026', Icons.monitor_heart_rounded),
+                  (ClinicalFormType.mortality, 'Mortality Notification Form', 'MOR-2026', Icons.event_busy_rounded),
+                  (ClinicalFormType.patientRegistration, 'Patient Registration Card', 'PAT-2026', Icons.badge_rounded),
+                ].map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Material(
+                      color: AppDesign.page.withValues(alpha: 0.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: AppDesign.border),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        leading: Icon(item.$4, color: AppDesign.blue, size: 22),
+                        title: Text(item.$2, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppDesign.blue.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(item.$3, style: const TextStyle(color: AppDesign.blue, fontSize: 11, fontWeight: FontWeight.bold)),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.chevron_right_rounded, color: AppDesign.muted, size: 18),
+                          ],
+                        ),
+                        onTap: () {
+                          Navigator.pop(bottomSheetContext);
+                          ClinicalFormPdfService.showExportDialog(context, formType: item.$1);
+                        },
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -288,11 +288,22 @@ class MorbidityDatabaseHelper {
     if (kIsWeb) return;
 
     try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        // Not authenticated: keep records stored locally in SQLite
+        return;
+      }
+
+      final accessScope =
+          await UserAccessScopeService.instance.loadCurrentScope();
+      if (!accessScope.isAuthenticated) {
+        return;
+      }
+
       final connectivityResult = await Connectivity().checkConnectivity();
       final hasInternet = !connectivityResult.contains(ConnectivityResult.none);
 
       if (!hasInternet) {
-        print('No internet connection. Will sync morbidity records later.');
         return;
       }
 
@@ -310,6 +321,16 @@ class MorbidityDatabaseHelper {
           recordData.remove('synced');
           recordData.remove('id');
 
+          if (accessScope.barangayCode.isNotEmpty) {
+            recordData['barangayCode'] = accessScope.barangayCode;
+          }
+          if (accessScope.barangay.isNotEmpty) {
+            recordData['barangay'] = accessScope.barangay;
+          }
+          if ((recordData['createdBy'] ?? '').toString().trim().isEmpty) {
+            recordData['createdBy'] = currentUser.uid;
+          }
+
           await getFirestoreInstance()
               .collection('morbidity_records')
               .doc(id)
@@ -323,6 +344,13 @@ class MorbidityDatabaseHelper {
           );
 
           print('Synced morbidity record: $id');
+        } on FirebaseException catch (e) {
+          if (e.code == 'permission-denied') {
+            print(
+              'Morbidity cloud sync permission denied. Local records remain preserved in SQLite.',
+            );
+            break;
+          }
         } catch (e) {
           print('Error syncing morbidity record ${record['id']}: $e');
         }

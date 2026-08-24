@@ -11,6 +11,7 @@ import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
+import 'package:mycapstone_project/app/shared/services/clinical_form_pdf_service.dart';
 import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const Color _primaryAqua = AppDesign.blue;
@@ -1073,10 +1074,16 @@ class _MorbidityPageState extends State<MorbidityPage> {
           onPressed: () => _showMorbidityDetails(context, record),
         ),
         MobileRecordAction(
-          label: 'Add New Morbidity Record',
-          icon: Icons.add_circle_outline,
-          tone: MobileRecordActionTone.success,
-          onPressed: () => _showNewMorbidityModal(context, onSaved: _loadData),
+          label: 'Export Form PDF / Print',
+          icon: Icons.picture_as_pdf_outlined,
+          onPressed: () {
+            ClinicalFormPdfService.showExportDialog(
+              context,
+              formType: ClinicalFormType.morbidity,
+              record: record,
+              patientName: (record['patientName'] ?? record['patient'] ?? record['name'])?.toString(),
+            );
+          },
         ),
         MobileRecordAction(
           label: 'Delete Record',

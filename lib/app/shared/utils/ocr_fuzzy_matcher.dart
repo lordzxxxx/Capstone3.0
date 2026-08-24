@@ -13,8 +13,11 @@ class OcrFuzzyMatcher {
         list.add(b.name);
       }
     }
-    // Also include named aliases
+    // Also include named aliases and numeric variations
     final aliases = <String>[
+      'Barangay 01', 'Barangay 02', 'Barangay 03', 'Barangay 04',
+      'Barangay 05', 'Barangay 06', 'Barangay 07', 'Barangay 08',
+      'Barangay 09', 'Barangay 10', 'Barangay 11',
       'Sumpong', 'Casisang', 'Magsaysay', 'Aglayan', 'Bangcud',
       'Can-ayan', 'Kalasungay', 'Dalwangan', 'Linabo', 'Managok',
       'San Jose', 'Laguitas', 'Kibalabag', 'Kulaman', 'Busdi',
@@ -30,6 +33,69 @@ class OcrFuzzyMatcher {
     }
     return list;
   }();
+
+  /// Common clinical acronyms used in handwritten health records.
+  static const Map<String, String> clinicalAcronyms = <String, String>{
+    'URTI': 'Upper Respiratory Tract Infection',
+    'AURI': 'Acute Upper Respiratory Infection',
+    'URI': 'Upper Respiratory Infection',
+    'AGE': 'Acute Gastroenteritis',
+    'GE': 'Gastroenteritis',
+    'UTI': 'Urinary Tract Infection',
+    'CAP': 'Community-Acquired Pneumonia',
+    'PNEUMONIA': 'Pneumonia',
+    'PTB': 'Pulmonary Tuberculosis',
+    'TB': 'Tuberculosis',
+    'HTN': 'Hypertension',
+    'HBP': 'High Blood Pressure',
+    'DM': 'Diabetes Mellitus',
+    'DM2': 'Type 2 Diabetes Mellitus',
+    'T2DM': 'Type 2 Diabetes Mellitus',
+    'T1DM': 'Type 1 Diabetes Mellitus',
+    'MI': 'Myocardial Infarction',
+    'AMI': 'Acute Myocardial Infarction',
+    'DHF': 'Dengue Hemorrhagic Fever',
+    'DF': 'Dengue Fever',
+    'BA': 'Bronchial Asthma',
+    'ASTHMA': 'Asthma',
+    'PNC': 'Prenatal Checkup',
+    'EPI': 'Immunization',
+    'COPD': 'Chronic Obstructive Pulmonary Disease',
+    'CVA': 'Cerebrovascular Accident (Stroke)',
+  };
+
+  /// Common Filipino (Tagalog/Cebuano) clinical symptom expressions mapped to canonical terms.
+  static const Map<String, String> localSymptomMap = <String, String>{
+    'lagnat': 'Fever',
+    'sinat': 'Mild Fever',
+    'mataas na lagnat': 'High Fever',
+    'ubo': 'Cough',
+    'sipon': 'Common Cold',
+    'sakit ng ulo': 'Headache',
+    'pananakit ng ulo': 'Headache',
+    'sakit ng tiyan': 'Abdominal Pain',
+    'pananakit ng tiyan': 'Abdominal Pain',
+    'hilo': 'Dizziness',
+    'pagkahilo': 'Dizziness',
+    'nagtatae': 'Diarrhea',
+    'pagtatae': 'Diarrhea',
+    'sumusuka': 'Vomiting',
+    'pagsusuka': 'Vomiting',
+    'altapresyon': 'Hypertension',
+    'mataas ang presyon': 'High Blood Pressure',
+    'hika': 'Asthma',
+    'trangkaso': 'Flu',
+    'panghihina': 'Body Weakness',
+    'panghihina ng katawan': 'Body Weakness',
+    'walang gana': 'Loss of Appetite',
+    'kawalan ng gana': 'Loss of Appetite',
+    'pananakit ng dibdib': 'Chest Pain',
+    'hirap huminga': 'Difficulty Breathing',
+    'pantal': 'Skin Rash',
+    'singaw': 'Mouth Sores',
+    'rashes': 'Skin Rash',
+    'masakit ang lalamunan': 'Sore Throat',
+  };
 
   /// Standard Clinical Symptoms & Diagnoses Dictionary.
   static const List<String> clinicalDictionary = <String>[
@@ -51,9 +117,12 @@ class OcrFuzzyMatcher {
     'Prenatal Checkup',
     'Immunization',
     'Upper Respiratory Tract Infection',
+    'Acute Upper Respiratory Infection',
     'Urinary Tract Infection',
     'Dengue Fever',
+    'Dengue Hemorrhagic Fever',
     'Tuberculosis',
+    'Pulmonary Tuberculosis',
     'Malnutrition',
     'Loss of Appetite',
     'Nausea',
@@ -64,7 +133,11 @@ class OcrFuzzyMatcher {
     'Flu',
     'Common Cold',
     'Gastroenteritis',
+    'Acute Gastroenteritis',
     'Pneumonia',
+    'Community-Acquired Pneumonia',
+    'Acute Myocardial Infarction',
+    'Bronchial Asthma',
   ];
 
   /// Standard Levenshtein Distance implementation in pure Dart.
@@ -117,8 +190,17 @@ class OcrFuzzyMatcher {
     final cleaned = rawInput.trim();
     if (cleaned.isEmpty) return '';
 
-    // Normalize Poblacion 1-11 patterns directly to canonical Barangay 01-11
-    final pobsMatch = RegExp(r'^(?:poblacion|pob\.?)\s*0?(\d{1,2})$', caseSensitive: false).firstMatch(cleaned);
+    // Handle common abbreviations like "St. Peter" -> "Saint Peter", "Sto. Nino" -> "Santo Niño"
+    final normalizedAlias = cleaned
+        .replaceAll(RegExp(r'\bst\.?\s*peter\b', caseSensitive: false), 'Saint Peter')
+        .replaceAll(RegExp(r'\bsto\.?\s*ni[nñ]o\b', caseSensitive: false), 'Santo Niño')
+        .replaceAll(RegExp(r'\bsta\.?\s*', caseSensitive: false), 'Santa ');
+
+    // Normalize Poblacion / Barangay 1-11 patterns directly to canonical Barangay 01-11
+    final pobsMatch = RegExp(
+      r'^(?:poblacion|pob\.?|barangay|brgy\.?|bgy\.?)\s*0?(\d{1,2})$',
+      caseSensitive: false,
+    ).firstMatch(normalizedAlias);
     if (pobsMatch != null) {
       final num = int.tryParse(pobsMatch.group(1)!);
       if (num != null && num >= 1 && num <= 11) {
@@ -126,11 +208,17 @@ class OcrFuzzyMatcher {
       }
     }
 
+    // Bare number 1-11 when inside barangay field
+    final bareNum = int.tryParse(normalizedAlias);
+    if (bareNum != null && bareNum >= 1 && bareNum <= 11) {
+      return 'Barangay ${bareNum.toString().padLeft(2, '0')}';
+    }
+
     String bestMatch = cleaned;
     double highestScore = 0.0;
 
     for (final brgy in canonicalBarangays) {
-      double score = similarity(cleaned, brgy);
+      double score = similarity(normalizedAlias, brgy);
       if (score > highestScore) {
         highestScore = score;
         bestMatch = brgy;
@@ -148,11 +236,23 @@ class OcrFuzzyMatcher {
     final cleaned = rawInput.trim();
     if (cleaned.isEmpty) return '';
 
+    // Check direct acronym expansions
+    final upperKey = cleaned.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+    if (clinicalAcronyms.containsKey(upperKey)) {
+      return clinicalAcronyms[upperKey]!;
+    }
+
+    // Check local Filipino translations
+    final lowerKey = cleaned.toLowerCase().trim();
+    if (localSymptomMap.containsKey(lowerKey)) {
+      return localSymptomMap[lowerKey]!;
+    }
+
     // For multi-item phrases, sentences, or phrases with conjunctions, preserve original text
     if (cleaned.contains(',') ||
         cleaned.contains(';') ||
         RegExp(r'\b(and|or|with|due\s+to|secondary\s+to)\b', caseSensitive: false).hasMatch(cleaned) ||
-        cleaned.split(RegExp(r'\s+')).length > 2) {
+        cleaned.split(RegExp(r'\s+')).length > 3) {
       return cleaned;
     }
 

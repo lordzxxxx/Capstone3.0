@@ -14,6 +14,7 @@ import 'package:mycapstone_project/app/features/patients/patient_centered_histor
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
+import 'package:mycapstone_project/app/shared/services/clinical_form_pdf_service.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
@@ -1734,6 +1735,18 @@ class _CheckUpPageState extends State<CheckUpPage> {
                 ),
               );
             });
+          },
+        ),
+        MobileRecordAction(
+          label: 'Export Form PDF / Print',
+          icon: Icons.picture_as_pdf_outlined,
+          onPressed: () {
+            ClinicalFormPdfService.showExportDialog(
+              context,
+              formType: ClinicalFormType.checkup,
+              record: record,
+              patientName: record['patient']?.toString(),
+            );
           },
         ),
         MobileRecordAction(
@@ -3899,6 +3912,21 @@ class _NewCheckUpFullScreenModalState
                         ],
                       ),
                     ),
+                    IconButton(
+                      tooltip: 'Print / Export Form PDF',
+                      icon: const Icon(
+                        Icons.picture_as_pdf_outlined,
+                        color: _primaryAqua,
+                        size: 22,
+                      ),
+                      onPressed: () {
+                        ClinicalFormPdfService.showExportDialog(
+                          context,
+                          formType: ClinicalFormType.checkup,
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 6),
                     Container(
                       decoration: BoxDecoration(
                         color: _lightOffWhite.withValues(alpha: 0.2),
