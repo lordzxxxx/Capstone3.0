@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
+import io
 import logging
-import os
 import re
 import time
 from typing import Any
@@ -12,6 +12,8 @@ from typing import Any
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+from PIL import Image, UnidentifiedImageError
 
 try:
     from .config import Settings, get_settings
@@ -28,7 +30,12 @@ try:
         recognize_symptoms,
     )
     from .symptom_guidance_service import SymptomGuidanceService
-    from .security import AuthenticatedUser, require_ai_access
+    from .security import (
+        AuthenticatedUser,
+        enforce_api_rate_limit,
+        enforce_ocr_rate_limit,
+        require_ai_access,
+    )
     from .schemas import (
         DiseaseInformation,
         ErrorResponse,
@@ -57,7 +64,12 @@ except ImportError:  # Supports ``uvicorn app.api:app`` from backend/.
         recognize_symptoms,
     )
     from symptom_guidance_service import SymptomGuidanceService
-    from security import AuthenticatedUser, require_ai_access
+    from security import (
+        AuthenticatedUser,
+        enforce_api_rate_limit,
+        enforce_ocr_rate_limit,
+        require_ai_access,
+    )
     from schemas import (
         DiseaseInformation,
         ErrorResponse,
@@ -83,6 +95,74 @@ _MEDICATION_GUIDANCE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _MAX_REQUEST_BYTES = 64 * 1024
+_MAX_OCR_REQUEST_BYTES = 20 * 1024 * 1024
+_MAX_OCR_FILE_BYTES = 5 * 1024 * 1024
+_MAX_OCR_FILES = 10
+_MAX_OCR_DIMENSION = 4096
+_ALLOWED_OCR_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+_FIELD_ID_PATTERN = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
+
+
+class _RequestTooLarge(Exception):
+    """Internal signal used to stop streaming request bodies at the limit."""
+
+
+def _validate_field_id(value: Any) -> str:
+    field_id = str(value).strip()
+    if not _FIELD_ID_PATTERN.fullmatch(field_id):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="field_id must contain only letters, numbers, dots, underscores, or hyphens.",
+        )
+    return field_id
+
+
+async def _read_validated_ocr_upload(file_upload: Any) -> bytes:
+    """Validate declared and actual image data before it reaches the ML model."""
+    content_type = str(getattr(file_upload, "content_type", "") or "").casefold()
+    if content_type not in _ALLOWED_OCR_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="OCR accepts JPEG, PNG, or WebP images only.",
+        )
+    content = await file_upload.read(_MAX_OCR_FILE_BYTES + 1)
+    if len(content) > _MAX_OCR_FILE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="Each OCR image must be 5 MB or smaller.",
+        )
+    try:
+        with Image.open(io.BytesIO(content)) as image:
+            image.verify()
+        with Image.open(io.BytesIO(content)) as image:
+            expected_formats = {
+                "image/jpeg": {"JPEG"},
+                "image/png": {"PNG"},
+                "image/webp": {"WEBP"},
+            }
+            if image.format not in expected_formats[content_type]:
+                raise HTTPException(
+                    status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                    detail="The declared image type does not match the file contents.",
+                )
+            width, height = image.size
+            if (
+                width < 1
+                or height < 1
+                or width > _MAX_OCR_DIMENSION
+                or height > _MAX_OCR_DIMENSION
+                or width * height > 16_000_000
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                    detail="OCR images exceed the supported dimensions.",
+                )
+    except (UnidentifiedImageError, OSError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The uploaded file is not a valid image.",
+        ) from None
+    return content
 
 
 def _safe_guidance_strings(values: list[str]) -> list[str]:
@@ -211,27 +291,27 @@ def build_prediction_response(
 
 def create_app() -> FastAPI:
     """Create the documented API application without loading artifacts twice."""
+    settings = get_settings()
     application = FastAPI(
         title="AI-DSUHIS Symptom Guidance API",
-        version=get_settings().model_version,
+        version=settings.model_version,
         description=(
             "Keyword-based self-care and emergency guidance retrieved from "
             "reviewed Firestore content. This API does not provide a diagnosis."
         ),
     )
-    configured_origins = {
-        origin.strip().rstrip("/")
-        for origin in os.environ.get("WEB_ALLOWED_ORIGINS", "").split(",")
-        if origin.strip()
-    }
+    application.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=list(settings.api_allowed_hosts),
+    )
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "https://capstone-c98f9.web.app",
-            "https://capstone-c98f9.firebaseapp.com",
-            *sorted(configured_origins),
-        ],
-        allow_origin_regex=r"^http://(localhost|127\.0\.0\.1)(:\d+)?$",
+        allow_origins=list(settings.web_allowed_origins),
+        allow_origin_regex=(
+            r"^http://(localhost|127\.0\.0\.1)(:\d+)?$"
+            if settings.allow_local_cors
+            else None
+        ),
         allow_credentials=False,
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=[
@@ -245,10 +325,26 @@ def create_app() -> FastAPI:
     @application.middleware("http")
     async def _request_size_limit(request: Request, call_next):
         """Reject oversized bodies before parsing or processing them."""
+        if request.method != "OPTIONS" and request.url.path not in {"/", "/health"}:
+            client_key = request.client.host if request.client else "unknown"
+            try:
+                enforce_api_rate_limit(client_key)
+            except HTTPException as exc:
+                return JSONResponse(
+                    status_code=exc.status_code,
+                    content={"detail": exc.detail},
+                    headers=exc.headers,
+                )
+
+        max_request_bytes = (
+            _MAX_OCR_REQUEST_BYTES
+            if request.url.path.startswith("/api/v1/ocr/")
+            else _MAX_REQUEST_BYTES
+        )
         content_length = request.headers.get("content-length")
         if content_length:
             try:
-                if int(content_length) > _MAX_REQUEST_BYTES:
+                if int(content_length) > max_request_bytes:
                     return JSONResponse(
                         status_code=status.HTTP_413_CONTENT_TOO_LARGE,
                         content={"detail": "Request body is too large."},
@@ -259,30 +355,47 @@ def create_app() -> FastAPI:
                     content={"detail": "Invalid Content-Length header."},
                 )
 
-        if request.method in {"POST", "PUT", "PATCH"}:
-            body = await request.body()
-            if len(body) > _MAX_REQUEST_BYTES:
-                return JSONResponse(
-                    status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-                    content={"detail": "Request body is too large."},
-                )
-        return await call_next(request)
+        if request.method not in {"POST", "PUT", "PATCH"}:
+            return await call_next(request)
+
+        original_receive = request._receive
+        received_bytes = 0
+
+        async def limited_receive():
+            nonlocal received_bytes
+            message = await original_receive()
+            if message.get("type") == "http.request":
+                received_bytes += len(message.get("body", b""))
+                if received_bytes > max_request_bytes:
+                    raise _RequestTooLarge
+            return message
+
+        request._receive = limited_receive
+        try:
+            return await call_next(request)
+        except _RequestTooLarge:
+            return JSONResponse(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                content={"detail": "Request body is too large."},
+            )
 
     @application.middleware("http")
     async def _security_headers(request: Request, call_next):
         """Baseline hardening headers for every response.
 
-        This API only ever returns JSON, so a Content-Security-Policy
-        (which primarily governs HTML/script/resource loading) is not
-        applicable here and is intentionally omitted rather than added
-        as an untested, possibly-wrong default. Strict-Transport-Security
-        is a no-op over plain HTTP (browsers only honor it on HTTPS
-        responses), so it is safe to always send.
+        This API only ever returns JSON. The no-store policy prevents
+        authenticated guidance and OCR responses from being cached by
+        browsers or intermediary proxies.
         """
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+        )
         response.headers["Permissions-Policy"] = (
             "geolocation=(), camera=(), microphone=(), payment=()"
         )
@@ -626,11 +739,13 @@ def create_app() -> FastAPI:
     )
     async def recognize_single_handwriting(
         request: Request,
+        authenticated_user: AuthenticatedUser = Depends(require_ai_access),
     ) -> OCRFieldResult:
         """Transcribes a single cropped handwritten image ROI using TrOCR."""
+        enforce_ocr_rate_limit(authenticated_user)
         form = await request.form()
         file_upload = form.get("file")
-        field_id = str(form.get("field_id", "field"))
+        field_id = _validate_field_id(form.get("field_id", "field"))
 
         if file_upload is None or not hasattr(file_upload, "read"):
             raise HTTPException(
@@ -638,7 +753,7 @@ def create_app() -> FastAPI:
                 detail="Form field 'file' containing image bytes is required.",
             )
 
-        content = await file_upload.read()
+        content = await _read_validated_ocr_upload(file_upload)
         engine = TrOCRHandwritingEngine.get_instance()
         started = time.perf_counter()
         
@@ -662,8 +777,10 @@ def create_app() -> FastAPI:
     )
     async def recognize_batch_handwriting(
         request: Request,
+        authenticated_user: AuthenticatedUser = Depends(require_ai_access),
     ) -> OCRBatchResponse:
         """Batch transcribes multiple cropped handwritten image ROIs."""
+        enforce_ocr_rate_limit(authenticated_user)
         form = await request.form()
         files = form.getlist("files")
         field_ids = form.getlist("field_ids")
@@ -674,7 +791,36 @@ def create_app() -> FastAPI:
                 detail="At least one image in 'files' is required.",
             )
 
-        contents = [await f.read() for f in files if hasattr(f, "read")]
+        if len(files) > _MAX_OCR_FILES:
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail=f"OCR batches are limited to {_MAX_OCR_FILES} images.",
+            )
+        if len(field_ids) > len(files):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="There cannot be more field_ids than files.",
+            )
+
+        contents: list[bytes] = []
+        total_bytes = 0
+        for file_upload in files:
+            if not hasattr(file_upload, "read"):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Every OCR batch item must be an image upload.",
+                )
+            content = await _read_validated_ocr_upload(file_upload)
+            total_bytes += len(content)
+            if total_bytes > _MAX_OCR_REQUEST_BYTES:
+                raise HTTPException(
+                    status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                    detail="The total OCR batch must be 20 MB or smaller.",
+                )
+            contents.append(content)
+        validated_field_ids = [
+            _validate_field_id(field_id) for field_id in field_ids
+        ]
         engine = TrOCRHandwritingEngine.get_instance()
         started = time.perf_counter()
 
@@ -684,7 +830,11 @@ def create_app() -> FastAPI:
 
         results: list[OCRFieldResult] = []
         for idx, (text, conf) in enumerate(batch_results):
-            fid = str(field_ids[idx]) if idx < len(field_ids) else f"field_{idx}"
+            fid = (
+                validated_field_ids[idx]
+                if idx < len(validated_field_ids)
+                else f"field_{idx}"
+            )
             results.append(
                 OCRFieldResult(
                     field_id=fid,

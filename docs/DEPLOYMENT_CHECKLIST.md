@@ -4,6 +4,11 @@
 
 - [ ] Confirm the intended Firebase project and production Firestore database.
 - [ ] Provision a deployed HTTPS FastAPI host for `/guidance`.
+- [ ] Set `APP_ENV=production`; the API refuses to start if Auth, App Check,
+      revoked-token checks, HTTPS origins, or allowed hosts are missing.
+- [ ] Set `API_ALLOWED_HOSTS` to the exact API hostname; never use `*`.
+- [ ] Review `API_RATE_LIMIT_REQUESTS` and `API_RATE_LIMIT_WINDOW_SECONDS`;
+      these limit traffic per client address before request parsing.
 - [ ] Configure release `AI_API_BASE_URL`; never ship a localhost URL.
 - [ ] Set `WEB_ALLOWED_ORIGINS` to the exact production Vercel origin in the
       FastAPI and password-reset environments; do not use a wildcard.
@@ -27,7 +32,13 @@
 
 - [ ] Obtain qualified health-professional review of the manual validation set.
 - [ ] Run real authenticated/App Check guidance requests in staging.
+- [ ] Verify OCR requests require Firebase Auth and App Check, accept only
+      valid JPEG/PNG/WebP images, and enforce the file, batch, and rate limits.
 - [ ] Verify 401, 403, 422, 429, unavailable-backend, and emergency cases.
+- [ ] Confirm Firebase Authentication's server-side `too-many-requests`
+      response is retained for repeated password failures; the app cooldown is
+      only an additional client-side backoff and must not be treated as the
+      security boundary.
 - [ ] Complete the real-form OCR accuracy table.
 - [ ] Complete Android handset offline/reconnect testing.
 - [ ] Complete iOS testing if iOS is in scope.

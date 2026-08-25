@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/features/auth/widgets/mobile_auth_shell.dart';
 import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
+import 'package:mycapstone_project/app/core/services/login_attempt_limiter.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _darkDeepTeal = AppDesign.ink;
@@ -259,12 +260,25 @@ class _LoginState extends State<Login> {
       return;
     }
 
+    final email = emailController.text.trim();
+    final cooldown = LoginAttemptLimiter.remaining(email);
+    if (cooldown != null) {
+      Get.snackbar(
+        'Please wait',
+        'Too many failed attempts. Try again in ${(cooldown.inMilliseconds / 1000).ceil()} seconds.',
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
+        email: email,
         password: passwordController.text,
       );
+      LoginAttemptLimiter.clear(email);
 
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
@@ -276,6 +290,13 @@ class _LoginState extends State<Login> {
 
       await _finalizeAuthenticatedLogin(currentUser);
     } on FirebaseAuthException catch (e) {
+      if ({
+        'invalid-credential',
+        'wrong-password',
+        'user-not-found',
+      }.contains(e.code)) {
+        LoginAttemptLimiter.recordFailure(email);
+      }
       String message;
       switch (e.code) {
         case 'user-not-found':

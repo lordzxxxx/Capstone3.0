@@ -20,6 +20,7 @@ import 'package:mycapstone_project/web/roles/bhw/referrals/referrals.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 import 'package:mycapstone_project/web/shared/widgets/login_success_sweet_alert.dart';
 import 'package:mycapstone_project/web/shared/services/firestore_rest_reader.dart';
+import 'package:mycapstone_project/app/core/services/login_attempt_limiter.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
@@ -821,10 +822,21 @@ class _LoginState extends State<Login> {
       return;
     }
 
+    final email = emailController.text.trim();
+    final cooldown = LoginAttemptLimiter.remaining(email);
+    if (cooldown != null) {
+      Get.snackbar(
+        'Please wait',
+        'Too many failed attempts. Try again in ${(cooldown.inMilliseconds / 1000).ceil()} seconds.',
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     if (kDebugMode) {
       // Do not print the password itself; print length for debugging only
-      final email = emailController.text.trim();
       final pwdLen = passwordController.text.length;
       // ignore: avoid_print
       debugPrint('Attempting signIn email=$email passwordLength=$pwdLen');
@@ -832,9 +844,10 @@ class _LoginState extends State<Login> {
 
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
+        email: email,
         password: passwordController.text,
       );
+      LoginAttemptLimiter.clear(email);
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
         throw FirebaseAuthException(
@@ -883,6 +896,13 @@ class _LoginState extends State<Login> {
       await _cacheRoleLocally(currentUser, resolvedRole);
       await _showSuccessDialogAndNavigate(currentUser, resolvedRole);
     } on FirebaseAuthException catch (e) {
+      if ({
+        'invalid-credential',
+        'wrong-password',
+        'user-not-found',
+      }.contains(e.code)) {
+        LoginAttemptLimiter.recordFailure(email);
+      }
       // Map common FirebaseAuth web error codes to friendly messages
       String message;
       switch (e.code) {

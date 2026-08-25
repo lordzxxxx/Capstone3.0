@@ -36,10 +36,12 @@ class SlidingWindowRateLimiter:
         limit: int,
         window_seconds: int,
         clock: Callable[[], float] = time.monotonic,
+        max_keys: int = 10_000,
     ) -> None:
         self.limit = limit
         self.window_seconds = window_seconds
         self._clock = clock
+        self._max_keys = max_keys
         self._hits: dict[str, deque[float]] = defaultdict(deque)
         self._lock = Lock()
 
@@ -51,15 +53,31 @@ class SlidingWindowRateLimiter:
             hits = self._hits[key]
             while hits and hits[0] <= cutoff:
                 hits.popleft()
+            if not hits:
+                self._hits.pop(key, None)
+                hits = self._hits[key]
             if len(hits) >= self.limit:
                 return max(1, math.ceil(hits[0] + self.window_seconds - now))
             hits.append(now)
+            if len(self._hits) > self._max_keys:
+                oldest_key = min(
+                    self._hits,
+                    key=lambda candidate: self._hits[candidate][-1]
+                    if self._hits[candidate]
+                    else float("-inf"),
+                )
+                if oldest_key != key:
+                    self._hits.pop(oldest_key, None)
             return None
 
 
 _bearer = HTTPBearer(auto_error=False)
 _limiter: SlidingWindowRateLimiter | None = None
 _limiter_config: tuple[int, int] | None = None
+_ocr_limiter: SlidingWindowRateLimiter | None = None
+_ocr_limiter_config: tuple[int, int] | None = None
+_api_limiter: SlidingWindowRateLimiter | None = None
+_api_limiter_config: tuple[int, int] | None = None
 _limiter_lock = Lock()
 
 
@@ -75,6 +93,34 @@ def _rate_limiter() -> SlidingWindowRateLimiter:
             _limiter = SlidingWindowRateLimiter(*config)
             _limiter_config = config
         return _limiter
+
+
+def _ocr_rate_limiter() -> SlidingWindowRateLimiter:
+    global _ocr_limiter, _ocr_limiter_config
+    settings = get_settings()
+    config = (
+        settings.ocr_rate_limit_requests,
+        settings.ocr_rate_limit_window_seconds,
+    )
+    with _limiter_lock:
+        if _ocr_limiter is None or _ocr_limiter_config != config:
+            _ocr_limiter = SlidingWindowRateLimiter(*config)
+            _ocr_limiter_config = config
+        return _ocr_limiter
+
+
+def _api_rate_limiter() -> SlidingWindowRateLimiter:
+    global _api_limiter, _api_limiter_config
+    settings = get_settings()
+    config = (
+        settings.api_rate_limit_requests,
+        settings.api_rate_limit_window_seconds,
+    )
+    with _limiter_lock:
+        if _api_limiter is None or _api_limiter_config != config:
+            _api_limiter = SlidingWindowRateLimiter(*config)
+            _api_limiter_config = config
+        return _api_limiter
 
 
 def _unauthorized(detail: str) -> HTTPException:
@@ -162,3 +208,33 @@ def require_ai_access(
             headers={"Retry-After": str(retry_after)},
         )
     return AuthenticatedUser(uid=uid)
+
+
+def enforce_ocr_rate_limit(user: AuthenticatedUser) -> None:
+    """Apply a tighter limit to OCR because it invokes a costly ML model."""
+    retry_after = _ocr_rate_limiter().consume(user.uid)
+    if retry_after is not None:
+        SECURITY_LOGGER.warning(
+            "OCR request rate limit exceeded",
+            extra={"event": "ocr_rate_limited", "uid": user.uid},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many OCR requests. Please try again shortly.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+
+def enforce_api_rate_limit(client_key: str) -> None:
+    """Limit unauthenticated API traffic by client address before parsing."""
+    retry_after = _api_rate_limiter().consume(client_key)
+    if retry_after is not None:
+        SECURITY_LOGGER.warning(
+            "API request rate limit exceeded",
+            extra={"event": "api_rate_limited"},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many API requests. Please try again shortly.",
+            headers={"Retry-After": str(retry_after)},
+        )

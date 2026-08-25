@@ -6,7 +6,11 @@ import pytest
 
 import api
 from config import get_settings
-from security import SlidingWindowRateLimiter, require_ai_access
+from security import (
+    SlidingWindowRateLimiter,
+    enforce_api_rate_limit,
+    require_ai_access,
+)
 
 
 def test_guidance_rejects_missing_firebase_authentication() -> None:
@@ -55,3 +59,59 @@ def test_security_defaults_fail_closed(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.require_firebase_auth is True
     assert settings.require_app_check is True
     assert settings.check_revoked_tokens is True
+
+
+def test_production_requires_explicit_network_settings(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.delenv("WEB_ALLOWED_ORIGINS", raising=False)
+    monkeypatch.delenv("API_ALLOWED_HOSTS", raising=False)
+    get_settings.cache_clear()
+    with pytest.raises(ValueError, match="WEB_ALLOWED_ORIGINS"):
+        get_settings()
+    get_settings.cache_clear()
+
+
+def test_ocr_rejects_missing_authentication() -> None:
+    api.app.dependency_overrides.pop(api.require_ai_access, None)
+    response = TestClient(api.app).post("/api/v1/ocr/handwriting")
+    assert response.status_code == 401
+
+
+def test_ocr_rejects_non_image_upload() -> None:
+    response = TestClient(api.app).post(
+        "/api/v1/ocr/handwriting",
+        data={"field_id": "patient_name"},
+        files={"file": ("payload.txt", b"not an image", "text/plain")},
+    )
+    assert response.status_code == 415
+
+
+def test_api_sets_no_store_security_headers() -> None:
+    response = TestClient(api.app).get("/health")
+    assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-store"
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["content-security-policy"].startswith("default-src")
+
+
+def test_api_rejects_unconfigured_host() -> None:
+    response = TestClient(api.app).get(
+        "/health", headers={"host": "untrusted.example"}
+    )
+    assert response.status_code == 400
+
+
+def test_api_rate_limiter_returns_retry_after(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("API_RATE_LIMIT_REQUESTS", "1")
+    get_settings.cache_clear()
+    key = "api-rate-test-client"
+    enforce_api_rate_limit(key)
+    with pytest.raises(Exception) as error:
+        enforce_api_rate_limit(key)
+    assert error.value.status_code == 429
+    assert error.value.headers["Retry-After"]
+    get_settings.cache_clear()
