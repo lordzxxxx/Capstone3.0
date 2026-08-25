@@ -255,6 +255,38 @@ class PatientCenteredHistoryService {
   final MortalityDatabaseHelper _mortalityHelper;
   final MorbidityDatabaseHelper _morbidityHelper;
 
+  Future<List<Map<String, dynamic>>> searchRegisteredPatients(
+    String query,
+  ) async {
+    return searchPatients(query);
+  }
+
+  Future<Map<String, dynamic>?> resolveRegisteredPatient(
+    Map<String, dynamic>? candidate,
+  ) async {
+    if (candidate == null) return null;
+    if (candidate['isRegisteredPatient'] == true) {
+      return Map<String, dynamic>.from(candidate);
+    }
+    final patientId = (candidate['patientId'] ??
+            candidate['linkedPatientId'] ??
+            candidate['id'] ??
+            '')
+        .toString()
+        .trim();
+    if (patientId.isNotEmpty) {
+      final records = await _patientHelper.getAllRecords();
+      for (final r in records) {
+        if ((r['id']?.toString() == patientId ||
+            r['patientId']?.toString() == patientId ||
+            r['patientCode']?.toString() == patientId)) {
+          return Map<String, dynamic>.from(r);
+        }
+      }
+    }
+    return null;
+  }
+
   Future<List<Map<String, dynamic>>> searchPatients(String query) async {
     final normalizedQuery = _normalize(query);
     final patients = await _patientHelper.getAllRecords();

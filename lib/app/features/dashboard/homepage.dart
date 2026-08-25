@@ -4168,6 +4168,7 @@ class _HomePageState extends State<HomePage> {
                   (ClinicalFormType.checkup, 'General Check-Up Form', 'CHK-2026', Icons.healing_rounded),
                   (ClinicalFormType.prenatal, 'Prenatal Care Record', 'PNC-2026', Icons.pregnant_woman_rounded),
                   (ClinicalFormType.immunization, 'EPI Immunization Card', 'IMZ-2026', Icons.vaccines_rounded),
+                  (ClinicalFormType.referral, 'Standard Patient Referral Form', 'REF-2026', Icons.assignment_return_rounded),
                   (ClinicalFormType.morbidity, 'Morbidity Surveillance Form', 'MBD-2026', Icons.monitor_heart_rounded),
                   (ClinicalFormType.mortality, 'Mortality Notification Form', 'MOR-2026', Icons.event_busy_rounded),
                   (ClinicalFormType.patientRegistration, 'Patient Registration Card', 'PAT-2026', Icons.badge_rounded),

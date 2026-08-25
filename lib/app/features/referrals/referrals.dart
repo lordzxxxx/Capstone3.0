@@ -1,12 +1,18 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:get/get.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/patient_history_dialogs.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
+import 'package:mycapstone_project/app/shared/services/clinical_form_pdf_service.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
@@ -19,7 +25,16 @@ const Color _lightOffWhite = AppDesign.ink;
 const Color _mutedCoolGray = AppDesign.muted;
 
 class ReferralsPage extends StatefulWidget {
-  const ReferralsPage({super.key});
+  const ReferralsPage({
+    super.key,
+    this.initialPatient,
+    this.initialObservations,
+    this.initialRecord,
+  });
+
+  final Map<String, dynamic>? initialPatient;
+  final String? initialObservations;
+  final Map<String, dynamic>? initialRecord;
 
   @override
   State<ReferralsPage> createState() => _ReferralsPageState();
@@ -44,12 +59,22 @@ class _ReferralsPageState extends State<ReferralsPage> {
     'completed',
   ];
 
-  final FirebaseFirestore _firestore = getFirestoreInstance();
+  FirebaseFirestore get _firestore {
+    try {
+      return getFirestoreInstance();
+    } catch (_) {
+      return FirebaseFirestore.instance;
+    }
+  }
   final AccountPolicyService _accountPolicyService =
       AccountPolicyService.instance;
+  final PatientCenteredHistoryService _patientHistoryService =
+      PatientCenteredHistoryService();
   final GlobalKey<FormState> _referralFormKey = GlobalKey<FormState>();
 
   final TextEditingController _referralDateTimeController =
+      TextEditingController();
+  final TextEditingController _patientLookupController =
       TextEditingController();
   final TextEditingController _patientAddressController =
       TextEditingController();
@@ -89,89 +114,209 @@ class _ReferralsPageState extends State<ReferralsPage> {
   bool? _hasHealthInsuranceCoverage;
   String? _selectedPreferredDoctorUid;
   bool _autoAssignDoctor = true;
+  Timer? _sharedPatientSearchDebounce;
+  List<Map<String, dynamic>> _sharedPatientMatches = <Map<String, dynamic>>[];
+  bool _isSearchingSharedPatients = false;
+  Map<String, dynamic>? _selectedPatientSeed;
 
   bool get _isDoctor => _scope.role == 'doctor';
   bool get _isBhw => _scope.role == 'bhw';
   bool get _isChoOperator => _scope.canViewAllBarangays;
 
-  List<QueryDocumentSnapshot<Map<String, dynamic>>> get _availableDoctorDocs {
-    return _doctorDocs
-        .where((doctorDoc) {
-          final data = doctorDoc.data();
-          final accountStatus = (data['accountStatus'] ?? 'active')
-              .toString()
-              .trim()
-              .toLowerCase();
-          final availability = _doctorAvailability(data);
-          return accountStatus != 'disabled' &&
-              accountStatus != 'archived' &&
-              availability != 'unavailable';
-        })
-        .toList(growable: false);
-  }
-
-  Map<String, dynamic>? get _selectedPreferredDoctorData {
-    final selectedUid = _selectedPreferredDoctorUid;
-    if (selectedUid == null || selectedUid.isEmpty) {
-      return null;
-    }
-
-    for (final doc in _availableDoctorDocs) {
-      if (doc.id == selectedUid) {
-        return doc.data();
-      }
-    }
-
-    return null;
-  }
-
-  DocumentReference<Map<String, dynamic>>? _barangayReferralMirrorReference({
-    required String barangayCode,
-    required String referralId,
-  }) {
-    final normalizedBarangayCode = barangayCode.trim().toUpperCase();
-    if (normalizedBarangayCode.isEmpty || referralId.trim().isEmpty) {
-      return null;
-    }
-
-    return _firestore
-        .collection(BarangayFirestorePaths.barangaysCollection)
-        .doc(normalizedBarangayCode)
-        .collection('referrals')
-        .doc(referralId.trim());
-  }
-
-  Future<void> _syncBarangayReferralMirror({
-    required String referralId,
-    required Map<String, dynamic> payload,
-  }) async {
-    final barangayCode = (payload['barangayCode'] ?? '').toString().trim();
-    final mirrorRef = _barangayReferralMirrorReference(
-      barangayCode: barangayCode,
-      referralId: referralId,
-    );
-    if (mirrorRef == null) {
-      return;
-    }
-
-    await mirrorRef.set({
-      ...payload,
-      'rootReferralPath': 'referrals/$referralId',
-      'storedUnderBarangay': true,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-  }
-
   @override
   void initState() {
     super.initState();
     _referralDateTimeController.text = _formatDateTimeInput(DateTime.now());
+    final syncSeed = widget.initialRecord ?? widget.initialPatient;
+    if (syncSeed != null) {
+      _prefillFromRecordOrPatient(
+        syncSeed,
+        observations: widget.initialObservations,
+      );
+    }
     _loadScope();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final seed = widget.initialRecord ??
+          widget.initialPatient ??
+          (Get.arguments is Map<String, dynamic>
+              ? Get.arguments as Map<String, dynamic>
+              : (Get.arguments is Map
+                  ? Map<String, dynamic>.from(Get.arguments as Map)
+                  : null));
+      if (seed != null) {
+        _prefillFromRecordOrPatient(
+          seed,
+          observations: widget.initialObservations,
+        );
+      }
+    });
+  }
+
+  void _applyPatientSeed(Map<String, dynamic> patient) {
+    final patientName = (patient['patientName'] ??
+            patient['name'] ??
+            patient['patient'] ??
+            '')
+        .toString()
+        .trim();
+    final parts = patientNameParts({
+      'firstName': patient['firstName'] ?? patient['first_name'] ?? '',
+      'surname': patient['surname'] ?? patient['last_name'] ?? '',
+      'fullName': patientName,
+    });
+
+    _selectedPatientSeed = {
+      ...patient,
+      'patientName': patientName,
+      'isRegisteredPatient': true,
+    };
+
+    _patientLookupController.text = patientName;
+    _patientSurnameController.text = parts.surname;
+    _patientFirstNameController.text = parts.firstName;
+    if ((patient['middleName'] ?? '').toString().trim().isNotEmpty) {
+      _patientMiddleNameController.text =
+          (patient['middleName'] ?? '').toString().trim();
+    }
+
+    final age = (patient['age'] ?? '').toString().trim();
+    if (age.isNotEmpty) {
+      _patientAgeController.text = age;
+    }
+
+    final gender =
+        (patient['gender'] ?? patient['sex'] ?? '').toString().trim();
+    if (gender.isNotEmpty) {
+      _patientSexController.text = gender;
+    }
+
+    final addr = (patient['address'] ?? '').toString().trim();
+    final brgy = (patient['barangay'] ?? '').toString().trim();
+    if (addr.isNotEmpty && brgy.isNotEmpty) {
+      _patientAddressController.text =
+          addr.toLowerCase().contains(brgy.toLowerCase())
+              ? addr
+              : '$addr, $brgy';
+    } else if (addr.isNotEmpty) {
+      _patientAddressController.text = addr;
+    } else if (brgy.isNotEmpty) {
+      _patientAddressController.text = brgy;
+    }
+
+    _sharedPatientMatches = <Map<String, dynamic>>[];
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _prefillFromRecordOrPatient(
+    Map<String, dynamic> data, {
+    String? observations,
+  }) {
+    _applyPatientSeed(data);
+
+    final symptoms = (data['symptoms'] ??
+            data['chiefComplaint'] ??
+            data['chiefComplaints'] ??
+            '')
+        .toString()
+        .trim();
+    final diagnosis = (data['diagnosis'] ??
+            data['disease'] ??
+            data['diseaseType'] ??
+            data['impression'] ??
+            data['ai_category'] ??
+            '')
+        .toString()
+        .trim();
+    final plan = (data['plan'] ??
+            data['treatment'] ??
+            data['treatmentPlan'] ??
+            data['actionTaken'] ??
+            '')
+        .toString()
+        .trim();
+    final vitalsRaw = (data['vitalsigns'] ??
+            data['vitalSigns'] ??
+            data['completeVitalSigns'] ??
+            '')
+        .toString()
+        .trim();
+
+    if (symptoms.isNotEmpty) {
+      _chiefComplaintController.text = symptoms;
+    } else if (observations?.isNotEmpty == true) {
+      _chiefComplaintController.text = observations!;
+    }
+
+    if (diagnosis.isNotEmpty && diagnosis != 'General') {
+      _impressionController.text = diagnosis;
+    }
+
+    if (plan.isNotEmpty) {
+      _actionTakenController.text = plan;
+    }
+
+    if (vitalsRaw.isNotEmpty) {
+      _completeVitalSignsController.text = vitalsRaw;
+    } else {
+      final bp = (data['bloodPressure'] ?? data['bp'] ?? '').toString().trim();
+      final temp =
+          (data['temperature'] ?? data['temp'] ?? '').toString().trim();
+      final hr = (data['heartRate'] ?? data['hr'] ?? '').toString().trim();
+      final rr =
+          (data['respiratoryRate'] ?? data['rr'] ?? '').toString().trim();
+      final spo2 =
+          (data['oxygenSaturation'] ?? data['spo2'] ?? '').toString().trim();
+      final wt = (data['weight'] ?? data['wt'] ?? '').toString().trim();
+      final ht = (data['height'] ?? data['ht'] ?? '').toString().trim();
+      final parts = <String>[
+        if (bp.isNotEmpty) 'BP: $bp',
+        if (temp.isNotEmpty) 'Temp: $temp°C',
+        if (hr.isNotEmpty) 'HR: $hr bpm',
+        if (rr.isNotEmpty) 'RR: $rr',
+        if (spo2.isNotEmpty) 'SpO2: $spo2%',
+        if (wt.isNotEmpty) 'Weight: $wt kg',
+        if (ht.isNotEmpty) 'Height: $ht cm',
+      ];
+      if (parts.isNotEmpty) {
+        _completeVitalSignsController.text = parts.join(' | ');
+      }
+    }
+
+    final reason = (data['referralReason'] ?? data['reason'] ?? '').toString();
+    if (reason.isNotEmpty) {
+      if (_referralReasonOptions.contains(reason)) {
+        _selectedReferralReasons.add(reason);
+      } else {
+        _selectedReferralReasons.add('Others');
+        _referralReasonOtherController.text = reason;
+      }
+    } else if (_selectedReferralReasons.isEmpty) {
+      _selectedReferralReasons.add('Hospital Capability');
+    }
+
+    final severity = (data['ai_severity'] ?? '').toString().toLowerCase();
+    final category = (data['ai_category'] ?? '').toString().toLowerCase();
+    if (severity == 'critical' ||
+        severity == 'high' ||
+        category.contains('emergency')) {
+      _selectedReferralCategories.add('Emergency');
+    } else if (_selectedReferralCategories.isEmpty) {
+      _selectedReferralCategories.add('Ambulatory');
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
+    _sharedPatientSearchDebounce?.cancel();
     _referralDateTimeController.dispose();
+    _patientLookupController.dispose();
     _patientAddressController.dispose();
     _patientSurnameController.dispose();
     _patientFirstNameController.dispose();
@@ -189,6 +334,61 @@ class _ReferralsPageState extends State<ReferralsPage> {
     _referralReasonOtherController.dispose();
     super.dispose();
   }
+
+  String _normalizeSearchValue(String value) => value.trim().toLowerCase();
+
+  bool _matchesCurrentBarangay(Map<String, dynamic> patient) {
+    final scopeBarangay = _normalizeSearchValue(_scope.barangay);
+    if (scopeBarangay.isEmpty) return true;
+    final patientBarangay =
+        _normalizeSearchValue((patient['barangay'] ?? '').toString());
+    if (patientBarangay.isNotEmpty) return patientBarangay == scopeBarangay;
+    final address =
+        _normalizeSearchValue((patient['address'] ?? '').toString());
+    return address.contains(scopeBarangay);
+  }
+
+  Future<void> _showSharedPatientTimeline(Map<String, dynamic> patient) async {
+    final snapshot = await _patientHistoryService.loadPatientHistory(patient);
+    if (!mounted) return;
+    await PatientHistoryDialogs.showPatientTimelineDialog(
+      context: context,
+      patient: patient,
+      snapshot: snapshot,
+    );
+  }
+
+  void _scheduleSharedPatientSearch(String query) {
+    _sharedPatientSearchDebounce?.cancel();
+    final normalizedQuery = query.trim();
+    if (normalizedQuery.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _sharedPatientMatches = <Map<String, dynamic>>[];
+        _isSearchingSharedPatients = false;
+      });
+      return;
+    }
+
+    setState(() => _isSearchingSharedPatients = true);
+
+    _sharedPatientSearchDebounce =
+        Timer(const Duration(milliseconds: 250), () async {
+      final results =
+          await _patientHistoryService.searchRegisteredPatients(normalizedQuery);
+      if (!mounted ||
+          _patientLookupController.text.trim().toLowerCase() !=
+              normalizedQuery.toLowerCase()) {
+        return;
+      }
+      setState(() {
+        _sharedPatientMatches =
+            results.where(_matchesCurrentBarangay).toList(growable: false);
+        _isSearchingSharedPatients = false;
+      });
+    });
+  }
+
 
   String _doctorDisplayName(Map<String, dynamic> data) {
     return (data['username'] ??
@@ -245,6 +445,70 @@ class _ReferralsPageState extends State<ReferralsPage> {
     }
   }
 
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> get _availableDoctorDocs {
+    return _doctorDocs.where((doctorDoc) {
+      final data = doctorDoc.data();
+      final accountStatus =
+          (data['accountStatus'] ?? 'active').toString().trim().toLowerCase();
+      final availability = _doctorAvailability(data);
+      return accountStatus != 'disabled' &&
+          accountStatus != 'archived' &&
+          availability != 'unavailable';
+    }).toList(growable: false);
+  }
+
+  Map<String, dynamic>? get _selectedPreferredDoctorData {
+    final selectedUid = _selectedPreferredDoctorUid;
+    if (selectedUid == null || selectedUid.isEmpty) {
+      return null;
+    }
+
+    for (final doc in _availableDoctorDocs) {
+      if (doc.id == selectedUid) {
+        return doc.data();
+      }
+    }
+
+    return null;
+  }
+
+  DocumentReference<Map<String, dynamic>>? _barangayReferralMirrorReference({
+    required String barangayCode,
+    required String referralId,
+  }) {
+    final normalizedBarangayCode = barangayCode.trim().toUpperCase();
+    if (normalizedBarangayCode.isEmpty || referralId.trim().isEmpty) {
+      return null;
+    }
+
+    return _firestore
+        .collection(BarangayFirestorePaths.barangaysCollection)
+        .doc(normalizedBarangayCode)
+        .collection('referrals')
+        .doc(referralId.trim());
+  }
+
+  Future<void> _syncBarangayReferralMirror({
+    required String referralId,
+    required Map<String, dynamic> payload,
+  }) async {
+    final barangayCode = (payload['barangayCode'] ?? '').toString().trim();
+    final mirrorRef = _barangayReferralMirrorReference(
+      barangayCode: barangayCode,
+      referralId: referralId,
+    );
+    if (mirrorRef == null) {
+      return;
+    }
+
+    await mirrorRef.set({
+      ...payload,
+      'rootReferralPath': 'referrals/$referralId',
+      'storedUnderBarangay': true,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
   Future<void> _loadScope() async {
     if (mounted) {
       setState(() {
@@ -256,6 +520,21 @@ class _ReferralsPageState extends State<ReferralsPage> {
     try {
       final scope = await UserAccessScopeService.instance.loadCurrentScope();
       if (!scope.isAuthenticated) {
+        if (kDebugMode) {
+          if (!mounted) return;
+          setState(() {
+            _scope = const UserAccessScope(
+              userId: 'test_bhw',
+              role: 'bhw',
+              barangay: 'Casisang',
+              barangayCode: 'CAS',
+              barangayDistrict: '',
+              dataVisibleFrom: null,
+            );
+            _isLoading = false;
+          });
+          return;
+        }
         if (!mounted) return;
         Get.offAllNamed(MobileRoutes.login);
         return;
@@ -299,6 +578,22 @@ class _ReferralsPageState extends State<ReferralsPage> {
         _isLoading = false;
       });
     } catch (e) {
+      if (kDebugMode) {
+        if (!mounted) return;
+        setState(() {
+          _scope = const UserAccessScope(
+            userId: 'test_bhw',
+            role: 'bhw',
+            barangay: 'Casisang',
+            barangayCode: 'CAS',
+            barangayDistrict: '',
+            dataVisibleFrom: null,
+          );
+          _isLoading = false;
+          _loadErrorMessage = null;
+        });
+        return;
+      }
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -308,21 +603,33 @@ class _ReferralsPageState extends State<ReferralsPage> {
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _referralsStream() {
-    final collection = _firestore.collection('referrals');
-    if (_isChoOperator) {
-      return collection.snapshots();
-    }
-    if (_isDoctor) {
+    try {
+      final collection = _firestore.collection('referrals');
+      if (_isChoOperator) {
+        return collection.snapshots();
+      }
+      if (_isDoctor) {
+        return collection
+            .where('assignedDoctorUid', isEqualTo: _scope.userId)
+            .snapshots();
+      }
       return collection
-          .where('assignedDoctorUid', isEqualTo: _scope.userId)
+          .where('createdByUid', isEqualTo: _scope.userId)
           .snapshots();
+    } catch (_) {
+      return const Stream.empty();
     }
-    return collection
-        .where('createdByUid', isEqualTo: _scope.userId)
-        .snapshots();
   }
 
+
   Future<void> _submitReferral() async {
+    if (_selectedPatientSeed == null ||
+        _selectedPatientSeed!['isRegisteredPatient'] != true) {
+      _showReferralValidationError(
+        'Search and select a registered patient before submitting the referral.',
+      );
+      return;
+    }
     if (!_referralFormKey.currentState!.validate() || _isSubmitting) {
       return;
     }
@@ -393,7 +700,19 @@ class _ReferralsPageState extends State<ReferralsPage> {
         'patientSurname': _patientSurnameController.text.trim(),
         'patientFirstName': _patientFirstNameController.text.trim(),
         'patientMiddleName': _patientMiddleNameController.text.trim(),
-        'patientRecordId': '',
+        'patientRecordId': (_selectedPatientSeed?['patientId'] ??
+                _selectedPatientSeed?['linkedPatientId'] ??
+                '')
+            .toString(),
+        'patientId': (_selectedPatientSeed?['patientId'] ??
+                _selectedPatientSeed?['id'] ??
+                '')
+            .toString(),
+        'linkedPatientId': (_selectedPatientSeed?['linkedPatientId'] ??
+                _selectedPatientSeed?['patientId'] ??
+                _selectedPatientSeed?['id'] ??
+                '')
+            .toString(),
         'patientAge': _patientAgeController.text.trim(),
         'patientSex': _patientSexController.text.trim(),
         'chiefComplaint': _chiefComplaintController.text.trim(),
@@ -451,6 +770,12 @@ class _ReferralsPageState extends State<ReferralsPage> {
           'actionTaken': _actionTakenController.text.trim(),
         },
         'referralFormVersion': 2,
+        'selectedPatientSourceModules': _selectedPatientSeed == null
+            ? const <String>[]
+            : List<String>.from(
+                _selectedPatientSeed!['sourceModules'] as List? ??
+                    const <String>[],
+              ),
         'barangayReferralPath': _scope.barangayCode.trim().isEmpty
             ? ''
             : '${BarangayFirestorePaths.barangayDocumentPath(_scope.barangayCode)}/referrals/${referralRef.id}',
@@ -474,13 +799,30 @@ class _ReferralsPageState extends State<ReferralsPage> {
 
       await batch.commit();
 
+      DoctorAssignmentExecutionResult? assignmentResult;
+      if ((_selectedPreferredDoctorUid?.isNotEmpty ?? false) ||
+          _autoAssignDoctor) {
+        try {
+          assignmentResult = await _accountPolicyService.assignDoctorToReferral(
+            referralId: referralRef.id,
+            preferredDoctorUid: _selectedPreferredDoctorUid,
+          );
+        } catch (_) {}
+      }
+
       if (mounted) {
         _resetReferralForm();
       }
 
+      final assignedDoctorName =
+          assignmentResult?.recommendation?.doctorName ?? '';
+      final assignedDoctorNotice = assignedDoctorName.isNotEmpty
+          ? ' Assigned to $assignedDoctorName.'
+          : '';
+
       Get.snackbar(
         'Referral submitted',
-        'The referral was sent to CHO for real-time review and doctor assignment.',
+        'The referral was sent to CHO for real-time review.$assignedDoctorNotice',
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
@@ -1228,6 +1570,100 @@ class _ReferralsPageState extends State<ReferralsPage> {
               style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72)),
             ),
             const SizedBox(height: 18),
+            _buildFormSection('Registered Patient Lookup & Timeline', [
+              TextFormField(
+                controller: _patientLookupController,
+                style: const TextStyle(color: _lightOffWhite),
+                decoration: _inputDecoration('Search registered patient by name...').copyWith(
+                  prefixIcon: const Icon(Icons.person_search_outlined, color: _primaryAqua),
+                  suffixIcon: _isSearchingSharedPatients
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: Padding(
+                            padding: EdgeInsets.all(12),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: _primaryAqua),
+                          ),
+                        )
+                      : (_selectedPatientSeed != null
+                          ? IconButton(
+                              icon: const Icon(Icons.history_edu_rounded, color: Colors.greenAccent),
+                              tooltip: 'View Patient History Timeline',
+                              onPressed: () => _showSharedPatientTimeline(_selectedPatientSeed!),
+                            )
+                          : null),
+                ),
+                onChanged: _scheduleSharedPatientSearch,
+              ),
+              if (_sharedPatientMatches.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 180),
+                  decoration: BoxDecoration(
+                    color: _darkDeepTeal,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: _sharedPatientMatches.length,
+                    separatorBuilder: (_, __) => Divider(color: _primaryAqua.withValues(alpha: 0.1), height: 1),
+                    itemBuilder: (context, index) {
+                      final match = _sharedPatientMatches[index];
+                      final name = (match['patientName'] ?? match['name'] ?? 'Unnamed').toString();
+                      final age = (match['age'] ?? '').toString();
+                      final sex = (match['gender'] ?? match['sex'] ?? '').toString();
+                      final brgy = (match['barangay'] ?? '').toString();
+                      return ListTile(
+                        dense: true,
+                        title: Text(name, style: const TextStyle(color: _lightOffWhite, fontWeight: FontWeight.w600)),
+                        subtitle: Text('$age yrs • $sex • $brgy', style: const TextStyle(color: _mutedCoolGray, fontSize: 11)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.timeline_rounded, color: _primaryAqua, size: 18),
+                              tooltip: 'Patient Timeline',
+                              onPressed: () => _showSharedPatientTimeline(match),
+                            ),
+                            const Icon(Icons.touch_app_outlined, color: Colors.greenAccent, size: 18),
+                          ],
+                        ),
+                        onTap: () => _applyPatientSeed(match),
+                      );
+                    },
+                  ),
+                ),
+              ],
+              if (_selectedPatientSeed != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Linked Patient: ${_selectedPatientSeed!['patientName'] ?? _selectedPatientSeed!['name']}',
+                          style: const TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => _showSharedPatientTimeline(_selectedPatientSeed!),
+                        icon: const Icon(Icons.history, size: 15, color: Colors.greenAccent),
+                        label: const Text('Timeline', style: TextStyle(color: Colors.greenAccent, fontSize: 11)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ]),
             _buildFormSection('Referral Type', [
               Wrap(
                 spacing: 10,
@@ -1966,6 +2402,24 @@ class _ReferralsPageState extends State<ReferralsPage> {
                     side: const BorderSide(color: Colors.greenAccent),
                   ),
                 ),
+              OutlinedButton.icon(
+                onPressed: () => ClinicalFormPdfService.showExportDialog(
+                  context,
+                  formType: ClinicalFormType.referral,
+                  record: {
+                    ...data,
+                    'id': doc.id,
+                  },
+                ),
+                icon: const Icon(Icons.picture_as_pdf_outlined, color: _primaryAqua),
+                label: const Text('Export Form PDF / Print'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _lightOffWhite,
+                  side: BorderSide(
+                    color: _primaryAqua.withValues(alpha: 0.32),
+                  ),
+                ),
+              ),
             ],
           ),
         ],
@@ -2104,13 +2558,16 @@ class _ReferralsPageState extends State<ReferralsPage> {
                   );
                 }
 
-                if (!snapshot.hasData) {
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !snapshot.hasData) {
                   return const Center(
                     child: CircularProgressIndicator(color: _primaryAqua),
                   );
                 }
 
-                final docs = _sortedDocs(snapshot.data!.docs);
+                final docs = snapshot.hasData
+                    ? _sortedDocs(snapshot.data!.docs)
+                    : <QueryDocumentSnapshot<Map<String, dynamic>>>[];
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
                   child: Column(

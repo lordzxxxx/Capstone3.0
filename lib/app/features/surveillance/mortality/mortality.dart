@@ -14,6 +14,8 @@ import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
+import 'package:mycapstone_project/app/features/patients/patient.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
 import 'package:mycapstone_project/app/shared/services/clinical_form_pdf_service.dart';
 
 const Color _primaryAqua = AppDesign.blue;
@@ -1902,13 +1904,33 @@ class _MortalityPageState extends State<MortalityPage>
     );
   }
 
-  void _showAddRecordDialog({Map<String, dynamic>? patientSeed}) {
+  Future<void> _showAddRecordDialog({Map<String, dynamic>? patientSeed}) async {
+    patientSeed = await _patientHistoryService.resolveRegisteredPatient(
+      patientSeed,
+    );
+    if (patientSeed == null) {
+      if (!mounted) return;
+      patientSeed = await PatientFirstServiceSelector.selectRegisteredPatient(
+        context,
+        serviceLabel: 'Mortality',
+        patientService: _patientHistoryService,
+        onRegisterPatient: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                const PatientRecordPage(openRegistrationOnLoad: true),
+          ),
+        ),
+      );
+      if (!mounted || patientSeed == null) return;
+    }
+
     final nameController = TextEditingController(
       text:
-          (patientSeed?['name'] ??
-                  patientSeed?['patientName'] ??
-                  patientSeed?['fullName'] ??
-                  patientSeed?['patient'] ??
+          (patientSeed['name'] ??
+                  patientSeed['patientName'] ??
+                  patientSeed['fullName'] ??
+                  patientSeed['patient'] ??
                   '')
               .toString(),
     );
@@ -2178,6 +2200,7 @@ class _MortalityPageState extends State<MortalityPage>
                     causeController.text,
                     placeController.text,
                     reportedByController.text,
+                    patientSeed: patientSeed,
                   );
                   if (saved && mounted) {
                     Navigator.pop(context);
@@ -2209,8 +2232,9 @@ class _MortalityPageState extends State<MortalityPage>
     String gender,
     String cause,
     String place,
-    String reportedBy,
-  ) async {
+    String reportedBy, {
+    Map<String, dynamic>? patientSeed,
+  }) async {
     if (name.isEmpty || age.isEmpty || cause.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -2225,9 +2249,25 @@ class _MortalityPageState extends State<MortalityPage>
 
     try {
       final parsedAge = int.parse(age);
+      final linkedPatientId = (patientSeed?['linkedPatientId'] ??
+              patientSeed?['id'] ??
+              patientSeed?['patientId'] ??
+              '')
+          .toString()
+          .trim();
+      final patientId = (patientSeed?['patientId'] ??
+              patientSeed?['patientCode'] ??
+              linkedPatientId)
+          .toString()
+          .trim();
       final newRecord = {
         'id': '${DateTime.now().millisecondsSinceEpoch}',
+        if (linkedPatientId.isNotEmpty) 'linkedPatientId': linkedPatientId,
+        if (patientId.isNotEmpty) 'patientId': patientId,
+        if (patientSeed?['patientCode'] != null)
+          'patientCode': patientSeed!['patientCode'],
         'name': name,
+        'patientName': name,
         'date': DateTime.now().toString().split(' ')[0],
         'month': _getMonthName(DateTime.now().month),
         'age': parsedAge.toString(),

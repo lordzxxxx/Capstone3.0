@@ -24,12 +24,12 @@ class PatientFirstServiceSelector extends StatefulWidget {
   });
 
   final String serviceLabel;
-  final PatientCenteredHistoryService patientService;
+  final dynamic patientService;
 
   static Future<PatientSelectionResult?> show(
     BuildContext context, {
     required String serviceLabel,
-    required PatientCenteredHistoryService patientService,
+    required dynamic patientService,
   }) {
     return showDialog<PatientSelectionResult>(
       context: context,
@@ -44,7 +44,7 @@ class PatientFirstServiceSelector extends StatefulWidget {
   static Future<Map<String, dynamic>?> selectRegisteredPatient(
     BuildContext context, {
     required String serviceLabel,
-    required PatientCenteredHistoryService patientService,
+    required dynamic patientService,
     required Future<void> Function() onRegisterPatient,
   }) async {
     final result = await show(

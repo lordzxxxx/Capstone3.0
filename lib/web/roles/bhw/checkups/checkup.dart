@@ -4815,13 +4815,10 @@ class _NewCheckUpFullScreenModalState
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   const SizedBox(width: 12),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.referralStrong,
-                      side: const BorderSide(
-                        color: AppColors.referral,
-                        width: 1.2,
-                      ),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade700,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 12,
@@ -4829,11 +4826,15 @@ class _NewCheckUpFullScreenModalState
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
+                      elevation: 2,
                     ),
-                    icon: const Icon(Icons.local_hospital_outlined, size: 18),
+                    icon: const Icon(Icons.local_hospital_outlined, size: 18, color: Colors.white),
                     label: const Text(
                       'Save & Refer to CHO',
-                      style: TextStyle(fontWeight: FontWeight.w800),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
                     ),
                     onPressed: _isSaving
                         ? null

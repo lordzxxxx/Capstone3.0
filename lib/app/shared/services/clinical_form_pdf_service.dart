@@ -16,6 +16,7 @@ enum ClinicalFormType {
   morbidity,
   mortality,
   patientRegistration,
+  referral,
 }
 
 class ClinicalFormPdfService {
@@ -26,6 +27,7 @@ class ClinicalFormPdfService {
     ClinicalFormType.morbidity: 'MBD-2026',
     ClinicalFormType.mortality: 'MOR-2026',
     ClinicalFormType.patientRegistration: 'PAT-2026',
+    ClinicalFormType.referral: 'REF-2026',
   };
 
   static const Map<ClinicalFormType, String> _formTitles = {
@@ -35,6 +37,7 @@ class ClinicalFormPdfService {
     ClinicalFormType.morbidity: 'Notifiable Disease Morbidity Surveillance',
     ClinicalFormType.mortality: 'Community Mortality Reporting Notification',
     ClinicalFormType.patientRegistration: 'Patient Master Registration Card',
+    ClinicalFormType.referral: 'Standard Patient Referral Form',
   };
 
   static String getFormCode(ClinicalFormType type) => _formCodes[type] ?? 'MED-2026';
@@ -590,6 +593,8 @@ class ClinicalFormPdfService {
         return _buildMortalityContent(r, isBlank: isBlank);
       case ClinicalFormType.patientRegistration:
         return _buildPatientRegistrationContent(r, isBlank: isBlank);
+      case ClinicalFormType.referral:
+        return _buildReferralContent(r, isBlank: isBlank);
     }
   }
 
@@ -971,6 +976,119 @@ class ClinicalFormPdfService {
         {'label': 'Registration Date', 'value': regDate, 'blankGuide': 'YYYY-MM-DD'},
         {'label': 'Registered By', 'value': registrar, 'blankGuide': '____________________'},
       ], isBlank: isBlank),
+    ];
+  }
+
+  static List<pw.Widget> _buildReferralContent(Map<String, dynamic> r, {bool isBlank = false}) {
+    final patient = (r['patient'] ?? r['patientName'] ?? r['fullName'] ?? 'Juan Miguel Dela Cruz').toString();
+    final patientId = (r['patientId'] ?? r['patientRecordId'] ?? r['id'] ?? 'PAT-2026-0105').toString();
+    final age = (r['patientAge'] ?? r['age'] ?? '34').toString();
+    final gender = (r['patientSex'] ?? r['gender'] ?? r['sex'] ?? 'Male').toString();
+    final address = (r['patientAddress'] ?? r['address'] ?? 'Purok 4, Sayre Highway').toString();
+    final barangay = (r['barangay'] ?? 'Casisang').toString();
+    final referralDateTime = (r['referralDateTime'] ?? r['date'] ?? '2026-08-25 10:30 AM').toString();
+    final referredTo = (r['referredTo'] ?? r['preferredDoctorName'] ?? 'City Health Office / Specialist').toString();
+    final referralType = (r['referralCategorySummary'] ??
+            (r['referralCategories'] is List
+                ? (r['referralCategories'] as List).join(', ')
+                : (r['referralType'] ?? 'Emergency')))
+        .toString();
+    final referralReason = (r['referralReason'] ?? 'Hospital Capability').toString();
+    final chiefComplaint = (r['chiefComplaint'] ?? r['chiefComplaints'] ?? 'Acute severe chest pain, shortness of breath').toString();
+    final medicalHistory = (r['medicalHistory'] ?? 'Hypertension for 5 years, Non-compliant on meds').toString();
+    final vitalSigns = (r['completeVitalSigns'] ?? 'BP: 160/100 mmHg | HR: 110 bpm | RR: 24 cpm | Temp: 37.1 C | SpO2: 94%').toString();
+    final impression = (r['impression'] ?? r['currentDiagnosis'] ?? 'Hypertensive Urgency, rule out Acute Coronary Syndrome').toString();
+    final actionTaken = (r['actionTaken'] ?? r['currentTreatment'] ?? 'Given sublingual Isosorbide Dinitrate, O2 inhalation at 4 LPM, called CHO ambulance').toString();
+    final lastMeal = (r['lastMealTime'] ?? '07:30 AM').toString();
+    final surgical = (r['surgicalProcedure'] ?? (r['hasSurgicalOperations'] == true ? 'Yes' : 'None')).toString();
+    final insurance = (r['healthInsuranceCoverageType'] ?? (r['hasHealthInsuranceCoverage'] == true ? 'PhilHealth Indigent' : 'None')).toString();
+    final assignedDoctor = (r['assignedDoctorName'] ?? r['referredTo'] ?? 'Dr. Ramon Reyes, MD').toString();
+    final submittedBy = (r['createdByName'] ?? r['createdByEmail'] ?? 'BHW Assigned Worker').toString();
+
+    final genderDisplay = gender.toLowerCase() == 'female' ? '[ ] Male  [X] Female' : '[X] Male  [ ] Female';
+
+    return [
+      _buildSection('1. PATIENT DEMOGRAPHIC & CONTACT INFORMATION'),
+      _buildFieldRow([
+        {'label': 'Patient Full Name', 'value': patient, 'blankGuide': '______________________________', 'flex': '2'},
+        {'label': 'Patient ID', 'value': patientId, 'blankGuide': 'PAT-2026-____', 'flex': '1'},
+      ], isBlank: isBlank),
+      _buildFieldRow([
+        {'label': 'Age', 'value': age, 'blankGuide': '___ yrs'},
+        {'label': 'Sex', 'value': genderDisplay, 'blankGuide': '[ ] Male  [ ] Female'},
+        {'label': 'Health Insurance', 'value': insurance, 'blankGuide': '[ ] PhilHealth  [ ] HMO  [ ] None', 'flex': '2'},
+      ], isBlank: isBlank),
+      _buildFieldRow([
+        {'label': 'Residential Address', 'value': address, 'blankGuide': '______________________________', 'flex': '2'},
+        {'label': 'Originating Barangay', 'value': barangay, 'blankGuide': '____________________', 'flex': '1'},
+      ], isBlank: isBlank),
+
+      _buildSection('2. REFERRAL CLASSIFICATION & TRIAGE'),
+      _buildFieldRow([
+        {'label': 'Referral Date & Time', 'value': referralDateTime, 'blankGuide': 'YYYY-MM-DD HH:MM'},
+        {'label': 'Referral Type', 'value': referralType, 'blankGuide': '[ ] Emergency  [ ] Ambulatory  [ ] Medico-legal', 'flex': '2'},
+      ], isBlank: isBlank),
+      _buildFieldRow([
+        {'label': 'Referred Facility / Physician', 'value': referredTo, 'blankGuide': '______________________________', 'flex': '2'},
+        {'label': 'Reason for Referral', 'value': referralReason, 'blankGuide': '[ ] Hospital Capability [ ] Lack of Specialist [ ] Financial', 'flex': '2'},
+      ], isBlank: isBlank),
+      _buildBoxField('Chief Complaints / Reason for Consultation', chiefComplaint, isBlank: isBlank, minHeight: 20),
+
+      _buildSection('3. CLINICAL FINDINGS & INITIAL INTERVENTIONS'),
+      _buildBoxField('Complete Vital Signs', vitalSigns, isBlank: isBlank, minHeight: 18),
+      _buildFieldRow([
+        {'label': 'Medical History', 'value': medicalHistory, 'blankGuide': '______________________________', 'flex': '2'},
+        {'label': 'Last Meal Time', 'value': lastMeal, 'blankGuide': 'HH:MM AM/PM', 'flex': '1'},
+      ], isBlank: isBlank),
+      _buildFieldRow([
+        {'label': 'Surgical History', 'value': surgical, 'blankGuide': '[ ] None  [ ] Yes: ____________________', 'flex': '2'},
+      ], isBlank: isBlank),
+      _buildBoxField('Clinical Impression / Preliminary Diagnosis', impression, isBlank: isBlank, minHeight: 20),
+      _buildBoxField('Action Taken / Emergency Treatment Given (Phone / RECO)', actionTaken, isBlank: isBlank, minHeight: 20),
+
+      _buildSection('4. WORKFLOW ASSIGNMENT & OFFICIAL AUTHORIZATION'),
+      _buildFieldRow([
+        {'label': 'Assigned Doctor', 'value': assignedDoctor, 'blankGuide': 'Dr. ____________________'},
+        {'label': 'Submitted By', 'value': submittedBy, 'blankGuide': '____________________'},
+      ], isBlank: isBlank),
+      pw.SizedBox(height: 8),
+      pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              pw.Container(width: 110, height: 1, color: PdfColors.black),
+              pw.SizedBox(height: 2),
+              pw.Text('Barangay Captain', style: const pw.TextStyle(fontSize: 7)),
+            ],
+          ),
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              pw.Container(width: 110, height: 1, color: PdfColors.black),
+              pw.SizedBox(height: 2),
+              pw.Text('Kagawad in Health', style: const pw.TextStyle(fontSize: 7)),
+            ],
+          ),
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              pw.Container(width: 110, height: 1, color: PdfColors.black),
+              pw.SizedBox(height: 2),
+              pw.Text('BHW Head', style: const pw.TextStyle(fontSize: 7)),
+            ],
+          ),
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              pw.Container(width: 110, height: 1, color: PdfColors.black),
+              pw.SizedBox(height: 2),
+              pw.Text('BHW Assigned on Duty', style: const pw.TextStyle(fontSize: 7)),
+            ],
+          ),
+        ],
+      ),
     ];
   }
 }

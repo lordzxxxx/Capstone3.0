@@ -15,6 +15,8 @@ import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
 import 'package:mycapstone_project/app/shared/services/clinical_form_pdf_service.dart';
+import 'package:mycapstone_project/app/features/patients/patient.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
 import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const Color _primaryAqua = AppDesign.blue;
@@ -1829,10 +1831,30 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
     }
   }
 
-  void _showNewPrenatalModal(
+  Future<void> _showNewPrenatalModal(
     BuildContext context, {
     Map<String, dynamic>? patientSeed,
-  }) {
+  }) async {
+    patientSeed = await _patientHistoryService.resolveRegisteredPatient(
+      patientSeed,
+    );
+    if (patientSeed == null) {
+      if (!context.mounted) return;
+      patientSeed = await PatientFirstServiceSelector.selectRegisteredPatient(
+        context,
+        serviceLabel: 'Prenatal',
+        patientService: _patientHistoryService,
+        onRegisterPatient: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                const PatientRecordPage(openRegistrationOnLoad: true),
+          ),
+        ),
+      );
+      if (!context.mounted || patientSeed == null) return;
+    }
+
     // Text editing controllers
     final firstNameController = TextEditingController();
     final surnameController = TextEditingController();
@@ -2457,7 +2479,16 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                                 }
 
                                 // Create new prenatal record
+                                final linkedPatientId = (patientSeed?['linkedPatientId'] ??
+                                        patientSeed?['id'] ??
+                                        patientIdController.text)
+                                    .toString()
+                                    .trim();
                                 final newRecord = {
+                                  if (linkedPatientId.isNotEmpty)
+                                    'linkedPatientId': linkedPatientId,
+                                  if (patientSeed?['patientCode'] != null)
+                                    'patientCode': patientSeed!['patientCode'],
                                   'patientName':
                                       '${firstNameController.text} ${surnameController.text}',
                                   'age': ageController.text,
