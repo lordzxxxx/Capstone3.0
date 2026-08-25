@@ -13,7 +13,7 @@
     "provenance": "/Users/lylesmac/capstone2-modify/backend/dataset/processed/row_provenance.csv"
   },
   "training": {
-    "trained_at_utc": "2026-08-11T04:05:09.641141+00:00",
+    "trained_at_utc": "2026-08-25T05:11:24.247918+00:00",
     "hyperparameters": {
       "bootstrap": true,
       "ccp_alpha": 0.0,
@@ -79,6 +79,106 @@
       "std_f1_weighted": 0.0023531674547399048,
       "mean_f1_macro": 0.8883708928473002,
       "std_f1_macro": 0.002335712796440583
+    },
+    "calibration_evaluation": {
+      "definitions": {
+        "multiclass_log_loss": "-mean(log(probability assigned to the true class))",
+        "multiclass_brier_score": "mean(sum((predicted probability - one-hot truth)^2 across classes))",
+        "top_label_ece": "sum(n_bin / n * abs(bin accuracy - bin mean confidence)); 10 equal-width confidence bins by default"
+      },
+      "records": 18799,
+      "classes": 100,
+      "bin_count": 10,
+      "multiclass_log_loss": 0.7509595737413562,
+      "multiclass_brier_score": 0.29455283867380866,
+      "top_label_expected_calibration_error": 0.35116430979408997,
+      "top_label_maximum_calibration_error": 0.47422184908903986,
+      "top1_accuracy": 0.8933985850311187,
+      "mean_top1_confidence": 0.5422342752370286,
+      "mean_confidence_minus_accuracy": -0.3511643097940901,
+      "bins": [
+        {
+          "lower_bound_inclusive": 0.0,
+          "upper_bound_inclusive": 0.1,
+          "records": 175,
+          "mean_confidence": 0.07162346712735182,
+          "empirical_accuracy": 0.4114285714285714,
+          "absolute_gap": 0.3398051043012196
+        },
+        {
+          "lower_bound_inclusive": 0.1,
+          "upper_bound_inclusive": 0.2,
+          "records": 1025,
+          "mean_confidence": 0.1592608741303254,
+          "empirical_accuracy": 0.48292682926829267,
+          "absolute_gap": 0.32366595513796725
+        },
+        {
+          "lower_bound_inclusive": 0.2,
+          "upper_bound_inclusive": 0.3,
+          "records": 1790,
+          "mean_confidence": 0.25303438328498096,
+          "empirical_accuracy": 0.6229050279329609,
+          "absolute_gap": 0.3698706446479799
+        },
+        {
+          "lower_bound_inclusive": 0.3,
+          "upper_bound_inclusive": 0.4,
+          "records": 2359,
+          "mean_confidence": 0.35118467339021076,
+          "empirical_accuracy": 0.8075455701568461,
+          "absolute_gap": 0.4563608967666354
+        },
+        {
+          "lower_bound_inclusive": 0.4,
+          "upper_bound_inclusive": 0.5,
+          "records": 2603,
+          "mean_confidence": 0.4508645896355087,
+          "empirical_accuracy": 0.9250864387245485,
+          "absolute_gap": 0.47422184908903986
+        },
+        {
+          "lower_bound_inclusive": 0.5,
+          "upper_bound_inclusive": 0.6,
+          "records": 2761,
+          "mean_confidence": 0.550593911221463,
+          "empirical_accuracy": 0.9840637450199203,
+          "absolute_gap": 0.4334698337984574
+        },
+        {
+          "lower_bound_inclusive": 0.6,
+          "upper_bound_inclusive": 0.7,
+          "records": 2999,
+          "mean_confidence": 0.649547519008511,
+          "empirical_accuracy": 0.9989996665555185,
+          "absolute_gap": 0.3494521475470075
+        },
+        {
+          "lower_bound_inclusive": 0.7,
+          "upper_bound_inclusive": 0.8,
+          "records": 2653,
+          "mean_confidence": 0.7482721077830999,
+          "empirical_accuracy": 1.0,
+          "absolute_gap": 0.25172789221690006
+        },
+        {
+          "lower_bound_inclusive": 0.8,
+          "upper_bound_inclusive": 0.9,
+          "records": 1863,
+          "mean_confidence": 0.8467319880148794,
+          "empirical_accuracy": 1.0,
+          "absolute_gap": 0.15326801198512063
+        },
+        {
+          "lower_bound_inclusive": 0.9,
+          "upper_bound_inclusive": 1.0,
+          "records": 571,
+          "mean_confidence": 0.9315210613168341,
+          "empirical_accuracy": 1.0,
+          "absolute_gap": 0.0684789386831659
+        }
+      ],
+      "interpretation": "Lower log loss, Brier score, and calibration error are better. Calibration measures probability reliability on this held-out dataset; it does not establish diagnosis safety or clinical validity."
     }
   },
   "production_status": "offline artifact; /predict remains disabled",

@@ -99,17 +99,37 @@
       font-weight: 600;
     }
 
+    #web-connectivity-status {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 10001;
+      box-sizing: border-box;
+      padding: 9px 20px;
+      color: #FFFFFF;
+      background: #B45309;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35;
+      text-align: center;
+      box-shadow: 0 4px 14px rgba(7, 26, 51, 0.18);
+    }
+
+    #web-connectivity-status[data-state="online"] {
+      background: #18794E;
+    }
+
     @keyframes startup-spin {
       to { transform: rotate(360deg); }
     }
   </style>
   
-  <!-- Google Sign-In -->
-  <meta name="google-signin-client_id" content="YOUR_WEB_CLIENT_ID.apps.googleusercontent.com">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Firebase Auth owns the web Google provider flow. Loading the separate
+       Google Identity script here created an unused second client and failed
+       whenever the placeholder client ID was evaluated. -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
+  <div id="web-connectivity-status" role="status" aria-live="polite" hidden></div>
   <div id="app-startup-loader" role="status" aria-live="polite">
     <div class="startup-content">
       <img src="assets/newlogo_white.png" alt="AI-DSUHIS">
@@ -119,6 +139,39 @@
   </div>
 
   <script>
+    // Browser connectivity owns this route-independent notice. Keeping it
+    // outside Flutter means it survives navigator/shell rebuilds and can
+    // report an interrupted connection even while the canvas is busy.
+    (() => {
+      const banner = document.getElementById('web-connectivity-status');
+      if (!banner) return;
+
+      let wasOffline = false;
+      let restoredTimer;
+      const showOffline = () => {
+        clearTimeout(restoredTimer);
+        wasOffline = true;
+        banner.dataset.state = 'offline';
+        banner.textContent = 'You are offline. Showing saved data; new changes will sync when the connection returns.';
+        banner.hidden = false;
+      };
+      const showOnline = () => {
+        if (!wasOffline) return;
+        clearTimeout(restoredTimer);
+        wasOffline = false;
+        banner.dataset.state = 'online';
+        banner.textContent = 'Connection restored. Syncing the latest records.';
+        banner.hidden = false;
+        restoredTimer = setTimeout(() => {
+          banner.hidden = true;
+        }, 4000);
+      };
+
+      window.addEventListener('offline', showOffline);
+      window.addEventListener('online', showOnline);
+      if (!navigator.onLine) showOffline();
+    })();
+
     // Prevent stale UI from an old service worker during development.
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then((registrations) => {

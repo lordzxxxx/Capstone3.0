@@ -20,4 +20,19 @@ void main() {
       isTrue,
     );
   });
+
+  test('browser offline state wins over a connected network interface', () {
+    expect(
+      WebConnectivityBanner.isOnline([
+        ConnectivityResult.wifi,
+      ], browserOnline: false),
+      isFalse,
+    );
+    expect(
+      WebConnectivityBanner.isOnline([
+        ConnectivityResult.wifi,
+      ], browserOnline: true),
+      isTrue,
+    );
+  });
 }

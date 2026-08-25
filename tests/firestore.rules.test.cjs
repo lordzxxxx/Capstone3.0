@@ -315,6 +315,47 @@ describe('BHW referral workflow boundaries', () => {
   });
 });
 
+describe('nested barangay collection boundaries', () => {
+  beforeEach(async () => {
+    await seed(
+      'users/bhw-1',
+      activeProfile('bhw-1', 'bhw@example.test', {
+        barangayCode: 'poblacion-10',
+      }),
+    );
+    await seed('barangays/POBLACION-10/checkup_records/checkup-1', {
+      patientName: 'Same barangay patient',
+      barangay: 'Barangay 10',
+      barangayCode: 'POBLACION-10',
+    });
+    await seed('barangays/POBLACION-11/checkup_records/checkup-2', {
+      patientName: 'Other barangay patient',
+      barangay: 'Barangay 11',
+      barangayCode: 'POBLACION-11',
+    });
+  });
+
+  it('accepts canonical lowercase profile codes for uppercase web paths', async () => {
+    const db = testEnv
+      .authenticatedContext('bhw-1', {email: 'bhw@example.test'})
+      .firestore();
+
+    await assertSucceeds(
+      db.doc('barangays/POBLACION-10/checkup_records/checkup-1').get(),
+    );
+  });
+
+  it('still rejects a different barangay path', async () => {
+    const db = testEnv
+      .authenticatedContext('bhw-1', {email: 'bhw@example.test'})
+      .firestore();
+
+    await assertFails(
+      db.doc('barangays/POBLACION-11/checkup_records/checkup-2').get(),
+    );
+  });
+});
+
 // Added 2026-08-11: the JDK/emulator dependency that previously blocked
 // running these tests at all is now available. These cover checklist
 // items the original 8 tests did not exercise directly: unauthenticated

@@ -712,7 +712,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       onPressed: _showAddPatientModal,
       style: AppButtonStyles.primary(),
       icon: const Icon(Icons.person_add_outlined, size: 18),
-      label: const Text('Add'),
+      label: const Text('Add Patient'),
     );
   }
 

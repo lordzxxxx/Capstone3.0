@@ -12,7 +12,7 @@ const profiles = [
     role: 'bhw',
     fullName: 'Browser QA BHW',
     barangay: 'Barangay 10',
-    barangayCode: 'barangay_10',
+    barangayCode: 'poblacion-10',
     accessScope: 'barangay',
   },
   {

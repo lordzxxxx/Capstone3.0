@@ -59,6 +59,7 @@ import 'package:mycapstone_project/web/features/auth/bhw_registration.dart'
 import 'package:mycapstone_project/web/features/auth/forgot.dart' as web_forgot;
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/shared/utils/browser_location.dart';
 import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart'
     as web_bhw_dashboard;
 import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart'
@@ -88,7 +89,6 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart'
 import 'package:mycapstone_project/web/shared/utils/auth_guard_middleware.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_route_middleware.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_role_gate.dart';
-import 'package:mycapstone_project/web/shared/widgets/web_connectivity_banner.dart';
 import 'package:mycapstone_project/web/roles/cho/dashboard/cho_dashboard.dart'
     as web_cho_dashboard;
 import 'package:mycapstone_project/web/roles/cho/portal/cho_module_workspace.dart'
@@ -133,6 +133,8 @@ const bool kUseFirebaseEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR');
 // is supplied accidentally.
 const bool kBrowserQaMode = bool.fromEnvironment('BROWSER_QA');
 
+String? _webInitialRoute;
+
 Widget _guardWebPage({
   required Set<String> allowedRoles,
   required Widget child,
@@ -148,6 +150,11 @@ void main() async {
   // `/#/bhw/prenatal?view=insights`, which breaks direct links and makes
   // refresh/deep-link handling inconsistent with the route definitions.
   if (kIsWeb) {
+    final platformRoute =
+        WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+    final requestedRoute = browserLocationRoute() ?? platformRoute;
+    _webInitialRoute =
+        WebRoutes.startupOverride(requestedRoute) ?? requestedRoute;
     usePathUrlStrategy();
   }
 
@@ -300,10 +307,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final browserRoute =
+    final platformRoute =
         WidgetsBinding.instance.platformDispatcher.defaultRouteName;
     final initialRoute = kIsWeb
-        ? WebRoutes.startupOverride(browserRoute)
+        ? _webInitialRoute ??
+              WebRoutes.startupOverride(platformRoute) ??
+              platformRoute
         : null;
 
     return GetMaterialApp(
@@ -316,10 +325,6 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       defaultTransition: kIsWeb ? Transition.fadeIn : null,
       transitionDuration: kIsWeb ? const Duration(milliseconds: 200) : null,
-      builder: kIsWeb
-          ? (context, child) =>
-                WebConnectivityBanner(child: child ?? const SizedBox.shrink())
-          : null,
       // Move the root entry to the branded path while preserving direct deep
       // links such as /login and /bhw/dashboard.
       initialRoute: initialRoute,

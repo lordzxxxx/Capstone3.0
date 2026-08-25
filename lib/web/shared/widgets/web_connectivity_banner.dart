@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
+import 'package:mycapstone_project/web/shared/utils/browser_online_state.dart';
 
 /// The browser's network state is a useful UX signal, but it is not proof that
 /// Firestore is reachable. Firestore's persistent cache remains the source of
@@ -23,6 +24,13 @@ class WebConnectivityBanner extends StatefulWidget {
     return results.any((result) => result != ConnectivityResult.none);
   }
 
+  static bool isOnline(
+    List<ConnectivityResult> results, {
+    bool? browserOnline,
+  }) {
+    return browserOnline != false && isPotentiallyOnline(results);
+  }
+
   @override
   State<WebConnectivityBanner> createState() => _WebConnectivityBannerState();
 }
@@ -30,21 +38,38 @@ class WebConnectivityBanner extends StatefulWidget {
 class _WebConnectivityBannerState extends State<WebConnectivityBanner> {
   WebConnectionState _connectionState = WebConnectionState.checking;
   StreamSubscription<List<ConnectivityResult>>? _subscription;
+  StreamSubscription<bool>? _browserSubscription;
   Timer? _connectivityPollTimer;
   Timer? _restoredMessageTimer;
   bool _showRestoredMessage = false;
+  bool? _browserOnline;
 
   @override
   void initState() {
     super.initState();
+    _browserOnline = browserIsOnline();
     _initializeConnectivity();
     _subscription = Connectivity().onConnectivityChanged.listen(
       _updateConnectivity,
     );
+    _browserSubscription = browserOnlineChanges().listen((isOnline) {
+      _browserOnline = isOnline;
+      if (!isOnline) {
+        _updateConnectionState(isOnline: false);
+      } else {
+        unawaited(_pollConnectivity());
+      }
+    });
     // Browser online/offline events can be suppressed by embedded webviews,
     // DevTools network emulation, or a backgrounded tab. A lightweight poll
     // keeps the visible state honest without replacing the immediate stream.
-    _connectivityPollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _connectivityPollTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final observedBrowserState = browserIsOnline();
+      if (observedBrowserState == false) {
+        _browserOnline = false;
+        _updateConnectionState(isOnline: false);
+        return;
+      }
       unawaited(_pollConnectivity());
     });
   }
@@ -71,8 +96,17 @@ class _WebConnectivityBannerState extends State<WebConnectivityBanner> {
   }
 
   void _updateConnectivity(List<ConnectivityResult> results) {
+    _updateConnectionState(
+      isOnline: WebConnectivityBanner.isOnline(
+        results,
+        browserOnline: _browserOnline ?? browserIsOnline(),
+      ),
+    );
+  }
+
+  void _updateConnectionState({required bool isOnline}) {
     if (!mounted) return;
-    final nextState = WebConnectivityBanner.isPotentiallyOnline(results)
+    final nextState = isOnline
         ? WebConnectionState.online
         : WebConnectionState.offline;
     if (nextState == _connectionState) return;
@@ -93,6 +127,7 @@ class _WebConnectivityBannerState extends State<WebConnectivityBanner> {
   @override
   void dispose() {
     _subscription?.cancel();
+    _browserSubscription?.cancel();
     _connectivityPollTimer?.cancel();
     _restoredMessageTimer?.cancel();
     super.dispose();

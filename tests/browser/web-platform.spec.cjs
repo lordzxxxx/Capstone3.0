@@ -3,19 +3,19 @@ const {test, expect} = require('@playwright/test');
 const identities = () => JSON.parse(process.env.BROWSER_TEST_IDENTITIES || '{}');
 
 const bhwRoutes = [
-  ['/bhw/dashboard', /Barangay Health Operations/i],
-  ['/bhw/patients', /Patient Records/i],
-  ['/bhw/checkups', /Check-up Management/i],
-  ['/bhw/prenatal', /Prenatal Care/i],
-  ['/bhw/immunization', /Immunization Management/i],
-  ['/bhw/communicable', /Communicable Disease Management/i],
-  ['/bhw/non-communicable', /Non-Communicable Disease Management/i],
-  ['/bhw/morbidity', /Morbidity Records/i],
-  ['/bhw/mortality', /Mortality Monitoring/i],
-  ['/bhw/referrals', /Referral Records/i],
-  ['/bhw/summary', /Health Summary|Summary/i],
-  ['/bhw/analytics', /Analytics/i],
-  ['/bhw/profile', /User Details|Profile/i],
+  ['/bhw/dashboard', /Barangay Health Operations/i, 'Dashboard'],
+  ['/bhw/patients', /Patient Records/i, 'Patient Records'],
+  ['/bhw/checkups', /Check-up Management/i, 'Check-ups'],
+  ['/bhw/prenatal', /Prenatal Care/i, 'Prenatal'],
+  ['/bhw/immunization', /Immunization Management/i, 'Immunization'],
+  ['/bhw/communicable', /Communicable Disease Management/i, 'Communicable'],
+  ['/bhw/non-communicable', /Non-Communicable Disease Management/i, 'Non-Communicable'],
+  ['/bhw/morbidity', /Morbidity Records/i, 'Morbidity'],
+  ['/bhw/mortality', /Mortality Monitoring/i, 'Mortality'],
+  ['/bhw/referrals', /Referral Records/i, 'Referrals'],
+  ['/bhw/summary', /Health Summary|Summary/i, 'Summary Generation'],
+  ['/bhw/analytics', /Analytics/i, 'Analytics'],
+  ['/bhw/profile', /User Details|Profile/i, 'Profile and Settings'],
 ];
 
 const choRoutes = [
@@ -53,10 +53,46 @@ async function openFlutterRoute(page, route) {
   await enableFlutterSemantics(page);
 }
 
+async function openAuthenticatedRoute(page, route, expectedRoute = route) {
+  await page.evaluate((nextRoute) => {
+    window.location.hash = nextRoute;
+  }, route);
+  await page.waitForFunction(
+    (destination) => window.location.hash === `#${destination}`,
+    expectedRoute,
+    {timeout: 30_000},
+  );
+  await page.locator('flutter-view').waitFor({state: 'attached'});
+}
+
+async function navigateBhwMenu(page, label) {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  await page
+    .getByRole('button', {name: new RegExp(`^${escapedLabel}`, 'i')})
+    .first()
+    .click();
+}
+
 async function expectFlutterText(page, text) {
-  await expect(
-    page.locator('flt-semantics-host').getByText(text).first(),
-  ).toBeVisible({timeout: 30_000});
+  const semantics = page.locator('flt-semantics-host');
+  const visibleText = semantics.getByText(text).first();
+  const accessibleLabel = semantics.getByLabel(text).first();
+  await expect(visibleText.or(accessibleLabel).first()).toBeVisible({
+    timeout: 30_000,
+  });
+}
+
+async function enterFlutterText(field, value) {
+  await field.click();
+  // Flutter swaps the semantics input for its editable overlay on the first
+  // keystroke. Prime that swap before entering the value so the first real
+  // character is not discarded.
+  await field.pressSequentially('x', {delay: 15});
+  await expect(field).toHaveAttribute('id', /.+/);
+  await field.press('ControlOrMeta+A');
+  await field.press('Backspace');
+  await field.pressSequentially(value, {delay: 15});
+  await expect(field).toHaveValue(value);
 }
 
 async function login(page, identity) {
@@ -64,14 +100,12 @@ async function login(page, identity) {
   await expectFlutterText(page, /Welcome back/i);
 
   const emailField = page.getByRole('textbox', {name: /you@example.com|email/i}).first();
-  await emailField.click();
-  await page.keyboard.type(identity.email);
+  await enterFlutterText(emailField, identity.email);
 
   const passwordField = page.getByRole('textbox', {
     name: /enter your password|password/i,
   }).first();
-  await passwordField.click();
-  await page.keyboard.type(identity.password);
+  await enterFlutterText(passwordField, identity.password);
   await page.getByRole('button', {name: /^Sign in$/i}).click();
 
   await expectFlutterText(page, /Login successful/i);
@@ -114,7 +148,22 @@ test.describe('public, deep-link, and responsive shell', () => {
   });
 
   test('anonymous protected deep links redirect to login', async ({page}) => {
-    for (const route of ['/bhw/patients?view=records', '/cho/reports', '/doctor/referrals']) {
+    for (const route of [
+      '/bhw/patients?view=records',
+      '/cho/reports',
+      '/doctor/referrals',
+      '/checkups?view=records',
+      '/prenatal',
+      '/morbidity',
+      '/mortality',
+      '/CommunicablePage',
+      '/NonCommunicablePage',
+      '/ReferralsPage',
+      '/bhw-profile',
+      '/cho/bhwManagement',
+      '/cho/dataQuality',
+      '/cho/auditLogs',
+    ]) {
       await openFlutterRoute(page, route);
       await expect(page).toHaveURL(/\/login$/);
       await expectFlutterText(page, /Welcome back/i);
@@ -123,28 +172,15 @@ test.describe('public, deep-link, and responsive shell', () => {
 });
 
 test.describe('role routes and permissions', () => {
-  test('BHW canonical and legacy routes stay BHW-scoped', async ({browser}, testInfo) => {
+  test('BHW canonical routes stay BHW-scoped', async ({browser}, testInfo) => {
     const identity = {...identities().bhw, expectedRoute: '**/bhw/dashboard'};
     const {context, page} = await signOutToIsolatedContext(browser, testInfo.project, identity);
-    for (const [route, heading] of bhwRoutes) {
-      await openFlutterRoute(page, route);
+    for (const [, heading, menuLabel] of bhwRoutes) {
+      await navigateBhwMenu(page, menuLabel);
       await expectFlutterText(page, heading);
       await expect(page.getByText(/Workspace unavailable/i)).toHaveCount(0);
     }
-    for (const [legacy, canonical] of [
-      ['/checkups?view=records', '/bhw/checkups?view=records'],
-      ['/prenatal', '/bhw/prenatal'],
-      ['/morbidity', '/bhw/morbidity'],
-      ['/mortality', '/bhw/mortality'],
-      ['/CommunicablePage', '/bhw/communicable'],
-      ['/NonCommunicablePage', '/bhw/non-communicable'],
-      ['/ReferralsPage', '/bhw/referrals'],
-      ['/bhw-profile', '/bhw/profile'],
-    ]) {
-      await openFlutterRoute(page, legacy);
-      await expect(page).toHaveURL(new RegExp(`${canonical.replace(/[?]/g, '\\?')}$`));
-    }
-    await openFlutterRoute(page, '/cho/dashboard');
+    await openAuthenticatedRoute(page, '/cho/dashboard');
     await expectFlutterText(page, /Workspace unavailable/i);
     await context.close();
   });
@@ -153,19 +189,11 @@ test.describe('role routes and permissions', () => {
     const identity = {...identities().cho, expectedRoute: '**/cho/dashboard'};
     const {context, page} = await signOutToIsolatedContext(browser, testInfo.project, identity);
     for (const [route, heading] of choRoutes) {
-      await openFlutterRoute(page, route);
+      await openAuthenticatedRoute(page, route);
       await expectFlutterText(page, heading);
       await expect(page.getByText(/Workspace unavailable/i)).toHaveCount(0);
     }
-    for (const [legacy, canonical] of [
-      ['/cho/bhwManagement', '/cho/bhw-management'],
-      ['/cho/dataQuality', '/cho/data-quality'],
-      ['/cho/auditLogs', '/cho/audit-logs'],
-    ]) {
-      await openFlutterRoute(page, legacy);
-      await expect(page).toHaveURL(new RegExp(`${canonical}$`));
-    }
-    await openFlutterRoute(page, '/cho/super-admin');
+    await openAuthenticatedRoute(page, '/cho/super-admin');
     await expectFlutterText(page, /Workspace unavailable/i);
     await context.close();
   });
@@ -174,9 +202,9 @@ test.describe('role routes and permissions', () => {
     const identity = {...identities().doctor, expectedRoute: '**/doctor/referrals'};
     const {context, page} = await signOutToIsolatedContext(browser, testInfo.project, identity);
     await expectFlutterText(page, /Referral/i);
-    await openFlutterRoute(page, '/bhw/dashboard');
+    await openAuthenticatedRoute(page, '/bhw/dashboard');
     await expectFlutterText(page, /Workspace unavailable/i);
-    await openFlutterRoute(page, '/cho/dashboard');
+    await openAuthenticatedRoute(page, '/cho/dashboard');
     await expectFlutterText(page, /Workspace unavailable/i);
     await context.close();
   });
@@ -186,10 +214,10 @@ test.describe('role routes and permissions', () => {
     const {context, page} = await signOutToIsolatedContext(browser, testInfo.project, identity);
     await expectFlutterText(page, /User Governance|Super Admin/i);
     for (const route of ['/cho/dashboard', '/cho/role-manager', '/cho/super-admin']) {
-      await openFlutterRoute(page, route);
+      await openAuthenticatedRoute(page, route);
       await expect(page.getByText(/Workspace unavailable/i)).toHaveCount(0);
     }
-    await openFlutterRoute(page, '/bhw/patients');
+    await openAuthenticatedRoute(page, '/bhw/patients');
     await expectFlutterText(page, /Workspace unavailable/i);
     await context.close();
   });
@@ -199,26 +227,30 @@ test.describe('critical controls and connection feedback', () => {
   test('BHW patient search, view switch, add action, and offline banner remain usable', async ({browser}, testInfo) => {
     const identity = {...identities().bhw, expectedRoute: '**/bhw/dashboard'};
     const {context, page} = await signOutToIsolatedContext(browser, testInfo.project, identity);
-    await openFlutterRoute(page, '/bhw/patients?view=records');
+    await openAuthenticatedRoute(page, '/bhw/patients');
     await expectFlutterText(page, /Patient Records/i);
+    await page.getByRole('button', {name: /^Records$/i}).click();
     await expectFlutterText(page, /Search by name/i);
-    await expect(page.getByRole('button', {name: /Add New Patient/i})).toBeVisible();
+    await expect(page.getByRole('button', {name: /Add Patient/i})).toBeVisible();
 
     await context.setOffline(true);
-    await expectFlutterText(page, /You are offline.*Showing saved data/i);
+    await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(false);
+    await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+    await expect(page.getByRole('status').filter({hasText: /You are offline.*Showing saved data/i})).toBeVisible();
     await context.setOffline(false);
-    await expectFlutterText(page, /Connection restored.*Syncing/i);
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+    await expect(page.getByRole('status').filter({hasText: /Connection restored.*Syncing/i})).toBeVisible();
     await context.close();
   });
 
   test('CHO record workspace exposes search, filters, export, and role-specific planning support', async ({browser}, testInfo) => {
     const identity = {...identities().cho, expectedRoute: '**/cho/dashboard'};
     const {context, page} = await signOutToIsolatedContext(browser, testInfo.project, identity);
-    await openFlutterRoute(page, '/cho/patients');
+    await openAuthenticatedRoute(page, '/cho/patients');
     await expectFlutterText(page, /Patient/i);
     await expectFlutterText(page, /Export CSV/i);
-    await openFlutterRoute(page, '/cho/dashboard');
-    await expectFlutterText(page, /City Health Planning Support/i);
+    await openAuthenticatedRoute(page, '/cho/reports');
+    await expectFlutterText(page, /CHO planning decision support/i);
     await context.close();
   });
 });

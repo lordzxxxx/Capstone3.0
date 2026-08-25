@@ -208,7 +208,8 @@ service cloud.firestore {
 
     function sameBarangay(data) {
       return isSignedIn() && userRole() != '' && data != null && (
-        (('barangayCode' in data) && data.barangayCode == userBarangayCode()) ||
+        (('barangayCode' in data) &&
+          data.barangayCode.lower() == userBarangayCode().lower()) ||
         (('barangay' in data) && data.barangay == userBarangay())
       );
     }
@@ -222,7 +223,11 @@ service cloud.firestore {
     }
 
     function sameBarangayPath(barangayCode) {
-      return isSignedIn() && userBarangayCode() == barangayCode;
+      // Web collection paths use an uppercase normalized code while user
+      // profiles retain the canonical lowercase barangay code. Compare the
+      // normalized values so both existing path formats remain accessible.
+      return isSignedIn() &&
+        userBarangayCode().lower() == barangayCode.lower();
     }
 
     function canReadBarangayScopedRecord(barangayCode, data) {

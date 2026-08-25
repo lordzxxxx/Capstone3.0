@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:mycapstone_project/web/shared/utils/browser_online_state.dart';
 
 /// User-visible lifecycle for a web clinical record.
 ///
@@ -261,6 +262,7 @@ class WebRecordWriteCoordinator {
   }
 
   static Future<bool> _defaultConnectivityCheck() async {
+    if (browserIsOnline() == false) return false;
     final result = await Connectivity().checkConnectivity();
     return !result.contains(ConnectivityResult.none);
   }
