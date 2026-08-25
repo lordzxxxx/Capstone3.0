@@ -395,7 +395,22 @@ class UserAccessScopeService {
 
     Map<String, dynamic> data = <String, dynamic>{};
 
-    if (kIsWeb) {
+    // Read the Firestore SDK cache first on every platform. The web client
+    // intentionally enables persistence, so a cached approved scope keeps
+    // the shell usable during a brief outage. The REST reader remains a
+    // network-only compatibility fallback for legacy profiles.
+    try {
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .get()
+          .timeout(const Duration(seconds: 8));
+      if (userDoc.exists) {
+        data = userDoc.data() ?? <String, dynamic>{};
+      }
+    } catch (_) {}
+
+    if (kIsWeb && !_hasResolvedScope(data)) {
       try {
         final userDoc = await const FirestoreRestReader().getDocument(
           'users',
@@ -403,16 +418,6 @@ class UserAccessScopeService {
         );
         if (userDoc != null) {
           data = userDoc.data();
-        }
-      } catch (_) {}
-    } else {
-      try {
-        final userDoc = await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .get();
-        if (userDoc.exists) {
-          data = userDoc.data() ?? <String, dynamic>{};
         }
       } catch (_) {}
     }

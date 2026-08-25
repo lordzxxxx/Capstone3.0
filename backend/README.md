@@ -10,11 +10,17 @@ binary datasets to `dataset/raw`, then run these commands from the project root:
 .\venv\Scripts\python.exe backend\scripts\merge_datasets.py
 .\venv\Scripts\python.exe backend\scripts\train_model.py
 python backend/scripts/verify_ai_requirements.py
+python backend/scripts/accuracy_audit.py
 ```
 
 The verification command writes `reports/ai_requirements_verification.json`
 with actual source counts, feature/target definitions, quality checks, and a
 group-safe held-out evaluation. It does not generate or duplicate data.
+The accuracy audit writes `reports/accuracy_statistics_audit.json` with exact
+held-out hit counts, Wilson 95% intervals, top-k coverage definitions, the
+identical-vector ambiguity ceiling, and (when `MODEL_PATH` is available)
+multiclass log loss, Brier score, and top-label calibration error. It does not
+retrain or rewrite the model.
 
 To compare the original, recovered 100,000-row Kaggle source, union merge, and
 common-feature merge without replacing the production baseline, run:

@@ -17,9 +17,23 @@ from sklearn.metrics import (
     classification_report,
     confusion_matrix,
     precision_recall_fscore_support,
-    top_k_accuracy_score,
 )
 from sklearn.model_selection import StratifiedGroupKFold, cross_validate
+
+try:
+    from evaluation_metrics import (
+        exact_vector_ambiguity_summary,
+        multiclass_calibration_summary,
+        statistical_metric_summary,
+        top_k_successes,
+    )
+except ModuleNotFoundError:  # pragma: no cover - supports package invocation
+    from backend.app.evaluation_metrics import (
+        exact_vector_ambiguity_summary,
+        multiclass_calibration_summary,
+        statistical_metric_summary,
+        top_k_successes,
+    )
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 DATASET_PATH = BACKEND_DIR / "dataset" / "processed" / "merged_dataset.csv"
@@ -177,17 +191,30 @@ def train_model() -> RandomForestClassifier:
             y_test, predictions, average="macro", zero_division=0
         )
     )
-    top3_accuracy = top_k_accuracy_score(
-        y_test,
-        probabilities,
-        k=min(3, probabilities.shape[1]),
-        labels=model.classes_,
+    top1_success_count = top_k_successes(
+        y_test, probabilities, model.classes_, k=1
     )
-    top2_accuracy = top_k_accuracy_score(
+    top2_success_count = top_k_successes(
+        y_test, probabilities, model.classes_, k=min(2, probabilities.shape[1])
+    )
+    top3_success_count = top_k_successes(
+        y_test, probabilities, model.classes_, k=min(3, probabilities.shape[1])
+    )
+    top1_accuracy = top1_success_count / len(y_test)
+    top2_accuracy = top2_success_count / len(y_test)
+    top3_accuracy = top3_success_count / len(y_test)
+    statistical_evaluation = statistical_metric_summary(
+        total=len(y_test),
+        top1_successes=top1_success_count,
+        top2_successes=top2_success_count,
+        top3_successes=top3_success_count,
+        class_count=int(labels.nunique()),
+        ambiguity=exact_vector_ambiguity_summary(features, labels),
+    )
+    calibration_evaluation = multiclass_calibration_summary(
         y_test,
         probabilities,
-        k=min(2, probabilities.shape[1]),
-        labels=model.classes_,
+        model.classes_,
     )
     matrix = confusion_matrix(y_test, predictions, labels=model.classes_)
     report = classification_report(
@@ -232,8 +259,13 @@ def train_model() -> RandomForestClassifier:
     print(f"Precision: {precision:.4f}")
     print(f"Recall:    {recall:.4f}")
     print(f"F1-score:  {f1:.4f}")
-    print(f"Top-2 accuracy: {top2_accuracy:.4f}")
-    print(f"Top-3 accuracy: {top3_accuracy:.4f}")
+    print(f"Top-1 accuracy: {top1_accuracy:.4f}")
+    print(f"Top-2 coverage: {top2_accuracy:.4f}")
+    print(f"Top-3 coverage: {top3_accuracy:.4f}")
+    print(
+        "Top-label ECE: "
+        f"{calibration_evaluation['top_label_expected_calibration_error']:.4f}"
+    )
 
     LOGGER.info("Saving trained model to %s", MODEL_PATH)
     # Bzip2 compression keeps the checked-in artifact below GitHub's regular
@@ -271,6 +303,11 @@ def train_model() -> RandomForestClassifier:
         "f1_macro": float(macro_f1),
         "top2_accuracy": float(top2_accuracy),
         "top3_accuracy": float(top3_accuracy),
+        "top1_correct": int(top1_success_count),
+        "top2_correct": int(top2_success_count),
+        "top3_correct": int(top3_success_count),
+        "statistical_evaluation": statistical_evaluation,
+        "calibration_evaluation": calibration_evaluation,
         "training_records": int(len(x_train)),
         "test_records": int(len(x_test)),
         "features": int(features.shape[1]),
@@ -341,6 +378,7 @@ def train_model() -> RandomForestClassifier:
                 )
             },
             "cross_validation": metrics["cross_validation"],
+            "calibration_evaluation": metrics["calibration_evaluation"],
         },
         "production_status": "offline artifact; /predict remains disabled",
         "certification_status": "No ISO certification claim",

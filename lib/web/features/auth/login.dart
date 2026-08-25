@@ -440,6 +440,32 @@ class _LoginState extends State<Login> {
 
   Future<_RoleCheckResult> _hasChoOrBhwAccess(User user) async {
     if (kIsWeb) {
+      Map<String, dynamic>? cachedProfile;
+      try {
+        final cachedDocument = await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .get()
+            .timeout(const Duration(seconds: 8));
+        if (cachedDocument.exists) {
+          cachedProfile = cachedDocument.data();
+          final cachedRole = _normalizeRole(
+            (cachedProfile?['role'] ?? '').toString(),
+          );
+          if (_isApprovedActiveProfile(cachedProfile) &&
+              _isChoOrBhwRole(cachedRole)) {
+            // The local Firestore cache is a valid degraded-mode source after
+            // the user has already authenticated. A server check still runs
+            // below when the cached profile is absent or not approved.
+            return _RoleCheckResult.allowed(cachedRole);
+          }
+        }
+      } catch (error) {
+        if (kDebugMode) {
+          print('Cached Firestore role verification failed: $error');
+        }
+      }
+
       try {
         if (kDebugMode) {
           print('Checking Firestore user role through authenticated REST...');
@@ -457,6 +483,9 @@ class _LoginState extends State<Login> {
         if (kDebugMode) {
           print('Firestore REST role verification failed: $error');
         }
+        // A non-approved cached profile must never grant access. If there is
+        // no server response, report an unavailable verification rather than
+        // silently turning a network problem into a denial or false approval.
         return const _RoleCheckResult.unavailable();
       }
     }
@@ -1151,7 +1180,9 @@ class _LoginState extends State<Login> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              _portalName.isEmpty ? 'Welcome back' : '$_portalName Portal Login',
+              _portalName.isEmpty
+                  ? 'Welcome back'
+                  : '$_portalName Portal Login',
               style: TextStyle(
                 fontFamily: 'Manrope',
                 fontSize: isCompact ? 28 : 34,

@@ -19,6 +19,8 @@ import 'package:mycapstone_project/web/shared/services/user_access_scope_service
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/widgets/sidebar_page_transition.dart';
+import 'package:mycapstone_project/web/shared/components/web_navigation_item.dart';
+import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:get/get.dart';
 
 abstract final class _BhwDrawerColors {
@@ -58,8 +60,9 @@ class WebAppSidebar extends StatefulWidget {
   });
 
   /// Globally persisted collapsed preference during session.
-  static final ValueNotifier<bool> isCollapsedNotifier =
-      ValueNotifier<bool>(false);
+  static final ValueNotifier<bool> isCollapsedNotifier = ValueNotifier<bool>(
+    false,
+  );
 
   static bool _logoutInProgress = false;
 
@@ -68,6 +71,16 @@ class WebAppSidebar extends StatefulWidget {
 }
 
 class _WebAppSidebarState extends State<WebAppSidebar> {
+  late Future<UserAccessScope?> _scopeFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Do not create a new Firestore-backed future on every rebuild. Hover,
+    // collapse, and pressed-state updates should never refetch user scope.
+    _scopeFuture = UserAccessScopeService.instance.loadCurrentScope();
+  }
+
   void _toggleCollapse() {
     WebAppSidebar.isCollapsedNotifier.value =
         !WebAppSidebar.isCollapsedNotifier.value;
@@ -78,8 +91,13 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
     return ValueListenableBuilder<bool>(
       valueListenable: WebAppSidebar.isCollapsedNotifier,
       builder: (context, isCollapsed, _) {
-        return FutureBuilder(
-          future: UserAccessScopeService.instance.loadCurrentScope(),
+        // Keep the content usable when the browser is narrower than a normal
+        // desktop. The user can still expand the rail later on a wide screen,
+        // but narrow screens never lose their main working area to the nav.
+        final compactViewport = MediaQuery.sizeOf(context).width < 1180;
+        final effectiveCollapsed = isCollapsed || compactViewport;
+        return FutureBuilder<UserAccessScope?>(
+          future: _scopeFuture,
           builder: (context, scopeSnapshot) {
             final scope = scopeSnapshot.data;
             final assignedBarangay = [scope?.barangay, scope?.barangayCode]
@@ -91,24 +109,32 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
 
             return Hero(
               tag: 'web_app_sidebar',
-              flightShuttleBuilder: (
-                flightContext,
-                animation,
-                flightDirection,
-                fromHeroContext,
-                toHeroContext,
-              ) {
-                return Material(
-                  type: MaterialType.transparency,
-                  child: toHeroContext.widget,
-                );
-              },
+              flightShuttleBuilder:
+                  (
+                    flightContext,
+                    animation,
+                    flightDirection,
+                    fromHeroContext,
+                    toHeroContext,
+                  ) {
+                    return Material(
+                      type: MaterialType.transparency,
+                      child: toHeroContext.widget,
+                    );
+                  },
               child: Material(
                 type: MaterialType.transparency,
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 240),
+                  // Snap to the compact rail when the browser crosses the
+                  // responsive breakpoint. Animating 300 -> 76 while the
+                  // viewport is already narrow briefly leaves the page only
+                  // a few pixels wide and causes otherwise-correct rows to
+                  // overflow during a browser resize.
+                  duration: compactViewport
+                      ? Duration.zero
+                      : const Duration(milliseconds: 240),
                   curve: Curves.easeInOutCubic,
-                  width: isCollapsed ? 76.0 : 300.0,
+                  width: effectiveCollapsed ? 76.0 : 300.0,
                   height: double.infinity,
                   decoration: const BoxDecoration(
                     color: _BhwDrawerColors.background,
@@ -131,35 +157,39 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
                       builder: (context, constraints) {
                         return OverflowBox(
                           alignment: Alignment.topLeft,
-                          minWidth: isCollapsed ? 76.0 : 300.0,
-                          maxWidth: isCollapsed ? 76.0 : 300.0,
+                          minWidth: effectiveCollapsed ? 76.0 : 300.0,
+                          maxWidth: effectiveCollapsed ? 76.0 : 300.0,
                           minHeight: constraints.maxHeight,
                           maxHeight: constraints.maxHeight,
                           child: SafeArea(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                _buildBrandHeader(isCollapsed),
+                                _buildBrandHeader(effectiveCollapsed),
                                 _buildUserSection(
                                   widget.userName,
                                   assignedBarangay,
-                                  isCollapsed,
+                                  effectiveCollapsed,
                                 ),
                                 const SizedBox(height: 8),
                                 Expanded(
                                   child: ListView(
                                     padding: EdgeInsets.symmetric(
-                                      horizontal: isCollapsed ? 8 : 10,
+                                      horizontal: effectiveCollapsed ? 8 : 10,
                                       vertical: 4,
                                     ),
                                     children: [
-                                      _buildSectionHeader('OVERVIEW', isCollapsed),
+                                      _buildSectionHeader(
+                                        'OVERVIEW',
+                                        effectiveCollapsed,
+                                      ),
                                       _buildSidebarItem(
                                         icon: Icons.dashboard_outlined,
                                         label: 'Dashboard',
                                         isActive:
-                                            widget.activeItem == WebSidebarItem.dashboard,
-                                        isCollapsed: isCollapsed,
+                                            widget.activeItem ==
+                                            WebSidebarItem.dashboard,
+                                        isCollapsed: effectiveCollapsed,
                                         onTap: _navigateTo(
                                           context,
                                           WebSidebarItem.dashboard,
@@ -167,192 +197,215 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
                                           routeName: WebRoutes.bhwDashboard,
                                         ),
                                       ),
-                                      _buildSectionHeader('PATIENT SERVICES', isCollapsed),
+                                      _buildSectionHeader(
+                                        'PATIENT SERVICES',
+                                        effectiveCollapsed,
+                                      ),
                                       _buildSidebarItem(
                                         icon: Icons.people_alt_outlined,
-                              label: 'Patient Records',
-                              isActive:
-                                  widget.activeItem ==
-                                  WebSidebarItem.patientRecords,
-                              isCollapsed: isCollapsed,
-                              onTap: _navigateTo(
-                                context,
-                                WebSidebarItem.patientRecords,
-                                () => const PatientRecordPage(),
-                                routeName: WebRoutes.bhwPatients,
-                              ),
+                                        label: 'Patient Records',
+                                        isActive:
+                                            widget.activeItem ==
+                                            WebSidebarItem.patientRecords,
+                                        isCollapsed: effectiveCollapsed,
+                                        onTap: _navigateTo(
+                                          context,
+                                          WebSidebarItem.patientRecords,
+                                          () => const PatientRecordPage(),
+                                          routeName: WebRoutes.bhwPatients,
+                                        ),
+                                      ),
+                                      _buildSidebarItem(
+                                        icon: Icons.medical_services_outlined,
+                                        label: 'Check-ups',
+                                        isActive:
+                                            widget.activeItem ==
+                                            WebSidebarItem.checkups,
+                                        isCollapsed: effectiveCollapsed,
+                                        onTap: _navigateTo(
+                                          context,
+                                          WebSidebarItem.checkups,
+                                          () =>
+                                              const checkup_page.CheckUpPage(),
+                                          routeName: WebRoutes.bhwCheckups,
+                                        ),
+                                      ),
+                                      _buildSectionHeader(
+                                        'INSIGHTS',
+                                        effectiveCollapsed,
+                                      ),
+                                      _buildSidebarItem(
+                                        icon: Icons.auto_graph_rounded,
+                                        label: 'Summary Generation',
+                                        isActive:
+                                            widget.activeItem ==
+                                            WebSidebarItem.summaryGeneration,
+                                        isCollapsed: effectiveCollapsed,
+                                        onTap: _navigateTo(
+                                          context,
+                                          WebSidebarItem.summaryGeneration,
+                                          () => const HealthMetricsPage(),
+                                          routeName: WebRoutes.bhwSummary,
+                                        ),
+                                      ),
+                                      _buildSidebarItem(
+                                        icon: Icons.insights_rounded,
+                                        label: 'Analytics',
+                                        isActive:
+                                            widget.activeItem ==
+                                            WebSidebarItem.analytics,
+                                        isCollapsed: effectiveCollapsed,
+                                        onTap: _navigateTo(
+                                          context,
+                                          WebSidebarItem.analytics,
+                                          () => const BHWAnalyticsPage(),
+                                          routeName: WebRoutes.bhwAnalytics,
+                                        ),
+                                      ),
+                                      _buildSidebarItem(
+                                        icon: Icons.pregnant_woman_rounded,
+                                        label: 'Prenatal',
+                                        isActive:
+                                            widget.activeItem ==
+                                            WebSidebarItem.prenatalCare,
+                                        isCollapsed: effectiveCollapsed,
+                                        onTap: _navigateTo(
+                                          context,
+                                          WebSidebarItem.prenatalCare,
+                                          () => const PrenatalPage(),
+                                          routeName: WebRoutes.bhwPrenatal,
+                                        ),
+                                      ),
+                                      _buildSidebarItem(
+                                        icon: Icons.vaccines_outlined,
+                                        label: 'Immunization',
+                                        isActive:
+                                            widget.activeItem ==
+                                            WebSidebarItem.immunization,
+                                        isCollapsed: effectiveCollapsed,
+                                        onTap: _navigateTo(
+                                          context,
+                                          WebSidebarItem.immunization,
+                                          () => const ImmunizationPage(),
+                                          routeName: WebRoutes.bhwImmunization,
+                                        ),
+                                      ),
+                                      _buildSectionHeader(
+                                        'CASE MONITORING',
+                                        effectiveCollapsed,
+                                      ),
+                                      _buildSidebarItem(
+                                        icon: Icons.coronavirus_outlined,
+                                        label: 'Communicable',
+                                        isActive:
+                                            widget.activeItem ==
+                                            WebSidebarItem.communicable,
+                                        isCollapsed: effectiveCollapsed,
+                                        onTap: _navigateTo(
+                                          context,
+                                          WebSidebarItem.communicable,
+                                          () => const CommunicablePage(),
+                                          routeName: WebRoutes.bhwCommunicable,
+                                        ),
+                                      ),
+                                      _buildSidebarItem(
+                                        icon: Icons.health_and_safety_outlined,
+                                        label: 'Non-Communicable',
+                                        isActive:
+                                            widget.activeItem ==
+                                            WebSidebarItem.nonCommunicable,
+                                        isCollapsed: effectiveCollapsed,
+                                        onTap: _navigateTo(
+                                          context,
+                                          WebSidebarItem.nonCommunicable,
+                                          () => const NonCommunicablePage(),
+                                          routeName:
+                                              WebRoutes.bhwNonCommunicable,
+                                        ),
+                                      ),
+                                      _buildSidebarItem(
+                                        icon: Icons.monitor_heart_outlined,
+                                        label: 'Morbidity',
+                                        isActive:
+                                            widget.activeItem ==
+                                            WebSidebarItem.morbidity,
+                                        isCollapsed: effectiveCollapsed,
+                                        onTap: _navigateTo(
+                                          context,
+                                          WebSidebarItem.morbidity,
+                                          () => const MorbidityPage(),
+                                          routeName: WebRoutes.bhwMorbidity,
+                                        ),
+                                      ),
+                                      _buildSidebarItem(
+                                        icon: Icons.heart_broken_outlined,
+                                        label: 'Mortality',
+                                        isActive:
+                                            widget.activeItem ==
+                                            WebSidebarItem.mortality,
+                                        isCollapsed: effectiveCollapsed,
+                                        onTap: _navigateTo(
+                                          context,
+                                          WebSidebarItem.mortality,
+                                          () => const MortalityPage(),
+                                          routeName: WebRoutes.bhwMortality,
+                                        ),
+                                      ),
+                                      _buildSectionHeader(
+                                        'COORDINATION',
+                                        effectiveCollapsed,
+                                      ),
+                                      _buildSidebarItem(
+                                        icon: Icons.outbound_outlined,
+                                        label: 'Referrals',
+                                        isActive:
+                                            widget.activeItem ==
+                                            WebSidebarItem.referrals,
+                                        isCollapsed: effectiveCollapsed,
+                                        onTap: _navigateTo(
+                                          context,
+                                          WebSidebarItem.referrals,
+                                          () => const BhwReferralPage(),
+                                          routeName: WebRoutes.bhwReferrals,
+                                        ),
+                                      ),
+                                      _buildSectionHeader(
+                                        'ACCOUNT',
+                                        effectiveCollapsed,
+                                      ),
+                                      _buildSidebarItem(
+                                        icon: Icons.manage_accounts_outlined,
+                                        label: 'Profile and Settings',
+                                        isActive:
+                                            widget.activeItem ==
+                                            WebSidebarItem.profile,
+                                        isCollapsed: effectiveCollapsed,
+                                        onTap: _navigateTo(
+                                          context,
+                                          WebSidebarItem.profile,
+                                          () => const BHWProfilePage(),
+                                          routeName: WebRoutes.bhwProfile,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                _buildLogoutButton(context, effectiveCollapsed),
+                              ],
                             ),
-                            _buildSidebarItem(
-                              icon: Icons.medical_services_outlined,
-                              label: 'Check-ups',
-                              isActive:
-                                  widget.activeItem == WebSidebarItem.checkups,
-                              isCollapsed: isCollapsed,
-                              onTap: _navigateTo(
-                                context,
-                                WebSidebarItem.checkups,
-                                () => const checkup_page.CheckUpPage(),
-                                routeName: WebRoutes.bhwCheckups,
-                              ),
-                            ),
-                            _buildSectionHeader('INSIGHTS', isCollapsed),
-                            _buildSidebarItem(
-                              icon: Icons.auto_graph_rounded,
-                              label: 'Summary Generation',
-                              isActive:
-                                  widget.activeItem ==
-                                  WebSidebarItem.summaryGeneration,
-                              isCollapsed: isCollapsed,
-                              onTap: _navigateTo(
-                                context,
-                                WebSidebarItem.summaryGeneration,
-                                () => const HealthMetricsPage(),
-                                routeName: WebRoutes.bhwSummary,
-                              ),
-                            ),
-                            _buildSidebarItem(
-                              icon: Icons.insights_rounded,
-                              label: 'Analytics',
-                              isActive:
-                                  widget.activeItem == WebSidebarItem.analytics,
-                              isCollapsed: isCollapsed,
-                              onTap: _navigateTo(
-                                context,
-                                WebSidebarItem.analytics,
-                                () => const BHWAnalyticsPage(),
-                                routeName: WebRoutes.bhwAnalytics,
-                              ),
-                            ),
-                            _buildSidebarItem(
-                              icon: Icons.pregnant_woman_rounded,
-                              label: 'Prenatal',
-                              isActive:
-                                  widget.activeItem ==
-                                  WebSidebarItem.prenatalCare,
-                              isCollapsed: isCollapsed,
-                              onTap: _navigateTo(
-                                context,
-                                WebSidebarItem.prenatalCare,
-                                () => const PrenatalPage(),
-                                routeName: WebRoutes.bhwPrenatal,
-                              ),
-                            ),
-                            _buildSidebarItem(
-                              icon: Icons.vaccines_outlined,
-                              label: 'Immunization',
-                              isActive:
-                                  widget.activeItem ==
-                                  WebSidebarItem.immunization,
-                              isCollapsed: isCollapsed,
-                              onTap: _navigateTo(
-                                context,
-                                WebSidebarItem.immunization,
-                                () => const ImmunizationPage(),
-                                routeName: WebRoutes.bhwImmunization,
-                              ),
-                            ),
-                            _buildSectionHeader('CASE MONITORING', isCollapsed),
-                            _buildSidebarItem(
-                              icon: Icons.coronavirus_outlined,
-                              label: 'Communicable',
-                              isActive:
-                                  widget.activeItem ==
-                                  WebSidebarItem.communicable,
-                              isCollapsed: isCollapsed,
-                              onTap: _navigateTo(
-                                context,
-                                WebSidebarItem.communicable,
-                                () => const CommunicablePage(),
-                                routeName: WebRoutes.bhwCommunicable,
-                              ),
-                            ),
-                            _buildSidebarItem(
-                              icon: Icons.health_and_safety_outlined,
-                              label: 'Non-Communicable',
-                              isActive:
-                                  widget.activeItem ==
-                                  WebSidebarItem.nonCommunicable,
-                              isCollapsed: isCollapsed,
-                              onTap: _navigateTo(
-                                context,
-                                WebSidebarItem.nonCommunicable,
-                                () => const NonCommunicablePage(),
-                                routeName: WebRoutes.bhwNonCommunicable,
-                              ),
-                            ),
-                            _buildSidebarItem(
-                              icon: Icons.monitor_heart_outlined,
-                              label: 'Morbidity',
-                              isActive:
-                                  widget.activeItem == WebSidebarItem.morbidity,
-                              isCollapsed: isCollapsed,
-                              onTap: _navigateTo(
-                                context,
-                                WebSidebarItem.morbidity,
-                                () => const MorbidityPage(),
-                                routeName: WebRoutes.bhwMorbidity,
-                              ),
-                            ),
-                            _buildSidebarItem(
-                              icon: Icons.heart_broken_outlined,
-                              label: 'Mortality',
-                              isActive:
-                                  widget.activeItem == WebSidebarItem.mortality,
-                              isCollapsed: isCollapsed,
-                              onTap: _navigateTo(
-                                context,
-                                WebSidebarItem.mortality,
-                                () => const MortalityPage(),
-                                routeName: WebRoutes.bhwMortality,
-                              ),
-                            ),
-                            _buildSectionHeader('COORDINATION', isCollapsed),
-                            _buildSidebarItem(
-                              icon: Icons.outbound_outlined,
-                              label: 'Referrals',
-                              isActive:
-                                  widget.activeItem == WebSidebarItem.referrals,
-                              isCollapsed: isCollapsed,
-                              onTap: _navigateTo(
-                                context,
-                                WebSidebarItem.referrals,
-                                () => const BhwReferralPage(),
-                                routeName: WebRoutes.bhwReferrals,
-                              ),
-                            ),
-                            _buildSectionHeader('ACCOUNT', isCollapsed),
-                            _buildSidebarItem(
-                              icon: Icons.manage_accounts_outlined,
-                              label: 'Profile and Settings',
-                              isActive:
-                                  widget.activeItem == WebSidebarItem.profile,
-                              isCollapsed: isCollapsed,
-                              onTap: _navigateTo(
-                                context,
-                                WebSidebarItem.profile,
-                                () => const BHWProfilePage(),
-                                routeName: WebRoutes.bhwProfile,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      _buildLogoutButton(context, isCollapsed),
-                    ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
-              );
-            },
-          ),
-        ),
-      ),
-    ),
-  );
-},
-);
-},
-);
-}
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   VoidCallback _navigateTo(
     BuildContext context,
@@ -378,17 +431,6 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
         ),
       );
     };
-  }
-
-  Offset _pageOffsetFor(WebSidebarItem targetItem) {
-    final activeIndex = WebSidebarItem.values.indexOf(widget.activeItem);
-    final targetIndex = WebSidebarItem.values.indexOf(targetItem);
-
-    if (targetIndex == activeIndex) {
-      return Offset.zero;
-    }
-
-    return Offset(targetIndex > activeIndex ? 0.08 : -0.08, 0);
   }
 
   Widget _buildBrandHeader(bool isCollapsed) {
@@ -430,7 +472,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
               tooltip: 'Expand Menu',
               onPressed: _toggleCollapse,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             ),
           ],
         ),
@@ -506,7 +548,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
             tooltip: 'Minimize Menu',
             onPressed: _toggleCollapse,
             padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           ),
         ],
       ),
@@ -603,11 +645,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
     if (isCollapsed) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-        child: Divider(
-          color: _BhwDrawerColors.border,
-          height: 1,
-          thickness: 1,
-        ),
+        child: Divider(color: _BhwDrawerColors.border, height: 1, thickness: 1),
       );
     }
 
@@ -637,15 +675,12 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
     required bool isCollapsed,
     bool isActive = false,
   }) {
-    return _SidebarAnimatedItem(
+    return WebNavigationItem(
       icon: icon,
       label: label,
       onTap: onTap,
       isCollapsed: isCollapsed,
       isActive: isActive,
-      activeColor: _BhwDrawerColors.aqua,
-      inactiveTextColor: _BhwDrawerColors.text,
-      hoverColor: _BhwDrawerColors.aqua.withValues(alpha: 0.15),
     );
   }
 
@@ -761,16 +796,17 @@ class _SidebarAnimatedItemState extends State<_SidebarAnimatedItem> {
     final foreground = widget.isActive
         ? Colors.white
         : (_isHovered
-            ? Colors.white
-            : widget.inactiveTextColor.withValues(alpha: 0.92));
+              ? Colors.white
+              : widget.inactiveTextColor.withValues(alpha: 0.92));
 
     final backgroundColor = widget.isActive
         ? widget.activeColor
         : (_isHovered ? widget.hoverColor : Colors.transparent);
 
     final scale = _isPressed ? 0.95 : (_isHovered ? 1.01 : 1.0);
-    final translationX =
-        (!widget.isCollapsed && _isHovered && !widget.isActive) ? 3.0 : 0.0;
+    final translationX = (!widget.isCollapsed && _isHovered && !widget.isActive)
+        ? 3.0
+        : 0.0;
 
     if (widget.isCollapsed) {
       return Semantics(
@@ -874,14 +910,14 @@ class _SidebarAnimatedItemState extends State<_SidebarAnimatedItem> {
                             ),
                           ]
                         : (_isHovered
-                            ? [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ]
-                            : null),
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.08),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -892,8 +928,9 @@ class _SidebarAnimatedItemState extends State<_SidebarAnimatedItem> {
                           curve: Curves.easeOutCubic,
                           width: widget.isActive ? 4 : 0,
                           height: widget.isActive ? 22 : 0,
-                          margin:
-                              EdgeInsets.only(right: widget.isActive ? 8 : 0),
+                          margin: EdgeInsets.only(
+                            right: widget.isActive ? 8 : 0,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(2),
@@ -919,8 +956,8 @@ class _SidebarAnimatedItemState extends State<_SidebarAnimatedItem> {
                                 fontWeight: widget.isActive
                                     ? FontWeight.w800
                                     : (_isHovered
-                                        ? FontWeight.w700
-                                        : FontWeight.w600),
+                                          ? FontWeight.w700
+                                          : FontWeight.w600),
                               ),
                               child: Text(
                                 widget.label,
@@ -960,10 +997,7 @@ class _AnimatedLogoutButton extends StatefulWidget {
   final bool isCollapsed;
   final VoidCallback onTap;
 
-  const _AnimatedLogoutButton({
-    required this.isCollapsed,
-    required this.onTap,
-  });
+  const _AnimatedLogoutButton({required this.isCollapsed, required this.onTap});
 
   @override
   State<_AnimatedLogoutButton> createState() => _AnimatedLogoutButtonState();
@@ -1009,8 +1043,9 @@ class _AnimatedLogoutButtonState extends State<_AnimatedLogoutButton> {
                     color: Colors.red.withValues(alpha: _isHovered ? 0.2 : 0.1),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: Colors.redAccent
-                          .withValues(alpha: _isHovered ? 0.6 : 0.2),
+                      color: Colors.redAccent.withValues(
+                        alpha: _isHovered ? 0.6 : 0.2,
+                      ),
                     ),
                   ),
                   child: const Center(
@@ -1061,7 +1096,9 @@ class _AnimatedLogoutButtonState extends State<_AnimatedLogoutButton> {
                   color: Colors.red.withValues(alpha: _isHovered ? 0.12 : 0.06),
                   borderRadius: BorderRadius.circular(11),
                   border: Border.all(
-                    color: Colors.red.withValues(alpha: _isHovered ? 0.55 : 0.35),
+                    color: Colors.red.withValues(
+                      alpha: _isHovered ? 0.55 : 0.35,
+                    ),
                   ),
                   boxShadow: _isHovered
                       ? [

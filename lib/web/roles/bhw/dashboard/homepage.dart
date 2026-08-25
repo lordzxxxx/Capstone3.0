@@ -103,7 +103,9 @@ class _HomePageState extends State<HomePage> {
   DashboardDateFilterMode _dateFilterMode = DashboardDateFilterMode.thisMonth;
   DateTime? _selectedCustomDate;
   DateTime? _selectedMonthDate;
-  DateTime _selectedRangeStart = DateTime.now().subtract(const Duration(days: 6));
+  DateTime _selectedRangeStart = DateTime.now().subtract(
+    const Duration(days: 6),
+  );
   DateTime _selectedRangeEnd = DateTime.now();
 
   int _totalPatients = 0;
@@ -116,9 +118,12 @@ class _HomePageState extends State<HomePage> {
   int _filteredImmunizationRecords = 0;
   bool _isLoadingMetrics = true;
   DateTime? _keyMetricsSelectedDate;
-  DashboardDateFilterMode _keyMetricsFilterMode = DashboardDateFilterMode.thisMonth;
+  DashboardDateFilterMode _keyMetricsFilterMode =
+      DashboardDateFilterMode.thisMonth;
   DateTime? _keyMetricsSpecificDate;
-  DateTime _keyMetricsRangeStart = DateTime.now().subtract(const Duration(days: 6));
+  DateTime _keyMetricsRangeStart = DateTime.now().subtract(
+    const Duration(days: 6),
+  );
   DateTime _keyMetricsRangeEnd = DateTime.now();
 
   // Actionable Health Insights for active window
@@ -240,9 +245,11 @@ class _HomePageState extends State<HomePage> {
     }
     QuerySnapshot<Map<String, dynamic>> snapshot;
     try {
-      snapshot = await query.get(
-        kIsWeb ? const GetOptions(source: Source.server) : const GetOptions(),
-      );
+      // Let Firestore choose the freshest available source. On web this is
+      // cache-first when the browser is offline and server-backed when it is
+      // online; forcing Source.server made a short outage look like an empty
+      // dashboard even after records had already been loaded.
+      snapshot = await query.get();
     } catch (error) {
       if (kDebugMode) {
         debugPrint(
@@ -705,7 +712,9 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  _TrendData _generateConsultationTrendData(List<Map<String, dynamic>> checkups) {
+  _TrendData _generateConsultationTrendData(
+    List<Map<String, dynamic>> checkups,
+  ) {
     final now = DateTime.now();
 
     if (_dateFilterMode == DashboardDateFilterMode.today ||
@@ -953,11 +962,11 @@ class _HomePageState extends State<HomePage> {
     if (morbidity.isNotEmpty) {
       final diseaseCounts = <String, int>{};
       for (final m in morbidity) {
-        final disease = _dashboardText(
-          m,
-          const ['disease', 'diagnosis', 'condition'],
-          fallback: 'General Illness',
-        );
+        final disease = _dashboardText(m, const [
+          'disease',
+          'diagnosis',
+          'condition',
+        ], fallback: 'General Illness');
         diseaseCounts[disease] = (diseaseCounts[disease] ?? 0) + 1;
       }
       final sortedDiseases = diseaseCounts.entries.toList()
@@ -1468,12 +1477,20 @@ class _HomePageState extends State<HomePage> {
             cleanDate.month == selectedDate.month;
       case DashboardDateFilterMode.last7Days:
         final now = DateTime.now();
-        final start = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
+        final start = DateTime(
+          now.year,
+          now.month,
+          now.day,
+        ).subtract(const Duration(days: 6));
         final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
         return !date.isBefore(start) && !date.isAfter(end);
       case DashboardDateFilterMode.last30Days:
         final now = DateTime.now();
-        final start = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 29));
+        final start = DateTime(
+          now.year,
+          now.month,
+          now.day,
+        ).subtract(const Duration(days: 29));
         final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
         return !date.isBefore(start) && !date.isAfter(end);
       case DashboardDateFilterMode.last6Months:
@@ -1587,7 +1604,9 @@ class _HomePageState extends State<HomePage> {
       builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
               const Text(
@@ -1605,8 +1624,13 @@ class _HomePageState extends State<HomePage> {
             children: [
               ListTile(
                 leading: const Icon(Icons.today_rounded, color: _primaryAqua),
-                title: const Text('Today', style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text('Show records for ${_monthLabelLong(DateTime.now().month)} ${DateTime.now().day}, ${DateTime.now().year}'),
+                title: const Text(
+                  'Today',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  'Show records for ${_monthLabelLong(DateTime.now().month)} ${DateTime.now().day}, ${DateTime.now().year}',
+                ),
                 onTap: () {
                   Navigator.pop(dialogContext);
                   setState(() {
@@ -1617,22 +1641,36 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.calendar_view_week_rounded, color: _primaryAqua),
-                title: const Text('Last 7 Days', style: TextStyle(fontWeight: FontWeight.w600)),
+                leading: const Icon(
+                  Icons.calendar_view_week_rounded,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'Last 7 Days',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 subtitle: const Text('Show records for the past 7 days'),
                 onTap: () {
                   Navigator.pop(dialogContext);
                   setState(() {
                     _keyMetricsFilterMode = DashboardDateFilterMode.last7Days;
                     _keyMetricsRangeEnd = DateTime.now();
-                    _keyMetricsRangeStart = DateTime.now().subtract(const Duration(days: 6));
+                    _keyMetricsRangeStart = DateTime.now().subtract(
+                      const Duration(days: 6),
+                    );
                   });
                   _loadMetrics();
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.calendar_month_rounded, color: _primaryAqua),
-                title: const Text('This Month / Select Month', style: TextStyle(fontWeight: FontWeight.w600)),
+                leading: const Icon(
+                  Icons.calendar_month_rounded,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'This Month / Select Month',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 subtitle: Text('Current: ${_formatKeyMetricsSelectedDate()}'),
                 onTap: () async {
                   Navigator.pop(dialogContext);
@@ -1650,8 +1688,14 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.event_available_rounded, color: _primaryAqua),
-                title: const Text('Specific Date', style: TextStyle(fontWeight: FontWeight.w600)),
+                leading: const Icon(
+                  Icons.event_available_rounded,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'Specific Date',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 subtitle: const Text('Pick any calendar date'),
                 onTap: () async {
                   Navigator.pop(dialogContext);
@@ -1671,8 +1715,14 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.date_range_outlined, color: _primaryAqua),
-                title: const Text('Custom Date Range', style: TextStyle(fontWeight: FontWeight.w600)),
+                leading: const Icon(
+                  Icons.date_range_outlined,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'Custom Date Range',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 subtitle: const Text('Select start and end dates'),
                 onTap: () async {
                   Navigator.pop(dialogContext);
@@ -2693,11 +2743,7 @@ class _HomePageState extends State<HomePage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Text('Notifications'),
-          ],
-        ),
+        title: const Row(children: [Text('Notifications')]),
         content: SizedBox(
           width: 400,
           child: _isLoadingNotifications
@@ -2845,26 +2891,24 @@ class _HomePageState extends State<HomePage> {
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 24.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Welcome - Full Width
-                  _buildWelcomeCard(userName),
-                  const SizedBox(height: 24),
-                  if (_executiveOverviewError != null)
-                    _buildExecutiveOverviewError()
-                  else ...[
-                    _buildAnalyticsFilterBar(),
+              child: WebPageContent(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Welcome - Full Width
+                    _buildWelcomeCard(userName),
                     const SizedBox(height: 24),
-                    _buildExecutiveKpiGrid(),
-                    const SizedBox(height: 28),
-                    _buildExecutiveAnalytics(),
+                    if (_executiveOverviewError != null)
+                      _buildExecutiveOverviewError()
+                    else ...[
+                      _buildAnalyticsFilterBar(),
+                      const SizedBox(height: 24),
+                      _buildExecutiveKpiGrid(),
+                      const SizedBox(height: 28),
+                      _buildExecutiveAnalytics(),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -3530,12 +3574,36 @@ class _HomePageState extends State<HomePage> {
         );
 
         final filterChips = <Widget>[
-          _buildFilterChip('Today', Icons.today_rounded, DashboardDateFilterMode.today),
-          _buildFilterChip('Last 7 Days', Icons.calendar_view_week_rounded, DashboardDateFilterMode.last7Days),
-          _buildFilterChip('Last 30 Days', Icons.date_range_rounded, DashboardDateFilterMode.last30Days),
-          _buildFilterChip('This Month', Icons.calendar_month_rounded, DashboardDateFilterMode.thisMonth),
-          _buildFilterChip('Last 6 Months', Icons.stacked_bar_chart_rounded, DashboardDateFilterMode.last6Months),
-          _buildFilterChip('All Time', Icons.all_inclusive_rounded, DashboardDateFilterMode.allTime),
+          _buildFilterChip(
+            'Today',
+            Icons.today_rounded,
+            DashboardDateFilterMode.today,
+          ),
+          _buildFilterChip(
+            'Last 7 Days',
+            Icons.calendar_view_week_rounded,
+            DashboardDateFilterMode.last7Days,
+          ),
+          _buildFilterChip(
+            'Last 30 Days',
+            Icons.date_range_rounded,
+            DashboardDateFilterMode.last30Days,
+          ),
+          _buildFilterChip(
+            'This Month',
+            Icons.calendar_month_rounded,
+            DashboardDateFilterMode.thisMonth,
+          ),
+          _buildFilterChip(
+            'Last 6 Months',
+            Icons.stacked_bar_chart_rounded,
+            DashboardDateFilterMode.last6Months,
+          ),
+          _buildFilterChip(
+            'All Time',
+            Icons.all_inclusive_rounded,
+            DashboardDateFilterMode.allTime,
+          ),
           OutlinedButton.icon(
             onPressed: _showDateFilterPickerModal,
             icon: const Icon(Icons.tune_rounded, size: 14),
@@ -3547,22 +3615,27 @@ class _HomePageState extends State<HomePage> {
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: (_dateFilterMode == DashboardDateFilterMode.customDay ||
+              foregroundColor:
+                  (_dateFilterMode == DashboardDateFilterMode.customDay ||
                       _dateFilterMode == DashboardDateFilterMode.customRange)
                   ? _primaryAqua
                   : _lightOffWhite,
-              backgroundColor: (_dateFilterMode == DashboardDateFilterMode.customDay ||
+              backgroundColor:
+                  (_dateFilterMode == DashboardDateFilterMode.customDay ||
                       _dateFilterMode == DashboardDateFilterMode.customRange)
                   ? _primaryAqua.withValues(alpha: 0.12)
                   : Colors.white,
               side: BorderSide(
-                color: (_dateFilterMode == DashboardDateFilterMode.customDay ||
+                color:
+                    (_dateFilterMode == DashboardDateFilterMode.customDay ||
                         _dateFilterMode == DashboardDateFilterMode.customRange)
                     ? _primaryAqua
                     : filterBorderColor,
               ),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
         ];
@@ -3600,11 +3673,7 @@ class _HomePageState extends State<HomePage> {
                 activeWindowCard,
               ],
               const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: filterChips,
-              ),
+              Wrap(spacing: 8, runSpacing: 8, children: filterChips),
             ],
           ),
         );
@@ -3612,7 +3681,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildFilterChip(String label, IconData icon, DashboardDateFilterMode mode) {
+  Widget _buildFilterChip(
+    String label,
+    IconData icon,
+    DashboardDateFilterMode mode,
+  ) {
     final isSelected = _dateFilterMode == mode;
     return InkWell(
       borderRadius: BorderRadius.circular(10),
@@ -3630,10 +3703,14 @@ class _HomePageState extends State<HomePage> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? _primaryAqua : _darkDeepTeal.withValues(alpha: 0.05),
+          color: isSelected
+              ? _primaryAqua
+              : _darkDeepTeal.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? _primaryAqua : Colors.black.withValues(alpha: 0.08),
+            color: isSelected
+                ? _primaryAqua
+                : Colors.black.withValues(alpha: 0.08),
           ),
           boxShadow: isSelected
               ? [
@@ -3674,7 +3751,9 @@ class _HomePageState extends State<HomePage> {
       builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
               const Text(
@@ -3691,8 +3770,14 @@ class _HomePageState extends State<HomePage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.event_available_rounded, color: _primaryAqua),
-                title: const Text('Specific Calendar Date', style: TextStyle(fontWeight: FontWeight.w600)),
+                leading: const Icon(
+                  Icons.event_available_rounded,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'Specific Calendar Date',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 subtitle: const Text('Pick any specific day'),
                 onTap: () async {
                   Navigator.pop(dialogContext);
@@ -3712,9 +3797,17 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.calendar_month_rounded, color: _primaryAqua),
-                title: const Text('Select Month & Year', style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text('Pick a target month (Current: ${_monthLabelLong((_selectedMonthDate ?? DateTime.now()).month)})'),
+                leading: const Icon(
+                  Icons.calendar_month_rounded,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'Select Month & Year',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  'Pick a target month (Current: ${_monthLabelLong((_selectedMonthDate ?? DateTime.now()).month)})',
+                ),
                 onTap: () async {
                   Navigator.pop(dialogContext);
                   final target = _selectedMonthDate ?? DateTime.now();
@@ -3731,8 +3824,14 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.date_range_outlined, color: _primaryAqua),
-                title: const Text('Custom Date Range', style: TextStyle(fontWeight: FontWeight.w600)),
+                leading: const Icon(
+                  Icons.date_range_outlined,
+                  color: _primaryAqua,
+                ),
+                title: const Text(
+                  'Custom Date Range',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 subtitle: const Text('Select custom start and end dates'),
                 onTap: () async {
                   Navigator.pop(dialogContext);
@@ -3757,7 +3856,10 @@ class _HomePageState extends State<HomePage> {
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.today_rounded, color: _accentGreen),
-                title: const Text('Quick: Today', style: TextStyle(fontWeight: FontWeight.w600)),
+                title: const Text(
+                  'Quick: Today',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 onTap: () {
                   Navigator.pop(dialogContext);
                   setState(() {
@@ -3767,8 +3869,14 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.all_inclusive_rounded, color: _accentPurple),
-                title: const Text('Quick: All Time', style: TextStyle(fontWeight: FontWeight.w600)),
+                leading: const Icon(
+                  Icons.all_inclusive_rounded,
+                  color: _accentPurple,
+                ),
+                title: const Text(
+                  'Quick: All Time',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 onTap: () {
                   Navigator.pop(dialogContext);
                   setState(() {
@@ -3787,14 +3895,19 @@ class _HomePageState extends State<HomePage> {
   Widget _buildActionableInsightsPanel() {
     return _buildExecutivePanel(
       title: 'Actionable Health Insights',
-      subtitle: 'Data-driven clinical guidance for ${_activeWindowLabel().toLowerCase()}',
+      subtitle:
+          'Data-driven clinical guidance for ${_activeWindowLabel().toLowerCase()}',
       icon: Icons.insights_rounded,
       child: _actionableInsights.isEmpty
-          ? _buildNoExecutiveData('No insights available for the selected period.')
+          ? _buildNoExecutiveData(
+              'No insights available for the selected period.',
+            )
           : Column(
               children: _actionableInsights.map((insight) {
-                final Color color = (insight['color'] as Color?) ?? _primaryAqua;
-                final IconData icon = (insight['icon'] as IconData?) ?? Icons.insights_rounded;
+                final Color color =
+                    (insight['color'] as Color?) ?? _primaryAqua;
+                final IconData icon =
+                    (insight['icon'] as IconData?) ?? Icons.insights_rounded;
                 return Container(
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.all(12),
@@ -3907,27 +4020,27 @@ class _HomePageState extends State<HomePage> {
                 : constraints.maxWidth >= 650
                 ? 2
                 : 1;
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: metrics.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: columns,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: columns == 1 ? 2.0 : 1.55,
-              ),
-              itemBuilder: (context, index) {
+            const spacing = 16.0;
+            final cardWidth = columns == 1
+                ? constraints.maxWidth
+                : (constraints.maxWidth - spacing * (columns - 1)) / columns;
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: List.generate(metrics.length, (index) {
                 final metric = metrics[index];
-                return _buildWebMetricCard(
-                  title: metric['title'] as String,
-                  value: _isLoadingExecutiveOverview
-                      ? '...'
-                      : '${metric['value']}',
-                  subtitle: metric['subtitle'] as String,
-                  icon: metric['icon'] as IconData,
+                return SizedBox(
+                  width: cardWidth,
+                  child: _buildWebMetricCard(
+                    title: metric['title'] as String,
+                    value: _isLoadingExecutiveOverview
+                        ? '...'
+                        : '${metric['value']}',
+                    subtitle: metric['subtitle'] as String,
+                    icon: metric['icon'] as IconData,
+                  ),
                 );
-              },
+              }, growable: false),
             );
           },
         ),
@@ -4029,7 +4142,9 @@ class _HomePageState extends State<HomePage> {
       subtitle: _trendChartSubtitle,
       icon: Icons.show_chart_rounded,
       child: counts.isEmpty
-          ? _buildNoExecutiveData('No consultation history is available for this period.')
+          ? _buildNoExecutiveData(
+              'No consultation history is available for this period.',
+            )
           : SizedBox(
               height: 250,
               child: LineChart(
@@ -4275,7 +4390,8 @@ class _HomePageState extends State<HomePage> {
       _buildRecentHighRiskAlerts(),
       _buildDistributionPanel(
         title: 'Referral Status Summary',
-        subtitle: 'Workflow status for referrals in ${_activeWindowLabel().toLowerCase()}',
+        subtitle:
+            'Workflow status for referrals in ${_activeWindowLabel().toLowerCase()}',
         icon: Icons.assignment_ind_rounded,
         values: _referralStatusCounts,
       ),
@@ -5941,36 +6057,38 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
-                  children: [
-                    Icon(
-                      Icons.history_rounded,
-                      color: _lightOffWhite,
-                      size: 24,
-                    ),
-                    SizedBox(width: 10),
-                    Text(
-                      'Recent Activity',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                const Expanded(
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.history_rounded,
                         color: _lightOffWhite,
+                        size: 24,
                       ),
-                    ),
-                  ],
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Recent Activity',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: _lightOffWhite,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                TextButton.icon(
+                IconButton(
                   onPressed: _loadExecutiveOverview,
+                  tooltip: 'Refresh recent activity',
                   icon: const Icon(
                     Icons.refresh_rounded,
-                    size: 16,
+                    size: 20,
                     color: _primaryAqua,
-                  ),
-                  label: const Text(
-                    'Refresh',
-                    style: TextStyle(color: _primaryAqua),
                   ),
                 ),
               ],

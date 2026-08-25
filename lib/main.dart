@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'
-    show kDebugMode, kIsWeb, kReleaseMode;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb, kReleaseMode;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -89,6 +88,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart'
 import 'package:mycapstone_project/web/shared/utils/auth_guard_middleware.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_route_middleware.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_role_gate.dart';
+import 'package:mycapstone_project/web/shared/widgets/web_connectivity_banner.dart';
 import 'package:mycapstone_project/web/roles/cho/dashboard/cho_dashboard.dart'
     as web_cho_dashboard;
 import 'package:mycapstone_project/web/roles/cho/portal/cho_module_workspace.dart'
@@ -125,9 +125,7 @@ const Set<String> _doctorWebRoles = <String>{'doctor'};
 // Local QA/dev only: --dart-define=USE_FIREBASE_EMULATOR=true redirects
 // Auth/Firestore to the local emulator suite. Defaults to false so a normal
 // `flutter run`/`flutter build` always targets the real Firebase project.
-const bool kUseFirebaseEmulator = bool.fromEnvironment(
-  'USE_FIREBASE_EMULATOR',
-);
+const bool kUseFirebaseEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR');
 
 Widget _guardWebPage({
   required Set<String> allowedRoles,
@@ -233,9 +231,14 @@ Future<void> _initializeWebServices() async {
   try {
     final firestore = getFirestoreInstance();
     firestore.settings = const Settings(
-      persistenceEnabled: false,
-      webExperimentalForceLongPolling: true,
-      webExperimentalAutoDetectLongPolling: false,
+      // Web pages write directly to Firestore. Persistent cache allows
+      // already-loaded records to remain readable offline and lets the
+      // Firestore SDK queue writes until the connection returns.
+      persistenceEnabled: true,
+      cacheSizeBytes: 50 * 1024 * 1024,
+      webPersistentTabManager: WebPersistentMultipleTabManager(),
+      webExperimentalForceLongPolling: false,
+      webExperimentalAutoDetectLongPolling: true,
     );
     await firestore.enableNetwork().timeout(const Duration(seconds: 6));
     print('✅ [FIRESTORE] Ready for operations');
@@ -306,6 +309,10 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       defaultTransition: kIsWeb ? Transition.fadeIn : null,
       transitionDuration: kIsWeb ? const Duration(milliseconds: 200) : null,
+      builder: kIsWeb
+          ? (context, child) =>
+                WebConnectivityBanner(child: child ?? const SizedBox.shrink())
+          : null,
       // Move the root entry to the branded path while preserving direct deep
       // links such as /login and /bhw/dashboard.
       initialRoute: initialRoute,
@@ -932,9 +939,9 @@ Future<void> _initDynamicLinks() async {
     // unavailable, so never let it hold the startup gate indefinitely.
     final initialLink = dynamicLinks == null
         ? null
-        : await dynamicLinks
-              .getInitialLink()
-              .timeout(const Duration(seconds: 8));
+        : await dynamicLinks.getInitialLink().timeout(
+            const Duration(seconds: 8),
+          );
     if (initialLink?.link != null) {
       // Handle the deep link, e.g., parse parameters and navigate
       // ignore: avoid_print

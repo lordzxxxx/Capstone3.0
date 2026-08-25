@@ -193,6 +193,14 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.backgroundLight,
       canvasColor: AppColors.canvasLight,
+      // Keep interaction states visible and consistent across the legacy
+      // feature pages that still use Flutter's default controls. These
+      // semantic tokens are intentionally shared with the new web shell.
+      focusColor: AppColors.primary.withValues(alpha: 0.16),
+      hoverColor: AppColors.primary.withValues(alpha: 0.08),
+      splashColor: AppColors.primary.withValues(alpha: 0.14),
+      highlightColor: AppColors.primary.withValues(alpha: 0.08),
+      visualDensity: VisualDensity.standard,
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.surfaceDark,
@@ -398,6 +406,37 @@ class AppTheme {
         color: AppColors.border,
         thickness: 1,
         space: 1,
+      ),
+      scrollbarTheme: ScrollbarThemeData(
+        thumbColor: WidgetStatePropertyAll(
+          AppColors.secondary.withValues(alpha: 0.48),
+        ),
+        trackColor: WidgetStatePropertyAll(
+          AppColors.surfaceSubtle.withValues(alpha: 0.9),
+        ),
+        trackBorderColor: const WidgetStatePropertyAll(Colors.transparent),
+        thickness: const WidgetStatePropertyAll(8),
+        radius: const Radius.circular(99),
+        interactive: true,
+      ),
+      tooltipTheme: TooltipThemeData(
+        waitDuration: const Duration(milliseconds: 450),
+        showDuration: const Duration(seconds: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        textStyle: const TextStyle(
+          color: AppColors.textOnDark,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.backgroundDark,
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.primary,
+        linearTrackColor: AppColors.surfaceSubtle,
+        circularTrackColor: AppColors.surfaceSubtle,
       ),
       drawerTheme: const DrawerThemeData(
         backgroundColor: AppColors.surfaceDark,

@@ -15,7 +15,6 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_histo
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
-import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
@@ -187,8 +186,12 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
                         );
                       }
                       final records =
-                          snapshot.data!.docs.map(_BhwReferralRecord.new).toList()
-                            ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+                          snapshot.data!.docs
+                              .map(_BhwReferralRecord.new)
+                              .toList()
+                            ..sort(
+                              (a, b) => b.updatedAt.compareTo(a.updatedAt),
+                            );
                       return _workspace(records);
                     },
                   ),
@@ -326,7 +329,6 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     decoration: BoxDecoration(
       color: AppColors.secondary,
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppColors.referral, width: 1.2),
     ),
     child: LayoutBuilder(
       builder: (context, constraints) {
@@ -341,7 +343,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
                   const Text(
                     'BHW SERVICES / REFERRAL',
                     style: TextStyle(
-                      color: AppColors.referral,
+                      color: Colors.white,
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                     ),
@@ -358,10 +360,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
                   const SizedBox(height: 5),
                   const Text(
                     'Create patient-linked requests for CHO review and monitor higher-level care. BHWs cannot approve, assign providers, diagnose, or prescribe.',
-                    style: TextStyle(
-                      color: AppColors.textOnDarkMuted,
-                      height: 1.45,
-                    ),
+                    style: TextStyle(color: Colors.white, height: 1.45),
                   ),
                 ],
               ),
@@ -396,7 +395,10 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
             label: Text(_views[index]),
             style: TextButton.styleFrom(
               foregroundColor: selected ? Colors.white : _muted,
-              backgroundColor: selected ? AppColors.referral : Colors.transparent,
+              // Navigation selection follows the shared clinical-blue system
+              // palette. The referral accent remains reserved for escalation
+              // actions, not for routine page navigation.
+              backgroundColor: selected ? _aqua : Colors.transparent,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),

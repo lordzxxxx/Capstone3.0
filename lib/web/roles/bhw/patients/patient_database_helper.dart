@@ -648,6 +648,12 @@ class PatientDatabaseHelper {
 
   // Listen to connectivity changes
   void startConnectivityListener() {
+    // Browser writes go straight to Firestore, whose web SDK already queues
+    // offline writes and resumes them when the connection returns. Starting
+    // the mobile SQLite sync path here would open an unnecessary local DB on
+    // the web and could turn a harmless reconnect into a sync error.
+    if (kIsWeb) return;
+
     Connectivity().onConnectivityChanged.listen((result) {
       if (!result.contains(ConnectivityResult.none)) {
         print('Internet connection restored. Syncing patient data...');

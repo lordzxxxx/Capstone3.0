@@ -13,12 +13,25 @@ from predict import (
     build_feature_vector,
     get_valid_symptoms,
     load_artifacts,
+    load_disease_labels,
+    load_feature_columns,
     load_symptom_aliases,
     normalize_symptom,
     predict_top_diseases,
     recognize_diseases,
     validate_symptom_aliases,
 )
+
+
+def test_recognition_vocabularies_do_not_require_model_binary() -> None:
+    features = load_feature_columns()
+    diseases = load_disease_labels()
+
+    assert len(features) == 228
+    assert len(features) == len(set(features))
+    assert "fever" in features
+    assert len(diseases) == 100
+    assert "pneumonia" in diseases
 
 
 def test_production_model_and_features_load_once() -> None:

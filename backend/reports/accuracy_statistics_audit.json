@@ -1,0 +1,188 @@
+{
+  "report": "accuracy_statistics_audit",
+  "source": {
+    "metrics": "/Users/lylesmac/capstone2-modify/backend/models/training_metrics.json",
+    "dataset": "/Users/lylesmac/capstone2-modify/backend/dataset/processed/merged_dataset.csv",
+    "model_artifact_present": true,
+    "model_artifact": "/private/tmp/capstone2-audit-disease_model.pkl",
+    "note": "Held-out hit counts are reconstructed from the persisted proportions and test-record count; no retraining occurs."
+  },
+  "dataset_checks": {
+    "records": 93993,
+    "features": 228,
+    "classes": 100,
+    "matches_training_metrics": {
+      "records": true,
+      "features": true,
+      "classes": true
+    }
+  },
+  "recorded_proportions": {
+    "top1_accuracy": 0.8933985850311187,
+    "top2_coverage": 0.9654236927496144,
+    "top3_coverage": 0.9850523964040641
+  },
+  "evaluation": {
+    "definitions": {
+      "top1_accuracy": "P(predicted_label == true_label) = correct_top1 / n",
+      "top_k_coverage": "Top-k coverage = P(true_label is in k highest-ranked labels) = top_k_hits / n",
+      "wilson_interval": "score interval for a binomial proportion at 95% confidence",
+      "majority_vector_ceiling": "sum(max label count per identical input vector) / n"
+    },
+    "top1_accuracy": {
+      "successes": 16795,
+      "total": 18799,
+      "estimate": 0.8933985850311187,
+      "wilson_95_ci": [
+        0.8889064461478126,
+        0.8977299796494874
+      ],
+      "wilson_95_margin": 0.004411766750837431
+    },
+    "top2_coverage": {
+      "successes": 18149,
+      "total": 18799,
+      "estimate": 0.9654236927496144,
+      "wilson_95_ci": [
+        0.9627154076660026,
+        0.9679418038157735
+      ],
+      "wilson_95_margin": 0.00261319807488547
+    },
+    "top3_coverage": {
+      "successes": 18518,
+      "total": 18799,
+      "estimate": 0.9850523964040641,
+      "wilson_95_ci": [
+        0.9832160603832304,
+        0.9866905380391452
+      ],
+      "wilson_95_margin": 0.0017372388279573991
+    },
+    "uniform_random_top1_baseline": 0.01,
+    "uniform_random_top3_coverage_baseline": 0.03,
+    "ambiguity": {
+      "unique_feature_vector_groups": 88878,
+      "conflicting_feature_vector_groups": 4140,
+      "rows_in_conflicting_feature_vector_groups": 9255,
+      "majority_vector_ceiling": 0.9455810539082697,
+      "majority_vector_ceiling_correct_rows": 88878,
+      "majority_class_baseline": 0.012969050886768163
+    },
+    "interpretation": "Top-2 and top-3 are coverage metrics, not ordinary accuracy. The majority-vector value is an empirical upper bound for this feature representation and cannot establish clinical validity."
+  },
+  "artifact_evaluation": {
+    "status": "recomputed_from_saved_artifact",
+    "artifact_sha256": "4cc536ba3503283454f58c6f53d992350f1e6205317d3b3c50e7da3573cd370c",
+    "matches_persisted_artifact_sha256": true,
+    "training_records": 75194,
+    "test_records": 18799,
+    "train_test_exact_vector_overlap_groups": 0,
+    "recomputed_correct_counts": {
+      "top1": 16795,
+      "top2": 18149,
+      "top3": 18518
+    },
+    "matches_persisted_correct_counts": true,
+    "calibration": {
+      "definitions": {
+        "multiclass_log_loss": "-mean(log(probability assigned to the true class))",
+        "multiclass_brier_score": "mean(sum((predicted probability - one-hot truth)^2 across classes))",
+        "top_label_ece": "sum(n_bin / n * abs(bin accuracy - bin mean confidence)); 10 equal-width confidence bins by default"
+      },
+      "records": 18799,
+      "classes": 100,
+      "bin_count": 10,
+      "multiclass_log_loss": 0.7509595737413562,
+      "multiclass_brier_score": 0.29455283867380866,
+      "top_label_expected_calibration_error": 0.35116430979408997,
+      "top_label_maximum_calibration_error": 0.47422184908903986,
+      "top1_accuracy": 0.8933985850311187,
+      "mean_top1_confidence": 0.5422342752370286,
+      "mean_confidence_minus_accuracy": -0.3511643097940901,
+      "bins": [
+        {
+          "lower_bound_inclusive": 0.0,
+          "upper_bound_inclusive": 0.1,
+          "records": 175,
+          "mean_confidence": 0.07162346712735182,
+          "empirical_accuracy": 0.4114285714285714,
+          "absolute_gap": 0.3398051043012196
+        },
+        {
+          "lower_bound_inclusive": 0.1,
+          "upper_bound_inclusive": 0.2,
+          "records": 1025,
+          "mean_confidence": 0.1592608741303254,
+          "empirical_accuracy": 0.48292682926829267,
+          "absolute_gap": 0.32366595513796725
+        },
+        {
+          "lower_bound_inclusive": 0.2,
+          "upper_bound_inclusive": 0.3,
+          "records": 1790,
+          "mean_confidence": 0.25303438328498096,
+          "empirical_accuracy": 0.6229050279329609,
+          "absolute_gap": 0.3698706446479799
+        },
+        {
+          "lower_bound_inclusive": 0.3,
+          "upper_bound_inclusive": 0.4,
+          "records": 2359,
+          "mean_confidence": 0.3511846733902108,
+          "empirical_accuracy": 0.8075455701568461,
+          "absolute_gap": 0.4563608967666353
+        },
+        {
+          "lower_bound_inclusive": 0.4,
+          "upper_bound_inclusive": 0.5,
+          "records": 2603,
+          "mean_confidence": 0.4508645896355087,
+          "empirical_accuracy": 0.9250864387245485,
+          "absolute_gap": 0.47422184908903986
+        },
+        {
+          "lower_bound_inclusive": 0.5,
+          "upper_bound_inclusive": 0.6,
+          "records": 2761,
+          "mean_confidence": 0.550593911221463,
+          "empirical_accuracy": 0.9840637450199203,
+          "absolute_gap": 0.4334698337984574
+        },
+        {
+          "lower_bound_inclusive": 0.6,
+          "upper_bound_inclusive": 0.7,
+          "records": 2999,
+          "mean_confidence": 0.649547519008511,
+          "empirical_accuracy": 0.9989996665555185,
+          "absolute_gap": 0.3494521475470075
+        },
+        {
+          "lower_bound_inclusive": 0.7,
+          "upper_bound_inclusive": 0.8,
+          "records": 2653,
+          "mean_confidence": 0.7482721077830999,
+          "empirical_accuracy": 1.0,
+          "absolute_gap": 0.25172789221690006
+        },
+        {
+          "lower_bound_inclusive": 0.8,
+          "upper_bound_inclusive": 0.9,
+          "records": 1863,
+          "mean_confidence": 0.8467319880148794,
+          "empirical_accuracy": 1.0,
+          "absolute_gap": 0.15326801198512063
+        },
+        {
+          "lower_bound_inclusive": 0.9,
+          "upper_bound_inclusive": 1.0,
+          "records": 571,
+          "mean_confidence": 0.9315210613168341,
+          "empirical_accuracy": 1.0,
+          "absolute_gap": 0.0684789386831659
+        }
+      ],
+      "interpretation": "Lower log loss, Brier score, and calibration error are better. Calibration measures probability reliability on this held-out dataset; it does not establish diagnosis safety or clinical validity."
+    }
+  }
+}

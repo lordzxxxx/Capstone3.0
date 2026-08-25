@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -35,7 +36,15 @@ PROJECT_DIR = BACKEND_DIR.parent
 DATASET_DIR = BACKEND_DIR / "dataset"
 PROCESSED_PATH = DATASET_DIR / "processed" / "merged_dataset.csv"
 PROVENANCE_PATH = DATASET_DIR / "processed" / "row_provenance.csv"
-MODEL_PATH = BACKEND_DIR / "models" / "disease_model.pkl"
+MODEL_PATH = Path(
+    os.getenv("MODEL_PATH", BACKEND_DIR / "models" / "disease_model.pkl")
+).expanduser().resolve()
+TRAINING_METRICS_PATH = Path(
+    os.getenv(
+        "TRAINING_METRICS_PATH",
+        BACKEND_DIR / "models" / "training_metrics.json",
+    )
+).expanduser().resolve()
 FEATURES_PATH = BACKEND_DIR / "models" / "disease_model_features.json"
 ON_DEVICE_PATH = PROJECT_DIR / "assets" / "models" / "health_classifier_weights.json"
 REPORT_PATH = BACKEND_DIR / "reports" / "ai_requirements_verification.json"
@@ -541,10 +550,9 @@ def build_report() -> dict[str, Any]:
     model = joblib.load(MODEL_PATH)
     evaluation = _evaluate_saved_model(features, labels, model)
     feature_prevalence = features.mean().sort_values()
-    training_metrics_path = MODEL_PATH.parent / "training_metrics.json"
     training_metrics = (
-        _load_json(training_metrics_path)
-        if training_metrics_path.exists()
+        _load_json(TRAINING_METRICS_PATH)
+        if TRAINING_METRICS_PATH.exists()
         else {}
     )
 

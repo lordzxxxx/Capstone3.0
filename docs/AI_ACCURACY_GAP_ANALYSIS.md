@@ -35,6 +35,60 @@ feature representation, not a clinical performance claim. It is below the
 these 228 binary inputs. Additional paired clinical variables or a cleaner,
 less ambiguous labeled dataset are required.
 
+## Statistical interpretation
+
+The repository now reports the held-out results with explicit counts and 95%
+Wilson score intervals in
+`backend/reports/accuracy_statistics_audit.json`. The definitions are:
+
+* Top-1 accuracy: `top1_correct / n`.
+* Top-k coverage: `count(true label is in the k highest-ranked labels) / n`.
+  Top-2 and top-3 are useful triage coverage measures, but they are not
+  ordinary accuracy and must not be presented as a single correct diagnosis.
+* Wilson interval for an observed proportion `p = x / n`:
+  `centre = (p + z²/(2n)) / (1 + z²/n)` and
+  `margin = z * sqrt(p(1-p)/n + z²/(4n²)) / (1 + z²/n)`, where `z = 1.96`
+  for a 95% interval. The interval is bounded to `[0, 1]`.
+* Identical-vector ceiling:
+  `sum over vectors max(count(label | vector)) / n`. This quantifies
+  information loss in the current 228-bit representation; it is not a
+  guarantee of clinical accuracy.
+
+For the current test set, the checked-in metrics correspond to 16,795/18,799
+top-1 hits, 18,149/18,799 top-2 hits, and 18,518/18,799 top-3 hits. The
+statistical audit recomputes the uncertainty around those proportions and
+checks that the dataset still has 93,993 records, 228 features, and 100
+classes. A 100-class uniform random baseline is 1% for top-1 and 3% for top-3;
+that baseline is only a reference point, not a deployment threshold.
+
+### Probability calibration audit
+
+The same saved v4 artifact was re-evaluated on the unchanged 18,799-row
+group-safe held-out partition. Its SHA-256 matches the persisted training
+metadata, its recomputed top-1/top-2/top-3 hit counts match exactly, and the
+train/test exact-vector overlap remains zero. Probability reliability is:
+
+| Calibration measure | Held-out result |
+|---|---:|
+| Multiclass log loss | 0.75096 |
+| Multiclass Brier score | 0.29455 |
+| Top-label expected calibration error (10 equal-width bins) | 0.35116 |
+| Mean predicted top-label probability | 0.54223 |
+| Observed top-1 accuracy | 0.89340 |
+
+Multiclass log loss is
+`-mean(log(probability assigned to the true class))`; the Brier score is
+`mean(sum((predicted probability - one-hot truth)^2 across classes))`; and
+top-label ECE is
+`sum(n_bin / n * abs(bin accuracy - bin mean confidence))`. Lower is better.
+The negative 0.35116 mean-confidence-minus-accuracy gap shows that this Random
+Forest is substantially **under-confident** on this split. Consequently, its
+raw probability must not be described to users as a calibrated likelihood.
+Calibration should be fitted only from training-partition or out-of-fold
+predictions and then checked once on the untouched test partition; fitting a
+calibrator on this test set would be leakage and was not done. These measures
+still describe dataset performance only, not clinical validity.
+
 ## Main causes of error
 
 1. The same symptom vector is assigned to multiple medically distinct

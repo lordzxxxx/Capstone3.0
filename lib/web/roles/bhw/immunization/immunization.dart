@@ -708,14 +708,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                 : Stack(
                     children: [
                       SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24.0,
-                          vertical: 20.0,
-                        ),
-                        child: Container(
-                          constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width,
-                          ),
+                        child: WebPageContent(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [

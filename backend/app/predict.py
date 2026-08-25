@@ -44,6 +44,9 @@ DEFAULT_ALIASES_PATH = (
 DEFAULT_DISEASE_ALIASES_PATH = (
     Path(__file__).resolve().parents[1] / "models" / "disease_aliases.json"
 )
+DEFAULT_TRAINING_METRICS_PATH = (
+    Path(__file__).resolve().parents[1] / "models" / "training_metrics.json"
+)
 
 
 def normalize_symptom(value: object) -> str:
@@ -138,20 +141,17 @@ def validate_symptom_aliases(
 
 
 @lru_cache(maxsize=4)
-def _load_artifacts_cached(
-    model_path_text: str,
-    feature_columns_path_text: str,
-) -> tuple[Any, tuple[str, ...]]:
-    model_path = Path(model_path_text)
+def _load_feature_columns_cached(feature_columns_path_text: str) -> tuple[str, ...]:
+    """Load the recognition vocabulary without deserializing the model.
+
+    Symptom recognition is part of the supported guidance API, while the
+    Random Forest is an offline evaluation artifact. Keeping these concerns
+    separate prevents a missing optional pickle from taking `/symptoms` and
+    `/guidance` offline.
+    """
     feature_path = Path(feature_columns_path_text)
-    if not model_path.is_file():
-        raise ArtifactLoadError(f"Model file not found: {model_path}")
     if not feature_path.is_file():
         raise ArtifactLoadError(f"Feature-columns file not found: {feature_path}")
-    try:
-        model = joblib.load(model_path)
-    except Exception as exc:
-        raise ArtifactLoadError(f"Could not load model artifact: {exc}") from exc
     try:
         payload = json.loads(feature_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -165,6 +165,66 @@ def _load_artifacts_cached(
     features = tuple(payload)
     _validated_feature_lookup(features)
     validate_symptom_aliases(load_symptom_aliases(), features)
+    return features
+
+
+def load_feature_columns(
+    feature_columns_path: Path | None = None,
+) -> tuple[str, ...]:
+    """Return the validated ordered symptom vocabulary from JSON metadata."""
+    settings = get_settings()
+    resolved_path = (feature_columns_path or settings.feature_columns_path).resolve()
+    return _load_feature_columns_cached(str(resolved_path))
+
+
+@lru_cache(maxsize=4)
+def _load_disease_labels_cached(metrics_path_text: str) -> tuple[str, ...]:
+    """Load ordered condition labels from reproducible training metadata."""
+    metrics_path = Path(metrics_path_text)
+    if not metrics_path.is_file():
+        raise ArtifactLoadError(f"Training metrics file not found: {metrics_path}")
+    try:
+        payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ArtifactLoadError(f"Could not load training metrics: {exc}") from exc
+    distribution = payload.get("class_distribution")
+    if not isinstance(distribution, dict) or not distribution:
+        raise ArtifactLoadError(
+            "Training metrics must contain a non-empty class_distribution object"
+        )
+    labels = tuple(str(label) for label in distribution)
+    lookup = _validated_feature_lookup(labels)
+    aliases = load_disease_aliases()
+    invalid_targets = sorted(
+        target for target in aliases.values() if target not in lookup
+    )
+    if invalid_targets:
+        raise ArtifactLoadError(
+            "Disease aliases target unknown labels: " + ", ".join(invalid_targets)
+        )
+    return labels
+
+
+def load_disease_labels(metrics_path: Path | None = None) -> tuple[str, ...]:
+    """Return condition labels without loading the inference artifact."""
+    resolved_path = (metrics_path or DEFAULT_TRAINING_METRICS_PATH).resolve()
+    return _load_disease_labels_cached(str(resolved_path))
+
+
+@lru_cache(maxsize=4)
+def _load_artifacts_cached(
+    model_path_text: str,
+    feature_columns_path_text: str,
+) -> tuple[Any, tuple[str, ...]]:
+    model_path = Path(model_path_text)
+    feature_path = Path(feature_columns_path_text)
+    if not model_path.is_file():
+        raise ArtifactLoadError(f"Model file not found: {model_path}")
+    try:
+        model = joblib.load(model_path)
+    except Exception as exc:
+        raise ArtifactLoadError(f"Could not load model artifact: {exc}") from exc
+    features = _load_feature_columns_cached(str(feature_path))
     expected_count = getattr(model, "n_features_in_", len(features))
     if int(expected_count) != len(features):
         raise ArtifactLoadError(
@@ -192,20 +252,20 @@ def load_artifacts(
 def clear_artifact_cache() -> None:
     """Clear cached artifacts for isolated tests or controlled deployments."""
     _load_artifacts_cached.cache_clear()
+    _load_feature_columns_cached.cache_clear()
+    _load_disease_labels_cached.cache_clear()
     _load_symptom_aliases_cached.cache_clear()
     _load_disease_aliases_cached.cache_clear()
 
 
 def get_valid_symptoms() -> list[str]:
-    """Return the ordered, validated symptom vocabulary used by the model."""
-    _, features = load_artifacts()
-    return list(features)
+    """Return the ordered symptom vocabulary used by recognition/inference."""
+    return list(load_feature_columns())
 
 
 def get_valid_diseases() -> list[str]:
-    """Return model disease labels as a vocabulary, without running inference."""
-    model, _ = load_artifacts()
-    return [str(label) for label in model.classes_]
+    """Return disease labels from metadata without running inference."""
+    return list(load_disease_labels())
 
 
 def recognize_diseases(values: Iterable[str]) -> dict[str, list[str]]:

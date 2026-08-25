@@ -311,46 +311,45 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                 : Stack(
                     children: [
                       SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 12.0,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            HealthModuleViewHeader(
-                              title: 'Patient Records',
-                              description:
-                                  'Review assigned-patient activity and demographics, or manage individual patient records.',
-                              activeView: _selectedPatientTab == 0
-                                  ? HealthModuleView.insights
-                                  : HealthModuleView.records,
-                              onViewChanged: (view) {
-                                setState(() {
-                                  _selectedPatientTab =
-                                      view == HealthModuleView.insights ? 0 : 1;
-                                  if (_selectedPatientTab == 0) {
-                                    _isSelectionMode = false;
-                                    _selectedIndices.clear();
-                                  }
-                                });
-                              },
-                              primaryColor: _primaryAqua,
-                              insightsLabel: 'Summary',
-                            ),
-                            const SizedBox(height: 16),
-                            if (_selectedPatientTab == 0)
-                              PatientOperationalSummary(
-                                patients: _patients,
-                                onViewPatient: _showPatientDetails,
-                                onViewAll: () =>
-                                    setState(() => _selectedPatientTab = 1),
-                              )
-                            else ...[
-                              _buildPatientTable(),
-                              const SizedBox(height: 80),
+                        child: WebPageContent(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              HealthModuleViewHeader(
+                                title: 'Patient Records',
+                                description:
+                                    'Review assigned-patient activity and demographics, or manage individual patient records.',
+                                activeView: _selectedPatientTab == 0
+                                    ? HealthModuleView.insights
+                                    : HealthModuleView.records,
+                                onViewChanged: (view) {
+                                  setState(() {
+                                    _selectedPatientTab =
+                                        view == HealthModuleView.insights ? 0 : 1;
+                                    if (_selectedPatientTab == 0) {
+                                      _isSelectionMode = false;
+                                      _selectedIndices.clear();
+                                    }
+                                  });
+                                },
+                                primaryColor: _primaryAqua,
+                                insightsLabel: 'Summary',
+                              ),
+                              const SizedBox(height: 16),
+                              if (_selectedPatientTab == 0)
+                                PatientOperationalSummary(
+                                  patients: _patients,
+                                  onViewPatient: _showPatientDetails,
+                                  onViewAll: () =>
+                                      setState(() => _selectedPatientTab = 1),
+                                )
+                              else ...[
+                                _buildPatientTable(),
+                                const SizedBox(height: 80),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
                       if (_selectedPatientTab == 1) _buildSelectionActionCard(),

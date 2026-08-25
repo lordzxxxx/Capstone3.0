@@ -7,14 +7,16 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.da
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/components/web_navigation_item.dart';
 
 class ChoNavigationDrawer extends StatefulWidget {
   final ChoDestination current;
 
   const ChoNavigationDrawer({super.key, required this.current});
 
-  static final ValueNotifier<bool> isCollapsedNotifier =
-      ValueNotifier<bool>(false);
+  static final ValueNotifier<bool> isCollapsedNotifier = ValueNotifier<bool>(
+    false,
+  );
   static bool _logoutInProgress = false;
 
   @override
@@ -32,40 +34,42 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
     final user = FirebaseAuth.instance.currentUser;
     final userName =
         (user?.displayName != null && user!.displayName!.trim().isNotEmpty)
-            ? user.displayName!.trim()
-            : user?.email?.split('@').first ?? 'CHO Staff';
+        ? user.displayName!.trim()
+        : user?.email?.split('@').first ?? 'CHO Staff';
 
     return ValueListenableBuilder<bool>(
       valueListenable: ChoNavigationDrawer.isCollapsedNotifier,
       builder: (context, isCollapsed, _) {
+        final compactViewport = MediaQuery.sizeOf(context).width < 1180;
+        final effectiveCollapsed = isCollapsed || compactViewport;
         return Hero(
           tag: 'cho_navigation_sidebar',
-          flightShuttleBuilder: (
-            flightContext,
-            animation,
-            flightDirection,
-            fromHeroContext,
-            toHeroContext,
-          ) {
-            return Material(
-              type: MaterialType.transparency,
-              child: toHeroContext.widget,
-            );
-          },
+          flightShuttleBuilder:
+              (
+                flightContext,
+                animation,
+                flightDirection,
+                fromHeroContext,
+                toHeroContext,
+              ) {
+                return Material(
+                  type: MaterialType.transparency,
+                  child: toHeroContext.widget,
+                );
+              },
           child: Material(
             type: MaterialType.transparency,
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 240),
+              duration: compactViewport
+                  ? Duration.zero
+                  : const Duration(milliseconds: 240),
               curve: Curves.easeInOutCubic,
-              width: isCollapsed ? 76.0 : 300.0,
+              width: effectiveCollapsed ? 76.0 : 300.0,
               height: double.infinity,
               decoration: const BoxDecoration(
                 color: ChoColors.navBackground,
                 border: Border(
-                  right: BorderSide(
-                    color: ChoColors.navBorder,
-                    width: 1,
-                  ),
+                  right: BorderSide(color: ChoColors.navBorder, width: 1),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -80,122 +84,134 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
                   builder: (context, constraints) {
                     return OverflowBox(
                       alignment: Alignment.topLeft,
-                      minWidth: isCollapsed ? 76.0 : 300.0,
-                      maxWidth: isCollapsed ? 76.0 : 300.0,
+                      minWidth: effectiveCollapsed ? 76.0 : 300.0,
+                      maxWidth: effectiveCollapsed ? 76.0 : 300.0,
                       minHeight: constraints.maxHeight,
                       maxHeight: constraints.maxHeight,
                       child: SafeArea(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            _buildBrandHeader(isCollapsed),
-                            _buildUserSection(userName, isCollapsed),
+                            _buildBrandHeader(effectiveCollapsed),
+                            _buildUserSection(userName, effectiveCollapsed),
                             const SizedBox(height: 8),
                             Expanded(
                               child: ListView(
                                 padding: EdgeInsets.symmetric(
-                                  horizontal: isCollapsed ? 8 : 10,
+                                  horizontal: effectiveCollapsed ? 8 : 10,
                                   vertical: 4,
                                 ),
                                 children: [
-                                  _buildSectionHeader('OVERVIEW', isCollapsed),
+                                  _buildSectionHeader(
+                                    'OVERVIEW',
+                                    effectiveCollapsed,
+                                  ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.dashboard,
                                     label: 'Dashboard',
                                     icon: Icons.dashboard_outlined,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
-                                  _buildSectionHeader('HEALTH PROGRAMS', isCollapsed),
+                                  _buildSectionHeader(
+                                    'HEALTH PROGRAMS',
+                                    effectiveCollapsed,
+                                  ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.patients,
                                     label: 'Patients',
                                     icon: Icons.people_alt_outlined,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.checkups,
                                     label: 'Check-ups',
                                     icon: Icons.medical_services_outlined,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.prenatal,
                                     label: 'Prenatal',
                                     icon: Icons.pregnant_woman_rounded,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.immunization,
                                     label: 'Immunization',
                                     icon: Icons.vaccines_outlined,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.morbidity,
                                     label: 'Morbidity',
                                     icon: Icons.monitor_heart_outlined,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.mortality,
                                     label: 'Mortality',
                                     icon: Icons.heart_broken_outlined,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.referrals,
                                     label: 'Referrals',
                                     icon: Icons.outbound_outlined,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
-                                  _buildSectionHeader('COORDINATION', isCollapsed),
+                                  _buildSectionHeader(
+                                    'COORDINATION',
+                                    effectiveCollapsed,
+                                  ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.bhwManagement,
                                     label: 'BHW Management',
                                     icon: Icons.groups_2_outlined,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.reports,
                                     label: 'Reports',
                                     icon: Icons.summarize_outlined,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.announcements,
                                     label: 'Announcements',
                                     icon: Icons.campaign_outlined,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
-                                  _buildSectionHeader('GOVERNANCE', isCollapsed),
+                                  _buildSectionHeader(
+                                    'GOVERNANCE',
+                                    effectiveCollapsed,
+                                  ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.dataQuality,
                                     label: 'Data Quality',
                                     icon: Icons.rule_folder_outlined,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.auditLogs,
                                     label: 'Audit Logs',
                                     icon: Icons.history_rounded,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.notifications,
                                     label: 'Notifications',
                                     icon: Icons.notifications_outlined,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
                                   _buildSidebarItem(
                                     destination: ChoDestination.profile,
                                     label: 'Profile and Settings',
                                     icon: Icons.manage_accounts_outlined,
-                                    isCollapsed: isCollapsed,
+                                    isCollapsed: effectiveCollapsed,
                                   ),
                                 ],
                               ),
                             ),
-                            _buildLogoutButton(context, isCollapsed),
+                            _buildLogoutButton(context, effectiveCollapsed),
                           ],
                         ),
                       ),
@@ -249,7 +265,7 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
               tooltip: 'Expand Menu',
               onPressed: _toggleCollapse,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             ),
           ],
         ),
@@ -325,7 +341,7 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
             tooltip: 'Minimize Menu',
             onPressed: _toggleCollapse,
             padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           ),
         ],
       ),
@@ -348,11 +364,7 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
               child: CircleAvatar(
                 radius: 16,
                 backgroundColor: ChoColors.navBackground,
-                child: Icon(
-                  Icons.person,
-                  color: ChoColors.aqua,
-                  size: 18,
-                ),
+                child: Icon(Icons.person, color: ChoColors.aqua, size: 18),
               ),
             ),
           ),
@@ -418,11 +430,7 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
     if (isCollapsed) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-        child: Divider(
-          color: ChoColors.navBorder,
-          height: 1,
-          thickness: 1,
-        ),
+        child: Divider(color: ChoColors.navBorder, height: 1, thickness: 1),
       );
     }
 
@@ -452,7 +460,7 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
     required bool isCollapsed,
   }) {
     final isSelected = destination == widget.current;
-    return _ChoSidebarAnimatedItem(
+    return WebNavigationItem(
       icon: icon,
       label: label,
       isActive: isSelected,
@@ -573,17 +581,20 @@ class _ChoSidebarAnimatedItemState extends State<_ChoSidebarAnimatedItem> {
   Widget build(BuildContext context) {
     final foreground = widget.isActive
         ? Colors.white
-        : (_isHovered ? Colors.white : ChoColors.navText.withValues(alpha: 0.92));
+        : (_isHovered
+              ? Colors.white
+              : ChoColors.navText.withValues(alpha: 0.92));
 
     final backgroundColor = widget.isActive
         ? ChoColors.aqua
         : (_isHovered
-            ? ChoColors.aqua.withValues(alpha: 0.15)
-            : Colors.transparent);
+              ? ChoColors.aqua.withValues(alpha: 0.15)
+              : Colors.transparent);
 
     final scale = _isPressed ? 0.95 : (_isHovered ? 1.01 : 1.0);
-    final translationX =
-        (!widget.isCollapsed && _isHovered && !widget.isActive) ? 3.0 : 0.0;
+    final translationX = (!widget.isCollapsed && _isHovered && !widget.isActive)
+        ? 3.0
+        : 0.0;
 
     if (widget.isCollapsed) {
       return Semantics(
@@ -687,14 +698,14 @@ class _ChoSidebarAnimatedItemState extends State<_ChoSidebarAnimatedItem> {
                             ),
                           ]
                         : (_isHovered
-                            ? [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ]
-                            : null),
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.08),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -705,8 +716,9 @@ class _ChoSidebarAnimatedItemState extends State<_ChoSidebarAnimatedItem> {
                           curve: Curves.easeOutCubic,
                           width: widget.isActive ? 4 : 0,
                           height: widget.isActive ? 22 : 0,
-                          margin:
-                              EdgeInsets.only(right: widget.isActive ? 8 : 0),
+                          margin: EdgeInsets.only(
+                            right: widget.isActive ? 8 : 0,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(2),
@@ -732,8 +744,8 @@ class _ChoSidebarAnimatedItemState extends State<_ChoSidebarAnimatedItem> {
                                 fontWeight: widget.isActive
                                     ? FontWeight.w800
                                     : (_isHovered
-                                        ? FontWeight.w700
-                                        : FontWeight.w600),
+                                          ? FontWeight.w700
+                                          : FontWeight.w600),
                               ),
                               child: Text(
                                 widget.label,
@@ -823,8 +835,9 @@ class _ChoAnimatedLogoutButtonState extends State<_ChoAnimatedLogoutButton> {
                     color: Colors.red.withValues(alpha: _isHovered ? 0.2 : 0.1),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: Colors.redAccent
-                          .withValues(alpha: _isHovered ? 0.6 : 0.2),
+                      color: Colors.redAccent.withValues(
+                        alpha: _isHovered ? 0.6 : 0.2,
+                      ),
                     ),
                   ),
                   child: const Center(
@@ -875,7 +888,9 @@ class _ChoAnimatedLogoutButtonState extends State<_ChoAnimatedLogoutButton> {
                   color: Colors.red.withValues(alpha: _isHovered ? 0.12 : 0.06),
                   borderRadius: BorderRadius.circular(11),
                   border: Border.all(
-                    color: Colors.red.withValues(alpha: _isHovered ? 0.55 : 0.35),
+                    color: Colors.red.withValues(
+                      alpha: _isHovered ? 0.55 : 0.35,
+                    ),
                   ),
                   boxShadow: _isHovered
                       ? [
