@@ -386,10 +386,10 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
                                               const BhwNotificationsDialog(),
                                         ),
                                       ),
-                                      BhwPwaInstallAction(
+                                      BhwApkDownloadAction(
                                         isCollapsed: effectiveCollapsed,
                                       ),
-                                      BhwApkDownloadAction(
+                                      BhwPwaInstallAction(
                                         isCollapsed: effectiveCollapsed,
                                       ),
                                       _buildSidebarItem(

@@ -17,7 +17,11 @@
       that reset/audit/rate-limit collections are not client-writable.
 - [ ] Verify password reset revokes refresh tokens and returns generic account
       recovery messages for unknown addresses.
-- [ ] Build web and Android release artifacts with the intended defines.
+- [ ] Build the web artifact with `AI_API_BASE_URL` and
+      `FIREBASE_APP_CHECK_WEB_KEY` set, using `npm run build:web:release`.
+- [ ] Run `vercel build --prod` locally or in CI, then deploy the generated
+      output with `vercel deploy --prebuilt --prod`; Flutter's generated
+      `build/` directory is intentionally not committed to Git.
 
 ## Safety and validation
 

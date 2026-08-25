@@ -54,12 +54,14 @@ async function openFlutterRoute(page, route) {
 }
 
 async function openAuthenticatedRoute(page, route, expectedRoute = route) {
-  await page.evaluate((nextRoute) => {
-    window.location.hash = nextRoute;
-  }, route);
+  // The web app uses Flutter's path URL strategy. Navigating by hash here
+  // leaves the browser on the previous route and makes an otherwise healthy
+  // authenticated page look like a timeout.
+  await page.goto(route, {waitUntil: 'domcontentloaded'});
+  const expectedPath = new URL(expectedRoute, 'http://127.0.0.1').pathname;
   await page.waitForFunction(
-    (destination) => window.location.hash === `#${destination}`,
-    expectedRoute,
+    (destination) => window.location.pathname === destination,
+    expectedPath,
     {timeout: 30_000},
   );
   await page.locator('flutter-view').waitFor({state: 'attached'});
@@ -230,7 +232,10 @@ test.describe('critical controls and connection feedback', () => {
     const notificationButton = page.getByRole('button', {name: /Notifications navigation item/i});
     await expect(notificationButton).toBeVisible();
     await expect(
-      page.getByRole('button', {name: /Install AI-DSUHIS BHW app/i}),
+      page.getByRole('button', {name: /Download the AI-DSUHIS BHW Android application APK/i}),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', {name: /Install AI-DSUHIS BHW web app \(PWA\)/i}),
     ).toBeVisible();
     await notificationButton.click();
     const closeNotifications = page.getByRole('button', {name: /Close notifications/i});

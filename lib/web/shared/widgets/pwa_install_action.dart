@@ -56,7 +56,7 @@ class BhwPwaInstallAction extends StatelessWidget {
                         SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Install BHW app',
+                            'Install web app (PWA)',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -75,9 +75,9 @@ class BhwPwaInstallAction extends StatelessWidget {
 
         return Semantics(
           button: true,
-          label: 'Install AI-DSUHIS BHW app',
+          label: 'Install AI-DSUHIS BHW web app (PWA)',
           child: Tooltip(
-            message: 'Install BHW app',
+            message: 'Install web app (PWA)',
             preferBelow: false,
             child: item,
           ),
@@ -100,13 +100,13 @@ class BhwPwaInstallAction extends StatelessWidget {
           children: [
             Icon(Icons.install_mobile_outlined, color: AppColors.primary),
             SizedBox(width: 10),
-            Expanded(child: Text('Install the BHW app')),
+            Expanded(child: Text('Install web app (PWA)')),
           ],
         ),
         content: const Text(
-          'Use your browser menu and choose “Install app” or “Add to Home Screen”. '
-          'After installation, AI-DSUHIS will open like an app while keeping '
-          'your existing Firebase account and synchronized records.',
+          'This installs the browser version as a PWA (Progressive Web App). '
+          'Use your browser menu and choose “Install app” or “Add to Home '
+          'Screen”. It does not download or install the native Android APK.',
         ),
         actions: [
           TextButton(

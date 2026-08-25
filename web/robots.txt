@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Keep authenticated clinical workspaces out of search indexes while allowing
+# the public AI-DSUHIS landing page to be discovered.
+Disallow: /bhw/
+Disallow: /cho/
+Disallow: /doctor/
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /not-found
+Disallow: /checkups
+Disallow: /prenatal
+Disallow: /immunization
+Disallow: /morbidity
+Disallow: /mortality
+Disallow: /CommunicablePage
+Disallow: /NonCommunicablePage
+Disallow: /ReferralsPage

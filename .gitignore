@@ -77,3 +77,4 @@ backend/models/experiments/disease_model_v2_candidate.pkl
 # Generated Playwright test output (HTML reports/traces)
 /test-results/
 /qa/playwright-report/
+.vercel

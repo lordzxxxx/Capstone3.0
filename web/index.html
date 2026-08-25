@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -22,9 +22,6 @@
   <meta name="application-name" content="AI-DSUHIS">
   <meta name="description" content="AI-DSUHIS healthcare information system.">
   <meta name="theme-color" content="#071A33">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -37,12 +34,6 @@
 
   <title>AI-DSUHIS</title>
   <link rel="manifest" href="manifest.json">
-  <!-- Inter is the shared web UI typeface; Flutter falls back to the bundled
-       fonts when a network connection is unavailable. -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <style>
     html, body {
       height: 100%;
@@ -53,7 +44,7 @@
       overflow-x: hidden;
       overflow-y: auto;
       background: #071A33;
-      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
     #app-startup-loader {
@@ -125,10 +116,6 @@
     }
   </style>
   
-  <!-- Firebase Auth owns the web Google provider flow. Loading the separate
-       Google Identity script here created an unused second client and failed
-       whenever the placeholder client ID was evaluated. -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
   <div id="web-connectivity-status" role="status" aria-live="polite" hidden></div>
