@@ -20,7 +20,6 @@ import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/widgets/sidebar_page_transition.dart';
 import 'package:mycapstone_project/web/shared/widgets/bhw_notifications.dart';
-import 'package:mycapstone_project/web/shared/widgets/pwa_install_action.dart';
 import 'package:mycapstone_project/web/shared/widgets/bhw_apk_download_action.dart';
 import 'package:mycapstone_project/web/shared/components/web_navigation_item.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
@@ -387,9 +386,6 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
                                         ),
                                       ),
                                       BhwApkDownloadAction(
-                                        isCollapsed: effectiveCollapsed,
-                                      ),
-                                      BhwPwaInstallAction(
                                         isCollapsed: effectiveCollapsed,
                                       ),
                                       _buildSidebarItem(

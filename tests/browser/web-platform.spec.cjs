@@ -234,9 +234,6 @@ test.describe('critical controls and connection feedback', () => {
     await expect(
       page.getByRole('button', {name: /Download the AI-DSUHIS BHW Android application APK/i}),
     ).toBeVisible();
-    await expect(
-      page.getByRole('button', {name: /Install AI-DSUHIS BHW web app \(PWA\)/i}),
-    ).toBeVisible();
     await notificationButton.click();
     const closeNotifications = page.getByRole('button', {name: /Close notifications/i});
     await expect(closeNotifications).toBeVisible();

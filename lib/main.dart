@@ -60,7 +60,6 @@ import 'package:mycapstone_project/web/features/auth/forgot.dart' as web_forgot;
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/utils/browser_location.dart';
-import 'package:mycapstone_project/web/shared/services/pwa_install.dart';
 import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart'
     as web_bhw_dashboard;
 import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart'
@@ -166,12 +165,6 @@ void main() async {
   }
 
   if (kIsWeb) {
-    // Register the install listener before Flutter renders the login flow.
-    // Chromium may dispatch `beforeinstallprompt` before the BHW sidebar is
-    // created, so delaying this until the install button appears can lose the
-    // native prompt and leave only the manual-install fallback.
-    PwaInstallService.instance;
-
     // Do not build Firebase-backed routes until Firebase Web has finished
     // initializing. FlutterFire's JS adapters can otherwise receive a Dart
     // FirebaseException during the startup race and surface a misleading
