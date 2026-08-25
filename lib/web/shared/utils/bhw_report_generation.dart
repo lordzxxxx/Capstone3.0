@@ -1137,10 +1137,6 @@ String _slugify(String value) {
       .replaceAll(RegExp(r'^_+|_+$'), '');
 }
 
-Color _bestForegroundColor(Color background) {
-  return background.computeLuminance() > 0.45 ? Colors.black : Colors.white;
-}
-
 Future<List<int>> _buildFormalBhwReportPdfBytes({
   required String moduleLabel,
   required _ReportSelection selection,

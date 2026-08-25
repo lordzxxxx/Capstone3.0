@@ -11,17 +11,12 @@ Route<T> buildSidebarPageRoute<T>({
     transitionDuration: const Duration(milliseconds: 200),
     reverseTransitionDuration: const Duration(milliseconds: 180),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOut,
-        ),
-      );
+      final fadeAnimation = Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
 
-      return FadeTransition(
-        opacity: fadeAnimation,
-        child: child,
-      );
+      return FadeTransition(opacity: fadeAnimation, child: child);
     },
   );
 }

@@ -9,13 +9,11 @@ processed dataset.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import sys
 from pathlib import Path
 
-import joblib
 import pandas as pd
 
 APP_DIR = Path(__file__).resolve().parents[1] / "app"
@@ -29,6 +27,7 @@ from evaluation_metrics import (  # noqa: E402
     top_k_successes,
 )
 from train import group_safe_split, vector_group_ids  # noqa: E402
+from verified_artifact import load_verified_joblib, sha256_file  # noqa: E402
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 DATASET_PATH = BACKEND_DIR / "dataset" / "processed" / "merged_dataset.csv"
@@ -37,14 +36,6 @@ DEFAULT_MODEL_PATH = BACKEND_DIR / "models" / "disease_model.pkl"
 MODEL_PATH = Path(os.getenv("MODEL_PATH", DEFAULT_MODEL_PATH)).expanduser().resolve()
 OUTPUT_PATH = BACKEND_DIR / "reports" / "accuracy_statistics_audit.json"
 TARGET = "diseases"
-
-
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _reported_successes(
@@ -93,10 +84,13 @@ def main() -> dict[str, object]:
     )
 
     if MODEL_PATH.is_file():
-        artifact_sha256 = _sha256(MODEL_PATH)
+        artifact_sha256 = sha256_file(MODEL_PATH)
         groups = vector_group_ids(features)
         train_indices, test_indices = group_safe_split(features, labels, groups)
-        model = joblib.load(MODEL_PATH)
+        model = load_verified_joblib(
+            MODEL_PATH,
+            str(metrics.get("model_sha256", "")),
+        )
         held_out_features = features.iloc[test_indices]
         held_out_labels = labels.iloc[test_indices]
         probabilities = model.predict_proba(held_out_features)

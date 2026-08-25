@@ -152,18 +152,14 @@ class BarangayWorkspaceService {
         .doc(normalizedCode);
     final batch = _firestore.batch();
 
-    batch.set(
-      barangayRef,
-      <String, dynamic>{
-        'barangay': scope.barangay,
-        'barangayCode': normalizedCode,
-        'barangayDistrict': scope.barangayDistrict,
-        'workspaceCollections': _modules.map((module) => module.id).toList(),
-        'workspaceInitializedByUid': scope.userId,
-        'workspaceUpdatedAt': FieldValue.serverTimestamp(),
-      },
-      SetOptions(merge: true),
-    );
+    batch.set(barangayRef, <String, dynamic>{
+      'barangay': scope.barangay,
+      'barangayCode': normalizedCode,
+      'barangayDistrict': scope.barangayDistrict,
+      'workspaceCollections': _modules.map((module) => module.id).toList(),
+      'workspaceInitializedByUid': scope.userId,
+      'workspaceUpdatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
 
     for (final module in _modules) {
       batch.set(

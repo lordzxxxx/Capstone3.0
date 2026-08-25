@@ -17,7 +17,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import joblib
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (
@@ -32,6 +31,10 @@ from sklearn.metrics import (
 )
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
+APP_DIR = BACKEND_DIR / "app"
+if str(APP_DIR) not in sys.path:
+    sys.path.insert(0, str(APP_DIR))
+from verified_artifact import load_verified_joblib  # noqa: E402
 PROJECT_DIR = BACKEND_DIR.parent
 DATASET_DIR = BACKEND_DIR / "dataset"
 PROCESSED_PATH = DATASET_DIR / "processed" / "merged_dataset.csv"
@@ -547,7 +550,10 @@ def build_report() -> dict[str, Any]:
     group_sizes = grouped.groupby("group").size()
     label_counts = grouped.groupby("group")["label"].nunique()
     conflict_groups = label_counts[label_counts > 1]
-    model = joblib.load(MODEL_PATH)
+    expected_sha256 = str(
+        _load_json(TRAINING_METRICS_PATH).get("model_sha256", "")
+    )
+    model = load_verified_joblib(MODEL_PATH, expected_sha256)
     evaluation = _evaluate_saved_model(features, labels, model)
     feature_prevalence = features.mean().sort_values()
     training_metrics = (

@@ -467,10 +467,7 @@ Future<_OverallReportSelection?> _showOverallSelectionDialog(
               backgroundColor: AppColors.surfaceLight,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
-                side: const BorderSide(
-                  color: _launcherPrimaryAqua,
-                  width: 1.5,
-                ),
+                side: const BorderSide(color: _launcherPrimaryAqua, width: 1.5),
               ),
               title: const Text(
                 'Generate Overall Health Report',
@@ -752,10 +749,7 @@ Widget _buildOverallDropdownField<T>({
       labelStyle: const TextStyle(color: AppColors.textSecondary),
       filled: true,
       fillColor: Colors.black.withValues(alpha: 0.04),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 16,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(
@@ -784,10 +778,7 @@ Widget _buildOverallTextField({
       labelStyle: const TextStyle(color: AppColors.textSecondary),
       filled: true,
       fillColor: Colors.black.withValues(alpha: 0.04),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 16,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(

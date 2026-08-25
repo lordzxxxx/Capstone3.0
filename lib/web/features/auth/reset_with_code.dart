@@ -5,8 +5,6 @@ import 'dart:convert';
 import 'package:mycapstone_project/app/core/services/cloud_functions_config.dart';
 
 const Color _primaryAqua = Color(0xFF00A8B5);
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _darkDeepTeal = Color(0xFF0A1F24);
 const Color _lightOffWhite = Color(0xFFF5F5F5);
 
 class ResetWithCode extends StatefulWidget {
@@ -29,44 +27,84 @@ class _ResetWithCodeState extends State<ResetWithCode> {
     final confirm = confirmController.text;
 
     if (code.isEmpty || pwd.isEmpty || confirm.isEmpty) {
-      Get.snackbar('Error', 'Please fill all fields', backgroundColor: const Color(0xFFD32F2F), colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        'Please fill all fields',
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
       return;
     }
     if (code.length != 4) {
-      Get.snackbar('Error', 'Code must be 4 digits', backgroundColor: const Color(0xFFD32F2F), colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        'Code must be 4 digits',
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
       return;
     }
     if (pwd != confirm) {
-      Get.snackbar('Error', 'Passwords do not match', backgroundColor: const Color(0xFFD32F2F), colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        'Passwords do not match',
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
       return;
     }
     if (pwd.length < 6) {
-      Get.snackbar('Error', 'Password must be at least 6 characters', backgroundColor: const Color(0xFFD32F2F), colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        'Password must be at least 6 characters',
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
       return;
     }
 
     setState(() => _isLoading = true);
     try {
       // Call Cloud Function to complete password reset
-      final response = await http.post(
-        Uri.parse(CloudFunctionsConfig.completePasswordResetUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': widget.email,
-          'code': code,
-          'newPassword': pwd,
-        }),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .post(
+            Uri.parse(CloudFunctionsConfig.completePasswordResetUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'email': widget.email,
+              'code': code,
+              'newPassword': pwd,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
 
       final body = jsonDecode(response.body);
       if (response.statusCode == 200 && body['success'] == true) {
-        Get.snackbar('Success', 'Password reset successfully. Please sign in.', backgroundColor: const Color(0xFF388E3C), colorText: Colors.white);
-        Future.delayed(const Duration(seconds: 2), () => Get.offAll(() => const SizedBox()));
+        Get.snackbar(
+          'Success',
+          'Password reset successfully. Please sign in.',
+          backgroundColor: const Color(0xFF388E3C),
+          colorText: Colors.white,
+        );
+        Future.delayed(
+          const Duration(seconds: 2),
+          () => Get.offAll(() => const SizedBox()),
+        );
       } else {
-        Get.snackbar('Failed', body['error'] ?? 'Failed to reset password', backgroundColor: const Color(0xFFD32F2F), colorText: Colors.white);
+        Get.snackbar(
+          'Failed',
+          body['error'] ?? 'Failed to reset password',
+          backgroundColor: const Color(0xFFD32F2F),
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
-      Get.snackbar('Failed', 'Network or server error: $e', backgroundColor: const Color(0xFFD32F2F), colorText: Colors.white);
+      Get.snackbar(
+        'Failed',
+        'Network or server error: $e',
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
     } finally {
       setState(() => _isLoading = false);
     }
@@ -115,8 +153,12 @@ class _ResetWithCodeState extends State<ResetWithCode> {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submit,
-                  style: ElevatedButton.styleFrom(backgroundColor: _primaryAqua),
-                  child: _isLoading ? const CircularProgressIndicator() : const Text('Reset Password'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaryAqua,
+                  ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text('Reset Password'),
                 ),
               ),
             ],

@@ -252,7 +252,10 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
                       IconButton(
                         tooltip: 'Refresh data',
                         onPressed: _loadScope,
-                        icon: const Icon(Icons.refresh_rounded, color: ChoColors.text),
+                        icon: const Icon(
+                          Icons.refresh_rounded,
+                          color: ChoColors.text,
+                        ),
                       ),
                     ],
                   ),
@@ -260,7 +263,10 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
                 const Divider(height: 1, color: ChoColors.border),
                 Expanded(
                   child: _accessError != null
-                      ? ChoErrorState(message: _accessError!, onRetry: _loadScope)
+                      ? ChoErrorState(
+                          message: _accessError!,
+                          onRetry: _loadScope,
+                        )
                       : _stream == null
                       ? const ChoLoadingSkeleton()
                       : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -272,7 +278,9 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
                                 onRetry: _loadScope,
                               );
                             }
-                            if (!snapshot.hasData) return const ChoLoadingSkeleton();
+                            if (!snapshot.hasData) {
+                              return const ChoLoadingSkeleton();
+                            }
                             return _content(snapshot.data!.docs);
                           },
                         ),
@@ -983,26 +991,5 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
         ),
       );
     }
-  }
-}
-
-class _ChoFilterLabel extends StatelessWidget {
-  const _ChoFilterLabel(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: const TextStyle(
-        color: ChoColors.text,
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.2,
-      ),
-    );
   }
 }

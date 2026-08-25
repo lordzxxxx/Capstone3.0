@@ -9,14 +9,15 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable
 
-import joblib
 import numpy as np
 import pandas as pd
 
 try:
     from .config import get_settings
+    from .verified_artifact import ArtifactVerificationError, load_verified_joblib
 except ImportError:  # Direct execution support.
     from config import get_settings
+    from verified_artifact import ArtifactVerificationError, load_verified_joblib
 
 
 class ArtifactLoadError(RuntimeError):
@@ -215,15 +216,14 @@ def load_disease_labels(metrics_path: Path | None = None) -> tuple[str, ...]:
 def _load_artifacts_cached(
     model_path_text: str,
     feature_columns_path_text: str,
+    expected_sha256: str,
 ) -> tuple[Any, tuple[str, ...]]:
     model_path = Path(model_path_text)
     feature_path = Path(feature_columns_path_text)
-    if not model_path.is_file():
-        raise ArtifactLoadError(f"Model file not found: {model_path}")
     try:
-        model = joblib.load(model_path)
-    except Exception as exc:
-        raise ArtifactLoadError(f"Could not load model artifact: {exc}") from exc
+        model = load_verified_joblib(model_path, expected_sha256)
+    except ArtifactVerificationError as exc:
+        raise ArtifactLoadError(str(exc)) from exc
     features = _load_feature_columns_cached(str(feature_path))
     expected_count = getattr(model, "n_features_in_", len(features))
     if int(expected_count) != len(features):
@@ -239,6 +239,7 @@ def _load_artifacts_cached(
 def load_artifacts(
     model_path: Path | None = None,
     feature_columns_path: Path | None = None,
+    expected_sha256: str | None = None,
 ) -> tuple[Any, tuple[str, ...]]:
     """Load model/metadata once per resolved path pair."""
     settings = get_settings()
@@ -246,7 +247,12 @@ def load_artifacts(
     resolved_features = (
         feature_columns_path or settings.feature_columns_path
     ).resolve()
-    return _load_artifacts_cached(str(resolved_model), str(resolved_features))
+    approved_sha256 = expected_sha256 or settings.model_expected_sha256
+    return _load_artifacts_cached(
+        str(resolved_model),
+        str(resolved_features),
+        approved_sha256,
+    )
 
 
 def clear_artifact_cache() -> None:

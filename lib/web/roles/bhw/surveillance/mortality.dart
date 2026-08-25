@@ -1,24 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:community_charts_flutter/community_charts_flutter.dart'
     as charts;
-import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
-import 'package:mycapstone_project/web/roles/bhw/checkups/checkup.dart'
-    as checkup_page;
-import 'package:mycapstone_project/web/roles/bhw/analytics/health_metrics.dart';
-import 'package:mycapstone_project/web/roles/cho/analytics/cho_analytics.dart';
-import 'package:mycapstone_project/web/roles/bhw/prenatal/prenatal.dart';
-import 'package:mycapstone_project/web/roles/bhw/immunization/immunization.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality_database_helper.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
-import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
@@ -34,6 +23,7 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient_history_dialog
 import 'package:mycapstone_project/web/roles/bhw/patients/shared_patient_search_panel.dart';
 import 'package:mycapstone_project/web/shared/utils/report_generation.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
+import 'package:mycapstone_project/web/shared/widgets/web_sync_status_badge.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _secondaryIceBlue = Color(0xFF163B66);
@@ -50,8 +40,12 @@ const List<Color> _mortalityChartPalette = <Color>[
   Color(0xFFB8C9DB),
 ];
 
-charts.Color _toChartsColor(Color color) =>
-    charts.Color(r: color.red, g: color.green, b: color.blue, a: color.alpha);
+charts.Color _toChartsColor(Color color) => charts.Color(
+  r: (color.r * 255).round().clamp(0, 255),
+  g: (color.g * 255).round().clamp(0, 255),
+  b: (color.b * 255).round().clamp(0, 255),
+  a: (color.a * 255).round().clamp(0, 255),
+);
 
 class MortalityPage extends StatefulWidget {
   const MortalityPage({super.key, this.initialPatient});
@@ -113,8 +107,9 @@ class _MortalityPageState extends State<MortalityPage> {
       DashboardDateFilterMode.allTime;
   DateTime? _insightsCustomDate;
   DateTime? _insightsSelectedMonth;
-  DateTime _insightsRangeStart =
-      DateTime.now().subtract(const Duration(days: 6));
+  DateTime _insightsRangeStart = DateTime.now().subtract(
+    const Duration(days: 6),
+  );
   DateTime _insightsRangeEnd = DateTime.now();
 
   // Pie Chart Hover State
@@ -304,19 +299,21 @@ class _MortalityPageState extends State<MortalityPage> {
     final verifiedCount = filtered
         .where((r) => r['verification']?.toString().toLowerCase() == 'verified')
         .length;
-    final verificationPercent =
-        totalDeaths > 0 ? (verifiedCount / totalDeaths) * 100 : 0.0;
+    final verificationPercent = totalDeaths > 0
+        ? (verifiedCount / totalDeaths) * 100
+        : 0.0;
 
     final causeCounts = <String, int>{};
     for (final r in filtered) {
-      final cause =
-          (r['causeOfDeath'] ?? r['cause'] ?? 'Unspecified').toString();
+      final cause = (r['causeOfDeath'] ?? r['cause'] ?? 'Unspecified')
+          .toString();
       causeCounts[cause] = (causeCounts[cause] ?? 0) + 1;
     }
     final sortedCauses = causeCounts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    final leadingCause =
-        sortedCauses.isEmpty ? 'No data' : sortedCauses.first.key;
+    final leadingCause = sortedCauses.isEmpty
+        ? 'No data'
+        : sortedCauses.first.key;
 
     final trends = _generateMonthlyTrends(filtered);
     final causes = _generateCauseData(filtered);
@@ -356,7 +353,11 @@ class _MortalityPageState extends State<MortalityPage> {
               'Filter mortality records, verified counts, cause distributions, and monthly trends by date. Currently showing ${_activeInsightsWindowLabel().toLowerCase()}.',
               maxLines: isWideHeader ? 2 : 3,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: _mutedCoolGray, fontSize: 11, height: 1.35),
+              style: const TextStyle(
+                color: _mutedCoolGray,
+                fontSize: 11,
+                height: 1.35,
+              ),
             ),
           ],
         );
@@ -450,20 +451,23 @@ class _MortalityPageState extends State<MortalityPage> {
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: (_insightsDateFilterMode ==
+              foregroundColor:
+                  (_insightsDateFilterMode ==
                           DashboardDateFilterMode.customDay ||
                       _insightsDateFilterMode ==
                           DashboardDateFilterMode.customRange)
                   ? _primaryAqua
                   : _lightOffWhite,
-              backgroundColor: (_insightsDateFilterMode ==
+              backgroundColor:
+                  (_insightsDateFilterMode ==
                           DashboardDateFilterMode.customDay ||
                       _insightsDateFilterMode ==
                           DashboardDateFilterMode.customRange)
                   ? _primaryAqua.withValues(alpha: 0.12)
                   : Colors.white,
               side: BorderSide(
-                color: (_insightsDateFilterMode ==
+                color:
+                    (_insightsDateFilterMode ==
                             DashboardDateFilterMode.customDay ||
                         _insightsDateFilterMode ==
                             DashboardDateFilterMode.customRange)
@@ -626,8 +630,7 @@ class _MortalityPageState extends State<MortalityPage> {
                   );
                   if (picked == null || !mounted) return;
                   setState(() {
-                    _insightsDateFilterMode =
-                        DashboardDateFilterMode.customDay;
+                    _insightsDateFilterMode = DashboardDateFilterMode.customDay;
                     _insightsCustomDate = picked;
                   });
                   _recomputeMortalityInsightsMetrics();
@@ -657,10 +660,11 @@ class _MortalityPageState extends State<MortalityPage> {
                   );
                   if (picked == null || !mounted) return;
                   setState(() {
-                    _insightsDateFilterMode =
-                        DashboardDateFilterMode.thisMonth;
-                    _insightsSelectedMonth =
-                        DateTime(picked.year, picked.month);
+                    _insightsDateFilterMode = DashboardDateFilterMode.thisMonth;
+                    _insightsSelectedMonth = DateTime(
+                      picked.year,
+                      picked.month,
+                    );
                   });
                   _recomputeMortalityInsightsMetrics();
                 },
@@ -709,8 +713,7 @@ class _MortalityPageState extends State<MortalityPage> {
                 onTap: () {
                   Navigator.pop(dialogContext);
                   setState(() {
-                    _insightsDateFilterMode =
-                        DashboardDateFilterMode.allTime;
+                    _insightsDateFilterMode = DashboardDateFilterMode.allTime;
                   });
                   _recomputeMortalityInsightsMetrics();
                 },
@@ -734,7 +737,7 @@ class _MortalityPageState extends State<MortalityPage> {
       _isLoadingMetrics = false;
       _recomputeMortalityInsightsMetrics();
     } catch (e) {
-      print('Error loading data: $e');
+      debugPrint('Error loading data: $e');
       setState(() {
         _isLoadingMetrics = false;
         _isDataLoaded = true;
@@ -770,8 +773,9 @@ class _MortalityPageState extends State<MortalityPage> {
 
         // Cause Filter
         if (_selectedCauseFilter != 'All') {
-          final cause =
-              (record['causeOfDeath'] ?? record['cause'] ?? '').toString().toLowerCase();
+          final cause = (record['causeOfDeath'] ?? record['cause'] ?? '')
+              .toString()
+              .toLowerCase();
           if (!cause.contains(_selectedCauseFilter.toLowerCase())) {
             return false;
           }
@@ -822,12 +826,15 @@ class _MortalityPageState extends State<MortalityPage> {
         // Search Query filter
         if (_searchQuery.trim().isNotEmpty) {
           final query = _searchQuery.toLowerCase();
-          final name =
-              (record['name'] ?? record['patientName'] ?? '').toString().toLowerCase();
-          final id =
-              (record['id'] ?? record['patientId'] ?? '').toString().toLowerCase();
-          final cause =
-              (record['causeOfDeath'] ?? record['cause'] ?? '').toString().toLowerCase();
+          final name = (record['name'] ?? record['patientName'] ?? '')
+              .toString()
+              .toLowerCase();
+          final id = (record['id'] ?? record['patientId'] ?? '')
+              .toString()
+              .toLowerCase();
+          final cause = (record['causeOfDeath'] ?? record['cause'] ?? '')
+              .toString()
+              .toLowerCase();
           final place =
               (record['place'] ?? record['barangay'] ?? record['address'] ?? '')
                   .toString()
@@ -836,8 +843,9 @@ class _MortalityPageState extends State<MortalityPage> {
               (record['verification'] ?? record['status'] ?? '')
                   .toString()
                   .toLowerCase();
-          final reportedBy =
-              (record['reportedBy'] ?? '').toString().toLowerCase();
+          final reportedBy = (record['reportedBy'] ?? '')
+              .toString()
+              .toLowerCase();
 
           if (!name.contains(query) &&
               !id.contains(query) &&
@@ -867,18 +875,22 @@ class _MortalityPageState extends State<MortalityPage> {
             comparison = aAge.compareTo(bAge);
             break;
           case 'Cause':
-            final aCause =
-                (a['causeOfDeath'] ?? a['cause'] ?? '').toString().toLowerCase();
-            final bCause =
-                (b['causeOfDeath'] ?? b['cause'] ?? '').toString().toLowerCase();
+            final aCause = (a['causeOfDeath'] ?? a['cause'] ?? '')
+                .toString()
+                .toLowerCase();
+            final bCause = (b['causeOfDeath'] ?? b['cause'] ?? '')
+                .toString()
+                .toLowerCase();
             comparison = aCause.compareTo(bCause);
             break;
           case 'Name':
           default:
-            final aName =
-                (a['name'] ?? a['patientName'] ?? '').toString().toLowerCase();
-            final bName =
-                (b['name'] ?? b['patientName'] ?? '').toString().toLowerCase();
+            final aName = (a['name'] ?? a['patientName'] ?? '')
+                .toString()
+                .toLowerCase();
+            final bName = (b['name'] ?? b['patientName'] ?? '')
+                .toString()
+                .toLowerCase();
             comparison = aName.compareTo(bName);
             break;
         }
@@ -1041,7 +1053,7 @@ class _MortalityPageState extends State<MortalityPage> {
           monthCounts[monthKey] = monthCounts[monthKey]! + 1;
         }
       } catch (e) {
-        print('Error parsing date: $e');
+        debugPrint('Error parsing date: $e');
       }
     }
 
@@ -1105,14 +1117,15 @@ class _MortalityPageState extends State<MortalityPage> {
         String range;
         if (age <= 18) {
           range = '0-18';
-        } else if (age <= 40)
+        } else if (age <= 40) {
           range = '19-40';
-        else if (age <= 60)
+        } else if (age <= 60) {
           range = '41-60';
-        else if (age <= 80)
+        } else if (age <= 80) {
           range = '61-80';
-        else
+        } else {
           range = '81+';
+        }
 
         ageRangeCounts[range] = ageRangeCounts[range]! + 1;
       } catch (e) {
@@ -1215,868 +1228,6 @@ class _MortalityPageState extends State<MortalityPage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDrawer(BuildContext context, String userName) {
-    final user = FirebaseAuth.instance.currentUser;
-    return Drawer(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_sidebarDark, _sidebarDark.withValues(alpha: 0.95)],
-          ),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                vertical: 20.0,
-                horizontal: 16.0,
-              ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_primaryAqua, _secondaryIceBlue],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryAqua.withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.25),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/bg3.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.white,
-                            child: Icon(
-                              Icons.person,
-                              size: 35,
-                              color: _primaryAqua,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    userName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: 0.5,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    user?.email ?? '',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 11,
-                      letterSpacing: 0.3,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Colors.greenAccent,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.greenAccent,
-                                blurRadius: 4,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Online',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 3,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: _primaryAqua,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'MAIN MENU',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 4,
-                  horizontal: 10,
-                ),
-                children: [
-                  _buildDrawerSidebarItem(
-                    icon: Icons.dashboard_rounded,
-                    label: 'Dashboard',
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.assignment_turned_in_rounded,
-                    label: 'Check-ups',
-                    onTap: () => Get.toNamed(WebRoutes.bhwCheckups),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.favorite_rounded,
-                    label: 'Summary Generation',
-                    onTap: () => Get.toNamed(WebRoutes.bhwSummary),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.analytics_rounded,
-                    label: 'Analytics',
-                    onTap: () => Get.toNamed(WebRoutes.bhwAnalytics),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 3,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: _primaryAqua,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'PATIENT CARE',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.pregnant_woman_rounded,
-                    label: 'Prenatal Care',
-                    onTap: () => Get.toNamed(WebRoutes.bhwPrenatal),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.vaccines_rounded,
-                    label: 'Immunization',
-                    onTap: () => Get.toNamed(WebRoutes.bhwImmunization),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.person_rounded,
-                    label: 'Patient Records',
-                    onTap: () => Get.toNamed(WebRoutes.bhwPatients),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 3,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: _primaryAqua,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'DISEASE TRACKING',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.coronavirus_rounded,
-                    label: 'Communicable',
-                    onTap: () => Get.toNamed(WebRoutes.bhwCommunicable),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.health_and_safety_rounded,
-                    label: 'Non-Communicable',
-                    onTap: () => Get.toNamed(WebRoutes.bhwNonCommunicable),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.analytics_outlined,
-                    label: 'Mortality',
-                    onTap: () => Get.toNamed(WebRoutes.bhwMortality),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () async {
-                    await FirebaseAuth.instance.signOut();
-                    Get.offAllNamed(WebRoutes.login);
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.red.shade600, Colors.red.shade700],
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.red.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.logout_rounded,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Logout',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerSidebarItem({
-    required IconData icon,
-    required String label,
-    bool isActive = false,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6.0),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          hoverColor: Colors.white.withValues(alpha: 0.08),
-          splashColor: _primaryAqua.withValues(alpha: 0.2),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-            decoration: BoxDecoration(
-              color: isActive ? _primaryAqua.withValues(alpha: 0.18) : null,
-              borderRadius: BorderRadius.circular(12),
-              border: Border(
-                left: BorderSide(
-                  color: isActive ? _primaryAqua : Colors.transparent,
-                  width: 3,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? _primaryAqua.withValues(alpha: 0.15)
-                        : Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isActive
-                        ? _primaryAqua
-                        : Colors.white.withValues(alpha: 0.8),
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: isActive
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.8),
-                      fontSize: 12.5,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ),
-                if (isActive)
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: _primaryAqua,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.chevron_right,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSidebar(BuildContext context, String userName) {
-    final user = FirebaseAuth.instance.currentUser;
-    return Container(
-      width: 220,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [_sidebarDark, _sidebarDark.withValues(alpha: 0.95)],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 20,
-            offset: const Offset(4, 0),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(
-              vertical: 20.0,
-              horizontal: 16.0,
-            ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [_primaryAqua, _secondaryIceBlue],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _primaryAqua.withValues(alpha: 0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.25),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/bg3.png',
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.white,
-                          child: Icon(
-                            Icons.person,
-                            size: 35,
-                            color: _primaryAqua,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  userName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    letterSpacing: 0.5,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  user?.email ?? '',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 11,
-                    letterSpacing: 0.3,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          color: Colors.greenAccent,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.greenAccent,
-                              blurRadius: 4,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Online',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: _primaryAqua,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'MAIN MENU',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              children: [
-                _buildSidebarItem(
-                  icon: Icons.dashboard_rounded,
-                  label: 'Dashboard',
-                  onTap: () => Get.toNamed(WebRoutes.bhwDashboard),
-                ),
-                _buildSidebarItem(
-                  icon: Icons.assignment_turned_in_rounded,
-                  label: 'Check-ups',
-                  onTap: () => Get.toNamed(WebRoutes.bhwCheckups),
-                ),
-                _buildSidebarItem(
-                  icon: Icons.favorite_rounded,
-                  label: 'Summary Generation',
-                  onTap: () => Get.toNamed(WebRoutes.bhwSummary),
-                ),
-                _buildSidebarItem(
-                  icon: Icons.analytics_rounded,
-                  label: 'Analytics',
-                  onTap: () => Get.toNamed(WebRoutes.bhwAnalytics),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 3,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: _primaryAqua,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'PATIENT CARE',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _buildSidebarItem(
-                  icon: Icons.pregnant_woman_rounded,
-                  label: 'Prenatal Care',
-                  onTap: () => Get.toNamed(WebRoutes.bhwPrenatal),
-                ),
-                _buildSidebarItem(
-                  icon: Icons.vaccines_rounded,
-                  label: 'Immunization',
-                  onTap: () => Get.toNamed(WebRoutes.bhwImmunization),
-                ),
-                _buildSidebarItem(
-                  icon: Icons.person_rounded,
-                  label: 'Patient Records',
-                  onTap: () => Get.toNamed(WebRoutes.bhwPatients),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 3,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: _primaryAqua,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'DISEASE TRACKING',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _buildSidebarItem(
-                  icon: Icons.coronavirus_rounded,
-                  label: 'Communicable',
-                  onTap: () => Get.toNamed(WebRoutes.bhwCommunicable),
-                ),
-                _buildSidebarItem(
-                  icon: Icons.health_and_safety_rounded,
-                  label: 'Non-Communicable',
-                  onTap: () => Get.toNamed(WebRoutes.bhwNonCommunicable),
-                ),
-                _buildSidebarItem(
-                  icon: Icons.analytics_outlined,
-                  label: 'Mortality',
-                  isActive: true,
-                  onTap: () {},
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(12.0),
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () async {
-                  await FirebaseAuth.instance.signOut();
-                  Get.offAllNamed(WebRoutes.login);
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.red.shade600, Colors.red.shade700],
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.red.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.logout_rounded, color: Colors.white, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'Logout',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSidebarItem({
-    required IconData icon,
-    required String label,
-    bool isActive = false,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6.0),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          hoverColor: Colors.white.withValues(alpha: 0.08),
-          splashColor: _primaryAqua.withValues(alpha: 0.2),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-            decoration: BoxDecoration(
-              color: isActive ? _primaryAqua.withValues(alpha: 0.18) : null,
-              borderRadius: BorderRadius.circular(12),
-              border: Border(
-                left: BorderSide(
-                  color: isActive ? _primaryAqua : Colors.transparent,
-                  width: 3,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? _primaryAqua.withValues(alpha: 0.15)
-                        : Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isActive
-                        ? _primaryAqua
-                        : Colors.white.withValues(alpha: 0.8),
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: isActive
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.8),
-                      fontSize: 12.5,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ),
-                if (isActive)
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: _primaryAqua,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.chevron_right,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTopBar(BuildContext context) {
-    return WebAppTopBar(
-      title: 'Mortality Monitoring',
-      scaffoldKey: _scaffoldKey,
-      isLoading: _isLoadingMetrics,
-      onGenerateReport: _generateMortalityReport,
-      onRefresh: () => _loadData(),
     );
   }
 
@@ -2201,70 +1352,6 @@ class _MortalityPageState extends State<MortalityPage> {
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildMetricCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required Color textColor,
-    bool isSmallText = false,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: textColor, size: 28),
-              if (!isSmallText)
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (isSmallText)
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 13,
-              color: textColor.withValues(alpha: 0.8),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -2609,49 +1696,6 @@ class _MortalityPageState extends State<MortalityPage> {
             ],
           ),
       ],
-    );
-  }
-
-  Widget _buildGraphCard({
-    required String title,
-    required IconData icon,
-    required Widget child,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _sidebarDark,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: Colors.white, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
     );
   }
 
@@ -3425,7 +2469,7 @@ class _MortalityPageState extends State<MortalityPage> {
     return SizedBox(
       width: width,
       child: DropdownButtonFormField<String>(
-        value: items.contains(value) ? value : items.first,
+        initialValue: items.contains(value) ? value : items.first,
         isDense: true,
         style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
         decoration: InputDecoration(
@@ -4100,28 +3144,33 @@ class _MortalityPageState extends State<MortalityPage> {
               flex: 18,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _verificationChipBackground(verification),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      verification,
-                      style: const TextStyle(
-                        color: Color(0xFF163B66),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 5,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      decoration: BoxDecoration(
+                        color: _verificationChipBackground(verification),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        verification,
+                        style: const TextStyle(
+                          color: Color(0xFF163B66),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 6),
+                    WebSyncStatusBadge(record: record),
+                  ],
                 ),
               ),
             ),
@@ -4154,238 +3203,6 @@ class _MortalityPageState extends State<MortalityPage> {
                     ),
                   ],
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecordCard(Map<String, dynamic> record) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _sidebarDark,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _primaryAqua.withValues(alpha: 0.2),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: _primaryAqua,
-                  child: Text(
-                    record['name'].toString().substring(0, 1).toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        record['name'],
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${record['age']} years • ${record['gender']}',
-                        style: TextStyle(fontSize: 13, color: Colors.white70),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getVerificationColor(record['verification']),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    record['verification'],
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Details
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _buildDetailRow(
-                  icon: Icons.calendar_today,
-                  label: 'Date',
-                  value: _formatDate(record['date']),
-                  color: _primaryAqua,
-                ),
-                const Divider(height: 20, color: Colors.white24),
-                _buildDetailRow(
-                  icon: Icons.warning_amber,
-                  label: 'Cause of Death',
-                  value: record['causeOfDeath'],
-                  color: const Color(0xFFD84315),
-                ),
-                const Divider(height: 20, color: Colors.white24),
-                _buildDetailRow(
-                  icon: Icons.location_on,
-                  label: 'Place',
-                  value: record['place'],
-                  color: const Color(0xFF7B1FA2),
-                ),
-                const Divider(height: 20, color: Colors.white24),
-                _buildDetailRow(
-                  icon: Icons.person,
-                  label: 'Reported By',
-                  value: record['reportedBy'],
-                  color: const Color(0xFF2196F3),
-                ),
-              ],
-            ),
-          ),
-
-          // Actions
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: _secondaryIceBlue.withValues(alpha: 0.3),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(16),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildActionButton(
-                  icon: Icons.history,
-                  label: 'History',
-                  color: _primaryAqua,
-                  onTap: () => _showMortalityHistory(context, record),
-                ),
-                _buildActionButton(
-                  icon: Icons.edit,
-                  label: 'Edit',
-                  color: const Color(0xFF7B1FA2),
-                  onTap: () => _editRecord(record),
-                ),
-                _buildActionButton(
-                  icon: Icons.verified,
-                  label: 'Verify',
-                  color: const Color(0xFF4CAF50),
-                  onTap: () => _verifyRecord(record),
-                ),
-                _buildActionButton(
-                  icon: Icons.picture_as_pdf,
-                  label: 'PDF',
-                  color: const Color(0xFF607D8B),
-                  onTap: () => _printRecord(record),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 20, color: color),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: color,
-                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -4440,7 +3257,7 @@ class _MortalityPageState extends State<MortalityPage> {
   ) async {
     final patient = _buildPatientHistorySeed(record);
     final snapshot = await _patientHistoryService.loadPatientHistory(patient);
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
 
@@ -4485,6 +3302,7 @@ class _MortalityPageState extends State<MortalityPage> {
     patientSeed = await _patientHistoryService.resolveRegisteredPatient(
       patientSeed,
     );
+    if (!mounted) return;
     if (patientSeed == null) {
       patientSeed = await PatientFirstServiceSelector.selectRegisteredPatient(
         context,
@@ -4564,10 +3382,7 @@ class _MortalityPageState extends State<MortalityPage> {
                   decoration: const BoxDecoration(
                     color: _darkDeepTeal,
                     border: Border(
-                      bottom: BorderSide(
-                        color: Color(0x20FFFFFF),
-                        width: 1,
-                      ),
+                      bottom: BorderSide(color: Color(0x20FFFFFF), width: 1),
                     ),
                   ),
                   child: Row(
@@ -4698,7 +3513,7 @@ class _MortalityPageState extends State<MortalityPage> {
                                   children: [
                                     _buildMortalityDialogFieldLabel('Gender *'),
                                     DropdownButtonFormField<String>(
-                                      value: selectedGender,
+                                      initialValue: selectedGender,
                                       isExpanded: true,
                                       borderRadius: BorderRadius.circular(14),
                                       onChanged: (newValue) {
@@ -5483,13 +4298,6 @@ class _MortalityPageState extends State<MortalityPage> {
     );
     final dateOfDeath = _formatDate(record['date']);
     final reportedDate = _formatDate(record['dateReported'] ?? record['date']);
-    final initials = name
-        .split(RegExp(r'\s+'))
-        .where((part) => part.isNotEmpty)
-        .take(2)
-        .map((part) => part.substring(0, 1).toUpperCase())
-        .join();
-
     showFullscreenDetailTableDialog(
       context: context,
       title: 'Mortality Record Details',
@@ -5554,542 +4362,6 @@ class _MortalityPageState extends State<MortalityPage> {
       ],
     );
     return;
-
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.72),
-      builder: (dialogContext) {
-        final screenSize = MediaQuery.of(dialogContext).size;
-        final isCompact = screenSize.width < 760;
-        final statusColor = _getVerificationColor(verification);
-
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.zero,
-          child: SizedBox(
-            width: screenSize.width,
-            height: screenSize.height,
-            child: Container(
-              decoration: BoxDecoration(
-                color: _darkDeepTeal,
-                border: Border.all(
-                  color: _primaryAqua.withValues(alpha: 0.22),
-                  width: 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.38),
-                    blurRadius: 28,
-                    offset: const Offset(0, 14),
-                  ),
-                ],
-              ),
-              child: ClipRect(
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(isCompact ? 20 : 24),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF163B66), Color(0xFF0D274D)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          border: Border(
-                            bottom: BorderSide(
-                              color: _primaryAqua.withValues(alpha: 0.2),
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: isCompact ? 58 : 68,
-                                  height: isCompact ? 58 : 68,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFF00E5FF),
-                                        Color(0xFF2F80ED),
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(
-                                          0xFF00E5FF,
-                                        ).withValues(alpha: 0.22),
-                                        blurRadius: 18,
-                                        offset: const Offset(0, 8),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      initials.isEmpty ? 'MR' : initials,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: isCompact ? 22 : 26,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.8,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Mortality Record Details',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: isCompact ? 22 : 26,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: 0.2,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        name,
-                                        style: TextStyle(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.92,
-                                          ),
-                                          fontSize: isCompact ? 16 : 18,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Recorded on $reportedDate',
-                                        style: TextStyle(
-                                          color: _lightOffWhite.withValues(
-                                            alpha: 0.7,
-                                          ),
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () =>
-                                        Navigator.of(dialogContext).pop(),
-                                    borderRadius: BorderRadius.circular(14),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.06,
-                                        ),
-                                        borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.12,
-                                          ),
-                                        ),
-                                      ),
-                                      child: const Icon(
-                                        Icons.close_rounded,
-                                        color: Colors.white,
-                                        size: 22,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 18),
-                            Wrap(
-                              spacing: 10,
-                              runSpacing: 10,
-                              children: [
-                                _buildMortalitySummaryChip(
-                                  icon: Icons.verified_outlined,
-                                  label: 'Status',
-                                  value: verification,
-                                  accentColor: statusColor,
-                                  valueColor: statusColor,
-                                ),
-                                _buildMortalitySummaryChip(
-                                  icon: Icons.cake_outlined,
-                                  label: 'Age',
-                                  value: age == 'N/A' || age == '-'
-                                      ? 'Not recorded'
-                                      : '$age years',
-                                  accentColor: const Color(0xFFFFB74D),
-                                ),
-                                _buildMortalitySummaryChip(
-                                  icon: Icons.wc_outlined,
-                                  label: 'Gender',
-                                  value: gender,
-                                  accentColor: const Color(0xFF64B5F6),
-                                ),
-                                _buildMortalitySummaryChip(
-                                  icon: Icons.location_on_outlined,
-                                  label: 'Place',
-                                  value: place,
-                                  accentColor: const Color(0xFFE57373),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.all(isCompact ? 18 : 22),
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final sectionWidth = isCompact
-                                ? constraints.maxWidth
-                                : (constraints.maxWidth - 16) / 2;
-
-                            return Wrap(
-                              spacing: 16,
-                              runSpacing: 16,
-                              children: [
-                                SizedBox(
-                                  width: sectionWidth,
-                                  child: _buildMortalityDetailSection(
-                                    title: 'Personal Profile',
-                                    icon: Icons.person_outline_rounded,
-                                    accentColor: const Color(0xFF64B5F6),
-                                    children: [
-                                      _buildMortalityDetailField(
-                                        label: 'Full Name',
-                                        value: name,
-                                        icon: Icons.badge_outlined,
-                                      ),
-                                      _buildMortalityDetailField(
-                                        label: 'Age',
-                                        value: age == 'N/A' || age == '-'
-                                            ? 'Not recorded'
-                                            : '$age years old',
-                                        icon: Icons.cake_outlined,
-                                      ),
-                                      _buildMortalityDetailField(
-                                        label: 'Gender',
-                                        value: gender,
-                                        icon: Icons.wc_outlined,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: sectionWidth,
-                                  child: _buildMortalityDetailSection(
-                                    title: 'Record Tracking',
-                                    icon: Icons.folder_open_outlined,
-                                    accentColor: const Color(0xFF00E5FF),
-                                    children: [
-                                      _buildMortalityDetailField(
-                                        label: 'Record ID',
-                                        value: recordId,
-                                        icon: Icons.tag_outlined,
-                                      ),
-                                      _buildMortalityDetailField(
-                                        label: 'Date Reported',
-                                        value: reportedDate,
-                                        icon: Icons.event_note_outlined,
-                                      ),
-                                      _buildMortalityDetailField(
-                                        label: 'Verification Status',
-                                        value: verification,
-                                        icon: Icons.verified_user_outlined,
-                                        accentColor: statusColor,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: sectionWidth,
-                                  child: _buildMortalityDetailSection(
-                                    title: 'Incident Details',
-                                    icon: Icons.monitor_heart_outlined,
-                                    accentColor: const Color(0xFFE57373),
-                                    children: [
-                                      _buildMortalityDetailField(
-                                        label: 'Date of Death',
-                                        value: dateOfDeath,
-                                        icon: Icons.calendar_today_outlined,
-                                      ),
-                                      _buildMortalityDetailField(
-                                        label: 'Cause of Death',
-                                        value: cause,
-                                        icon: Icons.coronavirus_outlined,
-                                      ),
-                                      _buildMortalityDetailField(
-                                        label: 'Place',
-                                        value: place,
-                                        icon: Icons.location_on_outlined,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: sectionWidth,
-                                  child: _buildMortalityDetailSection(
-                                    title: 'Reporting Information',
-                                    icon: Icons.assignment_turned_in_outlined,
-                                    accentColor: const Color(0xFF81C784),
-                                    children: [
-                                      _buildMortalityDetailField(
-                                        label: 'Reported By',
-                                        value: reportedBy,
-                                        icon: Icons.person_search_outlined,
-                                      ),
-                                      _buildMortalityDetailField(
-                                        label: 'Status Overview',
-                                        value:
-                                            'This case is currently marked as $verification.',
-                                        icon: Icons.info_outline_rounded,
-                                        accentColor: statusColor,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.fromLTRB(
-                          isCompact ? 18 : 22,
-                          14,
-                          isCompact ? 18 : 22,
-                          isCompact ? 18 : 22,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _sidebarDark.withValues(alpha: 0.78),
-                          border: Border(
-                            top: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.06),
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            OutlinedButton(
-                              onPressed: () =>
-                                  Navigator.of(dialogContext).pop(),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                side: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.18),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              child: const Text('Close'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildMortalitySummaryChip({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color accentColor,
-    Color? valueColor,
-  }) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 150, maxWidth: 240),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: accentColor, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.58),
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: valueColor ?? Colors.white,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMortalityDetailSection({
-    required String title,
-    required IconData icon,
-    required Color accentColor,
-    required List<Widget> children,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _sidebarDark.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.14),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(icon, color: accentColor, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ...children,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMortalityDetailField({
-    required String label,
-    required String value,
-    required IconData icon,
-    Color? accentColor,
-  }) {
-    final iconColor = accentColor ?? _primaryAqua;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: iconColor, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   void _editRecord(Map<String, dynamic> record) {

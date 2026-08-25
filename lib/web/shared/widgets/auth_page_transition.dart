@@ -15,10 +15,7 @@ Route<T> buildAuthPageRoute<T>({
         reverseCurve: Curves.easeInCubic,
       );
 
-      final fadeAnimation = Tween<double>(
-        begin: 0,
-        end: 1,
-      ).animate(
+      final fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
         CurvedAnimation(
           parent: animation,
           curve: const Interval(0, 0.82, curve: Curves.easeOut),
@@ -39,10 +36,7 @@ Route<T> buildAuthPageRoute<T>({
         opacity: fadeAnimation,
         child: SlideTransition(
           position: slideAnimation,
-          child: ScaleTransition(
-            scale: scaleAnimation,
-            child: child,
-          ),
+          child: ScaleTransition(scale: scaleAnimation, child: child),
         ),
       );
     },
@@ -64,9 +58,7 @@ Future<T?> replaceWithAuthPage<T>(
   Widget page, {
   Offset begin = const Offset(0.06, 0),
 }) {
-  return Navigator.of(
-    context,
-  ).pushReplacement<T, Object?>(
+  return Navigator.of(context).pushReplacement<T, Object?>(
     buildAuthPageRoute<T>(page: page, begin: begin),
   );
 }

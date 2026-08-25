@@ -38,7 +38,9 @@ List<pw.Widget> _buildSummaryBodyWidgets(String summary) {
     }
 
     final isHeading =
-        line == line.toUpperCase() && !line.startsWith('- ') && line.length <= 40;
+        line == line.toUpperCase() &&
+        !line.startsWith('- ') &&
+        line.length <= 40;
     if (isHeading) {
       children.add(
         pw.Padding(
@@ -76,6 +78,9 @@ List<pw.Widget> _buildSummaryBodyWidgets(String summary) {
     }
   }
   return [
-    pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: children),
+    pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: children,
+    ),
   ];
 }

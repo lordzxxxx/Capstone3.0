@@ -1,17 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mycapstone_project/web/features/auth/login.dart';
-import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
-import 'package:mycapstone_project/web/roles/bhw/checkups/checkup.dart'
-    as checkup_page;
-import 'package:mycapstone_project/web/roles/bhw/analytics/health_metrics.dart';
-import 'package:mycapstone_project/web/roles/cho/analytics/cho_analytics.dart';
-import 'package:mycapstone_project/web/roles/bhw/immunization/immunization.dart';
-import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'prenatal_constants.dart';
 

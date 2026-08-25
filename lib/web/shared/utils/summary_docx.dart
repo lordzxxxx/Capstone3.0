@@ -54,7 +54,9 @@ List<String> _bodyParagraphsFromSummaryText(String summary) {
     final line = rawLine.trimRight();
     if (line.isEmpty) continue;
     final isHeading =
-        line == line.toUpperCase() && !line.startsWith('- ') && line.length <= 40;
+        line == line.toUpperCase() &&
+        !line.startsWith('- ') &&
+        line.length <= 40;
     if (isHeading) {
       paragraphs.add(_headingParagraph(line));
     } else if (line.startsWith('- ')) {

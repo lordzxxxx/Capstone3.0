@@ -7,12 +7,37 @@ import pandas as pd
 import pytest
 
 from evaluation_metrics import (
+    apply_temperature_scaling,
     exact_vector_ambiguity_summary,
+    fit_temperature_from_oof,
     multiclass_calibration_summary,
     statistical_metric_summary,
     top_k_successes,
     wilson_interval,
 )
+
+
+def test_temperature_scaling_preserves_rows_and_class_order() -> None:
+    probabilities = np.array([[0.55, 0.30, 0.15], [0.20, 0.50, 0.30]])
+
+    calibrated = apply_temperature_scaling(probabilities, 0.5)
+
+    assert calibrated.sum(axis=1) == pytest.approx([1.0, 1.0])
+    assert calibrated.argmax(axis=1).tolist() == [0, 1]
+    assert calibrated[0, 0] > probabilities[0, 0]
+
+
+def test_temperature_is_fit_from_oof_probabilities() -> None:
+    labels = ["a", "b", "a", "b"]
+    underconfident = np.array(
+        [[0.60, 0.40], [0.40, 0.60], [0.58, 0.42], [0.42, 0.58]]
+    )
+
+    fit = fit_temperature_from_oof(labels, underconfident, ["a", "b"])
+
+    assert fit["fit_scope"] == "training_partition_out_of_fold_only"
+    assert float(fit["temperature"]) < 1.0
+    assert float(fit["oof_log_loss_after"]) < float(fit["oof_log_loss_before"])
 
 
 def test_wilson_interval_is_bounded_and_contains_estimate() -> None:

@@ -1,26 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:get/get.dart';
 import 'package:mycapstone_project/web/roles/bhw/prenatal/prenatal_database_helper.dart';
 import 'package:mycapstone_project/app/core/services/health_ai_classifier.dart';
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
-import 'package:mycapstone_project/web/roles/bhw/checkups/checkup.dart'
-    as checkup_page;
-import 'package:mycapstone_project/web/roles/bhw/analytics/health_metrics.dart';
-import 'package:mycapstone_project/web/roles/cho/analytics/cho_analytics.dart';
-import 'package:mycapstone_project/web/roles/bhw/immunization/immunization.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
-import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
-import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
@@ -32,10 +19,10 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_histo
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
 import 'package:mycapstone_project/web/shared/utils/prenatal_pdf.dart';
-import 'package:mycapstone_project/web/shared/utils/report_generation.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/shared_patient_search_panel.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
+import 'package:mycapstone_project/web/shared/widgets/web_sync_status_badge.dart';
 import 'dart:math' as math;
 
 const Color _primaryAqua = Color(0xFF2F80ED);
@@ -82,7 +69,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
 
   bool _isSelectionMode = false;
   final Set<int> _selectedIndices = {};
-  bool _isDeleteDialogShowing = false;
   bool _isLoading = true;
   int _currentPage = 1;
   int _rowsPerPage = 10;
@@ -104,8 +90,9 @@ class _PrenatalPageState extends State<PrenatalPage> {
       DashboardDateFilterMode.allTime;
   DateTime? _insightsCustomDate;
   DateTime? _insightsSelectedMonth;
-  DateTime _insightsRangeStart =
-      DateTime.now().subtract(const Duration(days: 6));
+  DateTime _insightsRangeStart = DateTime.now().subtract(
+    const Duration(days: 6),
+  );
   DateTime _insightsRangeEnd = DateTime.now();
 
   // AI Classifier
@@ -160,8 +147,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
     setState(() => _isLoading = true);
 
     // Load from local database
-    final records = await _dbHelper.getAllRecords();
-
     // Try to sync from Firebase
     await _dbHelper.syncFromFirebase();
 
@@ -382,547 +367,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
   }
 
   // Drawer Navigation Widget
-  Widget _buildDrawer(BuildContext context, String userName) {
-    final user = FirebaseAuth.instance.currentUser;
-    return Drawer(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_sidebarDark, _sidebarDark.withValues(alpha: 0.95)],
-          ),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                vertical: 20.0,
-                horizontal: 16.0,
-              ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_primaryAqua, _secondaryIceBlue],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryAqua.withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.25),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/bg3.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.white,
-                            child: Icon(
-                              Icons.person,
-                              size: 35,
-                              color: _primaryAqua,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    userName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: 0.5,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    user?.email ?? '',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 11,
-                      letterSpacing: 0.3,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Colors.greenAccent,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.greenAccent,
-                                blurRadius: 4,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Online',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 3,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: _primaryAqua,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'MAIN MENU',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 4,
-                  horizontal: 10,
-                ),
-                children: [
-                  _buildSidebarItem(
-                    icon: Icons.dashboard_rounded,
-                    label: 'Dashboard',
-                    onTap: () => Get.toNamed(WebRoutes.bhwDashboard),
-                  ),
-                  _buildSidebarItem(
-                    icon: Icons.assignment_turned_in_rounded,
-                    label: 'Check-ups',
-                    onTap: () => Get.toNamed(WebRoutes.bhwCheckups),
-                  ),
-                  _buildSidebarItem(
-                    icon: Icons.favorite_rounded,
-                    label: 'Summary Generation',
-                    onTap: () => Get.toNamed(WebRoutes.bhwSummary),
-                  ),
-                  _buildSidebarItem(
-                    icon: Icons.analytics_rounded,
-                    label: 'Analytics',
-                    onTap: () => Get.toNamed(WebRoutes.bhwAnalytics),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 3,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: _primaryAqua,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'PATIENT CARE',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildSidebarItem(
-                    icon: Icons.pregnant_woman_rounded,
-                    label: 'Prenatal Care',
-                    isActive: true,
-                    onTap: () {},
-                  ),
-                  _buildSidebarItem(
-                    icon: Icons.vaccines_rounded,
-                    label: 'Immunization',
-                    onTap: () => Get.toNamed(WebRoutes.bhwImmunization),
-                  ),
-                  _buildSidebarItem(
-                    icon: Icons.person_rounded,
-                    label: 'Patient Records',
-                    onTap: () => Get.toNamed(WebRoutes.bhwPatients),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 3,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: _primaryAqua,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'DISEASE TRACKING',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildSidebarItem(
-                    icon: Icons.coronavirus_rounded,
-                    label: 'Communicable',
-                    onTap: () => Get.toNamed(WebRoutes.bhwCommunicable),
-                  ),
-                  _buildSidebarItem(
-                    icon: Icons.health_and_safety_rounded,
-                    label: 'Non-Communicable',
-                    onTap: () => Get.toNamed(WebRoutes.bhwNonCommunicable),
-                  ),
-                  _buildSidebarItem(
-                    icon: Icons.analytics_outlined,
-                    label: 'Mortality',
-                    onTap: () => Get.toNamed(WebRoutes.bhwMortality),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () async {
-                    await FirebaseAuth.instance.signOut();
-                    Get.offAllNamed(WebRoutes.login);
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.red.shade600, Colors.red.shade700],
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.red.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.logout_rounded,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Logout',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSidebarItem({
-    required IconData icon,
-    required String label,
-    bool isActive = false,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6.0),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          hoverColor: Colors.white.withValues(alpha: 0.08),
-          splashColor: _primaryAqua.withValues(alpha: 0.2),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-            decoration: BoxDecoration(
-              color: isActive ? _primaryAqua.withValues(alpha: 0.18) : null,
-              borderRadius: BorderRadius.circular(12),
-              border: Border(
-                left: BorderSide(
-                  color: isActive ? _primaryAqua : Colors.transparent,
-                  width: 3,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? _primaryAqua.withValues(alpha: 0.15)
-                        : Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isActive
-                        ? _primaryAqua
-                        : Colors.white.withValues(alpha: 0.8),
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: isActive
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.8),
-                      fontSize: 12.5,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ),
-                if (isActive)
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: _primaryAqua,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.chevron_right,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWebHeaderBar(BuildContext context) {
-    return WebAppTopBar(
-      title: 'Prenatal Dashboard',
-      scaffoldKey: _scaffoldKey,
-      isLoading: _isLoading,
-      onGenerateReport: _generatePrenatalReport,
-      onRefresh: () => _loadRecords(),
-      selectionCount: _isSelectionMode ? _selectedIndices.length : null,
-      actions: [
-        if (kDebugMode) ...[
-          const SizedBox(width: 4),
-          PopupMenuButton<String>(
-            color: _darkDeepTeal,
-            icon: const Icon(Icons.more_vert, color: Colors.white),
-            onSelected: (value) async {
-              if (value == 'seed_100') {
-                await _confirmAndSeedSamples(context);
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'seed_100',
-                child: Text('Seed Sample Data', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-
-  Future<void> _generatePrenatalReport() {
-    return generateReportPdf(
-      context: context,
-      moduleLabel: 'Prenatal',
-      records: _getFilteredRecords(),
-      dateResolver: (record) =>
-          parseReportDateValue(record['registrationDate']) ??
-          parseReportDateValue(record['dueDate']),
-      columns: [
-        ReportCsvColumn(
-          'Patient ID',
-          (record) => reportText(record['patientId']),
-          flex: 0.85,
-        ),
-        ReportCsvColumn(
-          'Patient Name',
-          (record) => reportJoin([record['firstName'], record['surname']]),
-          flex: 1.35,
-        ),
-        ReportCsvColumn(
-          'Age',
-          (record) => reportText(record['age']),
-          flex: 0.55,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Registration Date',
-          (record) => formatReportDateValue(record['registrationDate']),
-          flex: 0.95,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Due Date',
-          (record) => formatReportDateValue(record['dueDate']),
-          flex: 0.95,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Gestational Age',
-          (record) => reportText(record['gestationalAge']),
-          flex: 0.85,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Gravida',
-          (record) => reportText(record['gravida']),
-          flex: 0.5,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Para',
-          (record) => reportText(record['para']),
-          flex: 0.5,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Risk Level',
-          (record) => reportText(record['riskLevel']),
-          flex: 0.9,
-        ),
-        ReportCsvColumn(
-          'Status',
-          (record) => reportText(record['status']),
-          flex: 0.85,
-        ),
-        ReportCsvColumn(
-          'Address / Barangay',
-          (record) => reportText(record['address']),
-          flex: 1.3,
-        ),
-        ReportCsvColumn(
-          'Remarks',
-          (record) => reportText(record['additionalNote']),
-          flex: 1.15,
-        ),
-      ],
-      accentColor: _primaryAqua,
-      dialogColor: _sidebarDark,
-      textColor: Colors.white,
-      mutedColor: Colors.white70,
-      sectionTitleBuilder: (record, index) =>
-          'Record ${index + 1}: ${reportJoin([record['firstName'], record['surname']], fallback: 'Patient')}',
-    );
-  }
 
   List<Map<String, dynamic>> _getFilteredRecords() {
     final filtered = _prenatalRecords.where((record) {
@@ -977,7 +421,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
       // Date range filter
       if (_fromDate != null || _toDate != null) {
         try {
-          final rawDate = record['registrationDate'] ??
+          final rawDate =
+              record['registrationDate'] ??
               record['dueDate'] ??
               record['date'] ??
               record['createdAt'];
@@ -1000,10 +445,11 @@ class _PrenatalPageState extends State<PrenatalPage> {
       // Search filter
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
-        final name = (record['patientName'] ??
-                '${record['firstName'] ?? ''} ${record['surname'] ?? ''}')
-            .toString()
-            .toLowerCase();
+        final name =
+            (record['patientName'] ??
+                    '${record['firstName'] ?? ''} ${record['surname'] ?? ''}')
+                .toString()
+                .toLowerCase();
         final id = (record['patientId'] ?? record['id'] ?? '')
             .toString()
             .toLowerCase();
@@ -1049,14 +495,16 @@ class _PrenatalPageState extends State<PrenatalPage> {
           break;
         case 'Name':
         default:
-          final aName = (a['patientName'] ??
-                  '${a['firstName'] ?? ''} ${a['surname'] ?? ''}')
-              .toString()
-              .toLowerCase();
-          final bName = (b['patientName'] ??
-                  '${b['firstName'] ?? ''} ${b['surname'] ?? ''}')
-              .toString()
-              .toLowerCase();
+          final aName =
+              (a['patientName'] ??
+                      '${a['firstName'] ?? ''} ${a['surname'] ?? ''}')
+                  .toString()
+                  .toLowerCase();
+          final bName =
+              (b['patientName'] ??
+                      '${b['firstName'] ?? ''} ${b['surname'] ?? ''}')
+                  .toString()
+                  .toLowerCase();
           comparison = aName.compareTo(bName);
           break;
       }
@@ -1074,46 +522,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
       nameKeys: const ['patientName'],
       dateKeys: const ['registrationDate', 'dueDate', 'lmpDate'],
     );
-  }
-
-  Future<void> _selectDate(BuildContext context, bool isFromDate) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: _primaryAqua,
-              onPrimary: Colors.white,
-              onSurface: _darkDeepTeal,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      setState(() {
-        if (isFromDate) {
-          _fromDate = picked;
-        } else {
-          _toDate = picked;
-        }
-        _currentPage = 1;
-      });
-    }
-  }
-
-  void _clearDateFilters() {
-    setState(() {
-      _fromDate = null;
-      _toDate = null;
-      _currentPage = 1;
-    });
   }
 
   // Show AI Classification results for a prenatal record. The classification
@@ -1222,28 +630,11 @@ class _PrenatalPageState extends State<PrenatalPage> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _prenatalAiInfoCard(
-                              icon: Icons.speed_rounded,
-                              label: 'Confidence',
-                              value:
-                                  '${(classification.confidence * 100).toStringAsFixed(1)}%',
-                              color: Colors.blueAccent,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _prenatalAiInfoCard(
-                              icon: Icons.label_rounded,
-                              label: 'Keywords',
-                              value:
-                                  classification.keywords?.join(', ') ?? 'None',
-                              color: Colors.orangeAccent,
-                            ),
-                          ),
-                        ],
+                      _prenatalAiInfoCard(
+                        icon: Icons.label_rounded,
+                        label: 'Information used',
+                        value: classification.keywords?.join(', ') ?? 'None',
+                        color: Colors.orangeAccent,
                       ),
 
                       if (recoveryPlan != null) ...[
@@ -1514,6 +905,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
     patientSeed = await _patientHistoryService.resolveRegisteredPatient(
       patientSeed,
     );
+    if (!context.mounted) return;
     if (patientSeed == null) {
       patientSeed = await PatientFirstServiceSelector.selectRegisteredPatient(
         context,
@@ -1527,7 +919,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           ),
         ),
       );
-      if (!mounted || patientSeed == null) return;
+      if (!context.mounted || patientSeed == null) return;
     }
     // Text editing controllers
     final firstNameController = TextEditingController();
@@ -1588,68 +980,59 @@ class _PrenatalPageState extends State<PrenatalPage> {
       return null;
     }
 
-    final modalTitle = patientSeed == null
-        ? 'New Prenatal Registration'
-        : 'Add Another Prenatal Visit';
+    final modalTitle = 'Add Another Prenatal Visit';
 
-    if (patientSeed != null) {
-      final name = patientNameParts(patientSeed);
-      firstNameController.text = name.firstName;
-      surnameController.text = name.surname;
-      ageController.text = (patientSeed['age'] ?? '').toString();
-      addressController.text = (patientSeed['address'] ?? '').toString();
-      patientIdController.text = (patientSeed['patientId'] ?? '').toString();
-      contactNumberController.text = (patientSeed['contactNumber'] ?? '')
-          .toString();
-      civilStatusController.text = (patientSeed['civilStatus'] ?? '')
-          .toString();
-      philhealthNumberController.text = (patientSeed['philhealthNumber'] ?? '')
-          .toString();
-      philhealthMemberController.text = (patientSeed['philhealthMember'] ?? '')
-          .toString();
-      religionController.text = (patientSeed['religion'] ?? '').toString();
-      gravidaController.text = (patientSeed['gravida'] ?? '').toString();
-      paraController.text = (patientSeed['para'] ?? '').toString();
-      selectedRiskLevel = _normalizePrenatalRiskLevel(
-        patientSeed['riskLevel'] ?? patientSeed['status'] ?? 'Active',
-      );
-      bloodTypeController.text = (patientSeed['bloodType'] ?? '').toString();
-      allergiesController.text = (patientSeed['allergies'] ?? '').toString();
-      preExistingConditionsController.text =
-          (patientSeed['preExistingConditions'] ?? '').toString();
-      previousComplicationsController.text =
-          (patientSeed['previousComplications'] ?? '').toString();
-      aogController.text =
-          (patientSeed['gestationalAge'] ?? patientSeed['aog'] ?? '')
-              .toString();
-      wtController.text = (patientSeed['weight'] ?? patientSeed['wt'] ?? '')
-          .toString();
-      atController.text =
-          (patientSeed['abdominalTenderness'] ?? patientSeed['at'] ?? '')
-              .toString();
-      tempController.text =
-          (patientSeed['temperature'] ?? patientSeed['temp'] ?? '').toString();
-      bpController.text =
-          (patientSeed['bloodPressure'] ?? patientSeed['bp'] ?? '').toString();
-      bmiController.text = (patientSeed['bmi'] ?? '').toString();
-      fhController.text =
-          (patientSeed['fundalHeight'] ?? patientSeed['fh'] ?? '').toString();
-      dhbController.text =
-          (patientSeed['fetalHeartBeat'] ?? patientSeed['dhb'] ?? '')
-              .toString();
-      tcbController.text = (patientSeed['tcb'] ?? '').toString();
-      registeredByController.text = (patientSeed['registeredBy'] ?? '')
-          .toString();
-      additionalNoteController.text =
-          (patientSeed['additionalNotes'] ??
-                  patientSeed['additionalNote'] ??
-                  '')
-              .toString();
-      lmpDate = _parseDate(patientSeed['lmpDate']);
-      eddDate = _parseDate(patientSeed['eddDate'] ?? patientSeed['dueDate']);
-      lastDeliveryDate = _parseDate(patientSeed['lastDeliveryDate']);
-      registrationDate = DateTime.now();
-    }
+    final name = patientNameParts(patientSeed);
+    firstNameController.text = name.firstName;
+    surnameController.text = name.surname;
+    ageController.text = (patientSeed['age'] ?? '').toString();
+    addressController.text = (patientSeed['address'] ?? '').toString();
+    patientIdController.text = (patientSeed['patientId'] ?? '').toString();
+    contactNumberController.text = (patientSeed['contactNumber'] ?? '')
+        .toString();
+    civilStatusController.text = (patientSeed['civilStatus'] ?? '').toString();
+    philhealthNumberController.text = (patientSeed['philhealthNumber'] ?? '')
+        .toString();
+    philhealthMemberController.text = (patientSeed['philhealthMember'] ?? '')
+        .toString();
+    religionController.text = (patientSeed['religion'] ?? '').toString();
+    gravidaController.text = (patientSeed['gravida'] ?? '').toString();
+    paraController.text = (patientSeed['para'] ?? '').toString();
+    selectedRiskLevel = _normalizePrenatalRiskLevel(
+      patientSeed['riskLevel'] ?? patientSeed['status'] ?? 'Active',
+    );
+    bloodTypeController.text = (patientSeed['bloodType'] ?? '').toString();
+    allergiesController.text = (patientSeed['allergies'] ?? '').toString();
+    preExistingConditionsController.text =
+        (patientSeed['preExistingConditions'] ?? '').toString();
+    previousComplicationsController.text =
+        (patientSeed['previousComplications'] ?? '').toString();
+    aogController.text =
+        (patientSeed['gestationalAge'] ?? patientSeed['aog'] ?? '').toString();
+    wtController.text = (patientSeed['weight'] ?? patientSeed['wt'] ?? '')
+        .toString();
+    atController.text =
+        (patientSeed['abdominalTenderness'] ?? patientSeed['at'] ?? '')
+            .toString();
+    tempController.text =
+        (patientSeed['temperature'] ?? patientSeed['temp'] ?? '').toString();
+    bpController.text =
+        (patientSeed['bloodPressure'] ?? patientSeed['bp'] ?? '').toString();
+    bmiController.text = (patientSeed['bmi'] ?? '').toString();
+    fhController.text = (patientSeed['fundalHeight'] ?? patientSeed['fh'] ?? '')
+        .toString();
+    dhbController.text =
+        (patientSeed['fetalHeartBeat'] ?? patientSeed['dhb'] ?? '').toString();
+    tcbController.text = (patientSeed['tcb'] ?? '').toString();
+    registeredByController.text = (patientSeed['registeredBy'] ?? '')
+        .toString();
+    additionalNoteController.text =
+        (patientSeed['additionalNotes'] ?? patientSeed['additionalNote'] ?? '')
+            .toString();
+    lmpDate = _parseDate(patientSeed['lmpDate']);
+    eddDate = _parseDate(patientSeed['eddDate'] ?? patientSeed['dueDate']);
+    lastDeliveryDate = _parseDate(patientSeed['lastDeliveryDate']);
+    registrationDate = DateTime.now();
 
     showDialog(
       context: context,
@@ -1673,10 +1056,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                   decoration: const BoxDecoration(
                     color: _darkDeepTeal,
                     border: Border(
-                      bottom: BorderSide(
-                        color: Color(0x20FFFFFF),
-                        width: 1,
-                      ),
+                      bottom: BorderSide(color: Color(0x20FFFFFF), width: 1),
                     ),
                   ),
                   child: Row(
@@ -2315,168 +1695,170 @@ class _PrenatalPageState extends State<PrenatalPage> {
                         onPressed: isSaving
                             ? null
                             : () async {
-                          final isFormValid =
-                              formKey.currentState?.validate() ?? false;
-                          final isLmpDateValid = lmpDate != null;
-                          final isLmpDateNotFuture =
-                              lmpDate == null ||
-                              !lmpDate!.isAfter(DateTime.now());
-                          if (!isLmpDateValid) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('LMP date is required'),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          } else if (!isLmpDateNotFuture) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'LMP date cannot be in the future',
-                                ),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                          if (!isFormValid ||
-                              !isLmpDateValid ||
-                              !isLmpDateNotFuture) {
-                            return;
-                          }
-
-                          setModalState(() => isSaving = true);
-
-                          // Create new prenatal record
-                          final newRecord = {
-                            'patientName':
-                                '${firstNameController.text} ${surnameController.text}',
-                            'age': ageController.text,
-                            'address': addressController.text,
-                            'patientId':
-                                (patientSeed?['patientId'] ??
-                                        patientSeed?['id'] ??
-                                        patientIdController.text)
-                                    .toString(),
-                            'linkedPatientId':
-                                (patientSeed?['linkedPatientId'] ??
-                                        patientSeed?['patientId'] ??
-                                        patientSeed?['id'] ??
-                                        '')
-                                    .toString(),
-                            'contactNumber': contactNumberController.text,
-                            'civilStatus': civilStatusController.text,
-                            'religion': religionController.text,
-                            'philhealthNumber':
-                                philhealthNumberController.text,
-                            'philhealthMember':
-                                philhealthMemberController.text,
-                            'lmpDate': lmpDate?.toIso8601String() ?? '',
-                            'eddDate': eddDate?.toIso8601String() ?? '',
-                            'lastDeliveryDate':
-                                lastDeliveryDate?.toIso8601String() ?? '',
-                            'gravida': gravidaController.text,
-                            'para': paraController.text,
-                            'riskLevel': selectedRiskLevel,
-                            'bloodType': bloodTypeController.text,
-                            'allergies': allergiesController.text,
-                            'preExistingConditions':
-                                preExistingConditionsController.text,
-                            'previousComplications':
-                                previousComplicationsController.text,
-                            'aog': aogController.text,
-                            'wt': wtController.text,
-                            'at': atController.text,
-                            'temp': tempController.text,
-                            'bp': bpController.text,
-                            'bmi': bmiController.text,
-                            'fh': fhController.text,
-                            'dhb': dhbController.text,
-                            'tcb': tcbController.text,
-                            'registrationDate':
-                                registrationDate?.toIso8601String() ?? '',
-                            'registeredBy': registeredByController.text,
-                            'additionalNote': additionalNoteController.text,
-                            'gestationalAge': aogController.text,
-                            'dueDate': eddDate?.toIso8601String() ?? '',
-                            'status': selectedRiskLevel,
-                          };
-
-                          // AI Classification
-                          ClassificationResult? classification;
-                          try {
-                            classification = await _aiClassifier.classify(
-                              newRecord,
-                            );
-
-                            newRecord['ai_category'] = classification.category;
-                            newRecord['ai_severity'] = classification.severity;
-                            newRecord['ai_confidence'] = classification
-                                .confidence
-                                .toString();
-                            newRecord['ai_method'] = classification.method;
-                            if (classification.keywords != null) {
-                              newRecord['ai_keywords'] = classification
-                                  .keywords!
-                                  .join(', ');
-                            }
-                            if (classification.recoveryPlan != null) {
-                              newRecord['ai_recovery_plan'] = jsonEncode(
-                                classification.recoveryPlan,
-                              );
-                            }
-                          } catch (e) {
-                            // ignore
-                          }
-
-                          // Save to database (offline + Firebase sync)
-                          try {
-                            await _dbHelper.insertRecord(newRecord);
-
-                            // Reload records
-                            await _loadRecords();
-
-                            // Show AI Classification modal with loading spinner
-                            if (context.mounted && classification != null) {
-                              await _showPrenatalAIModal(
-                                context,
-                                classification,
-                              );
-                            }
-
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                            }
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Prenatal registration saved successfully!',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
+                                final isFormValid =
+                                    formKey.currentState?.validate() ?? false;
+                                final isLmpDateValid = lmpDate != null;
+                                final isLmpDateNotFuture =
+                                    lmpDate == null ||
+                                    !lmpDate!.isAfter(DateTime.now());
+                                if (!isLmpDateValid) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('LMP date is required'),
+                                      backgroundColor: Colors.red,
+                                      behavior: SnackBarBehavior.floating,
                                     ),
-                                  ),
-                                  backgroundColor: Colors.green,
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Failed to save prenatal record: $e',
-                                  ),
-                                  backgroundColor: Colors.red,
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
-                            setModalState(() => isSaving = false);
-                          }
-                        },
+                                  );
+                                } else if (!isLmpDateNotFuture) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'LMP date cannot be in the future',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                                if (!isFormValid ||
+                                    !isLmpDateValid ||
+                                    !isLmpDateNotFuture) {
+                                  return;
+                                }
+
+                                setModalState(() => isSaving = true);
+
+                                // Create new prenatal record
+                                final newRecord = {
+                                  'patientName':
+                                      '${firstNameController.text} ${surnameController.text}',
+                                  'age': ageController.text,
+                                  'address': addressController.text,
+                                  'patientId':
+                                      (patientSeed?['patientId'] ??
+                                              patientSeed?['id'] ??
+                                              patientIdController.text)
+                                          .toString(),
+                                  'linkedPatientId':
+                                      (patientSeed?['linkedPatientId'] ??
+                                              patientSeed?['patientId'] ??
+                                              patientSeed?['id'] ??
+                                              '')
+                                          .toString(),
+                                  'contactNumber': contactNumberController.text,
+                                  'civilStatus': civilStatusController.text,
+                                  'religion': religionController.text,
+                                  'philhealthNumber':
+                                      philhealthNumberController.text,
+                                  'philhealthMember':
+                                      philhealthMemberController.text,
+                                  'lmpDate': lmpDate?.toIso8601String() ?? '',
+                                  'eddDate': eddDate?.toIso8601String() ?? '',
+                                  'lastDeliveryDate':
+                                      lastDeliveryDate?.toIso8601String() ?? '',
+                                  'gravida': gravidaController.text,
+                                  'para': paraController.text,
+                                  'riskLevel': selectedRiskLevel,
+                                  'bloodType': bloodTypeController.text,
+                                  'allergies': allergiesController.text,
+                                  'preExistingConditions':
+                                      preExistingConditionsController.text,
+                                  'previousComplications':
+                                      previousComplicationsController.text,
+                                  'aog': aogController.text,
+                                  'wt': wtController.text,
+                                  'at': atController.text,
+                                  'temp': tempController.text,
+                                  'bp': bpController.text,
+                                  'bmi': bmiController.text,
+                                  'fh': fhController.text,
+                                  'dhb': dhbController.text,
+                                  'tcb': tcbController.text,
+                                  'registrationDate':
+                                      registrationDate?.toIso8601String() ?? '',
+                                  'registeredBy': registeredByController.text,
+                                  'additionalNote':
+                                      additionalNoteController.text,
+                                  'gestationalAge': aogController.text,
+                                  'dueDate': eddDate?.toIso8601String() ?? '',
+                                  'status': selectedRiskLevel,
+                                };
+
+                                // AI Classification
+                                ClassificationResult? classification;
+                                try {
+                                  classification = await _aiClassifier.classify(
+                                    newRecord,
+                                  );
+
+                                  newRecord['ai_category'] =
+                                      classification.category;
+                                  newRecord['ai_severity'] =
+                                      classification.severity;
+                                  newRecord['ai_method'] =
+                                      classification.method;
+                                  if (classification.keywords != null) {
+                                    newRecord['ai_keywords'] = classification
+                                        .keywords!
+                                        .join(', ');
+                                  }
+                                  if (classification.recoveryPlan != null) {
+                                    newRecord['ai_recovery_plan'] = jsonEncode(
+                                      classification.recoveryPlan,
+                                    );
+                                  }
+                                } catch (e) {
+                                  // ignore
+                                }
+
+                                // Save to database (offline + Firebase sync)
+                                try {
+                                  await _dbHelper.insertRecord(newRecord);
+
+                                  // Reload records
+                                  await _loadRecords();
+
+                                  // Show AI Classification modal with loading spinner
+                                  if (context.mounted &&
+                                      classification != null) {
+                                    await _showPrenatalAIModal(
+                                      context,
+                                      classification,
+                                    );
+                                  }
+
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                  }
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Prenatal registration saved successfully!',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.green,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Failed to save prenatal record: $e',
+                                        ),
+                                        backgroundColor: Colors.red,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                  setModalState(() => isSaving = false);
+                                }
+                              },
                       ),
                     ],
                   ),
@@ -2637,10 +2019,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                   decoration: const BoxDecoration(
                     color: _darkDeepTeal,
                     border: Border(
-                      bottom: BorderSide(
-                        color: Color(0x20FFFFFF),
-                        width: 1,
-                      ),
+                      bottom: BorderSide(color: Color(0x20FFFFFF), width: 1),
                     ),
                   ),
                   child: Row(
@@ -3271,10 +2650,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
                             'contactNumber': contactNumberController.text,
                             'civilStatus': civilStatusController.text,
                             'religion': religionController.text,
-                            'philhealthNumber':
-                                philhealthNumberController.text,
-                            'philhealthMember':
-                                philhealthMemberController.text,
+                            'philhealthNumber': philhealthNumberController.text,
+                            'philhealthMember': philhealthMemberController.text,
                             'lmpDate': lmpDate?.toIso8601String() ?? '',
                             'eddDate': eddDate?.toIso8601String() ?? '',
                             'lastDeliveryDate':
@@ -3538,7 +2915,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
     required DateTime? date,
     required IconData icon,
     required VoidCallback onTap,
-    bool dark = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3608,7 +2984,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
     required IconData icon,
     required List<String> items,
     required Function(String?) onChanged,
-    bool dark = false,
   }) {
     final dropdownItems = _uniqueDropdownItems(items);
     final safeValue = _resolveDropdownValue(value, dropdownItems);
@@ -3627,7 +3002,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         ),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          value: safeValue,
+          initialValue: safeValue,
           icon: const Icon(Icons.arrow_drop_down_rounded, color: _primaryAqua),
           dropdownColor: Colors.white,
           style: const TextStyle(
@@ -3681,886 +3056,11 @@ class _PrenatalPageState extends State<PrenatalPage> {
     );
   }
 
-  Widget _buildDateFilter() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Gradient Header
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  _primaryAqua.withValues(alpha: 0.1),
-                  _secondaryIceBlue.withValues(alpha: 0.05),
-                ],
-              ),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [_primaryAqua, _secondaryIceBlue],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _primaryAqua.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.filter_alt_rounded,
-                    color: AppColors.textSecondary,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Filter & Search',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: _darkDeepTeal,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Filter Content
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // Status Filter
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _lightOffWhite,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _primaryAqua.withValues(alpha: 0.2),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.filter_list_rounded,
-                        color: _primaryAqua,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedStatusFilter,
-                            isExpanded: true,
-                            icon: Icon(
-                              Icons.arrow_drop_down,
-                              color: _primaryAqua,
-                            ),
-                            style: TextStyle(
-                              color: _darkDeepTeal,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            items: _statusFilterOptions.map((String option) {
-                              return DropdownMenuItem<String>(
-                                value: option,
-                                child: Text(option),
-                              );
-                            }).toList(),
-                            onChanged: (String? newValue) {
-                              if (newValue != null) {
-                                setState(() {
-                                  _selectedStatusFilter = newValue;
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Date Range Header
-                Row(
-                  children: [
-                    Icon(
-                      Icons.date_range_rounded,
-                      color: _primaryAqua,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Due Date Range',
-                      style: TextStyle(
-                        color: _darkDeepTeal,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(),
-                    if (_fromDate != null || _toDate != null)
-                      InkWell(
-                        onTap: _clearDateFilters,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.clear, size: 14, color: Colors.red),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Clear',
-                                style: TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildLegacyDatePickerButton(
-                        context: context,
-                        label: 'From Date',
-                        date: _fromDate,
-                        isFromDate: true,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildLegacyDatePickerButton(
-                        context: context,
-                        label: 'To Date',
-                        date: _toDate,
-                        isFromDate: false,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLegacyDatePickerButton({
-    required BuildContext context,
-    required String label,
-    required DateTime? date,
-    required bool isFromDate,
-  }) {
-    return InkWell(
-      onTap: () => _selectDate(context, isFromDate),
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: _lightOffWhite,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: date != null
-                ? _primaryAqua
-                : _mutedCoolGray.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: _mutedCoolGray,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(
-                  Icons.calendar_today,
-                  size: 16,
-                  color: date != null ? _primaryAqua : _mutedCoolGray,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    date != null
-                        ? '${date.day}/${date.month}/${date.year}'
-                        : 'Select Date',
-                    style: TextStyle(
-                      color: date != null ? _darkDeepTeal : _mutedCoolGray,
-                      fontSize: 13,
-                      fontWeight: date != null
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // Web-oriented Dashboard Card for larger screens
-  Widget _buildWebDashboardCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _darkDeepTeal.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: color.withValues(alpha: 0.4),
-                    width: 1,
-                  ),
-                ),
-                child: Icon(icon, color: color, size: 28),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Active',
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 36,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -1,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(
-              color: _mutedCoolGray,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // Web Filter Bar - Horizontal layout for desktop
-  Widget _buildWebFilterBar() {
-    return WebFilterSurface(
-      children: [
-        WebFilterDropdown<String>(
-          width: 220,
-          label: 'Status',
-          value: _selectedStatusFilter,
-          items: _statusFilterOptions
-              .map(
-                (option) => DropdownMenuItem<String>(
-                  value: option,
-                  child: Text(option, overflow: TextOverflow.ellipsis),
-                ),
-              )
-              .toList(),
-          onChanged: (value) {
-            if (value != null) {
-              setState(() => _selectedStatusFilter = value);
-            }
-          },
-        ),
-        OutlinedButton.icon(
-          onPressed: () => _selectDate(context, true),
-          icon: const Icon(Icons.calendar_today_outlined, size: 18),
-          label: Text(
-            _fromDate != null
-                ? '${_fromDate!.day}/${_fromDate!.month}'
-                : 'From date',
-          ),
-        ),
-        OutlinedButton.icon(
-          onPressed: () => _selectDate(context, false),
-          icon: const Icon(Icons.calendar_today_outlined, size: 18),
-          label: Text(
-            _toDate != null ? '${_toDate!.day}/${_toDate!.month}' : 'To date',
-          ),
-        ),
-        if (_fromDate != null || _toDate != null)
-          OutlinedButton.icon(
-            onPressed: _clearDateFilters,
-            icon: const Icon(Icons.clear_rounded, size: 18),
-            label: const Text('Clear dates'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.error,
-              side: const BorderSide(color: AppColors.error),
-            ),
-          ),
-      ],
-    );
-  }
 
   // Web Data Table view for patients - Card layout instead of DataTable
-  Widget _buildPatientsDataTable() {
-    final records = _getFilteredRecords();
-
-    if (records.isEmpty) {
-      return Center(
-        child: Text(
-          'No records found.',
-          style: TextStyle(color: Colors.white, fontSize: 16),
-        ),
-      );
-    }
-
-    return Column(
-      children: List.generate(records.length, (index) {
-        final isSelected = _selectedIndices.contains(index);
-        return _PrenatalCard(
-          record: records[index],
-          isSelectionMode: _isSelectionMode,
-          isSelected: isSelected,
-          index: index,
-          onSelectionChanged: (idx, selected) {
-            setState(() {
-              if (selected) {
-                _selectedIndices.add(idx);
-              } else {
-                _selectedIndices.remove(idx);
-              }
-            });
-          },
-          onEdit: (record) => _showEditPrenatalModal(context, record),
-          onView: (record) => _onViewButtonPressed(context, record),
-        );
-      }),
-    );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'High Risk':
-        return Colors.red;
-      case 'Follow Up':
-        return Colors.orange;
-      case 'Completed':
-        return Colors.green;
-      default:
-        return _primaryAqua;
-    }
-  }
-
-  void _showDeleteConfirm(
-    BuildContext context,
-    int index,
-    Map<String, dynamic> record,
-  ) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Confirm Delete'),
-        content: Text('Delete prenatal record for ${record['patientName']}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final id = record['id']?.toString() ?? '';
-              if (id.isNotEmpty) {
-                try {
-                  await _dbHelper.deleteRecord(id);
-                  await _loadRecords();
-                  if (context.mounted) Navigator.pop(context);
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Failed to delete prenatal record: $e'),
-                        backgroundColor: Colors.red,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
-                }
-              }
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDashboardCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required String trend,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [color, color.withValues(alpha: 0.7)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(icon, color: Colors.white, size: 24),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: color.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  trend,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            title,
-            style: TextStyle(
-              color: _mutedCoolGray,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPatientCard({
-    required BuildContext context,
-    required int index,
-    required Map<String, dynamic> record,
-  }) {
-    final isSelected = _selectedIndices.contains(index);
-    final patientName = record['patientName'] ?? 'Unknown';
-    final nameParts = patientName.split(' ');
-    final firstName = nameParts.isNotEmpty ? nameParts[0] : 'N/A';
-    final surname = nameParts.length > 1
-        ? nameParts.sublist(1).join(' ')
-        : 'N/A';
-    final gestationalAge = record['gestationalAge'] ?? 'N/A';
-    final dueDate = record['dueDate'] ?? 'N/A';
-    final status = record['status'] ?? 'Active';
-    final age = record['age'] ?? 'N/A';
-    final address = record['address'] ?? 'N/A';
-    final contactNumber = record['contactNumber'] ?? 'N/A';
-    final riskLevel = record['riskLevel'] ?? status;
-
-    return GestureDetector(
-      onTap: _isSelectionMode
-          ? () {
-              setState(() {
-                if (isSelected) {
-                  _selectedIndices.remove(index);
-                } else {
-                  _selectedIndices.add(index);
-                }
-              });
-            }
-          : null,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? _primaryAqua
-                : _primaryAqua.withValues(alpha: 0.2),
-            width: isSelected ? 2.5 : 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? _primaryAqua.withValues(alpha: 0.2)
-                  : _mutedCoolGray.withValues(alpha: 0.08),
-              blurRadius: isSelected ? 12 : 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Patient Name Header with Checkbox
-              Row(
-                children: [
-                  if (_isSelectionMode) ...[
-                    Checkbox(
-                      value: isSelected,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          if (value == true) {
-                            _selectedIndices.add(index);
-                          } else {
-                            _selectedIndices.remove(index);
-                          }
-                        });
-                      },
-                      activeColor: _primaryAqua,
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: _primaryAqua.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.pregnant_woman,
-                      color: _primaryAqua,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      patientName,
-                      style: TextStyle(
-                        color: _darkDeepTeal,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  _buildStatusChip(status),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Patient Details
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInfoRow(
-                      icon: Icons.person_outline,
-                      label: 'First Name',
-                      value: firstName,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildInfoRow(
-                      icon: Icons.person,
-                      label: 'Surname',
-                      value: surname,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInfoRow(
-                      icon: Icons.cake,
-                      label: 'Age',
-                      value: age,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildInfoRow(
-                      icon: Icons.location_on,
-                      label: 'Address',
-                      value: address,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Action Buttons
-              if (!_isSelectionMode)
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _onViewButtonPressed(context, record),
-                        icon: Icon(Icons.visibility, size: 18),
-                        label: Text(
-                          'View History',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _primaryAqua,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          _showEditPrenatalModal(context, record);
-                        },
-                        icon: Icon(Icons.edit, size: 18),
-                        label: Text(
-                          'Edit',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _secondaryIceBlue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 16, color: _mutedCoolGray),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: _mutedCoolGray,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            color: _darkDeepTeal,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusChip(String status) {
-    Color statusColor;
-    switch (status) {
-      case 'Active':
-        statusColor = Colors.green;
-        break;
-      case 'Follow Up':
-        statusColor = Colors.orange;
-        break;
-      case 'High Risk':
-        statusColor = Colors.red;
-        break;
-      case 'Completed':
-        statusColor = Colors.blue;
-        break;
-      default:
-        statusColor = _mutedCoolGray;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: statusColor.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: statusColor.withValues(alpha: 0.5), width: 1),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(
-          color: statusColor,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
 
   void _showPatientDetails(BuildContext context, Map<String, dynamic> record) {
     final patientName = _safePrenatalDetailText(
@@ -4582,13 +3082,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
     final dueDate = _formatDate(record['dueDate']);
     final contactNumber = _safePrenatalDetailText(record['contactNumber']);
     final patientId = _safePrenatalDetailText(record['patientId']);
-    final statusColor = _getStatusColor(riskLevel);
-    final initials = nameParts
-        .where((part) => part.trim().isNotEmpty)
-        .take(2)
-        .map((part) => part.trim().substring(0, 1).toUpperCase())
-        .join();
-
     showFullscreenDetailTableDialog(
       context: context,
       title: 'Prenatal Details',
@@ -4718,496 +3211,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
       ],
     );
     return;
-
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.74),
-      builder: (dialogContext) {
-        final screenSize = MediaQuery.of(dialogContext).size;
-        final isCompact = screenSize.width < 760;
-
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.zero,
-          child: SizedBox(
-            width: screenSize.width,
-            height: screenSize.height,
-            child: Container(
-              decoration: BoxDecoration(
-                color: _darkDeepTeal,
-                border: Border.all(
-                  color: _primaryAqua.withValues(alpha: 0.16),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.4),
-                    blurRadius: 36,
-                    offset: const Offset(0, 18),
-                  ),
-                ],
-              ),
-              child: ClipRect(
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(isCompact ? 20 : 24),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              _sidebarDark,
-                              _secondaryIceBlue.withValues(alpha: 0.88),
-                              _primaryAqua.withValues(alpha: 0.72),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          border: Border(
-                            bottom: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.08),
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.14),
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      initials.isEmpty ? 'PN' : initials,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.8,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        patientName,
-                                        style: const TextStyle(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.white,
-                                          letterSpacing: 0.2,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        'Prenatal record overview with patient profile, pregnancy details, risk indicators, and registration history.',
-                                        style: TextStyle(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.74,
-                                          ),
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.w500,
-                                          height: 1.38,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () =>
-                                        Navigator.of(dialogContext).pop(),
-                                    borderRadius: BorderRadius.circular(14),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.08,
-                                        ),
-                                        borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.12,
-                                          ),
-                                        ),
-                                      ),
-                                      child: const Icon(
-                                        Icons.close_rounded,
-                                        color: Colors.white,
-                                        size: 22,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 18),
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    statusColor.withValues(alpha: 0.18),
-                                    Colors.white.withValues(alpha: 0.04),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: statusColor.withValues(alpha: 0.2),
-                                ),
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    width: 42,
-                                    height: 42,
-                                    decoration: BoxDecoration(
-                                      color: statusColor.withValues(
-                                        alpha: 0.16,
-                                      ),
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    child: Icon(
-                                      Icons.pregnant_woman_rounded,
-                                      color: statusColor,
-                                      size: 22,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Current prenatal status',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'This case is tagged as $riskLevel with a current record status of $status.',
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.7,
-                                            ),
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                            height: 1.35,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                    child: Text(
-                                      riskLevel,
-                                      style: TextStyle(
-                                        color: statusColor,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Wrap(
-                              spacing: 10,
-                              runSpacing: 10,
-                              children: [
-                                _buildPrenatalDetailMetaChip(
-                                  icon: Icons.badge_outlined,
-                                  label: 'Patient ID',
-                                  value: patientId,
-                                  accentColor: const Color(0xFF64B5F6),
-                                ),
-                                _buildPrenatalDetailMetaChip(
-                                  icon: Icons.timelapse_rounded,
-                                  label: 'Gestational Age',
-                                  value: gestationalAge,
-                                  accentColor: const Color(0xFFFFB74D),
-                                ),
-                                _buildPrenatalDetailMetaChip(
-                                  icon: Icons.event_available_outlined,
-                                  label: 'Due Date',
-                                  value: dueDate,
-                                  accentColor: const Color(0xFF81C784),
-                                ),
-                                _buildPrenatalDetailMetaChip(
-                                  icon: Icons.phone_outlined,
-                                  label: 'Contact',
-                                  value: contactNumber,
-                                  accentColor: const Color(0xFFE57373),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.all(isCompact ? 18 : 22),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildDetailSectionDark('Personal Information', [
-                              _buildDetailRowDark('First Name', firstName),
-                              _buildDetailRowDark('Surname', surname),
-                              _buildDetailRowDark(
-                                'Patient ID',
-                                record['patientId'],
-                              ),
-                              _buildDetailRowDark('Age', record['age']),
-                              _buildDetailRowDark('Address', record['address']),
-                              _buildDetailRowDark(
-                                'Contact Number',
-                                record['contactNumber'],
-                              ),
-                              _buildDetailRowDark(
-                                'Civil Status',
-                                record['civilStatus'],
-                              ),
-                              _buildDetailRowDark(
-                                'Religion',
-                                record['religion'],
-                              ),
-                            ]),
-                            const SizedBox(height: 16),
-                            _buildDetailSectionDark('Philhealth Information', [
-                              _buildDetailRowDark(
-                                'Philhealth Number',
-                                record['philhealthNumber'],
-                              ),
-                              _buildDetailRowDark(
-                                'Philhealth Member',
-                                record['philhealthMember'],
-                              ),
-                            ]),
-                            const SizedBox(height: 16),
-                            _buildDetailSectionDark('Pregnancy Details', [
-                              _buildDetailRowDark(
-                                'Gestational Age',
-                                record['gestationalAge'],
-                              ),
-                              _buildDetailRowDark(
-                                'LMP Date',
-                                _formatDate(record['lmpDate']),
-                              ),
-                              _buildDetailRowDark(
-                                'EDD Date',
-                                _formatDate(record['eddDate']),
-                              ),
-                              _buildDetailRowDark(
-                                'Due Date',
-                                _formatDate(record['dueDate']),
-                              ),
-                              _buildDetailRowDark(
-                                'Last Delivery',
-                                _formatDate(record['lastDeliveryDate']),
-                              ),
-                              _buildDetailRowDark('Gravida', record['gravida']),
-                              _buildDetailRowDark('Para', record['para']),
-                              _buildDetailRowDark(
-                                'Risk Level',
-                                record['riskLevel'],
-                              ),
-                            ]),
-                            const SizedBox(height: 16),
-                            _buildDetailSectionDark('Medical History', [
-                              _buildDetailRowDark(
-                                'Blood Type',
-                                record['bloodType'],
-                              ),
-                              _buildDetailRowDark(
-                                'Allergies',
-                                record['allergies'],
-                              ),
-                              _buildDetailRowDark(
-                                'Pre-existing Conditions',
-                                record['preExistingConditions'],
-                              ),
-                              _buildDetailRowDark(
-                                'Previous Complications',
-                                record['previousComplications'],
-                              ),
-                            ]),
-                            const SizedBox(height: 16),
-                            _buildDetailSectionDark(
-                              'Vital Signs & Measurements',
-                              [
-                                _buildDetailRowDark(
-                                  'Age of Gestation (AOG)',
-                                  record['aog'],
-                                ),
-                                _buildDetailRowDark(
-                                  'Weight (WT)',
-                                  record['wt'],
-                                ),
-                                _buildDetailRowDark(
-                                  'Abdominal Tenderness (AT)',
-                                  record['at'],
-                                ),
-                                _buildDetailRowDark(
-                                  'Temperature',
-                                  record['temp'],
-                                ),
-                                _buildDetailRowDark(
-                                  'Blood Pressure (BP)',
-                                  record['bp'],
-                                ),
-                                _buildDetailRowDark('BMI', record['bmi']),
-                                _buildDetailRowDark(
-                                  'Fundal Height (FH)',
-                                  record['fh'],
-                                ),
-                                _buildDetailRowDark(
-                                  'Fetal Heart Beat (DHB)',
-                                  record['dhb'],
-                                ),
-                                _buildDetailRowDark(
-                                  'Total Bilirubin (TCB)',
-                                  record['tcb'],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            _buildDetailSectionDark('Registration Details', [
-                              _buildDetailRowDark(
-                                'Registration Date',
-                                _formatDate(record['registrationDate']),
-                              ),
-                              _buildDetailRowDark(
-                                'Registered By',
-                                record['registeredBy'],
-                              ),
-                              _buildDetailRowDark('Status', record['status']),
-                            ]),
-                            if (record['additionalNote'] != null &&
-                                record['additionalNote']
-                                    .toString()
-                                    .isNotEmpty) ...[
-                              const SizedBox(height: 16),
-                              _buildDetailSectionDark('Additional Notes', [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: _darkDeepTeal,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    record['additionalNote'] ?? '',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ]),
-                            ],
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.fromLTRB(
-                          isCompact ? 18 : 22,
-                          10,
-                          isCompact ? 18 : 22,
-                          isCompact ? 18 : 22,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _sidebarDark.withValues(alpha: 0.82),
-                          border: Border(
-                            top: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.06),
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                        child: Wrap(
-                          alignment: WrapAlignment.end,
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: [
-                            OutlinedButton(
-                              onPressed: () =>
-                                  Navigator.of(dialogContext).pop(),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                backgroundColor: Colors.white.withValues(
-                                  alpha: 0.03,
-                                ),
-                                side: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.16),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              child: const Text('Close'),
-                            ),
-                            FilledButton.icon(
-                              onPressed: () async {
-                                Navigator.of(dialogContext).pop();
-                                await _generatePrenatalPdf(context, record);
-                              },
-                              icon: const Icon(
-                                Icons.picture_as_pdf_rounded,
-                                size: 18,
-                              ),
-                              label: const Text('Generate PDF'),
-                              style: AppButtonStyles.report(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
   }
 
   List<Map<String, dynamic>> _getPrenatalHistory(Map<String, dynamic> record) {
@@ -5245,7 +3248,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
   ) async {
     final patient = _buildPatientHistorySeed(record);
     final snapshot = await _patientHistoryService.loadPatientHistory(patient);
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
 
@@ -5288,234 +3291,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
     _showPrenatalHistory(context, record);
   }
 
-  Future<void> _confirmAndSeedSamples(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Seed Sample Data'),
-        content: const Text(
-          'Insert 100 complete sample prenatal records into the database?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Seed'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await _seedSampleData(context);
-    }
-  }
-
-  Future<void> _seedSampleData(BuildContext context) async {
-    // Show progress dialog
-    if (!context.mounted) return;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: _darkDeepTeal,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                CircularProgressIndicator(color: _primaryAqua),
-                SizedBox(height: 12),
-                Text(
-                  'Seeding 100 records...',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-
-    try {
-      final now = DateTime.now();
-      for (var i = 1; i <= 100; i++) {
-        final idSuffix = i.toString().padLeft(3, '0');
-        final ms = now.millisecondsSinceEpoch.toString();
-        final shortMs = ms.substring(
-          ms.length - 6,
-        ); // use last 6 digits for readability
-        final uniqueCode = 'SMP$shortMs${i.toString().padLeft(3, '0')}';
-        final lmp = now.subtract(Duration(days: 14 * (i % 6) + i));
-        final edd = lmp.add(const Duration(days: 280));
-        final registration = now.subtract(Duration(days: i % 30));
-
-        final sample = {
-          'patientName': 'Sample Patient $uniqueCode',
-          'age': (20 + (i % 15)).toString(),
-          'address': '123 Sample Street, Barangay ${(i % 20) + 1}, Cityville',
-          'patientId': 'PAT-$uniqueCode',
-          'contactNumber': '+63 900 $shortMs${i.toString().padLeft(3, '0')}',
-          'civilStatus': i % 2 == 0 ? 'Married' : 'Single',
-          'religion': 'Religion ${i % 5 + 1}',
-          'philhealthNumber': 'PH-${now.year}-$uniqueCode',
-          'philhealthMember': 'Member $uniqueCode',
-          'lmpDate': lmp.toIso8601String(),
-          'eddDate': edd.toIso8601String(),
-          'lastDeliveryDate': lmp
-              .subtract(const Duration(days: 365))
-              .toIso8601String(),
-          'gravida': ((i % 4) + 1).toString(),
-          'para': (i % 3).toString(),
-          'riskLevel': (i % 10 == 0)
-              ? 'High Risk'
-              : (i % 3 == 0)
-              ? 'Follow Up'
-              : 'Active',
-          'bloodType': ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+'][i % 7],
-          'allergies': 'None',
-          'preExistingConditions': 'None',
-          'previousComplications': 'None',
-          'aog': '${(i % 40) + 1} weeks',
-          'wt': '${50 + (i % 20)} kg',
-          'at': 'None',
-          'temp': '36.${i % 9}Â°C',
-          'bp': '${110 + (i % 30)}/${70 + (i % 10)}',
-          'bmi': '${18 + (i % 10)}',
-          'fh': '${20 + (i % 12)} cm',
-          'dhb': '${120 + (i % 40)} bpm',
-          'tcb': '${0.5 + (i % 5) * 0.1}',
-          'registrationDate': registration.toIso8601String(),
-          'registeredBy': 'Seeder',
-          'additionalNote': 'Auto-generated sample record #$idSuffix',
-          'gestationalAge': '${(i % 40) + 1} weeks',
-          'dueDate': edd.toIso8601String(),
-          'status': (i % 10 == 0) ? 'High Risk' : 'Active',
-        };
-
-        await _dbHelper.insertRecord(sample);
-      }
-
-      await _loadRecords();
-      if (context.mounted) {
-        Navigator.of(context).pop(); // close progress dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Seeded 100 sample prenatal records'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Seeding failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Widget _buildDetailSection(String title, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Section Header with Icon
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: _primaryAqua.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(Icons.info_outline, color: _primaryAqua, size: 16),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: _darkDeepTeal,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _primaryAqua.withValues(alpha: 0.15),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: _mutedCoolGray.withValues(alpha: 0.05),
-                blurRadius: 4,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Column(children: children),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailRow(String label, dynamic value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: _mutedCoolGray,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 3,
-            child: Text(
-              value?.toString() ?? 'N/A',
-              style: TextStyle(
-                color: _darkDeepTeal,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   String _safePrenatalDetailText(
     dynamic value, {
     String fallback = 'Not recorded',
@@ -5524,185 +3299,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
     return text.isEmpty ? fallback : text;
   }
 
-  Widget _buildPrenatalDetailMetaChip({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color accentColor,
-    Color? valueColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: accentColor.withValues(alpha: 0.18)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: accentColor, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.6),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 2),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 180),
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: valueColor ?? Colors.white,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSectionHeaderDark(String title, IconData icon) {
     return _buildSectionHeader(title, icon);
-  }
-
-  Widget _buildDetailRowDark(
-    String label,
-    dynamic value, {
-    IconData icon = Icons.info_outline_rounded,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.035),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: _primaryAqua.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: _primaryAqua, size: 18),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.62),
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _safePrenatalDetailText(value),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailSectionDark(String title, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: _sidebarDark.withValues(alpha: 0.96),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.16),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: _primaryAqua.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(
-                      Icons.info_outline_rounded,
-                      color: _primaryAqua,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              ...children,
-            ],
-          ),
-        ),
-      ],
-    );
   }
 
   String _formatDate(dynamic date) {
@@ -5713,122 +3311,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
     } catch (e) {
       return date.toString();
     }
-  }
-
-  Widget _buildActionMenuButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: _lightOffWhite.withValues(alpha: 0.3),
-            width: 2,
-          ),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              setState(() {
-                _isSelectionMode = !_isSelectionMode;
-                if (!_isSelectionMode) {
-                  _selectedIndices.clear();
-                }
-              });
-            },
-            borderRadius: BorderRadius.circular(8),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: _isSelectionMode
-                          ? [Color(0xFFFF5252), Color(0xFFE53935)]
-                          : [Color(0xFF4CAF50), Color(0xFF388E3C)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    _isSelectionMode
-                        ? Icons.close_rounded
-                        : Icons.check_circle_outline_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _isSelectionMode
-                            ? 'Exit Selection Mode'
-                            : 'Enter Selection Mode',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        _isSelectionMode
-                            ? 'Tap to deactivate bulk operations'
-                            : 'Tap to enable bulk operations',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (_isSelectionMode && _selectedIndices.isNotEmpty) ...[
-                  const SizedBox(width: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Color(0xFFFF5252),
-                      borderRadius: BorderRadius.circular(6),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFFFF5252).withValues(alpha: 0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      '${_selectedIndices.length} selected',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: _mutedCoolGray,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _buildSelectionActionCard() {
@@ -5977,19 +3459,11 @@ class _PrenatalPageState extends State<PrenatalPage> {
       return;
     }
 
-    setState(() {
-      _isDeleteDialogShowing = true;
-    });
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Text('Confirm Delete'),
-          ],
-        ),
+        title: Row(children: [Text('Confirm Delete')]),
         content: Text(
           'Are you sure you want to delete ${_selectedIndices.length} selected record(s)? This action cannot be undone.',
           style: TextStyle(color: _darkDeepTeal),
@@ -5997,9 +3471,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
         actions: [
           TextButton(
             onPressed: () {
-              setState(() {
-                _isDeleteDialogShowing = false;
-              });
               Navigator.pop(context);
             },
             child: Text(
@@ -6014,9 +3485,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
             onPressed: () {
               Navigator.pop(context);
               _deleteSelectedRecords();
-              setState(() {
-                _isDeleteDialogShowing = false;
-              });
             },
             child: Text(
               'Delete',
@@ -6025,12 +3493,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
           ),
         ],
       ),
-    ).then((_) {
-      // Ensure the state is reset if dialog is dismissed by tapping outside
-      setState(() {
-        _isDeleteDialogShowing = false;
-      });
-    });
+    );
   }
 
   void _deleteSelectedRecords() async {
@@ -6067,10 +3530,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         : 'Deleted ${succeededIds.length} of $count record(s); $failedCount failed';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        content: Text(message, style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: failedCount == 0 ? Colors.green : Colors.red,
         behavior: SnackBarBehavior.floating,
       ),
@@ -6229,7 +3689,11 @@ class _PrenatalPageState extends State<PrenatalPage> {
               'Filter pregnancy cohorts, risk distributions, visits, and complications by date. Currently showing ${_activeInsightsWindowLabel().toLowerCase()}.',
               maxLines: isWideHeader ? 2 : 3,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: _mutedCoolGray, fontSize: 11, height: 1.35),
+              style: const TextStyle(
+                color: _mutedCoolGray,
+                fontSize: 11,
+                height: 1.35,
+              ),
             ),
           ],
         );
@@ -6323,20 +3787,23 @@ class _PrenatalPageState extends State<PrenatalPage> {
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: (_insightsDateFilterMode ==
+              foregroundColor:
+                  (_insightsDateFilterMode ==
                           DashboardDateFilterMode.customDay ||
                       _insightsDateFilterMode ==
                           DashboardDateFilterMode.customRange)
                   ? _primaryAqua
                   : _lightOffWhite,
-              backgroundColor: (_insightsDateFilterMode ==
+              backgroundColor:
+                  (_insightsDateFilterMode ==
                           DashboardDateFilterMode.customDay ||
                       _insightsDateFilterMode ==
                           DashboardDateFilterMode.customRange)
                   ? _primaryAqua.withValues(alpha: 0.12)
                   : Colors.white,
               side: BorderSide(
-                color: (_insightsDateFilterMode ==
+                color:
+                    (_insightsDateFilterMode ==
                             DashboardDateFilterMode.customDay ||
                         _insightsDateFilterMode ==
                             DashboardDateFilterMode.customRange)
@@ -6498,8 +3965,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                   );
                   if (picked == null || !mounted) return;
                   setState(() {
-                    _insightsDateFilterMode =
-                        DashboardDateFilterMode.customDay;
+                    _insightsDateFilterMode = DashboardDateFilterMode.customDay;
                     _insightsCustomDate = picked;
                   });
                 },
@@ -6528,10 +3994,11 @@ class _PrenatalPageState extends State<PrenatalPage> {
                   );
                   if (picked == null || !mounted) return;
                   setState(() {
-                    _insightsDateFilterMode =
-                        DashboardDateFilterMode.thisMonth;
-                    _insightsSelectedMonth =
-                        DateTime(picked.year, picked.month);
+                    _insightsDateFilterMode = DashboardDateFilterMode.thisMonth;
+                    _insightsSelectedMonth = DateTime(
+                      picked.year,
+                      picked.month,
+                    );
                   });
                 },
               ),
@@ -6578,8 +4045,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 onTap: () {
                   Navigator.pop(dialogContext);
                   setState(() {
-                    _insightsDateFilterMode =
-                        DashboardDateFilterMode.allTime;
+                    _insightsDateFilterMode = DashboardDateFilterMode.allTime;
                   });
                 },
               ),
@@ -6601,13 +4067,15 @@ class _PrenatalPageState extends State<PrenatalPage> {
     final charts = <Widget>[
       _buildPrenatalChartCard(
         title: 'Monthly Prenatal Visits',
-        subtitle: 'Visits recorded during ${_activeInsightsWindowLabel().toLowerCase()}',
+        subtitle:
+            'Visits recorded during ${_activeInsightsWindowLabel().toLowerCase()}',
         icon: Icons.show_chart_rounded,
         child: _buildPrenatalMonthlyLineChart(),
       ),
       _buildPrenatalChartCard(
         title: 'Pregnancy Risk Distribution',
-        subtitle: 'Current maternal risk classification for ${_activeInsightsWindowLabel().toLowerCase()}',
+        subtitle:
+            'Current maternal risk classification for ${_activeInsightsWindowLabel().toLowerCase()}',
         icon: Icons.health_and_safety_outlined,
         child: _buildPrenatalRiskPieChart(),
       ),
@@ -6617,14 +4085,16 @@ class _PrenatalPageState extends State<PrenatalPage> {
         icon: Icons.location_on_outlined,
         child: _buildPrenatalBarChart(
           _highRiskByBarangay(),
-          emptyMessage: 'No high-risk pregnancies are currently recorded for this period.',
+          emptyMessage:
+              'No high-risk pregnancies are currently recorded for this period.',
           tooltipUnit: 'case',
           colors: const [_secondaryIceBlue, _primaryAqua],
         ),
       ),
       _buildPrenatalChartCard(
         title: 'Gestational Age Distribution',
-        subtitle: 'Pregnancies grouped by trimester in ${_activeInsightsWindowLabel().toLowerCase()}',
+        subtitle:
+            'Pregnancies grouped by trimester in ${_activeInsightsWindowLabel().toLowerCase()}',
         icon: Icons.calendar_view_month_rounded,
         child: _buildPrenatalBarChart(
           _gestationalAgeDistribution(),
@@ -6641,7 +4111,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
       ),
       _buildPrenatalChartCard(
         title: 'Maternal Age Distribution',
-        subtitle: 'Prenatal patients grouped by maternal age in ${_activeInsightsWindowLabel().toLowerCase()}',
+        subtitle:
+            'Prenatal patients grouped by maternal age in ${_activeInsightsWindowLabel().toLowerCase()}',
         icon: Icons.groups_2_outlined,
         child: _buildPrenatalBarChart(
           _maternalAgeDistribution(),
@@ -6656,7 +4127,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
         icon: Icons.monitor_heart_outlined,
         child: _buildPrenatalBarChart(
           _pregnancyComplicationDistribution(),
-          emptyMessage: 'No pregnancy complications are currently recorded for this period.',
+          emptyMessage:
+              'No pregnancy complications are currently recorded for this period.',
           tooltipUnit: 'case',
           colors: const [_primaryAqua, Color(0xFF8FAFD6)],
         ),
@@ -6681,7 +4153,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 : (constraints.maxWidth - spacing * (columns - 1)) / columns;
             final cards = <Widget>[
               _buildWebMetricCard(
-                title: _insightsDateFilterMode == DashboardDateFilterMode.allTime
+                title:
+                    _insightsDateFilterMode == DashboardDateFilterMode.allTime
                     ? 'Total Prenatal'
                     : 'Prenatal Cases',
                 value: '$total',
@@ -6739,15 +4212,24 @@ class _PrenatalPageState extends State<PrenatalPage> {
       _prenatalRecords,
       idKeys: const ['linkedPatientId', 'patientId', 'patientCode'],
       nameKeys: const ['patientName', 'patient'],
-      dateKeys: const ['registrationDate', 'updatedAt', 'createdAt', 'lmpDate', 'dueDate', 'date'],
+      dateKeys: const [
+        'registrationDate',
+        'updatedAt',
+        'createdAt',
+        'lmpDate',
+        'dueDate',
+        'date',
+      ],
     );
     if (_insightsDateFilterMode == DashboardDateFilterMode.allTime) {
       return collapsed;
     }
-    return collapsed.where((record) {
-      final date = _coercePrenatalRecordDate(record);
-      return _matchesInsightsDateFilter(date);
-    }).toList(growable: false);
+    return collapsed
+        .where((record) {
+          final date = _coercePrenatalRecordDate(record);
+          return _matchesInsightsDateFilter(date);
+        })
+        .toList(growable: false);
   }
 
   DateTime? _prenatalDate(dynamic raw) {
@@ -8317,7 +5799,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
     return SizedBox(
       width: width,
       child: DropdownButtonFormField<String>(
-        value: items.contains(value) ? value : items.first,
+        initialValue: items.contains(value) ? value : items.first,
         isDense: true,
         style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
         decoration: InputDecoration(
@@ -8576,10 +6058,7 @@ class _PrenatalCard extends StatelessWidget {
         ? ' (G$gravida P$para)'
         : '';
     final bp = _safe(record['bp'] ?? record['bloodPressure'], '');
-    final status = _safe(
-      record['status'] ?? record['riskLevel'],
-      'Active',
-    );
+    final status = _safe(record['status'] ?? record['riskLevel'], 'Active');
     final registration = _formatDateTimeParts(
       record['registrationDate'] ??
           record['createdAt'] ??
@@ -8802,6 +6281,8 @@ class _PrenatalCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 6),
+                    WebSyncStatusBadge(record: record),
                   ],
                 ),
               ),
@@ -8897,93 +6378,3 @@ Future<void> _generatePrenatalPdf(
 }
 
 // Prenatal Dashboard Header Widget - Checkup style
-class _PrenatalDashboardHeader extends StatelessWidget {
-  final int totalPatients;
-  final int highRiskCount;
-  final int completedCount;
-
-  const _PrenatalDashboardHeader({
-    required this.totalPatients,
-    required this.highRiskCount,
-    required this.completedCount,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Title Section
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              'Prenatal Care Dashboard',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: 28,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              'Maternal health tracking & management system',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.white.withValues(alpha: 0.7),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 32),
-
-        // Metrics Grid - 4 columns for web with better spacing
-        Row(
-          children: [
-            Expanded(
-              child: _buildWebMetricCard(
-                title: 'Total Patients',
-                value: '$totalPatients',
-                icon: Icons.groups_outlined,
-              ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: _buildWebMetricCard(
-                title: 'High Risk',
-                value: '$highRiskCount',
-                icon: Icons.warning_amber_outlined,
-              ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: _buildWebMetricCard(
-                title: 'Completed',
-                value: '$completedCount',
-                icon: Icons.check_circle_outline,
-              ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: _buildWebMetricCard(
-                title: 'Status',
-                value:
-                    '${((completedCount / (totalPatients > 0 ? totalPatients : 1)) * 100).toStringAsFixed(0)}%',
-                icon: Icons.trending_up_outlined,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWebMetricCard({
-    required String title,
-    required String value,
-    required IconData icon,
-  }) {
-    return AppMetricCard(label: title, value: value, icon: icon);
-  }
-}

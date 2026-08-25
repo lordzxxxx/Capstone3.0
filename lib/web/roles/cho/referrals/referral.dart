@@ -12,7 +12,6 @@ import 'package:mycapstone_project/web/shared/services/account_policy_service.da
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/utils/referral_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/report_download.dart';
-import 'package:mycapstone_project/web/shared/utils/report_print.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
@@ -223,19 +222,6 @@ class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
         return 'Unavailable';
       default:
         return 'Available';
-    }
-  }
-
-  Color _doctorAvailabilityColor(String value) {
-    switch (value.trim().toLowerCase()) {
-      case 'busy':
-        return Colors.orangeAccent;
-      case 'limited':
-        return Colors.amberAccent;
-      case 'unavailable':
-        return Colors.redAccent;
-      default:
-        return Colors.greenAccent;
     }
   }
 
@@ -778,405 +764,6 @@ class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
       return 'BHW-selected doctor';
     }
     return 'Manual assignment';
-  }
-
-  String _doctorOptionLabel(Map<String, dynamic> data) {
-    return '${_doctorDisplayName(data)} • ${_doctorSpecialization(data)} • ${_doctorAvailabilityLabel(_doctorAvailability(data))}';
-  }
-
-  Future<void> _showDoctorRegistrationResultDialog(
-    DoctorRegistrationResult result,
-  ) async {
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: _panelSurface,
-          title: const Text(
-            'Doctor Ready',
-            style: TextStyle(color: _lightOffWhite),
-          ),
-          content: SizedBox(
-            width: 500,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${result.doctorName} is now listed in the referral directory as ${result.specialization}.',
-                  style: TextStyle(
-                    color: _lightOffWhite.withValues(alpha: 0.82),
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _buildInfoChip(result.email),
-                _buildInfoChip(result.specialization),
-                _buildInfoChip(_doctorAvailabilityLabel(result.availability)),
-                if (result.resetLink != null) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    'Password setup link',
-                    style: TextStyle(
-                      color: _lightOffWhite.withValues(alpha: 0.92),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _darkDeepTeal,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: SelectableText(
-                      result.resetLink!,
-                      style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.8),
-                        fontSize: 12,
-                        height: 1.45,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _showDoctorRegistryDialog() async {
-    final formKey = GlobalKey<FormState>();
-    final fullNameController = TextEditingController();
-    final emailController = TextEditingController();
-    String specialization = _doctorSpecializationOptions.first;
-    String availability = _doctorAvailabilityOptions.first;
-    bool isSubmitting = false;
-
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: _panelSurface,
-              title: const Text(
-                'Doctor Registry',
-                style: TextStyle(color: _lightOffWhite),
-              ),
-              content: SizedBox(
-                width: 560,
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: _darkDeepTeal,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: _primaryAqua.withValues(alpha: 0.18),
-                          ),
-                        ),
-                        child: Text(
-                          'Add a doctor account directly from CHO so referrals can be matched by specialization and availability immediately.',
-                          style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.8),
-                            height: 1.45,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: fullNameController,
-                        style: const TextStyle(color: _lightOffWhite),
-                        decoration: _inputDecoration('Doctor full name'),
-                        validator: (value) =>
-                            value == null || value.trim().isEmpty
-                            ? 'Doctor name is required'
-                            : null,
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        style: const TextStyle(color: _lightOffWhite),
-                        decoration: _inputDecoration('Doctor email'),
-                        validator: (value) {
-                          final text = value?.trim() ?? '';
-                          if (text.isEmpty) {
-                            return 'Doctor email is required';
-                          }
-                          if (!text.contains('@')) {
-                            return 'Enter a valid email address';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        initialValue: specialization,
-                        dropdownColor: _panelAlt,
-                        style: const TextStyle(color: _lightOffWhite),
-                        decoration: _inputDecoration('Specialization'),
-                        items: _doctorSpecializationOptions
-                            .map(
-                              (value) => DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setDialogState(() => specialization = value);
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        initialValue: availability,
-                        dropdownColor: _panelAlt,
-                        style: const TextStyle(color: _lightOffWhite),
-                        decoration: _inputDecoration('Availability'),
-                        items: _doctorAvailabilityOptions
-                            .map(
-                              (value) => DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(_doctorAvailabilityLabel(value)),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setDialogState(() => availability = value);
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Current doctor roster',
-                        style: TextStyle(
-                          color: _lightOffWhite.withValues(alpha: 0.92),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Submitting an existing doctor email updates that doctor\'s specialization and availability in this directory.',
-                        style: TextStyle(
-                          color: _lightOffWhite.withValues(alpha: 0.7),
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 220),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: _doctorDocs
-                                .map((doctorDoc) {
-                                  final doctorData = doctorDoc.data();
-                                  final availabilityColor =
-                                      _doctorAvailabilityColor(
-                                        _doctorAvailability(doctorData),
-                                      );
-                                  return Container(
-                                    width: double.infinity,
-                                    margin: const EdgeInsets.only(bottom: 10),
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: _darkDeepTeal,
-                                      borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(
-                                        color: _primaryAqua.withValues(
-                                          alpha: 0.12,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                _doctorDisplayName(doctorData),
-                                                style: const TextStyle(
-                                                  color: _lightOffWhite,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                (doctorData['email'] ?? '')
-                                                    .toString(),
-                                                style: TextStyle(
-                                                  color: _lightOffWhite
-                                                      .withValues(alpha: 0.66),
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
-                                            _buildInfoChip(
-                                              _doctorSpecialization(doctorData),
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 10,
-                                                    vertical: 6,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: availabilityColor
-                                                    .withValues(alpha: 0.12),
-                                                borderRadius:
-                                                    BorderRadius.circular(999),
-                                                border: Border.all(
-                                                  color: availabilityColor
-                                                      .withValues(alpha: 0.32),
-                                                ),
-                                              ),
-                                              child: Text(
-                                                _doctorAvailabilityLabel(
-                                                  _doctorAvailability(
-                                                    doctorData,
-                                                  ),
-                                                ),
-                                                style: TextStyle(
-                                                  color: availabilityColor,
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                })
-                                .toList(growable: false),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSubmitting
-                      ? null
-                      : () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: isSubmitting
-                      ? null
-                      : () async {
-                          if (!formKey.currentState!.validate()) {
-                            return;
-                          }
-                          setDialogState(() => isSubmitting = true);
-                          try {
-                            final result = await _accountPolicyService
-                                .registerDoctorAccount(
-                                  fullName: fullNameController.text.trim(),
-                                  email: emailController.text.trim(),
-                                  specialization: specialization,
-                                  availability: availability,
-                                );
-                            await _refreshDoctorDirectoryState();
-                            if (dialogContext.mounted) {
-                              Navigator.of(dialogContext).pop();
-                            }
-                            Get.snackbar(
-                              'Doctor registered',
-                              '${result.doctorName} is now available for referral assignment.',
-                              backgroundColor: Colors.green,
-                              colorText: Colors.white,
-                            );
-                            await _showDoctorRegistrationResultDialog(result);
-                          } catch (error) {
-                            setDialogState(() => isSubmitting = false);
-                            Get.snackbar(
-                              'Registration failed',
-                              'Could not register doctor: ${_formatDoctorRegistrationError(error)}',
-                              backgroundColor: Colors.redAccent,
-                              colorText: Colors.white,
-                            );
-                          }
-                        },
-                  icon: isSubmitting
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.person_add_alt_1_outlined),
-                  label: Text(isSubmitting ? 'Saving' : 'Register doctor'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    fullNameController.dispose();
-    emailController.dispose();
-  }
-
-  Future<void> _printReferralReport(Map<String, dynamic> referral) async {
-    final printTarget = prepareReportPrintTarget();
-    try {
-      final pdfBytes = await buildReferralPdfBytes(referral);
-      final filename = buildReferralPdfFilename(referral);
-      final printed = printReportFile(
-        bytes: pdfBytes,
-        filename: filename,
-        mimeType: 'application/pdf',
-        target: printTarget,
-      );
-      Get.snackbar(
-        printed ? 'Print view opened' : 'Print unavailable',
-        printed
-            ? 'The referral PDF was opened in a print-ready view.'
-            : 'Printing is not supported on this platform.',
-        backgroundColor: printed ? Colors.green : Colors.orange,
-        colorText: Colors.white,
-      );
-    } catch (error) {
-      closeReportPrintTarget(printTarget);
-      Get.snackbar(
-        'Print failed',
-        'Could not prepare the referral report for printing: $error',
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-    }
   }
 
   Future<void> _loadScope() async {
@@ -1735,6 +1322,7 @@ class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
       );
       return;
     }
+    if (!mounted) return;
 
     final existingData = doc.data();
     String? selectedDoctorUid;
@@ -3283,101 +2871,65 @@ class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
           const ChoNavigationDrawer(current: ChoDestination.referrals),
           Expanded(
             child: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _primaryAqua))
-          : _loadErrorMessage != null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.error_outline_rounded,
-                      color: Colors.orangeAccent,
-                      size: 42,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      _loadErrorMessage!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: _lightOffWhite),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _loadScope,
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _ensureReferralsStream(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  final isTargetConflict = _isReferralsTargetConflict(
-                    snapshot.error,
-                  );
-
-                  if (isTargetConflict && _referralsRecoveryAttempts < 2) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      _recoverReferralsStream();
-                    });
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const CircularProgressIndicator(
-                              color: _primaryAqua,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Recovering referral stream... (${_referralsRecoveryAttempts + 1}/2)',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: _lightOffWhite),
-                            ),
-                          ],
-                        ),
+                ? const Center(
+                    child: CircularProgressIndicator(color: _primaryAqua),
+                  )
+                : _loadErrorMessage != null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.error_outline_rounded,
+                            color: Colors.orangeAccent,
+                            size: 42,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            _loadErrorMessage!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: _lightOffWhite),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadScope,
+                            child: const Text('Retry'),
+                          ),
+                        ],
                       ),
-                    );
-                  }
+                    ),
+                  )
+                : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: _ensureReferralsStream(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        final isTargetConflict = _isReferralsTargetConflict(
+                          snapshot.error,
+                        );
 
-                  if (isTargetConflict) {
-                    return FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      future: _firestore.collection('referrals').get(),
-                      builder: (context, fallbackSnapshot) {
-                        if (fallbackSnapshot.hasData) {
-                          return _buildReferralsContent(
-                            fallbackSnapshot.data!.docs,
-                          );
-                        }
-
-                        if (fallbackSnapshot.hasError) {
+                        if (isTargetConflict &&
+                            _referralsRecoveryAttempts < 2) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            _recoverReferralsStream();
+                          });
                           return Center(
                             child: Padding(
                               padding: const EdgeInsets.all(24),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  const CircularProgressIndicator(
+                                    color: _primaryAqua,
+                                  ),
+                                  const SizedBox(height: 12),
                                   Text(
-                                    'Referral records could not be loaded. Check your connection and try again.',
+                                    'Recovering referral stream... (${_referralsRecoveryAttempts + 1}/2)',
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       color: _lightOffWhite,
                                     ),
-                                  ),
-                                  const SizedBox(height: 14),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        _referralsRecoveryAttempts = 0;
-                                        _referralsStream =
-                                            _createReferralsStream();
-                                      });
-                                    },
-                                    child: const Text('Retry'),
                                   ),
                                 ],
                               ),
@@ -3385,49 +2937,95 @@ class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
                           );
                         }
 
+                        if (isTargetConflict) {
+                          return FutureBuilder<
+                            QuerySnapshot<Map<String, dynamic>>
+                          >(
+                            future: _firestore.collection('referrals').get(),
+                            builder: (context, fallbackSnapshot) {
+                              if (fallbackSnapshot.hasData) {
+                                return _buildReferralsContent(
+                                  fallbackSnapshot.data!.docs,
+                                );
+                              }
+
+                              if (fallbackSnapshot.hasError) {
+                                return Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(24),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Referral records could not be loaded. Check your connection and try again.',
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            color: _lightOffWhite,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 14),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              _referralsRecoveryAttempts = 0;
+                                              _referralsStream =
+                                                  _createReferralsStream();
+                                            });
+                                          },
+                                          child: const Text('Retry'),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              return const Center(
+                                child: CircularProgressIndicator(
+                                  color: _primaryAqua,
+                                ),
+                              );
+                            },
+                          );
+                        }
+
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Referral records could not be loaded. Check your connection and try again.',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: _lightOffWhite),
+                                ),
+                                const SizedBox(height: 14),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _referralsRecoveryAttempts = 0;
+                                      _referralsStream =
+                                          _createReferralsStream();
+                                    });
+                                  },
+                                  child: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (!snapshot.hasData) {
                         return const Center(
                           child: CircularProgressIndicator(color: _primaryAqua),
                         );
-                      },
-                    );
-                  }
+                      }
 
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Referral records could not be loaded. Check your connection and try again.',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: _lightOffWhite),
-                          ),
-                          const SizedBox(height: 14),
-                          ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _referralsRecoveryAttempts = 0;
-                                _referralsStream = _createReferralsStream();
-                              });
-                            },
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                if (!snapshot.hasData) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: _primaryAqua),
-                  );
-                }
-
-                return _buildReferralsContent(snapshot.data!.docs);
-              },
-            ),
+                      return _buildReferralsContent(snapshot.data!.docs);
+                    },
+                  ),
           ),
         ],
       ),

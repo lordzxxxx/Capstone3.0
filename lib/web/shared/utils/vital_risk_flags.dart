@@ -58,7 +58,11 @@ List<String> detectAbnormalVitalFlags(String? vitalSignsText) {
     flags.add('Elevated blood pressure');
   }
 
-  final heartRate = _extractLabeledValue(text, const ['HR', 'Heart Rate', 'Pulse']);
+  final heartRate = _extractLabeledValue(text, const [
+    'HR',
+    'Heart Rate',
+    'Pulse',
+  ]);
   if (heartRate != null && (heartRate < 50 || heartRate > 100)) {
     flags.add('Abnormal heart rate');
   }

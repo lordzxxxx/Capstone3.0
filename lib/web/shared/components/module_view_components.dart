@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
-import 'package:universal_html/html.dart' as html;
+import 'package:mycapstone_project/web/shared/utils/browser_history.dart';
 
 enum HealthModuleView { insights, records }
 
@@ -22,7 +22,7 @@ void persistHealthModuleView(String route, HealthModuleView view) {
   final query = Map<String, String>.from(current.queryParameters)
     ..['view'] = view.name;
   final next = current.replace(path: route, queryParameters: query);
-  html.window.history.replaceState(null, '', next.toString());
+  replaceBrowserHistory(next.toString());
 }
 
 class HealthModuleViewHeader extends StatelessWidget {

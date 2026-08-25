@@ -16,10 +16,13 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/shared_patient_search_panel.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/services/web_record_sync.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/utils/referral_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/report_print.dart';
+import 'package:mycapstone_project/web/shared/widgets/web_sync_status_badge.dart';
+import 'package:mycapstone_project/web/shared/components/role_decision_support_panel.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF071A33);
@@ -58,6 +61,9 @@ class _ReferralsPageState extends State<ReferralsPage> {
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final FirebaseFirestore _firestore = getFirestoreInstance();
+  final WebRecordWriteCoordinator _writeCoordinator = WebRecordWriteCoordinator(
+    firestore: getFirestoreInstance(),
+  );
   final AccountPolicyService _accountPolicyService =
       AccountPolicyService.instance;
   final PatientCenteredHistoryService _patientHistoryService =
@@ -511,16 +517,16 @@ class _ReferralsPageState extends State<ReferralsPage> {
   Stream<QuerySnapshot<Map<String, dynamic>>> _referralsStream() {
     final collection = _firestore.collection('referrals');
     if (_isChoOperator) {
-      return collection.snapshots();
+      return collection.snapshots(includeMetadataChanges: true);
     }
     if (_isDoctor) {
       return collection
           .where('assignedDoctorUid', isEqualTo: _scope.userId)
-          .snapshots();
+          .snapshots(includeMetadataChanges: true);
     }
     return collection
         .where('createdByUid', isEqualTo: _scope.userId)
-        .snapshots();
+        .snapshots(includeMetadataChanges: true);
   }
 
   Future<void> _submitReferral() async {
@@ -588,6 +594,9 @@ class _ReferralsPageState extends State<ReferralsPage> {
       final referralReasonSummary = _composeReferralReasonSummary();
       final referralCategorySummary = _selectedReferralCategories.join(', ');
       final payload = <String, dynamic>{
+        'id': referralRef.id,
+        'clientOperationId': referralRef.id,
+        'recordVersion': 1,
         'referralCategories': _selectedReferralCategories.toList()..sort(),
         'referralCategorySummary': referralCategorySummary,
         'referredTo': _selectedPreferredDoctorUid?.isNotEmpty == true
@@ -1119,13 +1128,18 @@ class _ReferralsPageState extends State<ReferralsPage> {
                       'status': status,
                       'updatedAt': FieldValue.serverTimestamp(),
                     };
-                    await doc.reference.set(
-                      updatePayload,
-                      SetOptions(merge: true),
+                    final nextVersion = await _writeCoordinator.update(
+                      reference: doc.reference,
+                      changes: updatePayload,
+                      expectedVersion: recordVersionOf(data),
                     );
                     await _syncBarangayReferralMirror(
                       referralId: doc.id,
-                      payload: {...data, ...updatePayload},
+                      payload: {
+                        ...data,
+                        ...updatePayload,
+                        'recordVersion': nextVersion,
+                      },
                     );
 
                     if (dialogContext.mounted) {
@@ -1248,13 +1262,18 @@ class _ReferralsPageState extends State<ReferralsPage> {
                       'doctorUpdatedAt': FieldValue.serverTimestamp(),
                       'updatedAt': FieldValue.serverTimestamp(),
                     };
-                    await doc.reference.set(
-                      updatePayload,
-                      SetOptions(merge: true),
+                    final nextVersion = await _writeCoordinator.update(
+                      reference: doc.reference,
+                      changes: updatePayload,
+                      expectedVersion: recordVersionOf(data),
                     );
                     await _syncBarangayReferralMirror(
                       referralId: doc.id,
-                      payload: {...data, ...updatePayload},
+                      payload: {
+                        ...data,
+                        ...updatePayload,
+                        'recordVersion': nextVersion,
+                      },
                     );
 
                     if (dialogContext.mounted) {
@@ -1460,6 +1479,51 @@ class _ReferralsPageState extends State<ReferralsPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDoctorDecisionSupport(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> documents,
+  ) {
+    final urgent = documents.where((document) {
+      final priority =
+          (document.data()['priority'] ??
+                  document.data()['referralPriority'] ??
+                  '')
+              .toString()
+              .toLowerCase();
+      return priority.contains('urgent') || priority.contains('emergency');
+    }).length;
+    final awaitingReview = documents.where((document) {
+      final status = (document.data()['status'] ?? '').toString().toLowerCase();
+      return status.contains('assigned') ||
+          status.contains('waiting') ||
+          status.contains('review');
+    }).length;
+
+    return RoleDecisionSupportPanel(
+      audience: DecisionSupportAudience.doctor,
+      summary:
+          'The queue summarizes information submitted by BHW and CHO users. Confirm symptoms, vitals, history, and urgency before documenting care.',
+      items: <DecisionSupportItem>[
+        DecisionSupportItem(
+          label: 'Assigned cases',
+          value: '${documents.length}',
+          icon: Icons.assignment_ind_outlined,
+        ),
+        DecisionSupportItem(
+          label: 'Urgent flags',
+          value: '$urgent',
+          icon: Icons.emergency_outlined,
+          isPriority: urgent > 0,
+        ),
+        DecisionSupportItem(
+          label: 'Awaiting clinical review',
+          value: '$awaitingReview',
+          icon: Icons.medical_information_outlined,
+          isPriority: awaitingReview > 0,
+        ),
+      ],
     );
   }
 
@@ -2299,7 +2363,11 @@ class _ReferralsPageState extends State<ReferralsPage> {
   }
 
   Widget _buildReferralCard(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data();
+    final data = attachWebSyncMetadata(
+      <String, dynamic>{...doc.data(), 'id': doc.id},
+      hasPendingWrites: doc.metadata.hasPendingWrites,
+      isFromCache: doc.metadata.isFromCache,
+    );
     final status = (data['status'] ?? 'submitted').toString();
     final doctorName = (data['assignedDoctorName'] ?? 'Unassigned').toString();
     final doctorSpecialization = (data['assignedDoctorSpecialization'] ?? '')
@@ -2385,6 +2453,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                 ),
               ),
               _buildStatusChip(status),
+              WebSyncStatusBadge(record: data),
               if ((data['barangay'] ?? '').toString().isNotEmpty)
                 _buildInfoChip((data['barangay'] ?? '').toString()),
               _buildInfoChip('Doctor: $doctorName'),
@@ -2699,6 +2768,10 @@ class _ReferralsPageState extends State<ReferralsPage> {
                     children: [
                       _buildHeader(),
                       const SizedBox(height: 20),
+                      if (_isDoctor) ...[
+                        _buildDoctorDecisionSupport(docs),
+                        const SizedBox(height: 20),
+                      ],
                       _buildReferralForm(),
                       if (_isBhw) const SizedBox(height: 20),
                       _buildSummaryCards(docs),

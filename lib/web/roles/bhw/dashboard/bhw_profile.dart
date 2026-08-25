@@ -4,11 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
-import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
 const Color _profileAqua = Color(0xFF2F80ED);
-const Color _profileDark = Color(0xFF071A33);
 const Color _profileSurface = Colors.white;
 const Color _profileInk = Color(0xFF0B1F3A);
 const Color _profileMuted = Color(0xFF4B6075);
@@ -275,15 +273,6 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
     );
   }
 
-  Widget _buildTopBar() {
-    return WebAppTopBar(
-      title: 'My Profile',
-      scaffoldKey: _scaffoldKey,
-      onRefresh: _loadProfile,
-      refreshTooltip: 'Refresh profile',
-    );
-  }
-
   Widget _buildProfileHero() {
     final initial = _displayName.isEmpty ? 'B' : _displayName[0].toUpperCase();
     final accountStatus = _firstValue([
@@ -337,7 +326,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
                 const SizedBox(height: 6),
                 const Text(
                   'Barangay Health Worker',
-                  style: const TextStyle(color: _profileMuted, fontSize: 14),
+                  style: TextStyle(color: _profileMuted, fontSize: 14),
                 ),
                 const SizedBox(height: 14),
                 Wrap(

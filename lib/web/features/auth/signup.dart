@@ -668,7 +668,7 @@ class _SignupState extends State<Signup> {
     } catch (e) {
       backendPolicyAvailable = false;
       if (kDebugMode) {
-        print(
+        debugPrint(
           'Signup policy precheck unavailable, continuing with fallback: $e',
         );
       }
@@ -750,7 +750,7 @@ class _SignupState extends State<Signup> {
           );
         } catch (e) {
           if (kDebugMode) {
-            print(
+            debugPrint(
               'Signup completeRegistration failed, using Firestore fallback: $e',
             );
           }
@@ -783,7 +783,7 @@ class _SignupState extends State<Signup> {
           barangay: _selectedBarangay,
         ).catchError((Object e) {
           if (kDebugMode) {
-            print('RTDB role mirror write failed during signup: $e');
+            debugPrint('RTDB role mirror write failed during signup: $e');
           }
         }),
       );
@@ -1285,6 +1285,7 @@ class _SignupState extends State<Signup> {
 
   Future<void> _showBarangayPicker() async {
     await _refreshBarangayAvailability(silent: true);
+    if (!mounted) return;
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 720;
     final selection = isMobile

@@ -1,0 +1,285 @@
+{
+  "methodology": {
+    "model_version": "disease_model_v4",
+    "model_sha256": "4cc536ba3503283454f58c6f53d992350f1e6205317d3b3c50e7da3573cd370c",
+    "dataset_sha256": "cc53ccfdf09da298ea13dc5e5d4047eb7a15d7eb47c1cb103b68de65a9457a9d",
+    "method": "single_temperature_log_probability_scaling",
+    "temperature": 0.3154786722400966,
+    "fit": {
+      "temperature": 0.3154786722400966,
+      "oof_log_loss_before": 0.7723619904305165,
+      "oof_log_loss_after": 0.22886146581935868,
+      "records": 75194,
+      "search_minimum": 0.05,
+      "search_maximum": 5.0,
+      "search_grid_points": 401,
+      "fit_scope": "training_partition_out_of_fold_only"
+    },
+    "folds": [
+      {
+        "fold": 1,
+        "training_records": 60155,
+        "validation_records": 15039,
+        "group_overlap": 0
+      },
+      {
+        "fold": 2,
+        "training_records": 60154,
+        "validation_records": 15040,
+        "group_overlap": 0
+      },
+      {
+        "fold": 3,
+        "training_records": 60155,
+        "validation_records": 15039,
+        "group_overlap": 0
+      },
+      {
+        "fold": 4,
+        "training_records": 60155,
+        "validation_records": 15039,
+        "group_overlap": 0
+      },
+      {
+        "fold": 5,
+        "training_records": 60157,
+        "validation_records": 15037,
+        "group_overlap": 0
+      }
+    ],
+    "test_access_policy": "Temperature selected from training-partition OOF predictions only; untouched group-safe test evaluated once after selection."
+  },
+  "training_records": 75194,
+  "test_records": 18799,
+  "train_test_exact_vector_overlap_groups": 0,
+  "before_calibration": {
+    "accuracy": 0.8933985850311187,
+    "balanced_accuracy": 0.8969460225662702,
+    "precision_weighted": 0.898701320865484,
+    "recall_weighted": 0.8933985850311187,
+    "f1_weighted": 0.8933275454927165,
+    "precision_macro": 0.8911121532447212,
+    "recall_macro": 0.8969460225662702,
+    "f1_macro": 0.8912643779939138,
+    "definitions": {
+      "multiclass_log_loss": "-mean(log(probability assigned to the true class))",
+      "multiclass_brier_score": "mean(sum((predicted probability - one-hot truth)^2 across classes))",
+      "top_label_ece": "sum(n_bin / n * abs(bin accuracy - bin mean confidence)); 10 equal-width confidence bins by default"
+    },
+    "records": 18799,
+    "classes": 100,
+    "bin_count": 10,
+    "multiclass_log_loss": 0.7509595737413562,
+    "multiclass_brier_score": 0.29455283867380866,
+    "top_label_expected_calibration_error": 0.35116430979408997,
+    "top_label_maximum_calibration_error": 0.47422184908903986,
+    "top1_accuracy": 0.8933985850311187,
+    "mean_top1_confidence": 0.5422342752370286,
+    "mean_confidence_minus_accuracy": -0.3511643097940901,
+    "bins": [
+      {
+        "lower_bound_inclusive": 0.0,
+        "upper_bound_inclusive": 0.1,
+        "records": 175,
+        "mean_confidence": 0.07162346712735182,
+        "empirical_accuracy": 0.4114285714285714,
+        "absolute_gap": 0.3398051043012196
+      },
+      {
+        "lower_bound_inclusive": 0.1,
+        "upper_bound_inclusive": 0.2,
+        "records": 1025,
+        "mean_confidence": 0.1592608741303254,
+        "empirical_accuracy": 0.48292682926829267,
+        "absolute_gap": 0.32366595513796725
+      },
+      {
+        "lower_bound_inclusive": 0.2,
+        "upper_bound_inclusive": 0.3,
+        "records": 1790,
+        "mean_confidence": 0.25303438328498096,
+        "empirical_accuracy": 0.6229050279329609,
+        "absolute_gap": 0.3698706446479799
+      },
+      {
+        "lower_bound_inclusive": 0.3,
+        "upper_bound_inclusive": 0.4,
+        "records": 2359,
+        "mean_confidence": 0.3511846733902108,
+        "empirical_accuracy": 0.8075455701568461,
+        "absolute_gap": 0.4563608967666353
+      },
+      {
+        "lower_bound_inclusive": 0.4,
+        "upper_bound_inclusive": 0.5,
+        "records": 2603,
+        "mean_confidence": 0.4508645896355087,
+        "empirical_accuracy": 0.9250864387245485,
+        "absolute_gap": 0.47422184908903986
+      },
+      {
+        "lower_bound_inclusive": 0.5,
+        "upper_bound_inclusive": 0.6,
+        "records": 2761,
+        "mean_confidence": 0.5505939112214631,
+        "empirical_accuracy": 0.9840637450199203,
+        "absolute_gap": 0.43346983379845727
+      },
+      {
+        "lower_bound_inclusive": 0.6,
+        "upper_bound_inclusive": 0.7,
+        "records": 2999,
+        "mean_confidence": 0.649547519008511,
+        "empirical_accuracy": 0.9989996665555185,
+        "absolute_gap": 0.3494521475470075
+      },
+      {
+        "lower_bound_inclusive": 0.7,
+        "upper_bound_inclusive": 0.8,
+        "records": 2653,
+        "mean_confidence": 0.7482721077830999,
+        "empirical_accuracy": 1.0,
+        "absolute_gap": 0.25172789221690006
+      },
+      {
+        "lower_bound_inclusive": 0.8,
+        "upper_bound_inclusive": 0.9,
+        "records": 1863,
+        "mean_confidence": 0.8467319880148794,
+        "empirical_accuracy": 1.0,
+        "absolute_gap": 0.15326801198512063
+      },
+      {
+        "lower_bound_inclusive": 0.9,
+        "upper_bound_inclusive": 1.0,
+        "records": 571,
+        "mean_confidence": 0.9315210613168341,
+        "empirical_accuracy": 1.0,
+        "absolute_gap": 0.0684789386831659
+      }
+    ],
+    "interpretation": "Lower log loss, Brier score, and calibration error are better. Calibration measures probability reliability on this held-out dataset; it does not establish diagnosis safety or clinical validity."
+  },
+  "after_calibration": {
+    "accuracy": 0.8933985850311187,
+    "balanced_accuracy": 0.8969460225662702,
+    "precision_weighted": 0.898701320865484,
+    "recall_weighted": 0.8933985850311187,
+    "f1_weighted": 0.8933275454927165,
+    "precision_macro": 0.8911121532447212,
+    "recall_macro": 0.8969460225662702,
+    "f1_macro": 0.8912643779939138,
+    "definitions": {
+      "multiclass_log_loss": "-mean(log(probability assigned to the true class))",
+      "multiclass_brier_score": "mean(sum((predicted probability - one-hot truth)^2 across classes))",
+      "top_label_ece": "sum(n_bin / n * abs(bin accuracy - bin mean confidence)); 10 equal-width confidence bins by default"
+    },
+    "records": 18799,
+    "classes": 100,
+    "bin_count": 10,
+    "multiclass_log_loss": 0.22433301011781465,
+    "multiclass_brier_score": 0.1275167638227068,
+    "top_label_expected_calibration_error": 0.030726603705830653,
+    "top_label_maximum_calibration_error": 0.22321818987134712,
+    "top1_accuracy": 0.8933985850311187,
+    "mean_top1_confidence": 0.9156923736471334,
+    "mean_confidence_minus_accuracy": 0.02229378861601472,
+    "bins": [
+      {
+        "lower_bound_inclusive": 0.0,
+        "upper_bound_inclusive": 0.1,
+        "records": 0,
+        "mean_confidence": 0.0,
+        "empirical_accuracy": 0.0,
+        "absolute_gap": 0.0
+      },
+      {
+        "lower_bound_inclusive": 0.1,
+        "upper_bound_inclusive": 0.2,
+        "records": 12,
+        "mean_confidence": 0.143260362637215,
+        "empirical_accuracy": 0.08333333333333333,
+        "absolute_gap": 0.059927029303881676
+      },
+      {
+        "lower_bound_inclusive": 0.2,
+        "upper_bound_inclusive": 0.3,
+        "records": 126,
+        "mean_confidence": 0.26066964583569135,
+        "empirical_accuracy": 0.20634920634920634,
+        "absolute_gap": 0.05432043948648502
+      },
+      {
+        "lower_bound_inclusive": 0.3,
+        "upper_bound_inclusive": 0.4,
+        "records": 318,
+        "mean_confidence": 0.3561780677463725,
+        "empirical_accuracy": 0.22012578616352202,
+        "absolute_gap": 0.1360522815828505
+      },
+      {
+        "lower_bound_inclusive": 0.4,
+        "upper_bound_inclusive": 0.5,
+        "records": 506,
+        "mean_confidence": 0.45533528298759324,
+        "empirical_accuracy": 0.33794466403162055,
+        "absolute_gap": 0.11739061895597269
+      },
+      {
+        "lower_bound_inclusive": 0.5,
+        "upper_bound_inclusive": 0.6,
+        "records": 916,
+        "mean_confidence": 0.5471494947943263,
+        "empirical_accuracy": 0.46179039301310043,
+        "absolute_gap": 0.08535910178122585
+      },
+      {
+        "lower_bound_inclusive": 0.6,
+        "upper_bound_inclusive": 0.7,
+        "records": 689,
+        "mean_confidence": 0.6490577097005773,
+        "empirical_accuracy": 0.5181422351233672,
+        "absolute_gap": 0.1309154745772101
+      },
+      {
+        "lower_bound_inclusive": 0.7,
+        "upper_bound_inclusive": 0.8,
+        "records": 588,
+        "mean_confidence": 0.747027713680871,
+        "empirical_accuracy": 0.5238095238095238,
+        "absolute_gap": 0.22321818987134712
+      },
+      {
+        "lower_bound_inclusive": 0.8,
+        "upper_bound_inclusive": 0.9,
+        "records": 477,
+        "mean_confidence": 0.8500951872275075,
+        "empirical_accuracy": 0.6645702306079665,
+        "absolute_gap": 0.18552495661954105
+      },
+      {
+        "lower_bound_inclusive": 0.9,
+        "upper_bound_inclusive": 1.0,
+        "records": 15167,
+        "mean_confidence": 0.9918069331155321,
+        "empirical_accuracy": 0.9970330322410497,
+        "absolute_gap": 0.005226099125517525
+      }
+    ],
+    "interpretation": "Lower log loss, Brier score, and calibration error are better. Calibration measures probability reliability on this held-out dataset; it does not establish diagnosis safety or clinical validity."
+  },
+  "difference_after_minus_before": {
+    "accuracy": 0.0,
+    "balanced_accuracy": 0.0,
+    "precision_weighted": 0.0,
+    "recall_weighted": 0.0,
+    "f1_weighted": 0.0,
+    "precision_macro": 0.0,
+    "recall_macro": 0.0,
+    "f1_macro": 0.0,
+    "multiclass_log_loss": -0.5266265636235417,
+    "multiclass_brier_score": -0.16703607485110186,
+    "top_label_expected_calibration_error": -0.32043770608825933
+  },
+  "clinical_validity_statement": "Probability calibration on this dataset does not establish medical certainty, Philippine representativeness, or clinical validity."
+}

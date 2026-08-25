@@ -40,8 +40,9 @@ class _PatientOperationalSummaryState extends State<PatientOperationalSummary> {
   PatientDateFilterMode _dateFilterMode = PatientDateFilterMode.allTime;
   DateTime? _selectedCustomDate;
   DateTime? _selectedMonthDate;
-  DateTime _selectedRangeStart =
-      DateTime.now().subtract(const Duration(days: 6));
+  DateTime _selectedRangeStart = DateTime.now().subtract(
+    const Duration(days: 6),
+  );
   DateTime _selectedRangeEnd = DateTime.now();
 
   @override
@@ -382,18 +383,19 @@ class _PatientOperationalSummaryState extends State<PatientOperationalSummary> {
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: (_dateFilterMode ==
-                          PatientDateFilterMode.customDay ||
+              foregroundColor:
+                  (_dateFilterMode == PatientDateFilterMode.customDay ||
                       _dateFilterMode == PatientDateFilterMode.customRange)
                   ? _accent
                   : _text,
-              backgroundColor: (_dateFilterMode ==
-                          PatientDateFilterMode.customDay ||
+              backgroundColor:
+                  (_dateFilterMode == PatientDateFilterMode.customDay ||
                       _dateFilterMode == PatientDateFilterMode.customRange)
                   ? _accent.withValues(alpha: 0.12)
                   : Colors.white,
               side: BorderSide(
-                color: (_dateFilterMode == PatientDateFilterMode.customDay ||
+                color:
+                    (_dateFilterMode == PatientDateFilterMode.customDay ||
                         _dateFilterMode == PatientDateFilterMode.customRange)
                     ? _accent
                     : filterBorderColor,
@@ -471,9 +473,7 @@ class _PatientOperationalSummaryState extends State<PatientOperationalSummary> {
           color: isSelected ? _accent : _surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected
-                ? _accent
-                : Colors.black.withValues(alpha: 0.12),
+            color: isSelected ? _accent : Colors.black.withValues(alpha: 0.12),
           ),
           boxShadow: isSelected
               ? [
@@ -488,11 +488,7 @@ class _PatientOperationalSummaryState extends State<PatientOperationalSummary> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 14,
-              color: isSelected ? Colors.white : _text,
-            ),
+            Icon(icon, size: 14, color: isSelected ? Colors.white : _text),
             const SizedBox(width: 6),
             Text(
               label,
@@ -588,10 +584,7 @@ class _PatientOperationalSummaryState extends State<PatientOperationalSummary> {
                 },
               ),
               ListTile(
-                leading: const Icon(
-                  Icons.date_range_outlined,
-                  color: _accent,
-                ),
+                leading: const Icon(Icons.date_range_outlined, color: _accent),
                 title: const Text(
                   'Custom Date Range',
                   style: TextStyle(fontWeight: FontWeight.w600),
@@ -618,7 +611,10 @@ class _PatientOperationalSummaryState extends State<PatientOperationalSummary> {
               ),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.all_inclusive_rounded, color: _primaryAqua),
+                leading: const Icon(
+                  Icons.all_inclusive_rounded,
+                  color: _primaryAqua,
+                ),
                 title: const Text(
                   'Quick: All Time Registry',
                   style: TextStyle(fontWeight: FontWeight.w600),
@@ -709,18 +705,13 @@ class _PatientOperationalSummaryState extends State<PatientOperationalSummary> {
           _Metric('Female Patients', female, Icons.female_rounded),
           _Metric(
             'Senior Citizens',
-            filteredPatients
-                .where((patient) => _age(patient) >= 60)
-                .length,
+            filteredPatients.where((patient) => _age(patient) >= 60).length,
             Icons.elderly_rounded,
           ),
           _Metric(
             'Children (0–5)',
             filteredPatients
-                .where(
-                  (patient) =>
-                      _age(patient) >= 0 && _age(patient) <= 5,
-                )
+                .where((patient) => _age(patient) >= 0 && _age(patient) <= 5)
                 .length,
             Icons.child_care_rounded,
           ),
@@ -765,8 +756,7 @@ class _PatientOperationalSummaryState extends State<PatientOperationalSummary> {
             filteredPatients
                 .where(
                   (patient) =>
-                      _textValue(patient['status']).toLowerCase() ==
-                      'inactive',
+                      _textValue(patient['status']).toLowerCase() == 'inactive',
                 )
                 .length,
             Icons.person_off_outlined,
@@ -790,13 +780,15 @@ class _PatientOperationalSummaryState extends State<PatientOperationalSummary> {
           context,
           _chartCard(
             title: 'Age Distribution',
-            subtitle: 'Patients grouped by age range in ${_activeWindowLabel().toLowerCase()}',
+            subtitle:
+                'Patients grouped by age range in ${_activeWindowLabel().toLowerCase()}',
             icon: Icons.bar_chart_rounded,
             chart: _ageChart(filteredPatients),
           ),
           _chartCard(
             title: 'Sex Distribution',
-            subtitle: 'Patients grouped by recorded sex in ${_activeWindowLabel().toLowerCase()}',
+            subtitle:
+                'Patients grouped by recorded sex in ${_activeWindowLabel().toLowerCase()}',
             icon: Icons.donut_large_rounded,
             chart: _sexChart(male, female),
           ),

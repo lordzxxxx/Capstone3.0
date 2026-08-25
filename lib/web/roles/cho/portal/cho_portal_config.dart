@@ -89,8 +89,11 @@ class ChoModuleConfig {
       ChoFieldColumn('Barangay', ['barangay', 'barangayName']),
       ChoFieldColumn('BHW', ['bhwName', 'createdByName']),
       ChoFieldColumn('Symptoms', ['symptoms', 'ai_keywords'], flex: 2),
-      ChoFieldColumn('AI Prediction', ['ai_prediction', 'predictedDisease']),
-      ChoFieldColumn('Confidence', ['ai_confidence', 'confidence']),
+      ChoFieldColumn('Decision-support category', [
+        'healthCategory',
+        'ai_suggested_health_category',
+        'ai_prediction',
+      ]),
       ChoFieldColumn('Risk', ['riskLevel']),
       ChoFieldColumn('Validation', ['validationStatus', 'status']),
     ],

@@ -9,7 +9,6 @@ import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/roles/bhw/analytics/ai_summary.dart'
     as ai;
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
-import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
@@ -388,10 +387,11 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
     final firestore = getFirestoreInstance();
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
 
-    return buildScopedRecordQuery(firestore, 'summary_records', accessScope)
-        .where('patientId', isEqualTo: currentUserId)
-        .limit(200)
-        .snapshots();
+    return buildScopedRecordQuery(
+      firestore,
+      'summary_records',
+      accessScope,
+    ).where('patientId', isEqualTo: currentUserId).limit(200).snapshots();
   }
 
   void _copySummaryToClipboard() {
@@ -423,7 +423,10 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
     final generatedAt = _effectiveGeneratedAt ?? DateTime.now();
 
     return <MapEntry<String, String>>[
-      MapEntry('Barangay', scope.barangay.isEmpty ? 'Not specified' : scope.barangay),
+      MapEntry(
+        'Barangay',
+        scope.barangay.isEmpty ? 'Not specified' : scope.barangay,
+      ),
       MapEntry('Reporting Period', _currentPeriodLabel),
       MapEntry('Prepared By', '$bhwName (Barangay Health Worker)'),
       MapEntry('Generated', DateFormat.yMMMd().add_jm().format(generatedAt)),
@@ -510,7 +513,9 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
       closeReportPrintTarget(printTarget);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not prepare the summary for printing: $e')),
+        SnackBar(
+          content: Text('Could not prepare the summary for printing: $e'),
+        ),
       );
     }
   }
@@ -545,53 +550,56 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
             child: ColoredBox(
               color: AppColors.backgroundLight,
               child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1320),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeroSection(userName),
-                  const SizedBox(height: 20),
-                  _buildOverviewCards(),
-                  const SizedBox(height: 24),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isWide = constraints.maxWidth >= 1080;
+                padding: const EdgeInsets.all(24),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1320),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeroSection(userName),
+                        const SizedBox(height: 20),
+                        _buildOverviewCards(),
+                        const SizedBox(height: 24),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isWide = constraints.maxWidth >= 1080;
 
-                      if (isWide) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 4,
-                              child: _buildControlPanel(context),
-                            ),
-                            const SizedBox(width: 24),
-                            Expanded(flex: 6, child: _buildSummaryPanel()),
-                          ],
-                        );
-                      }
+                            if (isWide) {
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 4,
+                                    child: _buildControlPanel(context),
+                                  ),
+                                  const SizedBox(width: 24),
+                                  Expanded(
+                                    flex: 6,
+                                    child: _buildSummaryPanel(),
+                                  ),
+                                ],
+                              );
+                            }
 
-                      return Column(
-                        children: [
-                          _buildControlPanel(context),
-                          const SizedBox(height: 24),
-                          _buildSummaryPanel(),
-                        ],
-                      );
-                    },
+                            return Column(
+                              children: [
+                                _buildControlPanel(context),
+                                const SizedBox(height: 24),
+                                _buildSummaryPanel(),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
-    ),
-  ],
-),
     );
   }
 
@@ -1201,23 +1209,23 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
                     );
                   }
 
-                  final docs = snapshot.data!.docs.where((doc) {
-                    final data = doc.data();
-                    return data['patientId'] == currentUserId &&
-                        data['type'] == _storageType &&
-                        data['period'] == _storagePeriod;
-                  }).toList()
-                    ..sort((a, b) {
-                      final aTimestamp = a.data()['generatedAt'];
-                      final bTimestamp = b.data()['generatedAt'];
-                      final aMs = aTimestamp is Timestamp
-                          ? aTimestamp.millisecondsSinceEpoch
-                          : 0;
-                      final bMs = bTimestamp is Timestamp
-                          ? bTimestamp.millisecondsSinceEpoch
-                          : 0;
-                      return bMs.compareTo(aMs);
-                    });
+                  final docs =
+                      snapshot.data!.docs.where((doc) {
+                        final data = doc.data();
+                        return data['patientId'] == currentUserId &&
+                            data['type'] == _storageType &&
+                            data['period'] == _storagePeriod;
+                      }).toList()..sort((a, b) {
+                        final aTimestamp = a.data()['generatedAt'];
+                        final bTimestamp = b.data()['generatedAt'];
+                        final aMs = aTimestamp is Timestamp
+                            ? aTimestamp.millisecondsSinceEpoch
+                            : 0;
+                        final bMs = bTimestamp is Timestamp
+                            ? bTimestamp.millisecondsSinceEpoch
+                            : 0;
+                        return bMs.compareTo(aMs);
+                      });
 
                   if (docs.isEmpty) {
                     return Container(

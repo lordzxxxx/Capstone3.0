@@ -304,18 +304,18 @@ class AccountPolicyService {
 
     DocumentReference<Map<String, dynamic>> invitationRef;
     try {
-      invitationRef = await _firestore.collection('invitations').add(
-        invitationPayload,
-      );
+      invitationRef = await _firestore
+          .collection('invitations')
+          .add(invitationPayload);
     } on FirebaseException catch (error) {
       if (error.code != 'permission-denied') {
         rethrow;
       }
 
       await UserAccessScopeService.instance.ensureCurrentUserRootMirror();
-      invitationRef = await _firestore.collection('invitations').add(
-        invitationPayload,
-      );
+      invitationRef = await _firestore
+          .collection('invitations')
+          .add(invitationPayload);
     }
 
     for (var attempt = 0; attempt < 20; attempt++) {
@@ -558,7 +558,9 @@ class AccountPolicyService {
     String? doctorEmail,
     String? doctorName,
   }) async {
-    final callable = _functions.httpsCallable('sendDoctorReferralAssignmentEmail');
+    final callable = _functions.httpsCallable(
+      'sendDoctorReferralAssignmentEmail',
+    );
     final response = await callable.call(<String, dynamic>{
       'referralId': referralId.trim(),
       'doctorEmail': doctorEmail?.trim(),

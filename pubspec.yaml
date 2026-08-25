@@ -51,7 +51,7 @@ dependencies:
   sqflite: ^2.4.1
   path: ^1.9.1
   connectivity_plus: ^6.1.2
-  universal_html: ^2.2.4
+  web: ^1.1.1
   sqflite_common_ffi_web: ^0.4.2+2
   shared_preferences: ^2.3.4
   flutter_local_notifications: ^17.0.0

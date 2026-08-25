@@ -15,6 +15,78 @@ import numpy as np
 import pandas as pd
 
 
+def apply_temperature_scaling(
+    probabilities: np.ndarray,
+    temperature: float,
+    *,
+    epsilon: float = 1e-15,
+) -> np.ndarray:
+    """Apply multiclass temperature scaling without changing class order."""
+    matrix = np.asarray(probabilities, dtype=float)
+    if matrix.ndim != 2 or matrix.shape[0] == 0 or matrix.shape[1] < 2:
+        raise ValueError("probabilities must be a non-empty two-dimensional matrix")
+    if not np.isfinite(matrix).all() or (matrix < 0).any():
+        raise ValueError("probabilities must be finite and non-negative")
+    if not np.allclose(matrix.sum(axis=1), 1.0, rtol=0, atol=1e-6):
+        raise ValueError("each probability row must sum to one")
+    if not np.isfinite(temperature) or temperature <= 0:
+        raise ValueError("temperature must be a positive finite number")
+
+    logits = np.log(np.clip(matrix, epsilon, 1.0)) / temperature
+    logits -= logits.max(axis=1, keepdims=True)
+    exponentiated = np.exp(logits)
+    return exponentiated / exponentiated.sum(axis=1, keepdims=True)
+
+
+def fit_temperature_from_oof(
+    y_true: Iterable[object],
+    probabilities: np.ndarray,
+    classes: Iterable[object],
+    *,
+    minimum: float = 0.05,
+    maximum: float = 5.0,
+    grid_points: int = 401,
+) -> dict[str, float | int | str]:
+    """Fit one temperature using training/out-of-fold probabilities only.
+
+    A deterministic logarithmic grid avoids an additional optimizer dependency.
+    The caller is responsible for ensuring these are out-of-fold predictions
+    from the training partition and must not pass held-out test predictions.
+    """
+    labels = list(y_true)
+    class_list = list(classes)
+    matrix = np.asarray(probabilities, dtype=float)
+    if len(labels) != matrix.shape[0] or not labels:
+        raise ValueError("OOF probabilities must align with non-empty y_true")
+    if not 0 < minimum < maximum or grid_points < 3:
+        raise ValueError("temperature search bounds are invalid")
+
+    class_index = {label: index for index, label in enumerate(class_list)}
+    try:
+        true_indices = np.asarray([class_index[label] for label in labels])
+    except KeyError as exc:
+        raise ValueError(f"Unknown OOF label: {exc.args[0]}") from exc
+    rows = np.arange(len(labels))
+
+    def loss(temperature: float) -> float:
+        calibrated = apply_temperature_scaling(matrix, temperature)
+        return float(-np.log(np.clip(calibrated[rows, true_indices], 1e-15, 1)).mean())
+
+    temperatures = np.geomspace(minimum, maximum, grid_points)
+    losses = np.asarray([loss(float(value)) for value in temperatures])
+    best_index = int(losses.argmin())
+    return {
+        "temperature": float(temperatures[best_index]),
+        "oof_log_loss_before": loss(1.0),
+        "oof_log_loss_after": float(losses[best_index]),
+        "records": len(labels),
+        "search_minimum": minimum,
+        "search_maximum": maximum,
+        "search_grid_points": grid_points,
+        "fit_scope": "training_partition_out_of_fold_only",
+    }
+
+
 def wilson_interval(
     successes: int,
     total: int,

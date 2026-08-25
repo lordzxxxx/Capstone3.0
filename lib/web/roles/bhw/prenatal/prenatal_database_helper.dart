@@ -2,9 +2,10 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
+import 'package:mycapstone_project/web/shared/services/web_record_sync.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
 class PrenatalDatabaseHelper {
@@ -124,8 +125,7 @@ class PrenatalDatabaseHelper {
       try {
         final accessScope = await UserAccessScopeService.instance
             .loadCurrentScope();
-        final recordWithId = {
-          'id': id,
+        final recordWithId = WebRecordWriteCoordinator.prepareCreate({
           'patientName': record['patientName'] ?? '',
           'age': record['age'] ?? '',
           'address': record['address'] ?? '',
@@ -170,7 +170,7 @@ class PrenatalDatabaseHelper {
           'ai_recovery_plan': record['ai_recovery_plan'] ?? '',
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
-        };
+        }, documentId: id.toString());
         final scopedRecord = applyBarangayScopeToRecord(
           recordWithId,
           accessScope: accessScope,
@@ -182,10 +182,12 @@ class PrenatalDatabaseHelper {
           accessScope: accessScope,
           record: scopedRecord,
         );
-        await documentRef.set(scopedRecord);
+        await WebRecordWriteCoordinator(
+          firestore: getFirestoreInstance(),
+        ).create(reference: documentRef, record: scopedRecord);
         return id;
       } catch (e) {
-        print('Error saving to Firebase on web: $e');
+        debugPrint('Error saving to Firebase on web: $e');
         rethrow;
       }
     }
@@ -263,11 +265,17 @@ class PrenatalDatabaseHelper {
         );
         final snapshot = await query.get();
         final scopedDocs = snapshot.docs
-            .map(materializeFirestoreRecord)
+            .map(
+              (document) => attachWebSyncMetadata(
+                materializeFirestoreRecord(document),
+                hasPendingWrites: document.metadata.hasPendingWrites,
+                isFromCache: snapshot.metadata.isFromCache,
+              ),
+            )
             .where((record) => recordMatchesAccessScope(record, accessScope));
         return sortRecordsByActivityDateDescending(scopedDocs);
       } catch (e) {
-        print('Error fetching from Firebase on web: $e');
+        debugPrint('Error fetching from Firebase on web: $e');
         return [];
       }
     }
@@ -306,10 +314,16 @@ class PrenatalDatabaseHelper {
           record: updatedRecord,
           existingPath: (record['_firestorePath'] ?? '').toString(),
         );
-        await documentRef.update(updatedRecord);
+        await WebRecordWriteCoordinator(
+          firestore: getFirestoreInstance(),
+        ).update(
+          reference: documentRef,
+          changes: updatedRecord,
+          expectedVersion: recordVersionOf(record),
+        );
         return 1;
       } catch (e) {
-        print('Error updating Firebase on web: $e');
+        debugPrint('Error updating Firebase on web: $e');
         rethrow;
       }
     }
@@ -349,7 +363,7 @@ class PrenatalDatabaseHelper {
         await documentRef.delete();
         return 1;
       } catch (e) {
-        print('Error deleting from Firebase on web: $e');
+        debugPrint('Error deleting from Firebase on web: $e');
         rethrow;
       }
     }
@@ -371,7 +385,7 @@ class PrenatalDatabaseHelper {
             .doc(id)
             .delete();
       } catch (e) {
-        print('Error deleting from Firebase: $e');
+        debugPrint('Error deleting from Firebase: $e');
       }
     }
 
@@ -395,7 +409,7 @@ class PrenatalDatabaseHelper {
           await deleteRecord(id);
           succeededIds.add(id);
         } catch (e) {
-          print('Error deleting from Firebase on web: $e');
+          debugPrint('Error deleting from Firebase on web: $e');
         }
       }
       return succeededIds;
@@ -407,7 +421,7 @@ class PrenatalDatabaseHelper {
         await deleteRecord(id);
         succeededIds.add(id);
       } catch (e) {
-        print('Error deleting prenatal record $id: $e');
+        debugPrint('Error deleting prenatal record $id: $e');
       }
     }
     return succeededIds;
@@ -423,7 +437,7 @@ class PrenatalDatabaseHelper {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        print('No internet connection. Will sync later.');
+        debugPrint('No internet connection. Will sync later.');
         return;
       }
 
@@ -454,13 +468,13 @@ class PrenatalDatabaseHelper {
             whereArgs: [id],
           );
 
-          print('Synced prenatal record: $id');
+          debugPrint('Synced prenatal record: $id');
         } catch (e) {
-          print('Error syncing prenatal record: $e');
+          debugPrint('Error syncing prenatal record: $e');
         }
       }
     } catch (e) {
-      print('Error during prenatal sync: $e');
+      debugPrint('Error during prenatal sync: $e');
     }
   }
 
@@ -468,14 +482,14 @@ class PrenatalDatabaseHelper {
   Future<void> syncFromFirebase() async {
     // On web, data is already in Firebase, no sync needed
     if (kIsWeb) {
-      print('Running on web - data is already in Firebase');
+      debugPrint('Running on web - data is already in Firebase');
       return;
     }
 
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        print('No internet connection. Using offline data.');
+        debugPrint('No internet connection. Using offline data.');
         return;
       }
 
@@ -543,9 +557,11 @@ class PrenatalDatabaseHelper {
         );
       }
 
-      print('Synced ${snapshot.docs.length} prenatal records from Firebase');
+      debugPrint(
+        'Synced ${snapshot.docs.length} prenatal records from Firebase',
+      );
     } catch (e) {
-      print('Error syncing prenatal records from Firebase: $e');
+      debugPrint('Error syncing prenatal records from Firebase: $e');
     }
   }
 
@@ -558,7 +574,7 @@ class PrenatalDatabaseHelper {
 
     Connectivity().onConnectivityChanged.listen((result) {
       if (!result.contains(ConnectivityResult.none)) {
-        print('Internet connected! Syncing prenatal data...');
+        debugPrint('Internet connected! Syncing prenatal data...');
         _syncToFirebase();
         syncFromFirebase();
       }

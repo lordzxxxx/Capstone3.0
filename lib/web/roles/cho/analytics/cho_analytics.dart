@@ -26,6 +26,7 @@ import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 import 'package:mycapstone_project/web/shared/utils/report_download.dart';
 import 'package:mycapstone_project/web/shared/utils/report_branding.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/shared/components/role_decision_support_panel.dart';
 
 // Names are historical (page was dark-themed); values now point at the
 // white-card system used across the rest of the app.
@@ -768,7 +769,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           const ChoNavigationDrawer(current: ChoDestination.reports),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: _primaryAqua))
+                ? const Center(
+                    child: CircularProgressIndicator(color: _primaryAqua),
+                  )
                 : SingleChildScrollView(
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -777,6 +780,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                         _buildHeader(),
                         const SizedBox(height: 14),
                         _buildFilters(),
+                        const SizedBox(height: 14),
+                        _buildPlanningDecisionSupport(),
                         const SizedBox(height: 14),
                         _buildSummaryGrid(),
                         const SizedBox(height: 14),
@@ -1008,6 +1013,64 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildPlanningDecisionSupport() {
+    final highPriority = _records
+        .where((record) => _severityWeight(record.severityLabel) >= 4)
+        .length;
+    final pendingValidation = _records.where((record) {
+      final value =
+          (record.raw['validationStatus'] ??
+                  record.raw['verification'] ??
+                  record.raw['status'] ??
+                  '')
+              .toString()
+              .toLowerCase();
+      return value.contains('pending') || value.contains('review');
+    }).length;
+    final incompleteLocation = _records.where((record) {
+      final barangay = record.barangay.trim().toLowerCase();
+      return barangay.isEmpty || barangay == 'unassigned';
+    }).length;
+    final activeBarangays = _heatmapEntries()
+        .where((entry) => entry.caseCount > 0)
+        .toList(growable: false);
+    final highestLoad = activeBarangays.isEmpty
+        ? 'No barangay activity yet'
+        : '${activeBarangays.first.barangay} (${activeBarangays.first.caseCount})';
+
+    return RoleDecisionSupportPanel(
+      audience: DecisionSupportAudience.cho,
+      summary: _records.isEmpty
+          ? 'No scoped records are available for planning yet.'
+          : 'Review the highest-burden location and unresolved records before allocating follow-up capacity.',
+      items: <DecisionSupportItem>[
+        DecisionSupportItem(
+          label: 'High-priority records',
+          value: '$highPriority',
+          icon: Icons.priority_high_rounded,
+          isPriority: highPriority > 0,
+        ),
+        DecisionSupportItem(
+          label: 'Pending validation',
+          value: '$pendingValidation',
+          icon: Icons.fact_check_outlined,
+          isPriority: pendingValidation > 0,
+        ),
+        DecisionSupportItem(
+          label: 'Highest load',
+          value: highestLoad,
+          icon: Icons.location_city_outlined,
+        ),
+        DecisionSupportItem(
+          label: 'Missing barangay data',
+          value: '$incompleteLocation',
+          icon: Icons.rule_folder_outlined,
+          isPriority: incompleteLocation > 0,
+        ),
+      ],
     );
   }
 

@@ -1,0 +1,50 @@
+{
+  "model_version": "disease_model_v4",
+  "model_sha256": "4cc536ba3503283454f58c6f53d992350f1e6205317d3b3c50e7da3573cd370c",
+  "dataset_sha256": "cc53ccfdf09da298ea13dc5e5d4047eb7a15d7eb47c1cb103b68de65a9457a9d",
+  "method": "single_temperature_log_probability_scaling",
+  "temperature": 0.3154786722400966,
+  "fit": {
+    "temperature": 0.3154786722400966,
+    "oof_log_loss_before": 0.7723619904305165,
+    "oof_log_loss_after": 0.22886146581935868,
+    "records": 75194,
+    "search_minimum": 0.05,
+    "search_maximum": 5.0,
+    "search_grid_points": 401,
+    "fit_scope": "training_partition_out_of_fold_only"
+  },
+  "folds": [
+    {
+      "fold": 1,
+      "training_records": 60155,
+      "validation_records": 15039,
+      "group_overlap": 0
+    },
+    {
+      "fold": 2,
+      "training_records": 60154,
+      "validation_records": 15040,
+      "group_overlap": 0
+    },
+    {
+      "fold": 3,
+      "training_records": 60155,
+      "validation_records": 15039,
+      "group_overlap": 0
+    },
+    {
+      "fold": 4,
+      "training_records": 60155,
+      "validation_records": 15039,
+      "group_overlap": 0
+    },
+    {
+      "fold": 5,
+      "training_records": 60157,
+      "validation_records": 15037,
+      "group_overlap": 0
+    }
+  ],
+  "test_access_policy": "Temperature selected from training-partition OOF predictions only; untouched group-safe test evaluated once after selection."
+}

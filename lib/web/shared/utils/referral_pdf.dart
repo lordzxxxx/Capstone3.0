@@ -15,10 +15,14 @@ Future<List<int>> buildReferralPdfBytes(Map<String, dynamic> record) async {
     record['hasHealthInsuranceCoverage'],
   );
 
-  final surgicalProcedure =
-      pdfText(record['surgicalProcedure'], fallback: '').trim();
-  final healthInsuranceCoverageType =
-      pdfText(record['healthInsuranceCoverageType'], fallback: '').trim();
+  final surgicalProcedure = pdfText(
+    record['surgicalProcedure'],
+    fallback: '',
+  ).trim();
+  final healthInsuranceCoverageType = pdfText(
+    record['healthInsuranceCoverageType'],
+    fallback: '',
+  ).trim();
 
   final surgicalSummary =
       hasSurgicalOperations == true && surgicalProcedure.isNotEmpty
@@ -106,18 +110,9 @@ Future<List<int>> buildReferralPdfBytes(Map<String, dynamic> record) async {
       RecordPdfSignatureLine(title: 'BHW Assigned on Duty'),
     ],
     sections: [
-      RecordPdfSection(
-        title: 'Patient Information',
-        fields: patientFields,
-      ),
-      RecordPdfSection(
-        title: 'Referral Information',
-        fields: referralFields,
-      ),
-      RecordPdfSection(
-        title: 'Clinical Details',
-        fields: clinicalFields,
-      ),
+      RecordPdfSection(title: 'Patient Information', fields: patientFields),
+      RecordPdfSection(title: 'Referral Information', fields: referralFields),
+      RecordPdfSection(title: 'Clinical Details', fields: clinicalFields),
       RecordPdfSection(
         title: 'Workflow and Assignment',
         fields: workflowFields,
@@ -139,10 +134,10 @@ String _buildPatientName(Map<String, dynamic> data) {
   final surname = pdfText(data['patientSurname'], fallback: '').trim();
   final firstName = pdfText(data['patientFirstName'], fallback: '').trim();
   final middleName = pdfText(data['patientMiddleName'], fallback: '').trim();
-  final combined = <String>[firstName, middleName]
-      .where((value) => value.isNotEmpty)
-      .join(' ')
-      .trim();
+  final combined = <String>[
+    firstName,
+    middleName,
+  ].where((value) => value.isNotEmpty).join(' ').trim();
 
   if (surname.isNotEmpty && combined.isNotEmpty) {
     return '$surname, $combined';

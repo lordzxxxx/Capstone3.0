@@ -1,14 +1,15 @@
-import 'dart:html' as html;
+import 'dart:js_interop';
+import 'dart:typed_data';
 
-bool downloadCsvFile({
-  required List<int> bytes,
-  required String filename,
-}) {
-  final blob = html.Blob([bytes]);
-  final url = html.Url.createObjectUrlFromBlob(blob);
-  html.AnchorElement(href: url)
-    ..setAttribute('download', filename)
+import 'package:web/web.dart' as web;
+
+bool downloadCsvFile({required List<int> bytes, required String filename}) {
+  final blob = web.Blob(<web.BlobPart>[Uint8List.fromList(bytes).toJS].toJS);
+  final url = web.URL.createObjectURL(blob);
+  web.HTMLAnchorElement()
+    ..href = url
+    ..download = filename
     ..click();
-  html.Url.revokeObjectUrl(url);
+  web.URL.revokeObjectURL(url);
   return true;
 }

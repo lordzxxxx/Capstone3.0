@@ -76,10 +76,7 @@ String _formatMortalityTimestamp(dynamic value) {
   return '$datePart$meridiem';
 }
 
-String _formatMortalityMonth(
-  dynamic value, {
-  dynamic fallbackDateSource,
-}) {
+String _formatMortalityMonth(dynamic value, {dynamic fallbackDateSource}) {
   final rawMonth = pdfText(value, fallback: '');
 
   if (rawMonth.isNotEmpty) {
@@ -129,7 +126,8 @@ DateTime? _parseMortalityDateTime(dynamic value) {
     final nanoseconds = value['nanoseconds'];
     if (seconds is int) {
       final millis =
-          (seconds * 1000) + ((nanoseconds is int ? nanoseconds : 0) ~/ 1000000);
+          (seconds * 1000) +
+          ((nanoseconds is int ? nanoseconds : 0) ~/ 1000000);
       return DateTime.fromMillisecondsSinceEpoch(millis);
     }
   }

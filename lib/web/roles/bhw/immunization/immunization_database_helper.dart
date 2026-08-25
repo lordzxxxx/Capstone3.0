@@ -2,9 +2,10 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
+import 'package:mycapstone_project/web/shared/services/web_record_sync.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
 class ImmunizationDatabaseHelper {
@@ -76,8 +77,7 @@ class ImmunizationDatabaseHelper {
       try {
         final accessScope = await UserAccessScopeService.instance
             .loadCurrentScope();
-        final recordWithId = {
-          'id': id,
+        final recordWithId = WebRecordWriteCoordinator.prepareCreate({
           'time': record['time'] ?? '',
           'patientName': record['patientName'] ?? '',
           'patientId': record['patientId'] ?? '',
@@ -101,7 +101,7 @@ class ImmunizationDatabaseHelper {
           'date': record['date'] ?? '',
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
-        };
+        }, documentId: id.toString());
         final scopedRecord = applyBarangayScopeToRecord(
           recordWithId,
           accessScope: accessScope,
@@ -113,10 +113,12 @@ class ImmunizationDatabaseHelper {
           accessScope: accessScope,
           record: scopedRecord,
         );
-        await documentRef.set(scopedRecord);
+        await WebRecordWriteCoordinator(
+          firestore: getFirestoreInstance(),
+        ).create(reference: documentRef, record: scopedRecord);
         return id;
       } catch (e) {
-        print('Error saving to Firebase on web: $e');
+        debugPrint('Error saving to Firebase on web: $e');
         rethrow;
       }
     }
@@ -173,11 +175,17 @@ class ImmunizationDatabaseHelper {
         );
         final snapshot = await query.get();
         final scopedDocs = snapshot.docs
-            .map(materializeFirestoreRecord)
+            .map(
+              (document) => attachWebSyncMetadata(
+                materializeFirestoreRecord(document),
+                hasPendingWrites: document.metadata.hasPendingWrites,
+                isFromCache: snapshot.metadata.isFromCache,
+              ),
+            )
             .where((record) => recordMatchesAccessScope(record, accessScope));
         return sortRecordsByActivityDateDescending(scopedDocs);
       } catch (e) {
-        print('Error fetching from Firebase on web: $e');
+        debugPrint('Error fetching from Firebase on web: $e');
         return [];
       }
     }
@@ -216,10 +224,16 @@ class ImmunizationDatabaseHelper {
           record: updatedRecord,
           existingPath: (record['_firestorePath'] ?? '').toString(),
         );
-        await documentRef.update(updatedRecord);
+        await WebRecordWriteCoordinator(
+          firestore: getFirestoreInstance(),
+        ).update(
+          reference: documentRef,
+          changes: updatedRecord,
+          expectedVersion: recordVersionOf(record),
+        );
         return 1;
       } catch (e) {
-        print('Error updating Firebase on web: $e');
+        debugPrint('Error updating Firebase on web: $e');
         rethrow;
       }
     }
@@ -259,7 +273,7 @@ class ImmunizationDatabaseHelper {
         await documentRef.delete();
         return 1;
       } catch (e) {
-        print('Error deleting from Firebase on web: $e');
+        debugPrint('Error deleting from Firebase on web: $e');
         rethrow;
       }
     }
@@ -281,7 +295,7 @@ class ImmunizationDatabaseHelper {
             .doc(id)
             .delete();
       } catch (e) {
-        print('Error deleting from Firebase: $e');
+        debugPrint('Error deleting from Firebase: $e');
       }
     }
 
@@ -306,7 +320,7 @@ class ImmunizationDatabaseHelper {
             succeededIds.add(id);
           }
         } catch (e) {
-          print('Error deleting from Firebase on web: $e');
+          debugPrint('Error deleting from Firebase on web: $e');
         }
       }
       return succeededIds;
@@ -320,7 +334,7 @@ class ImmunizationDatabaseHelper {
           succeededIds.add(id);
         }
       } catch (e) {
-        print('Error deleting immunization record $id: $e');
+        debugPrint('Error deleting immunization record $id: $e');
       }
     }
     return succeededIds;
@@ -336,7 +350,7 @@ class ImmunizationDatabaseHelper {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        print('No internet connection. Will sync later.');
+        debugPrint('No internet connection. Will sync later.');
         return;
       }
 
@@ -367,13 +381,13 @@ class ImmunizationDatabaseHelper {
             whereArgs: [id],
           );
 
-          print('Synced immunization record: $id');
+          debugPrint('Synced immunization record: $id');
         } catch (e) {
-          print('Error syncing immunization record: $e');
+          debugPrint('Error syncing immunization record: $e');
         }
       }
     } catch (e) {
-      print('Error during immunization sync: $e');
+      debugPrint('Error during immunization sync: $e');
     }
   }
 
@@ -381,14 +395,14 @@ class ImmunizationDatabaseHelper {
   Future<void> syncFromFirebase() async {
     // On web, data is already in Firebase, no sync needed
     if (kIsWeb) {
-      print('Running on web - data is already in Firebase');
+      debugPrint('Running on web - data is already in Firebase');
       return;
     }
 
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        print('No internet connection. Using offline data.');
+        debugPrint('No internet connection. Using offline data.');
         return;
       }
 
@@ -435,11 +449,11 @@ class ImmunizationDatabaseHelper {
         );
       }
 
-      print(
+      debugPrint(
         'Synced ${snapshot.docs.length} immunization records from Firebase',
       );
     } catch (e) {
-      print('Error syncing immunization records from Firebase: $e');
+      debugPrint('Error syncing immunization records from Firebase: $e');
     }
   }
 
@@ -452,7 +466,7 @@ class ImmunizationDatabaseHelper {
 
     Connectivity().onConnectivityChanged.listen((result) {
       if (!result.contains(ConnectivityResult.none)) {
-        print('Internet connected! Syncing immunization data...');
+        debugPrint('Internet connected! Syncing immunization data...');
         _syncToFirebase();
         syncFromFirebase();
       }
@@ -650,15 +664,15 @@ class ImmunizationDatabaseHelper {
               .set(sample);
           inserted++;
         } catch (e) {
-          print('Error inserting sample immunization ${sample['id']}: $e');
+          debugPrint('Error inserting sample immunization ${sample['id']}: $e');
         }
       }
 
-      print(
+      debugPrint(
         '✅ Successfully seeded $inserted sample immunization records to Firestore',
       );
     } catch (e) {
-      print('❌ Error seeding immunization data: $e');
+      debugPrint('❌ Error seeding immunization data: $e');
       rethrow;
     }
   }

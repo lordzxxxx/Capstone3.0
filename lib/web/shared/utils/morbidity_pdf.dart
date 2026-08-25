@@ -31,7 +31,11 @@ Future<List<int>> buildMorbidityPdfBytes(Map<String, dynamic> record) {
         title: 'Clinical & Disease Information',
         fields: [
           pdfField('Disease / Condition', record['disease']),
-          pdfField('Classification / Type', record['diseaseType'], fallback: 'Morbidity'),
+          pdfField(
+            'Classification / Type',
+            record['diseaseType'],
+            fallback: 'Morbidity',
+          ),
           pdfField('Severity Level', record['severity']),
           pdfField('Symptoms / Chief Complaint', record['symptoms']),
           pdfField('Diagnosis Details', record['diagnosis']),
@@ -42,7 +46,14 @@ Future<List<int>> buildMorbidityPdfBytes(Map<String, dynamic> record) {
         title: 'Surveillance & Record Details',
         fields: [
           pdfField('Status', record['status'], fallback: 'Active'),
-          pdfField('Date Reported', _formatMorbidityTimestamp(record['reportedDate'] ?? record['dateReported'] ?? record['date'])),
+          pdfField(
+            'Date Reported',
+            _formatMorbidityTimestamp(
+              record['reportedDate'] ??
+                  record['dateReported'] ??
+                  record['date'],
+            ),
+          ),
           pdfField('Reported By', record['reportedBy']),
           pdfField('Remarks / Notes', record['remarks'] ?? record['notes']),
         ],
@@ -93,7 +104,8 @@ DateTime? _parseMorbidityDateTime(dynamic value) {
     final seconds = value['seconds'];
     final nanoseconds = value['nanoseconds'];
     if (seconds is int) {
-      final millis = (seconds * 1000) +
+      final millis =
+          (seconds * 1000) +
           ((nanoseconds is int ? nanoseconds : 0) ~/ 1000000);
       return DateTime.fromMillisecondsSinceEpoch(millis);
     }

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,7 +17,7 @@ import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
-import 'package:universal_html/html.dart' as html;
+import 'package:mycapstone_project/web/shared/utils/web_file_picker.dart';
 
 const _aqua = AppColors.primary;
 const _background = AppColors.backgroundLight;
@@ -911,12 +910,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
   );
 
   Future<void> _pickAttachment() async {
-    final input = html.FileUploadInputElement()
-      ..accept = '.pdf,.jpg,.jpeg,.png'
-      ..multiple = false;
-    input.click();
-    await input.onChange.first;
-    final file = input.files?.isNotEmpty == true ? input.files!.first : null;
+    final file = await pickWebFile(accept: '.pdf,.jpg,.jpeg,.png');
     if (file == null) return;
     if (file.size > 10 * 1024 * 1024) {
       _snack('Attachment must be 10 MB or smaller.');
@@ -924,9 +918,6 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     }
     setState(() => _uploading = true);
     try {
-      final reader = html.FileReader()..readAsArrayBuffer(file);
-      await reader.onLoad.first;
-      final bytes = Uint8List.view(reader.result as ByteBuffer);
       final safeName = file.name.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
       final referralId =
           _editingReferralId ??
@@ -934,13 +925,16 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
       final path =
           'referral_attachments/${_scope.userId}/$referralId/${DateTime.now().millisecondsSinceEpoch}_$safeName';
       final reference = FirebaseStorage.instance.ref(path);
-      await reference.putData(bytes, SettableMetadata(contentType: file.type));
+      await reference.putData(
+        file.bytes,
+        SettableMetadata(contentType: file.mimeType),
+      );
       if (!mounted) return;
       setState(
         () => _attachments.add({
           'name': file.name,
           'storagePath': path,
-          'contentType': file.type,
+          'contentType': file.mimeType,
           'size': file.size,
         }),
       );

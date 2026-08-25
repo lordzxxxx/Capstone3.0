@@ -13,9 +13,10 @@ import 'package:mycapstone_project/firebase_helper.dart';
 const bool _kUseFirebaseEmulator = bool.fromEnvironment(
   'USE_FIREBASE_EMULATOR',
 );
+const bool _kBrowserQaMode = bool.fromEnvironment('BROWSER_QA');
 
 Uri _firestoreRestUri(String path, Map<String, String> queryParameters) {
-  if (_kUseFirebaseEmulator && !kReleaseMode) {
+  if (_kUseFirebaseEmulator && (!kReleaseMode || _kBrowserQaMode)) {
     return Uri.http('localhost:8085', path, queryParameters);
   }
   return Uri.https('firestore.googleapis.com', path, queryParameters);

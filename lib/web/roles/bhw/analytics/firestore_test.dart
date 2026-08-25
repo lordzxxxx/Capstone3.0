@@ -1,39 +1,42 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:mycapstone_project/firebase_helper.dart';
 
 /// Test function to verify Firestore connection and write capability
 Future<void> testFirestoreConnection() async {
-  print('\n========================================');
-  print('🧪 FIRESTORE CONNECTION TEST');
-  print('========================================\n');
+  debugPrint('\n========================================');
+  debugPrint('🧪 FIRESTORE CONNECTION TEST');
+  debugPrint('========================================\n');
 
   // 1. Check Firebase initialization
-  print('1️⃣ Checking Firebase initialization...');
+  debugPrint('1️⃣ Checking Firebase initialization...');
   try {
     getFirestoreInstance();
-    print('   ✅ Firestore instance created successfully');
-    print('   📍 Database ID: capstone-c98f9');
+    debugPrint('   ✅ Firestore instance created successfully');
+    debugPrint('   📍 Database ID: capstone-c98f9');
   } catch (e) {
-    print('   ❌ Failed to get Firestore instance: $e');
+    debugPrint('   ❌ Failed to get Firestore instance: $e');
     return;
   }
 
   // 2. Check authentication
-  print('\n2️⃣ Checking authentication status...');
+  debugPrint('\n2️⃣ Checking authentication status...');
   final currentUser = FirebaseAuth.instance.currentUser;
   if (currentUser != null) {
-    print('   ✅ User is authenticated');
-    print('   👤 User ID: ${currentUser.uid}');
-    print('   📧 Email: ${currentUser.email}');
+    debugPrint('   ✅ User is authenticated');
+    debugPrint('   👤 User ID: ${currentUser.uid}');
+    debugPrint('   📧 Email: ${currentUser.email}');
   } else {
-    print('   ⚠️  No user is logged in');
-    print('   💡 Note: If using authenticated rules, you must log in first');
-    print('   ⏭️  Skipping write test until after authentication');
+    debugPrint('   ⚠️  No user is logged in');
+    debugPrint(
+      '   💡 Note: If using authenticated rules, you must log in first',
+    );
+    debugPrint('   ⏭️  Skipping write test until after authentication');
     return;
   }
 
   // 3. Try to write a test document
-  print('\n3️⃣ Attempting to write test document...');
+  debugPrint('\n3️⃣ Attempting to write test document...');
   try {
     final testId = 'test_${DateTime.now().millisecondsSinceEpoch}';
     final testData = {
@@ -49,8 +52,8 @@ Future<void> testFirestoreConnection() async {
       'testRecord': true,
     };
 
-    print('   📝 Writing to collection: checkup_records');
-    print('   🆔 Document ID: $testId');
+    debugPrint('   📝 Writing to collection: checkup_records');
+    debugPrint('   🆔 Document ID: $testId');
 
     final startTime = DateTime.now();
     await getFirestoreInstance()
@@ -59,38 +62,38 @@ Future<void> testFirestoreConnection() async {
         .set(testData);
     final elapsed = DateTime.now().difference(startTime).inMilliseconds;
 
-    print('   ✅ Write successful! (${elapsed}ms)');
-    print('   📍 Document path: checkup_records/$testId');
+    debugPrint('   ✅ Write successful! (${elapsed}ms)');
+    debugPrint('   📍 Document path: checkup_records/$testId');
   } on FirebaseException catch (e) {
-    print('   ❌ Firebase error: ${e.code}');
-    print('   💬 Message: ${e.message}');
+    debugPrint('   ❌ Firebase error: ${e.code}');
+    debugPrint('   💬 Message: ${e.message}');
 
     if (e.code == 'permission-denied') {
-      print('\n   🔒 PERMISSION DENIED!');
-      print('   Fix: Update your Firestore security rules at:');
-      print(
+      debugPrint('\n   🔒 PERMISSION DENIED!');
+      debugPrint('   Fix: Update your Firestore security rules at:');
+      debugPrint(
         '   🔗 https://console.firebase.google.com/project/capstone-c98f9/firestore/rules',
       );
-      print('\n   Option 1 (Development - allows all access):');
-      print('   ----------------------------------------');
-      print('   rules_version = \'2\';');
-      print('   service cloud.firestore {');
-      print('     match /databases/{database}/documents {');
-      print('       match /{document=**} {');
-      print('         allow read, write: if true;');
-      print('       }');
-      print('     }');
-      print('   }');
+      debugPrint('\n   Option 1 (Development - allows all access):');
+      debugPrint('   ----------------------------------------');
+      debugPrint('   rules_version = \'2\';');
+      debugPrint('   service cloud.firestore {');
+      debugPrint('     match /databases/{database}/documents {');
+      debugPrint('       match /{document=**} {');
+      debugPrint('         allow read, write: if true;');
+      debugPrint('       }');
+      debugPrint('     }');
+      debugPrint('   }');
     }
     return;
   } catch (e) {
-    print('   ❌ Unexpected error: $e');
-    print('   Type: ${e.runtimeType}');
+    debugPrint('   ❌ Unexpected error: $e');
+    debugPrint('   Type: ${e.runtimeType}');
     return;
   }
 
   // 4. Try to read the document back
-  print('\n4️⃣ Attempting to read test document back...');
+  debugPrint('\n4️⃣ Attempting to read test document back...');
   try {
     final snapshot = await getFirestoreInstance()
         .collection('checkup_records')
@@ -98,53 +101,55 @@ Future<void> testFirestoreConnection() async {
         .limit(5)
         .get();
 
-    print('   ✅ Read successful!');
-    print('   📊 Found ${snapshot.docs.length} test record(s)');
+    debugPrint('   ✅ Read successful!');
+    debugPrint('   📊 Found ${snapshot.docs.length} test record(s)');
 
     if (snapshot.docs.isNotEmpty) {
-      print('\n   📄 Most recent test record:');
+      debugPrint('\n   📄 Most recent test record:');
       final doc = snapshot.docs.first;
-      print('   - ID: ${doc.id}');
-      print('   - Patient: ${doc.data()['patient']}');
-      print('   - DateTime: ${doc.data()['datetime']}');
+      debugPrint('   - ID: ${doc.id}');
+      debugPrint('   - Patient: ${doc.data()['patient']}');
+      debugPrint('   - DateTime: ${doc.data()['datetime']}');
     }
   } catch (e) {
-    print('   ❌ Read error: $e');
+    debugPrint('   ❌ Read error: $e');
   }
 
   // 5. Check all checkup_records
-  print('\n5️⃣ Counting all checkup_records in Firestore...');
+  debugPrint('\n5️⃣ Counting all checkup_records in Firestore...');
   try {
     final snapshot = await getFirestoreInstance()
         .collection('checkup_records')
         .get();
 
-    print('   ✅ Collection accessed successfully');
-    print('   📊 Total documents in checkup_records: ${snapshot.docs.length}');
+    debugPrint('   ✅ Collection accessed successfully');
+    debugPrint(
+      '   📊 Total documents in checkup_records: ${snapshot.docs.length}',
+    );
 
     if (snapshot.docs.isNotEmpty) {
-      print('\n   📋 Recent records:');
+      debugPrint('\n   📋 Recent records:');
       for (var doc in snapshot.docs.take(5)) {
         final data = doc.data();
-        print('   - ${doc.id}: ${data['patient']} (${data['datetime']})');
+        debugPrint('   - ${doc.id}: ${data['patient']} (${data['datetime']})');
       }
     }
   } catch (e) {
-    print('   ❌ Error counting records: $e');
+    debugPrint('   ❌ Error counting records: $e');
   }
 
-  print('\n========================================');
-  print('✅ TEST COMPLETE');
-  print('========================================\n');
+  debugPrint('\n========================================');
+  debugPrint('✅ TEST COMPLETE');
+  debugPrint('========================================\n');
 
-  print('Next steps:');
-  print('1. Check the Firebase Console at:');
-  print(
+  debugPrint('Next steps:');
+  debugPrint('1. Check the Firebase Console at:');
+  debugPrint(
     '   https://console.firebase.google.com/project/capstone-c98f9/firestore/data',
   );
-  print(
+  debugPrint(
     '2. Make sure you selected the "capstone-c98f9" database (not "default")',
   );
-  print('3. Look for the "checkup_records" collection');
-  print('4. You should see documents with timestamps\n');
+  debugPrint('3. Look for the "checkup_records" collection');
+  debugPrint('4. You should see documents with timestamps\n');
 }

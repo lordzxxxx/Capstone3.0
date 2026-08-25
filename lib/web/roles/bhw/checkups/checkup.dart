@@ -1,29 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:mycapstone_project/web/roles/bhw/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/core/services/health_ai_classifier.dart';
 import 'package:mycapstone_project/app/core/services/disease_prediction_api_service.dart';
-import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
-import 'package:mycapstone_project/web/features/auth/login.dart';
-import 'package:mycapstone_project/web/roles/bhw/analytics/health_metrics.dart';
-import 'package:mycapstone_project/web/roles/cho/analytics/analytics.dart';
-import 'package:mycapstone_project/web/roles/bhw/prenatal/prenatal.dart';
-import 'package:mycapstone_project/web/roles/bhw/immunization/immunization.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
-import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
-import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
@@ -35,8 +22,9 @@ import 'package:mycapstone_project/web/roles/bhw/referrals/bhw_referral_manageme
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/web/shared/utils/checkup_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
-import 'package:mycapstone_project/web/shared/utils/report_generation.dart';
 import 'package:mycapstone_project/web/shared/utils/vital_risk_flags.dart';
+import 'package:mycapstone_project/web/shared/widgets/web_sync_status_badge.dart';
+import 'package:mycapstone_project/web/shared/components/role_decision_support_panel.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
@@ -47,21 +35,6 @@ const Color _darkDeepTeal = Color(0xFF071A33);
 const Color _mutedCoolGray = Color(0xFF4B6075);
 const Color _lightOffWhite = Color(0xFF0B1F3A);
 const Color _sidebarDark = Colors.white;
-
-ThemeData _buildDarkDatePickerTheme(BuildContext context) {
-  return Theme.of(context).copyWith(
-    // The rest of the module uses the light, high-contrast records surface.
-    // Keep the picker on that same surface so dates and controls never become
-    // white-on-white or inherit the old teal dark theme.
-    colorScheme: const ColorScheme.light(
-      primary: _primaryAqua,
-      onPrimary: Colors.white,
-      surface: Colors.white,
-      onSurface: _lightOffWhite,
-    ),
-    dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
-  );
-}
 
 class CheckUpPage extends StatefulWidget {
   const CheckUpPage({super.key, this.initialPatient});
@@ -79,7 +52,6 @@ class _CheckUpPageState extends State<CheckUpPage> {
 
   bool _isSelectionMode = false;
   final Set<int> _selectedIndices = {};
-  bool _isDeleteDialogShowing = false;
   bool _isLoading = true;
   String? _loadErrorMessage;
   int _currentPage = 1;
@@ -231,22 +203,10 @@ class _CheckUpPageState extends State<CheckUpPage> {
     }
   }
 
-  Future<void> _seedSampleData() async {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Sample data initialization is disabled. Records now appear only from actual barangay transactions.',
-        ),
-        backgroundColor: Colors.orange,
-      ),
-    );
-  }
-
   Future<void> _loadRecords() async {
     // This method is kept for compatibility but real-time listener
     // will automatically update the UI
-    print('🔄 [CHECKUP] Manual load requested...');
+    debugPrint('🔄 [CHECKUP] Manual load requested...');
     await _dbHelper.syncFromFirebase();
   }
 
@@ -363,6 +323,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
     patientSeed = await _patientHistoryService.resolveRegisteredPatient(
       patientSeed,
     );
+    if (!mounted) return;
     if (patientSeed == null) {
       patientSeed = await PatientFirstServiceSelector.selectRegisteredPatient(
         context,
@@ -378,7 +339,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
       );
       if (!mounted || patientSeed == null) return;
     }
-    print('➕ [CHECKUP] Add new check-up button pressed');
+    debugPrint('➕ [CHECKUP] Add new check-up button pressed');
     final result = await showDialog<Object>(
       context: context,
       barrierDismissible: false,
@@ -390,10 +351,10 @@ class _CheckUpPageState extends State<CheckUpPage> {
     );
 
     if (result is _ReferralHandoff) {
-      print('✅ [CHECKUP] New record added, opening referral for it');
+      debugPrint('✅ [CHECKUP] New record added, opening referral for it');
       if (mounted) _openReferralAfterSave(result.record);
     } else if (result != null) {
-      print('✅ [CHECKUP] New record added for disease type: $result');
+      debugPrint('✅ [CHECKUP] New record added for disease type: $result');
     }
   }
 
@@ -432,7 +393,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
   ) async {
     final patient = _buildPatientHistorySeed(record);
     final snapshot = await _patientHistoryService.loadPatientHistory(patient);
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
 
@@ -743,94 +704,6 @@ class _CheckUpPageState extends State<CheckUpPage> {
     return [...pendingCollapsed, ...otherCollapsed];
   }
 
-  Future<void> _generateCheckupReport() {
-    return generateReportPdf(
-      context: context,
-      moduleLabel: 'Check-up',
-      records: _filteredRecords,
-      dateResolver: (record) => parseReportDateValue(record['datetime']),
-      columns: [
-        ReportCsvColumn(
-          'Patient Name',
-          (record) => reportText(record['patient']),
-          flex: 1.4,
-        ),
-        ReportCsvColumn(
-          'Age',
-          (record) => reportText(record['age']),
-          flex: 0.55,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Sex',
-          (record) => reportText(record['gender'] ?? record['sex']),
-          flex: 0.55,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Address / Barangay',
-          (record) => reportText(record['address']),
-          flex: 1.35,
-        ),
-        ReportCsvColumn(
-          'Date of Check-up',
-          (record) => formatReportDateValue(record['datetime']),
-          flex: 0.95,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Chief Complaint',
-          (record) => reportText(record['symptoms']),
-          flex: 1.25,
-        ),
-        ReportCsvColumn(
-          'Findings',
-          (record) => reportText(
-            record['details'],
-            fallback: reportText(record['vitalsigns']),
-          ),
-          flex: 1.35,
-        ),
-        ReportCsvColumn(
-          'Diagnosis',
-          (record) => reportText(
-            record['diagnosis'],
-            fallback: reportText(
-              record['diseaseType'],
-              fallback: reportText(record['ai_category']),
-            ),
-          ),
-          flex: 1.05,
-        ),
-        ReportCsvColumn(
-          'Treatment / Action Taken',
-          (record) => reportText(record['plan']),
-          flex: 1.35,
-        ),
-        ReportCsvColumn('Remarks', (record) {
-          final followup = reportText(record['followup'], fallback: '');
-          final parts = <String>[
-            'Status: ${reportText(record['status'], fallback: 'Completed')}',
-          ];
-          if (followup.isNotEmpty) {
-            parts.add('Follow-up: $followup');
-          }
-          return reportJoin(
-            parts,
-            separator: ' | ',
-            fallback: reportText(record['remarks']),
-          );
-        }, flex: 1.1),
-      ],
-      accentColor: _primaryAqua,
-      dialogColor: _sidebarDark,
-      textColor: Colors.white,
-      mutedColor: Colors.white70,
-      sectionTitleBuilder: (record, index) =>
-          'Record ${index + 1}: ${reportText(record['patient'], fallback: 'Unknown patient')}',
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -873,1021 +746,497 @@ class _CheckUpPageState extends State<CheckUpPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                              CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  _primaryAqua,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Loading check-up records...',
-                                style: TextStyle(
-                                  color: _lightOffWhite,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
+                        CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _primaryAqua,
                           ),
-                        )
-                      : _loadErrorMessage != null
-                      ? _buildLoadErrorState()
-                      : Stack(
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Loading check-up records...',
+                          style: TextStyle(color: _lightOffWhite, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  )
+                : _loadErrorMessage != null
+                ? _buildLoadErrorState()
+                : Stack(
+                    children: [
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 12.0,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SingleChildScrollView(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                                vertical: 12.0,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  HealthModuleViewHeader(
-                                    title: 'Check-up Management',
-                                    description:
-                                        'Review service activity and vital-sign coverage, or manage individual check-up records.',
-                                    activeView: _activeView,
-                                    onViewChanged: _setActiveView,
-                                    primaryColor: _primaryAqua,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  // Dashboard Header with Metrics
-                                  if (_activeView ==
-                                      HealthModuleView.insights) ...[
-                                    if (_records.isEmpty)
-                                      const ModuleEmptyState(
-                                        title: 'No check-up insights yet',
-                                        message:
-                                            'Add a check-up record to begin monitoring service activity and vital-sign coverage.',
-                                        icon: Icons.monitor_heart_outlined,
-                                      )
-                                    else
-                                      _CheckUpDashboardHeader(
-                                        totalCheckups: _totalCheckups,
-                                        thisMonthCheckups: _thisMonthCheckups,
-                                        vitalRecordsCount: _vitalRecordsCount,
-                                        records: _records,
-                                      ),
-                                    const SizedBox(height: 16),
-                                  ],
+                            HealthModuleViewHeader(
+                              title: 'Check-up Management',
+                              description:
+                                  'Review service activity and vital-sign coverage, or manage individual check-up records.',
+                              activeView: _activeView,
+                              onViewChanged: _setActiveView,
+                              primaryColor: _primaryAqua,
+                            ),
+                            const SizedBox(height: 16),
+                            // Dashboard Header with Metrics
+                            if (_activeView == HealthModuleView.insights) ...[
+                              if (_records.isEmpty)
+                                const ModuleEmptyState(
+                                  title: 'No check-up insights yet',
+                                  message:
+                                      'Add a check-up record to begin monitoring service activity and vital-sign coverage.',
+                                  icon: Icons.monitor_heart_outlined,
+                                )
+                              else
+                                _CheckUpDashboardHeader(
+                                  totalCheckups: _totalCheckups,
+                                  thisMonthCheckups: _thisMonthCheckups,
+                                  vitalRecordsCount: _vitalRecordsCount,
+                                  records: _records,
+                                ),
+                              const SizedBox(height: 16),
+                            ],
 
-                                  // Records Section - Merged with Add, Filter, and Selection Controls
-                                  if (_activeView == HealthModuleView.records)
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: _primaryAqua.withValues(
-                                            alpha: 0.3,
-                                          ),
-                                          width: 1,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.05,
-                                            ),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 4),
+                            // Records Section - Merged with Add, Filter, and Selection Controls
+                            if (_activeView == HealthModuleView.records)
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _primaryAqua.withValues(alpha: 0.3),
+                                    width: 1,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Top Control Bar - Filter, Add Button, Mode Toggle
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _buildSearchBar(),
+                                        if (_effectiveSearchQuery.isNotEmpty ||
+                                            _isSearchingSharedPatients) ...[
+                                          const SizedBox(height: 12),
+                                          SharedPatientSearchPanel(
+                                            query: _effectiveSearchQuery,
+                                            results: _sharedPatientMatches,
+                                            isLoading:
+                                                _isSearchingSharedPatients,
+                                            primaryActionLabel:
+                                                'View Medical History',
+                                            onPrimaryAction:
+                                                _showSharedPatientTimeline,
+                                            secondaryActionLabel:
+                                                'Start Check-Up',
+                                            onSecondaryAction: (patient) =>
+                                                _openAddCheckUpModal(
+                                                  patientSeed: patient,
+                                                ),
                                           ),
                                         ],
-                                      ),
-                                      padding: const EdgeInsets.all(16),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          // Top Control Bar - Filter, Add Button, Mode Toggle
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              _buildSearchBar(),
-                                              if (_effectiveSearchQuery
-                                                      .isNotEmpty ||
-                                                  _isSearchingSharedPatients) ...[
-                                                const SizedBox(height: 12),
-                                                SharedPatientSearchPanel(
-                                                  query: _effectiveSearchQuery,
-                                                  results:
-                                                      _sharedPatientMatches,
-                                                  isLoading:
-                                                      _isSearchingSharedPatients,
-                                                  primaryActionLabel:
-                                                      'View Medical History',
-                                                  onPrimaryAction:
-                                                      _showSharedPatientTimeline,
-                                                  secondaryActionLabel:
-                                                      'Start Check-Up',
-                                                  onSecondaryAction:
-                                                      (patient) =>
-                                                          _openAddCheckUpModal(
-                                                            patientSeed:
-                                                                patient,
-                                                          ),
-                                                ),
-                                              ],
-                                              const SizedBox(height: 12),
+                                        const SizedBox(height: 12),
 
-                                              // Filter Section
-                                              _buildFilterSection(),
-                                              const SizedBox(height: 12),
+                                        // Filter Section
+                                        _buildFilterSection(),
+                                        const SizedBox(height: 12),
 
-                                              // Row with Selection Mode Toggle Button (from _buildActionMenuButton)
-                                              Row(
-                                                children: [
-                                                  // Selection Mode Toggle Button
-                                                  if (!_isSelectionMode)
-                                                    Material(
-                                                      color: Colors.transparent,
-                                                      child: InkWell(
-                                                        onTap: () {
-                                                          setState(() {
-                                                            _isSelectionMode =
-                                                                true;
-                                                            _selectedIndices
-                                                                .clear();
-                                                          });
-                                                        },
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              10,
-                                                            ),
-                                                        child: Container(
-                                                          padding:
-                                                              const EdgeInsets.symmetric(
-                                                                horizontal: 12,
-                                                                vertical: 10,
-                                                              ),
-                                                          decoration: BoxDecoration(
-                                                            border: Border.all(
-                                                              color: _primaryAqua
-                                                                  .withValues(
-                                                                    alpha: 0.3,
-                                                                  ),
-                                                              width: 1,
-                                                            ),
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  10,
-                                                                ),
-                                                          ),
-                                                          child: Row(
-                                                            children: [
-                                                              Icon(
-                                                                Icons
-                                                                    .check_circle_outline,
-                                                                color:
-                                                                    _primaryAqua,
-                                                                size: 18,
-                                                              ),
-                                                              const SizedBox(
-                                                                width: 6,
-                                                              ),
-                                                              const Text(
-                                                                'Select',
-                                                                style: TextStyle(
-                                                                  color:
-                                                                      _lightOffWhite,
-                                                                  fontSize: 13,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
+                                        // Row with Selection Mode Toggle Button (from _buildActionMenuButton)
+                                        Row(
+                                          children: [
+                                            // Selection Mode Toggle Button
+                                            if (!_isSelectionMode)
+                                              Material(
+                                                color: Colors.transparent,
+                                                child: InkWell(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _isSelectionMode = true;
+                                                      _selectedIndices.clear();
+                                                    });
+                                                  },
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 10,
                                                         ),
-                                                      ),
-                                                    )
-                                                  else
-                                                    Material(
-                                                      color: Colors.transparent,
-                                                      child: InkWell(
-                                                        onTap: () {
-                                                          setState(() {
-                                                            _isSelectionMode =
-                                                                false;
-                                                            _selectedIndices
-                                                                .clear();
-                                                          });
-                                                        },
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              10,
-                                                            ),
-                                                        child: Container(
-                                                          padding:
-                                                              const EdgeInsets.symmetric(
-                                                                horizontal: 12,
-                                                                vertical: 10,
-                                                              ),
-                                                          decoration: BoxDecoration(
-                                                            color: _primaryAqua
-                                                                .withValues(
-                                                                  alpha: 0.2,
-                                                                ),
-                                                            border: Border.all(
-                                                              color: _primaryAqua
-                                                                  .withValues(
-                                                                    alpha: 0.5,
-                                                                  ),
-                                                              width: 1,
-                                                            ),
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  10,
-                                                                ),
-                                                          ),
-                                                          child: const Row(
-                                                            children: [
-                                                              Icon(
-                                                                Icons
-                                                                    .check_circle,
-                                                                color:
-                                                                    _primaryAqua,
-                                                                size: 18,
-                                                              ),
-                                                              SizedBox(
-                                                                width: 6,
-                                                              ),
-                                                              Text(
-                                                                'Done',
-                                                                style: TextStyle(
-                                                                  color:
-                                                                      _primaryAqua,
-                                                                  fontSize: 13,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  const Spacer(),
-                                                  _buildHighlightedAddButtonContainer(),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 16),
-                                            ],
-                                          ),
-
-                                          // Records Display
-                                          if (filteredRecords.isEmpty)
-                                            Center(
-                                              child: Padding(
-                                                padding: const EdgeInsets.all(
-                                                  40,
-                                                ),
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    Container(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                            20,
-                                                          ),
-                                                      decoration: BoxDecoration(
+                                                    decoration: BoxDecoration(
+                                                      border: Border.all(
                                                         color: _primaryAqua
                                                             .withValues(
-                                                              alpha: 0.2,
+                                                              alpha: 0.3,
                                                             ),
-                                                        shape: BoxShape.circle,
+                                                        width: 1,
                                                       ),
-                                                      child: Icon(
-                                                        Icons.inbox_rounded,
-                                                        color: _primaryAqua,
-                                                        size: 48,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 16),
-                                                    Text(
-                                                      'No records found',
-                                                      style: TextStyle(
-                                                        color: _lightOffWhite,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 8),
-                                                    Text(
-                                                      'Try adjusting your filters or add a new check-up record',
-                                                      style: TextStyle(
-                                                        color: _mutedCoolGray,
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            )
-                                          else
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.stretch,
-                                              children: [
-                                                _buildCheckUpCardHeader(),
-                                                _CheckUpTable(
-                                                  records: pagedRecords,
-                                                  startIndex: pageStartIndex,
-                                                  isSelectionMode:
-                                                      _isSelectionMode,
-                                                  selectedIndices:
-                                                      _selectedIndices,
-                                                  onSelectionChanged:
-                                                      (index, selected) {
-                                                        setState(() {
-                                                          if (selected) {
-                                                            _selectedIndices
-                                                                .add(index);
-                                                          } else {
-                                                            _selectedIndices
-                                                                .remove(index);
-                                                          }
-                                                        });
-                                                      },
-                                                  onEdit: (record) async {
-                                                    await showDialog<void>(
-                                                      context: context,
-                                                      builder: (context) =>
-                                                          _EditCheckUpFullScreenModal(
-                                                            record: record,
-                                                            onSave:
-                                                                (
-                                                                  id,
-                                                                  updatedRecord,
-                                                                ) => _dbHelper
-                                                                    .updateRecord(
-                                                                      id,
-                                                                      updatedRecord,
-                                                                    ),
-                                                            aiClassifier:
-                                                                _aiClassifier,
-                                                            guidanceApi:
-                                                                _guidanceApi,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
                                                           ),
-                                                    );
-                                                  },
-                                                  onViewHistory: (record) =>
-                                                      _showCheckUpHistory(
-                                                        context,
-                                                        record,
-                                                      ),
-                                                  onRefer: (record) =>
-                                                      _openReferralForRecord(
-                                                        record,
-                                                      ),
-                                                ),
-                                                const SizedBox(height: 12),
-                                                Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: Text(
-                                                        'Showing ${pageStartIndex + 1}-$pageEndIndex of ${filteredRecords.length} records',
-                                                        style: TextStyle(
-                                                          fontSize: 12,
-                                                          color: _mutedCoolGray,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                        ),
-                                                      ),
                                                     ),
-                                                    Container(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 10,
-                                                            vertical: 2,
-                                                          ),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              8,
-                                                            ),
-                                                        border: Border.all(
-                                                          color: _primaryAqua
-                                                              .withValues(
-                                                                alpha: 0.25,
-                                                              ),
+                                                    child: Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons
+                                                              .check_circle_outline,
+                                                          color: _primaryAqua,
+                                                          size: 18,
                                                         ),
-                                                      ),
-                                                      child: DropdownButtonHideUnderline(
-                                                        child: DropdownButton<int>(
-                                                          dropdownColor:
-                                                              Colors.white,
-                                                          value:
-                                                              effectiveRowsPerPage,
-                                                          style: const TextStyle(
+                                                        const SizedBox(
+                                                          width: 6,
+                                                        ),
+                                                        const Text(
+                                                          'Select',
+                                                          style: TextStyle(
                                                             color:
                                                                 _lightOffWhite,
-                                                            fontSize: 12,
+                                                            fontSize: 13,
                                                             fontWeight:
                                                                 FontWeight.w600,
                                                           ),
-                                                          iconEnabledColor:
-                                                              _primaryAqua,
-                                                          items: const [
-                                                            DropdownMenuItem(
-                                                              value: 10,
-                                                              child: Text(
-                                                                '10 / page',
-                                                              ),
-                                                            ),
-                                                            DropdownMenuItem(
-                                                              value: 20,
-                                                              child: Text(
-                                                                '20 / page',
-                                                              ),
-                                                            ),
-                                                            DropdownMenuItem(
-                                                              value: 50,
-                                                              child: Text(
-                                                                '50 / page',
-                                                              ),
-                                                            ),
-                                                          ],
-                                                          onChanged: (value) {
-                                                            if (value == null) {
-                                                              return;
-                                                            }
-                                                            setState(() {
-                                                              _rowsPerPage =
-                                                                  value > 0
-                                                                  ? value
-                                                                  : 10;
-                                                              _currentPage = 1;
-                                                            });
-                                                          },
                                                         ),
-                                                      ),
+                                                      ],
                                                     ),
-                                                    const SizedBox(width: 10),
-                                                    IconButton(
-                                                      tooltip: 'Previous page',
-                                                      onPressed: currentPage > 1
-                                                          ? () {
-                                                              setState(() {
-                                                                _currentPage =
-                                                                    currentPage -
-                                                                    1;
-                                                              });
-                                                            }
-                                                          : null,
-                                                      icon: const Icon(
-                                                        Icons.chevron_left,
-                                                      ),
-                                                      color: _mutedCoolGray,
-                                                    ),
-                                                    Container(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 10,
-                                                            vertical: 6,
+                                                  ),
+                                                ),
+                                              )
+                                            else
+                                              Material(
+                                                color: Colors.transparent,
+                                                child: InkWell(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _isSelectionMode = false;
+                                                      _selectedIndices.clear();
+                                                    });
+                                                  },
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 10,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: _primaryAqua
+                                                          .withValues(
+                                                            alpha: 0.2,
                                                           ),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              8,
+                                                      border: Border.all(
+                                                        color: _primaryAqua
+                                                            .withValues(
+                                                              alpha: 0.5,
                                                             ),
-                                                        border: Border.all(
-                                                          color: _primaryAqua
-                                                              .withValues(
-                                                                alpha: 0.25,
-                                                              ),
-                                                        ),
+                                                        width: 1,
                                                       ),
-                                                      child: Text(
-                                                        '$currentPage / $totalPages',
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                    child: const Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons.check_circle,
+                                                          color: _primaryAqua,
+                                                          size: 18,
+                                                        ),
+                                                        SizedBox(width: 6),
+                                                        Text(
+                                                          'Done',
+                                                          style: TextStyle(
+                                                            color: _primaryAqua,
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            const Spacer(),
+                                            _buildHighlightedAddButtonContainer(),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 16),
+                                      ],
+                                    ),
+
+                                    // Records Display
+                                    if (filteredRecords.isEmpty)
+                                      Center(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(40),
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(
+                                                  20,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: _primaryAqua
+                                                      .withValues(alpha: 0.2),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: Icon(
+                                                  Icons.inbox_rounded,
+                                                  color: _primaryAqua,
+                                                  size: 48,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 16),
+                                              Text(
+                                                'No records found',
+                                                style: TextStyle(
+                                                  color: _lightOffWhite,
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                'Try adjusting your filters or add a new check-up record',
+                                                style: TextStyle(
+                                                  color: _mutedCoolGray,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    else
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          _buildCheckUpCardHeader(),
+                                          _CheckUpTable(
+                                            records: pagedRecords,
+                                            startIndex: pageStartIndex,
+                                            isSelectionMode: _isSelectionMode,
+                                            selectedIndices: _selectedIndices,
+                                            onSelectionChanged:
+                                                (index, selected) {
+                                                  setState(() {
+                                                    if (selected) {
+                                                      _selectedIndices.add(
+                                                        index,
+                                                      );
+                                                    } else {
+                                                      _selectedIndices.remove(
+                                                        index,
+                                                      );
+                                                    }
+                                                  });
+                                                },
+                                            onEdit: (record) async {
+                                              await showDialog<void>(
+                                                context: context,
+                                                builder: (context) =>
+                                                    _EditCheckUpFullScreenModal(
+                                                      record: record,
+                                                      onSave:
+                                                          (
+                                                            id,
+                                                            updatedRecord,
+                                                          ) => _dbHelper
+                                                              .updateRecord(
+                                                                id,
+                                                                updatedRecord,
+                                                              ),
+                                                      aiClassifier:
+                                                          _aiClassifier,
+                                                      guidanceApi: _guidanceApi,
+                                                    ),
+                                              );
+                                            },
+                                            onViewHistory: (record) =>
+                                                _showCheckUpHistory(
+                                                  context,
+                                                  record,
+                                                ),
+                                            onRefer: (record) =>
+                                                _openReferralForRecord(record),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  'Showing ${pageStartIndex + 1}-$pageEndIndex of ${filteredRecords.length} records',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: _mutedCoolGray,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 2,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color: _primaryAqua
+                                                        .withValues(
+                                                          alpha: 0.25,
+                                                        ),
+                                                  ),
+                                                ),
+                                                child:
+                                                    DropdownButtonHideUnderline(
+                                                      child: DropdownButton<int>(
+                                                        dropdownColor:
+                                                            Colors.white,
+                                                        value:
+                                                            effectiveRowsPerPage,
                                                         style: const TextStyle(
                                                           color: _lightOffWhite,
                                                           fontSize: 12,
                                                           fontWeight:
                                                               FontWeight.w600,
                                                         ),
+                                                        iconEnabledColor:
+                                                            _primaryAqua,
+                                                        items: const [
+                                                          DropdownMenuItem(
+                                                            value: 10,
+                                                            child: Text(
+                                                              '10 / page',
+                                                            ),
+                                                          ),
+                                                          DropdownMenuItem(
+                                                            value: 20,
+                                                            child: Text(
+                                                              '20 / page',
+                                                            ),
+                                                          ),
+                                                          DropdownMenuItem(
+                                                            value: 50,
+                                                            child: Text(
+                                                              '50 / page',
+                                                            ),
+                                                          ),
+                                                        ],
+                                                        onChanged: (value) {
+                                                          if (value == null) {
+                                                            return;
+                                                          }
+                                                          setState(() {
+                                                            _rowsPerPage =
+                                                                value > 0
+                                                                ? value
+                                                                : 10;
+                                                            _currentPage = 1;
+                                                          });
+                                                        },
                                                       ),
                                                     ),
-                                                    IconButton(
-                                                      tooltip: 'Next page',
-                                                      onPressed:
-                                                          currentPage <
-                                                              totalPages
-                                                          ? () {
-                                                              setState(() {
-                                                                _currentPage =
-                                                                    currentPage +
-                                                                    1;
-                                                              });
-                                                            }
-                                                          : null,
-                                                      icon: const Icon(
-                                                        Icons.chevron_right,
-                                                      ),
-                                                      color: _lightOffWhite,
-                                                    ),
-                                                  ],
+                                              ),
+                                              const SizedBox(width: 10),
+                                              IconButton(
+                                                tooltip: 'Previous page',
+                                                onPressed: currentPage > 1
+                                                    ? () {
+                                                        setState(() {
+                                                          _currentPage =
+                                                              currentPage - 1;
+                                                        });
+                                                      }
+                                                    : null,
+                                                icon: const Icon(
+                                                  Icons.chevron_left,
                                                 ),
-                                              ],
-                                            ),
+                                                color: _mutedCoolGray,
+                                              ),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 6,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color: _primaryAqua
+                                                        .withValues(
+                                                          alpha: 0.25,
+                                                        ),
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  '$currentPage / $totalPages',
+                                                  style: const TextStyle(
+                                                    color: _lightOffWhite,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                              IconButton(
+                                                tooltip: 'Next page',
+                                                onPressed:
+                                                    currentPage < totalPages
+                                                    ? () {
+                                                        setState(() {
+                                                          _currentPage =
+                                                              currentPage + 1;
+                                                        });
+                                                      }
+                                                    : null,
+                                                icon: const Icon(
+                                                  Icons.chevron_right,
+                                                ),
+                                                color: _lightOffWhite,
+                                              ),
+                                            ],
+                                          ),
                                         ],
                                       ),
-                                    ),
-                                  const SizedBox(height: 32),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            // Bulk Selection Action Card - Floating at bottom
-                            if (_activeView == HealthModuleView.records)
-                              _buildSelectionActionCard(),
+                            const SizedBox(height: 32),
                           ],
                         ),
+                      ),
+                      // Bulk Selection Action Card - Floating at bottom
+                      if (_activeView == HealthModuleView.records)
+                        _buildSelectionActionCard(),
+                    ],
+                  ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDrawer(BuildContext context, String userName) {
-    final user = FirebaseAuth.instance.currentUser;
-    return Drawer(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_sidebarDark, _sidebarDark.withValues(alpha: 0.95)],
-          ),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                vertical: 20.0,
-                horizontal: 16.0,
-              ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_primaryAqua, _secondaryIceBlue],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryAqua.withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.25),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/bg3.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: _mutedCoolGray,
-                            child: Icon(
-                              Icons.person,
-                              size: 35,
-                              color: _primaryAqua,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    userName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: 0.5,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    user?.email ?? '',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 11,
-                      letterSpacing: 0.3,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Colors.greenAccent,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.greenAccent,
-                                blurRadius: 4,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Online',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 3,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: _primaryAqua,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'MAIN MENU',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 4,
-                  horizontal: 10,
-                ),
-                children: [
-                  _buildDrawerSidebarItem(
-                    icon: Icons.dashboard_rounded,
-                    label: 'Dashboard',
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.assignment_turned_in_rounded,
-                    label: 'Check-ups',
-                    isActive: true,
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.favorite_rounded,
-                    label: 'Summary Generation',
-                    onTap: () => Get.toNamed(WebRoutes.bhwSummary),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.analytics_rounded,
-                    label: 'Analytics',
-                    onTap: () => Get.toNamed(WebRoutes.bhwAnalytics),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 3,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: _primaryAqua,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'PATIENT CARE',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.pregnant_woman_rounded,
-                    label: 'Prenatal Care',
-                    onTap: () => Get.toNamed(WebRoutes.bhwPrenatal),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.vaccines_rounded,
-                    label: 'Immunization',
-                    onTap: () => Get.toNamed(WebRoutes.bhwImmunization),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.person_rounded,
-                    label: 'Patient Records',
-                    onTap: () => Get.toNamed(WebRoutes.bhwPatients),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 3,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: _primaryAqua,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'DISEASE TRACKING',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.coronavirus_rounded,
-                    label: 'Communicable',
-                    onTap: () => Get.toNamed(WebRoutes.bhwCommunicable),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.health_and_safety_rounded,
-                    label: 'Non-Communicable',
-                    onTap: () => Get.toNamed(WebRoutes.bhwNonCommunicable),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.analytics_outlined,
-                    label: 'Mortality',
-                    onTap: () => Get.toNamed(WebRoutes.bhwMortality),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () async {
-                    await FirebaseAuth.instance.signOut();
-                    Get.offAllNamed(WebRoutes.login);
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.red.shade600, Colors.red.shade700],
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.red.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.logout_rounded,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Logout',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerSidebarItem({
-    required IconData icon,
-    required String label,
-    bool isActive = false,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6.0),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          hoverColor: Colors.white.withValues(alpha: 0.08),
-          splashColor: _primaryAqua.withValues(alpha: 0.2),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-            decoration: BoxDecoration(
-              color: isActive ? _primaryAqua.withValues(alpha: 0.18) : null,
-              borderRadius: BorderRadius.circular(12),
-              border: Border(
-                left: BorderSide(
-                  color: isActive ? _primaryAqua : Colors.transparent,
-                  width: 3,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? _primaryAqua.withValues(alpha: 0.15)
-                        : Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isActive
-                        ? _primaryAqua
-                        : Colors.white.withValues(alpha: 0.8),
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: isActive
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.8),
-                      fontSize: 12.5,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ),
-                if (isActive)
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: _primaryAqua,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.chevron_right,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTopBar(BuildContext context) {
-    return WebAppTopBar(
-      title: 'Check-up Dashboard',
-      scaffoldKey: _scaffoldKey,
-      isLoading: _isLoading,
-      onGenerateReport: _generateCheckupReport,
-      onRefresh: () => _loadRecords(),
-      actions: [
-        if (kDebugMode) ...[
-          const SizedBox(width: 4),
-          PopupMenuButton(
-            icon: const Icon(Icons.more_vert_outlined, color: Colors.white),
-            color: _darkDeepTeal,
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                child: const Text('Seed Sample Data', style: TextStyle(color: Colors.white)),
-                onTap: () => _seedSampleData(),
-              ),
-              PopupMenuItem(
-                child: const Text('View Data in Console', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  print('=== CHECK-UP RECORDS DATA ===');
-                  print('Total Records: ${_records.length}');
-                  for (var i = 0; i < _records.length; i++) {
-                    print('\nRecord ${i + 1}:');
-                    _records[i].forEach((key, value) {
-                      print('  $key: $value');
-                    });
-                  }
-                  print('=============================');
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Data printed to console! Check Debug Console.',
-                        ),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
-        ],
-      ],
     );
   }
 
@@ -2195,11 +1544,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.date_range,
-                      color: _primaryAqua,
-                      size: 18,
-                    ),
+                    const Icon(Icons.date_range, color: _primaryAqua, size: 18),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Row(
@@ -2255,12 +1600,13 @@ class _CheckUpPageState extends State<CheckUpPage> {
   }
 
   Widget _buildCheckUpAdvancedFilters() {
-    final barangays = _records
-        .map((r) => (r['address'] ?? r['barangay'] ?? '').toString().trim())
-        .where((value) => value.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort();
+    final barangays =
+        _records
+            .map((r) => (r['address'] ?? r['barangay'] ?? '').toString().trim())
+            .where((value) => value.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
 
     return Semantics(
       label: 'Check-up filters and sorting',
@@ -2499,122 +1845,6 @@ class _CheckUpPageState extends State<CheckUpPage> {
     }
   }
 
-  Widget _buildActionMenuButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: _lightOffWhite.withValues(alpha: 0.3),
-            width: 2,
-          ),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              setState(() {
-                _isSelectionMode = !_isSelectionMode;
-                if (!_isSelectionMode) {
-                  _selectedIndices.clear();
-                }
-              });
-            },
-            borderRadius: BorderRadius.circular(8),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: _isSelectionMode
-                          ? [Color(0xFFFF5252), Color(0xFFE53935)]
-                          : [Color(0xFF4CAF50), Color(0xFF388E3C)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    _isSelectionMode
-                        ? Icons.close_rounded
-                        : Icons.check_circle_outline_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _isSelectionMode
-                            ? 'Exit Selection Mode'
-                            : 'Enter Selection Mode',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        _isSelectionMode
-                            ? 'Tap to deactivate bulk operations'
-                            : 'Tap to enable bulk operations',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (_isSelectionMode && _selectedIndices.isNotEmpty) ...[
-                  const SizedBox(width: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Color(0xFFFF5252),
-                      borderRadius: BorderRadius.circular(6),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFFFF5252).withValues(alpha: 0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      '${_selectedIndices.length} selected',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: _mutedCoolGray,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildSelectionActionCard() {
     if (!_isSelectionMode || _selectedIndices.isEmpty) {
       return const SizedBox.shrink();
@@ -2768,10 +1998,6 @@ class _CheckUpPageState extends State<CheckUpPage> {
       return;
     }
 
-    setState(() {
-      _isDeleteDialogShowing = true;
-    });
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -2797,9 +2023,6 @@ class _CheckUpPageState extends State<CheckUpPage> {
         actions: [
           TextButton(
             onPressed: () {
-              setState(() {
-                _isDeleteDialogShowing = false;
-              });
               Navigator.pop(context);
             },
             child: Text(
@@ -2814,9 +2037,6 @@ class _CheckUpPageState extends State<CheckUpPage> {
             onPressed: () {
               Navigator.pop(context);
               _deleteSelectedRecords();
-              setState(() {
-                _isDeleteDialogShowing = false;
-              });
             },
             child: Text(
               'Delete',
@@ -2825,12 +2045,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
           ),
         ],
       ),
-    ).then((_) {
-      // Ensure the state is reset if dialog is dismissed by tapping outside
-      setState(() {
-        _isDeleteDialogShowing = false;
-      });
-    });
+    );
   }
 
   void _deleteSelectedRecords() async {
@@ -2902,7 +2117,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
         }
       }
     } catch (e) {
-      print('Error deleting records: $e');
+      debugPrint('Error deleting records: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -2929,7 +2144,8 @@ class _CheckUpDashboardHeader extends StatefulWidget {
   });
 
   @override
-  State<_CheckUpDashboardHeader> createState() => _CheckUpDashboardHeaderState();
+  State<_CheckUpDashboardHeader> createState() =>
+      _CheckUpDashboardHeaderState();
 }
 
 class _CheckUpDashboardHeaderState extends State<_CheckUpDashboardHeader> {
@@ -2948,7 +2164,8 @@ class _CheckUpDashboardHeaderState extends State<_CheckUpDashboardHeader> {
   }
 
   DateTime? _recordDate(Map<String, dynamic> record) {
-    final raw = record['datetime'] ??
+    final raw =
+        record['datetime'] ??
         record['createdAt'] ??
         record['date'] ??
         record['consultationDate'] ??
@@ -3202,18 +2419,19 @@ class _CheckUpDashboardHeaderState extends State<_CheckUpDashboardHeader> {
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: (_dateFilterMode ==
-                          DashboardDateFilterMode.customDay ||
+              foregroundColor:
+                  (_dateFilterMode == DashboardDateFilterMode.customDay ||
                       _dateFilterMode == DashboardDateFilterMode.customRange)
                   ? _primaryAqua
                   : _lightOffWhite,
-              backgroundColor: (_dateFilterMode ==
-                          DashboardDateFilterMode.customDay ||
+              backgroundColor:
+                  (_dateFilterMode == DashboardDateFilterMode.customDay ||
                       _dateFilterMode == DashboardDateFilterMode.customRange)
                   ? _primaryAqua.withValues(alpha: 0.12)
                   : Colors.white,
               side: BorderSide(
-                color: (_dateFilterMode == DashboardDateFilterMode.customDay ||
+                color:
+                    (_dateFilterMode == DashboardDateFilterMode.customDay ||
                         _dateFilterMode == DashboardDateFilterMode.customRange)
                     ? _primaryAqua
                     : filterBorderColor,
@@ -4195,11 +3413,6 @@ void _showCheckUpDetails(BuildContext context, Map<String, dynamic> record) {
         label: 'AI Severity',
         value: _safeCheckUpText(record['ai_severity'], fallback: ''),
       ),
-      DetailTableItem(
-        icon: Icons.insights_outlined,
-        label: 'AI Confidence',
-        value: _safeCheckUpText(record['ai_confidence'], fallback: ''),
-      ),
     ],
   );
 }
@@ -4417,208 +3630,6 @@ DateTime? _parseCheckUpDateTime(dynamic value) {
   );
 }
 
-Color _getCheckUpStatusColor(String status) {
-  final lower = status.toLowerCase();
-
-  if (lower.contains('complete') || lower.contains('done')) {
-    return const Color(0xFF66BB6A);
-  }
-  if (lower.contains('progress') || lower.contains('ongoing')) {
-    return const Color(0xFFFFB74D);
-  }
-  if (lower.contains('follow') || lower.contains('review')) {
-    return const Color(0xFF64B5F6);
-  }
-  if (lower.contains('pending') || lower.contains('scheduled')) {
-    return const Color(0xFF4DD0E1);
-  }
-  return _primaryAqua;
-}
-
-Widget _buildCheckUpMetaChip({
-  required IconData icon,
-  required String label,
-  required String value,
-  required Color accentColor,
-  Color? valueColor,
-}) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.06),
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: accentColor.withValues(alpha: 0.18)),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: accentColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: accentColor, size: 18),
-        ),
-        const SizedBox(width: 10),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 2),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 180),
-              child: Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: valueColor ?? Colors.white,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildDetailSection({
-  required String title,
-  required String subtitle,
-  required IconData icon,
-  required Color accentColor,
-  required List<Widget> children,
-}) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: _sidebarDark.withValues(alpha: 0.96),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.16),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: _primaryAqua.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(icon, color: _primaryAqua, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ...children,
-          ],
-        ),
-      ),
-    ],
-  );
-}
-
-Widget _buildDetailRow({
-  required String label,
-  required dynamic value,
-  required IconData icon,
-  required Color accentColor,
-  Color? valueColor,
-  Widget? content,
-}) {
-  final valueString = _safeCheckUpText(value);
-
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 10),
-    child: Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.035),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: _primaryAqua.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: _primaryAqua, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.62),
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                content ??
-                    Text(
-                      valueString,
-                      style: TextStyle(
-                        color: valueColor ?? Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        height: 1.4,
-                      ),
-                    ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
 Widget _buildHighlightedVitalSignsWeb(String vitalsString) {
   const rowText = Color(0xFF0B1F3A);
   const labelColor = Color(0xFF2F80ED);
@@ -4679,10 +3690,7 @@ Widget _buildHighlightedVitalSignsWeb(String vitalsString) {
         textSpans.add(
           const TextSpan(
             text: '   ',
-            style: TextStyle(
-              fontSize: 11,
-              color: Color(0xFFB0BEC5),
-            ),
+            style: TextStyle(fontSize: 11, color: Color(0xFFB0BEC5)),
           ),
         );
       }
@@ -4704,43 +3712,6 @@ Widget _buildHighlightedVitalSignsWeb(String vitalsString) {
     text: TextSpan(children: textSpans),
     maxLines: 4,
     overflow: TextOverflow.ellipsis,
-  );
-}
-
-Widget _buildInfoRow({
-  required IconData icon,
-  required String label,
-  required String value,
-}) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        children: [
-          Icon(icon, size: 16, color: Colors.white.withValues(alpha: 0.7)),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.7),
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(width: 6),
-      Text(
-        value,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-        ),
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-      ),
-    ],
   );
 }
 
@@ -4983,6 +3954,8 @@ class _CheckUpCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
+                    const SizedBox(height: 6),
+                    WebSyncStatusBadge(record: record),
                   ],
                 ),
               ),
@@ -5128,11 +4101,8 @@ class _NewCheckUpFullScreenModalState
 
   final TextEditingController _symptomsController = TextEditingController();
   DateTime? _followUpDate;
-  final String _recordType = 'General';
   final String _diseaseType = 'General';
   bool _isSaving = false;
-  static const Color _panelSurface = Color(0xFF163B66);
-  static const Color _fieldSurface = Color(0xFF0B1F3A);
 
   @override
   void initState() {
@@ -5176,10 +4146,7 @@ class _NewCheckUpFullScreenModalState
               decoration: const BoxDecoration(
                 color: _darkDeepTeal,
                 border: Border(
-                  bottom: BorderSide(
-                    color: Color(0x20FFFFFF),
-                    width: 1,
-                  ),
+                  bottom: BorderSide(color: Color(0x20FFFFFF), width: 1),
                 ),
               ),
               child: Row(
@@ -5257,9 +4224,7 @@ class _NewCheckUpFullScreenModalState
                                   color: _primaryAqua.withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: _primaryAqua.withValues(
-                                      alpha: 0.25,
-                                    ),
+                                    color: _primaryAqua.withValues(alpha: 0.25),
                                   ),
                                 ),
                                 child: Row(
@@ -5362,10 +4327,9 @@ class _NewCheckUpFullScreenModalState
                                       fontWeight: FontWeight.w600,
                                     ),
                                     keyboardType: TextInputType.number,
-                                    validator: (v) =>
-                                        v == null || v.isEmpty
-                                            ? 'Age required'
-                                            : null,
+                                    validator: (v) => v == null || v.isEmpty
+                                        ? 'Age required'
+                                        : null,
                                   ),
                                 ),
                                 const SizedBox(width: 14),
@@ -5751,9 +4715,8 @@ class _NewCheckUpFullScreenModalState
                                       color: _mutedCoolGray,
                                     ),
                                     tooltip: 'Clear date',
-                                    onPressed: () => setState(
-                                      () => _followUpDate = null,
-                                    ),
+                                    onPressed: () =>
+                                        setState(() => _followUpDate = null),
                                   ),
                               ],
                             ),
@@ -5905,8 +4868,9 @@ class _NewCheckUpFullScreenModalState
                             height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : const Icon(Icons.check_circle_rounded, size: 18),
@@ -6007,16 +4971,9 @@ class _NewCheckUpFullScreenModalState
         newRecord.addAll(classification.toRecordFields());
         newRecord['ai_category'] = classification.category;
         newRecord['ai_severity'] = classification.severity;
-        newRecord['ai_confidence'] = classification.confidence.toString();
         newRecord['ai_method'] = classification.method;
-        if (classification.keywords != null) {
-          newRecord['ai_keywords'] = classification.keywords!.join(', ');
-        }
-        if (classification.recoveryPlan != null) {
-          newRecord['ai_recovery_plan'] = jsonEncode(
-            classification.recoveryPlan,
-          );
-        }
+        newRecord['ai_keywords'] = classification.keywords.join(', ');
+        newRecord['ai_recovery_plan'] = jsonEncode(classification.recoveryPlan);
       } catch (e) {
         newRecord.addAll(
           _localHealthCategoryFallback(_symptomsController.text),
@@ -6025,25 +4982,24 @@ class _NewCheckUpFullScreenModalState
 
       // Call the callback to save the record
       await widget.onSave(newRecord);
+      if (!mounted) return null;
 
       // Show AI Classification modal
-      if (context.mounted && classification != null) {
+      if (classification != null) {
         setState(() => _isSaving = false);
-        newRecord.remove('ai_confidence');
         await _showSymptomGuidanceModal(context, classification);
       }
 
       return newRecord;
     } catch (e) {
+      if (!mounted) return null;
       setState(() => _isSaving = false);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving record: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving record: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return null;
     }
   }
@@ -6119,7 +5075,10 @@ class _NewCheckUpFullScreenModalState
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 18,
+                ),
                 decoration: const BoxDecoration(
                   color: _darkDeepTeal,
                   borderRadius: BorderRadius.only(
@@ -6136,7 +5095,7 @@ class _NewCheckUpFullScreenModalState
                     ),
                     SizedBox(width: 12),
                     Text(
-                      'AI Symptom Guidance',
+                      'Patient Decision Support',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -6152,6 +5111,34 @@ class _NewCheckUpFullScreenModalState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      RoleDecisionSupportPanel(
+                        audience: DecisionSupportAudience.bhw,
+                        summary: result.emergencyWarningSigns.isEmpty
+                            ? 'Review the recognized information, supportive care, and follow-up instructions before completing this visit.'
+                            : 'Emergency warning signs were returned. Arrange urgent clinical assessment or referral according to local protocol.',
+                        items: <DecisionSupportItem>[
+                          DecisionSupportItem(
+                            label: 'Recognized symptoms',
+                            value: '${result.recognizedSymptoms.length}',
+                            icon: Icons.fact_check_outlined,
+                          ),
+                          DecisionSupportItem(
+                            label: 'Emergency warnings',
+                            value: '${result.emergencyWarningSigns.length}',
+                            icon: Icons.emergency_outlined,
+                            isPriority: result.emergencyWarningSigns.isNotEmpty,
+                          ),
+                          DecisionSupportItem(
+                            label: 'Recommended next step',
+                            value: result.emergencyWarningSigns.isEmpty
+                                ? 'Clinical review'
+                                : 'Urgent referral',
+                            icon: Icons.follow_the_signs_outlined,
+                            isPriority: result.emergencyWarningSigns.isNotEmpty,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                       Text(
                         'Recognized symptoms: '
                         '${result.recognizedSymptoms.isEmpty ? 'None' : result.recognizedSymptoms.join(', ')}',
@@ -6261,7 +5248,10 @@ class _NewCheckUpFullScreenModalState
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F7FA),
                   border: Border(
@@ -6291,7 +5281,7 @@ class _NewCheckUpFullScreenModalState
                     onPressed: () => Navigator.of(dialogContext).pop(),
                     icon: const Icon(Icons.check_circle_rounded, size: 18),
                     label: const Text(
-                      'Got It',
+                      'Close guidance',
                       style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
@@ -6305,486 +5295,6 @@ class _NewCheckUpFullScreenModalState
   }
 
   // Legacy classifier modal retained for editing older records.
-  Future<void> _showAIClassificationModal(
-    BuildContext context,
-    ClassificationResult classification,
-  ) async {
-    // Show loading spinner dialog for 3 seconds
-    if (context.mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (loadingContext) => Dialog(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: Center(
-            child: Container(
-              width: 280,
-              padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 28),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF0D274D), Color(0xFF163B66)],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryAqua.withValues(alpha: 0.3),
-                    blurRadius: 24,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 56,
-                    height: 56,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 4,
-                      valueColor: AlwaysStoppedAnimation<Color>(_primaryAqua),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Analyzing Health Data...',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'AI is classifying your record',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-
-      // Wait 3 seconds then dismiss the loading dialog
-      await Future.delayed(const Duration(seconds: 3));
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
-    }
-
-    final recoveryPlan = _parseAiRecoveryPlan(classification.recoveryPlan);
-    final modalKeywords = _safeAiKeywords(classification.keywords?.join(', '));
-    final modalKeywordText = modalKeywords.isEmpty
-        ? 'No matching keyword found'
-        : modalKeywords.join(', ');
-
-    // Show the actual AI classification result modal
-    if (!context.mounted) return;
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          width: 520,
-          constraints: const BoxConstraints(maxHeight: 650),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF0D274D), Color(0xFF163B66)],
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: _primaryAqua.withValues(alpha: 0.15),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'AI Classification Complete',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Health record analyzed successfully',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.check_circle,
-                      color: Colors.greenAccent,
-                      size: 28,
-                    ),
-                  ],
-                ),
-              ),
-
-              // Body - scrollable
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Category & Severity Row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _aiInfoCard(
-                              icon: Icons.category_rounded,
-                              label: 'Category',
-                              value: classification.category,
-                              color: _getCategoryColor(classification.category),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _aiInfoCard(
-                              icon: Icons.warning_amber_rounded,
-                              label: 'Severity',
-                              value: classification.severity,
-                              color: _getSeverityColor(classification.severity),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Confidence & Keywords Row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _aiInfoCard(
-                              icon: Icons.speed_rounded,
-                              label: 'Confidence',
-                              value:
-                                  '${(classification.confidence * 100).toStringAsFixed(1)}%',
-                              color: Colors.blueAccent,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _aiInfoCard(
-                              icon: Icons.label_rounded,
-                              label: 'Keywords',
-                              value: modalKeywordText,
-                              color: Colors.orangeAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // Recovery Plan
-                      if (recoveryPlan != null) ...[
-                        const SizedBox(height: 18),
-                        const Text(
-                          'Recovery Plan',
-                          style: TextStyle(
-                            color: _primaryAqua,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-
-                        // Home Care
-                        if (_safeAiStringList(
-                          recoveryPlan['home_care'],
-                        ).isNotEmpty)
-                          _recoverySection(
-                            icon: Icons.home_rounded,
-                            title: 'Home Care',
-                            items: _safeAiStringList(recoveryPlan['home_care']),
-                            color: Colors.tealAccent,
-                          ),
-
-                        // Precautions
-                        if (_safeAiStringList(
-                          recoveryPlan['precautions'],
-                        ).isNotEmpty)
-                          _recoverySection(
-                            icon: Icons.shield_rounded,
-                            title: 'Precautions',
-                            items: _safeAiStringList(
-                              recoveryPlan['precautions'],
-                            ),
-                            color: Colors.amberAccent,
-                          ),
-
-                        // Estimated Recovery
-                        if (_safeAiText(
-                          recoveryPlan['estimated_recovery'],
-                          fallback: '',
-                        ).isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 10),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: _primaryAqua.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.schedule,
-                                    color: _primaryAqua,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    'Estimated Recovery: ',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  Text(
-                                    _safeAiText(
-                                      recoveryPlan['estimated_recovery'],
-                                      fallback: '',
-                                    ),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                        // General Advice
-                        if (_safeAiStringList(
-                          recoveryPlan['general_advice'],
-                        ).isNotEmpty)
-                          _recoverySection(
-                            icon: Icons.tips_and_updates_rounded,
-                            title: 'General Advice',
-                            items: _safeAiStringList(
-                              recoveryPlan['general_advice'],
-                            ),
-                            color: Colors.lightGreenAccent,
-                          ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-
-              // Footer Button
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _primaryAqua,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    icon: const Icon(Icons.check_rounded),
-                    label: const Text(
-                      'Done',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _aiInfoCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    final safeValue = _safeAiText(value, fallback: 'N/A');
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 16),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(color: Colors.white60, fontSize: 12),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            safeValue,
-            style: TextStyle(
-              color: color,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _recoverySection({
-    required IconData icon,
-    required String title,
-    required List<String> items,
-    required Color color,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: color, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ...items.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Icon(
-                        Icons.circle,
-                        color: color.withValues(alpha: 0.6),
-                        size: 6,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        item,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'Communicable Disease':
-        return Colors.orangeAccent;
-      case 'Non-Communicable Disease':
-        return Colors.purpleAccent;
-      case 'Emergency':
-        return Colors.redAccent;
-      case 'Prenatal Care':
-        return Colors.pinkAccent;
-      case 'Pediatric Care':
-        return Colors.cyanAccent;
-      case 'Routine Checkup':
-        return Colors.greenAccent;
-      default:
-        return _primaryAqua;
-    }
-  }
-
-  Color _getSeverityColor(String severity) {
-    switch (severity) {
-      case 'Critical':
-        return Colors.red;
-      case 'High':
-        return Colors.deepOrange;
-      case 'Medium':
-        return Colors.amber;
-      case 'Low':
-        return Colors.greenAccent;
-      default:
-        return Colors.white70;
-    }
-  }
 
   // Helper method to build section cards
   Widget _buildSectionCard({
@@ -6955,7 +5465,6 @@ class _EditCheckUpFullScreenModalState
 
   late final TextEditingController _symptomsController;
   DateTime? _followUpDate;
-  final String _recordType = 'General';
   bool _isSaving = false;
 
   @override
@@ -7159,10 +5668,7 @@ class _EditCheckUpFullScreenModalState
               decoration: const BoxDecoration(
                 color: _darkDeepTeal,
                 border: Border(
-                  bottom: BorderSide(
-                    color: Color(0x20FFFFFF),
-                    width: 1,
-                  ),
+                  bottom: BorderSide(color: Color(0x20FFFFFF), width: 1),
                 ),
               ),
               child: Row(
@@ -7195,7 +5701,9 @@ class _EditCheckUpFullScreenModalState
                   ),
                   const SizedBox(width: 16),
                   IconButton(
-                    onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+                    onPressed: _isSaving
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     tooltip: 'Close editor',
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white.withValues(alpha: 0.1),
@@ -7212,7 +5720,10 @@ class _EditCheckUpFullScreenModalState
             // Form Content Area
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 960),
@@ -7311,7 +5822,8 @@ class _EditCheckUpFullScreenModalState
                                         controller: _addressController,
                                         decoration: _buildInputDecoration(
                                           'Residential Address',
-                                          hintText: 'House / Street / Barangay / Municipality',
+                                          hintText:
+                                              'House / Street / Barangay / Municipality',
                                           prefixIcon: const Icon(
                                             Icons.home_outlined,
                                             size: 18,
@@ -7403,8 +5915,8 @@ class _EditCheckUpFullScreenModalState
                                         ),
                                         keyboardType:
                                             const TextInputType.numberWithOptions(
-                                          decimal: true,
-                                        ),
+                                              decimal: true,
+                                            ),
                                         validator: (v) => v == null || v.isEmpty
                                             ? 'Required'
                                             : null,
@@ -7538,8 +6050,8 @@ class _EditCheckUpFullScreenModalState
                                         ),
                                         keyboardType:
                                             const TextInputType.numberWithOptions(
-                                          decimal: true,
-                                        ),
+                                              decimal: true,
+                                            ),
                                       ),
                                     ),
                                     const SizedBox(width: 14),
@@ -7570,8 +6082,8 @@ class _EditCheckUpFullScreenModalState
                                         ),
                                         keyboardType:
                                             const TextInputType.numberWithOptions(
-                                          decimal: true,
-                                        ),
+                                              decimal: true,
+                                            ),
                                       ),
                                     ),
                                   ],
@@ -7621,9 +6133,12 @@ class _EditCheckUpFullScreenModalState
                                 final now = DateTime.now();
                                 final picked = await showDatePicker(
                                   context: context,
-                                  initialDate: _followUpDate ??
+                                  initialDate:
+                                      _followUpDate ??
                                       now.add(const Duration(days: 7)),
-                                  firstDate: now.subtract(const Duration(days: 30)),
+                                  firstDate: now.subtract(
+                                    const Duration(days: 30),
+                                  ),
                                   lastDate: now.add(const Duration(days: 365)),
                                 );
                                 if (picked != null) {
@@ -7653,8 +6168,9 @@ class _EditCheckUpFullScreenModalState
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color:
-                                            _primaryAqua.withValues(alpha: 0.1),
+                                        color: _primaryAqua.withValues(
+                                          alpha: 0.1,
+                                        ),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: const Icon(
@@ -7766,7 +6282,9 @@ class _EditCheckUpFullScreenModalState
                       'Cancel',
                       style: TextStyle(fontWeight: FontWeight.w700),
                     ),
-                    onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+                    onPressed: _isSaving
+                        ? null
+                        : () => Navigator.of(context).pop(),
                   ),
                   const SizedBox(width: 12),
                   FilledButton.icon(
@@ -7788,8 +6306,9 @@ class _EditCheckUpFullScreenModalState
                             height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : const Icon(Icons.save_rounded, size: 18),
@@ -7920,476 +6439,6 @@ class _EditCheckUpFullScreenModalState
   }
 
   // Show AI Classification result modal with loading spinner for edited records
-  Future<void> _showEditAIClassificationModal(
-    BuildContext context,
-    ClassificationResult classification,
-  ) async {
-    // Show loading spinner dialog for 3 seconds
-    if (context.mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (loadingContext) => Dialog(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: Center(
-            child: Container(
-              width: 280,
-              padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 28),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF0D274D), Color(0xFF163B66)],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryAqua.withValues(alpha: 0.3),
-                    blurRadius: 24,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 56,
-                    height: 56,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 4,
-                      valueColor: AlwaysStoppedAnimation<Color>(_primaryAqua),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Re-analyzing Health Data...',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'AI is re-classifying your updated record',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await Future.delayed(const Duration(seconds: 3));
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
-    }
-
-    final recoveryPlan = _parseAiRecoveryPlan(classification.recoveryPlan);
-    final modalKeywords = _safeAiKeywords(classification.keywords?.join(', '));
-    final modalKeywordText = modalKeywords.isEmpty
-        ? 'No matching keyword found'
-        : modalKeywords.join(', ');
-
-    if (!context.mounted) return;
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          width: 520,
-          constraints: const BoxConstraints(maxHeight: 650),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF0D274D), Color(0xFF163B66)],
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: _primaryAqua.withValues(alpha: 0.15),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'AI Re-Classification Complete',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Updated record analyzed successfully',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.check_circle,
-                      color: Colors.greenAccent,
-                      size: 28,
-                    ),
-                  ],
-                ),
-              ),
-
-              // Body
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _editAiInfoCard(
-                              icon: Icons.category_rounded,
-                              label: 'Category',
-                              value: classification.category,
-                              color: _editGetCategoryColor(
-                                classification.category,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _editAiInfoCard(
-                              icon: Icons.warning_amber_rounded,
-                              label: 'Severity',
-                              value: classification.severity,
-                              color: _editGetSeverityColor(
-                                classification.severity,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _editAiInfoCard(
-                              icon: Icons.speed_rounded,
-                              label: 'Confidence',
-                              value:
-                                  '${(classification.confidence * 100).toStringAsFixed(1)}%',
-                              color: Colors.blueAccent,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _editAiInfoCard(
-                              icon: Icons.label_rounded,
-                              label: 'Keywords',
-                              value: modalKeywordText,
-                              color: Colors.orangeAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      if (recoveryPlan != null) ...[
-                        const SizedBox(height: 18),
-                        const Text(
-                          'Recovery Plan',
-                          style: TextStyle(
-                            color: _primaryAqua,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        if (_safeAiStringList(
-                          recoveryPlan['home_care'],
-                        ).isNotEmpty)
-                          _editRecoverySection(
-                            icon: Icons.home_rounded,
-                            title: 'Home Care',
-                            items: _safeAiStringList(recoveryPlan['home_care']),
-                            color: Colors.tealAccent,
-                          ),
-                        if (_safeAiStringList(
-                          recoveryPlan['precautions'],
-                        ).isNotEmpty)
-                          _editRecoverySection(
-                            icon: Icons.shield_rounded,
-                            title: 'Precautions',
-                            items: _safeAiStringList(
-                              recoveryPlan['precautions'],
-                            ),
-                            color: Colors.amberAccent,
-                          ),
-                        if (_safeAiText(
-                          recoveryPlan['estimated_recovery'],
-                          fallback: '',
-                        ).isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 10),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: _primaryAqua.withValues(alpha: 0.2),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.schedule,
-                                    color: _primaryAqua,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    'Estimated Recovery: ',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  Text(
-                                    _safeAiText(
-                                      recoveryPlan['estimated_recovery'],
-                                      fallback: '',
-                                    ),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        if (_safeAiStringList(
-                          recoveryPlan['general_advice'],
-                        ).isNotEmpty)
-                          _editRecoverySection(
-                            icon: Icons.tips_and_updates_rounded,
-                            title: 'General Advice',
-                            items: _safeAiStringList(
-                              recoveryPlan['general_advice'],
-                            ),
-                            color: Colors.lightGreenAccent,
-                          ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-
-              // Footer
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _primaryAqua,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    icon: const Icon(Icons.check_rounded),
-                    label: const Text(
-                      'Done',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _editAiInfoCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    final safeValue = _safeAiText(value, fallback: 'N/A');
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 16),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(color: Colors.white60, fontSize: 12),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            safeValue,
-            style: TextStyle(
-              color: color,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _editRecoverySection({
-    required IconData icon,
-    required String title,
-    required List<String> items,
-    required Color color,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: color, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ...items.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Icon(
-                        Icons.circle,
-                        color: color.withValues(alpha: 0.6),
-                        size: 6,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        item,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _editGetCategoryColor(String category) {
-    switch (category) {
-      case 'Communicable Disease':
-        return Colors.orangeAccent;
-      case 'Non-Communicable Disease':
-        return Colors.purpleAccent;
-      case 'Emergency':
-        return Colors.redAccent;
-      case 'Prenatal Care':
-        return Colors.pinkAccent;
-      case 'Pediatric Care':
-        return Colors.cyanAccent;
-      case 'Routine Checkup':
-        return Colors.greenAccent;
-      default:
-        return _primaryAqua;
-    }
-  }
-
-  Color _editGetSeverityColor(String severity) {
-    switch (severity) {
-      case 'Critical':
-        return Colors.red;
-      case 'High':
-        return Colors.deepOrange;
-      case 'Medium':
-        return Colors.amber;
-      case 'Low':
-        return Colors.greenAccent;
-      default:
-        return Colors.white70;
-    }
-  }
 
   @override
   void dispose() {
@@ -8410,616 +6459,3 @@ class _EditCheckUpFullScreenModalState
 }
 
 // AI Classification Display Methods
-bool _isInvalidAiText(String? value) {
-  if (value == null) return true;
-  final normalized = value.trim().toLowerCase();
-  return normalized.isEmpty ||
-      normalized == 'undefined' ||
-      normalized == 'null';
-}
-
-String _safeAiText(dynamic value, {String fallback = 'N/A'}) {
-  if (value == null) return fallback;
-  final text = value.toString().trim();
-  return _isInvalidAiText(text) ? fallback : text;
-}
-
-List<String> _safeAiStringList(dynamic value) {
-  if (value is List) {
-    return value
-        .map((item) => _safeAiText(item, fallback: '').trim())
-        .where((item) => item.isNotEmpty)
-        .toList();
-  }
-  return const <String>[];
-}
-
-double _safeAiConfidence(dynamic value) {
-  final parsed = value is num
-      ? value.toDouble()
-      : double.tryParse(value?.toString() ?? '');
-  final confidence = parsed ?? 0.0;
-  if (confidence.isNaN) return 0.0;
-  if (confidence < 0) return 0.0;
-  if (confidence > 1) return 1.0;
-  return confidence;
-}
-
-List<String> _safeAiKeywords(dynamic rawKeywords) {
-  final text = _safeAiText(rawKeywords, fallback: '');
-  if (text.isEmpty) return const <String>[];
-
-  final seen = <String>{};
-  final keywords = <String>[];
-  for (final raw in text.split(',')) {
-    final keyword = _safeAiText(raw, fallback: '').trim();
-    if (keyword.isEmpty) continue;
-    final key = keyword.toLowerCase();
-    if (seen.add(key)) {
-      keywords.add(keyword);
-    }
-  }
-  return keywords;
-}
-
-Map<String, dynamic>? _parseAiRecoveryPlan(dynamic recoveryData) {
-  try {
-    Map<String, dynamic>? plan;
-    if (recoveryData is Map) {
-      plan = Map<String, dynamic>.from(recoveryData);
-    } else if (recoveryData is String && !_isInvalidAiText(recoveryData)) {
-      final decoded = jsonDecode(recoveryData);
-      if (decoded is Map) {
-        plan = Map<String, dynamic>.from(decoded);
-      }
-    }
-
-    if (plan == null) return null;
-
-    final homeCare = _safeAiStringList(plan['home_care']);
-    final precautions = _safeAiStringList(plan['precautions']);
-    final generalAdvice = _safeAiStringList(plan['general_advice']);
-    final estimatedRecovery = _safeAiText(
-      plan['estimated_recovery'],
-      fallback: '',
-    );
-
-    if (homeCare.isEmpty &&
-        precautions.isEmpty &&
-        generalAdvice.isEmpty &&
-        estimatedRecovery.isEmpty) {
-      return null;
-    }
-
-    return {
-      'home_care': homeCare,
-      'precautions': precautions,
-      'general_advice': generalAdvice,
-      'estimated_recovery': estimatedRecovery,
-    };
-  } catch (e) {
-    print('Error parsing recovery plan: $e');
-    return null;
-  }
-}
-
-Widget _buildAIClassificationSection(Map<String, dynamic> record) {
-  final category = _safeAiText(record['ai_category'], fallback: 'Unknown');
-  final severity = _safeAiText(record['ai_severity'], fallback: 'Unknown');
-  final confidence = _safeAiConfidence(record['ai_confidence']);
-  final method = _safeAiText(
-    record['ai_method'],
-    fallback: 'unknown',
-  ).toLowerCase();
-  final keywords = _safeAiKeywords(record['ai_keywords']);
-
-  final recoveryPlan = _parseAiRecoveryPlan(record['ai_recovery_plan']);
-
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: _sidebarDark.withValues(alpha: 0.96),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.16),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFBA68C8).withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(
-                    Icons.psychology_outlined,
-                    color: Color(0xFFBA68C8),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'AI Classification',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Machine-assisted interpretation attached to this check-up record.',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w500,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        (method == 'ml_model'
-                                ? const Color(0xFFBA68C8)
-                                : const Color(0xFF64B5F6))
-                            .withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color:
-                          (method == 'ml_model'
-                                  ? const Color(0xFFBA68C8)
-                                  : const Color(0xFF64B5F6))
-                              .withValues(alpha: 0.24),
-                    ),
-                  ),
-                  child: Text(
-                    method == 'ml_model' ? 'ML Model' : 'Rule-Based',
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                      color: method == 'ml_model'
-                          ? const Color(0xFFCE93D8)
-                          : const Color(0xFF90CAF9),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildAIBadge(
-                    label: 'Category',
-                    value: category,
-                    icon: Icons.category,
-                    color: _getCategoryColor(category),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildAIBadge(
-                    label: 'Severity',
-                    value: severity,
-                    icon: Icons.warning_amber,
-                    color: _getSeverityColor(severity),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.speed, size: 16, color: Color(0xFF90A4AE)),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Confidence',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: LinearProgressIndicator(
-                      value: confidence,
-                      backgroundColor: Colors.white.withValues(alpha: 0.08),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        confidence > 0.7
-                            ? const Color(0xFF66BB6A)
-                            : confidence > 0.4
-                            ? const Color(0xFFFFB74D)
-                            : const Color(0xFFE57373),
-                      ),
-                      minHeight: 8,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    '${(confidence * 100).toStringAsFixed(0)}%',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (keywords.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: keywords.take(5).map((keyword) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _primaryAqua.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _primaryAqua.withValues(alpha: 0.24),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      keyword,
-                      style: const TextStyle(
-                        fontSize: 10.5,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
-          ],
-        ),
-      ),
-      if (recoveryPlan != null) ...[
-        const SizedBox(height: 16),
-        _buildRecoveryRecommendations(recoveryPlan),
-      ],
-    ],
-  );
-}
-
-Widget _buildRecoveryRecommendations(Map<String, dynamic> recoveryPlan) {
-  final homeCare = _safeAiStringList(recoveryPlan['home_care']);
-  final precautions = _safeAiStringList(recoveryPlan['precautions']);
-  final estimatedRecovery = _safeAiText(
-    recoveryPlan['estimated_recovery'],
-    fallback: '',
-  );
-  final generalAdvice = _safeAiStringList(recoveryPlan['general_advice']);
-
-  return Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: _sidebarDark.withValues(alpha: 0.96),
-      borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFF81C784).withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(
-                Icons.healing_outlined,
-                color: Color(0xFF81C784),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'AI-Assisted Home-Care Recommendation',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        if (estimatedRecovery.isNotEmpty) ...[
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.schedule_outlined,
-                  color: Color(0xFF64B5F6),
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Estimated Recovery: $estimatedRecovery',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
-
-        // Home Care
-        if (homeCare.isNotEmpty) ...[
-          _buildRecommendationSection(
-            'Home Care Instructions',
-            Icons.home_outlined,
-            homeCare,
-            Colors.orange.shade700,
-            Colors.orange.shade50,
-          ),
-          const SizedBox(height: 10),
-        ],
-
-        // Precautions
-        if (precautions.isNotEmpty) ...[
-          _buildRecommendationSection(
-            'Important Precautions',
-            Icons.warning_amber_rounded,
-            precautions,
-            Colors.red.shade700,
-            Colors.red.shade50,
-          ),
-          const SizedBox(height: 10),
-        ],
-
-        // General Advice
-        if (generalAdvice.isNotEmpty) ...[
-          _buildRecommendationSection(
-            'General Advice',
-            Icons.info_outline,
-            generalAdvice,
-            Colors.teal.shade700,
-            Colors.teal.shade50,
-          ),
-        ],
-
-        // Disclaimer
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.04),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFFFB74D).withValues(alpha: 0.2),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.info_outline_rounded,
-                color: Color(0xFFFFB74D),
-                size: 14,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: const Text(
-                  'AI-generated information provides supportive home-care '
-                  'guidance only. Medication and clinical decisions remain '
-                  'under the attending physician.',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    color: Colors.white70,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildRecommendationSection(
-  String title,
-  IconData icon,
-  List<String> items,
-  Color textColor,
-  Color bgColor,
-) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: bgColor.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: textColor.withValues(alpha: 0.22)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 15, color: textColor),
-                const SizedBox(width: 6),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ...items.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 6),
-                      width: 5,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: textColor.withValues(alpha: 0.9),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        item,
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          color: Colors.white70,
-                          height: 1.45,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ],
-  );
-}
-
-Widget _buildAIBadge({
-  required String label,
-  required String value,
-  required IconData icon,
-  required Color color,
-}) {
-  return Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: color.withValues(alpha: 0.22), width: 1.2),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.white70,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 12.5,
-            color: color,
-            fontWeight: FontWeight.bold,
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
-    ),
-  );
-}
-
-Color _getCategoryColor(String category) {
-  switch (category.toLowerCase()) {
-    case 'emergency':
-      return Colors.red;
-    case 'communicable disease':
-      return Colors.orange;
-    case 'non-communicable disease':
-      return Colors.blue;
-    case 'prenatal care':
-      return Colors.pink;
-    case 'pediatric care':
-      return Colors.purple;
-    default:
-      return Colors.green;
-  }
-}
-
-Color _getSeverityColor(String severity) {
-  switch (severity.toLowerCase()) {
-    case 'critical':
-      return Colors.red.shade700;
-    case 'high':
-      return Colors.orange.shade700;
-    case 'medium':
-      return Colors.yellow.shade700;
-    default:
-      return Colors.green.shade600;
-  }
-}

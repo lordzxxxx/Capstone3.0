@@ -133,9 +133,9 @@ class _LiquidGlassNavbarState extends State<LiquidGlassNavbar> {
         );
 
         return Padding(
-          padding: EdgeInsets.symmetric(horizontal: horizontalMargin).copyWith(
-            top: isPhone ? 10 : 16,
-          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalMargin,
+          ).copyWith(top: isPhone ? 10 : 16),
           child: Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
@@ -247,7 +247,11 @@ class _Brand extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(width: compact ? 24 : 28, height: compact ? 24 : 28, child: logo),
+              SizedBox(
+                width: compact ? 24 : 28,
+                height: compact ? 24 : 28,
+                child: logo,
+              ),
               const SizedBox(width: 8),
               Text(
                 label,
@@ -354,7 +358,9 @@ class _MobileNavLink extends StatelessWidget {
                     fontFamily: 'Manrope',
                     fontSize: 14.5,
                     fontWeight: item.active ? FontWeight.w700 : FontWeight.w600,
-                    color: Colors.white.withValues(alpha: item.active ? 1 : 0.86),
+                    color: Colors.white.withValues(
+                      alpha: item.active ? 1 : 0.86,
+                    ),
                   ),
                 ),
               ),

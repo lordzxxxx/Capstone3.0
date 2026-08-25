@@ -1,5 +1,6 @@
 import 'report_download_stub.dart'
-    if (dart.library.html) 'report_download_web.dart' as impl;
+    if (dart.library.html) 'report_download_web.dart'
+    as impl;
 
 bool downloadReportFile({
   required List<int> bytes,

@@ -4,9 +4,10 @@ import 'package:path/path.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
+import 'package:mycapstone_project/web/shared/services/web_record_sync.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
 class DatabaseHelper {
@@ -56,7 +57,7 @@ class DatabaseHelper {
           );
         }
       } catch (e) {
-        print('Error during database upgrade: $e');
+        debugPrint('Error during database upgrade: $e');
         // Column might already exist, continue
       }
     }
@@ -86,10 +87,10 @@ class DatabaseHelper {
   Future<String> insertRecord(Map<String, dynamic> record) async {
     final id = record['id'] ?? DateTime.now().millisecondsSinceEpoch.toString();
 
-    print('🔵 [DATABASE_HELPER] insertRecord called');
-    print('🔵 [DATABASE_HELPER] Platform check - kIsWeb: $kIsWeb');
-    print('🔵 [DATABASE_HELPER] Record ID: $id');
-    print('🔵 [DATABASE_HELPER] Record patient: ${record['patient']}');
+    debugPrint('🔵 [DATABASE_HELPER] insertRecord called');
+    debugPrint('🔵 [DATABASE_HELPER] Platform check - kIsWeb: $kIsWeb');
+    debugPrint('🔵 [DATABASE_HELPER] Record ID: $id');
+    debugPrint('🔵 [DATABASE_HELPER] Record patient: ${record['patient']}');
 
     // On web, save directly to Firebase
     if (kIsWeb) {
@@ -98,36 +99,40 @@ class DatabaseHelper {
             .loadCurrentScope();
         // Check authentication status
         final currentUser = FirebaseAuth.instance.currentUser;
-        print(
+        debugPrint(
           '🔵 [DATABASE_HELPER] Authentication check - User logged in: ${currentUser != null}',
         );
         if (currentUser != null) {
-          print('🔵 [DATABASE_HELPER] User ID: ${currentUser.uid}');
-          print('🔵 [DATABASE_HELPER] User email: ${currentUser.email}');
+          debugPrint('🔵 [DATABASE_HELPER] User ID: ${currentUser.uid}');
+          debugPrint('🔵 [DATABASE_HELPER] User email: ${currentUser.email}');
         } else {
-          print('⚠️ [DATABASE_HELPER] WARNING: No authenticated user!');
-          print(
+          debugPrint('⚠️ [DATABASE_HELPER] WARNING: No authenticated user!');
+          debugPrint(
             '⚠️ [DATABASE_HELPER] If using OPTION 2 Firestore rules, this will fail!',
           );
         }
 
-        print('🔵 [DATABASE_HELPER] Preparing Firestore write...');
-        final recordWithId = applyBarangayScopeToRecord({
-          ...record,
-          'id': id,
-          'createdBy': currentUser?.uid ?? '',
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, accessScope: accessScope);
-        print(
+        debugPrint('🔵 [DATABASE_HELPER] Preparing Firestore write...');
+        final recordWithId = applyBarangayScopeToRecord(
+          WebRecordWriteCoordinator.prepareCreate({
+            ...record,
+            'createdBy': currentUser?.uid ?? '',
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, documentId: id),
+          accessScope: accessScope,
+        );
+        debugPrint(
           '🔵 [DATABASE_HELPER] Writing to Firestore collection: checkup_records',
         );
-        print('🔵 [DATABASE_HELPER] Document ID: $id');
-        print('🔵 [DATABASE_HELPER] Record data: $recordWithId');
-        print('🔵 [DATABASE_HELPER] Starting Firestore .set() operation...');
+        debugPrint('🔵 [DATABASE_HELPER] Document ID: $id');
+        debugPrint('🔵 [DATABASE_HELPER] Record data: $recordWithId');
+        debugPrint(
+          '🔵 [DATABASE_HELPER] Starting Firestore .set() operation...',
+        );
 
         final startTime = DateTime.now();
-        print('🔵 [DATABASE_HELPER] Write started at: $startTime');
+        debugPrint('🔵 [DATABASE_HELPER] Write started at: $startTime');
 
         final documentRef = await resolveScopedRecordDocumentReference(
           getFirestoreInstance(),
@@ -136,16 +141,22 @@ class DatabaseHelper {
           accessScope: accessScope,
           record: recordWithId,
         );
-        await documentRef.set(recordWithId);
+        await WebRecordWriteCoordinator(
+          firestore: getFirestoreInstance(),
+        ).create(reference: documentRef, record: recordWithId);
 
         final endTime = DateTime.now();
         final elapsed = endTime.difference(startTime).inMilliseconds;
-        print('✅ [DATABASE_HELPER] Firestore write completed in ${elapsed}ms');
+        debugPrint(
+          '✅ [DATABASE_HELPER] Firestore write completed in ${elapsed}ms',
+        );
 
-        print('✅ [DATABASE_HELPER] Firestore write completed successfully!');
+        debugPrint(
+          '✅ [DATABASE_HELPER] Firestore write completed successfully!',
+        );
         return id;
       } on FirebaseException catch (e) {
-        print(
+        debugPrint(
           '❌ [DATABASE_HELPER] FirebaseException: ${e.code} - ${e.message}',
         );
         if (e.code == 'permission-denied') {
@@ -157,9 +168,9 @@ class DatabaseHelper {
         }
         rethrow;
       } catch (e, stackTrace) {
-        print('❌ [DATABASE_HELPER] Error saving to Firebase on web: $e');
-        print('❌ [DATABASE_HELPER] Error type: ${e.runtimeType}');
-        print('❌ [DATABASE_HELPER] Stack trace: $stackTrace');
+        debugPrint('❌ [DATABASE_HELPER] Error saving to Firebase on web: $e');
+        debugPrint('❌ [DATABASE_HELPER] Error type: ${e.runtimeType}');
+        debugPrint('❌ [DATABASE_HELPER] Stack trace: $stackTrace');
         rethrow;
       }
     }
@@ -195,9 +206,15 @@ class DatabaseHelper {
           getFirestoreInstance(),
           _collectionName,
           accessScope,
-        ).snapshots().map((snapshot) {
+        ).snapshots(includeMetadataChanges: true).map((snapshot) {
           final scopedDocs = snapshot.docs
-              .map(materializeFirestoreRecord)
+              .map(
+                (document) => attachWebSyncMetadata(
+                  materializeFirestoreRecord(document),
+                  hasPendingWrites: document.metadata.hasPendingWrites,
+                  isFromCache: snapshot.metadata.isFromCache,
+                ),
+              )
               .where((record) => recordMatchesAccessScope(record, accessScope));
           return sortRecordsByActivityDateDescending(scopedDocs);
         });
@@ -224,11 +241,17 @@ class DatabaseHelper {
         );
         final snapshot = await query.get();
         final scopedDocs = snapshot.docs
-            .map(materializeFirestoreRecord)
+            .map(
+              (document) => attachWebSyncMetadata(
+                materializeFirestoreRecord(document),
+                hasPendingWrites: document.metadata.hasPendingWrites,
+                isFromCache: snapshot.metadata.isFromCache,
+              ),
+            )
             .where((record) => recordMatchesAccessScope(record, accessScope));
         return sortRecordsByActivityDateDescending(scopedDocs);
       } catch (e) {
-        print('Error fetching from Firebase on web: $e');
+        debugPrint('Error fetching from Firebase on web: $e');
         return [];
       }
     }
@@ -271,19 +294,16 @@ class DatabaseHelper {
           record: updatedRecord,
           existingPath: existingPath,
         );
-        await documentRef
-            .update(updatedRecord)
-            .timeout(
-              const Duration(seconds: 30),
-              onTimeout: () {
-                throw TimeoutException(
-                  'Firestore update timed out after 30 seconds',
-                );
-              },
-            );
+        await WebRecordWriteCoordinator(
+          firestore: getFirestoreInstance(),
+        ).update(
+          reference: documentRef,
+          changes: updatedRecord,
+          expectedVersion: recordVersionOf(record),
+        );
         return 1;
       } catch (e) {
-        print('Error updating Firebase on web: $e');
+        debugPrint('Error updating Firebase on web: $e');
         rethrow;
       }
     }
@@ -330,7 +350,7 @@ class DatabaseHelper {
         );
         return 1;
       } catch (e) {
-        print('Error deleting from Firebase on web: $e');
+        debugPrint('Error deleting from Firebase on web: $e');
         rethrow;
       }
     }
@@ -352,7 +372,7 @@ class DatabaseHelper {
             .doc(id)
             .delete();
       } catch (e) {
-        print('Error deleting from Firebase: $e');
+        debugPrint('Error deleting from Firebase: $e');
       }
     }
 
@@ -368,7 +388,7 @@ class DatabaseHelper {
       try {
         await deleteRecord(id);
       } catch (e) {
-        print('Error deleting record $id: $e');
+        debugPrint('Error deleting record $id: $e');
         failedIds.add(id);
       }
     }
@@ -383,7 +403,7 @@ class DatabaseHelper {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        print('No internet connection. Will sync later.');
+        debugPrint('No internet connection. Will sync later.');
         return;
       }
 
@@ -414,13 +434,13 @@ class DatabaseHelper {
             whereArgs: [id],
           );
 
-          print('Synced record: $id');
+          debugPrint('Synced record: $id');
         } catch (e) {
-          print('Error syncing record: $e');
+          debugPrint('Error syncing record: $e');
         }
       }
     } catch (e) {
-      print('Error during sync: $e');
+      debugPrint('Error during sync: $e');
     }
   }
 
@@ -432,7 +452,7 @@ class DatabaseHelper {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        print('No internet connection. Using offline data.');
+        debugPrint('No internet connection. Using offline data.');
         return;
       }
 
@@ -454,9 +474,9 @@ class DatabaseHelper {
         );
       }
 
-      print('Synced ${snapshot.docs.length} records from Firebase');
+      debugPrint('Synced ${snapshot.docs.length} records from Firebase');
     } catch (e) {
-      print('Error syncing from Firebase: $e');
+      debugPrint('Error syncing from Firebase: $e');
     }
   }
 
@@ -467,7 +487,7 @@ class DatabaseHelper {
 
     Connectivity().onConnectivityChanged.listen((result) {
       if (!result.contains(ConnectivityResult.none)) {
-        print('Internet connected! Syncing data...');
+        debugPrint('Internet connected! Syncing data...');
         _syncToFirebase();
         syncFromFirebase();
       }
@@ -708,15 +728,15 @@ class DatabaseHelper {
               .set(sample);
           inserted++;
         } catch (e) {
-          print('Error inserting sample checkup ${sample['id']}: $e');
+          debugPrint('Error inserting sample checkup ${sample['id']}: $e');
         }
       }
 
-      print(
+      debugPrint(
         '✅ Successfully seeded $inserted sample checkup records to Firestore',
       );
     } catch (e) {
-      print('❌ Error seeding checkup data: $e');
+      debugPrint('❌ Error seeding checkup data: $e');
       rethrow;
     }
   }

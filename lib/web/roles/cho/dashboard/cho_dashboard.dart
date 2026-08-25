@@ -209,7 +209,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     );
     _accessScope = scope;
     if (kDebugMode) {
-      print(
+      debugPrint(
         'Dashboard scope resolved: role=${scope.role}, barangayCode=${scope.barangayCode}, canViewAll=${scope.canViewAllBarangays}',
       );
     }
@@ -230,7 +230,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       }, SetOptions(merge: true));
       UserAccessScopeService.instance.clearCachedScope(userId: user.uid);
       if (kDebugMode) {
-        print(
+        debugPrint(
           'Dashboard access - ensured Firestore role mirror: $normalizedRole',
         );
       }
@@ -240,7 +240,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       if (_initialDashboardSyncTriggered && !_roleMirrorResyncTriggered) {
         _roleMirrorResyncTriggered = true;
         if (kDebugMode) {
-          print(
+          debugPrint(
             'Dashboard access - role mirror updated post-start; restarting dashboard sync once',
           );
         }
@@ -248,7 +248,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Dashboard access - Firestore role mirror update failed: $e');
+        debugPrint(
+          'Dashboard access - Firestore role mirror update failed: $e',
+        );
       }
     }
   }
@@ -257,7 +259,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     for (int attempt = 1; attempt <= 3; attempt++) {
       try {
         if (kDebugMode) {
-          print(
+          debugPrint(
             'Dashboard access - Firestore role check (attempt $attempt/3)...',
           );
         }
@@ -269,7 +271,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
 
         if (!userDoc.exists) {
           if (kDebugMode) {
-            print('Dashboard access - user doc not found in Firestore');
+            debugPrint('Dashboard access - user doc not found in Firestore');
           }
           if (attempt < 3) {
             await Future.delayed(Duration(milliseconds: 300 * attempt));
@@ -280,12 +282,12 @@ class _ChoDashboardState extends State<ChoDashboard> {
 
         final role = (userDoc.data()?['role'] ?? '').toString();
         if (kDebugMode) {
-          print('Dashboard access - Firestore role: "$role"');
+          debugPrint('Dashboard access - Firestore role: "$role"');
         }
         return role;
       } catch (e) {
         if (kDebugMode) {
-          print(
+          debugPrint(
             'Dashboard access - Firestore check attempt $attempt failed: $e',
           );
         }
@@ -301,7 +303,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
   Future<String?> _readRoleFromRealtimeDb(User user) async {
     try {
       if (kDebugMode) {
-        print('Dashboard access - checking role from Realtime Database...');
+        debugPrint(
+          'Dashboard access - checking role from Realtime Database...',
+        );
       }
       final roleSnapshot = await FirebaseDatabase.instance
           .ref()
@@ -312,18 +316,18 @@ class _ChoDashboardState extends State<ChoDashboard> {
           .timeout(const Duration(seconds: 12));
       if (!roleSnapshot.exists || roleSnapshot.value == null) {
         if (kDebugMode) {
-          print('Dashboard access - RTDB role not found');
+          debugPrint('Dashboard access - RTDB role not found');
         }
         return null;
       }
       final role = roleSnapshot.value.toString();
       if (kDebugMode) {
-        print('Dashboard access - RTDB role: "$role"');
+        debugPrint('Dashboard access - RTDB role: "$role"');
       }
       return role;
     } catch (e) {
       if (kDebugMode) {
-        print('Dashboard access - RTDB role check failed: $e');
+        debugPrint('Dashboard access - RTDB role check failed: $e');
       }
       return null;
     }
@@ -351,7 +355,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         final argRole = (args['role'] ?? '').toString().trim().toLowerCase();
         if ((argUid.isEmpty || argUid == user.uid) && _isChoRole(argRole)) {
           if (kDebugMode) {
-            print('Dashboard access granted via trusted route arguments');
+            debugPrint('Dashboard access granted via trusted route arguments');
           }
           await _ensureFirestoreRoleMirror(user, argRole);
           _authorizeAndStart();
@@ -362,7 +366,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
       final firestoreRole = await _readRoleFromFirestore(user);
       if (_isChoRole(firestoreRole ?? '')) {
         if (kDebugMode) {
-          print('Dashboard access granted via Firestore role: $firestoreRole');
+          debugPrint(
+            'Dashboard access granted via Firestore role: $firestoreRole',
+          );
         }
         await _ensureFirestoreRoleMirror(user, firestoreRole!);
         _authorizeAndStart();
@@ -373,7 +379,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       final realtimeRole = await _readRoleFromRealtimeDb(user);
       if (_isChoRole(realtimeRole ?? '')) {
         if (kDebugMode) {
-          print(
+          debugPrint(
             'Dashboard access granted via Realtime Database role: $realtimeRole',
           );
         }
@@ -384,7 +390,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
 
       // Try custom claims fallback
       try {
-        if (kDebugMode) print('Dashboard access - checking custom claims...');
+        if (kDebugMode) {
+          debugPrint('Dashboard access - checking custom claims...');
+        }
         final idToken = await user
             .getIdTokenResult(true)
             .timeout(const Duration(seconds: 12));
@@ -396,12 +404,14 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   .toList()
             : <String>[];
         if (kDebugMode) {
-          print('Dashboard access - custom claims role: "$claimRole"');
+          debugPrint('Dashboard access - custom claims role: "$claimRole"');
         }
         final hasChoClaimRole =
             _isChoRole(claimRole) || claimRoles.any(_isChoRole);
         if (hasChoClaimRole) {
-          if (kDebugMode) print('Dashboard access granted via custom claims');
+          if (kDebugMode) {
+            debugPrint('Dashboard access granted via custom claims');
+          }
           final resolvedClaimRole = _isChoRole(claimRole)
               ? claimRole
               : claimRoles.firstWhere(_isChoRole, orElse: () => 'cho');
@@ -410,11 +420,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
           return;
         }
       } catch (e) {
-        if (kDebugMode) print('⚠ Custom claims check failed: $e');
+        if (kDebugMode) debugPrint('⚠ Custom claims check failed: $e');
       }
 
       if (kDebugMode) {
-        print('Dashboard access denied - no valid CHO role found');
+        debugPrint('Dashboard access denied - no valid CHO role found');
       }
       Get.snackbar(
         'Access denied',
@@ -426,7 +436,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       await Future.delayed(const Duration(milliseconds: 500));
       Get.offAllNamed(WebRoutes.login);
     } catch (e) {
-      if (kDebugMode) print('Access check error: $e');
+      if (kDebugMode) debugPrint('Access check error: $e');
       Get.snackbar(
         'Error',
         'Could not verify access: $e',
@@ -1078,7 +1088,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       await subscription.cancel();
     } catch (e) {
       if (kDebugMode) {
-        print('Stream cancel warning: $e');
+        debugPrint('Stream cancel warning: $e');
       }
     }
   }
@@ -1117,7 +1127,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       _markSyncPending();
       await _cancelAllSyncSubscriptions();
       if (!mounted) return;
-      if (kDebugMode) print('Starting CHO dashboard sync...');
+      if (kDebugMode) debugPrint('Starting CHO dashboard sync...');
       await _startPatientsSync();
       await _startCheckupSync();
       await _startPrenatalSync();
@@ -1177,7 +1187,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
 
     _choRootFallbackEnabled[collectionName] = true;
     if (kDebugMode) {
-      print(
+      debugPrint(
         'CHO fallback enabled for $collectionName: retrying with root collection query',
       );
     }
@@ -1194,7 +1204,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       _isLoading = true;
       _syncStatus['patient_records'] = false;
     });
-    if (kDebugMode) print('Syncing patient records...');
+    if (kDebugMode) debugPrint('Syncing patient records...');
 
     final accessScope = _accessScope ?? await _ensureAccessScopeLoaded();
     Query<Map<String, dynamic>> patientQuery = _buildModuleQuery(
@@ -1291,7 +1301,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
               return aName.compareTo(bName);
             });
 
-            if (kDebugMode) print('✓ Synced ${rows.length} patient records');
+            if (kDebugMode) {
+              debugPrint('✓ Synced ${rows.length} patient records');
+            }
             setState(() {
               _rows
                 ..clear()
@@ -1320,11 +1332,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
           },
           onError: (e) {
             if (!mounted) return;
-            if (kDebugMode) print('✗ Patient sync error: $e');
+            if (kDebugMode) debugPrint('✗ Patient sync error: $e');
             if (!_patientSyncFallbackAttempted) {
               _patientSyncFallbackAttempted = true;
               if (kDebugMode) {
-                print(
+                debugPrint(
                   'Primary patient Firestore sync failed; retrying without createdAt sort: $e',
                 );
               }
@@ -1361,7 +1373,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     _checkupSubscription = null;
     await _cancelQuerySubscription(existingSubscription);
     if (!mounted) return;
-    if (kDebugMode) print('Syncing checkup records...');
+    if (kDebugMode) debugPrint('Syncing checkup records...');
     final accessScope = _accessScope ?? await _ensureAccessScopeLoaded();
     _checkupSubscription = _buildModuleQuery('checkup_records', accessScope)
         .snapshots()
@@ -1408,7 +1420,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               }
             }
             if (kDebugMode) {
-              print(
+              debugPrint(
                 '✓ Synced ${snap.docs.length} checkup records ($total this month)',
               );
             }
@@ -1426,7 +1438,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             });
           },
           onError: (e) {
-            if (kDebugMode) print('✗ Checkup sync error: $e');
+            if (kDebugMode) debugPrint('✗ Checkup sync error: $e');
             if (!mounted) return;
             if (_activateChoRootFallbackIfNeeded(
               'checkup_records',
@@ -1446,7 +1458,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     _prenatalSubscription = null;
     await _cancelQuerySubscription(existingSubscription);
     if (!mounted) return;
-    if (kDebugMode) print('Syncing prenatal records...');
+    if (kDebugMode) debugPrint('Syncing prenatal records...');
     final accessScope = _accessScope ?? await _ensureAccessScopeLoaded();
     _prenatalSubscription = _buildModuleQuery('prenatal_records', accessScope)
         .snapshots()
@@ -1472,7 +1484,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               if (dueDate != null) upcomingPrenatal.add(dueDate);
             }
             if (kDebugMode) {
-              print(
+              debugPrint(
                 '✓ Synced ${snap.docs.length} prenatal records ($active active)',
               );
             }
@@ -1487,7 +1499,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             });
           },
           onError: (e) {
-            if (kDebugMode) print('✗ Prenatal sync error: $e');
+            if (kDebugMode) debugPrint('✗ Prenatal sync error: $e');
             if (!mounted) return;
             if (_activateChoRootFallbackIfNeeded(
               'prenatal_records',
@@ -1507,7 +1519,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     _immunizationSubscription = null;
     await _cancelQuerySubscription(existingSubscription);
     if (!mounted) return;
-    if (kDebugMode) print('Syncing immunization records...');
+    if (kDebugMode) debugPrint('Syncing immunization records...');
     final accessScope = _accessScope ?? await _ensureAccessScopeLoaded();
     _immunizationSubscription =
         _buildModuleQuery(
@@ -1532,7 +1544,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               if (dueDate != null) upcomingImmunizations.add(dueDate);
             }
             if (kDebugMode) {
-              print('✓ Synced ${snap.docs.length} immunization records');
+              debugPrint('✓ Synced ${snap.docs.length} immunization records');
             }
             setState(() {
               _immunizationRows
@@ -1547,7 +1559,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             });
           },
           onError: (e) {
-            if (kDebugMode) print('✗ Immunization sync error: $e');
+            if (kDebugMode) debugPrint('✗ Immunization sync error: $e');
             if (!mounted) return;
             if (_activateChoRootFallbackIfNeeded(
               'immunization_records',
@@ -1567,7 +1579,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     _morbiditySubscription = null;
     await _cancelQuerySubscription(existingSubscription);
     if (!mounted) return;
-    if (kDebugMode) print('Syncing morbidity records...');
+    if (kDebugMode) debugPrint('Syncing morbidity records...');
     final accessScope = _accessScope ?? await _ensureAccessScopeLoaded();
     _morbiditySubscription = _buildModuleQuery('morbidity_records', accessScope)
         .snapshots()
@@ -1643,7 +1655,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             }
 
             if (kDebugMode) {
-              print('✓ Synced ${snap.docs.length} morbidity records');
+              debugPrint('✓ Synced ${snap.docs.length} morbidity records');
             }
             setState(() {
               _morbidityRows
@@ -1657,7 +1669,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             });
           },
           onError: (e) {
-            if (kDebugMode) print('✗ Morbidity sync error: $e');
+            if (kDebugMode) debugPrint('✗ Morbidity sync error: $e');
             if (!mounted) return;
             if (_activateChoRootFallbackIfNeeded(
               'morbidity_records',
@@ -1677,7 +1689,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     _mortalitySubscription = null;
     await _cancelQuerySubscription(existingSubscription);
     if (!mounted) return;
-    if (kDebugMode) print('Syncing mortality records...');
+    if (kDebugMode) debugPrint('Syncing mortality records...');
     final accessScope = _accessScope ?? await _ensureAccessScopeLoaded();
     _mortalitySubscription = _buildModuleQuery('mortality_records', accessScope)
         .snapshots()
@@ -1685,7 +1697,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
           (snap) {
             if (!mounted) return;
             if (kDebugMode) {
-              print('✓ Synced ${snap.docs.length} mortality records');
+              debugPrint('✓ Synced ${snap.docs.length} mortality records');
             }
             setState(() {
               _mortalityRows
@@ -1701,7 +1713,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             });
           },
           onError: (e) {
-            if (kDebugMode) print('✗ Mortality sync error: $e');
+            if (kDebugMode) debugPrint('✗ Mortality sync error: $e');
             if (!mounted) return;
             if (_activateChoRootFallbackIfNeeded(
               'mortality_records',
@@ -1721,7 +1733,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     _referralSubscription = null;
     await _cancelQuerySubscription(existingSubscription);
     if (!mounted) return;
-    if (kDebugMode) print('Syncing referrals...');
+    if (kDebugMode) debugPrint('Syncing referrals...');
     _referralSubscription = _firestore
         .collection('referrals')
         .snapshots()
@@ -1731,7 +1743,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
             final rows = snap.docs
                 .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
                 .toList(growable: false);
-            if (kDebugMode) print('✓ Synced ${snap.docs.length} referrals');
+            if (kDebugMode) {
+              debugPrint('✓ Synced ${snap.docs.length} referrals');
+            }
             setState(() {
               _referralRows
                 ..clear()
@@ -1746,7 +1760,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 !_referralTargetRetryPending) {
               _referralTargetRetryPending = true;
               if (kDebugMode) {
-                print(
+                debugPrint(
                   'Referral sync target conflict detected; restarting listener...',
                 );
               }
@@ -1758,7 +1772,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               });
               return;
             }
-            if (kDebugMode) print('✗ Referral sync error: $e');
+            if (kDebugMode) debugPrint('✗ Referral sync error: $e');
             if (!mounted) return;
             setState(() => _syncStatus['referrals'] = false);
           },
@@ -1878,7 +1892,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       }
     } catch (error) {
       if (kDebugMode) {
-        print('Doctor availability registry read failed: $error');
+        debugPrint('Doctor availability registry read failed: $error');
       }
     }
 
@@ -1898,7 +1912,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       }
     } catch (error) {
       if (kDebugMode) {
-        print('Doctor availability user read failed: $error');
+        debugPrint('Doctor availability user read failed: $error');
       }
     }
 
@@ -5155,7 +5169,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       _chartGreen,
     ];
 
-    final total = values.fold<int>(0, (sum, value) => sum + value);
+    final total = values.fold<int>(0, (total, value) => total + value);
     if (total == 0) {
       return Center(
         child: Text(
@@ -5398,7 +5412,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     final riskValues = rawRiskValues
         .take(labels.length)
         .toList(growable: false);
-    final total = riskValues.fold<int>(0, (sum, item) => sum + item);
+    final total = riskValues.fold<int>(0, (total, item) => total + item);
     if (total == 0) {
       return Center(
         child: Text(
@@ -5747,7 +5761,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       _chartCyan,
       _chartLime,
     ];
-    final total = values.fold<int>(0, (sum, v) => sum + v);
+    final total = values.fold<int>(0, (total, value) => total + value);
     if (total == 0) {
       return Center(
         child: Text(
@@ -5988,184 +6002,190 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         _buildExecutiveHero(),
                         const SizedBox(height: 14),
                         _buildOperationalInsights(),
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              margin: const EdgeInsets.only(bottom: 14),
-              decoration: BoxDecoration(
-                color: ChoColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: ChoColors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'CHO Dashboard: Firestore-powered patient monitoring, service delivery tracking, and public health risk surveillance.',
-                    style: TextStyle(
-                      color: ChoColors.text,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  // Sync status indicator
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: ChoColors.surfaceAlt,
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          _syncStatus.values.every((v) => v)
-                              ? Icons.cloud_done
-                              : Icons.cloud_sync,
-                          color: _syncStatus.values.every((v) => v)
-                              ? AppColors.success
-                              : ChoColors.aqua,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _syncStatus.values.every((v) => v)
-                              ? 'All Firestore collections synced ✓'
-                              : 'Syncing Firestore collections...',
-                          style: TextStyle(
-                            color: _syncStatus.values.every((v) => v)
-                                ? AppColors.success
-                                : ChoColors.aqua,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                        const SizedBox(height: 14),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          margin: const EdgeInsets.only(bottom: 14),
+                          decoration: BoxDecoration(
+                            color: ChoColors.surface,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: ChoColors.border),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'CHO Dashboard: Firestore-powered patient monitoring, service delivery tracking, and public health risk surveillance.',
+                                style: TextStyle(
+                                  color: ChoColors.text,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              // Sync status indicator
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: ChoColors.surfaceAlt,
+                                  borderRadius: BorderRadius.circular(9),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _syncStatus.values.every((v) => v)
+                                          ? Icons.cloud_done
+                                          : Icons.cloud_sync,
+                                      color: _syncStatus.values.every((v) => v)
+                                          ? AppColors.success
+                                          : ChoColors.aqua,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _syncStatus.values.every((v) => v)
+                                          ? 'All Firestore collections synced ✓'
+                                          : 'Syncing Firestore collections...',
+                                      style: TextStyle(
+                                        color:
+                                            _syncStatus.values.every((v) => v)
+                                            ? AppColors.success
+                                            : ChoColors.aqua,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                        _buildAnalyticsFilterBar(),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'Program Performance Snapshot',
+                          style: TextStyle(
+                            color: _lightOffWhite,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Live service volumes for the active reporting window.',
+                          style: TextStyle(
+                            color: _lightOffWhite.withValues(alpha: 0.55),
+                            fontSize: 11,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            const gap = 10.0;
+                            final columns = constraints.maxWidth >= 1700
+                                ? 7
+                                : constraints.maxWidth >= 1320
+                                ? 6
+                                : constraints.maxWidth >= 980
+                                ? 4
+                                : constraints.maxWidth >= 620
+                                ? 2
+                                : 1;
+                            final cardWidth = columns == 1
+                                ? constraints.maxWidth
+                                : (constraints.maxWidth -
+                                          (gap * (columns - 1))) /
+                                      columns;
+                            final cards = <Widget>[
+                              _summaryCard(
+                                'Patient Records',
+                                _safeMetricText(_totalPatients),
+                                Icons.people,
+                                _primaryAqua,
+                              ),
+                              _summaryCard(
+                                'Checkup Records',
+                                _safeMetricText(_checkupsThisMonth),
+                                Icons.medical_services,
+                                _secondaryIceBlue,
+                              ),
+                              _summaryCard(
+                                'Active Prenatal Cases',
+                                _safeMetricText(_activePrenatal),
+                                Icons.pregnant_woman,
+                                _primaryAqua,
+                              ),
+                              _summaryCard(
+                                'Immunization Records',
+                                _safeMetricText(_immunizationRecords),
+                                Icons.vaccines,
+                                _chartLime,
+                              ),
+                              _summaryCard(
+                                'Morbidity Reports',
+                                _safeMetricText(_morbidityReports),
+                                Icons.monitor_heart,
+                                _chartCyan,
+                              ),
+                              _summaryCard(
+                                'Mortality Reports',
+                                _safeMetricText(_mortalityReports),
+                                Icons.heart_broken,
+                                _secondaryIceBlue,
+                              ),
+                              _summaryCard(
+                                'Referral Reports',
+                                _safeMetricText(_referralReports),
+                                Icons.assignment_ind_outlined,
+                                _primaryAqua,
+                              ),
+                            ];
+                            return Wrap(
+                              spacing: gap,
+                              runSpacing: gap,
+                              children: cards
+                                  .map(
+                                    (card) =>
+                                        SizedBox(width: cardWidth, child: card),
+                                  )
+                                  .toList(growable: false),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        _buildBarangayDemographicsExplorer(),
+                        const SizedBox(height: 14),
+                        _buildDoctorAvailabilityPlanner(),
+                        const SizedBox(height: 14),
+                        _buildPowerBiCharts(),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'Population Follow-up Queue',
+                          style: TextStyle(
+                            color: _lightOffWhite,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Patient-level continuity view for scheduling and outreach coordination.',
+                          style: TextStyle(
+                            color: _lightOffWhite.withValues(alpha: 0.55),
+                            fontSize: 11,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildPatientQueueSection(),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            _buildAnalyticsFilterBar(),
-            const SizedBox(height: 14),
-            const Text(
-              'Program Performance Snapshot',
-              style: TextStyle(
-                color: _lightOffWhite,
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Live service volumes for the active reporting window.',
-              style: TextStyle(
-                color: _lightOffWhite.withValues(alpha: 0.55),
-                fontSize: 11,
-              ),
-            ),
-            const SizedBox(height: 12),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                const gap = 10.0;
-                final columns = constraints.maxWidth >= 1700
-                    ? 7
-                    : constraints.maxWidth >= 1320
-                    ? 6
-                    : constraints.maxWidth >= 980
-                    ? 4
-                    : constraints.maxWidth >= 620
-                    ? 2
-                    : 1;
-                final cardWidth = columns == 1
-                    ? constraints.maxWidth
-                    : (constraints.maxWidth - (gap * (columns - 1))) / columns;
-                final cards = <Widget>[
-                  _summaryCard(
-                    'Patient Records',
-                    _safeMetricText(_totalPatients),
-                    Icons.people,
-                    _primaryAqua,
-                  ),
-                  _summaryCard(
-                    'Checkup Records',
-                    _safeMetricText(_checkupsThisMonth),
-                    Icons.medical_services,
-                    _secondaryIceBlue,
-                  ),
-                  _summaryCard(
-                    'Active Prenatal Cases',
-                    _safeMetricText(_activePrenatal),
-                    Icons.pregnant_woman,
-                    _primaryAqua,
-                  ),
-                  _summaryCard(
-                    'Immunization Records',
-                    _safeMetricText(_immunizationRecords),
-                    Icons.vaccines,
-                    _chartLime,
-                  ),
-                  _summaryCard(
-                    'Morbidity Reports',
-                    _safeMetricText(_morbidityReports),
-                    Icons.monitor_heart,
-                    _chartCyan,
-                  ),
-                  _summaryCard(
-                    'Mortality Reports',
-                    _safeMetricText(_mortalityReports),
-                    Icons.heart_broken,
-                    _secondaryIceBlue,
-                  ),
-                  _summaryCard(
-                    'Referral Reports',
-                    _safeMetricText(_referralReports),
-                    Icons.assignment_ind_outlined,
-                    _primaryAqua,
-                  ),
-                ];
-                return Wrap(
-                  spacing: gap,
-                  runSpacing: gap,
-                  children: cards
-                      .map((card) => SizedBox(width: cardWidth, child: card))
-                      .toList(growable: false),
-                );
-              },
-            ),
-            const SizedBox(height: 14),
-            _buildBarangayDemographicsExplorer(),
-            const SizedBox(height: 14),
-            _buildDoctorAvailabilityPlanner(),
-            const SizedBox(height: 14),
-            _buildPowerBiCharts(),
-            const SizedBox(height: 14),
-            const Text(
-              'Population Follow-up Queue',
-              style: TextStyle(
-                color: _lightOffWhite,
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Patient-level continuity view for scheduling and outreach coordination.',
-              style: TextStyle(
-                color: _lightOffWhite.withValues(alpha: 0.55),
-                fontSize: 11,
-              ),
-            ),
-            const SizedBox(height: 10),
-            _buildPatientQueueSection(),
-            const SizedBox(height: 24),
-          ],
-        ),
+          ),
+        ],
       ),
-    ),
-  ],
-),
-);
-}
+    );
+  }
 }

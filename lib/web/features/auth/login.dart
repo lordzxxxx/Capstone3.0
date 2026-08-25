@@ -77,13 +77,13 @@ class _LoginState extends State<Login> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_roleCacheKey(user.uid), _normalizeRole(role));
       if (kDebugMode) {
-        print(
+        debugPrint(
           'Login role cache - saved local role "${_normalizeRole(role)}" for ${user.uid}',
         );
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Login role cache - failed to save local role: $e');
+        debugPrint('Login role cache - failed to save local role: $e');
       }
     }
   }
@@ -93,11 +93,11 @@ class _LoginState extends State<Login> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_roleCacheKey(user.uid));
       if (kDebugMode) {
-        print('Login role cache - cleared local role for ${user.uid}');
+        debugPrint('Login role cache - cleared local role for ${user.uid}');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Login role cache - failed to clear local role: $e');
+        debugPrint('Login role cache - failed to clear local role: $e');
       }
     }
   }
@@ -213,7 +213,7 @@ class _LoginState extends State<Login> {
       }
       return true;
     } catch (error) {
-      if (kDebugMode) print('Registration status check failed: $error');
+      if (kDebugMode) debugPrint('Registration status check failed: $error');
       return false;
     }
   }
@@ -344,11 +344,11 @@ class _LoginState extends State<Login> {
     try {
       await _firestore.enableNetwork().timeout(const Duration(seconds: 4));
       if (kDebugMode) {
-        print('Firestore network check - network enabled');
+        debugPrint('Firestore network check - network enabled');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Firestore network check - enableNetwork failed: $e');
+        debugPrint('Firestore network check - enableNetwork failed: $e');
       }
     }
   }
@@ -400,7 +400,7 @@ class _LoginState extends State<Login> {
 
     if (snapshot.docs.isEmpty) {
       if (kDebugMode) {
-        print('Firestore email lookup - no users doc found for $email');
+        debugPrint('Firestore email lookup - no users doc found for $email');
       }
       return null;
     }
@@ -414,7 +414,7 @@ class _LoginState extends State<Login> {
     if (!_isApprovedActiveProfile(profile)) return null;
     final role = _normalizeRole((profile!['role'] ?? '').toString());
     if (kDebugMode) {
-      print('Firestore email lookup - role="$role" docId=${doc.id}');
+      debugPrint('Firestore email lookup - role="$role" docId=${doc.id}');
     }
 
     if (!_isChoOrBhwRole(role)) {
@@ -462,26 +462,28 @@ class _LoginState extends State<Login> {
         }
       } catch (error) {
         if (kDebugMode) {
-          print('Cached Firestore role verification failed: $error');
+          debugPrint('Cached Firestore role verification failed: $error');
         }
       }
 
       try {
         if (kDebugMode) {
-          print('Checking Firestore user role through authenticated REST...');
+          debugPrint(
+            'Checking Firestore user role through authenticated REST...',
+          );
         }
         final document = await _restReader.getDocument('users', user.uid);
         if (document == null) return const _RoleCheckResult.denied();
         final profile = document.data();
         final role = _normalizeRole((profile['role'] ?? '').toString());
         if (_isApprovedActiveProfile(profile) && _isChoOrBhwRole(role)) {
-          if (kDebugMode) print('Access granted via Firestore REST role');
+          if (kDebugMode) debugPrint('Access granted via Firestore REST role');
           return _RoleCheckResult.allowed(role);
         }
         return const _RoleCheckResult.denied();
       } catch (error) {
         if (kDebugMode) {
-          print('Firestore REST role verification failed: $error');
+          debugPrint('Firestore REST role verification failed: $error');
         }
         // A non-approved cached profile must never grant access. If there is
         // no server response, report an unavailable verification rather than
@@ -499,7 +501,7 @@ class _LoginState extends State<Login> {
     for (int attempt = 1; attempt <= 3; attempt++) {
       try {
         if (kDebugMode) {
-          print('Checking Firestore user role (attempt $attempt/3)...');
+          debugPrint('Checking Firestore user role (attempt $attempt/3)...');
         }
 
         final userDoc = await _firestore
@@ -510,7 +512,7 @@ class _LoginState extends State<Login> {
 
         if (!userDoc.exists) {
           if (kDebugMode) {
-            print(
+            debugPrint(
               'User document users/${user.uid} not found in Firestore, trying email lookup...',
             );
           }
@@ -520,12 +522,12 @@ class _LoginState extends State<Login> {
           );
           if (roleByEmail != null) {
             if (kDebugMode) {
-              print('Access granted via Firestore email lookup');
+              debugPrint('Access granted via Firestore email lookup');
             }
             return _RoleCheckResult.allowed(roleByEmail);
           }
 
-          if (kDebugMode) print('User document not found in Firestore');
+          if (kDebugMode) debugPrint('User document not found in Firestore');
           if (attempt < 3) {
             await Future.delayed(Duration(milliseconds: 300 * attempt));
             continue;
@@ -540,16 +542,16 @@ class _LoginState extends State<Login> {
         );
         final role = (profile?['role'] ?? '').toString();
         if (kDebugMode) {
-          print('Firestore role check result: role="$role"');
+          debugPrint('Firestore role check result: role="$role"');
         }
 
         if (_isApprovedActiveProfile(profile) && _isChoOrBhwRole(role)) {
-          if (kDebugMode) print('Access granted via Firestore role');
+          if (kDebugMode) debugPrint('Access granted via Firestore role');
           return _RoleCheckResult.allowed(role);
         }
 
         if (kDebugMode) {
-          print(
+          debugPrint(
             'Firestore role exists but is not an allowed operations role: "$role"',
           );
         }
@@ -558,11 +560,13 @@ class _LoginState extends State<Login> {
         sawTransientFailure = true;
         lastFailure = e;
         if (kDebugMode) {
-          print('Firestore attempt $attempt failed: $e');
+          debugPrint('Firestore attempt $attempt failed: $e');
         }
       } on FirebaseException catch (e) {
         if (kDebugMode) {
-          print('Firestore attempt $attempt failed: [${e.code}] ${e.message}');
+          debugPrint(
+            'Firestore attempt $attempt failed: [${e.code}] ${e.message}',
+          );
         }
         if (_isRetryableFirestoreError(e)) {
           sawTransientFailure = true;
@@ -575,7 +579,7 @@ class _LoginState extends State<Login> {
         sawTransientFailure = true;
         lastFailure = e;
         if (kDebugMode) {
-          print('Firestore attempt $attempt failed: $e');
+          debugPrint('Firestore attempt $attempt failed: $e');
         }
       }
 
@@ -604,14 +608,16 @@ class _LoginState extends State<Login> {
           if (_isApprovedActiveProfile(recoveredProfile) &&
               _isChoOrBhwRole(recoveredRole)) {
             if (kDebugMode) {
-              print('Access granted via Firestore role after network recovery');
+              debugPrint(
+                'Access granted via Firestore role after network recovery',
+              );
             }
             return _RoleCheckResult.allowed(recoveredRole);
           }
         }
       } catch (e) {
         if (kDebugMode) {
-          print('Firestore uid lookup after recovery failed: $e');
+          debugPrint('Firestore uid lookup after recovery failed: $e');
         }
       }
 
@@ -623,7 +629,7 @@ class _LoginState extends State<Login> {
         );
         if (roleByEmail != null) {
           if (kDebugMode) {
-            print(
+            debugPrint(
               'Access granted via Firestore email lookup after network recovery',
             );
           }
@@ -631,12 +637,12 @@ class _LoginState extends State<Login> {
         }
       } catch (e) {
         if (kDebugMode) {
-          print('Firestore email lookup after recovery failed: $e');
+          debugPrint('Firestore email lookup after recovery failed: $e');
         }
       }
 
       if (kDebugMode) {
-        print(
+        debugPrint(
           'Could not verify CHO/BHW/Doctor/Super Admin role due to Firestore availability issues: $lastFailure',
         );
       }
@@ -644,7 +650,7 @@ class _LoginState extends State<Login> {
     }
 
     if (kDebugMode) {
-      print(
+      debugPrint(
         'No valid CHO/BHW/Doctor/Super Admin role found in Firestore users collection',
       );
     }
@@ -671,7 +677,7 @@ class _LoginState extends State<Login> {
     }
 
     if (kDebugMode) {
-      print(
+      debugPrint(
         'No valid CHO/BHW/Doctor/Super Admin role found in Firestore users collection',
       );
     }
@@ -687,7 +693,7 @@ class _LoginState extends State<Login> {
   Future<String?> _readChoOrBhwRoleFromClaims(User user) async {
     try {
       if (kDebugMode) {
-        print('Login fallback - checking custom claims...');
+        debugPrint('Login fallback - checking custom claims...');
       }
       final idToken = await user
           .getIdTokenResult(true)
@@ -700,7 +706,9 @@ class _LoginState extends State<Login> {
                 .toList()
           : <String>[];
       if (kDebugMode) {
-        print('Login fallback - claim role: "$claimRole", roles: $claimRoles');
+        debugPrint(
+          'Login fallback - claim role: "$claimRole", roles: $claimRoles',
+        );
       }
 
       if (_isChoOrBhwRole(claimRole)) {
@@ -714,7 +722,7 @@ class _LoginState extends State<Login> {
       return null;
     } catch (e) {
       if (kDebugMode) {
-        print('Login fallback - custom claims check failed: $e');
+        debugPrint('Login fallback - custom claims check failed: $e');
       }
       return null;
     }
@@ -726,7 +734,9 @@ class _LoginState extends State<Login> {
     final claimRole = await _readChoOrBhwRoleFromClaims(user);
     if (claimRole != null) {
       if (kDebugMode) {
-        print('Login fallback - access granted via custom claims: $claimRole');
+        debugPrint(
+          'Login fallback - access granted via custom claims: $claimRole',
+        );
       }
       return claimRole;
     }
@@ -750,7 +760,9 @@ class _LoginState extends State<Login> {
       if (await _blockUnapprovedRegistration(user)) return;
 
       if (kDebugMode) {
-        print('Verifying Google account from Firestore users collection...');
+        debugPrint(
+          'Verifying Google account from Firestore users collection...',
+        );
       }
 
       final roleCheckResult = await _hasChoOrBhwAccess(user);
@@ -768,7 +780,7 @@ class _LoginState extends State<Login> {
       }
 
       if (kDebugMode) {
-        print('Google login verified from Firestore users collection');
+        debugPrint('Google login verified from Firestore users collection');
       }
       final resolvedRole = roleCheckResult.resolvedRole;
       if (resolvedRole == null || !_isChoOrBhwRole(resolvedRole)) {
@@ -815,7 +827,7 @@ class _LoginState extends State<Login> {
       final email = emailController.text.trim();
       final pwdLen = passwordController.text.length;
       // ignore: avoid_print
-      print('Attempting signIn email=$email passwordLength=$pwdLen');
+      debugPrint('Attempting signIn email=$email passwordLength=$pwdLen');
     }
 
     try {
@@ -835,7 +847,7 @@ class _LoginState extends State<Login> {
 
       // Verify account strictly from Firestore users collection.
       if (kDebugMode) {
-        print(
+        debugPrint(
           'Verifying account from Firestore users collection for ${currentUser.email}...',
         );
       }
@@ -847,7 +859,7 @@ class _LoginState extends State<Login> {
           final fallbackRole = await _tryRoleFallbackSources(currentUser);
           if (fallbackRole != null) {
             if (kDebugMode) {
-              print(
+              debugPrint(
                 'Login verified via fallback source (RTDB/custom claims): role=$fallbackRole',
               );
             }
@@ -860,7 +872,9 @@ class _LoginState extends State<Login> {
         return;
       }
 
-      if (kDebugMode) print('Login verified from Firestore users collection');
+      if (kDebugMode) {
+        debugPrint('Login verified from Firestore users collection');
+      }
       final resolvedRole = roleCheckResult.resolvedRole;
       if (resolvedRole == null || !_isChoOrBhwRole(resolvedRole)) {
         await _handleRoleVerificationFailure(const _RoleCheckResult.denied());
@@ -934,7 +948,7 @@ class _LoginState extends State<Login> {
 
       if (kDebugMode) {
         // ignore: avoid_print
-        print(
+        debugPrint(
           'FirebaseAuthException during signIn: code=${e.code} message=${e.message}',
         );
       }
@@ -946,7 +960,7 @@ class _LoginState extends State<Login> {
         colorText: Colors.white,
       );
       // ignore: avoid_print
-      print('Unexpected signIn error: $e');
+      debugPrint('Unexpected signIn error: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

@@ -1,13 +1,15 @@
 {
   "scripts": {
     "test:firestore-rules": "firebase emulators:exec --only firestore --project demo-capstone-security \"mocha --timeout 60000 tests/firestore.rules.test.cjs\"",
-    "test:workflow-persistence": "firebase emulators:exec --only firestore --project demo-capstone-workflow \"mocha --timeout 60000 tests/workflow.persistence.test.cjs\""
+    "test:workflow-persistence": "firebase emulators:exec --only firestore --project demo-capstone-workflow \"mocha --timeout 60000 tests/workflow.persistence.test.cjs\"",
+    "test:browser": "firebase emulators:exec --only auth,firestore --project capstone-c98f9 \"playwright test\""
   },
   "dependencies": {
     "firebase": "^12.8.0"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.0",
+    "@playwright/test": "^1.62.1",
     "firebase-tools": "^15.24.0",
     "mocha": "^11.0.0"
   }

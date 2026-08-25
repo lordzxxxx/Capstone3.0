@@ -1,35 +1,20 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math';
 import 'package:mycapstone_project/web/roles/bhw/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_history_dialogs.dart';
-import 'package:mycapstone_project/web/features/auth/login.dart';
-import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
-import 'package:mycapstone_project/web/roles/bhw/checkups/checkup.dart'
-    as checkup_page;
-import 'package:mycapstone_project/web/roles/bhw/analytics/health_metrics.dart';
-import 'package:mycapstone_project/web/roles/cho/analytics/cho_analytics.dart';
-import 'package:mycapstone_project/web/roles/bhw/prenatal/prenatal.dart';
-import 'package:mycapstone_project/web/roles/bhw/immunization/immunization.dart';
-import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
-import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
-import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
-import 'package:mycapstone_project/app/dev/barangay_test_data_seeder.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable_insights.dart';
+import 'package:mycapstone_project/web/shared/widgets/web_sync_status_badge.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
-const Color _secondaryIceBlue = Color(0xFF163B66);
 const Color _darkDeepTeal = Color(0xFF071A33);
 const Color _mutedCoolGray = Color(0xFF4B6075);
 const Color _sidebarDark = Colors.white;
@@ -126,28 +111,6 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   List<Map<String, dynamic>> _patients = [];
   List<Map<String, dynamic>> _filteredPatients = [];
   List<Map<String, dynamic>> _nonCommunicableRecords = [];
-
-  int get _activeCases => _nonCommunicableRecords.length;
-
-  Map<String, int> get _diseaseTypes {
-    final result = <String, int>{};
-    for (final record in _nonCommunicableRecords) {
-      final condition = (record['condition'] ?? 'Unknown').toString();
-      result[condition] = (result[condition] ?? 0) + 1;
-    }
-    return result;
-  }
-
-  double get _controlRate {
-    if (_nonCommunicableRecords.isEmpty) return 0;
-    final completed = _nonCommunicableRecords.where((record) {
-      final status = (record['currentStatus'] ?? record['status'] ?? '')
-          .toString()
-          .toLowerCase();
-      return status.contains('complete') || status.contains('recover');
-    }).length;
-    return completed / _nonCommunicableRecords.length * 100;
-  }
 
   @override
   void initState() {
@@ -259,7 +222,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
         _isLoadingMetrics = false;
       });
     } catch (e) {
-      print('Error loading patients: $e');
+      debugPrint('Error loading patients: $e');
       if (mounted) {
         setState(() => _isLoadingMetrics = false);
       }
@@ -407,672 +370,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     );
   }
 
-  Widget _buildTopBar(BuildContext context) {
-    return WebAppTopBar(
-      title: 'Non-Communicable Disease Management',
-      scaffoldKey: _scaffoldKey,
-      onRefresh: () => _loadPatients(),
-      selectionCount: _isSelectionMode ? _getSelectedPatientIds.length : null,
-      actions: [
-        if (_isSelectionMode) ...[
-          IconButton(
-            icon: const Icon(Icons.select_all_rounded),
-            tooltip: 'Select All',
-            onPressed: () {
-              setState(() {
-                _getSelectedPatientIds.clear();
-                for (final patient in _filteredPatients) {
-                  final patientId = patient['id'] as String? ?? '';
-                  if (patientId.isNotEmpty) {
-                    _getSelectedPatientIds.add(patientId);
-                  }
-                }
-              });
-            },
-            color: Colors.white70,
-            iconSize: 24,
-          ),
-          IconButton(
-            icon: const Icon(Icons.clear_rounded),
-            tooltip: 'Cancel Selection',
-            onPressed: () {
-              setState(() {
-                _isSelectionMode = false;
-                _getSelectedPatientIds.clear();
-              });
-            },
-            color: Colors.white70,
-            iconSize: 24,
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_rounded),
-            tooltip: 'Delete Selected',
-            onPressed: _getSelectedPatientIds.isEmpty
-                ? null
-                : _showDeleteConfirmationModal,
-            color: _getSelectedPatientIds.isEmpty ? Colors.grey : Colors.redAccent,
-            iconSize: 24,
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildDrawerContent(BuildContext context, String userName) {
-    final user = FirebaseAuth.instance.currentUser;
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [_sidebarDark, _sidebarDark.withValues(alpha: 0.95)],
-        ),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(
-              vertical: 20.0,
-              horizontal: 16.0,
-            ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [_primaryAqua, _secondaryIceBlue],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _primaryAqua.withValues(alpha: 0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.25),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/bg3.png',
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.white,
-                          child: Icon(
-                            Icons.person,
-                            size: 35,
-                            color: _primaryAqua,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  userName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    letterSpacing: 0.5,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  user?.email ?? '',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 11,
-                    letterSpacing: 0.3,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          color: Colors.greenAccent,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.greenAccent,
-                              blurRadius: 4,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Online',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            child: Row(
-              children: [
-                Container(
-                  width: 3,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: _primaryAqua,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'MAIN MENU',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
-              children: [
-                _buildDrawerSidebarItem(
-                  icon: Icons.dashboard_rounded,
-                  label: 'Dashboard',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Get.toNamed(WebRoutes.bhwDashboard);
-                  },
-                ),
-                _buildDrawerSidebarItem(
-                  icon: Icons.assignment_turned_in_rounded,
-                  label: 'Check-ups',
-                  onTap: () => Get.toNamed(WebRoutes.bhwCheckups),
-                ),
-                _buildDrawerSidebarItem(
-                  icon: Icons.favorite_rounded,
-                  label: 'Summary Generation',
-                  onTap: () => Get.toNamed(WebRoutes.bhwSummary),
-                ),
-                _buildDrawerSidebarItem(
-                  icon: Icons.analytics_rounded,
-                  label: 'Analytics',
-                  onTap: () => Get.toNamed(WebRoutes.bhwAnalytics),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 3,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: _primaryAqua,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'PATIENT CARE',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _buildDrawerSidebarItem(
-                  icon: Icons.pregnant_woman_rounded,
-                  label: 'Prenatal Care',
-                  onTap: () => Get.toNamed(WebRoutes.bhwPrenatal),
-                ),
-                _buildDrawerSidebarItem(
-                  icon: Icons.vaccines_rounded,
-                  label: 'Immunization',
-                  onTap: () => Get.toNamed(WebRoutes.bhwImmunization),
-                ),
-                _buildDrawerSidebarItem(
-                  icon: Icons.person_rounded,
-                  label: 'Patient Records',
-                  onTap: () => Get.toNamed(WebRoutes.bhwPatients),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 3,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: _primaryAqua,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'DISEASE TRACKING',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _buildDrawerSidebarItem(
-                  icon: Icons.coronavirus_rounded,
-                  label: 'Communicable',
-                  onTap: () => Get.toNamed(WebRoutes.bhwCommunicable),
-                ),
-                _buildDrawerSidebarItem(
-                  icon: Icons.health_and_safety_rounded,
-                  label: 'Non-Communicable',
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                ),
-                _buildDrawerSidebarItem(
-                  icon: Icons.analytics_outlined,
-                  label: 'Mortality',
-                  onTap: () => Get.toNamed(WebRoutes.bhwMortality),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(12.0),
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () async {
-                  await FirebaseAuth.instance.signOut();
-                  Get.offAllNamed(WebRoutes.login);
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.red.shade600, Colors.red.shade700],
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.red.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.logout_rounded, color: Colors.white, size: 16),
-                      SizedBox(width: 8),
-                      Text(
-                        'Logout',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDrawer(BuildContext context, String userName) {
-    return Drawer(child: _buildDrawerContent(context, userName));
-  }
-
-  Widget _buildDrawerSidebarItem({
-    required IconData icon,
-    required String label,
-    bool isActive = false,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6.0),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          hoverColor: Colors.white.withValues(alpha: 0.08),
-          splashColor: _primaryAqua.withValues(alpha: 0.2),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-            decoration: BoxDecoration(
-              color: isActive ? _primaryAqua.withValues(alpha: 0.18) : null,
-              borderRadius: BorderRadius.circular(12),
-              border: Border(
-                left: BorderSide(
-                  color: isActive ? _primaryAqua : Colors.transparent,
-                  width: 3,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? _primaryAqua.withValues(alpha: 0.15)
-                        : Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isActive
-                        ? _primaryAqua
-                        : Colors.white.withValues(alpha: 0.8),
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: isActive
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.8),
-                      fontSize: 12.5,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ),
-                if (isActive)
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: _primaryAqua,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.chevron_right,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   // Overview Dashboard Section
-  Widget _buildOverviewDashboard() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_isLoadingMetrics)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(20),
-              child: CircularProgressIndicator(color: _primaryAqua),
-            ),
-          )
-        else
-          GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 2.2,
-            children: [
-              _buildWebMetricCard(
-                title: 'Active Cases',
-                value: _activeCases.toString(),
-                subtitle: 'Non-communicable cases',
-                icon: Icons.people_outline,
-              ),
-              _buildWebMetricCard(
-                title: 'Control Rate',
-                value: '${_controlRate.toStringAsFixed(1)}%',
-                subtitle: 'Cases completed',
-                icon: Icons.trending_up_outlined,
-              ),
-              _buildWebMetricCard(
-                title: 'Disease Types',
-                value: _diseaseTypes.length.toString(),
-                subtitle: 'Types tracked',
-                icon: Icons.medical_services_outlined,
-              ),
-            ],
-          ),
-      ],
-    );
-  }
-
-  Widget _buildWebSectionHeader({
-    required String title,
-    required IconData icon,
-    VoidCallback? onRefresh,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _primaryAqua.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: Colors.white, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              if (onRefresh != null)
-                IconButton(
-                  icon: const Icon(
-                    Icons.refresh_rounded,
-                    size: 18,
-                    color: Colors.white,
-                  ),
-                  onPressed: onRefresh,
-                  tooltip: 'Refresh',
-                  splashRadius: 20,
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Container(
-            height: 2,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  _primaryAqua.withValues(alpha: 0.5),
-                  _primaryAqua.withValues(alpha: 0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(1),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWebMetricCard({
-    required String title,
-    required String value,
-    required String subtitle,
-    required IconData icon,
-  }) {
-    return AppMetricCard(
-      label: title,
-      value: value,
-      icon: icon,
-      supportingText: subtitle,
-    );
-  }
-
-  Widget _buildDiseaseTypeCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.medical_services, color: _primaryAqua, size: 24),
-              const SizedBox(width: 8),
-              Text(
-                'Disease Types',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: _darkDeepTeal,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ..._diseaseTypes.entries.map((entry) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    entry.key,
-                    style: TextStyle(fontSize: 14, color: _darkDeepTeal),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _primaryAqua.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      entry.value.toString(),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: _primaryAqua,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
 
   Widget _buildSelectionToolbar() {
     return Container(
@@ -1110,7 +408,9 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
           IconButton(
             icon: const Icon(Icons.delete_rounded),
             tooltip: 'Delete selected',
-            color: _getSelectedPatientIds.isEmpty ? Colors.grey : Colors.redAccent,
+            color: _getSelectedPatientIds.isEmpty
+                ? Colors.grey
+                : Colors.redAccent,
             onPressed: _getSelectedPatientIds.isEmpty
                 ? null
                 : _showDeleteConfirmationModal,
@@ -1439,32 +739,36 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   }
 
   Widget _buildPatientCard(Map<String, dynamic> patient) {
-    final patientId = patient['id']?.toString() ??
+    final patientId =
+        patient['id']?.toString() ??
         patient['patientId']?.toString() ??
         patient['linkedPatientId']?.toString() ??
         '';
     final isSelected =
         patientId.isNotEmpty && _getSelectedPatientIds.contains(patientId);
-    final patientName = (patient['patientName'] ??
-            patient['name'] ??
-            patient['patient'] ??
-            patient['fullName'])
-        ?.toString() ??
+    final patientName =
+        (patient['patientName'] ??
+                patient['name'] ??
+                patient['patient'] ??
+                patient['fullName'])
+            ?.toString() ??
         'Unknown Patient';
     final age = (patient['age'])?.toString() ?? 'N/A';
     final gender =
         (patient['gender'] ?? patient['sex'])?.toString() ?? 'Unknown';
-    final condition = (patient['condition'] ??
-            patient['disease'] ??
-            patient['diagnosis'] ??
-            patient['caseClassification'])
-        ?.toString() ??
+    final condition =
+        (patient['condition'] ??
+                patient['disease'] ??
+                patient['diagnosis'] ??
+                patient['caseClassification'])
+            ?.toString() ??
         'No details';
-    final treatment = (patient['treatment'] ??
-            patient['medication'] ??
-            patient['plan'] ??
-            patient['remarks'])
-        ?.toString() ??
+    final treatment =
+        (patient['treatment'] ??
+                patient['medication'] ??
+                patient['plan'] ??
+                patient['remarks'])
+            ?.toString() ??
         'No treatment plan';
     final lastVisit = _formatDate(
       patient['lastVisit'] ??
@@ -1642,33 +946,37 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
               ),
               _buildPatientRowDivider(),
               Expanded(
-                flex: 14,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: statusColor.withValues(alpha: 0.5),
-                        width: 1,
+                flex: 20,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: statusColor.withValues(alpha: 0.5),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        status,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    child: Text(
-                      status,
-                      style: TextStyle(
-                        color: statusColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+                    const SizedBox(height: 6),
+                    WebSyncStatusBadge(record: patient),
+                  ],
                 ),
               ),
               if (!_isSelectionMode) ...[
@@ -1825,7 +1133,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
         duration: const Duration(seconds: 3),
       );
     } catch (e) {
-      print('Error deleting patients: $e');
+      debugPrint('Error deleting patients: $e');
       Get.snackbar(
         'Error',
         'Failed to delete patient records',
@@ -1837,111 +1145,6 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   }
 
   // Action Methods
-  void _showSettingsMenu() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: _sidebarDark,
-        title: const Text(
-          'Settings',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: const Text(
-                  'Select Data',
-                  style: TextStyle(color: Colors.white),
-                ),
-                subtitle: Text(
-                  'Enable selection mode to select and manage records',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
-                ),
-                trailing: const Icon(Icons.arrow_forward, color: _primaryAqua),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() {
-                    _isSelectionMode = true;
-                    _getSelectedPatientIds.clear();
-                  });
-                },
-              ),
-              if (kDebugMode) const Divider(color: _primaryAqua),
-              if (kDebugMode)
-                ListTile(
-                  title: const Text(
-                    'Seed 100 Sample Data',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  subtitle: Text(
-                    'Generate 100 complete patient records',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  trailing: const Icon(
-                    Icons.arrow_forward,
-                    color: _primaryAqua,
-                  ),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    await _seedSampleData();
-                  },
-                ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close', style: TextStyle(color: _primaryAqua)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _seedSampleData() async {
-    try {
-      Get.snackbar(
-        'Seeding Data',
-        'Generating sample non-communicable records for your barangay...',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: _primaryAqua,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      );
-      final result = await BarangayTestDataSeeder.seed();
-      await _loadPatients();
-      Get.snackbar(
-        'Seeding Complete',
-        'Added test records for ${result.barangay}. Non-communicable analytics are now updated.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF27AE60),
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-      );
-    } catch (e) {
-      Get.snackbar(
-        'Seeding failed',
-        '$e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-    }
-  }
-
-  Future<void> _showAddPatientDialog() async {
-    // Use the same canonical registration modal exposed by Patient Records
-    // instead of leaving this module on a non-functional placeholder.
-    await Get.toNamed(
-      WebRoutes.bhwPatients,
-      arguments: const {'openRegistrationOnLoad': true},
-    );
-  }
 
   void _viewPatientDetails(Map<String, dynamic> patient) {
     final ageText = detailText(patient['age']);
@@ -2017,153 +1220,6 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       ],
     );
     return;
-
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: _sidebarDark,
-        alignment: Alignment.center,
-        elevation: 8,
-        child: Container(
-          width: 700,
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.9,
-          ),
-          decoration: BoxDecoration(
-            color: _sidebarDark,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header with title and close button
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      patient['patientName'],
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => Navigator.pop(context),
-                        borderRadius: BorderRadius.circular(8),
-                        hoverColor: _primaryAqua.withValues(alpha: 0.1),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Icon(
-                            Icons.close_rounded,
-                            color: Colors.white.withValues(alpha: 0.7),
-                            size: 24,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Divider
-              Divider(
-                color: _primaryAqua.withValues(alpha: 0.2),
-                height: 1,
-                thickness: 1,
-              ),
-              // Content
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildInfoItem('Patient ID', patient['id']),
-                      _buildInfoItem('Age', '${patient['age']} years'),
-                      _buildInfoItem('Gender', patient['gender']),
-                      _buildInfoItem('Condition', patient['condition']),
-                      _buildInfoItem('Status', patient['currentStatus']),
-                      _buildInfoItem('Treatment', patient['treatment']),
-                      _buildInfoItem('Last Visit', patient['lastVisit']),
-                      _buildInfoItem('Next Visit', patient['nextVisit']),
-                    ],
-                  ),
-                ),
-              ),
-              // Divider
-              Divider(
-                color: _primaryAqua.withValues(alpha: 0.2),
-                height: 1,
-                thickness: 1,
-              ),
-              // Action buttons
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryAqua,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Close',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 13,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(color: Colors.white, fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   void _editPatient(Map<String, dynamic> patient) {
@@ -2570,77 +1626,6 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       metaBuilder: (entry) =>
           'Treatment: ${(entry['treatment'] ?? entry['plan'] ?? 'No treatment plan').toString()} | Follow-up: ${(entry['followup'] ?? entry['nextVisit'] ?? 'Not set').toString()}',
       dateKeys: const ['datetime', 'date', 'followup'],
-    );
-  }
-
-  Widget _buildHistorySection(String title, List<HistoryItem> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: _primaryAqua,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: _darkDeepTeal,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: items.asMap().entries.map((entry) {
-              final index = entry.key;
-              final item = entry.value;
-              final isLast = index == items.length - 1;
-              return Column(
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 100,
-                        child: Text(
-                          '${item.label}:',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          item.value,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (!isLast)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Divider(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        height: 1,
-                      ),
-                    ),
-                ],
-              );
-            }).toList(),
-          ),
-        ),
-      ],
     );
   }
 }

@@ -1487,7 +1487,12 @@ class PatientHistoryDialogs {
     }
   }
 
-  static const Set<String> _hiddenDetailKeys = <String>{'id'};
+  static const Set<String> _hiddenDetailKeys = <String>{
+    'id',
+    'ai_confidence',
+    'confidence',
+    'predictionConfidence',
+  };
 
   static List<MapEntry<String, String>> _buildFallbackTimelineDetailEntries(
     PatientTimelineEvent event,
@@ -1580,7 +1585,6 @@ class PatientHistoryDialogs {
       'riskLevel': 'Risk Level',
       'ai_category': 'AI Category',
       'ai_severity': 'AI Severity',
-      'ai_confidence': 'AI Confidence',
       'ai_recovery_plan': 'AI Recovery Plan',
     };
 

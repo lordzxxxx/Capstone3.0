@@ -140,7 +140,10 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                       IconButton(
                         onPressed: _loadScope,
                         tooltip: 'Refresh referrals',
-                        icon: const Icon(Icons.refresh_rounded, color: ChoColors.text),
+                        icon: const Icon(
+                          Icons.refresh_rounded,
+                          color: ChoColors.text,
+                        ),
                       ),
                     ],
                   ),
@@ -150,7 +153,10 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                   child: _loadingScope
                       ? const ChoLoadingSkeleton()
                       : _accessError != null
-                      ? ChoErrorState(message: _accessError!, onRetry: _loadScope)
+                      ? ChoErrorState(
+                          message: _accessError!,
+                          onRetry: _loadScope,
+                        )
                       : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                           stream: _stream,
                           builder: (context, snapshot) {
@@ -161,10 +167,17 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                                 onRetry: _loadScope,
                               );
                             }
-                            if (!snapshot.hasData) return const ChoLoadingSkeleton();
+                            if (!snapshot.hasData) {
+                              return const ChoLoadingSkeleton();
+                            }
                             final records =
-                                snapshot.data!.docs.map(_ReferralRecord.new).toList()
-                                  ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+                                snapshot.data!.docs
+                                    .map(_ReferralRecord.new)
+                                    .toList()
+                                  ..sort(
+                                    (a, b) =>
+                                        b.updatedAt.compareTo(a.updatedAt),
+                                  );
                             return _content(records);
                           },
                         ),
@@ -1001,8 +1014,7 @@ class _ReferralDetails extends StatelessWidget {
       MapEntry('Prenatal Information', record.prenatal),
       MapEntry('BHW Notes', record.bhwNotes),
       MapEntry('Attachments', record.attachments),
-      MapEntry('AI Prediction', record.aiPrediction),
-      MapEntry('Prediction Confidence', record.confidence),
+      MapEntry('Submitted decision-support category', record.aiPrediction),
       if (record.hospital.isNotEmpty)
         MapEntry('Assigned Hospital', record.hospital),
       if (record.doctor.isNotEmpty) MapEntry('Assigned Doctor', record.doctor),
@@ -1362,8 +1374,6 @@ class _ReferralRecord {
     'predictedDisease',
     'prediction',
   ], fallback: 'No AI guidance attached');
-  String get confidence =>
-      _confidence(data['predictionConfidence'] ?? data['confidence']);
   String get hospital =>
       _s(data, ['assignedHospital', 'receivingHospital', 'referredTo']);
   String get doctor => _s(data, ['assignedDoctorName', 'receivingDoctor']);
@@ -1475,16 +1485,6 @@ String _listText(dynamic value, {required String fallback}) {
   return value?.toString().trim().isNotEmpty == true
       ? value.toString()
       : fallback;
-}
-
-String _confidence(dynamic value) {
-  if (value == null) return 'Not available';
-  if (value is num) {
-    return value <= 1
-        ? '${(value * 100).toStringAsFixed(1)}%'
-        : '${value.toStringAsFixed(1)}%';
-  }
-  return value.toString();
 }
 
 bool _bool(dynamic value) =>

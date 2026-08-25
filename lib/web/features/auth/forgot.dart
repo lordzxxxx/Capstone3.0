@@ -75,7 +75,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       );
       if (kDebugMode) {
         // ignore: avoid_print
-        print('Password reset error: code=${e.code} message=${e.message}');
+        debugPrint('Password reset error: code=${e.code} message=${e.message}');
       }
     } catch (e) {
       Get.snackbar(
@@ -86,7 +86,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       );
       if (kDebugMode) {
         // ignore: avoid_print
-        print('Unexpected reset error: $e');
+        debugPrint('Unexpected reset error: $e');
       }
     } finally {
       setState(() => _isLoading = false);
@@ -97,19 +97,6 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   void dispose() {
     emailController.dispose();
     super.dispose();
-  }
-
-  Widget _buildBackdropOrb({required double size, required Color color}) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
-        ),
-      ),
-    );
   }
 
   Widget _buildFeatureItem(IconData icon, String text) {

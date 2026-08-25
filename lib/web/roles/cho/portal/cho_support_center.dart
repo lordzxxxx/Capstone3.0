@@ -145,77 +145,78 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                 : ListView(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                     children: [
-                ChoPageHeader(
-                  title: _title,
-                  description: _description,
-                  icon: _icon,
-                  actions: [
-                    if (widget.section == ChoSupportSection.announcements)
-                      FilledButton.icon(
-                        onPressed: _createAnnouncement,
-                        icon: const Icon(Icons.add),
-                        label: const Text('New Announcement'),
+                      ChoPageHeader(
+                        title: _title,
+                        description: _description,
+                        icon: _icon,
+                        actions: [
+                          if (widget.section == ChoSupportSection.announcements)
+                            FilledButton.icon(
+                              onPressed: _createAnnouncement,
+                              icon: const Icon(Icons.add),
+                              label: const Text('New Announcement'),
+                            ),
+                        ],
                       ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                if (widget.section != ChoSupportSection.profile &&
-                    widget.section != ChoSupportSection.dataQuality)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: WebFilterSurface(
-                      padding: const EdgeInsets.all(10),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final width = constraints.maxWidth > 420
-                              ? 420.0
-                              : constraints.maxWidth;
-                          return WebSearchField(
-                            controller: _search,
-                            width: width,
-                            hintText: 'Search this workspace',
-                            onChanged: (value) {
-                              _debounce?.cancel();
-                              _debounce = Timer(
-                                const Duration(milliseconds: 300),
-                                () {
-                                  if (mounted) {
-                                    setState(
-                                      () => _query = value.toLowerCase(),
+                      const SizedBox(height: 12),
+                      if (widget.section != ChoSupportSection.profile &&
+                          widget.section != ChoSupportSection.dataQuality)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: WebFilterSurface(
+                            padding: const EdgeInsets.all(10),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final width = constraints.maxWidth > 420
+                                    ? 420.0
+                                    : constraints.maxWidth;
+                                return WebSearchField(
+                                  controller: _search,
+                                  width: width,
+                                  hintText: 'Search this workspace',
+                                  onChanged: (value) {
+                                    _debounce?.cancel();
+                                    _debounce = Timer(
+                                      const Duration(milliseconds: 300),
+                                      () {
+                                        if (mounted) {
+                                          setState(
+                                            () => _query = value.toLowerCase(),
+                                          );
+                                        }
+                                      },
                                     );
-                                  }
-                                },
-                              );
-                            },
-                            onClear: () {
-                              _search.clear();
-                              _debounce?.cancel();
-                              setState(() => _query = '');
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                if (widget.section == ChoSupportSection.bhwManagement) ...[
-                  ChoViewTabs(
-                    tabs: const [
-                      'Active BHWs',
-                      'Pending Registrations',
-                      'Assignments',
-                      'Activity Summary',
+                                  },
+                                  onClear: () {
+                                    _search.clear();
+                                    _debounce?.cancel();
+                                    setState(() => _query = '');
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      if (widget.section ==
+                          ChoSupportSection.bhwManagement) ...[
+                        ChoViewTabs(
+                          tabs: const [
+                            'Active BHWs',
+                            'Pending Registrations',
+                            'Assignments',
+                            'Activity Summary',
+                          ],
+                          selectedIndex: _bhwTab,
+                          onChanged: (value) => setState(() => _bhwTab = value),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      if (_error != null)
+                        ChoErrorState(message: _error!, onRetry: _verifyAccess)
+                      else
+                        _body(),
                     ],
-                    selectedIndex: _bhwTab,
-                    onChanged: (value) => setState(() => _bhwTab = value),
                   ),
-                  const SizedBox(height: 12),
-                ],
-                if (_error != null)
-                  ChoErrorState(message: _error!, onRetry: _verifyAccess)
-                else
-                  _body(),
-              ],
-            ),
           ),
         ],
       ),
@@ -783,8 +784,9 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                   ),
                   FilledButton(
                     onPressed: () {
-                      if (reason.text.trim().isNotEmpty)
+                      if (reason.text.trim().isNotEmpty) {
                         Navigator.pop(dialogContext, true);
+                      }
                     },
                     child: const Text('Reject'),
                   ),
@@ -838,13 +840,14 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
       await batch.commit();
       _refreshBhwAccounts();
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Account review failed: $error'),
             backgroundColor: Colors.redAccent,
           ),
         );
+      }
     } finally {
       reason.dispose();
     }
@@ -1024,8 +1027,9 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
             FilledButton(
               onPressed: () {
                 if (title.text.trim().isNotEmpty &&
-                    message.text.trim().isNotEmpty)
+                    message.text.trim().isNotEmpty) {
                   Navigator.pop(dialogContext, true);
+                }
               },
               child: const Text('Publish'),
             ),
@@ -1045,13 +1049,14 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
           'publishDate': FieldValue.serverTimestamp(),
         });
       } catch (error) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Announcement could not be published: $error'),
               backgroundColor: Colors.redAccent,
             ),
           );
+        }
       }
     }
     title.dispose();
@@ -1062,11 +1067,12 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
     return FutureBuilder<List<QuerySnapshot<Map<String, dynamic>>>>(
       future: _loadQualityRecords(),
       builder: (context, snapshot) {
-        if (snapshot.hasError)
+        if (snapshot.hasError) {
           return ChoErrorState(
             message: snapshot.error.toString(),
             onRetry: () => setState(() {}),
           );
+        }
         if (!snapshot.hasData) return const ChoLoadingSkeleton();
         final records = snapshot.data!.expand((snap) => snap.docs).toList();
         final missingBarangay = records
@@ -1151,11 +1157,12 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
 
   Widget _profile() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null)
+    if (user == null) {
       return const ChoEmptyState(
         title: 'No authenticated account',
         message: 'Sign in with a CHO account to view profile settings.',
       );
+    }
     return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       future: _firestore
           .collection('users')

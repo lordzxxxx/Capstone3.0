@@ -127,6 +127,12 @@ const Set<String> _doctorWebRoles = <String>{'doctor'};
 // `flutter run`/`flutter build` always targets the real Firebase project.
 const bool kUseFirebaseEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR');
 
+// Release-mode browser automation exercises the optimized bundle against
+// local emulators. Requiring this second, explicit flag prevents a normal
+// release build from ever selecting local services if only the emulator flag
+// is supplied accidentally.
+const bool kBrowserQaMode = bool.fromEnvironment('BROWSER_QA');
+
 Widget _guardWebPage({
   required Set<String> allowedRoles,
   required Widget child,
@@ -170,7 +176,7 @@ Future<void> _initializeMobileServices() async {
     await activateFirebaseAppCheck();
   } catch (e) {
     if (!kDebugMode) rethrow;
-    print('⚠️ [APP_CHECK] Could not initialize App Check on mobile: $e');
+    debugPrint('⚠️ [APP_CHECK] Could not initialize App Check on mobile: $e');
   }
   // Initialize dynamic links on mobile so password reset and other action
   // links can be handled in-app.
@@ -180,7 +186,7 @@ Future<void> _initializeMobileServices() async {
 
 Future<void> _initializeWebServices() async {
   try {
-    print('🔵 [FIREBASE] Initializing Firebase for web...');
+    debugPrint('🔵 [FIREBASE] Initializing Firebase for web...');
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp(
         options: const FirebaseOptions(
@@ -195,20 +201,21 @@ Future<void> _initializeWebServices() async {
         ),
       ).timeout(const Duration(seconds: 12));
     }
-    print('✅ [FIREBASE] Firebase initialized');
+    debugPrint('✅ [FIREBASE] Firebase initialized');
   } catch (e) {
-    print('❌ [FIREBASE] Initialization failed: $e');
+    debugPrint('❌ [FIREBASE] Initialization failed: $e');
     rethrow;
   }
 
   // Local-only QA/dev hook: point Auth/Firestore at the Firebase emulator
   // suite instead of production. Requires an explicit dart-define AND
-  // non-release mode, so a release build can never reach a local emulator
-  // even if the define were mistakenly left set.
-  if (kUseFirebaseEmulator && !kReleaseMode) {
+  // non-release mode or an explicitly marked browser-QA artifact. Production
+  // release builds still cannot reach local services by accident because the
+  // QA artifact requires both compile-time flags.
+  if (kUseFirebaseEmulator && (!kReleaseMode || kBrowserQaMode)) {
     await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
     getFirestoreInstance().useFirestoreEmulator('localhost', 8085);
-    print('🧪 [EMULATOR] Connected to local Auth/Firestore emulators');
+    debugPrint('🧪 [EMULATOR] Connected to local Auth/Firestore emulators');
   }
 
   await _restoreFirebaseAuthSession();
@@ -224,8 +231,8 @@ Future<void> _initializeWebServices() async {
     // otherwise leave the public shell running while protected backend calls
     // fail later and less clearly. Development may continue without it, but
     // production must fail the startup gate and expose its retry/error UI.
-    if (kReleaseMode) rethrow;
-    print('⚠️ [APP_CHECK] Web activation skipped: $e');
+    if (kReleaseMode && !kBrowserQaMode) rethrow;
+    debugPrint('⚠️ [APP_CHECK] Web activation skipped: $e');
   }
 
   try {
@@ -241,9 +248,9 @@ Future<void> _initializeWebServices() async {
       webExperimentalAutoDetectLongPolling: true,
     );
     await firestore.enableNetwork().timeout(const Duration(seconds: 6));
-    print('✅ [FIRESTORE] Ready for operations');
+    debugPrint('✅ [FIRESTORE] Ready for operations');
   } catch (e) {
-    print('⚠️ [FIRESTORE] Configuration deferred: $e');
+    debugPrint('⚠️ [FIRESTORE] Configuration deferred: $e');
   }
 }
 
@@ -265,7 +272,7 @@ Future<void> _restoreFirebaseAuthSession() async {
           .timeout(const Duration(seconds: 5));
     } catch (error) {
       if (kDebugMode) {
-        print('⚠️ [AUTH] Local web persistence unavailable: $error');
+        debugPrint('⚠️ [AUTH] Local web persistence unavailable: $error');
       }
     }
   }
@@ -279,7 +286,7 @@ Future<void> _restoreFirebaseAuthSession() async {
     await auth.authStateChanges().first.timeout(const Duration(seconds: 8));
   } on TimeoutException catch (error) {
     if (kDebugMode) {
-      print(
+      debugPrint(
         '⚠️ [AUTH] Session restore timed out; continuing to app shell: $error',
       );
     }
@@ -295,8 +302,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final browserRoute =
         WidgetsBinding.instance.platformDispatcher.defaultRouteName;
-    final initialRoute = kIsWeb && (browserRoute.isEmpty || browserRoute == '/')
-        ? WebRoutes.landing
+    final initialRoute = kIsWeb
+        ? WebRoutes.startupOverride(browserRoute)
         : null;
 
     return GetMaterialApp(
@@ -945,7 +952,7 @@ Future<void> _initDynamicLinks() async {
     if (initialLink?.link != null) {
       // Handle the deep link, e.g., parse parameters and navigate
       // ignore: avoid_print
-      print('Dynamic Link (initial): ${initialLink!.link}');
+      debugPrint('Dynamic Link (initial): ${initialLink!.link}');
     }
 
     dynamicLinks?.onLink
@@ -953,15 +960,15 @@ Future<void> _initDynamicLinks() async {
           final Uri deepLink = dynamicLinkData.link;
           // Handle the deep link - navigate to reset screen or handle code
           // ignore: avoid_print
-          print('Dynamic Link (onLink): $deepLink');
+          debugPrint('Dynamic Link (onLink): $deepLink');
         })
         .onError((error) {
           // ignore: avoid_print
-          print('Dynamic Link error: $error');
+          debugPrint('Dynamic Link error: $error');
         });
   } catch (e) {
     // ignore: avoid_print
-    print('Error initializing dynamic links: $e');
+    debugPrint('Error initializing dynamic links: $e');
   }
 }
 

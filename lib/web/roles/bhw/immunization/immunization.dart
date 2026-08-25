@@ -1,25 +1,12 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:mycapstone_project/web/roles/bhw/immunization/immunization_database_helper.dart';
 import 'package:mycapstone_project/web/roles/bhw/immunization/immunization_insights.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mycapstone_project/web/features/auth/login.dart';
-import 'package:mycapstone_project/web/roles/bhw/checkups/checkup.dart'
-    as checkup_page;
-import 'package:mycapstone_project/web/roles/bhw/analytics/health_metrics.dart';
-import 'package:mycapstone_project/web/roles/cho/analytics/cho_analytics.dart';
-import 'package:mycapstone_project/web/roles/bhw/prenatal/prenatal.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/non_communicable.dart';
-import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
-import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
-import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
@@ -32,13 +19,11 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient_history_dialog
 import 'package:mycapstone_project/web/roles/bhw/patients/shared_patient_search_panel.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/shared/utils/immunization_pdf.dart';
-import 'package:mycapstone_project/web/shared/utils/report_generation.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
+import 'package:mycapstone_project/web/shared/widgets/web_sync_status_badge.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
-const Color _secondaryIceBlue = Color(0xFF163B66);
 const Color _darkDeepTeal = Color(0xFF071A33);
-const Color _cardBackground = Colors.white;
 const Color _mutedCoolGray = Color(0xFF4B6075);
 const Color _lightOffWhite = Color(0xFFEBF3FC);
 const Color _sidebarDark = Colors.white;
@@ -85,7 +70,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
 
   bool _isSelectionMode = false;
   final Set<int> _selectedIndices = {};
-  bool _isDeleteDialogShowing = false;
+  final bool _isDeleteDialogShowing = false;
   bool _isLoading = true;
   int _currentPage = 1;
   int _rowsPerPage = 10;
@@ -208,18 +193,6 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           _isSearchingSharedPatients = false;
         });
       },
-    );
-  }
-
-  Future<void> _seedSampleData() async {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Sample data initialization is disabled. Immunization records now populate only from actual encoding.',
-        ),
-        backgroundColor: Colors.orange,
-      ),
     );
   }
 
@@ -892,41 +865,6 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
   }
 
   // Web Header Bar
-  Widget _buildWebHeaderBar(BuildContext context) {
-    return WebAppTopBar(
-      title: 'Immunization Dashboard',
-      scaffoldKey: _scaffoldKey,
-      isLoading: _isLoading,
-      onGenerateReport: _generateImmunizationReport,
-      onRefresh: () => _loadRecords(),
-      selectionCount: _isSelectionMode ? _selectedIndices.length : null,
-      actions: [
-        if (kDebugMode) ...[
-          const SizedBox(width: 4),
-          PopupMenuButton(
-            icon: const Icon(Icons.more_vert_outlined, color: Colors.white70),
-            color: _darkDeepTeal,
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                child: const Text(
-                  'Seed Sample Data',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () => _seedSampleData(),
-              ),
-              PopupMenuItem(
-                child: const Text(
-                  'Refresh Data',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () => _loadRecords(),
-              ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
 
   // Immunization Records Table
   Widget _buildImmunizationTable() {
@@ -1192,7 +1130,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                         child: Column(
                           children: [
                             _buildImmunizationCardHeader(),
-                            _ImmunizationTable(
+                            _immunizationTable(
                               records: displayRecords,
                               startIndex: pageStartIndex,
                               isSelectionMode: _isSelectionMode,
@@ -1244,15 +1182,11 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 );
                                 if (confirmed == true) {
                                   try {
-                                    await _dbHelper.deleteRecord(
-                                      record['id'],
-                                    );
+                                    await _dbHelper.deleteRecord(record['id']);
                                     await _loadRecords();
                                   } catch (e) {
-                                    if (!context.mounted) return;
-                                    ScaffoldMessenger.of(
-                                      context,
-                                    ).showSnackBar(
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
                                           'Failed to delete immunization record: $e',
@@ -1421,7 +1355,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
   }
 
   // Immunization Records Table
-  Widget _ImmunizationTable({
+  Widget _immunizationTable({
     required List<Map<String, dynamic>> records,
     required int startIndex,
     required bool isSelectionMode,
@@ -1832,84 +1766,6 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     return _vaccineTypeOptions.first;
   }
 
-  Future<void> _generateImmunizationReport() {
-    return generateReportPdf(
-      context: context,
-      moduleLabel: 'Immunization',
-      records: _getFilteredRecords(),
-      dateResolver: (record) =>
-          parseReportDateValue(record['administrationDate']) ??
-          parseReportDateValue(record['date']),
-      columns: [
-        ReportCsvColumn(
-          'Patient ID',
-          (record) => reportText(record['patientId']),
-          flex: 0.9,
-        ),
-        ReportCsvColumn(
-          'Patient Name',
-          (record) => reportText(record['patientName']),
-          flex: 1.35,
-        ),
-        ReportCsvColumn(
-          'Age',
-          (record) => reportText(record['age']),
-          flex: 0.55,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Vaccine Type',
-          (record) => reportText(record['vaccine']),
-          flex: 1.2,
-        ),
-        ReportCsvColumn(
-          'Administration Date',
-          (record) => formatReportDateValue(record['administrationDate']),
-          flex: 0.95,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Dose Number',
-          (record) => reportText(record['doseNumber']),
-          flex: 0.6,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Status',
-          (record) => reportText(record['status']),
-          flex: 0.9,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Administered By',
-          (record) => reportText(record['administeredBy']),
-          flex: 1.1,
-        ),
-        ReportCsvColumn(
-          'Route',
-          (record) => reportText(record['routeOfAdministration']),
-          flex: 0.95,
-        ),
-        ReportCsvColumn(
-          'Injection Site',
-          (record) => reportText(record['injectionSite']),
-          flex: 0.95,
-        ),
-        ReportCsvColumn(
-          'Adverse Events',
-          (record) => reportText(record['adverseEvents'], fallback: 'None'),
-          flex: 1.2,
-        ),
-      ],
-      accentColor: _primaryAqua,
-      dialogColor: Colors.white,
-      textColor: _darkDeepTeal,
-      mutedColor: _mutedCoolGray,
-      sectionTitleBuilder: (record, index) =>
-          'Record ${index + 1}: ${reportText(record['patientName'], fallback: 'Patient')}',
-    );
-  }
-
   Future<void> _selectDate(BuildContext context, bool isFromDate) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -1948,15 +1804,6 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     }
   }
 
-  void _clearDateFilters() {
-    setState(() {
-      _fromDate = null;
-      _toDate = null;
-      _currentPage = 1;
-      _selectedIndices.clear();
-    });
-  }
-
   Future<void> _showNewImmunizationModal(
     BuildContext context, {
     Map<String, dynamic>? patientSeed,
@@ -1964,6 +1811,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     patientSeed = await _patientHistoryService.resolveRegisteredPatient(
       patientSeed,
     );
+    if (!context.mounted) return;
     if (patientSeed == null) {
       patientSeed = await PatientFirstServiceSelector.selectRegisteredPatient(
         context,
@@ -1977,7 +1825,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           ),
         ),
       );
-      if (!mounted || patientSeed == null) return;
+      if (!context.mounted || patientSeed == null) return;
     }
     // Controllers
     final firstNameController = TextEditingController();
@@ -1986,19 +1834,15 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     final ageController = TextEditingController();
     final contactNumberController = TextEditingController();
 
-    if (patientSeed != null) {
-      final name = patientNameParts(patientSeed);
-      firstNameController.text = name.firstName;
-      surnameController.text = name.surname;
-      patientIdController.text = (patientSeed['patientId'] ?? '').toString();
-      ageController.text = (patientSeed['age'] ?? '').toString();
-      contactNumberController.text = (patientSeed['contactNumber'] ?? '')
-          .toString();
-    }
+    final name = patientNameParts(patientSeed);
+    firstNameController.text = name.firstName;
+    surnameController.text = name.surname;
+    patientIdController.text = (patientSeed['patientId'] ?? '').toString();
+    ageController.text = (patientSeed['age'] ?? '').toString();
+    contactNumberController.text = (patientSeed['contactNumber'] ?? '')
+        .toString();
 
-    String selectedVaccineType = _normalizeVaccineType(
-      patientSeed != null ? patientSeed['vaccine'] : null,
-    );
+    String selectedVaccineType = _normalizeVaccineType(patientSeed['vaccine']);
     final vaccineBrandController = TextEditingController();
     final batchNumberController = TextEditingController();
     DateTime? expirationDate;
@@ -2012,9 +1856,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     final administeredByController = TextEditingController();
     final adverseEventsController = TextEditingController();
     DateTime? nextDoseDueDate;
-    final modalTitle = patientSeed == null
-        ? 'New Immunization Record'
-        : 'Add Another Immunization';
+    final modalTitle = 'Add Another Immunization';
     final formKey = GlobalKey<FormState>();
 
     showDialog(
@@ -2130,8 +1972,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                         hintText: 'Enter first name',
                                         validator: (value) =>
                                             value == null || value.isEmpty
-                                                ? 'Required'
-                                                : null,
+                                            ? 'Required'
+                                            : null,
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -2143,8 +1985,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                         hintText: 'Enter surname',
                                         validator: (value) =>
                                             value == null || value.isEmpty
-                                                ? 'Required'
-                                                : null,
+                                            ? 'Required'
+                                            : null,
                                       ),
                                     ),
                                   ],
@@ -2332,9 +2174,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   onChanged: (value) {
                                     if (value != null) {
                                       setModalState(
-                                        () =>
-                                            selectedRouteOfAdministration =
-                                                value,
+                                        () => selectedRouteOfAdministration =
+                                            value,
                                       );
                                     }
                                   },
@@ -2368,8 +2209,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   hintText: 'Enter staff name or ID',
                                   validator: (value) =>
                                       value == null || value.isEmpty
-                                          ? 'Required'
-                                          : null,
+                                      ? 'Required'
+                                      : null,
                                 ),
                               ]),
                             ],
@@ -2544,117 +2385,121 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                         onPressed: isSaving
                             ? null
                             : () async {
-                          final isFormValid =
-                              formKey.currentState?.validate() ?? false;
-                          if (!isFormValid) {
-                            return;
-                          }
-                          if (selectedVaccineType.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Vaccine type is required'),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                            return;
-                          }
-                          if (administrationDate == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Administration date is required',
-                                ),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                            return;
-                          }
+                                final isFormValid =
+                                    formKey.currentState?.validate() ?? false;
+                                if (!isFormValid) {
+                                  return;
+                                }
+                                if (selectedVaccineType.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Vaccine type is required'),
+                                      backgroundColor: Colors.red,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                if (administrationDate == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Administration date is required',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                  return;
+                                }
 
-                          setModalState(() => isSaving = true);
+                                setModalState(() => isSaving = true);
 
-                          // Create new immunization record
-                          final newRecord = {
-                            'time':
-                                '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
-                            'patientName':
-                                '${firstNameController.text} ${surnameController.text}'
-                                    .trim(),
-                            'patientId':
-                                (patientSeed?['patientId'] ??
-                                        patientSeed?['id'] ??
-                                        patientIdController.text)
-                                    .toString(),
-                            'linkedPatientId':
-                                (patientSeed?['linkedPatientId'] ??
-                                        patientSeed?['patientId'] ??
-                                        patientSeed?['id'] ??
-                                        '')
-                                    .toString(),
-                            'age': ageController.text,
-                            'contactNumber': contactNumberController.text,
-                            'vaccine': selectedVaccineType,
-                            'vaccineBrand': vaccineBrandController.text,
-                            'batchNumber': batchNumberController.text,
-                            'expirationDate':
-                                expirationDate?.toIso8601String() ?? '',
-                            'administrationDate':
-                                administrationDate?.toIso8601String() ?? '',
-                            'administrationTime':
-                                '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
-                            'doseNumber': doseNumberController.text,
-                            'routeOfAdministration':
-                                selectedRouteOfAdministration,
-                            'injectionSite': selectedInjectionSite,
-                            'administeredBy': administeredByController.text,
-                            'adverseEvents': adverseEventsController.text,
-                            'nextDoseDueDate':
-                                nextDoseDueDate?.toIso8601String() ?? '',
-                            'status': 'Completed',
-                            'date':
-                                administrationDate?.toIso8601String() ?? '',
-                          };
+                                // Create new immunization record
+                                final newRecord = {
+                                  'time':
+                                      '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
+                                  'patientName':
+                                      '${firstNameController.text} ${surnameController.text}'
+                                          .trim(),
+                                  'patientId':
+                                      (patientSeed?['patientId'] ??
+                                              patientSeed?['id'] ??
+                                              patientIdController.text)
+                                          .toString(),
+                                  'linkedPatientId':
+                                      (patientSeed?['linkedPatientId'] ??
+                                              patientSeed?['patientId'] ??
+                                              patientSeed?['id'] ??
+                                              '')
+                                          .toString(),
+                                  'age': ageController.text,
+                                  'contactNumber': contactNumberController.text,
+                                  'vaccine': selectedVaccineType,
+                                  'vaccineBrand': vaccineBrandController.text,
+                                  'batchNumber': batchNumberController.text,
+                                  'expirationDate':
+                                      expirationDate?.toIso8601String() ?? '',
+                                  'administrationDate':
+                                      administrationDate?.toIso8601String() ??
+                                      '',
+                                  'administrationTime':
+                                      '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
+                                  'doseNumber': doseNumberController.text,
+                                  'routeOfAdministration':
+                                      selectedRouteOfAdministration,
+                                  'injectionSite': selectedInjectionSite,
+                                  'administeredBy':
+                                      administeredByController.text,
+                                  'adverseEvents': adverseEventsController.text,
+                                  'nextDoseDueDate':
+                                      nextDoseDueDate?.toIso8601String() ?? '',
+                                  'status': 'Completed',
+                                  'date':
+                                      administrationDate?.toIso8601String() ??
+                                      '',
+                                };
 
-                          // Save to database (offline + Firebase sync)
-                          try {
-                            await _dbHelper.insertRecord(newRecord);
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Failed to save immunization record: $e',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                            setModalState(() => isSaving = false);
-                            return;
-                          }
+                                // Save to database (offline + Firebase sync)
+                                try {
+                                  await _dbHelper.insertRecord(newRecord);
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Failed to save immunization record: $e',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      backgroundColor: Colors.red,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                  setModalState(() => isSaving = false);
+                                  return;
+                                }
 
-                          // Reload records
-                          await _loadRecords();
+                                // Reload records
+                                await _loadRecords();
 
-                          if (context.mounted) {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Immunization record saved successfully!',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                backgroundColor: Colors.green,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        },
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Immunization record saved successfully!',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      backgroundColor: Colors.green,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              },
                       ),
                     ],
                   ),
@@ -3074,168 +2919,6 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     );
   }
 
-  Widget _buildFilters() {
-    return Column(
-      children: [
-        // Vaccine Filter
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _primaryAqua.withValues(alpha: 0.2),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: _mutedCoolGray.withValues(alpha: 0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 12, right: 8),
-                child: Icon(Icons.vaccines, color: _primaryAqua, size: 20),
-              ),
-              Expanded(
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedVaccineFilter,
-                    isExpanded: true,
-                    icon: Icon(Icons.arrow_drop_down, color: _primaryAqua),
-                    style: TextStyle(
-                      color: _darkDeepTeal,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    items: _vaccineFilterOptions.map((String option) {
-                      return DropdownMenuItem<String>(
-                        value: option,
-                        child: Text(
-                          option,
-                          style: const TextStyle(
-                            color: _lightOffWhite,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          _selectedVaccineFilter = newValue;
-                        });
-                      }
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // Date Range Filter
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _primaryAqua.withValues(alpha: 0.2),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: _mutedCoolGray.withValues(alpha: 0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.date_range, color: _primaryAqua, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Filter by Date Range',
-                    style: TextStyle(
-                      color: _darkDeepTeal,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  if (_fromDate != null || _toDate != null)
-                    InkWell(
-                      onTap: _clearDateFilters,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.clear, size: 14, color: Colors.red),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Clear',
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildDatePickerButton(
-                      context: context,
-                      label: 'From Date',
-                      date: _fromDate,
-                      isFromDate: true,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildDatePickerButton(
-                      context: context,
-                      label: 'To Date',
-                      date: _toDate,
-                      isFromDate: false,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildDatePickerButton({
     required BuildContext context,
     required String label,
@@ -3272,331 +2955,6 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDashboardCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required String trend,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [color, color.withValues(alpha: 0.7)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(icon, color: Colors.white, size: 24),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: color.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  trend,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            title,
-            style: TextStyle(
-              color: _mutedCoolGray,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImmunizationCard({
-    required BuildContext context,
-    required int index,
-    required Map<String, dynamic> record,
-  }) {
-    final isSelected = _selectedIndices.contains(index);
-    final time = record['time'] ?? 'N/A';
-    final patientName = record['patientName'] ?? 'N/A';
-    final vaccine = record['vaccine'] ?? 'N/A';
-    final status = record['status'] ?? 'N/A';
-
-    return GestureDetector(
-      onTap: _isSelectionMode
-          ? () {
-              setState(() {
-                if (isSelected) {
-                  _selectedIndices.remove(index);
-                } else {
-                  _selectedIndices.add(index);
-                }
-              });
-            }
-          : null,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? _primaryAqua
-                : _primaryAqua.withValues(alpha: 0.2),
-            width: isSelected ? 2.5 : 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? _primaryAqua.withValues(alpha: 0.2)
-                  : _mutedCoolGray.withValues(alpha: 0.08),
-              blurRadius: isSelected ? 12 : 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Time and Status Header with Selection Checkbox
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      if (_isSelectionMode) ...[
-                        Checkbox(
-                          value: isSelected,
-                          onChanged: (value) {
-                            setState(() {
-                              if (value == true) {
-                                _selectedIndices.add(index);
-                              } else {
-                                _selectedIndices.remove(index);
-                              }
-                            });
-                          },
-                          activeColor: _primaryAqua,
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: _primaryAqua.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.access_time,
-                          color: _primaryAqua,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        time,
-                        style: TextStyle(
-                          color: _darkDeepTeal,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  _buildStatusChip(status),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Patient Name and Vaccine Info
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.person, size: 16, color: _mutedCoolGray),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Patient Name',
-                              style: TextStyle(
-                                color: _mutedCoolGray,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          patientName,
-                          style: TextStyle(
-                            color: _darkDeepTeal,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.vaccines,
-                              size: 16,
-                              color: _mutedCoolGray,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Vaccine',
-                              style: TextStyle(
-                                color: _mutedCoolGray,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          vaccine,
-                          style: TextStyle(
-                            color: _darkDeepTeal,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Action Buttons
-              if (!_isSelectionMode)
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          _showImmunizationDetails(context, record);
-                        },
-                        icon: Icon(Icons.visibility, size: 16),
-                        label: Text(
-                          'View',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _primaryAqua,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          _showEditDialog(context, record);
-                        },
-                        icon: Icon(Icons.edit, size: 16),
-                        label: Text(
-                          'Edit',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _primaryAqua,
-                          side: BorderSide(color: _primaryAqua, width: 1.5),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
         ),
       ),
     );
@@ -3652,14 +3010,6 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     );
     final administrationDate = _formatDate(record['administrationDate']);
     final nextDoseDueDate = _formatDate(record['nextDoseDueDate']);
-    final statusColor = _getImmunizationDetailStatusColor(status);
-    final nameParts = patientName.split(' ');
-    final initials = nameParts
-        .where((part) => part.trim().isNotEmpty)
-        .take(2)
-        .map((part) => part.trim().substring(0, 1).toUpperCase())
-        .join();
-
     showFullscreenDetailTableDialog(
       context: context,
       title: 'Immunization Details',
@@ -3753,444 +3103,6 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       ],
     );
     return;
-
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.74),
-      builder: (dialogContext) {
-        final screenSize = MediaQuery.of(dialogContext).size;
-        final isCompact = screenSize.width < 760;
-
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.zero,
-          child: SizedBox(
-            width: screenSize.width,
-            height: screenSize.height,
-            child: Container(
-              decoration: BoxDecoration(
-                color: _darkDeepTeal,
-                border: Border.all(
-                  color: _primaryAqua.withValues(alpha: 0.16),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.4),
-                    blurRadius: 36,
-                    offset: const Offset(0, 18),
-                  ),
-                ],
-              ),
-              child: ClipRect(
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(isCompact ? 20 : 24),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              _sidebarDark,
-                              _secondaryIceBlue.withValues(alpha: 0.88),
-                              _primaryAqua.withValues(alpha: 0.72),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          border: Border(
-                            bottom: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.08),
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.14),
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      initials.isEmpty ? 'IM' : initials,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.8,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        patientName,
-                                        style: const TextStyle(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.white,
-                                          letterSpacing: 0.2,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        'Immunization record overview with patient, vaccine, administration, and follow-up details.',
-                                        style: TextStyle(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.74,
-                                          ),
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.w500,
-                                          height: 1.38,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () =>
-                                        Navigator.of(dialogContext).pop(),
-                                    borderRadius: BorderRadius.circular(14),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.08,
-                                        ),
-                                        borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.12,
-                                          ),
-                                        ),
-                                      ),
-                                      child: const Icon(
-                                        Icons.close_rounded,
-                                        color: Colors.white,
-                                        size: 22,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 18),
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    statusColor.withValues(alpha: 0.18),
-                                    Colors.white.withValues(alpha: 0.04),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: statusColor.withValues(alpha: 0.2),
-                                ),
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    width: 42,
-                                    height: 42,
-                                    decoration: BoxDecoration(
-                                      color: statusColor.withValues(
-                                        alpha: 0.16,
-                                      ),
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    child: Icon(
-                                      Icons.vaccines_outlined,
-                                      color: statusColor,
-                                      size: 21,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Current immunization status',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'This vaccine record is marked as $status and currently references $vaccine.',
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.7,
-                                            ),
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                            height: 1.35,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                    child: Text(
-                                      status,
-                                      style: TextStyle(
-                                        color: statusColor,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Wrap(
-                              spacing: 10,
-                              runSpacing: 10,
-                              children: [
-                                _buildImmunizationDetailMetaChip(
-                                  icon: Icons.badge_outlined,
-                                  label: 'Patient ID',
-                                  value: patientId,
-                                  accentColor: const Color(0xFF64B5F6),
-                                ),
-                                _buildImmunizationDetailMetaChip(
-                                  icon: Icons.vaccines_outlined,
-                                  label: 'Vaccine',
-                                  value: vaccine,
-                                  accentColor: const Color(0xFF81C784),
-                                ),
-                                _buildImmunizationDetailMetaChip(
-                                  icon: Icons.event_outlined,
-                                  label: 'Administered',
-                                  value: administrationDate,
-                                  accentColor: const Color(0xFFFFB74D),
-                                ),
-                                _buildImmunizationDetailMetaChip(
-                                  icon: Icons.update_outlined,
-                                  label: 'Next Dose',
-                                  value: nextDoseDueDate,
-                                  accentColor: const Color(0xFFE57373),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.all(isCompact ? 18 : 22),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildDetailsSection('Patient Information', [
-                              _buildDetailRowWithIcon(
-                                Icons.person,
-                                'Patient Name',
-                                record['patientName'],
-                              ),
-                              _buildDetailRowWithIcon(
-                                Icons.badge,
-                                'Patient ID',
-                                record['patientId'],
-                              ),
-                              _buildDetailRowWithIcon(
-                                Icons.cake,
-                                'Age',
-                                record['age'],
-                              ),
-                              _buildDetailRowWithIcon(
-                                Icons.phone,
-                                'Contact Number',
-                                record['contactNumber'],
-                              ),
-                            ]),
-                            const SizedBox(height: 16),
-                            _buildDetailsSection('Vaccine Information', [
-                              _buildDetailRowWithIcon(
-                                Icons.vaccines,
-                                'Vaccine Type',
-                                record['vaccine'],
-                              ),
-                              _buildDetailRowWithIcon(
-                                Icons.business,
-                                'Vaccine Brand',
-                                record['vaccineBrand'],
-                              ),
-                              _buildDetailRowWithIcon(
-                                Icons.numbers,
-                                'Batch/Lot Number',
-                                record['batchNumber'],
-                              ),
-                              _buildDetailRowWithIcon(
-                                Icons.event_busy,
-                                'Expiration Date',
-                                _formatDate(record['expirationDate']),
-                              ),
-                            ]),
-                            const SizedBox(height: 16),
-                            _buildDetailsSection('Administration Details', [
-                              _buildDetailRowWithIcon(
-                                Icons.event,
-                                'Administration Date',
-                                _formatDate(record['administrationDate']),
-                              ),
-                              _buildDetailRowWithIcon(
-                                Icons.access_time,
-                                'Administration Time',
-                                record['administrationTime'],
-                              ),
-                              _buildDetailRowWithIcon(
-                                Icons.filter_1,
-                                'Dose Number',
-                                record['doseNumber'],
-                              ),
-                              _buildDetailRowWithIcon(
-                                Icons.route,
-                                'Route of Administration',
-                                record['routeOfAdministration'],
-                              ),
-                              _buildDetailRowWithIcon(
-                                Icons.place,
-                                'Injection Site',
-                                record['injectionSite'],
-                              ),
-                              _buildDetailRowWithIcon(
-                                Icons.person_pin,
-                                'Administered By',
-                                record['administeredBy'],
-                              ),
-                            ]),
-                            const SizedBox(height: 16),
-                            _buildDetailsSection('Additional Information', [
-                              _buildDetailRowWithIcon(
-                                Icons.warning_amber,
-                                'Adverse Events',
-                                record['adverseEvents'] ?? 'None reported',
-                              ),
-                              _buildDetailRowWithIcon(
-                                Icons.event_available,
-                                'Next Dose Due Date',
-                                _formatDate(record['nextDoseDueDate']),
-                              ),
-                              _buildDetailRowWithIcon(
-                                Icons.info,
-                                'Status',
-                                record['status'],
-                              ),
-                            ]),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.fromLTRB(
-                          isCompact ? 18 : 22,
-                          10,
-                          isCompact ? 18 : 22,
-                          isCompact ? 18 : 22,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _sidebarDark.withValues(alpha: 0.82),
-                          border: Border(
-                            top: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.06),
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                        child: Wrap(
-                          alignment: WrapAlignment.end,
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: [
-                            OutlinedButton(
-                              onPressed: () =>
-                                  Navigator.of(dialogContext).pop(),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                backgroundColor: Colors.white.withValues(
-                                  alpha: 0.03,
-                                ),
-                                side: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.16),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              child: const Text('Close'),
-                            ),
-                            FilledButton.icon(
-                              onPressed: () async {
-                                Navigator.of(dialogContext).pop();
-                                await _downloadImmunizationRecordPdf(
-                                  context,
-                                  record,
-                                );
-                              },
-                              icon: const Icon(
-                                Icons.picture_as_pdf_rounded,
-                                size: 18,
-                              ),
-                              label: const Text('Generate PDF'),
-                              style: AppButtonStyles.report(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
   }
 
   void _showEditDialog(BuildContext context, Map<String, dynamic> record) {
@@ -4631,121 +3543,146 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 onPressed: isSaving
                                     ? null
                                     : () async {
-                                  final isFormValid =
-                                      formKey.currentState?.validate() ?? false;
-                                  if (!isFormValid) {
-                                    return;
-                                  }
-                                  if (selectedVaccineType.isEmpty) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Vaccine type is required',
-                                        ),
-                                        backgroundColor: Colors.red,
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
-                                    );
-                                    return;
-                                  }
-                                  if (administrationDate == null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Administration date is required',
-                                        ),
-                                        backgroundColor: Colors.red,
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
-                                    );
-                                    return;
-                                  }
-
-                                  setModalState(() => isSaving = true);
-
-                                  // Update immunization record
-                                  final updatedRecord = {
-                                    'time':
-                                        '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
-                                    'patientName':
-                                        '${firstNameController.text} ${surnameController.text}'
-                                            .trim(),
-                                    'patientId': patientIdController.text,
-                                    'age': ageController.text,
-                                    'contactNumber':
-                                        contactNumberController.text,
-                                    'vaccine': selectedVaccineType,
-                                    'vaccineBrand': vaccineBrandController.text,
-                                    'batchNumber': batchNumberController.text,
-                                    'expirationDate':
-                                        expirationDate?.toIso8601String() ?? '',
-                                    'administrationDate':
-                                        administrationDate?.toIso8601String() ??
-                                        '',
-                                    'administrationTime':
-                                        '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
-                                    'doseNumber': doseNumberController.text,
-                                    'routeOfAdministration':
-                                        selectedRouteOfAdministration,
-                                    'injectionSite': selectedInjectionSite,
-                                    'administeredBy':
-                                        administeredByController.text,
-                                    'adverseEvents':
-                                        adverseEventsController.text,
-                                    'nextDoseDueDate':
-                                        nextDoseDueDate?.toIso8601String() ??
-                                        '',
-                                    'status': record['status'] ?? 'Completed',
-                                    'date':
-                                        administrationDate?.toIso8601String() ??
-                                        '',
-                                  };
-
-                                  // Update in database
-                                  final id = record['id']?.toString() ?? '';
-                                  if (id.isNotEmpty) {
-                                    try {
-                                      await _dbHelper.updateRecord(
-                                        id,
-                                        updatedRecord,
-                                      );
-                                    } catch (e) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Failed to update immunization record: $e',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
+                                        final isFormValid =
+                                            formKey.currentState?.validate() ??
+                                            false;
+                                        if (!isFormValid) {
+                                          return;
+                                        }
+                                        if (selectedVaccineType.isEmpty) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Vaccine type is required',
+                                              ),
+                                              backgroundColor: Colors.red,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
                                             ),
+                                          );
+                                          return;
+                                        }
+                                        if (administrationDate == null) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Administration date is required',
+                                              ),
+                                              backgroundColor: Colors.red,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        setModalState(() => isSaving = true);
+
+                                        // Update immunization record
+                                        final updatedRecord = {
+                                          'time':
+                                              '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
+                                          'patientName':
+                                              '${firstNameController.text} ${surnameController.text}'
+                                                  .trim(),
+                                          'patientId': patientIdController.text,
+                                          'age': ageController.text,
+                                          'contactNumber':
+                                              contactNumberController.text,
+                                          'vaccine': selectedVaccineType,
+                                          'vaccineBrand':
+                                              vaccineBrandController.text,
+                                          'batchNumber':
+                                              batchNumberController.text,
+                                          'expirationDate':
+                                              expirationDate
+                                                  ?.toIso8601String() ??
+                                              '',
+                                          'administrationDate':
+                                              administrationDate
+                                                  ?.toIso8601String() ??
+                                              '',
+                                          'administrationTime':
+                                              '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
+                                          'doseNumber':
+                                              doseNumberController.text,
+                                          'routeOfAdministration':
+                                              selectedRouteOfAdministration,
+                                          'injectionSite':
+                                              selectedInjectionSite,
+                                          'administeredBy':
+                                              administeredByController.text,
+                                          'adverseEvents':
+                                              adverseEventsController.text,
+                                          'nextDoseDueDate':
+                                              nextDoseDueDate
+                                                  ?.toIso8601String() ??
+                                              '',
+                                          'status':
+                                              record['status'] ?? 'Completed',
+                                          'date':
+                                              administrationDate
+                                                  ?.toIso8601String() ??
+                                              '',
+                                        };
+
+                                        // Update in database
+                                        final id =
+                                            record['id']?.toString() ?? '';
+                                        if (id.isNotEmpty) {
+                                          try {
+                                            await _dbHelper.updateRecord(
+                                              id,
+                                              updatedRecord,
+                                            );
+                                          } catch (e) {
+                                            if (!context.mounted) return;
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Failed to update immunization record: $e',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                backgroundColor: Colors.red,
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                              ),
+                                            );
+                                            setModalState(
+                                              () => isSaving = false,
+                                            );
+                                            return;
+                                          }
+                                        }
+
+                                        // Reload records
+                                        await _loadRecords();
+                                        if (!context.mounted) return;
+
+                                        Navigator.pop(context);
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Immunization record updated successfully!',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            backgroundColor: Colors.green,
+                                            behavior: SnackBarBehavior.floating,
                                           ),
-                                          backgroundColor: Colors.red,
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
-                                      );
-                                      setModalState(() => isSaving = false);
-                                      return;
-                                    }
-                                  }
-
-                                  // Reload records
-                                  await _loadRecords();
-
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Immunization record updated successfully!',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      backgroundColor: Colors.green,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                },
+                                        );
+                                      },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: _primaryAqua,
                                   foregroundColor: Colors.white,
@@ -4765,8 +3702,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                           strokeWidth: 2,
                                           valueColor:
                                               AlwaysStoppedAnimation<Color>(
-                                            Colors.white,
-                                          ),
+                                                Colors.white,
+                                              ),
                                         ),
                                       )
                                     : const Text(
@@ -4801,362 +3738,6 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     return text.isEmpty ? fallback : text;
   }
 
-  Color _getImmunizationDetailStatusColor(String status) {
-    final lower = status.toLowerCase();
-
-    if (lower.contains('complete')) return const Color(0xFF66BB6A);
-    if (lower.contains('progress')) return const Color(0xFF64B5F6);
-    if (lower.contains('schedule')) return const Color(0xFFFFB74D);
-    if (lower.contains('missed') || lower.contains('overdue')) {
-      return const Color(0xFFE57373);
-    }
-    return _primaryAqua;
-  }
-
-  Widget _buildImmunizationDetailMetaChip({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color accentColor,
-    Color? valueColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: accentColor.withValues(alpha: 0.18)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: accentColor, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.6),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 2),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 180),
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: valueColor ?? Colors.white,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: _mutedCoolGray,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            color: _darkDeepTeal,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailsSection(String title, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: _sidebarDark.withValues(alpha: 0.96),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.16),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: _primaryAqua.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(
-                      Icons.info_outline_rounded,
-                      color: _primaryAqua,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              ...children,
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailRowWithIcon(IconData icon, String label, dynamic value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.035),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: _primaryAqua.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, size: 18, color: _primaryAqua),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: Colors.white.withValues(alpha: 0.62),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _safeImmunizationDetailText(value),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionMenuButton() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.2),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _mutedCoolGray.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            setState(() {
-              _isSelectionMode = !_isSelectionMode;
-              if (!_isSelectionMode) {
-                _selectedIndices.clear();
-              }
-            });
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Icon(
-                  _isSelectionMode ? Icons.close : Icons.check_circle_outline,
-                  color: _primaryAqua,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    _isSelectionMode
-                        ? 'Selection Mode Active'
-                        : 'Select Records',
-                    style: TextStyle(
-                      color: _darkDeepTeal,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                if (_isSelectionMode && _selectedIndices.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _primaryAqua.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${_selectedIndices.length} selected',
-                      style: TextStyle(
-                        color: _primaryAqua,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                Icon(Icons.arrow_drop_down, color: _primaryAqua),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _confirmDelete() {
-    if (_selectedIndices.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No records selected'),
-          backgroundColor: Colors.orange,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _isDeleteDialogShowing = true;
-    });
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Text('Confirm Delete'),
-          ],
-        ),
-        content: Text(
-          'Are you sure you want to delete ${_selectedIndices.length} selected record(s)? This action cannot be undone.',
-          style: TextStyle(color: _darkDeepTeal),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _isDeleteDialogShowing = false;
-              });
-              Navigator.pop(context);
-            },
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: _mutedCoolGray,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _deleteSelectedRecords();
-              setState(() {
-                _isDeleteDialogShowing = false;
-              });
-            },
-            child: Text(
-              'Delete',
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    ).then((_) {
-      // Ensure the state is reset if dialog is dismissed by tapping outside
-      setState(() {
-        _isDeleteDialogShowing = false;
-      });
-    });
-  }
-
   Future<void> _deleteSelectedRecords() async {
     // Get IDs of records to delete
     final filteredRecords = _getFilteredRecords();
@@ -5172,6 +3753,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     // Delete from database, tracking which ids actually succeeded
     final succeededIds = await _dbHelper.deleteRecords(idsToDelete);
     final failedCount = idsToDelete.length - succeededIds.length;
+    if (!mounted) return;
 
     // Remove only the records that were actually deleted
     setState(() {
@@ -5206,435 +3788,6 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       );
     }
   }
-
-  Widget _buildDrawer(BuildContext context, String userName) {
-    final user = FirebaseAuth.instance.currentUser;
-    return Drawer(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_sidebarDark, _sidebarDark.withValues(alpha: 0.95)],
-          ),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                vertical: 20.0,
-                horizontal: 16.0,
-              ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_primaryAqua, _secondaryIceBlue],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryAqua.withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.25),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/bg3.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.white,
-                            child: Icon(
-                              Icons.person,
-                              size: 35,
-                              color: _primaryAqua,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    userName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: 0.5,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    user?.email ?? '',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 11,
-                      letterSpacing: 0.3,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Colors.greenAccent,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.greenAccent,
-                                blurRadius: 4,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Online',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 3,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: _primaryAqua,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'MAIN MENU',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 4,
-                  horizontal: 10,
-                ),
-                children: [
-                  _buildDrawerSidebarItem(
-                    icon: Icons.dashboard_rounded,
-                    label: 'Dashboard',
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.assignment_turned_in_rounded,
-                    label: 'Check-ups',
-                    onTap: () => Get.toNamed(WebRoutes.bhwCheckups),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.favorite_rounded,
-                    label: 'Summary Generation',
-                    onTap: () => Get.toNamed(WebRoutes.bhwSummary),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.analytics_rounded,
-                    label: 'Analytics',
-                    onTap: () => Get.toNamed(WebRoutes.bhwAnalytics),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 3,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: _primaryAqua,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'PATIENT CARE',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.pregnant_woman_rounded,
-                    label: 'Prenatal Care',
-                    onTap: () => Get.toNamed(WebRoutes.bhwPrenatal),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.vaccines_rounded,
-                    label: 'Immunization',
-                    isActive: true,
-                    onTap: () {},
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.person_rounded,
-                    label: 'Patient Records',
-                    onTap: () => Get.toNamed(WebRoutes.bhwPatients),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 3,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: _primaryAqua,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'DISEASE TRACKING',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.coronavirus_rounded,
-                    label: 'Communicable',
-                    onTap: () => Get.toNamed(WebRoutes.bhwCommunicable),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.health_and_safety_rounded,
-                    label: 'Non-Communicable',
-                    onTap: () => Get.toNamed(WebRoutes.bhwNonCommunicable),
-                  ),
-                  _buildDrawerSidebarItem(
-                    icon: Icons.analytics_outlined,
-                    label: 'Mortality',
-                    onTap: () => Get.toNamed(WebRoutes.bhwMortality),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () async {
-                    await FirebaseAuth.instance.signOut();
-                    Get.offAllNamed(WebRoutes.login);
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.red.shade600, Colors.red.shade700],
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.red.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.logout_rounded,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Logout',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerSidebarItem({
-    required IconData icon,
-    required String label,
-    bool isActive = false,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6.0),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          hoverColor: Colors.white.withValues(alpha: 0.08),
-          splashColor: _primaryAqua.withValues(alpha: 0.2),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-            decoration: BoxDecoration(
-              color: isActive ? _primaryAqua.withValues(alpha: 0.18) : null,
-              borderRadius: BorderRadius.circular(12),
-              border: Border(
-                left: BorderSide(
-                  color: isActive ? _primaryAqua : Colors.transparent,
-                  width: 3,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? _primaryAqua.withValues(alpha: 0.15)
-                        : Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isActive
-                        ? _primaryAqua
-                        : Colors.white.withValues(alpha: 0.8),
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: isActive
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.8),
-                      fontSize: 12.5,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ),
-                if (isActive)
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: _primaryAqua,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.chevron_right,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
 }
 
 class _ImmunizationCard extends StatelessWidget {
@@ -5785,17 +3938,11 @@ class _ImmunizationCard extends StatelessWidget {
       record['patientId'] ?? record['id'] ?? record['linkedPatientId'],
       '-',
     );
-    final contactNumber = _safe(
-      record['contactNumber'] ?? record['phone'] ?? record['contact'],
-      'N/A',
-    );
     final vaccine = _safe(
       record['vaccine'] ?? record['vaccineType'] ?? record['vaccineName'],
       'N/A',
     );
     final status = _safe(record['status'], 'Completed');
-    final historyCount =
-        int.tryParse(record['patientHistoryCount']?.toString() ?? '') ?? 1;
     final doseNumber = _safe(record['doseNumber'] ?? record['dose'], '1');
     final route = _safe(
       record['routeOfAdministration'] ?? record['route'],
@@ -5907,6 +4054,8 @@ class _ImmunizationCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 6),
+                    WebSyncStatusBadge(record: record),
                   ],
                 ),
               ),

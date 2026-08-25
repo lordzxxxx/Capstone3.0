@@ -1,22 +1,17 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
-import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
-import 'package:mycapstone_project/web/shared/components/app_top_bar.dart';
 import 'package:mycapstone_project/web/shared/utils/checkup_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
-import 'package:mycapstone_project/web/shared/utils/report_generation.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/shared_patient_search_panel.dart';
@@ -24,7 +19,9 @@ import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/services/web_record_sync.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
+import 'package:mycapstone_project/web/shared/widgets/web_sync_status_badge.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF071A33);
@@ -71,8 +68,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
       DashboardDateFilterMode.allTime;
   DateTime? _insightsCustomDate;
   DateTime? _insightsSelectedMonth;
-  DateTime _insightsRangeStart =
-      DateTime.now().subtract(const Duration(days: 6));
+  DateTime _insightsRangeStart = DateTime.now().subtract(
+    const Duration(days: 6),
+  );
   DateTime _insightsRangeEnd = DateTime.now();
 
   @override
@@ -144,7 +142,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
         getFirestoreInstance(),
         'checkup_records',
         scope,
-      ).snapshots();
+      ).snapshots(includeMetadataChanges: true);
     });
   }
 
@@ -198,79 +196,6 @@ class _MorbidityPageState extends State<MorbidityPage> {
           _isSearchingSharedPatients = false;
         });
       },
-    );
-  }
-
-  Future<void> _generateMorbidityReport() {
-    return generateReportPdf(
-      context: context,
-      moduleLabel: 'Morbidity',
-      records: _reportRecords,
-      dateResolver: (record) {
-        final source = record['sourceRecord'] is Map
-            ? Map<String, dynamic>.from(record['sourceRecord'] as Map)
-            : const <String, dynamic>{};
-        return parseReportDateValue(record['reportedDate']) ??
-            parseReportDateValue(source['datetime']) ??
-            parseReportDateValue(source['dateReported']) ??
-            parseReportDateValue(source['date']);
-      },
-      columns: [
-        ReportCsvColumn(
-          'Patient Name',
-          (record) => reportText(record['patientName']),
-          flex: 1.45,
-        ),
-        ReportCsvColumn(
-          'Age',
-          (record) => reportText(
-            record['age'],
-            fallback: reportText((record['sourceRecord'] as Map?)?['age']),
-          ),
-          flex: 0.55,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Sex',
-          (record) => reportText(
-            record['sex'] ?? record['gender'],
-            fallback: reportText(
-              (record['sourceRecord'] as Map?)?['gender'] ??
-                  (record['sourceRecord'] as Map?)?['sex'],
-            ),
-          ),
-          flex: 0.55,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Disease / Diagnosis',
-          (record) => reportText(record['disease']),
-          flex: 1.45,
-        ),
-        ReportCsvColumn(
-          'Date Recorded',
-          (record) => formatReportDateValue(record['reportedDate']),
-          flex: 0.95,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Case Status',
-          (record) => reportText(record['status']),
-          flex: 0.9,
-          center: true,
-        ),
-        ReportCsvColumn(
-          'Remarks',
-          (record) => reportText(record['remarks']),
-          flex: 1.45,
-        ),
-      ],
-      accentColor: _primaryAqua,
-      dialogColor: _panelTeal,
-      textColor: _lightOffWhite,
-      mutedColor: _mutedCoolGray,
-      sectionTitleBuilder: (record, index) =>
-          'Record ${index + 1}: ${reportText(record['patientName'], fallback: 'Patient')}',
     );
   }
 
@@ -439,7 +364,11 @@ class _MorbidityPageState extends State<MorbidityPage> {
               'Filter diagnosis counts, active follow-ups, severe cases, and disease breakdowns by date. Currently showing ${_activeInsightsWindowLabel().toLowerCase()}.',
               maxLines: isWideHeader ? 2 : 3,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: _mutedCoolGray, fontSize: 11, height: 1.35),
+              style: const TextStyle(
+                color: _mutedCoolGray,
+                fontSize: 11,
+                height: 1.35,
+              ),
             ),
           ],
         );
@@ -533,20 +462,23 @@ class _MorbidityPageState extends State<MorbidityPage> {
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: (_insightsDateFilterMode ==
+              foregroundColor:
+                  (_insightsDateFilterMode ==
                           DashboardDateFilterMode.customDay ||
                       _insightsDateFilterMode ==
                           DashboardDateFilterMode.customRange)
                   ? _primaryAqua
                   : _lightOffWhite,
-              backgroundColor: (_insightsDateFilterMode ==
+              backgroundColor:
+                  (_insightsDateFilterMode ==
                           DashboardDateFilterMode.customDay ||
                       _insightsDateFilterMode ==
                           DashboardDateFilterMode.customRange)
                   ? _primaryAqua.withValues(alpha: 0.12)
                   : Colors.white,
               side: BorderSide(
-                color: (_insightsDateFilterMode ==
+                color:
+                    (_insightsDateFilterMode ==
                             DashboardDateFilterMode.customDay ||
                         _insightsDateFilterMode ==
                             DashboardDateFilterMode.customRange)
@@ -708,8 +640,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                   );
                   if (picked == null || !mounted) return;
                   setState(() {
-                    _insightsDateFilterMode =
-                        DashboardDateFilterMode.customDay;
+                    _insightsDateFilterMode = DashboardDateFilterMode.customDay;
                     _insightsCustomDate = picked;
                   });
                 },
@@ -738,10 +669,11 @@ class _MorbidityPageState extends State<MorbidityPage> {
                   );
                   if (picked == null || !mounted) return;
                   setState(() {
-                    _insightsDateFilterMode =
-                        DashboardDateFilterMode.thisMonth;
-                    _insightsSelectedMonth =
-                        DateTime(picked.year, picked.month);
+                    _insightsDateFilterMode = DashboardDateFilterMode.thisMonth;
+                    _insightsSelectedMonth = DateTime(
+                      picked.year,
+                      picked.month,
+                    );
                   });
                 },
               ),
@@ -788,8 +720,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                 onTap: () {
                   Navigator.pop(dialogContext);
                   setState(() {
-                    _insightsDateFilterMode =
-                        DashboardDateFilterMode.allTime;
+                    _insightsDateFilterMode = DashboardDateFilterMode.allTime;
                   });
                 },
               ),
@@ -819,113 +750,130 @@ class _MorbidityPageState extends State<MorbidityPage> {
             child: ColoredBox(
               color: const Color(0xFFF5F7FA),
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: _morbidityStream(),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return _buildStateMessage(
-                context,
-                icon: Icons.error_outline_rounded,
-                title: 'Linked check-up morbidity records could not be loaded.',
-                subtitle:
-                    'Check the Firestore connection or record permissions for check-up records and try again.',
-              );
-            }
-
-            if (!snapshot.hasData) {
-              return const Center(
-                child: CircularProgressIndicator(color: _primaryAqua),
-              );
-            }
-
-            final records = _normalizeRecords(snapshot.data!.docs);
-            final filteredRecords = _applyFilters(records);
-            _reportRecords = filteredRecords;
-            final insightsRecords = records
-                .where((r) => _matchesInsightsDateFilter(_coerceMorbidityDate(r)))
-                .toList(growable: false);
-            final summary = _summarizeRecords(insightsRecords);
-            final effectiveRowsPerPage = _rowsPerPage > 0 ? _rowsPerPage : 10;
-            final totalPages = filteredRecords.isEmpty
-                ? 1
-                : ((filteredRecords.length + effectiveRowsPerPage - 1) ~/
-                      effectiveRowsPerPage);
-            final currentPage = _currentPage < 1
-                ? 1
-                : (_currentPage > totalPages ? totalPages : _currentPage);
-            final pageStartIndex = filteredRecords.isEmpty
-                ? 0
-                : (currentPage - 1) * effectiveRowsPerPage;
-            final pageEndIndex = filteredRecords.isEmpty
-                ? 0
-                : math.min(
-                    pageStartIndex + effectiveRowsPerPage,
-                    filteredRecords.length,
-                  );
-            final pagedRecords = filteredRecords.isEmpty
-                ? <Map<String, dynamic>>[]
-                : filteredRecords.sublist(pageStartIndex, pageEndIndex);
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  HealthModuleViewHeader(
-                    title: 'Morbidity Records',
-                    description:
-                        'Review morbidity activity and care priorities, or manage individual patient-linked case records.',
-                    activeView: _activeView,
-                    onViewChanged: _setActiveView,
-                    primaryColor: _primaryAqua,
-                    mutedColor: _mutedCoolGray,
-                    insightsLabel: 'Summary',
-                  ),
-                  const SizedBox(height: 16),
-                  if (_activeView == HealthModuleView.insights) ...[
-                    _buildInsightsFilterBar(),
-                    const SizedBox(height: 20),
-                    if (insightsRecords.isEmpty)
-                      const ModuleEmptyState(
-                        title: 'No morbidity insights for this period',
-                        message:
-                            'Try selecting a different date range to view morbidity trends and case records.',
-                        icon: Icons.analytics_outlined,
-                      )
-                    else ...[
-                      _buildOverviewSection(summary),
-                      const SizedBox(height: 24),
-                      _buildOperationalPanels(summary),
-                    ],
-                  ] else
-                    _buildRecordsSection(
+                stream: _morbidityStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return _buildStateMessage(
                       context,
-                      filteredCount: filteredRecords.length,
-                      totalCount: records.length,
-                      pagedRecords: pagedRecords,
-                      currentPage: currentPage,
-                      totalPages: totalPages,
-                      effectiveRowsPerPage: effectiveRowsPerPage,
-                      pageStartIndex: pageStartIndex,
-                      pageEndIndex: pageEndIndex,
+                      icon: Icons.error_outline_rounded,
+                      title:
+                          'Linked check-up morbidity records could not be loaded.',
+                      subtitle:
+                          'Check the Firestore connection or record permissions for check-up records and try again.',
+                    );
+                  }
+
+                  if (!snapshot.hasData) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: _primaryAqua),
+                    );
+                  }
+
+                  final records = _normalizeRecords(
+                    snapshot.data!.docs,
+                    isFromCache: snapshot.data!.metadata.isFromCache,
+                  );
+                  final filteredRecords = _applyFilters(records);
+                  _reportRecords = filteredRecords;
+                  final insightsRecords = records
+                      .where(
+                        (r) =>
+                            _matchesInsightsDateFilter(_coerceMorbidityDate(r)),
+                      )
+                      .toList(growable: false);
+                  final summary = _summarizeRecords(insightsRecords);
+                  final effectiveRowsPerPage = _rowsPerPage > 0
+                      ? _rowsPerPage
+                      : 10;
+                  final totalPages = filteredRecords.isEmpty
+                      ? 1
+                      : ((filteredRecords.length + effectiveRowsPerPage - 1) ~/
+                            effectiveRowsPerPage);
+                  final currentPage = _currentPage < 1
+                      ? 1
+                      : (_currentPage > totalPages ? totalPages : _currentPage);
+                  final pageStartIndex = filteredRecords.isEmpty
+                      ? 0
+                      : (currentPage - 1) * effectiveRowsPerPage;
+                  final pageEndIndex = filteredRecords.isEmpty
+                      ? 0
+                      : math.min(
+                          pageStartIndex + effectiveRowsPerPage,
+                          filteredRecords.length,
+                        );
+                  final pagedRecords = filteredRecords.isEmpty
+                      ? <Map<String, dynamic>>[]
+                      : filteredRecords.sublist(pageStartIndex, pageEndIndex);
+
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
                     ),
-                ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        HealthModuleViewHeader(
+                          title: 'Morbidity Records',
+                          description:
+                              'Review morbidity activity and care priorities, or manage individual patient-linked case records.',
+                          activeView: _activeView,
+                          onViewChanged: _setActiveView,
+                          primaryColor: _primaryAqua,
+                          mutedColor: _mutedCoolGray,
+                          insightsLabel: 'Summary',
+                        ),
+                        const SizedBox(height: 16),
+                        if (_activeView == HealthModuleView.insights) ...[
+                          _buildInsightsFilterBar(),
+                          const SizedBox(height: 20),
+                          if (insightsRecords.isEmpty)
+                            const ModuleEmptyState(
+                              title: 'No morbidity insights for this period',
+                              message:
+                                  'Try selecting a different date range to view morbidity trends and case records.',
+                              icon: Icons.analytics_outlined,
+                            )
+                          else ...[
+                            _buildOverviewSection(summary),
+                            const SizedBox(height: 24),
+                            _buildOperationalPanels(summary),
+                          ],
+                        ] else
+                          _buildRecordsSection(
+                            context,
+                            filteredCount: filteredRecords.length,
+                            totalCount: records.length,
+                            pagedRecords: pagedRecords,
+                            currentPage: currentPage,
+                            totalPages: totalPages,
+                            effectiveRowsPerPage: effectiveRowsPerPage,
+                            pageStartIndex: pageStartIndex,
+                            pageEndIndex: pageEndIndex,
+                          ),
+                      ],
+                    ),
+                  );
+                },
               ),
-            );
-          },
-        ),
+            ),
+          ),
+        ],
       ),
-    ),
-  ],
-),
     );
   }
 
   List<Map<String, dynamic>> _normalizeRecords(
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
-  ) {
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs, {
+    required bool isFromCache,
+  }) {
     final records = docs
         .map((doc) {
-          final source = materializeFirestoreRecord(doc);
+          final source = attachWebSyncMetadata(
+            materializeFirestoreRecord(doc),
+            hasPendingWrites: doc.metadata.hasPendingWrites,
+            isFromCache: isFromCache,
+          );
           final linkedCheckupId = _safeText(source['id'], fallback: doc.id);
           final linkedPatientId = _safeText(
             source['linkedPatientId'] ??
@@ -987,6 +935,11 @@ class _MorbidityPageState extends State<MorbidityPage> {
             'remarks': remarks,
             'status': status,
             'reportedDate': reportedDate,
+            '_hasPendingWrites': source['_hasPendingWrites'],
+            '_isFromCache': source['_isFromCache'],
+            '_syncStatus': source['_syncStatus'],
+            if (source['_syncError'] != null)
+              '_syncError': source['_syncError'],
             'sourceRecord': source,
           };
         })
@@ -1727,8 +1680,11 @@ class _MorbidityPageState extends State<MorbidityPage> {
               ),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
-                      icon:
-                          const Icon(Icons.clear, color: Colors.grey, size: 18),
+                      icon: const Icon(
+                        Icons.clear,
+                        color: Colors.grey,
+                        size: 18,
+                      ),
                       onPressed: () {
                         _searchController.clear();
                         setState(() {
@@ -2065,7 +2021,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
     return SizedBox(
       width: width,
       child: DropdownButtonFormField<String>(
-        value: items.contains(value) ? value : items.first,
+        initialValue: items.contains(value) ? value : items.first,
         isDense: true,
         style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
         decoration: InputDecoration(
@@ -2473,155 +2429,6 @@ class _MorbidityPageState extends State<MorbidityPage> {
       ],
     );
     return;
-
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 28,
-            vertical: 24,
-          ),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 920),
-            decoration: BoxDecoration(
-              color: _darkDeepTeal,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              patientName,
-                              style: const TextStyle(
-                                color: _lightOffWhite,
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Linked morbidity details from the related check-up record.',
-                              style: TextStyle(
-                                color: _mutedCoolGray.withValues(alpha: 0.92),
-                                fontSize: 13,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(),
-                        icon: const Icon(Icons.close_rounded),
-                        color: _lightOffWhite,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  _buildDialogSection(
-                    title: 'Linked Record',
-                    children: [
-                      _buildDialogField('Check-up ID', linkedCheckupId),
-                      _buildDialogField('Patient ID', linkedPatientId),
-                      _buildDialogField('Report Date', reportDate),
-                      _buildDialogField('Status', status),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDialogSection(
-                    title: 'Case Information',
-                    children: [
-                      _buildDialogField('Disease', disease),
-                      _buildDialogField('Case Classification', classification),
-                      _buildDialogField('Severity', severity),
-                      _buildDialogField('Remarks', remarks, maxLines: 4),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDialogSection(
-                    title: 'Check-up Notes',
-                    children: [
-                      _buildDialogField('Symptoms', symptoms, maxLines: null),
-                      _buildDialogField('Vital Signs', vitals, maxLines: null),
-                      _buildDialogField('Follow-up Date', followUp),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDialogSection(
-                    title: 'Database Details',
-                    children: databaseFields.isEmpty
-                        ? const [
-                            Text(
-                              'No database fields were found for this linked record.',
-                              style: TextStyle(
-                                color: _mutedCoolGray,
-                                fontSize: 13,
-                                height: 1.4,
-                              ),
-                            ),
-                          ]
-                        : databaseFields
-                              .map(
-                                (field) => _buildDialogField(
-                                  _humanizeFieldLabel(field.key),
-                                  _formatDatabaseValue(field.value),
-                                  maxLines: null,
-                                ),
-                              )
-                              .toList(),
-                  ),
-                  const SizedBox(height: 18),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        OutlinedButton(
-                          onPressed: () => Navigator.of(dialogContext).pop(),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: _lightOffWhite,
-                            side: BorderSide(
-                              color: _primaryAqua.withValues(alpha: 0.24),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                          ),
-                          child: const Text('Close'),
-                        ),
-                        FilledButton.icon(
-                          onPressed: () async {
-                            Navigator.of(dialogContext).pop();
-                            await _generateMorbidityPdf(context, record);
-                          },
-                          icon: const Icon(Icons.picture_as_pdf_rounded),
-                          label: const Text('Generate PDF'),
-                          style: AppButtonStyles.report(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
   }
 
   Future<void> _showEditMorbidityDialog(
@@ -2694,9 +2501,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
                             horizontal: 22,
                             vertical: 16,
                           ),
-                          decoration: const BoxDecoration(
-                            color: _darkDeepTeal,
-                          ),
+                          decoration: const BoxDecoration(color: _darkDeepTeal),
                           child: Row(
                             children: [
                               Expanded(
@@ -2772,30 +2577,27 @@ class _MorbidityPageState extends State<MorbidityPage> {
                                     children: [
                                       _buildEditTextField(
                                         controller: diseaseController,
-                                        label:
-                                            'Symptoms / Diagnosed Condition',
+                                        label: 'Symptoms / Diagnosed Condition',
                                       ),
                                       const SizedBox(height: 14),
                                       _buildEditDropdown(
                                         label: 'Case Classification',
                                         value: classification,
                                         items: _classificationOptions,
-                                        onChanged: (value) => setDialogState(
-                                          () {
-                                            classification = value;
-                                          },
-                                        ),
+                                        onChanged: (value) =>
+                                            setDialogState(() {
+                                              classification = value;
+                                            }),
                                       ),
                                       const SizedBox(height: 14),
                                       _buildEditDropdown(
                                         label: 'Severity',
                                         value: severity,
                                         items: _editableSeverityOptions,
-                                        onChanged: (value) => setDialogState(
-                                          () {
-                                            severity = value;
-                                          },
-                                        ),
+                                        onChanged: (value) =>
+                                            setDialogState(() {
+                                              severity = value;
+                                            }),
                                       ),
                                     ],
                                   );
@@ -2813,11 +2615,10 @@ class _MorbidityPageState extends State<MorbidityPage> {
                                         label: 'Status',
                                         value: status,
                                         items: _editableStatusOptions,
-                                        onChanged: (value) => setDialogState(
-                                          () {
-                                            status = value;
-                                          },
-                                        ),
+                                        onChanged: (value) =>
+                                            setDialogState(() {
+                                              status = value;
+                                            }),
                                       ),
                                       const SizedBox(height: 14),
                                       _buildEditTextField(
@@ -3070,133 +2871,6 @@ class _MorbidityPageState extends State<MorbidityPage> {
       linkedPatientIdController.dispose();
       remarksController.dispose();
     }
-  }
-
-  Widget _buildDialogSection({
-    required String title,
-    required List<Widget> children,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _panelTeal.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.14)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: _lightOffWhite,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...children,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDialogField(String label, String value, {int? maxLines = 2}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: _mutedCoolGray,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: maxLines,
-            overflow: maxLines == null
-                ? TextOverflow.visible
-                : TextOverflow.ellipsis,
-            softWrap: true,
-            style: const TextStyle(
-              color: _lightOffWhite,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _humanizeFieldLabel(String key) {
-    final trimmed = key.trim();
-    if (trimmed.isEmpty) {
-      return 'Field';
-    }
-
-    final withSpaces = trimmed
-        .replaceAll('_', ' ')
-        .replaceAllMapped(
-          RegExp(r'([a-z0-9])([A-Z])'),
-          (match) => '${match.group(1)} ${match.group(2)}',
-        );
-
-    return withSpaces
-        .split(RegExp(r'\s+'))
-        .where((part) => part.isNotEmpty)
-        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-        .join(' ');
-  }
-
-  dynamic _normalizeDatabaseValue(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate().toIso8601String();
-    }
-    if (value is DateTime) {
-      return value.toIso8601String();
-    }
-    if (value is GeoPoint) {
-      return {'latitude': value.latitude, 'longitude': value.longitude};
-    }
-    if (value is List) {
-      return value.map(_normalizeDatabaseValue).toList();
-    }
-    if (value is Map) {
-      return {
-        for (final entry in value.entries)
-          entry.key.toString(): _normalizeDatabaseValue(entry.value),
-      };
-    }
-    return value;
-  }
-
-  String _formatDatabaseValue(dynamic value) {
-    if (value == null) {
-      return 'Not recorded';
-    }
-
-    final normalized = _normalizeDatabaseValue(value);
-
-    if (normalized is List || normalized is Map) {
-      if ((normalized is List && normalized.isEmpty) ||
-          (normalized is Map && normalized.isEmpty)) {
-        return 'Not recorded';
-      }
-
-      const encoder = JsonEncoder.withIndent('  ');
-      return encoder.convert(normalized);
-    }
-
-    final text = normalized.toString().trim();
-    return text.isEmpty ? 'Not recorded' : text;
   }
 
   InputDecoration _buildEditFieldDecoration(String label) {
@@ -3646,14 +3320,8 @@ class _MorbidityRecordCard extends StatelessWidget {
           record['type'],
       'Case classification not set',
     );
-    final severity = _safe(
-      record['severity'] ?? record['ai_severity'],
-      'N/A',
-    );
-    final status = _safe(
-      record['status'] ?? record['caseStatus'],
-      'Pending',
-    );
+    final severity = _safe(record['severity'] ?? record['ai_severity'], 'N/A');
+    final status = _safe(record['status'] ?? record['caseStatus'], 'Pending');
     final remarks = _safe(
       record['remarks'] ?? record['notes'] ?? record['description'],
       'No remarks recorded',
@@ -3826,6 +3494,7 @@ class _MorbidityRecordCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    WebSyncStatusBadge(record: record),
                   ],
                 ),
               ),
@@ -3878,54 +3547,6 @@ class _MorbidityRecordCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterDropdown extends StatelessWidget {
-  final String label;
-  final String value;
-  final List<String> options;
-  final ValueChanged<String> onChanged;
-
-  const _FilterDropdown({
-    required this.label,
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7FAFD),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFD9E5F2)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          dropdownColor: Colors.white,
-          style: const TextStyle(color: _lightOffWhite),
-          iconEnabledColor: _primaryAqua,
-          items: options
-              .map(
-                (option) => DropdownMenuItem<String>(
-                  value: option,
-                  child: Text('$label: $option'),
-                ),
-              )
-              .toList(),
-          onChanged: (newValue) {
-            if (newValue != null) {
-              onChanged(newValue);
-            }
-          },
         ),
       ),
     );

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import json
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -13,6 +14,7 @@ class Settings:
     """Validated runtime settings with repository-relative defaults."""
 
     model_path: Path
+    model_expected_sha256: str
     feature_columns_path: Path
     confidence_threshold: float
     google_application_credentials: str | None
@@ -43,6 +45,24 @@ def _bool_env(name: str, default: bool) -> bool:
     raise ValueError(f"{name} must be true or false")
 
 
+def _expected_model_sha256(backend_dir: Path) -> str:
+    configured = os.getenv("MODEL_EXPECTED_SHA256", "").strip().lower()
+    if configured:
+        return configured
+    metrics_path = backend_dir / "models" / "training_metrics.json"
+    try:
+        metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+        expected = str(metrics.get("model_sha256", "")).strip().lower()
+    except (OSError, json.JSONDecodeError):
+        expected = ""
+    if not expected:
+        raise ValueError(
+            "MODEL_EXPECTED_SHA256 is required when training_metrics.json "
+            "does not declare model_sha256"
+        )
+    return expected
+
+
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     """Load settings once; environment variables override safe defaults."""
@@ -69,6 +89,7 @@ def get_settings() -> Settings:
         model_path=_resolve_path(
             os.getenv("MODEL_PATH"), backend_dir / "models" / "disease_model.pkl"
         ),
+        model_expected_sha256=_expected_model_sha256(backend_dir),
         feature_columns_path=_resolve_path(
             os.getenv("FEATURE_COLUMNS_PATH"),
             backend_dir / "models" / "feature_columns.json",

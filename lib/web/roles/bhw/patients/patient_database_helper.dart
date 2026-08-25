@@ -2,9 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
+import 'package:mycapstone_project/web/shared/services/web_record_sync.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
 class PatientDatabaseHelper {
@@ -201,7 +202,10 @@ class PatientDatabaseHelper {
         await UserAccessScopeService.instance.ensureCurrentUserRootMirror();
         final accessScope = await UserAccessScopeService.instance
             .loadCurrentScope();
-        final recordWithId = _prepareRecordData(canonicalRecord, id);
+        final recordWithId = WebRecordWriteCoordinator.prepareCreate(
+          _prepareRecordData(canonicalRecord, id),
+          documentId: id,
+        );
         recordWithId.remove('synced'); // Remove synced field for web
         recordWithId['createdAt'] = FieldValue.serverTimestamp();
         recordWithId['updatedAt'] = FieldValue.serverTimestamp();
@@ -232,10 +236,12 @@ class PatientDatabaseHelper {
           accessScope: accessScope,
           record: scopedRecord,
         );
-        await documentRef.set(scopedRecord);
+        await WebRecordWriteCoordinator(
+          firestore: getFirestoreInstance(),
+        ).create(reference: documentRef, record: scopedRecord);
         return id;
       } catch (e) {
-        print('Error saving to Firebase on web: $e');
+        debugPrint('Error saving to Firebase on web: $e');
         rethrow;
       }
     }
@@ -387,11 +393,17 @@ class PatientDatabaseHelper {
         );
         final snapshot = await query.get();
         final scopedDocs = snapshot.docs
-            .map(materializeFirestoreRecord)
+            .map(
+              (document) => attachWebSyncMetadata(
+                materializeFirestoreRecord(document),
+                hasPendingWrites: document.metadata.hasPendingWrites,
+                isFromCache: snapshot.metadata.isFromCache,
+              ),
+            )
             .where((record) => recordMatchesAccessScope(record, accessScope));
         return sortRecordsByActivityDateDescending(scopedDocs);
       } catch (e) {
-        print('Error fetching from Firebase on web: $e');
+        debugPrint('Error fetching from Firebase on web: $e');
         rethrow;
       }
     }
@@ -419,9 +431,15 @@ class PatientDatabaseHelper {
           getFirestoreInstance(),
           _collectionName,
           accessScope,
-        ).snapshots().map((snapshot) {
+        ).snapshots(includeMetadataChanges: true).map((snapshot) {
           final scopedDocs = snapshot.docs
-              .map(materializeFirestoreRecord)
+              .map(
+                (document) => attachWebSyncMetadata(
+                  materializeFirestoreRecord(document),
+                  hasPendingWrites: document.metadata.hasPendingWrites,
+                  isFromCache: snapshot.metadata.isFromCache,
+                ),
+              )
               .where((record) => recordMatchesAccessScope(record, accessScope));
           return sortRecordsByActivityDateDescending(scopedDocs);
         });
@@ -443,7 +461,6 @@ class PatientDatabaseHelper {
             .loadCurrentScope();
         final updatedRecord = _prepareRecordData(record, id);
         updatedRecord.remove('synced');
-        updatedRecord['updatedAt'] = FieldValue.serverTimestamp();
 
         final scopedSeed = <String, dynamic>{...updatedRecord};
         if (accessScope.isBhw) {
@@ -470,10 +487,16 @@ class PatientDatabaseHelper {
           record: scopedRecord,
           existingPath: (record['_firestorePath'] ?? '').toString(),
         );
-        await documentRef.update(scopedRecord);
+        await WebRecordWriteCoordinator(
+          firestore: getFirestoreInstance(),
+        ).update(
+          reference: documentRef,
+          changes: scopedRecord,
+          expectedVersion: recordVersionOf(record),
+        );
         return 1;
       } catch (e) {
-        print('Error updating Firebase on web: $e');
+        debugPrint('Error updating Firebase on web: $e');
         rethrow;
       }
     }
@@ -510,7 +533,7 @@ class PatientDatabaseHelper {
         await documentRef.delete();
         return 1;
       } catch (e) {
-        print('Error deleting from Firebase on web: $e');
+        debugPrint('Error deleting from Firebase on web: $e');
         rethrow;
       }
     }
@@ -532,7 +555,7 @@ class PatientDatabaseHelper {
             .doc(id)
             .delete();
       } catch (e) {
-        print('Error deleting from Firebase: $e');
+        debugPrint('Error deleting from Firebase: $e');
       }
     }
 
@@ -548,7 +571,7 @@ class PatientDatabaseHelper {
       try {
         await deleteRecord(id);
       } catch (e) {
-        print('Error deleting record $id: $e');
+        debugPrint('Error deleting record $id: $e');
         failedIds.add(id);
       }
     }
@@ -560,7 +583,7 @@ class PatientDatabaseHelper {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        print('No internet connection. Will sync later.');
+        debugPrint('No internet connection. Will sync later.');
         return;
       }
 
@@ -589,13 +612,13 @@ class PatientDatabaseHelper {
             whereArgs: [record['id']],
           );
 
-          print('Synced patient record: ${record['id']}');
+          debugPrint('Synced patient record: ${record['id']}');
         } catch (e) {
-          print('Error syncing patient record ${record['id']}: $e');
+          debugPrint('Error syncing patient record ${record['id']}: $e');
         }
       }
     } catch (e) {
-      print('Error in sync process: $e');
+      debugPrint('Error in sync process: $e');
     }
   }
 
@@ -604,7 +627,7 @@ class PatientDatabaseHelper {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        print('No internet connection. Cannot sync from Firebase.');
+        debugPrint('No internet connection. Cannot sync from Firebase.');
         return;
       }
 
@@ -640,9 +663,11 @@ class PatientDatabaseHelper {
         );
       }
 
-      print('Synced ${snapshot.docs.length} patient records from Firebase');
+      debugPrint(
+        'Synced ${snapshot.docs.length} patient records from Firebase',
+      );
     } catch (e) {
-      print('Error syncing from Firebase: $e');
+      debugPrint('Error syncing from Firebase: $e');
     }
   }
 
@@ -656,7 +681,7 @@ class PatientDatabaseHelper {
 
     Connectivity().onConnectivityChanged.listen((result) {
       if (!result.contains(ConnectivityResult.none)) {
-        print('Internet connection restored. Syncing patient data...');
+        debugPrint('Internet connection restored. Syncing patient data...');
         _syncToFirebase();
       }
     });
@@ -1165,10 +1190,10 @@ class PatientDatabaseHelper {
       try {
         await insertRecord(sample);
       } catch (e) {
-        print('Error inserting sample patient ${sample['id']}: $e');
+        debugPrint('Error inserting sample patient ${sample['id']}: $e');
       }
     }
 
-    print('✅ Successfully seeded 100 sample patient records');
+    debugPrint('✅ Successfully seeded 100 sample patient records');
   }
 }

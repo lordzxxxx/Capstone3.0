@@ -2,9 +2,10 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
+import 'package:mycapstone_project/web/shared/services/web_record_sync.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
 class MortalityDatabaseHelper {
@@ -100,8 +101,7 @@ class MortalityDatabaseHelper {
       try {
         final accessScope = await UserAccessScopeService.instance
             .loadCurrentScope();
-        final recordWithId = {
-          'id': id,
+        final recordWithId = WebRecordWriteCoordinator.prepareCreate({
           'name': record['name'] ?? '',
           'patientId': record['patientId'] ?? '',
           'linkedPatientId':
@@ -125,7 +125,7 @@ class MortalityDatabaseHelper {
               record['dateReported'] ?? DateTime.now().toIso8601String(),
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
-        };
+        }, documentId: id.toString());
         final scopedRecord = applyBarangayScopeToRecord(
           recordWithId,
           accessScope: accessScope,
@@ -137,11 +137,13 @@ class MortalityDatabaseHelper {
           accessScope: accessScope,
           record: scopedRecord,
         );
-        await documentRef.set(scopedRecord);
+        await WebRecordWriteCoordinator(
+          firestore: getFirestoreInstance(),
+        ).create(reference: documentRef, record: scopedRecord);
         await syncMortalityToPatientHistory(scopedRecord);
         return id;
       } catch (e) {
-        print('Error saving to Firebase on web: $e');
+        debugPrint('Error saving to Firebase on web: $e');
         rethrow;
       }
     }
@@ -194,9 +196,9 @@ class MortalityDatabaseHelper {
             .set(firestoreData);
         await syncMortalityToPatientHistory(firestoreData);
 
-        print('✅ Mortality record $id saved to Firestore immediately');
+        debugPrint('✅ Mortality record $id saved to Firestore immediately');
       } catch (e) {
-        print('⚠️ Failed to save to Firestore, will retry later: $e');
+        debugPrint('⚠️ Failed to save to Firestore, will retry later: $e');
       }
     }
 
@@ -216,11 +218,17 @@ class MortalityDatabaseHelper {
         );
         final snapshot = await query.get();
         final scopedDocs = snapshot.docs
-            .map(materializeFirestoreRecord)
+            .map(
+              (document) => attachWebSyncMetadata(
+                materializeFirestoreRecord(document),
+                hasPendingWrites: document.metadata.hasPendingWrites,
+                isFromCache: snapshot.metadata.isFromCache,
+              ),
+            )
             .where((record) => recordMatchesAccessScope(record, accessScope));
         return sortRecordsByActivityDateDescending(scopedDocs);
       } catch (e) {
-        print('Error fetching from Firebase: $e');
+        debugPrint('Error fetching from Firebase: $e');
         return [];
       }
     }
@@ -243,11 +251,17 @@ class MortalityDatabaseHelper {
         ).where('causeOfDeath', isEqualTo: cause);
         final snapshot = await query.get();
         final scopedDocs = snapshot.docs
-            .map(materializeFirestoreRecord)
+            .map(
+              (document) => attachWebSyncMetadata(
+                materializeFirestoreRecord(document),
+                hasPendingWrites: document.metadata.hasPendingWrites,
+                isFromCache: snapshot.metadata.isFromCache,
+              ),
+            )
             .where((record) => recordMatchesAccessScope(record, accessScope));
         return sortRecordsByActivityDateDescending(scopedDocs);
       } catch (e) {
-        print('Error fetching from Firebase: $e');
+        debugPrint('Error fetching from Firebase: $e');
         return [];
       }
     }
@@ -274,11 +288,17 @@ class MortalityDatabaseHelper {
         ).where('verification', isEqualTo: 'Verified');
         final snapshot = await query.get();
         final scopedDocs = snapshot.docs
-            .map(materializeFirestoreRecord)
+            .map(
+              (document) => attachWebSyncMetadata(
+                materializeFirestoreRecord(document),
+                hasPendingWrites: document.metadata.hasPendingWrites,
+                isFromCache: snapshot.metadata.isFromCache,
+              ),
+            )
             .where((record) => recordMatchesAccessScope(record, accessScope));
         return sortRecordsByActivityDateDescending(scopedDocs);
       } catch (e) {
-        print('Error fetching from Firebase: $e');
+        debugPrint('Error fetching from Firebase: $e');
         return [];
       }
     }
@@ -309,7 +329,7 @@ class MortalityDatabaseHelper {
             .where((record) => recordMatchesAccessScope(record, accessScope));
         return sortRecordsByActivityDateDescending(scopedDocs);
       } catch (e) {
-        print('Error fetching from Firebase: $e');
+        debugPrint('Error fetching from Firebase: $e');
         return [];
       }
     }
@@ -352,7 +372,7 @@ class MortalityDatabaseHelper {
             .where((record) => recordMatchesAccessScope(record, accessScope));
         return sortRecordsByActivityDateDescending(scopedDocs);
       } catch (e) {
-        print('Error fetching from Firebase: $e');
+        debugPrint('Error fetching from Firebase: $e');
         return [];
       }
     }
@@ -385,7 +405,7 @@ class MortalityDatabaseHelper {
             .where((record) => recordMatchesAccessScope(record, accessScope));
         return sortRecordsByActivityDateDescending(scopedDocs);
       } catch (e) {
-        print('Error fetching from Firebase: $e');
+        debugPrint('Error fetching from Firebase: $e');
         return [];
       }
     }
@@ -423,7 +443,7 @@ class MortalityDatabaseHelper {
           elderlyCount++;
         }
       } catch (e) {
-        print('Error parsing age: $e');
+        debugPrint('Error parsing age: $e');
       }
     }
 
@@ -500,7 +520,7 @@ class MortalityDatabaseHelper {
           monthlyData[monthKey] = (monthlyData[monthKey] ?? 0) + 1;
         }
       } catch (e) {
-        print('Error parsing date: $e');
+        debugPrint('Error parsing date: $e');
       }
     }
 
@@ -569,11 +589,19 @@ class MortalityDatabaseHelper {
           record: updateData,
           existingPath: (record['_firestorePath'] ?? '').toString(),
         );
-        await documentRef.update(updateData);
+        final nextVersion =
+            await WebRecordWriteCoordinator(
+              firestore: getFirestoreInstance(),
+            ).update(
+              reference: documentRef,
+              changes: updateData,
+              expectedVersion: recordVersionOf(record),
+            );
+        updateData['recordVersion'] = nextVersion;
         await syncMortalityToPatientHistory(updateData);
         return;
       } catch (e) {
-        print('Error updating on Firebase: $e');
+        debugPrint('Error updating on Firebase: $e');
         rethrow;
       }
     }
@@ -600,7 +628,7 @@ class MortalityDatabaseHelper {
             .update(updateData);
         await syncMortalityToPatientHistory(updateData);
       } catch (e) {
-        print('⚠️ Failed to update on Firestore: $e');
+        debugPrint('⚠️ Failed to update on Firestore: $e');
       }
     }
   }
@@ -620,7 +648,7 @@ class MortalityDatabaseHelper {
         await documentRef.delete();
         return;
       } catch (e) {
-        print('Error deleting from Firebase: $e');
+        debugPrint('Error deleting from Firebase: $e');
         rethrow;
       }
     }
@@ -639,7 +667,7 @@ class MortalityDatabaseHelper {
             .doc(id)
             .delete();
       } catch (e) {
-        print('⚠️ Failed to delete from Firestore: $e');
+        debugPrint('⚠️ Failed to delete from Firestore: $e');
       }
     }
   }

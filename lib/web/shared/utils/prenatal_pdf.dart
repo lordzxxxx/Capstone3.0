@@ -130,7 +130,8 @@ DateTime? _parsePrenatalDateTime(dynamic value) {
     final seconds = value['seconds'];
     final nanoseconds = value['nanoseconds'];
     if (seconds is int) {
-      final millis = (seconds * 1000) +
+      final millis =
+          (seconds * 1000) +
           ((nanoseconds is int ? nanoseconds : 0) ~/ 1000000);
       return DateTime.fromMillisecondsSinceEpoch(millis);
     }

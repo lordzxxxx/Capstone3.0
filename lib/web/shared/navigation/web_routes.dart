@@ -84,4 +84,72 @@ abstract final class WebRoutes {
   static const legacyChoBhwManagement = '/cho/bhwManagement';
   static const legacyChoDataQuality = '/cho/dataQuality';
   static const legacyChoAuditLogs = '/cho/auditLogs';
+
+  static const registeredPaths = <String>{
+    landing,
+    legacyLanding,
+    login,
+    bhwLogin,
+    choLogin,
+    signup,
+    bhwSignup,
+    choSignup,
+    forgotPassword,
+    notFound,
+    bhwDashboard,
+    bhwPatients,
+    bhwCheckups,
+    bhwPrenatal,
+    bhwImmunization,
+    bhwCommunicable,
+    bhwNonCommunicable,
+    bhwMorbidity,
+    bhwMortality,
+    bhwReferrals,
+    bhwSummary,
+    bhwAnalytics,
+    bhwProfile,
+    choDashboard,
+    choPatients,
+    choCheckups,
+    choPrenatal,
+    choImmunization,
+    choMorbidity,
+    choMortality,
+    choReferrals,
+    choBhwManagement,
+    choReports,
+    choAnnouncements,
+    choDataQuality,
+    choAuditLogs,
+    choNotifications,
+    choProfile,
+    choSuperAdmin,
+    choRoleManager,
+    doctorReferrals,
+    legacyCommunicable,
+    legacyNonCommunicable,
+    legacyReferrals,
+    legacyCheckups,
+    legacyPrenatal,
+    legacyMorbidity,
+    legacyMortality,
+    legacyBhwProfile,
+    legacyChoBhwManagement,
+    legacyChoDataQuality,
+    legacyChoAuditLogs,
+  };
+
+  /// Selects only the startup overrides that GetX cannot infer safely.
+  ///
+  /// Known deep links return `null` so their registered route and middleware
+  /// run normally. The root compatibility URL opens the branded landing path,
+  /// while an unregistered browser path gets a clear not-found page instead
+  /// of silently falling back to the landing screen.
+  static String? startupOverride(String defaultRouteName) {
+    final uri = Uri.tryParse(defaultRouteName);
+    final path = uri?.path ?? '';
+    if (path.isEmpty || path == legacyLanding) return landing;
+    return registeredPaths.contains(path) ? null : notFound;
+  }
 }

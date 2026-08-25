@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/web/features/auth/landing.dart';
-import 'package:mycapstone_project/web/features/auth/forgot.dart';
 import 'package:mycapstone_project/web/shared/widgets/login_success_sweet_alert.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 
@@ -64,7 +63,7 @@ class _BHOLoginState extends State<BHOLogin> {
         backgroundColor: const Color(0xFFD32F2F),
         colorText: Colors.white,
       );
-      print('Google Sign-In Error: $e');
+      debugPrint('Google Sign-In Error: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -94,7 +93,7 @@ class _BHOLoginState extends State<BHOLogin> {
       final email = emailController.text.trim();
       final pwdLen = passwordController.text.length;
       // ignore: avoid_print
-      print('Attempting BHO signIn email=$email passwordLength=$pwdLen');
+      debugPrint('Attempting BHO signIn email=$email passwordLength=$pwdLen');
     }
 
     try {
@@ -169,7 +168,7 @@ class _BHOLoginState extends State<BHOLogin> {
 
       if (kDebugMode) {
         // ignore: avoid_print
-        print(
+        debugPrint(
           'FirebaseAuthException during BHO signIn: code=${e.code} message=${e.message}',
         );
       }
@@ -181,7 +180,7 @@ class _BHOLoginState extends State<BHOLogin> {
         colorText: Colors.white,
       );
       // ignore: avoid_print
-      print('Unexpected BHO signIn error: $e');
+      debugPrint('Unexpected BHO signIn error: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
