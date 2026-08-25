@@ -109,7 +109,12 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
                   orElse: () => 'Barangay assignment unavailable',
                 );
 
-            return Hero(
+            // The rail stays in the page layout while the content route
+            // changes. Disable Hero flights so navigation never animates or
+            // carries the sidebar with the destination page.
+            return HeroMode(
+              enabled: false,
+              child: Hero(
               tag: 'web_app_sidebar',
               flightShuttleBuilder:
                   (
@@ -414,6 +419,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
                     ),
                   ),
                 ),
+              ),
               ),
             );
           },

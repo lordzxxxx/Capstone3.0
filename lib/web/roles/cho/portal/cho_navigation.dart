@@ -42,7 +42,12 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
       builder: (context, isCollapsed, _) {
         final compactViewport = MediaQuery.sizeOf(context).width < 1180;
         final effectiveCollapsed = isCollapsed || compactViewport;
-        return Hero(
+        // The rail stays in the page layout while the content route changes.
+        // Disable Hero flights so navigation never animates or carries the
+        // sidebar with the destination page.
+        return HeroMode(
+          enabled: false,
+          child: Hero(
           tag: 'cho_navigation_sidebar',
           flightShuttleBuilder:
               (
@@ -220,6 +225,7 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
                 ),
               ),
             ),
+          ),
           ),
         );
       },
