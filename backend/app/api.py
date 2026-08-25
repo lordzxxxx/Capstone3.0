@@ -8,6 +8,9 @@ import logging
 import re
 import time
 from typing import Any
+from urllib.parse import urlencode
+from urllib.request import Request as UrlRequest
+from urllib.request import urlopen
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,6 +50,8 @@ try:
         RootStatusResponse,
         SymptomCatalogResponse,
         SymptomGuidanceResponse,
+        TurnstileVerifyRequest,
+        TurnstileVerifyResponse,
     )
     from .ocr_service import TrOCRHandwritingEngine
 except ImportError:  # Supports ``uvicorn app.api:app`` from backend/.
@@ -81,6 +86,8 @@ except ImportError:  # Supports ``uvicorn app.api:app`` from backend/.
         RootStatusResponse,
         SymptomCatalogResponse,
         SymptomGuidanceResponse,
+        TurnstileVerifyRequest,
+        TurnstileVerifyResponse,
     )
     from ocr_service import TrOCRHandwritingEngine
 
@@ -431,6 +438,77 @@ def create_app() -> FastAPI:
             modelLoaded=loaded,
             firestoreConfigured=bool(settings.google_application_credentials),
         )
+
+    @application.post(
+        "/security/turnstile/verify",
+        response_model=TurnstileVerifyResponse,
+        responses={
+            400: {"model": ErrorResponse, "description": "Invalid Turnstile token"},
+            429: {"model": ErrorResponse, "description": "Rate limit exceeded"},
+            503: {"model": ErrorResponse, "description": "Turnstile is not configured"},
+        },
+        summary="Verify a Cloudflare Turnstile token for web authentication",
+    )
+    def verify_turnstile(
+        payload: TurnstileVerifyRequest,
+        request: Request,
+    ) -> TurnstileVerifyResponse:
+        """Validate the one-use browser token before Firebase Auth actions."""
+        client_key = (
+            request.client.host
+            if request.client and request.client.host
+            else "unknown"
+        )
+        enforce_api_rate_limit(f"turnstile:{client_key}")
+        settings = get_settings()
+        if not settings.turnstile_secret_key:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Cloudflare Turnstile is not configured.",
+            )
+
+        fields = {
+            "secret": settings.turnstile_secret_key,
+            "response": payload.token,
+        }
+        if request.client and request.client.host:
+            fields["remoteip"] = request.client.host
+        try:
+            body = urlencode(fields).encode("utf-8")
+            verification_request = UrlRequest(
+                "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+                data=body,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                method="POST",
+            )
+            with urlopen(verification_request, timeout=5) as response:
+                result = json.loads(response.read().decode("utf-8"))
+        except Exception:
+            LOGGER.warning(
+                "Cloudflare Turnstile verification request failed",
+                extra={"event": "turnstile_verification_unavailable"},
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Cloudflare verification is temporarily unavailable.",
+            ) from None
+
+        hostname = str(result.get("hostname", "")).strip().casefold()
+        action = str(result.get("action", "")).strip()
+        if (
+            result.get("success") is not True
+            or action != payload.action
+            or hostname not in {value.casefold() for value in settings.turnstile_hostnames}
+        ):
+            LOGGER.warning(
+                "Cloudflare Turnstile verification rejected",
+                extra={"event": "turnstile_verification_rejected"},
+            )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cloudflare verification failed. Please try again.",
+            )
+        return TurnstileVerifyResponse(success=True)
 
     @application.get(
         "/symptoms",

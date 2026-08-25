@@ -22,6 +22,8 @@ import 'package:mycapstone_project/web/shared/widgets/login_success_sweet_alert.
 import 'package:mycapstone_project/web/shared/services/firestore_rest_reader.dart';
 import 'package:mycapstone_project/app/core/services/login_attempt_limiter.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/features/auth/turnstile_challenge.dart';
+import 'package:mycapstone_project/web/features/auth/turnstile_verification_service.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _secondaryIceBlue = Color(0xFF163B66);
@@ -747,6 +749,7 @@ class _LoginState extends State<Login> {
 
   Future<void> signInWithGoogle() async {
     if (_isLoading) return;
+    if (!await _verifyTurnstile()) return;
     setState(() => _isLoading = true);
     try {
       final googleProvider = GoogleAuthProvider()
@@ -800,7 +803,10 @@ class _LoginState extends State<Login> {
       debugPrint('Google Sign-In Error: $e');
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _turnstileResetNonce++;
+        });
       }
     }
   }
@@ -809,6 +815,36 @@ class _LoginState extends State<Login> {
   TextEditingController passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  String? _turnstileToken;
+  int _turnstileResetNonce = 0;
+  final TurnstileVerificationService _turnstileVerification =
+      TurnstileVerificationService();
+
+  Future<bool> _verifyTurnstile() async {
+    try {
+      await _turnstileVerification.verify(
+        token: _turnstileToken,
+        action: 'login',
+      );
+      return true;
+    } on TurnstileVerificationException catch (error) {
+      Get.snackbar(
+        'Security check required',
+        error.message,
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
+      return false;
+    } catch (_) {
+      Get.snackbar(
+        'Security check unavailable',
+        'Please try again in a moment.',
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
+      return false;
+    }
+  }
 
   Future<void> signIn() async {
     if (_isLoading) return;
@@ -833,6 +869,8 @@ class _LoginState extends State<Login> {
       );
       return;
     }
+
+    if (!await _verifyTurnstile()) return;
 
     setState(() => _isLoading = true);
     if (kDebugMode) {
@@ -983,7 +1021,10 @@ class _LoginState extends State<Login> {
       debugPrint('Unexpected signIn error: $e');
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _turnstileResetNonce++;
+        });
       }
     }
   }
@@ -992,6 +1033,7 @@ class _LoginState extends State<Login> {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
+    _turnstileVerification.close();
     super.dispose();
   }
 
@@ -1273,6 +1315,14 @@ class _LoginState extends State<Login> {
                     ],
                   ),
             _buildPasswordField(),
+            if (kIsWeb) ...[
+              const SizedBox(height: 10),
+              TurnstileChallenge(
+                action: 'login',
+                resetNonce: _turnstileResetNonce,
+                onTokenChanged: (token) => _turnstileToken = token,
+              ),
+            ],
             const SizedBox(height: 22),
             SizedBox(
               height: 50,

@@ -235,17 +235,16 @@ Future<void> _initializeWebServices() async {
 
   try {
     // App Check is a protection layer, but it must not prevent the public
-    // shell from rendering when the browser cannot reach the attestation
-    // provider. Firebase-backed actions will still surface their normal
-    // authorization/error state when they are attempted.
+    // shell (including Firebase Auth login) from rendering when the browser
+    // cannot reach the attestation provider. Protected operations still
+    // request an App Check token and fail closed when one is unavailable.
     await activateFirebaseAppCheck().timeout(const Duration(seconds: 5));
   } catch (e) {
-    // A release build without a configured/working App Check provider would
-    // otherwise leave the public shell running while protected backend calls
-    // fail later and less clearly. Development may continue without it, but
-    // production must fail the startup gate and expose its retry/error UI.
-    if (kReleaseMode && !kBrowserQaMode) rethrow;
-    debugPrint('⚠️ [APP_CHECK] Web activation skipped: $e');
+    // Keep the shell available so users can reach login and receive a useful
+    // operation-level error. AI requests explicitly require an App Check
+    // token, while Firestore rules still enforce Firebase authentication.
+    // This avoids converting a provider/domain outage into a total outage.
+    debugPrint('⚠️ [APP_CHECK] Web activation unavailable: $e');
   }
 
   try {

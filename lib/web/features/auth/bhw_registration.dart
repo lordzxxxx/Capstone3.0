@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
@@ -11,6 +12,8 @@ import 'package:mycapstone_project/web/features/auth/landing.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
+import 'package:mycapstone_project/web/features/auth/turnstile_challenge.dart';
+import 'package:mycapstone_project/web/features/auth/turnstile_verification_service.dart';
 
 const _blue = Color(0xFF2F80ED);
 const _aqua = Color(0xFF2F80ED);
@@ -72,6 +75,10 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
   bool _checkingEmail = false;
   bool? _usernameAvailable;
   bool? _emailAvailable;
+  String? _turnstileToken;
+  int _turnstileResetNonce = 0;
+  final TurnstileVerificationService _turnstileVerification =
+      TurnstileVerificationService();
   String? _usernameMessage;
   String? _emailMessage;
   Timer? _usernameDebounce;
@@ -101,6 +108,20 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
     if (mounted) setState(() {});
   }
 
+  Future<bool> _verifyTurnstile() async {
+    if (!kIsWeb) return true;
+    try {
+      await _turnstileVerification.verify(
+        token: _turnstileToken,
+        action: 'registration',
+      );
+      return true;
+    } on TurnstileVerificationException catch (error) {
+      _showMessage('Security check required', error.message, error: true);
+      return false;
+    }
+  }
+
   @override
   void dispose() {
     _usernameDebounce?.cancel();
@@ -128,6 +149,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
     ]) {
       controller.dispose();
     }
+    _turnstileVerification.close();
     super.dispose();
   }
 
@@ -296,6 +318,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
       );
       return;
     }
+    if (!await _verifyTurnstile()) return;
     setState(() => _submitting = true);
     UserCredential? credential;
     try {
@@ -464,7 +487,12 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
         error: true,
       );
     } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+          _turnstileResetNonce++;
+        });
+      }
     }
   }
 
@@ -696,6 +724,15 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
                             ],
                           ),
                           _declarationSection(),
+                          if (kIsWeb) ...[
+                            const SizedBox(height: 12),
+                            TurnstileChallenge(
+                              action: 'registration',
+                              resetNonce: _turnstileResetNonce,
+                              onTokenChanged: (token) =>
+                                  _turnstileToken = token,
+                            ),
+                          ],
                           const SizedBox(height: 22),
                           SizedBox(
                             width: double.infinity,

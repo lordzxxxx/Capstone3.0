@@ -34,6 +34,8 @@ class Settings:
     api_rate_limit_window_seconds: int
     ocr_rate_limit_requests: int
     ocr_rate_limit_window_seconds: int
+    turnstile_secret_key: str | None
+    turnstile_hostnames: tuple[str, ...]
 
 
 def _resolve_path(value: str | None, default: Path) -> Path:
@@ -115,6 +117,11 @@ def get_settings() -> Settings:
         raise ValueError("AI_OCR_RATE_LIMIT_REQUESTS must be at least 1")
     if ocr_rate_limit_window < 1:
         raise ValueError("AI_OCR_RATE_LIMIT_WINDOW_SECONDS must be at least 1")
+    turnstile_secret_key = os.getenv("TURNSTILE_SECRET_KEY", "").strip() or None
+    turnstile_hostnames = _list_env(
+        "TURNSTILE_HOSTNAMES",
+        ("ai-dsuhis.com", "www.ai-dsuhis.com"),
+    )
 
     web_allowed_origins = _list_env(
         "WEB_ALLOWED_ORIGINS",
@@ -174,4 +181,6 @@ def get_settings() -> Settings:
         api_rate_limit_window_seconds=api_rate_limit_window,
         ocr_rate_limit_requests=ocr_rate_limit_requests,
         ocr_rate_limit_window_seconds=ocr_rate_limit_window,
+        turnstile_secret_key=turnstile_secret_key,
+        turnstile_hostnames=turnstile_hostnames,
     )

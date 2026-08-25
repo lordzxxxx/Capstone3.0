@@ -78,3 +78,4 @@ backend/models/experiments/disease_model_v2_candidate.pkl
 /test-results/
 /qa/playwright-report/
 .vercel
+.env*

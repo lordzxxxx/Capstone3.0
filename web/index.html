@@ -34,6 +34,7 @@
 
   <title>AI-DSUHIS</title>
   <link rel="manifest" href="manifest.json">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
   <style>
     html, body {
       height: 100%;
@@ -121,7 +122,12 @@
   <div id="web-connectivity-status" role="status" aria-live="polite" hidden></div>
   <div id="app-startup-loader" role="status" aria-live="polite">
     <div class="startup-content">
-      <img src="assets/newlogo_white.png" alt="AI-DSUHIS">
+      <img
+        src="assets/newlogo_white.png"
+        width="76"
+        height="76"
+        alt="AI-DSUHIS"
+      >
       <div class="startup-progress" aria-hidden="true"></div>
       <p>Preparing your AI-DSUHIS workspace…</p>
     </div>

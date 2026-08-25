@@ -90,6 +90,17 @@ class HealthResponse(BaseModel):
     firestoreConfigured: bool
 
 
+class TurnstileVerifyRequest(BaseModel):
+    """One-time Cloudflare Turnstile token from a web auth form."""
+
+    token: str = Field(min_length=1, max_length=2048)
+    action: str = Field(pattern=r"^[a-z][a-z0-9_-]{1,31}$")
+
+
+class TurnstileVerifyResponse(BaseModel):
+    success: bool
+
+
 class SymptomCatalogResponse(BaseModel):
     total: int = Field(ge=1)
     symptoms: list[str]
