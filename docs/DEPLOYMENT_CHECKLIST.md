@@ -5,12 +5,18 @@
 - [ ] Confirm the intended Firebase project and production Firestore database.
 - [ ] Provision a deployed HTTPS FastAPI host for `/guidance`.
 - [ ] Configure release `AI_API_BASE_URL`; never ship a localhost URL.
+- [ ] Set `WEB_ALLOWED_ORIGINS` to the exact production Vercel origin in the
+      FastAPI and password-reset environments; do not use a wildcard.
 - [ ] Configure production Firebase Authentication providers.
 - [ ] Configure production App Check provider, web site key, and allowed
   domains.
 - [ ] Store service-account credentials outside the repository.
 - [ ] Apply only clinically reviewed `symptom_guidance` documents.
 - [ ] Confirm Firebase rules and indexes are deployed from the reviewed files.
+- [ ] Confirm Cloud Functions use `FIRESTORE_DATABASE_ID=capstone-c98f9` and
+      that reset/audit/rate-limit collections are not client-writable.
+- [ ] Verify password reset revokes refresh tokens and returns generic account
+      recovery messages for unknown addresses.
 - [ ] Build web and Android release artifacts with the intended defines.
 
 ## Safety and validation

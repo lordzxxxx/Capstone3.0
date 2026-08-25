@@ -1,8 +1,11 @@
 {
     "name": "AI-DSUHIS",
     "short_name": "AI-DSUHIS",
-    "start_url": "/aidsuhis",
+    "id": "/",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
+    "display_override": ["window-controls-overlay", "standalone"],
     "background_color": "#071A33",
     "theme_color": "#071A33",
     "description": "AI-DSUHIS healthcare information system.",

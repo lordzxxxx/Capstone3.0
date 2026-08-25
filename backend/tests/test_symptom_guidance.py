@@ -230,5 +230,21 @@ def test_local_flutter_web_origin_is_allowed_by_cors() -> None:
     )
 
 
+def test_oversized_request_body_is_rejected() -> None:
+    client = TestClient(api.app)
+    response = client.post(
+        "/guidance",
+        content=("x" * (64 * 1024 + 1)).encode(),
+        headers={"content-type": "application/json"},
+    )
+    assert response.status_code == 413
+
+
+def test_overlong_symptom_value_is_rejected() -> None:
+    client = TestClient(api.app)
+    response = client.post("/guidance", json={"symptoms": ["x" * 129]})
+    assert response.status_code == 422
+
+
 def teardown_module() -> None:
     api.app.dependency_overrides.clear()

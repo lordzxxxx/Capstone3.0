@@ -19,6 +19,8 @@ import 'package:mycapstone_project/web/shared/services/user_access_scope_service
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/widgets/sidebar_page_transition.dart';
+import 'package:mycapstone_project/web/shared/widgets/bhw_notifications.dart';
+import 'package:mycapstone_project/web/shared/widgets/pwa_install_action.dart';
 import 'package:mycapstone_project/web/shared/components/web_navigation_item.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:get/get.dart';
@@ -373,6 +375,19 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
                                         'ACCOUNT',
                                         effectiveCollapsed,
                                       ),
+                                      _buildSidebarUtilityItem(
+                                        icon: Icons.notifications_none_rounded,
+                                        label: 'Notifications',
+                                        isCollapsed: effectiveCollapsed,
+                                        onTap: () => showDialog<void>(
+                                          context: context,
+                                          builder: (_) =>
+                                              const BhwNotificationsDialog(),
+                                        ),
+                                      ),
+                                      BhwPwaInstallAction(
+                                        isCollapsed: effectiveCollapsed,
+                                      ),
                                       _buildSidebarItem(
                                         icon: Icons.manage_accounts_outlined,
                                         label: 'Profile and Settings',
@@ -681,6 +696,21 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
       onTap: onTap,
       isCollapsed: isCollapsed,
       isActive: isActive,
+    );
+  }
+
+  Widget _buildSidebarUtilityItem({
+    required IconData icon,
+    required String label,
+    required bool isCollapsed,
+    required VoidCallback onTap,
+  }) {
+    return WebNavigationItem(
+      icon: icon,
+      label: label,
+      onTap: onTap,
+      isCollapsed: isCollapsed,
+      tooltip: label,
     );
   }
 

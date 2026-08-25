@@ -227,6 +227,15 @@ test.describe('critical controls and connection feedback', () => {
   test('BHW patient search, view switch, add action, and offline banner remain usable', async ({browser}, testInfo) => {
     const identity = {...identities().bhw, expectedRoute: '**/bhw/dashboard'};
     const {context, page} = await signOutToIsolatedContext(browser, testInfo.project, identity);
+    const notificationButton = page.getByRole('button', {name: /Notifications navigation item/i});
+    await expect(notificationButton).toBeVisible();
+    await expect(
+      page.getByRole('button', {name: /Install AI-DSUHIS BHW app/i}),
+    ).toBeVisible();
+    await notificationButton.click();
+    const closeNotifications = page.getByRole('button', {name: /Close notifications/i});
+    await expect(closeNotifications).toBeVisible();
+    await closeNotifications.click();
     await openAuthenticatedRoute(page, '/bhw/patients');
     await expectFlutterText(page, /Patient Records/i);
     await page.getByRole('button', {name: /^Records$/i}).click();

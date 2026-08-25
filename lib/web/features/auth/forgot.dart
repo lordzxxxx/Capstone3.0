@@ -51,7 +51,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       String message;
       switch (e.code) {
         case 'user-not-found':
-          message = 'No account found for that email.';
+          message = 'If an account exists, a reset link will be sent.';
           break;
         case 'invalid-email':
           message = 'The email address is badly formatted.';

@@ -24,6 +24,8 @@ class PredictionRequest(BaseModel):
         for value in values:
             if not isinstance(value, str) or not value.strip():
                 raise ValueError("Every symptom must be a non-empty string")
+            if len(value) > 128:
+                raise ValueError("Every symptom must be 128 characters or fewer")
             cleaned.append(value.strip())
         return cleaned
 
@@ -143,4 +145,3 @@ class OCRBatchResponse(BaseModel):
     success: bool
     processing_time_ms: float
     results: list[OCRFieldResult]
-

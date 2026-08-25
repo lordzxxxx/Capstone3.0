@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import logging
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass
@@ -11,6 +12,8 @@ from typing import Callable
 
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+SECURITY_LOGGER = logging.getLogger("ai_dsuhis.api")
 
 try:
     from .config import get_settings
@@ -94,6 +97,10 @@ def require_ai_access(
 
     if settings.require_firebase_auth:
         if credentials is None or credentials.scheme.casefold() != "bearer":
+            SECURITY_LOGGER.warning(
+                "AI request rejected without Firebase authentication",
+                extra={"event": "ai_authentication_missing"},
+            )
             raise _unauthorized("A Firebase ID token is required.")
         try:
             from firebase_admin import auth
@@ -104,8 +111,16 @@ def require_ai_access(
                 check_revoked=settings.check_revoked_tokens,
             )
         except (ValueError, FirebaseConfigurationError):
+            SECURITY_LOGGER.warning(
+                "AI request rejected with an invalid Firebase token",
+                extra={"event": "ai_authentication_invalid"},
+            )
             raise _unauthorized("The Firebase ID token is invalid.") from None
         except Exception:
+            SECURITY_LOGGER.warning(
+                "AI request token verification failed",
+                extra={"event": "ai_authentication_verification_error"},
+            )
             raise _unauthorized("The Firebase ID token could not be verified.") from None
         uid = str(decoded.get("uid") or decoded.get("sub") or "").strip()
         if not uid:
@@ -113,6 +128,10 @@ def require_ai_access(
 
     if settings.require_app_check:
         if not app_check_token:
+            SECURITY_LOGGER.warning(
+                "AI request rejected without App Check",
+                extra={"event": "ai_app_check_missing", "uid": uid},
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="A Firebase App Check token is required.",
@@ -122,6 +141,10 @@ def require_ai_access(
 
             app_check.verify_token(app_check_token, app=get_firebase_app())
         except Exception:
+            SECURITY_LOGGER.warning(
+                "AI request rejected with invalid App Check",
+                extra={"event": "ai_app_check_invalid", "uid": uid},
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="The Firebase App Check token is invalid.",
@@ -129,6 +152,10 @@ def require_ai_access(
 
     retry_after = _rate_limiter().consume(uid)
     if retry_after is not None:
+        SECURITY_LOGGER.warning(
+            "AI request rate limit exceeded",
+            extra={"event": "ai_rate_limited", "uid": uid},
+        )
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Too many AI guidance requests. Please try again shortly.",

@@ -1,5 +1,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const { getFirestore } = require('firebase-admin/firestore');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
@@ -11,6 +12,10 @@ const crypto = require('crypto');
 const ALLOWED_ORIGINS = new Set([
   'https://capstone-c98f9.web.app',
   'https://capstone-c98f9.firebaseapp.com',
+  ...(process.env.WEB_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/$/, ''))
+    .filter(Boolean),
 ]);
 const LOCALHOST_ORIGIN_PATTERN = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 const cors = require('cors')({
@@ -26,6 +31,8 @@ const cors = require('cors')({
 if (!admin.apps.length) {
   admin.initializeApp();
 }
+const FIRESTORE_DATABASE_ID = process.env.FIRESTORE_DATABASE_ID || 'capstone-c98f9';
+const db = getFirestore(admin.app(), FIRESTORE_DATABASE_ID);
 
 // Server-side rate limiting for the password-reset flow. Firestore-backed
 // (not in-memory) so the limit holds across concurrent/cold-started
@@ -35,41 +42,106 @@ if (!admin.apps.length) {
 const RESET_REQUEST_COOLDOWN_MS = 60 * 1000; // min gap between codes for one email
 const RESET_REQUEST_MAX_PER_WINDOW = 5; // max sends per email per window
 const RESET_REQUEST_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const RESET_IP_COOLDOWN_MS = 5 * 1000;
+const RESET_IP_MAX_PER_WINDOW = 20;
+const RESET_IP_WINDOW_MS = 60 * 60 * 1000;
+const INVALID_RESET_MESSAGE = 'The reset request is invalid or expired. Request a new code.';
+
+function normalizeEmail(email) {
+  return email.trim().toLowerCase();
+}
+
+function hashRateLimitKey(value) {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+function getClientIp(req) {
+  return String(req.ip || 'unknown').trim().slice(0, 128);
+}
+
+async function writeSecurityEvent(event, details = {}) {
+  try {
+    await db.collection('audit_logs').add({
+      event,
+      source: 'password-reset',
+      ...details,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (error) {
+    // Audit logging must never turn a valid recovery request into a failure,
+    // but the operational log should make the missing audit write visible.
+    console.error('Security audit write failed', {
+      event,
+      error: error.message || String(error),
+    });
+  }
+}
+
+function retryAfterFor(data, now, cooldownMs, maxPerWindow, windowMs) {
+  if (!data) return null;
+  if (data.lastRequestAt && now - data.lastRequestAt < cooldownMs) {
+    return Math.ceil((cooldownMs - (now - data.lastRequestAt)) / 1000);
+  }
+  const windowStart = data.windowStart || now;
+  const windowCount = data.windowCount || 0;
+  if (now - windowStart < windowMs && windowCount >= maxPerWindow) {
+    return Math.ceil((windowStart + windowMs - now) / 1000);
+  }
+  return null;
+}
 
 /**
  * Returns null if the request is allowed, or a retry-after-seconds number
  * if the caller must wait. Uses a Firestore transaction so concurrent
  * requests for the same email can't race past the limit.
  */
-async function checkAndRecordResetRequestRate(email) {
-  const limitRef = admin.firestore().collection('password_reset_rate_limits').doc(email);
+async function checkAndRecordResetRequestRate(email, clientIp) {
+  const collection = db.collection('password_reset_rate_limits');
+  const emailRef = collection.doc(`email_${hashRateLimitKey(email)}`);
+  const ipRef = collection.doc(`ip_${hashRateLimitKey(clientIp)}`);
   const now = Date.now();
 
-  return admin.firestore().runTransaction(async (transaction) => {
-    const snap = await transaction.get(limitRef);
-    const data = snap.exists ? snap.data() : null;
+  return db.runTransaction(async (transaction) => {
+    const emailSnapshot = await transaction.get(emailRef);
+    const ipSnapshot = await transaction.get(ipRef);
+    const emailData = emailSnapshot.exists ? emailSnapshot.data() : null;
+    const ipData = ipSnapshot.exists ? ipSnapshot.data() : null;
 
-    if (data && data.lastRequestAt && now - data.lastRequestAt < RESET_REQUEST_COOLDOWN_MS) {
-      return Math.ceil((RESET_REQUEST_COOLDOWN_MS - (now - data.lastRequestAt)) / 1000);
+    const emailRetry = retryAfterFor(
+      emailData,
+      now,
+      RESET_REQUEST_COOLDOWN_MS,
+      RESET_REQUEST_MAX_PER_WINDOW,
+      RESET_REQUEST_WINDOW_MS,
+    );
+    const ipRetry = retryAfterFor(
+      ipData,
+      now,
+      RESET_IP_COOLDOWN_MS,
+      RESET_IP_MAX_PER_WINDOW,
+      RESET_IP_WINDOW_MS,
+    );
+    if (emailRetry !== null || ipRetry !== null) {
+      return Math.max(emailRetry || 0, ipRetry || 0);
     }
 
-    let windowStart = data && data.windowStart ? data.windowStart : now;
-    let windowCount = data && data.windowStart && now - data.windowStart < RESET_REQUEST_WINDOW_MS
-      ? (data.windowCount || 0)
-      : 0;
+    const nextWindow = (data, windowMs) => (
+      data && data.windowStart && now - data.windowStart < windowMs
+        ? { windowStart: data.windowStart, windowCount: data.windowCount || 0 }
+        : { windowStart: now, windowCount: 0 }
+    );
+    const emailWindow = nextWindow(emailData, RESET_REQUEST_WINDOW_MS);
+    const ipWindow = nextWindow(ipData, RESET_IP_WINDOW_MS);
 
-    if (windowCount >= RESET_REQUEST_MAX_PER_WINDOW) {
-      return Math.ceil((windowStart + RESET_REQUEST_WINDOW_MS - now) / 1000);
-    }
-
-    if (windowCount === 0) {
-      windowStart = now;
-    }
-
-    transaction.set(limitRef, {
+    transaction.set(emailRef, {
       lastRequestAt: now,
-      windowStart,
-      windowCount: windowCount + 1,
+      windowStart: emailWindow.windowStart,
+      windowCount: emailWindow.windowCount + 1,
+    });
+    transaction.set(ipRef, {
+      lastRequestAt: now,
+      windowStart: ipWindow.windowStart,
+      windowCount: ipWindow.windowCount + 1,
     });
 
     return null;
@@ -119,9 +191,27 @@ exports.sendPasswordResetEmail = functions.https.onRequest((req, res) => {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const { email } = req.body || {};
-      if (!email || typeof email !== 'string') {
+      const { email: rawEmail } = req.body || {};
+      if (!rawEmail || typeof rawEmail !== 'string') {
         return res.status(400).json({ error: 'Missing or invalid email' });
+      }
+      const email = normalizeEmail(rawEmail);
+      if (email.length > 320 || !email.includes('@')) {
+        return res.status(400).json({ error: 'Missing or invalid email' });
+      }
+
+      // Apply both email- and IP-based throttles before checking whether the
+      // account exists. This prevents attackers from bypassing the limiter by
+      // submitting unknown addresses and makes the endpoint safer to expose.
+      const retryAfterSeconds = await checkAndRecordResetRequestRate(
+        email,
+        getClientIp(req),
+      );
+      if (retryAfterSeconds !== null) {
+        res.set('Retry-After', String(retryAfterSeconds));
+        return res.status(429).json({
+          error: 'Too many reset requests. Please try again later.',
+        });
       }
 
       // Verify user exists
@@ -130,21 +220,24 @@ exports.sendPasswordResetEmail = functions.https.onRequest((req, res) => {
         user = await admin.auth().getUserByEmail(email);
       } catch (err) {
         // Don't leak whether user exists
-        console.warn(`Password reset requested for unknown email: ${email}`);
+        console.warn('Password reset requested for an unknown address', {
+          emailHash: hashRateLimitKey(email),
+        });
+        await writeSecurityEvent('password_reset_requested', {
+          emailHash: hashRateLimitKey(email),
+          accountFound: false,
+        });
         return res.status(200).json({
           success: true,
           message: 'If an account exists, a reset link will be sent',
         });
       }
 
-      // Server-side rate limit: strict cooldown + hourly cap per email.
-      const retryAfterSeconds = await checkAndRecordResetRequestRate(email);
-      if (retryAfterSeconds !== null) {
-        res.set('Retry-After', String(retryAfterSeconds));
-        return res.status(429).json({
-          error: 'Too many reset requests. Please try again later.',
-        });
-      }
+      await writeSecurityEvent('password_reset_requested', {
+        emailHash: hashRateLimitKey(email),
+        accountFound: true,
+        uid: user.uid,
+      });
 
       // Generate verification code (6 digits) using a cryptographically
       // secure generator -- Math.random() is not suitable for a security
@@ -158,8 +251,7 @@ exports.sendPasswordResetEmail = functions.https.onRequest((req, res) => {
       const expiryTime = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
       // Store code in Firestore
-      await admin
-        .firestore()
+      await db
         .collection('password_resets')
         .doc(email)
         .set({
@@ -274,23 +366,22 @@ exports.verifyResetCode = functions.https.onRequest((req, res) => {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const { email, code } = req.body || {};
-      if (!email || !code) {
+      const { email: rawEmail, code } = req.body || {};
+      if (!rawEmail || typeof rawEmail !== 'string' || !code) {
         return res.status(400).json({ error: 'Missing email or code' });
       }
+      const email = normalizeEmail(rawEmail);
+      if (typeof code !== 'string' || !/^\d{6}$/.test(code)) {
+        return res.status(400).json({ error: INVALID_RESET_MESSAGE });
+      }
 
-      const resetDoc = await admin
-        .firestore()
+      const resetDoc = await db
         .collection('password_resets')
         .doc(email)
         .get();
 
       if (!resetDoc.exists) {
-        return res
-          .status(404)
-          .json({
-            error: 'No reset request found for this email',
-          });
+        return res.status(400).json({ error: INVALID_RESET_MESSAGE });
       }
 
       const resetData = resetDoc.data();
@@ -298,30 +389,24 @@ exports.verifyResetCode = functions.https.onRequest((req, res) => {
       // Check expiry
       const expiryAt = resetData.expiryAt.toDate();
       if (new Date() > expiryAt) {
-        await admin
-          .firestore()
+        await db
           .collection('password_resets')
           .doc(email)
           .delete();
-        return res
-          .status(400)
-          .json({
-            error: 'Reset code has expired',
-          });
+        return res.status(400).json({ error: INVALID_RESET_MESSAGE });
       }
 
       // Check attempts
       if ((resetData.attempts || 0) >= 5) {
-        await admin
-          .firestore()
+        await db
           .collection('password_resets')
           .doc(email)
           .delete();
-        return res
-          .status(429)
-          .json({
-            error: 'Too many attempts. Request a new reset code.',
-          });
+        return res.status(400).json({ error: INVALID_RESET_MESSAGE });
+      }
+
+      if (resetData.verified) {
+        return res.status(400).json({ error: INVALID_RESET_MESSAGE });
       }
 
       // Verify code
@@ -333,24 +418,18 @@ exports.verifyResetCode = functions.https.onRequest((req, res) => {
 
       if (hash !== resetData.hashedCode) {
         // Increment attempts
-        await admin
-          .firestore()
+        await db
           .collection('password_resets')
           .doc(email)
           .update({
             attempts: (resetData.attempts || 0) + 1,
           });
-        return res
-          .status(400)
-          .json({
-            error: 'Invalid verification code',
-          });
+        return res.status(400).json({ error: INVALID_RESET_MESSAGE });
       }
 
       // Code is valid - generate session token
       const sessionToken = crypto.randomBytes(32).toString('hex');
-      await admin
-        .firestore()
+      await db
         .collection('password_resets')
         .doc(email)
         .update({
@@ -387,55 +466,54 @@ exports.completePasswordReset = functions.https.onRequest((req, res) => {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const { email, sessionToken, newPassword } = req.body || {};
-      if (!email || !sessionToken || !newPassword) {
+      const { email: rawEmail, sessionToken, newPassword } = req.body || {};
+      if (
+        !rawEmail ||
+        typeof rawEmail !== 'string' ||
+        typeof sessionToken !== 'string' ||
+        !newPassword
+      ) {
         return res.status(400).json({ error: 'Missing required parameters' });
       }
+      const email = normalizeEmail(rawEmail);
 
-      if (typeof newPassword !== 'string' || newPassword.length < 8) {
+      if (!/^[a-f0-9]{64}$/i.test(sessionToken)) {
+        return res.status(400).json({ error: INVALID_RESET_MESSAGE });
+      }
+      if (
+        typeof newPassword !== 'string' ||
+        newPassword.length < 8 ||
+        newPassword.length > 128
+      ) {
         return res.status(400).json({
-          error: 'Password must be at least 8 characters long.',
+          error: 'Password must be between 8 and 128 characters long.',
         });
       }
 
-      const resetDoc = await admin
-        .firestore()
+      const resetDoc = await db
         .collection('password_resets')
         .doc(email)
         .get();
 
       if (!resetDoc.exists) {
-        return res
-          .status(404)
-          .json({
-            error: 'No reset session found',
-          });
+        return res.status(400).json({ error: INVALID_RESET_MESSAGE });
       }
 
       const resetData = resetDoc.data();
 
       // Check verification and session token
       if (!resetData.verified || resetData.sessionToken !== sessionToken) {
-        return res
-          .status(403)
-          .json({
-            error: 'Invalid or expired session',
-          });
+        return res.status(400).json({ error: INVALID_RESET_MESSAGE });
       }
 
       // Check expiry
       const expiryAt = resetData.expiryAt.toDate();
       if (new Date() > expiryAt) {
-        await admin
-          .firestore()
+        await db
           .collection('password_resets')
           .doc(email)
           .delete();
-        return res
-          .status(400)
-          .json({
-            error: 'Reset session has expired',
-          });
+        return res.status(400).json({ error: INVALID_RESET_MESSAGE });
       }
 
       // Update password in Firebase Auth
@@ -444,15 +522,25 @@ exports.completePasswordReset = functions.https.onRequest((req, res) => {
         await admin.auth().updateUser(user.uid, {
           password: newPassword,
         });
+        // Invalidate refresh tokens so other devices must authenticate again.
+        // The AI API also verifies revoked Firebase ID tokens.
+        await admin.auth().revokeRefreshTokens(user.uid);
+
+        await writeSecurityEvent('password_reset_completed', {
+          emailHash: hashRateLimitKey(email),
+          uid: user.uid,
+        });
 
         // Delete reset document
-        await admin
-          .firestore()
+        await db
           .collection('password_resets')
           .doc(email)
           .delete();
 
-        console.log(`Password reset completed for ${email}`);
+        console.log('Password reset completed', {
+          uid: user.uid,
+          emailHash: hashRateLimitKey(email),
+        });
         return res.status(200).json({
           success: true,
           message: 'Password reset successfully',

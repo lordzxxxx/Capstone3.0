@@ -887,7 +887,7 @@ class _LoginState extends State<Login> {
       String message;
       switch (e.code) {
         case 'user-not-found':
-          message = 'No account found for that email.';
+          message = 'Incorrect email or password. Please try again.';
           break;
         case 'wrong-password':
           message = 'Incorrect password. Please try again.';

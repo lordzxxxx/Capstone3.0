@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import time
 from typing import Any
@@ -81,6 +82,7 @@ _MEDICATION_GUIDANCE_PATTERN = re.compile(
     r"antibiotics?|inhaler)\b",
     re.IGNORECASE,
 )
+_MAX_REQUEST_BYTES = 64 * 1024
 
 
 def _safe_guidance_strings(values: list[str]) -> list[str]:
@@ -113,6 +115,8 @@ class JsonLogFormatter(logging.Formatter):
             "normalizedSymptoms",
             "recognizedSymptoms",
             "ignoredSymptoms",
+            "recognizedSymptomCount",
+            "ignoredSymptomCount",
             "featureVectorCount",
             "topPredictions",
             "firestoreDocumentId",
@@ -215,11 +219,17 @@ def create_app() -> FastAPI:
             "reviewed Firestore content. This API does not provide a diagnosis."
         ),
     )
+    configured_origins = {
+        origin.strip().rstrip("/")
+        for origin in os.environ.get("WEB_ALLOWED_ORIGINS", "").split(",")
+        if origin.strip()
+    }
     application.add_middleware(
         CORSMiddleware,
         allow_origins=[
             "https://capstone-c98f9.web.app",
             "https://capstone-c98f9.firebaseapp.com",
+            *sorted(configured_origins),
         ],
         allow_origin_regex=r"^http://(localhost|127\.0\.0\.1)(:\d+)?$",
         allow_credentials=False,
@@ -231,6 +241,32 @@ def create_app() -> FastAPI:
             "X-Firebase-AppCheck",
         ],
     )
+
+    @application.middleware("http")
+    async def _request_size_limit(request: Request, call_next):
+        """Reject oversized bodies before parsing or processing them."""
+        content_length = request.headers.get("content-length")
+        if content_length:
+            try:
+                if int(content_length) > _MAX_REQUEST_BYTES:
+                    return JSONResponse(
+                        status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                        content={"detail": "Request body is too large."},
+                    )
+            except ValueError:
+                return JSONResponse(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    content={"detail": "Invalid Content-Length header."},
+                )
+
+        if request.method in {"POST", "PUT", "PATCH"}:
+            body = await request.body()
+            if len(body) > _MAX_REQUEST_BYTES:
+                return JSONResponse(
+                    status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                    content={"detail": "Request body is too large."},
+                )
+        return await call_next(request)
 
     @application.middleware("http")
     async def _security_headers(request: Request, call_next):
@@ -466,8 +502,8 @@ def create_app() -> FastAPI:
             extra={
                 "event": "symptom_guidance",
                 "latencyMs": round((time.perf_counter() - started) * 1000, 2),
-                "recognizedSymptoms": recognized_symptoms,
-                "ignoredSymptoms": ignored_keywords,
+                "recognizedSymptomCount": len(recognized_symptoms),
+                "ignoredSymptomCount": len(ignored_keywords),
                 "contentAvailable": guidance["contentAvailable"],
             },
         )
@@ -668,4 +704,3 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-
