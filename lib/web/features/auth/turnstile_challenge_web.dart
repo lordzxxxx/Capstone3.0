@@ -88,7 +88,9 @@ class _TurnstileChallengeState extends State<TurnstileChallenge> {
         <String, dynamic>{
               'sitekey': _siteKey,
               'action': widget.action,
-              'size': 'compact',
+              // Cloudflare's compact mode is tall and nearly square. The normal
+              // widget is the small horizontal 300x65 form that fits our auth cards.
+              'size': 'normal',
               'theme': 'light',
               'callback': ((JSString token) {
                 if (mounted) widget.onTokenChanged(token.toDart);
@@ -137,7 +139,8 @@ class _TurnstileChallengeState extends State<TurnstileChallenge> {
       );
     }
     return Container(
-      height: 72,
+      width: 300,
+      height: 65,
       alignment: Alignment.centerLeft,
       child: HtmlElementView(viewType: _viewType),
     );
