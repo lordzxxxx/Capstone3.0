@@ -168,7 +168,6 @@ the deployed Hosting domains to its allowed domains, then run locally:
   --web-port 8081 `
   --dart-define=AI_API_BASE_URL=http://127.0.0.1:8000 `
   --dart-define=FIREBASE_APP_CHECK_WEB_KEY=YOUR_RECAPTCHA_V3_SITE_KEY `
-  --dart-define=TURNSTILE_SITE_KEY=YOUR_TURNSTILE_SITE_KEY
 ```
 
 Production web and mobile builds must provide the deployed HTTPS FastAPI host;
@@ -178,7 +177,6 @@ never ship the development localhost fallback:
 flutter build web --release \
   --dart-define=AI_API_BASE_URL=https://YOUR_DEPLOYED_AI_API_HOST \
   --dart-define=FIREBASE_APP_CHECK_WEB_KEY=YOUR_RECAPTCHA_V3_SITE_KEY \
-  --dart-define=TURNSTILE_SITE_KEY=YOUR_TURNSTILE_SITE_KEY
 ```
 
 The repository does not contain a deployed AI API host yet. Until one is

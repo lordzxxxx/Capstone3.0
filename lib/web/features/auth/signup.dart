@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,8 +19,6 @@ import 'package:mycapstone_project/web/shared/services/account_policy_service.da
 import 'package:mycapstone_project/web/shared/services/barangay_branding_service.dart';
 import 'package:mycapstone_project/web/shared/widgets/barangay_logo_image.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
-import 'package:mycapstone_project/web/features/auth/turnstile_challenge.dart';
-import 'package:mycapstone_project/web/features/auth/turnstile_verification_service.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF071A33);
@@ -57,10 +55,6 @@ class _SignupState extends State<Signup> {
   bool _isCheckingEmail = false;
   bool _isCheckingUsername = false;
   bool _isCheckingBarangayAvailability = false;
-  String? _turnstileToken;
-  int _turnstileResetNonce = 0;
-  final TurnstileVerificationService _turnstileVerification =
-      TurnstileVerificationService();
   String? _emailValidationMessage;
   String? _usernameValidationMessage;
   String? _barangayRestrictionMessage;
@@ -111,7 +105,6 @@ class _SignupState extends State<Signup> {
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
-    _turnstileVerification.close();
     super.dispose();
   }
 
@@ -532,26 +525,6 @@ class _SignupState extends State<Signup> {
     return (role ?? '').trim().toUpperCase() == 'BHW';
   }
 
-  Future<bool> _verifyTurnstile() async {
-    if (!kIsWeb) return true;
-    try {
-      await _turnstileVerification.verify(
-        token: _turnstileToken,
-        action: 'registration',
-      );
-      return true;
-    } on TurnstileVerificationException catch (error) {
-      Get.snackbar(
-        'Security check required',
-        error.message,
-        backgroundColor: const Color(0xFFD32F2F),
-        colorText: Colors.white,
-        duration: const Duration(seconds: 5),
-      );
-      return false;
-    }
-  }
-
   Future<void> signup() async {
     final username = usernameController.text.trim();
     final email = emailController.text.trim();
@@ -748,8 +721,6 @@ class _SignupState extends State<Signup> {
       setState(() => _showBarangayValidationError = false);
     }
 
-    if (!await _verifyTurnstile()) return;
-
     setState(() => _isLoading = true);
     UserCredential? userCredential;
     try {
@@ -902,7 +873,6 @@ class _SignupState extends State<Signup> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _turnstileResetNonce++;
         });
       }
     }
@@ -1240,14 +1210,6 @@ class _SignupState extends State<Signup> {
                 height: 1.4,
               ),
             ),
-            if (kIsWeb) ...[
-              const SizedBox(height: 12),
-              TurnstileChallenge(
-                action: 'registration',
-                resetNonce: _turnstileResetNonce,
-                onTokenChanged: (token) => _turnstileToken = token,
-              ),
-            ],
             const SizedBox(height: 18),
             SizedBox(
               height: 50,

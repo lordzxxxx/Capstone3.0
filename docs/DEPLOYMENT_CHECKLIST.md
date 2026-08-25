@@ -15,13 +15,6 @@
 - [ ] Configure production Firebase Authentication providers.
 - [ ] Configure production App Check provider, web site key, and allowed
   domains.
-- [ ] Configure Cloudflare Turnstile for `ai-dsuhis.com` and
-  `www.ai-dsuhis.com`; pass its public site key as `TURNSTILE_SITE_KEY` to
-  the Flutter web build.
-- [ ] Store `TURNSTILE_SECRET_KEY` only in the FastAPI/Cloud Run environment
-  or Secret Manager, with `TURNSTILE_HOSTNAMES` set to the exact production
-  hostnames. The backend `/security/turnstile/verify` endpoint checks the
-  token, action, hostname, and client rate limit before Firebase Auth.
 - [ ] Store service-account credentials outside the repository.
 - [ ] Apply only clinically reviewed `symptom_guidance` documents.
 - [ ] Confirm Firebase rules and indexes are deployed from the reviewed files.
@@ -30,8 +23,7 @@
 - [ ] Verify password reset revokes refresh tokens and returns generic account
       recovery messages for unknown addresses.
 - [ ] Build the web artifact with `AI_API_BASE_URL` and
-      `FIREBASE_APP_CHECK_WEB_KEY` and `TURNSTILE_SITE_KEY` set, using
-      `npm run build:web:release`.
+      `FIREBASE_APP_CHECK_WEB_KEY` set, using `npm run build:web:release`.
 - [ ] Run `vercel build --prod` locally or in CI, then deploy the generated
       output with `vercel deploy --prebuilt --prod`; Flutter's generated
       `build/` directory is intentionally not committed to Git.

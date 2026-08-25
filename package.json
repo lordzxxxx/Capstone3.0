@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build:web:release": "flutter build web --release --no-pub --dart-define=AI_API_BASE_URL=$AI_API_BASE_URL --dart-define=FIREBASE_APP_CHECK_WEB_KEY=$FIREBASE_APP_CHECK_WEB_KEY --dart-define=TURNSTILE_SITE_KEY=$TURNSTILE_SITE_KEY && bash tooling/prepare_web_artifact.sh build/web",
+    "build:web:release": "flutter build web --release --no-pub --dart-define=AI_API_BASE_URL=$AI_API_BASE_URL --dart-define=FIREBASE_APP_CHECK_WEB_KEY=$FIREBASE_APP_CHECK_WEB_KEY && bash tooling/prepare_web_artifact.sh build/web",
     "test:firestore-rules": "firebase emulators:exec --only firestore --project demo-capstone-security \"mocha --timeout 60000 tests/firestore.rules.test.cjs\"",
     "test:workflow-persistence": "firebase emulators:exec --only firestore --project demo-capstone-workflow \"mocha --timeout 60000 tests/workflow.persistence.test.cjs\"",
     "test:browser": "firebase emulators:exec --only auth,firestore --project capstone-c98f9 \"playwright test\""
