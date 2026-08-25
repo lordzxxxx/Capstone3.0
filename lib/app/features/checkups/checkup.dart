@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:get/get.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/core/services/disease_prediction_api_service.dart';
 import 'package:mycapstone_project/app/core/services/health_ai_classifier.dart';
@@ -15,6 +16,9 @@ import 'package:mycapstone_project/app/features/patients/patient_history_dialogs
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 import 'package:mycapstone_project/app/shared/services/clinical_form_pdf_service.dart';
+import 'package:mycapstone_project/app/features/referrals/referrals.dart';
+import 'package:mycapstone_project/app/features/patients/patient.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
@@ -196,10 +200,30 @@ class _CheckUpPageState extends State<CheckUpPage> {
     }
   }
 
-  void _showNewCheckUpModal(
+  Future<void> _showNewCheckUpModal(
     BuildContext context, {
     Map<String, dynamic>? patientSeed,
-  }) {
+  }) async {
+    patientSeed = await _patientHistoryService.resolveRegisteredPatient(
+      patientSeed,
+    );
+    if (patientSeed == null) {
+      if (!context.mounted) return;
+      patientSeed = await PatientFirstServiceSelector.selectRegisteredPatient(
+        context,
+        serviceLabel: 'Check-up',
+        patientService: _patientHistoryService,
+        onRegisterPatient: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                const PatientRecordPage(openRegistrationOnLoad: true),
+          ),
+        ),
+      );
+      if (!context.mounted || patientSeed == null) return;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1738,6 +1762,14 @@ class _CheckUpPageState extends State<CheckUpPage> {
           },
         ),
         MobileRecordAction(
+          label: 'Refer to CHO',
+          icon: Icons.assignment_return_outlined,
+          tone: MobileRecordActionTone.primary,
+          onPressed: () {
+            Get.to(() => ReferralsPage(initialRecord: record));
+          },
+        ),
+        MobileRecordAction(
           label: 'Export Form PDF / Print',
           icon: Icons.picture_as_pdf_outlined,
           onPressed: () {
@@ -2477,6 +2509,31 @@ void _showCheckUpDetailsDialog(
                 // Action Buttons
                 Row(
                   children: [
+                    // Refer Button
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Get.to(() => ReferralsPage(initialRecord: record));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal.shade700,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.assignment_return_outlined, size: 18),
+                        label: const Text(
+                          'Refer to CHO',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     // Edit Button
                     Expanded(
                       child: ElevatedButton.icon(
@@ -2495,13 +2552,13 @@ void _showCheckUpDetailsDialog(
                         label: const Text(
                           'Edit',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     // Close Button
                     Expanded(
                       child: OutlinedButton(
@@ -2519,7 +2576,7 @@ void _showCheckUpDetailsDialog(
                         child: const Text(
                           'Close',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: _lightOffWhite,
                           ),
@@ -3780,6 +3837,93 @@ class _NewCheckUpFullScreenModalState
     }
   }
 
+  Map<String, dynamic> _buildNewRecordPayload() {
+    List<String> vitalSignsParts = [];
+    if (_bloodPressureController.text.isNotEmpty) {
+      vitalSignsParts.add('BP: ${_bloodPressureController.text}');
+    }
+    if (_temperatureController.text.isNotEmpty) {
+      vitalSignsParts.add('Temp: ${_temperatureController.text}°C');
+    }
+    if (_heartRateController.text.isNotEmpty) {
+      vitalSignsParts.add('HR: ${_heartRateController.text} bpm');
+    }
+    if (_respiratoryRateController.text.isNotEmpty) {
+      vitalSignsParts.add('RR: ${_respiratoryRateController.text} brpm');
+    }
+    if (_oxygenSaturationController.text.isNotEmpty) {
+      vitalSignsParts.add('O2: ${_oxygenSaturationController.text}%');
+    }
+    if (_weightController.text.isNotEmpty) {
+      vitalSignsParts.add('Weight: ${_weightController.text} kg');
+    }
+    if (_heightController.text.isNotEmpty) {
+      vitalSignsParts.add('Height: ${_heightController.text} cm');
+    }
+
+    final vitalSignsString = vitalSignsParts.join(', ');
+    final now = DateTime.now();
+    final linkedPatientId = (widget.patientSeed?['linkedPatientId'] ??
+            widget.patientSeed?['id'] ??
+            '')
+        .toString()
+        .trim();
+    final patientId = (widget.patientSeed?['patientId'] ??
+            widget.patientSeed?['patientCode'] ??
+            linkedPatientId)
+        .toString()
+        .trim();
+
+    return <String, dynamic>{
+      'id': now.millisecondsSinceEpoch.toString(),
+      if (linkedPatientId.isNotEmpty) 'linkedPatientId': linkedPatientId,
+      if (patientId.isNotEmpty) 'patientId': patientId,
+      if (widget.patientSeed?['patientCode'] != null)
+        'patientCode': widget.patientSeed!['patientCode'],
+      'datetime':
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+      'type': 'General',
+      'diseaseType': 'General',
+      'patient': '${_firstNameController.text} ${_surnameController.text}'.trim(),
+      'age': _ageController.text.trim(),
+      'address': _addressController.text.trim(),
+      'vitalsigns': vitalSignsString,
+      'symptoms': _symptomsController.text.trim(),
+      'details': vitalSignsString.isNotEmpty
+          ? '$vitalSignsString | ${_symptomsController.text.trim()}'
+          : 'Age: ${_ageController.text.trim()}, ${_symptomsController.text.trim()}',
+      'plan': _planController.text.trim(),
+      'followup': _followUpDate != null
+          ? '${_followUpDate!.year}-${_followUpDate!.month.toString().padLeft(2, '0')}-${_followUpDate!.day.toString().padLeft(2, '0')}'
+          : 'N/A',
+    };
+  }
+
+  Future<void> _saveAndReferToCho() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _isSaving = true);
+    final newRecord = _buildNewRecordPayload();
+    try {
+      await widget.onSave(newRecord);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unable to save check-up record: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isSaving = false);
+      }
+      return;
+    }
+
+    if (context.mounted) {
+      Navigator.of(context).pop();
+      Get.to(() => ReferralsPage(initialRecord: newRecord));
+    }
+  }
+
   // Helper method to build section cards
   Widget _buildSectionCard({
     required BuildContext context,
@@ -4242,13 +4386,15 @@ class _NewCheckUpFullScreenModalState
                       const SizedBox(height: 32),
 
                       // Action Buttons
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                      Wrap(
+                        alignment: WrapAlignment.end,
+                        spacing: 10,
+                        runSpacing: 10,
                         children: [
                           TextButton(
                             style: TextButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
+                                horizontal: 20,
                                 vertical: 12,
                               ),
                               shape: RoundedRectangleBorder(
@@ -4264,7 +4410,30 @@ class _NewCheckUpFullScreenModalState
                             ),
                             onPressed: () => Navigator.of(context).pop(),
                           ),
-                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red.shade700,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 3,
+                            ),
+                            icon: const Icon(Icons.assignment_return_outlined, size: 18, color: Colors.white),
+                            label: const Text(
+                              'Save & Refer to CHO',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Colors.white,
+                              ),
+                            ),
+                            onPressed: _isSaving ? null : _saveAndReferToCho,
+                          ),
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _primaryAqua,
@@ -4273,7 +4442,7 @@ class _NewCheckUpFullScreenModalState
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 32,
+                                horizontal: 24,
                                 vertical: 12,
                               ),
                               elevation: 4,
@@ -4294,7 +4463,7 @@ class _NewCheckUpFullScreenModalState
                                   : 'Save Record',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 15,
                               ),
                             ),
                             onPressed: _isSaving
@@ -4303,95 +4472,7 @@ class _NewCheckUpFullScreenModalState
                                     if (_formKey.currentState?.validate() ??
                                         false) {
                                       setState(() => _isSaving = true);
-                                      // Combine all vital signs into one string
-                                      List<String> vitalSignsParts = [];
-
-                                      if (_bloodPressureController
-                                          .text
-                                          .isNotEmpty) {
-                                        vitalSignsParts.add(
-                                          'BP: ${_bloodPressureController.text}',
-                                        );
-                                      }
-                                      if (_temperatureController
-                                          .text
-                                          .isNotEmpty) {
-                                        vitalSignsParts.add(
-                                          'Temp: ${_temperatureController.text}°C',
-                                        );
-                                      }
-                                      if (_heartRateController
-                                          .text
-                                          .isNotEmpty) {
-                                        vitalSignsParts.add(
-                                          'HR: ${_heartRateController.text} bpm',
-                                        );
-                                      }
-                                      if (_respiratoryRateController
-                                          .text
-                                          .isNotEmpty) {
-                                        vitalSignsParts.add(
-                                          'RR: ${_respiratoryRateController.text} brpm',
-                                        );
-                                      }
-                                      if (_oxygenSaturationController
-                                          .text
-                                          .isNotEmpty) {
-                                        vitalSignsParts.add(
-                                          'O2: ${_oxygenSaturationController.text}%',
-                                        );
-                                      }
-                                      if (_weightController.text.isNotEmpty) {
-                                        vitalSignsParts.add(
-                                          'Weight: ${_weightController.text} kg',
-                                        );
-                                      }
-                                      if (_heightController.text.isNotEmpty) {
-                                        vitalSignsParts.add(
-                                          'Height: ${_heightController.text} cm',
-                                        );
-                                      }
-
-                                      String vitalSignsString = vitalSignsParts
-                                          .join(', ');
-
-                                      // Create new record
-                                      final now = DateTime.now();
-                                      final linkedPatientId =
-                                          widget.patientSeed?['linkedPatientId']
-                                              ?.toString()
-                                              .trim() ??
-                                          '';
-                                      final patientId =
-                                          widget.patientSeed?['patientId']
-                                              ?.toString()
-                                              .trim() ??
-                                          '';
-                                      final Map<String, dynamic> newRecord = {
-                                        'id': now.millisecondsSinceEpoch
-                                            .toString(),
-                                        if (linkedPatientId.isNotEmpty)
-                                          'linkedPatientId': linkedPatientId,
-                                        if (patientId.isNotEmpty)
-                                          'patientId': patientId,
-                                        'datetime':
-                                            '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-                                        'type': 'General',
-                                        'diseaseType': 'General',
-                                        'patient':
-                                            '${_firstNameController.text} ${_surnameController.text}',
-                                        'age': _ageController.text,
-                                        'address': _addressController.text,
-                                        'vitalsigns': vitalSignsString,
-                                        'symptoms': _symptomsController.text,
-                                        'details': vitalSignsString.isNotEmpty
-                                            ? '$vitalSignsString | ${_symptomsController.text}'
-                                            : 'Age: ${_ageController.text}, ${_symptomsController.text}',
-                                        'plan': _planController.text,
-                                        'followup': _followUpDate != null
-                                            ? '${_followUpDate!.year}-${_followUpDate!.month.toString().padLeft(2, '0')}-${_followUpDate!.day.toString().padLeft(2, '0')}'
-                                            : 'N/A',
-                                      };
+                                      final newRecord = _buildNewRecordPayload();
 
                                       SymptomGuidanceResult? guidance;
                                       String? guidanceError;
@@ -4698,21 +4779,55 @@ class _NewCheckUpFullScreenModalState
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton.icon(
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    icon: const Icon(Icons.check),
-                    label: const Text('Got It'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _primaryAqua,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    if (result.emergencyWarningSigns.isNotEmpty ||
+                        result.whenToSeekCare.isNotEmpty)
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          final payload = _buildNewRecordPayload();
+                          Get.to(() => ReferralsPage(
+                                initialRecord: payload,
+                                initialObservations: result.emergencyWarningSigns.isNotEmpty
+                                    ? 'Emergency warning signs: ${result.emergencyWarningSigns.join(', ')}'
+                                    : 'When to seek care: ${result.whenToSeekCare.join(', ')}',
+                              ));
+                        },
+                        icon: const Icon(Icons.assignment_return_outlined, size: 18),
+                        label: const Text('Refer Patient to CHO'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ElevatedButton.icon(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      icon: const Icon(Icons.check),
+                      label: const Text('Got It'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primaryAqua,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ],

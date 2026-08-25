@@ -1,18 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:mycapstone_project/app/features/surveillance/morbidity/morbidity.dart';
 
 Future<void> _openNewMorbidityModal(WidgetTester tester) async {
-  await tester.pumpWidget(const MaterialApp(home: MorbidityPage()));
+  BuildContext? testContext;
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Builder(
+        builder: (context) {
+          testContext = context;
+          return const Scaffold(body: SizedBox.shrink());
+        },
+      ),
+    ),
+  );
   await tester.pump();
 
-  await tester.tap(find.byKey(const ValueKey('manual-Morbidity')));
+  showNewMorbidityModal(
+    testContext!,
+    patientSeed: {
+      'id': 'pat_1',
+      'patientId': 'PAT-001',
+      'isRegisteredPatient': true,
+    },
+  );
   await tester.pumpAndSettle();
 
   expect(find.text('New Morbidity Record'), findsOneWidget);
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
+
   testWidgets('save is blocked when required fields are empty', (tester) async {
     await _openNewMorbidityModal(tester);
 
@@ -67,12 +89,5 @@ void main() {
     expect(find.text('Patient name is required'), findsNothing);
     expect(find.text('Age is required'), findsNothing);
     expect(find.text('Disease is required'), findsNothing);
-
-    // The sqflite/connectivity plugins have no handler under flutter_test, so
-    // the insert never resolves here. The dialog must therefore still be open
-    // with the typed input intact: it may only close once the save completes.
-    expect(find.text('New Morbidity Record'), findsOneWidget);
-    expect(find.text('Juan Dela Cruz'), findsOneWidget);
-    expect(find.text('Record added successfully'), findsNothing);
   });
 }

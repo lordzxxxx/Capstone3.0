@@ -11,6 +11,9 @@ import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
+import 'package:mycapstone_project/app/features/patients/patient_centered_history_service.dart';
+import 'package:mycapstone_project/app/features/patients/patient.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
 import 'package:mycapstone_project/app/shared/services/clinical_form_pdf_service.dart';
 import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
@@ -1761,38 +1764,68 @@ class AgeDistribution {
 }
 
 // Modal Functions
-void _showNewMorbidityModal(
+Future<void> showNewMorbidityModal(
   BuildContext context, {
   Map<String, dynamic>? patientSeed,
   Future<void> Function()? onSaved,
-}) {
+}) =>
+    _showNewMorbidityModal(
+      context,
+      patientSeed: patientSeed,
+      onSaved: onSaved,
+    );
+
+Future<void> _showNewMorbidityModal(
+  BuildContext context, {
+  Map<String, dynamic>? patientSeed,
+  Future<void> Function()? onSaved,
+}) async {
+  final historyService = PatientCenteredHistoryService();
+  patientSeed = await historyService.resolveRegisteredPatient(patientSeed);
+  if (patientSeed == null) {
+    if (!context.mounted) return;
+    patientSeed = await PatientFirstServiceSelector.selectRegisteredPatient(
+      context,
+      serviceLabel: 'Morbidity',
+      patientService: historyService,
+      onRegisterPatient: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              const PatientRecordPage(openRegistrationOnLoad: true),
+        ),
+      ),
+    );
+    if (!context.mounted || patientSeed == null) return;
+  }
+
   final formKey = GlobalKey<FormState>();
   final patientNameController = TextEditingController(
     text:
-        (patientSeed?['patientName'] ??
-                patientSeed?['fullName'] ??
-                patientSeed?['name'] ??
-                patientSeed?['patient'] ??
+        (patientSeed['patientName'] ??
+                patientSeed['fullName'] ??
+                patientSeed['name'] ??
+                patientSeed['patient'] ??
                 '')
             .toString(),
   );
   final ageController = TextEditingController(
-    text: (patientSeed?['age'] ?? '').toString(),
+    text: (patientSeed['age'] ?? '').toString(),
   );
   final diseaseController = TextEditingController(
     text:
-        (patientSeed?['disease'] ??
-                patientSeed?['diagnosis'] ??
-                patientSeed?['symptoms'] ??
-                patientSeed?['chiefComplaint'] ??
+        (patientSeed['disease'] ??
+                patientSeed['diagnosis'] ??
+                patientSeed['symptoms'] ??
+                patientSeed['chiefComplaint'] ??
                 '')
             .toString(),
   );
   final facilityController = TextEditingController(
     text:
-        (patientSeed?['place'] ??
-                patientSeed?['address'] ??
-                patientSeed?['barangay'] ??
+        (patientSeed['place'] ??
+                patientSeed['address'] ??
+                patientSeed['barangay'] ??
                 '')
             .toString(),
   );
@@ -1873,8 +1906,24 @@ void _showNewMorbidityModal(
 
               final navigator = Navigator.of(context);
               final messenger = ScaffoldMessenger.of(context);
+              final linkedPatientId = (patientSeed?['linkedPatientId'] ??
+                      patientSeed?['id'] ??
+                      patientSeed?['patientId'] ??
+                      '')
+                  .toString()
+                  .trim();
+              final patientId = (patientSeed?['patientId'] ??
+                      patientSeed?['patientCode'] ??
+                      linkedPatientId)
+                  .toString()
+                  .trim();
               final newRecord = {
                 'id': DateTime.now().millisecondsSinceEpoch.toString(),
+                if (linkedPatientId.isNotEmpty)
+                  'linkedPatientId': linkedPatientId,
+                if (patientId.isNotEmpty) 'patientId': patientId,
+                if (patientSeed?['patientCode'] != null)
+                  'patientCode': patientSeed!['patientCode'],
                 'patientName': patientNameController.text.trim(),
                 'age': ageController.text.trim(),
                 'disease': diseaseController.text.trim(),
