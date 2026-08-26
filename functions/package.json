@@ -2,7 +2,7 @@
   "name": "functions",
   "description": "Cloud Functions for Firebase",
   "scripts": {
-    "lint": "eslint .",
+    "lint": "find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -n1 node --check",
     "serve": "firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions",
     "set-cho-role": "node set_cho_role.js",

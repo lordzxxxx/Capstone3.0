@@ -1009,15 +1009,28 @@ class _ChoDashboardState extends State<ChoDashboard> {
       referralBarangayCounts[barangayKey] =
           (referralBarangayCounts[barangayKey] ?? 0) + 1;
 
-      final status = (row['status'] ?? 'submitted').toString().toLowerCase();
-      if (status == 'assigned') {
+      final status = (row['status'] ?? 'submitted')
+          .toString()
+          .trim()
+          .toLowerCase()
+          .replaceAll('-', '_');
+      if ({
+        'assigned',
+        'hospital_assigned',
+        'doctor_assigned',
+        'waiting_consultation',
+      }.contains(status)) {
         referralsAssigned++;
-      } else if (status == 'in_treatment') {
+      } else if ({'in_treatment', 'consulted'}.contains(status)) {
         referralsInTreatment++;
       } else if (status == 'completed') {
         referralsCompleted++;
-      } else {
-        // Includes submitted and under_review statuses.
+      } else if ({
+        'submitted',
+        'pending_review',
+        'under_review',
+        'additional_information_requested',
+      }.contains(status)) {
         referralsSubmitted++;
       }
     }
@@ -2541,8 +2554,6 @@ class _ChoDashboardState extends State<ChoDashboard> {
         _coverageMissingNextCheckup +
         _coverageUnknownRisk +
         _coverageFollowUpNoSchedule;
-    final referralBacklog =
-        _referralsSubmitted + _referralsAssigned + _referralsInTreatment;
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth > 1080
@@ -2556,35 +2567,49 @@ class _ChoDashboardState extends State<ChoDashboard> {
           children: <Widget>[
             _buildInsightCard(
               width: width,
-              title: 'Priority caseload',
-              value: _safeMetricText(_highRiskPatients),
-              context: 'High-risk patients require clinical review',
-              icon: Icons.health_and_safety_outlined,
+              title: 'Automated Insights',
+              value: _safeMetricText(coverageGaps + _highRiskPatients),
+              context: 'Data-driven risk and coverage signals',
+              icon: Icons.auto_awesome_outlined,
               color: ChoColors.ice,
             ),
             _buildInsightCard(
               width: width,
-              title: 'Referral pipeline',
-              value: _safeMetricText(referralBacklog),
-              context: 'Cases not yet marked completed',
-              icon: Icons.route_outlined,
+              title: 'Pending Review',
+              value: _safeMetricText(_referralsSubmitted),
+              context: 'Referrals waiting for CHO review',
+              icon: Icons.rate_review_outlined,
               color: ChoColors.aqua,
+              onTap: () => WebNavigationCoordinator.goToNamed(
+                context,
+                '${WebRoutes.choReferrals}?view=1',
+              ),
             ),
             _buildInsightCard(
               width: width,
-              title: 'Coverage gaps',
-              value: _safeMetricText(coverageGaps),
-              context: 'Missing visits, schedules, or risk data',
-              icon: Icons.data_exploration_outlined,
+              title: 'Active Referrals',
+              value: _safeMetricText(
+                _referralsAssigned + _referralsInTreatment,
+              ),
+              context: 'Assigned or under clinical follow-through',
+              icon: Icons.assignment_ind_outlined,
               color: ChoColors.ice,
+              onTap: () => WebNavigationCoordinator.goToNamed(
+                context,
+                '${WebRoutes.choReferrals}?view=2',
+              ),
             ),
             _buildInsightCard(
               width: width,
-              title: 'Follow-up queue',
-              value: _safeMetricText(_followUpPatients),
-              context: 'Patients requiring continuity of care',
-              icon: Icons.event_repeat_outlined,
+              title: 'Completed Referrals',
+              value: _safeMetricText(_referralsCompleted),
+              context: 'Referrals completed by the care team',
+              icon: Icons.task_alt_outlined,
               color: ChoColors.aqua,
+              onTap: () => WebNavigationCoordinator.goToNamed(
+                context,
+                '${WebRoutes.choReferrals}?view=3',
+              ),
             ),
           ],
         );
@@ -2831,8 +2856,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
     required String context,
     required IconData icon,
     required Color color,
+    VoidCallback? onTap,
   }) {
-    return Container(
+    final card = Container(
       width: width,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -2901,6 +2927,16 @@ class _ChoDashboardState extends State<ChoDashboard> {
             ),
           ),
         ],
+      ),
+    );
+    if (onTap == null) return card;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: card,
       ),
     );
   }

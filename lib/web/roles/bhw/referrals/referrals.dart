@@ -230,7 +230,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
 
   String _assignmentModeLabel(String mode, String source) {
     if (mode == 'smart' && source == 'bhw_auto') {
-      return 'AI auto-assignment';
+      return 'Automatic assignment';
     }
     if (mode == 'smart') {
       return 'Smart assignment';
@@ -249,10 +249,21 @@ class _ReferralsPageState extends State<ReferralsPage> {
               .toString()
               .trim()
               .toLowerCase();
-          final availability = _doctorAvailability(data);
-          return accountStatus != 'disabled' &&
-              accountStatus != 'archived' &&
-              availability != 'unavailable';
+          final availability = _doctorAvailability(
+            data,
+          ).replaceAll(RegExp(r'[\s-]+'), '_');
+          final normalizedAccountStatus = accountStatus.replaceAll('-', '_');
+          final unavailableAccount = const {
+            'disabled',
+            'archived',
+            'inactive',
+            'deactivated',
+          }.contains(normalizedAccountStatus);
+          final unavailable =
+              availability == 'unavailable' ||
+              availability == 'on_leave' ||
+              availability == 'leave';
+          return !unavailableAccount && !unavailable;
         })
         .toList(growable: false);
   }
@@ -913,7 +924,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                             children: [
                               const Expanded(
                                 child: Text(
-                                  'AI-assisted doctor assignment',
+                                  'Automatic doctor assignment',
                                   style: TextStyle(
                                     color: _lightOffWhite,
                                     fontWeight: FontWeight.bold,
@@ -996,7 +1007,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                           const SizedBox(height: 8),
                           Text(
                             smartSuggestion == null
-                                ? 'Use workload, specialization, and availability signals to preselect the strongest doctor candidate, then save or override manually.'
+                                ? 'Use the eligible doctor with the lowest active referral workload, then save or override manually.'
                                 : 'Recommended: ${smartSuggestion!.doctorName} • ${smartSuggestion!.specialization} • workload ${smartSuggestion!.workload}',
                             style: TextStyle(
                               color: _lightOffWhite.withValues(alpha: 0.76),
@@ -1181,6 +1192,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
       text: (data['doctorNotes'] ?? '').toString(),
     );
     String status = _normalizedDoctorCareStatus(data['status']);
+    bool isSaving = false;
 
     await showDialog<void>(
       context: context,
@@ -1248,45 +1260,82 @@ class _ReferralsPageState extends State<ReferralsPage> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  onPressed: isSaving
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: () async {
-                    final updatePayload = <String, dynamic>{
-                      'doctorDiagnosis': diagnosisController.text.trim(),
-                      'doctorTreatment': treatmentController.text.trim(),
-                      'doctorMedication': medicationController.text.trim(),
-                      'doctorNotes': notesController.text.trim(),
-                      'status': status,
-                      'doctorUpdatedAt': FieldValue.serverTimestamp(),
-                      'updatedAt': FieldValue.serverTimestamp(),
-                    };
-                    final nextVersion = await _writeCoordinator.update(
-                      reference: doc.reference,
-                      changes: updatePayload,
-                      expectedVersion: recordVersionOf(data),
-                    );
-                    await _syncBarangayReferralMirror(
-                      referralId: doc.id,
-                      payload: {
-                        ...data,
-                        ...updatePayload,
-                        'recordVersion': nextVersion,
-                      },
-                    );
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          setDialogState(() => isSaving = true);
+                          try {
+                            final updatePayload = <String, dynamic>{
+                              'doctorDiagnosis': diagnosisController.text
+                                  .trim(),
+                              'doctorTreatment': treatmentController.text
+                                  .trim(),
+                              'doctorMedication': medicationController.text
+                                  .trim(),
+                              'doctorNotes': notesController.text.trim(),
+                              'status': status,
+                              'doctorUpdatedAt': FieldValue.serverTimestamp(),
+                              'updatedAt': FieldValue.serverTimestamp(),
+                              if (status == 'completed') ...{
+                                'completionStatus': 'completed',
+                                'completedAt': FieldValue.serverTimestamp(),
+                                'completedByDoctorUid':
+                                    FirebaseAuth.instance.currentUser?.uid,
+                                'completedByDoctorName':
+                                    FirebaseAuth
+                                        .instance
+                                        .currentUser
+                                        ?.displayName ??
+                                    FirebaseAuth.instance.currentUser?.email,
+                              },
+                            };
+                            final nextVersion = await _writeCoordinator.update(
+                              reference: doc.reference,
+                              changes: updatePayload,
+                              expectedVersion: recordVersionOf(data),
+                            );
+                            await _syncBarangayReferralMirror(
+                              referralId: doc.id,
+                              payload: {
+                                ...data,
+                                ...updatePayload,
+                                'recordVersion': nextVersion,
+                              },
+                            );
 
-                    if (dialogContext.mounted) {
-                      Navigator.of(dialogContext).pop();
-                    }
-                    Get.snackbar(
-                      'Care updated',
-                      'Your diagnosis, treatment, and medication updates are now synchronized to CHO and the referring BHW.',
-                      backgroundColor: Colors.green,
-                      colorText: Colors.white,
-                    );
-                  },
-                  child: const Text('Save update'),
+                            if (dialogContext.mounted) {
+                              Navigator.of(dialogContext).pop();
+                            }
+                            Get.snackbar(
+                              status == 'completed'
+                                  ? 'Referral completed'
+                                  : 'Care updated',
+                              status == 'completed'
+                                  ? 'The referral is marked completed and synchronized to CHO and the referring BHW.'
+                                  : 'Your diagnosis, treatment, and medication updates are now synchronized to CHO and the referring BHW.',
+                              backgroundColor: Colors.green,
+                              colorText: Colors.white,
+                            );
+                          } catch (error) {
+                            if (dialogContext.mounted) {
+                              setDialogState(() => isSaving = false);
+                            }
+                            Get.snackbar(
+                              'Care update failed',
+                              'The referral was not changed. Please try again.',
+                              backgroundColor: Colors.redAccent,
+                              colorText: Colors.white,
+                            );
+                          }
+                        },
+                  style: AppButtonStyles.primary(),
+                  child: Text(isSaving ? 'Saving...' : 'Save update'),
                 ),
               ],
             );
@@ -1916,7 +1965,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Choose a doctor directly when you know the needed specialization, or leave it open and let the AI assign the strongest available match based on workload and case details.',
+            'Choose a doctor directly when needed, or leave it open for automatic assignment to the eligible doctor with the lowest active referral workload.',
             style: TextStyle(
               color: _lightOffWhite.withValues(alpha: 0.76),
               height: 1.45,
@@ -1990,12 +2039,12 @@ class _ReferralsPageState extends State<ReferralsPage> {
                           value: _autoAssignDoctor,
                           activeThumbColor: _primaryAqua,
                           title: const Text(
-                            'Use AI auto-assignment',
+                            'Use automatic assignment',
                             style: TextStyle(color: _lightOffWhite),
                           ),
                           subtitle: Text(
                             _selectedPreferredDoctorUid == null
-                                ? 'The system will match the patient to the strongest doctor candidate after submission.'
+                                ? 'The system will assign the eligible doctor with the lowest active referral workload after submission.'
                                 : 'Keep this on if you want the server to validate and finalize the selected doctor immediately.',
                             style: TextStyle(
                               color: _lightOffWhite.withValues(alpha: 0.68),

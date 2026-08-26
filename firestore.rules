@@ -333,10 +333,18 @@ service cloud.firestore {
       // fix, which found the over-broad update succeeding.
       let recordsConsultation = changed.hasOnly([
         'doctorDiagnosis', 'doctorTreatment', 'doctorMedication',
-        'doctorNotes', 'status', 'doctorUpdatedAt', 'updatedAt'
+        'doctorNotes', 'status', 'doctorUpdatedAt', 'updatedAt',
+        'completionStatus', 'completedAt', 'completedByDoctorUid',
+        'completedByDoctorName'
       ]) && isAllowedDoctorReferralTransition(
         existingData.status,
         newData.status
+      ) && (
+        newData.status != 'completed' ||
+        (
+          newData.completionStatus == 'completed' &&
+          newData.completedByDoctorUid == request.auth.uid
+        )
       );
       return role in [
           'CHO', 'cho', 'CHO_SUPER_ADMIN', 'cho_super_admin',

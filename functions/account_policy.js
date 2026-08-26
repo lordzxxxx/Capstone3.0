@@ -258,40 +258,24 @@ async function sendDoctorAssignmentEmail({
   );
 
   const safeDoctorName = safeText(doctorName, 'Doctor');
-  const patientName = safeText(
-      referral?.patientName || referral?.patientRecordId || referralId,
-      'Patient',
-  );
-  const patientAge = safeText(referral?.patientAge || referral?.age || '', 'Not specified');
-  const patientSex = safeText(referral?.patientSex || referral?.sex || '', 'Not specified');
-  const barangay = safeText(
-      referral?.barangay || referral?.barangayCode || '',
-      'Not specified',
-  );
-  const referralType = referralTypeLabel(referral || {});
-  const referralReason = safeText(
-      referral?.referralReason || referral?.chiefComplaint || referral?.currentDiagnosis || '',
-      'Not specified',
-  );
   const assignmentTime = timestampText(
       referral?.assignedAt || referral?.updatedAt || new Date(),
   );
+  const appUrl = String(
+      process.env.APP_URL || 'https://www.ai-dsuhis.com',
+  ).replace(/\/$/, '');
+  const portalLink = `${appUrl}/doctor/referrals`;
 
-  const subject = `New Referral Assignment: ${patientName}`;
+  const subject = `New Referral Assignment: ${referralId}`;
   const text = [
     `Hello Dr. ${safeDoctorName},`,
     '',
     'You have been assigned a referral case in DSUHIS.',
     '',
     `Referral ID: ${referralId}`,
-    `Patient: ${patientName}`,
-    `Age/Sex: ${patientAge} / ${patientSex}`,
-    `Barangay: ${barangay}`,
-    `Referral Type: ${referralType}`,
-    `Reason: ${referralReason}`,
     `Assigned At: ${assignmentTime}`,
     '',
-    'Please sign in to DSUHIS to review and manage this referral.',
+    `Open the doctor portal: ${portalLink}`,
   ].join('\n');
 
   const html = `
@@ -301,14 +285,9 @@ async function sendDoctorAssignmentEmail({
       <p>You have been assigned a referral case in DSUHIS.</p>
       <table style="border-collapse: collapse; width: 100%; max-width: 640px;">
         <tr><td style="padding: 6px 8px; font-weight: 600;">Referral ID</td><td style="padding: 6px 8px;">${htmlEscape(referralId)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Patient</td><td style="padding: 6px 8px;">${htmlEscape(patientName)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Age / Sex</td><td style="padding: 6px 8px;">${htmlEscape(patientAge)} / ${htmlEscape(patientSex)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Barangay</td><td style="padding: 6px 8px;">${htmlEscape(barangay)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Referral Type</td><td style="padding: 6px 8px;">${htmlEscape(referralType)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Reason</td><td style="padding: 6px 8px;">${htmlEscape(referralReason)}</td></tr>
         <tr><td style="padding: 6px 8px; font-weight: 600;">Assigned At</td><td style="padding: 6px 8px;">${htmlEscape(assignmentTime)}</td></tr>
       </table>
-      <p style="margin-top: 12px;">Please sign in to DSUHIS to review and manage this referral.</p>
+      <p style="margin-top: 12px;"><a href="${htmlEscape(portalLink)}">Open the doctor portal</a></p>
     </div>
   `;
 
@@ -604,15 +583,6 @@ async function rankDoctorsForReferral(referral) {
     openCounts[assignedDoctorUid] = (openCounts[assignedDoctorUid] || 0) + 1;
   }
 
-  const referralText = [
-    referral.chiefComplaint,
-    referral.referralReason,
-    referral.currentDiagnosis,
-    referral.patientSex,
-    referral.impression,
-    referral.medicalHistory,
-  ].map((value) => normalizeText(value)).join(' ');
-
   return doctorsSnap.docs
       .map((doc) => {
         const row = doc.data() || {};
@@ -620,59 +590,23 @@ async function rankDoctorsForReferral(referral) {
         const approvalStatus = normalizeText(row.approvalStatus || 'pending');
         const availability = doctorAvailabilityValue(row);
         const specialization = doctorSpecializationValue(row);
-        const normalizedSpecialization = normalizeText(specialization);
         const workload = openCounts[doc.id] || 0;
-        const reasons = [];
 
-        let score = 100;
+        const normalizedAccountStatus = accountStatus.replace(/[\s-]+/g, '_');
+        const normalizedAvailability = availability.replace(/[\s-]+/g, '_');
+        const unavailable = [
+          'disabled', 'archived', 'inactive', 'deactivated',
+        ].includes(normalizedAccountStatus) || [
+          'unavailable', 'on_leave', 'leave', 'off_duty',
+        ].includes(normalizedAvailability);
+        if (unavailable) return null;
 
-        if (accountStatus === 'disabled' || accountStatus === 'archived') {
-          score -= 1000;
-          reasons.push('Account is disabled');
-        }
-
-        if (approvalStatus === 'approved') {
-          score += 18;
-          reasons.push('Approved doctor account');
-        } else {
-          score += 4;
-          reasons.push('Pending approval status');
-        }
-
-        if (availability === 'available') {
-          score += 22;
-          reasons.push('Marked as available');
-        } else if (availability === 'busy') {
-          score += 4;
-          reasons.push('Currently busy but still eligible');
-        } else if (availability === 'limited') {
-          score -= 6;
-          reasons.push('Limited availability');
-        } else {
-          score -= 1000;
-          reasons.push('Unavailable for assignment');
-        }
-
-        score -= workload * 12;
-        reasons.push(`${workload} open referral${workload === 1 ? '' : 's'} in workload`);
-
-        let specialtyMatches = 0;
-        for (const [specialty, keywords] of Object.entries(doctorSpecialtyKeywords())) {
-          if (!normalizedSpecialization.includes(specialty) && specialty !== 'general') {
-            continue;
-          }
-          if (keywords.some((keyword) => referralText.includes(keyword))) {
-            specialtyMatches += 1;
-          }
-        }
-
-        if (specialtyMatches > 0) {
-          score += specialtyMatches * 28;
-          reasons.push(`Specialization aligns with referral details (${specialization})`);
-        } else if (normalizedSpecialization.includes('general')) {
-          score += 10;
-          reasons.push('General medicine coverage available');
-        }
+        const score = Math.max(0, 100 - workload * 10);
+        const reasons = [
+          `${workload} active referral${workload === 1 ? '' : 's'} in workload`,
+          approvalStatus === 'approved' ? 'Approved doctor account' : 'Doctor account pending approval',
+          `Availability: ${availability}`,
+        ];
 
         return {
           doctorUid: doc.id,
@@ -685,8 +619,11 @@ async function rankDoctorsForReferral(referral) {
           rationale: reasons,
         };
       })
-      .filter((doctor) => doctor.score > -500)
-      .sort((a, b) => b.score - a.score);
+      .filter((doctor) => doctor != null)
+      // Workload is the assignment rule. UID is a stable tie-breaker so the
+      // same data produces the same result on every invocation.
+      .sort((a, b) => a.workload - b.workload ||
+        a.doctorUid.localeCompare(b.doctorUid));
 }
 
 function buildRootUserPayload({
@@ -1615,6 +1552,9 @@ exports.assignDoctorToReferral = functions.https.onCall(async (data, context) =>
   }
 
   const assignmentRationale = assignedDoctor.rationale.join(' | ');
+  // Keep the event key stable across callable retries so a transient client
+  // retry cannot send a second email for the same referral/doctor assignment.
+  const assignmentEventId = `${referralId}:${assignedDoctor.doctorUid}`;
   const updatePayload = {
     assignedDoctorUid: assignedDoctor.doctorUid,
     assignedDoctorName: assignedDoctor.doctorName,
@@ -1625,9 +1565,10 @@ exports.assignDoctorToReferral = functions.https.onCall(async (data, context) =>
     assignmentMode,
     assignmentSource,
     assignmentRationale: assignmentRationale || (assignmentMode === 'smart' ?
-      'AI matched the referral to the strongest doctor candidate.' :
+      'Automatically assigned to the eligible doctor with the lowest active referral workload.' :
       'Requested explicitly by the referring user.'),
     assignmentScore: assignedDoctor.score,
+    assignmentEventId,
     assignedByUid: context.auth.uid,
     assignedAt: admin.firestore.FieldValue.serverTimestamp(),
     status: 'assigned',
@@ -1650,6 +1591,12 @@ exports.assignDoctorToReferral = functions.https.onCall(async (data, context) =>
       ...updatePayload,
     },
   });
+  if (assignmentEmail.sent) {
+    await referralDoc.ref.update({
+      assignmentNotificationSentFor: assignmentEventId,
+      assignmentNotificationSentAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
 
   return {
     success: true,
@@ -1694,6 +1641,18 @@ exports.sendDoctorReferralAssignmentEmail = functions.https.onCall(async (data, 
   }
 
   const referral = referralDoc.data() || {};
+  const assignmentEventId = String(
+      referral.assignmentEventId ||
+      `legacy:${referralId}:${referral.assignedDoctorUid || 'unassigned'}`,
+  );
+  if (referral.assignmentNotificationSentFor === assignmentEventId) {
+    return {
+      success: true,
+      sent: true,
+      reason: 'already_sent',
+      message: 'The assignment notification was already sent for this assignment.',
+    };
+  }
   const doctorEmail = normalizeText(
       data?.doctorEmail || referral.assignedDoctorEmail || '',
   );
@@ -1710,6 +1669,12 @@ exports.sendDoctorReferralAssignmentEmail = functions.https.onCall(async (data, 
     referralId,
     referral,
   });
+  if (assignmentEmail.sent) {
+    await referralDoc.ref.update({
+      assignmentNotificationSentFor: assignmentEventId,
+      assignmentNotificationSentAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
 
   return {
     success: assignmentEmail.sent,

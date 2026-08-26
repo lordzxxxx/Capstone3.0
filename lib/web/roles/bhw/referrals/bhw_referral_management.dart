@@ -19,6 +19,8 @@ import 'package:mycapstone_project/web/shared/components/web_data_components.dar
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/utils/web_file_picker.dart';
+import 'package:mycapstone_project/web/shared/utils/referral_pdf.dart';
+import 'package:mycapstone_project/web/shared/utils/report_download.dart';
 
 const _aqua = AppColors.primary;
 const _background = AppColors.backgroundLight;
@@ -590,19 +592,20 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
                 const SizedBox(height: 16),
                 _attachmentPanel(),
                 const SizedBox(height: 18),
-                Row(
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 10,
+                  runSpacing: 10,
                   children: [
                     OutlinedButton.icon(
                       onPressed: _clearDraft,
                       icon: const Icon(Icons.close_rounded),
                       label: const Text('Clear Draft'),
+                      style: AppButtonStyles.outline(),
                     ),
-                    const Spacer(),
                     FilledButton.icon(
                       onPressed: _submitting ? null : _submit,
-                      style: AppButtonStyles.primary(
-                        background: AppColors.referral,
-                      ),
+                      style: AppButtonStyles.primary(),
                       icon: _submitting
                           ? const SizedBox(
                               width: 18,
@@ -1294,6 +1297,12 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
         icon: const Icon(Icons.visibility_outlined, size: 17),
         label: const Text('View Details'),
       ),
+      OutlinedButton.icon(
+        onPressed: () => _downloadReferralPdf(record),
+        icon: const Icon(Icons.picture_as_pdf_outlined, size: 17),
+        label: const Text('A4 / QR PDF'),
+        style: AppButtonStyles.outline(),
+      ),
       if (record.isReturned)
         FilledButton.icon(
           onPressed: () => _editReturned(record),
@@ -1302,6 +1311,25 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
         ),
     ],
   );
+
+  Future<void> _downloadReferralPdf(_BhwReferralRecord record) async {
+    try {
+      final data = <String, dynamic>{...record.data, 'id': record.id};
+      final bytes = await buildReferralPdfBytes(data);
+      final downloaded = downloadReportFile(
+        bytes: bytes,
+        filename: buildReferralPdfFilename(data),
+        mimeType: 'application/pdf',
+      );
+      _snack(
+        downloaded
+            ? 'A4 referral PDF with QR code downloaded.'
+            : 'PDF download is unavailable on this platform.',
+      );
+    } catch (error) {
+      _snack('Could not generate the referral PDF: $error');
+    }
+  }
 
   void _showDetails(_BhwReferralRecord record) {
     showDialog<void>(
@@ -1536,31 +1564,42 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final heading = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: _text,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: _muted, fontSize: 12),
+                ),
+              ],
+            );
+            if (trailing == null) return heading;
+            if (constraints.maxWidth < 560) {
+              return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: _text,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(color: _muted, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            if (trailing != null) trailing,
-          ],
+                children: [heading, const SizedBox(height: 8), trailing],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: heading),
+                const SizedBox(width: 10),
+                trailing,
+              ],
+            );
+          },
         ),
         const SizedBox(height: 16),
         child,

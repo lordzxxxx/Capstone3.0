@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,8 +14,10 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 
 /// CHO referral review/approval workspace — reached from the sidebar
@@ -42,10 +45,17 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
   final FirebaseFirestore _firestore = getFirestoreInstance();
   final PatientCenteredHistoryService _patientHistoryService =
       PatientCenteredHistoryService();
+  final AccountPolicyService _accountPolicyService =
+      AccountPolicyService.instance;
   int _view = 0;
   bool _loadingScope = true;
   String? _accessError;
   Stream<QuerySnapshot<Map<String, dynamic>>>? _stream;
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _doctorDirectory =
+      <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+  bool _loadingDoctorDirectory = false;
+  String? _requestedReferralId;
+  bool _requestedReferralOpened = false;
 
   static const _tabs = <String>[
     'Insights',
@@ -57,6 +67,13 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
   @override
   void initState() {
     super.initState();
+    _requestedReferralId = Uri.base.queryParameters['referralId']?.trim();
+    final requestedView = int.tryParse(Uri.base.queryParameters['view'] ?? '');
+    if (requestedView != null &&
+        requestedView >= 0 &&
+        requestedView < _tabs.length) {
+      _view = requestedView;
+    }
     _loadScope();
   }
 
@@ -85,6 +102,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
         _stream = _firestore.collection('referrals').snapshots();
         _loadingScope = false;
       });
+      unawaited(_loadDoctorDirectory());
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -106,45 +124,61 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Column(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  const heading = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'CHO Referral Management',
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: ChoColors.text,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Coordinate, review, and track clinical referrals across all health facilities.',
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 12,
+                          color: ChoColors.muted,
+                        ),
+                      ),
+                    ],
+                  );
+                  final actions = Wrap(
+                    spacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      const ChoStatusBadge('City Health Office'),
+                      IconButton(
+                        onPressed: _loadScope,
+                        tooltip: 'Refresh referrals',
+                        icon: const Icon(
+                          Icons.refresh_rounded,
+                          color: ChoColors.text,
+                        ),
+                      ),
+                    ],
+                  );
+                  if (constraints.maxWidth < 680) {
+                    return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'CHO Referral Management',
-                          style: TextStyle(
-                            fontFamily: 'Manrope',
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: ChoColors.text,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Coordinate, review, and track clinical referrals across all health facilities.',
-                          style: TextStyle(
-                            fontFamily: 'Manrope',
-                            fontSize: 12,
-                            color: ChoColors.muted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const ChoStatusBadge('City Health Office'),
-                  const SizedBox(width: 10),
-                  IconButton(
-                    onPressed: _loadScope,
-                    tooltip: 'Refresh referrals',
-                    icon: const Icon(
-                      Icons.refresh_rounded,
-                      color: ChoColors.text,
-                    ),
-                  ),
-                ],
+                      children: [heading, const SizedBox(height: 10), actions],
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: heading),
+                      const SizedBox(width: 12),
+                      actions,
+                    ],
+                  );
+                },
               ),
             ),
             const Divider(height: 1, color: ChoColors.border),
@@ -173,6 +207,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                               ..sort(
                                 (a, b) => b.updatedAt.compareTo(a.updatedAt),
                               );
+                        _openRequestedReferralIfNeeded(records);
                         return _content(records);
                       },
                     ),
@@ -181,6 +216,28 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
         ),
       ),
     );
+  }
+
+  void _openRequestedReferralIfNeeded(List<_ReferralRecord> records) {
+    final requestedId = _requestedReferralId;
+    if (_requestedReferralOpened ||
+        requestedId == null ||
+        requestedId.isEmpty) {
+      return;
+    }
+    _ReferralRecord? match;
+    for (final record in records) {
+      if (record.id == requestedId) {
+        match = record;
+        break;
+      }
+    }
+    if (match == null) return;
+    final target = match;
+    _requestedReferralOpened = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _details(target);
+    });
   }
 
   Widget _content(List<_ReferralRecord> records) {
@@ -213,6 +270,10 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
             onChanged: (value) => setState(() => _view = value),
           ),
           const SizedBox(height: 12),
+          if (_view == 0) ...[
+            _doctorDirectoryPanel(),
+            const SizedBox(height: 12),
+          ],
           switch (_view) {
             0 => _insights(records),
             1 => _queue(
@@ -237,6 +298,573 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _loadDoctorDirectory() async {
+    if (mounted) setState(() => _loadingDoctorDirectory = true);
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .where('role', whereIn: const <String>['DOCTOR', 'doctor'])
+          .get();
+      final doctors = snapshot.docs.toList()
+        ..sort(
+          (a, b) =>
+              _s(a.data(), [
+                'fullName',
+                'username',
+                'displayName',
+                'email',
+              ], fallback: 'Doctor').toLowerCase().compareTo(
+                _s(b.data(), [
+                  'fullName',
+                  'username',
+                  'displayName',
+                  'email',
+                ], fallback: 'Doctor').toLowerCase(),
+              ),
+        );
+      if (mounted) {
+        setState(() {
+          _doctorDirectory = doctors;
+          _loadingDoctorDirectory = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingDoctorDirectory = false);
+    }
+  }
+
+  Widget _doctorDirectoryPanel() {
+    final activeDoctors = _doctorDirectory
+        .where((doc) {
+          final data = doc.data();
+          final accountStatus = _s(data, [
+            'accountStatus',
+          ], fallback: 'active').toLowerCase().replaceAll('-', '_');
+          return !{
+            'disabled',
+            'archived',
+            'inactive',
+            'deactivated',
+          }.contains(accountStatus);
+        })
+        .toList(growable: false);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ChoColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ChoColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Text(
+                'Doctor Directory',
+                style: TextStyle(
+                  color: ChoColors.text,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                '${activeDoctors.length} active',
+                style: const TextStyle(color: ChoColors.muted),
+              ),
+              FilledButton.icon(
+                onPressed: _showCreateDoctorDialog,
+                style: AppButtonStyles.primary(),
+                icon: const Icon(Icons.person_add_alt_1_outlined),
+                label: const Text('Add doctor'),
+              ),
+              IconButton(
+                tooltip: 'Refresh doctors',
+                onPressed: _loadDoctorDirectory,
+                icon: const Icon(Icons.refresh_rounded),
+                color: ChoColors.text,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_loadingDoctorDirectory)
+            const LinearProgressIndicator()
+          else if (activeDoctors.isEmpty)
+            const Text(
+              'No active doctor records are available. Add a doctor or update an existing account.',
+              style: TextStyle(color: ChoColors.muted),
+            )
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = constraints.maxWidth >= 980
+                    ? 3
+                    : constraints.maxWidth >= 620
+                    ? 2
+                    : 1;
+                final width = columns == 1
+                    ? constraints.maxWidth
+                    : (constraints.maxWidth - 12 * (columns - 1)) / columns;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: activeDoctors
+                      .map(
+                        (doc) => SizedBox(
+                          width: width,
+                          child: _doctorDirectoryCard(doc),
+                        ),
+                      )
+                      .toList(growable: false),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _doctorDirectoryCard(
+    QueryDocumentSnapshot<Map<String, dynamic>> doctor,
+  ) {
+    final data = doctor.data();
+    final name = _s(data, [
+      'fullName',
+      'username',
+      'displayName',
+      'email',
+    ], fallback: 'Doctor');
+    final email = _s(data, ['email'], fallback: 'No email provided');
+    final specialization = _s(data, [
+      'specialization',
+      'doctorSpecialization',
+    ], fallback: 'General Medicine');
+    final availability = _s(data, [
+      'availability',
+      'doctorAvailability',
+      'status',
+    ], fallback: 'available').toLowerCase().replaceAll(RegExp(r'[\s-]+'), '_');
+    final unavailable =
+        availability.contains('unavailable') || availability.contains('leave');
+    final statusColor = unavailable ? Colors.red : Colors.green;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: ChoColors.canvas,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: ChoColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: ChoColors.text,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            email,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: ChoColors.muted, fontSize: 12),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              Chip(
+                label: Text(specialization),
+                visualDensity: VisualDensity.compact,
+                labelStyle: const TextStyle(
+                  color: ChoColors.text,
+                  fontSize: 11,
+                ),
+              ),
+              Chip(
+                label: Text(_title(availability)),
+                visualDensity: VisualDensity.compact,
+                labelStyle: TextStyle(color: statusColor, fontSize: 11),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _showEditDoctorDialog(doctor),
+                style: AppButtonStyles.outline(),
+                icon: const Icon(Icons.edit_outlined, size: 17),
+                label: const Text('Edit'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _showDoctorAvailabilityDialog(doctor),
+                style: AppButtonStyles.outline(),
+                icon: const Icon(Icons.event_available_outlined, size: 17),
+                label: const Text('Availability'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _deactivateDoctor(doctor),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  side: const BorderSide(color: AppColors.error),
+                  minimumSize: const Size(48, 44),
+                ),
+                icon: const Icon(Icons.person_off_outlined, size: 17),
+                label: const Text('Deactivate'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showCreateDoctorDialog() async {
+    final name = TextEditingController();
+    final email = TextEditingController();
+    final specialization = TextEditingController(text: 'General Medicine');
+    var availability = 'available';
+    var saving = false;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: ChoColors.surface,
+          title: const Text(
+            'Add Doctor',
+            style: TextStyle(color: ChoColors.text),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: name,
+                  decoration: _lightDecoration('Full name'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: email,
+                  decoration: _lightDecoration('Email address'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: specialization,
+                  decoration: _lightDecoration('Specialization'),
+                ),
+                const SizedBox(height: 10),
+                _lightDropdown(
+                  label: 'Availability',
+                  value: availability,
+                  values: const {
+                    'available': 'Available',
+                    'busy': 'Busy',
+                    'limited': 'Limited',
+                    'unavailable': 'Unavailable',
+                  },
+                  onChanged: (value) =>
+                      setDialogState(() => availability = value),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: saving ? null : () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      if (name.text.trim().isEmpty ||
+                          email.text.trim().isEmpty) {
+                        _snack('Doctor name and email are required.');
+                        return;
+                      }
+                      setDialogState(() => saving = true);
+                      try {
+                        await _accountPolicyService.registerDoctorAccount(
+                          fullName: name.text,
+                          email: email.text,
+                          specialization: specialization.text,
+                          availability: availability,
+                        );
+                        if (dialogContext.mounted) Navigator.pop(dialogContext);
+                        await _loadDoctorDirectory();
+                        _snack(
+                          'Doctor account created and added to the directory.',
+                        );
+                      } catch (error) {
+                        if (dialogContext.mounted) {
+                          setDialogState(() => saving = false);
+                        }
+                        _snack('Could not add doctor: $error');
+                      }
+                    },
+              style: AppButtonStyles.primary(),
+              child: Text(saving ? 'Saving...' : 'Add doctor'),
+            ),
+          ],
+        ),
+      ),
+    );
+    name.dispose();
+    email.dispose();
+    specialization.dispose();
+  }
+
+  Future<void> _showEditDoctorDialog(
+    QueryDocumentSnapshot<Map<String, dynamic>> doctor,
+  ) async {
+    final data = doctor.data();
+    final name = TextEditingController(
+      text: _s(data, [
+        'fullName',
+        'username',
+        'displayName',
+      ], fallback: 'Doctor'),
+    );
+    final email = TextEditingController(text: _s(data, ['email']));
+    final specialization = TextEditingController(
+      text: _s(data, [
+        'specialization',
+        'doctorSpecialization',
+      ], fallback: 'General Medicine'),
+    );
+    var availability = _s(data, [
+      'availability',
+      'doctorAvailability',
+      'status',
+    ], fallback: 'available').toLowerCase();
+    if (!{
+      'available',
+      'busy',
+      'limited',
+      'unavailable',
+    }.contains(availability)) {
+      availability = 'available';
+    }
+    var saving = false;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: ChoColors.surface,
+          title: const Text(
+            'Edit Doctor',
+            style: TextStyle(color: ChoColors.text),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: name,
+                  decoration: _lightDecoration('Full name'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: email,
+                  readOnly: true,
+                  decoration: _lightDecoration(
+                    'Email address (managed by Auth)',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: specialization,
+                  decoration: _lightDecoration('Specialization'),
+                ),
+                const SizedBox(height: 10),
+                _lightDropdown(
+                  label: 'Availability',
+                  value: availability,
+                  values: const {
+                    'available': 'Available',
+                    'busy': 'Busy',
+                    'limited': 'Limited',
+                    'unavailable': 'Unavailable',
+                  },
+                  onChanged: (value) =>
+                      setDialogState(() => availability = value),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: saving ? null : () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      if (name.text.trim().isEmpty ||
+                          specialization.text.trim().isEmpty) {
+                        _snack('Doctor name and specialization are required.');
+                        return;
+                      }
+                      setDialogState(() => saving = true);
+                      try {
+                        await doctor.reference.set({
+                          'fullName': name.text.trim(),
+                          'username': name.text.trim(),
+                          'displayName': name.text.trim(),
+                          'specialization': specialization.text.trim(),
+                          'doctorSpecialization': specialization.text.trim(),
+                          'availability': availability,
+                          'doctorAvailability': availability,
+                          'status': availability,
+                          'updatedAt': FieldValue.serverTimestamp(),
+                        }, SetOptions(merge: true));
+                        if (dialogContext.mounted) Navigator.pop(dialogContext);
+                        await _loadDoctorDirectory();
+                        _snack('Doctor details updated.');
+                      } catch (error) {
+                        if (dialogContext.mounted) {
+                          setDialogState(() => saving = false);
+                        }
+                        _snack('Could not update doctor details: $error');
+                      }
+                    },
+              style: AppButtonStyles.primary(),
+              child: Text(saving ? 'Saving...' : 'Save changes'),
+            ),
+          ],
+        ),
+      ),
+    );
+    name.dispose();
+    email.dispose();
+    specialization.dispose();
+  }
+
+  Future<void> _showDoctorAvailabilityDialog(
+    QueryDocumentSnapshot<Map<String, dynamic>> doctor,
+  ) async {
+    final data = doctor.data();
+    var availability = _s(data, [
+      'availability',
+      'doctorAvailability',
+      'status',
+    ], fallback: 'available').toLowerCase();
+    if (!{
+      'available',
+      'busy',
+      'limited',
+      'unavailable',
+    }.contains(availability)) {
+      availability = 'available';
+    }
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: ChoColors.surface,
+          title: const Text(
+            'Update availability',
+            style: TextStyle(color: ChoColors.text),
+          ),
+          content: _lightDropdown(
+            label: 'Doctor availability',
+            value: availability,
+            values: const {
+              'available': 'Available',
+              'busy': 'Busy',
+              'limited': 'Limited',
+              'unavailable': 'Unavailable',
+            },
+            onChanged: (value) => setDialogState(() => availability = value),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: AppButtonStyles.primary(),
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (saved != true) return;
+    await doctor.reference.set({
+      'availability': availability,
+      'doctorAvailability': availability,
+      'status': availability,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await _loadDoctorDirectory();
+    if (mounted) _snack('Doctor availability updated.');
+  }
+
+  Future<void> _deactivateDoctor(
+    QueryDocumentSnapshot<Map<String, dynamic>> doctor,
+  ) async {
+    final name = _s(doctor.data(), [
+      'fullName',
+      'username',
+      'displayName',
+    ], fallback: 'this doctor');
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: ChoColors.surface,
+        title: const Text(
+          'Deactivate doctor',
+          style: TextStyle(color: ChoColors.text),
+        ),
+        content: Text(
+          'Deactivate $name? The account will remain in history but will not receive new referrals.',
+          style: const TextStyle(color: ChoColors.muted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(48, 44),
+            ),
+            child: const Text('Deactivate'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await doctor.reference.set({
+      'accountStatus': 'inactive',
+      'isArchived': true,
+      'availability': 'unavailable',
+      'doctorAvailability': 'unavailable',
+      'status': 'unavailable',
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await _loadDoctorDirectory();
+    if (mounted) _snack('Doctor deactivated and removed from new assignments.');
   }
 
   Widget _insights(List<_ReferralRecord> records) {
@@ -400,6 +1028,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
     String doctorUid = record.doctorUid;
     DateTime? consultationDate = record.consultationDate;
     var action = 'approved';
+    var saving = false;
     final doctors = await _doctorOptions();
     final hospitals = await _hospitalOptions();
     if (!mounted) return;
@@ -459,10 +1088,14 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                     const SizedBox(height: 12),
                     _lightDropdown(
                       label: 'Available doctor',
-                      value: doctors.any((item) => item.id == doctorUid)
+                      value: doctors.isEmpty
+                          ? 'unassigned'
+                          : doctors.any((item) => item.id == doctorUid)
                           ? doctorUid
                           : doctors.first.id,
-                      values: {for (final item in doctors) item.id: item.label},
+                      values: doctors.isEmpty
+                          ? const {'unassigned': 'No eligible doctor available'}
+                          : {for (final item in doctors) item.id: item.label},
                       onChanged: (value) => setDialogState(() {
                         doctorUid = value;
                         doctor = doctors
@@ -470,6 +1103,13 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                             .name;
                       }),
                     ),
+                    if (doctors.isEmpty) ...[
+                      const SizedBox(height: 6),
+                      const Text(
+                        'No eligible doctor is currently available. The referral will remain pending assignment until CHO updates availability.',
+                        style: TextStyle(color: ChoColors.muted, fontSize: 12),
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     OutlinedButton.icon(
                       onPressed: () async {
@@ -513,29 +1153,49 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: () async {
-                if (notes.text.trim().isEmpty) {
-                  _snack('Review notes are required.');
-                  return;
-                }
-                if (action == 'approved' && consultationDate == null) {
-                  _snack('Set the expected consultation date before approval.');
-                  return;
-                }
-                await _saveReview(
-                  record,
-                  action: action,
-                  priority: priority,
-                  hospital: hospital.isEmpty ? hospitals.first : hospital,
-                  doctor: doctor.isEmpty ? doctors.first.name : doctor,
-                  doctorUid: doctorUid.isEmpty ? doctors.first.id : doctorUid,
-                  consultationDate: consultationDate,
-                  notes: notes.text.trim(),
-                );
-                if (dialogContext.mounted) Navigator.pop(dialogContext, true);
-              },
+              onPressed: saving
+                  ? null
+                  : () async {
+                      if (notes.text.trim().isEmpty) {
+                        _snack('Review notes are required.');
+                        return;
+                      }
+                      if (action == 'approved' && consultationDate == null) {
+                        _snack(
+                          'Set the expected consultation date before approval.',
+                        );
+                        return;
+                      }
+                      setDialogState(() => saving = true);
+                      try {
+                        await _saveReview(
+                          record,
+                          action: action,
+                          priority: priority,
+                          hospital: hospital.isEmpty
+                              ? hospitals.first
+                              : hospital,
+                          doctor: doctor.isEmpty || doctors.isEmpty
+                              ? 'To be assigned'
+                              : doctor,
+                          doctorUid: doctorUid.isEmpty || doctors.isEmpty
+                              ? ''
+                              : doctorUid,
+                          consultationDate: consultationDate,
+                          notes: notes.text.trim(),
+                        );
+                        if (dialogContext.mounted) {
+                          Navigator.pop(dialogContext, true);
+                        }
+                      } catch (error) {
+                        if (dialogContext.mounted) {
+                          setDialogState(() => saving = false);
+                        }
+                        _snack('Could not save the referral review: $error');
+                      }
+                    },
               style: AppButtonStyles.primary(),
-              child: const Text('Save review'),
+              child: Text(saving ? 'Saving...' : 'Save review'),
             ),
           ],
         ),
@@ -569,8 +1229,6 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       if (action == 'approved') ...{
         'assignedHospital': hospital,
         'receivingHospital': hospital,
-        'assignedDoctorName': doctor,
-        'assignedDoctorUid': doctorUid,
         'expectedConsultationDate': Timestamp.fromDate(consultationDate!),
         'approvedAt': FieldValue.serverTimestamp(),
       },
@@ -585,6 +1243,43 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
     };
     await record.reference.set(payload, SetOptions(merge: true));
     await _syncMirror(record, {...record.data, ...payload});
+    if (action == 'approved' && doctorUid.trim().isNotEmpty) {
+      try {
+        await _accountPolicyService.assignDoctorToReferral(
+          referralId: record.id,
+          preferredDoctorUid: doctorUid,
+        );
+      } catch (error) {
+        // Approval remains recorded, but the referral is deliberately left
+        // without a doctor when the selected doctor is no longer eligible.
+        await record.reference.set({
+          'assignedDoctorUid': FieldValue.delete(),
+          'assignedDoctorName': FieldValue.delete(),
+          'assignedDoctorEmail': FieldValue.delete(),
+          'assignedDoctorSpecialization': FieldValue.delete(),
+          'assignedDoctorAvailability': FieldValue.delete(),
+          'referredTo': FieldValue.delete(),
+          'status': 'approved',
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        await _syncMirror(record, {
+          ...record.data,
+          'assignedDoctorUid': FieldValue.delete(),
+          'assignedDoctorName': FieldValue.delete(),
+          'assignedDoctorEmail': FieldValue.delete(),
+          'assignedDoctorSpecialization': FieldValue.delete(),
+          'assignedDoctorAvailability': FieldValue.delete(),
+          'referredTo': FieldValue.delete(),
+          'status': 'approved',
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        if (mounted) {
+          _snack(
+            'Referral approved, but no eligible doctor could be assigned yet.',
+          );
+        }
+      }
+    }
     await _firestore.collection('notifications').add({
       'type': 'referral_review',
       'referralId': record.id,
@@ -675,9 +1370,23 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
             final role = _s(data, ['role']).toLowerCase();
             final availability = _s(data, [
               'availability',
+              'doctorAvailability',
               'status',
-            ]).toLowerCase();
-            return role == 'doctor' && !availability.contains('unavailable');
+            ]).toLowerCase().replaceAll(RegExp(r'[\s-]+'), '_');
+            final accountStatus = _s(data, [
+              'accountStatus',
+            ], fallback: 'active').toLowerCase().replaceAll('-', '_');
+            final unavailable =
+                availability.contains('unavailable') ||
+                availability.contains('on_leave') ||
+                availability == 'leave' ||
+                const {
+                  'disabled',
+                  'archived',
+                  'inactive',
+                  'deactivated',
+                }.contains(accountStatus);
+            return role == 'doctor' && !unavailable;
           })
           .map((doc) {
             final data = doc.data();
@@ -695,7 +1404,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           .toList();
       if (values.isNotEmpty) return values;
     } catch (_) {}
-    return const [_Option('unassigned', 'To be assigned', 'To be assigned')];
+    return const <_Option>[];
   }
 
   Future<List<String>> _hospitalOptions() async {

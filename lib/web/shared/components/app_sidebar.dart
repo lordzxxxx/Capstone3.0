@@ -780,7 +780,11 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
           ),
           FilledButton.icon(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(48, 44),
+            ),
             icon: const Icon(Icons.logout_rounded, size: 18),
             label: const Text('Logout'),
           ),
@@ -1096,7 +1100,9 @@ class _AnimatedLogoutButtonState extends State<_AnimatedLogoutButton> {
                   curve: Curves.easeOutCubic,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: _isHovered ? 0.2 : 0.1),
+                    color: Colors.redAccent.withValues(
+                      alpha: _isHovered ? 1 : 0.9,
+                    ),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: Colors.redAccent.withValues(
@@ -1108,7 +1114,7 @@ class _AnimatedLogoutButtonState extends State<_AnimatedLogoutButton> {
                     child: Icon(
                       Icons.logout_rounded,
                       size: 20,
-                      color: Colors.redAccent,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -1149,7 +1155,9 @@ class _AnimatedLogoutButtonState extends State<_AnimatedLogoutButton> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 13),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: _isHovered ? 0.12 : 0.06),
+                  color: Colors.redAccent.withValues(
+                    alpha: _isHovered ? 1 : 0.9,
+                  ),
                   borderRadius: BorderRadius.circular(11),
                   border: Border.all(
                     color: Colors.red.withValues(
@@ -1169,17 +1177,13 @@ class _AnimatedLogoutButtonState extends State<_AnimatedLogoutButton> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.logout_rounded,
-                      size: 19,
-                      color: Colors.red.shade700,
-                    ),
+                    Icon(Icons.logout_rounded, size: 19, color: Colors.white),
                     const SizedBox(width: 8),
                     Text(
                       'Logout',
                       style: TextStyle(
                         fontFamily: 'Manrope',
-                        color: Colors.red.shade700,
+                        color: Colors.white,
                         fontWeight: FontWeight.w800,
                         fontSize: 13,
                       ),

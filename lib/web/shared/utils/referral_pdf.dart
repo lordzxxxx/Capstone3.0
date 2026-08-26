@@ -1,5 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:mycapstone_project/web/shared/utils/record_pdf_builder.dart';
+
+const String _productionBaseUrl = String.fromEnvironment(
+  'APP_BASE_URL',
+  defaultValue: 'https://www.ai-dsuhis.com',
+);
 
 Future<List<int>> buildReferralPdfBytes(Map<String, dynamic> record) async {
   final patientName = _buildPatientName(record);
@@ -93,6 +100,10 @@ Future<List<int>> buildReferralPdfBytes(Map<String, dynamic> record) async {
     pdfField('Doctor Medication', record['doctorMedication']),
     pdfField('Doctor Notes', record['doctorNotes']),
   ];
+  final referralId = pdfText(record['id'] ?? record['referralId']).trim();
+  final verificationUrl = referralId.isEmpty
+      ? ''
+      : '${_productionBaseUrl.replaceFirst(RegExp(r'\/$'), '')}/cho/referrals?referralId=${Uri.encodeComponent(referralId)}';
 
   return buildRecordPdfBytes(
     title: 'Patient Referral Form',
@@ -109,6 +120,37 @@ Future<List<int>> buildReferralPdfBytes(Map<String, dynamic> record) async {
       RecordPdfSignatureLine(title: 'BHW Head'),
       RecordPdfSignatureLine(title: 'BHW Assigned on Duty'),
     ],
+    trailingWidgets: verificationUrl.isEmpty
+        ? const []
+        : [
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(12),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.black),
+              ),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  pw.BarcodeWidget(
+                    barcode: pw.Barcode.qrCode(),
+                    data: verificationUrl,
+                    width: 120,
+                    height: 120,
+                    drawText: false,
+                    backgroundColor: PdfColors.white,
+                  ),
+                  pw.SizedBox(width: 16),
+                  pw.Expanded(
+                    child: pw.Text(
+                      'Secure referral record\nScan this QR code to open the authorized digital referral record. The QR payload contains only the referral reference and application route.',
+                      style: const pw.TextStyle(fontSize: 9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
     sections: [
       RecordPdfSection(title: 'Patient Information', fields: patientFields),
       RecordPdfSection(title: 'Referral Information', fields: referralFields),

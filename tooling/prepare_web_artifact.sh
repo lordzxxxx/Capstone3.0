@@ -14,3 +14,7 @@ fi
 mkdir -p "${target_dir}"
 cp "${source_apk}" "${target_dir}/ai-dsuhis-bhw.apk"
 echo "Copied BHW APK to ${target_dir}/ai-dsuhis-bhw.apk"
+
+version="${APP_VERSION:-$(git -C "${repo_root}" rev-parse --short HEAD 2>/dev/null || echo dev)}"
+printf '{"version":"%s"}\n' "${version}" > "${output_dir}/app-version.json"
+echo "Wrote web application version ${version}"

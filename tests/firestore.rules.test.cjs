@@ -475,6 +475,17 @@ describe('doctor scope', () => {
         updatedAt: new Date(),
       }),
     );
+    await assertSucceeds(
+      ref.update({
+        status: 'completed',
+        completionStatus: 'completed',
+        completedAt: new Date(),
+        completedByDoctorUid: 'doctor-1',
+        completedByDoctorName: 'Dr. Test',
+        doctorUpdatedAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    );
     await assertFails(
       ref.update({
         status: 'approved',
@@ -593,6 +604,54 @@ describe('CHO citywide scope', () => {
       .authenticatedContext('cho-1', {email: 'cho@example.test'})
       .firestore();
     await assertSucceeds(db.doc('referrals/far-away-referral').get());
+  });
+});
+
+describe('CHO governance collections', () => {
+  beforeEach(async () => {
+    await seed('users/cho-1', activeProfile('cho-1', 'cho@example.test', {
+      role: 'CHO',
+      accessScope: 'citywide',
+      barangay: '',
+      barangayCode: '',
+    }));
+    await seed('users/bhw-1', activeProfile('bhw-1', 'bhw@example.test'));
+    await seed('announcements/a-1', {
+      title: 'Clinic schedule',
+      body: 'Updated schedule',
+    });
+    await seed('audit_logs/log-1', {
+      action: 'referral_reviewed',
+      actorUid: 'cho-1',
+    });
+    await seed('notifications/n-1', {
+      recipientUid: 'bhw-1',
+      title: 'Referral reviewed',
+    });
+  });
+
+  it('keeps announcements CHO-managed while allowing authenticated reads', async () => {
+    const choDb = testEnv.authenticatedContext('cho-1', {email: 'cho@example.test'}).firestore();
+    const bhwDb = testEnv.authenticatedContext('bhw-1', {email: 'bhw@example.test'}).firestore();
+    await assertSucceeds(choDb.doc('announcements/a-1').update({body: 'New schedule'}));
+    await assertSucceeds(bhwDb.doc('announcements/a-1').get());
+    await assertFails(bhwDb.doc('announcements/a-1').update({body: 'Tampered'}));
+  });
+
+  it('keeps audit logs read-only for CHO and hidden from ordinary users', async () => {
+    const choDb = testEnv.authenticatedContext('cho-1', {email: 'cho@example.test'}).firestore();
+    const bhwDb = testEnv.authenticatedContext('bhw-1', {email: 'bhw@example.test'}).firestore();
+    await assertSucceeds(choDb.doc('audit_logs/log-1').get());
+    await assertFails(choDb.doc('audit_logs/log-1').update({action: 'changed'}));
+    await assertFails(bhwDb.doc('audit_logs/log-1').get());
+  });
+
+  it('limits notification reads to the recipient and keeps them immutable', async () => {
+    const bhwDb = testEnv.authenticatedContext('bhw-1', {email: 'bhw@example.test'}).firestore();
+    const otherDb = testEnv.authenticatedContext('bhw-2', {email: 'bhw2@example.test'}).firestore();
+    await assertSucceeds(bhwDb.doc('notifications/n-1').get());
+    await assertFails(otherDb.doc('notifications/n-1').get());
+    await assertFails(bhwDb.doc('notifications/n-1').update({status: 'read'}));
   });
 });
 

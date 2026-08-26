@@ -108,6 +108,7 @@ import 'package:mycapstone_project/web/roles/cho/referrals/cho_referral_manageme
     as web_cho_referrals;
 import 'package:mycapstone_project/web/roles/bhw/referrals/referrals.dart'
     as web_doctor_referrals;
+import 'package:mycapstone_project/web/shared/widgets/app_update_notification.dart';
 
 const Set<String> _bhwWebRoles = <String>{'bhw'};
 const Set<String> _choWebRoles = <String>{
@@ -329,6 +330,15 @@ class MyApp extends StatelessWidget {
       theme: kIsWeb ? AppTheme.light(isWeb: true) : app_theme.AppDesign.theme(),
       themeMode: ThemeMode.light,
       debugShowCheckedModeBanner: false,
+      builder: kIsWeb
+          ? (context, child) => Stack(
+              fit: StackFit.expand,
+              children: [
+                child ?? const SizedBox.shrink(),
+                const AppUpdateNotification(),
+              ],
+            )
+          : null,
       defaultTransition: kIsWeb ? Transition.fadeIn : null,
       customTransition: kIsWeb ? WebPageTransition() : null,
       transitionDuration: kIsWeb ? const Duration(milliseconds: 180) : null,
