@@ -15,6 +15,7 @@ import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/components/role_decision_support_panel.dart';
 import 'package:mycapstone_project/web/shared/utils/web_file_picker.dart';
 
@@ -1477,266 +1478,245 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
 
     return Scaffold(
       backgroundColor: ChoColors.background,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const ChoNavigationDrawer(current: ChoDestination.dashboard),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _firestore.collection('users').snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return ChoErrorState(
-                    message: 'User administration data could not be loaded.',
-                    onRetry: () => setState(() {}),
-                  );
-                }
-                if (!snapshot.hasData) {
-                  return const ChoLoadingSkeleton();
-                }
+      body: WebResponsiveBody(
+        sidebar: const ChoNavigationDrawer(current: ChoDestination.dashboard),
+        title: 'User Administration',
+        child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: _firestore.collection('users').snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return ChoErrorState(
+                message: 'User administration data could not be loaded.',
+                onRetry: () => setState(() {}),
+              );
+            }
+            if (!snapshot.hasData) {
+              return const ChoLoadingSkeleton();
+            }
 
-                final docs = snapshot.data!.docs;
-                final filteredDocs = _filterUsers(docs);
-                final pendingApprovals = docs.where((doc) {
-                  final approval = (doc.data()['approvalStatus'] ?? 'pending')
-                      .toString();
-                  return approval.toLowerCase() != 'approved';
-                }).length;
-                final activeBhw = docs.where((doc) {
-                  final role = (doc.data()['role'] ?? '')
-                      .toString()
-                      .toUpperCase();
-                  return role == 'BHW';
-                }).length;
-                final choScoped = docs.where((doc) {
-                  final role = (doc.data()['role'] ?? '')
-                      .toString()
-                      .toUpperCase();
-                  return role == 'CHO' || role == 'CHO_SUPER_ADMIN';
-                }).length;
+            final docs = snapshot.data!.docs;
+            final filteredDocs = _filterUsers(docs);
+            final pendingApprovals = docs.where((doc) {
+              final approval = (doc.data()['approvalStatus'] ?? 'pending')
+                  .toString();
+              return approval.toLowerCase() != 'approved';
+            }).length;
+            final activeBhw = docs.where((doc) {
+              final role = (doc.data()['role'] ?? '').toString().toUpperCase();
+              return role == 'BHW';
+            }).length;
+            final choScoped = docs.where((doc) {
+              final role = (doc.data()['role'] ?? '').toString().toUpperCase();
+              return role == 'CHO' || role == 'CHO_SUPER_ADMIN';
+            }).length;
 
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Centralized governance for all Malaybalay barangays',
-                        style: TextStyle(
-                          color: _lightOffWhite.withValues(alpha: 0.74),
-                          fontSize: 16,
-                        ),
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Centralized governance for all Malaybalay barangays',
+                    style: TextStyle(
+                      color: _lightOffWhite.withValues(alpha: 0.74),
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  const RoleDecisionSupportPanel(
+                    audience: DecisionSupportAudience.administrator,
+                    summary:
+                        'Administrative users manage access and provenance. Patient-level suggestions and clinical actions remain in authorized care workflows.',
+                    items: <DecisionSupportItem>[
+                      DecisionSupportItem(
+                        label: 'Patient analysis',
+                        value: 'Hidden in admin view',
+                        icon: Icons.visibility_off_outlined,
                       ),
-                      const SizedBox(height: 14),
-                      const RoleDecisionSupportPanel(
-                        audience: DecisionSupportAudience.administrator,
-                        summary:
-                            'Administrative users manage access and provenance. Patient-level suggestions and clinical actions remain in authorized care workflows.',
-                        items: <DecisionSupportItem>[
-                          DecisionSupportItem(
-                            label: 'Patient analysis',
-                            value: 'Hidden in admin view',
-                            icon: Icons.visibility_off_outlined,
+                      DecisionSupportItem(
+                        label: 'Model artifact',
+                        value: 'Hash verification required',
+                        icon: Icons.verified_user_outlined,
+                      ),
+                      DecisionSupportItem(
+                        label: 'Guidance content',
+                        value: 'Human-reviewed sources',
+                        icon: Icons.fact_check_outlined,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final columns = constraints.maxWidth >= 1000
+                          ? 4
+                          : constraints.maxWidth >= 600
+                          ? 2
+                          : 1;
+                      return GridView.count(
+                        crossAxisCount: columns,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        childAspectRatio: columns == 1 ? 3.2 : 1.8,
+                        children: [
+                          _buildStatCard(
+                            label: 'Registered users',
+                            value: docs.length.toString(),
+                            icon: Icons.groups_2_outlined,
                           ),
-                          DecisionSupportItem(
-                            label: 'Model artifact',
-                            value: 'Hash verification required',
-                            icon: Icons.verified_user_outlined,
+                          _buildStatCard(
+                            label: 'BHW accounts',
+                            value: activeBhw.toString(),
+                            icon: Icons.health_and_safety_outlined,
                           ),
-                          DecisionSupportItem(
-                            label: 'Guidance content',
-                            value: 'Human-reviewed sources',
-                            icon: Icons.fact_check_outlined,
+                          _buildStatCard(
+                            label: 'CHO governance roles',
+                            value: choScoped.toString(),
+                            icon: Icons.admin_panel_settings_outlined,
+                          ),
+                          _buildStatCard(
+                            label: 'Pending approvals',
+                            value: pendingApprovals.toString(),
+                            icon: Icons.rule_folder_outlined,
                           ),
                         ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _panelSurface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _primaryAqua.withValues(alpha: 0.16),
                       ),
-                      const SizedBox(height: 16),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final columns = constraints.maxWidth >= 1000
-                              ? 4
-                              : constraints.maxWidth >= 600
-                              ? 2
-                              : 1;
-                          return GridView.count(
-                            crossAxisCount: columns,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            childAspectRatio: columns == 1 ? 3.2 : 1.8,
-                            children: [
-                              _buildStatCard(
-                                label: 'Registered users',
-                                value: docs.length.toString(),
-                                icon: Icons.groups_2_outlined,
-                              ),
-                              _buildStatCard(
-                                label: 'BHW accounts',
-                                value: activeBhw.toString(),
-                                icon: Icons.health_and_safety_outlined,
-                              ),
-                              _buildStatCard(
-                                label: 'CHO governance roles',
-                                value: choScoped.toString(),
-                                icon: Icons.admin_panel_settings_outlined,
-                              ),
-                              _buildStatCard(
-                                label: 'Pending approvals',
-                                value: pendingApprovals.toString(),
-                                icon: Icons.rule_folder_outlined,
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: _panelSurface,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: _primaryAqua.withValues(alpha: 0.16),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Row(
-                              children: [
-                                const Expanded(
-                                  child: Text(
-                                    'User Governance',
-                                    style: TextStyle(
-                                      color: _lightOffWhite,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                            const Expanded(
+                              child: Text(
+                                'User Governance',
+                                style: TextStyle(
+                                  color: _lightOffWhite,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                ElevatedButton.icon(
-                                  onPressed: _showInviteDialog,
-                                  icon: const Icon(
-                                    Icons.person_add_alt_1_outlined,
-                                  ),
-                                  label: const Text('Record invite'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _primaryAqua,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            WebFilterSurface(
-                              padding: const EdgeInsets.all(10),
-                              children: [
-                                WebSearchField(
-                                  controller: _searchController,
-                                  width: 280,
-                                  hintText: 'Search email, username, barangay',
-                                ),
-                                WebFilterDropdown<String>(
-                                  label: 'Role',
-                                  value: _selectedRoleFilter,
-                                  width: 170,
-                                  items:
-                                      <String>[
-                                            'ALL',
-                                            ...MalaybalayBarangays.roleOptions,
-                                          ]
-                                          .map(
-                                            (value) => DropdownMenuItem<String>(
-                                              value: value,
-                                              child: Text(value),
-                                            ),
-                                          )
-                                          .toList(),
-                                  onChanged: (value) {
-                                    if (value == null) return;
-                                    setState(() => _selectedRoleFilter = value);
-                                  },
-                                ),
-                                WebFilterDropdown<String>(
-                                  label: 'Barangay',
-                                  value: _selectedBarangayFilter,
-                                  width: 220,
-                                  items:
-                                      <String>[
-                                            'ALL',
-                                            ...MalaybalayBarangays.all.map(
-                                              (item) => item.name,
-                                            ),
-                                          ]
-                                          .map(
-                                            (value) => DropdownMenuItem<String>(
-                                              value: value,
-                                              child: Text(value),
-                                            ),
-                                          )
-                                          .toList(),
-                                  onChanged: (value) {
-                                    if (value == null) return;
-                                    setState(
-                                      () => _selectedBarangayFilter = value,
-                                    );
-                                  },
-                                ),
-                                WebFilterDropdown<String>(
-                                  label: 'Status',
-                                  value: _selectedStatusFilter,
-                                  width: 170,
-                                  items:
-                                      const <String>[
-                                            'ALL',
-                                            'active',
-                                            'disabled',
-                                          ]
-                                          .map(
-                                            (value) => DropdownMenuItem<String>(
-                                              value: value,
-                                              child: Text(value.toUpperCase()),
-                                            ),
-                                          )
-                                          .toList(),
-                                  onChanged: (value) {
-                                    if (value == null) return;
-                                    setState(
-                                      () => _selectedStatusFilter = value,
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            Text(
-                              '${filteredDocs.length} user${filteredDocs.length == 1 ? '' : 's'} matched',
-                              style: TextStyle(
-                                color: _lightOffWhite.withValues(alpha: 0.68),
                               ),
                             ),
-                            const SizedBox(height: 14),
-                            WebTableSurface(
-                              minWidth: 1100,
-                              child: Column(
-                                children: filteredDocs
-                                    .map(_buildUserCard)
-                                    .toList(),
+                            ElevatedButton.icon(
+                              onPressed: _showInviteDialog,
+                              icon: const Icon(Icons.person_add_alt_1_outlined),
+                              label: const Text('Record invite'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _primaryAqua,
+                                foregroundColor: Colors.white,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildBarangayDirectory(docs),
-                    ],
+                        const SizedBox(height: 16),
+                        WebFilterSurface(
+                          padding: const EdgeInsets.all(10),
+                          children: [
+                            WebSearchField(
+                              controller: _searchController,
+                              width: 280,
+                              hintText: 'Search email, username, barangay',
+                            ),
+                            WebFilterDropdown<String>(
+                              label: 'Role',
+                              value: _selectedRoleFilter,
+                              width: 170,
+                              items:
+                                  <String>[
+                                        'ALL',
+                                        ...MalaybalayBarangays.roleOptions,
+                                      ]
+                                      .map(
+                                        (value) => DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        ),
+                                      )
+                                      .toList(),
+                              onChanged: (value) {
+                                if (value == null) return;
+                                setState(() => _selectedRoleFilter = value);
+                              },
+                            ),
+                            WebFilterDropdown<String>(
+                              label: 'Barangay',
+                              value: _selectedBarangayFilter,
+                              width: 220,
+                              items:
+                                  <String>[
+                                        'ALL',
+                                        ...MalaybalayBarangays.all.map(
+                                          (item) => item.name,
+                                        ),
+                                      ]
+                                      .map(
+                                        (value) => DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        ),
+                                      )
+                                      .toList(),
+                              onChanged: (value) {
+                                if (value == null) return;
+                                setState(() => _selectedBarangayFilter = value);
+                              },
+                            ),
+                            WebFilterDropdown<String>(
+                              label: 'Status',
+                              value: _selectedStatusFilter,
+                              width: 170,
+                              items: const <String>['ALL', 'active', 'disabled']
+                                  .map(
+                                    (value) => DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value.toUpperCase()),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (value) {
+                                if (value == null) return;
+                                setState(() => _selectedStatusFilter = value);
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          '${filteredDocs.length} user${filteredDocs.length == 1 ? '' : 's'} matched',
+                          style: TextStyle(
+                            color: _lightOffWhite.withValues(alpha: 0.68),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        WebTableSurface(
+                          minWidth: 1100,
+                          child: Column(
+                            children: filteredDocs.map(_buildUserCard).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                );
-              },
-            ),
-          ),
-        ],
+                  const SizedBox(height: 16),
+                  _buildBarangayDirectory(docs),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

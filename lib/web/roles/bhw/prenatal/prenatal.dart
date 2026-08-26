@@ -13,6 +13,7 @@ import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
@@ -302,66 +303,62 @@ class _PrenatalPageState extends State<PrenatalPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          WebAppSidebar(
-            userName: userName,
-            activeItem: WebSidebarItem.prenatalCare,
-          ),
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: _primaryAqua),
-                  )
-                : Stack(
-                    children: [
-                      SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 12.0,
+      body: WebResponsiveBody(
+        sidebar: WebAppSidebar(
+          userName: userName,
+          activeItem: WebSidebarItem.prenatalCare,
+        ),
+        title: 'Prenatal Care',
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: _primaryAqua),
+              )
+            : Stack(
+                children: [
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        HealthModuleViewHeader(
+                          title: 'Prenatal Care',
+                          description:
+                              'Monitor maternal-care coverage and risk indicators, or manage prenatal records.',
+                          activeView: _activeView,
+                          onViewChanged: _setActiveView,
+                          primaryColor: _primaryAqua,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            HealthModuleViewHeader(
-                              title: 'Prenatal Care',
-                              description:
-                                  'Monitor maternal-care coverage and risk indicators, or manage prenatal records.',
-                              activeView: _activeView,
-                              onViewChanged: _setActiveView,
-                              primaryColor: _primaryAqua,
-                            ),
-                            const SizedBox(height: 16),
-                            // Statistics Dashboard
-                            if (_activeView == HealthModuleView.insights) ...[
-                              if (_prenatalRecords.isEmpty)
-                                const ModuleEmptyState(
-                                  title: 'No prenatal insights yet',
-                                  message:
-                                      'Add a prenatal record to begin monitoring maternal-care coverage and risk indicators.',
-                                  icon: Icons.pregnant_woman_rounded,
-                                )
-                              else
-                                _buildStatisticsDashboard(),
-                              const SizedBox(height: 16),
-                            ],
+                        const SizedBox(height: 16),
+                        // Statistics Dashboard
+                        if (_activeView == HealthModuleView.insights) ...[
+                          if (_prenatalRecords.isEmpty)
+                            const ModuleEmptyState(
+                              title: 'No prenatal insights yet',
+                              message:
+                                  'Add a prenatal record to begin monitoring maternal-care coverage and risk indicators.',
+                              icon: Icons.pregnant_woman_rounded,
+                            )
+                          else
+                            _buildStatisticsDashboard(),
+                          const SizedBox(height: 16),
+                        ],
 
-                            // Prenatal Records Table with integrated filters
-                            if (_activeView == HealthModuleView.records)
-                              _buildPrenatalTable(),
-                            const SizedBox(
-                              height: 80,
-                            ), // Space for floating action card
-                          ],
-                        ),
-                      ),
-                      if (_activeView == HealthModuleView.records)
-                        _buildSelectionActionCard(),
-                    ],
+                        // Prenatal Records Table with integrated filters
+                        if (_activeView == HealthModuleView.records)
+                          _buildPrenatalTable(),
+                        const SizedBox(
+                          height: 80,
+                        ), // Space for floating action card
+                      ],
+                    ),
                   ),
-          ),
-        ],
+                  if (_activeView == HealthModuleView.records)
+                    _buildSelectionActionCard(),
+                ],
+              ),
       ),
     );
   }

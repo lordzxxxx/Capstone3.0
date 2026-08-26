@@ -11,6 +11,7 @@ import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 
@@ -1197,33 +1198,29 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          WebAppSidebar(
-            userName: userName,
-            activeItem: WebSidebarItem.analytics,
-          ),
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: _primaryAqua),
-                  )
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeroSection(),
-                        const SizedBox(height: 20),
-                        _buildProgramBoard(),
-                        const SizedBox(height: 20),
-                        _buildClinicalInsightsSection(),
-                      ],
-                    ),
-                  ),
-          ),
-        ],
+      body: WebResponsiveBody(
+        sidebar: WebAppSidebar(
+          userName: userName,
+          activeItem: WebSidebarItem.analytics,
+        ),
+        title: 'Analytics',
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: _primaryAqua),
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeroSection(),
+                    const SizedBox(height: 20),
+                    _buildProgramBoard(),
+                    const SizedBox(height: 20),
+                    _buildClinicalInsightsSection(),
+                  ],
+                ),
+              ),
       ),
     );
   }

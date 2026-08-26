@@ -14,6 +14,7 @@ import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/features/auth/cho_access_session.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
@@ -5988,203 +5989,197 @@ class _ChoDashboardState extends State<ChoDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ChoColors.background,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const ChoNavigationDrawer(current: ChoDestination.dashboard),
-          Expanded(
-            child: !_authorized
-                ? const ChoLoadingSkeleton()
-                : Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                    child: ListView(
-                      children: [
-                        _buildExecutiveHero(),
-                        const SizedBox(height: 14),
-                        _buildOperationalInsights(),
-                        const SizedBox(height: 14),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(14),
-                          margin: const EdgeInsets.only(bottom: 14),
-                          decoration: BoxDecoration(
-                            color: ChoColors.surface,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: ChoColors.border),
+      body: WebResponsiveBody(
+        sidebar: const ChoNavigationDrawer(current: ChoDestination.dashboard),
+        title: 'CHO Dashboard',
+        child: !_authorized
+            ? const ChoLoadingSkeleton()
+            : Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                child: ListView(
+                  children: [
+                    _buildExecutiveHero(),
+                    const SizedBox(height: 14),
+                    _buildOperationalInsights(),
+                    const SizedBox(height: 14),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: ChoColors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: ChoColors.border),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'CHO Dashboard: Firestore-powered patient monitoring, service delivery tracking, and public health risk surveillance.',
+                            style: TextStyle(
+                              color: ChoColors.text,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'CHO Dashboard: Firestore-powered patient monitoring, service delivery tracking, and public health risk surveillance.',
-                                style: TextStyle(
-                                  color: ChoColors.text,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
+                          const SizedBox(height: 10),
+                          // Sync status indicator
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: ChoColors.surfaceAlt,
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _syncStatus.values.every((v) => v)
+                                      ? Icons.cloud_done
+                                      : Icons.cloud_sync,
+                                  color: _syncStatus.values.every((v) => v)
+                                      ? AppColors.success
+                                      : ChoColors.aqua,
+                                  size: 16,
                                 ),
-                              ),
-                              const SizedBox(height: 10),
-                              // Sync status indicator
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: ChoColors.surfaceAlt,
-                                  borderRadius: BorderRadius.circular(9),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _syncStatus.values.every((v) => v)
+                                      ? 'All Firestore collections synced ✓'
+                                      : 'Syncing Firestore collections...',
+                                  style: TextStyle(
+                                    color: _syncStatus.values.every((v) => v)
+                                        ? AppColors.success
+                                        : ChoColors.aqua,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      _syncStatus.values.every((v) => v)
-                                          ? Icons.cloud_done
-                                          : Icons.cloud_sync,
-                                      color: _syncStatus.values.every((v) => v)
-                                          ? AppColors.success
-                                          : ChoColors.aqua,
-                                      size: 16,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      _syncStatus.values.every((v) => v)
-                                          ? 'All Firestore collections synced ✓'
-                                          : 'Syncing Firestore collections...',
-                                      style: TextStyle(
-                                        color:
-                                            _syncStatus.values.every((v) => v)
-                                            ? AppColors.success
-                                            : ChoColors.aqua,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        _buildAnalyticsFilterBar(),
-                        const SizedBox(height: 14),
-                        const Text(
-                          'Program Performance Snapshot',
-                          style: TextStyle(
-                            color: _lightOffWhite,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Live service volumes for the active reporting window.',
-                          style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.55),
-                            fontSize: 11,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            const gap = 10.0;
-                            final columns = constraints.maxWidth >= 1700
-                                ? 7
-                                : constraints.maxWidth >= 1320
-                                ? 6
-                                : constraints.maxWidth >= 980
-                                ? 4
-                                : constraints.maxWidth >= 620
-                                ? 2
-                                : 1;
-                            final cardWidth = columns == 1
-                                ? constraints.maxWidth
-                                : (constraints.maxWidth -
-                                          (gap * (columns - 1))) /
-                                      columns;
-                            final cards = <Widget>[
-                              _summaryCard(
-                                'Patient Records',
-                                _safeMetricText(_totalPatients),
-                                Icons.people,
-                                _primaryAqua,
-                              ),
-                              _summaryCard(
-                                'Checkup Records',
-                                _safeMetricText(_checkupsThisMonth),
-                                Icons.medical_services,
-                                _secondaryIceBlue,
-                              ),
-                              _summaryCard(
-                                'Active Prenatal Cases',
-                                _safeMetricText(_activePrenatal),
-                                Icons.pregnant_woman,
-                                _primaryAqua,
-                              ),
-                              _summaryCard(
-                                'Immunization Records',
-                                _safeMetricText(_immunizationRecords),
-                                Icons.vaccines,
-                                _chartLime,
-                              ),
-                              _summaryCard(
-                                'Morbidity Reports',
-                                _safeMetricText(_morbidityReports),
-                                Icons.monitor_heart,
-                                _chartCyan,
-                              ),
-                              _summaryCard(
-                                'Mortality Reports',
-                                _safeMetricText(_mortalityReports),
-                                Icons.heart_broken,
-                                _secondaryIceBlue,
-                              ),
-                              _summaryCard(
-                                'Referral Reports',
-                                _safeMetricText(_referralReports),
-                                Icons.assignment_ind_outlined,
-                                _primaryAqua,
-                              ),
-                            ];
-                            return Wrap(
-                              spacing: gap,
-                              runSpacing: gap,
-                              children: cards
-                                  .map(
-                                    (card) =>
-                                        SizedBox(width: cardWidth, child: card),
-                                  )
-                                  .toList(growable: false),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        _buildBarangayDemographicsExplorer(),
-                        const SizedBox(height: 14),
-                        _buildDoctorAvailabilityPlanner(),
-                        const SizedBox(height: 14),
-                        _buildPowerBiCharts(),
-                        const SizedBox(height: 14),
-                        const Text(
-                          'Population Follow-up Queue',
-                          style: TextStyle(
-                            color: _lightOffWhite,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Patient-level continuity view for scheduling and outreach coordination.',
-                          style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.55),
-                            fontSize: 11,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        _buildPatientQueueSection(),
-                        const SizedBox(height: 24),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-          ),
-        ],
+                    _buildAnalyticsFilterBar(),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Program Performance Snapshot',
+                      style: TextStyle(
+                        color: _lightOffWhite,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Live service volumes for the active reporting window.',
+                      style: TextStyle(
+                        color: _lightOffWhite.withValues(alpha: 0.55),
+                        fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        const gap = 10.0;
+                        final columns = constraints.maxWidth >= 1700
+                            ? 7
+                            : constraints.maxWidth >= 1320
+                            ? 6
+                            : constraints.maxWidth >= 980
+                            ? 4
+                            : constraints.maxWidth >= 620
+                            ? 2
+                            : 1;
+                        final cardWidth = columns == 1
+                            ? constraints.maxWidth
+                            : (constraints.maxWidth - (gap * (columns - 1))) /
+                                  columns;
+                        final cards = <Widget>[
+                          _summaryCard(
+                            'Patient Records',
+                            _safeMetricText(_totalPatients),
+                            Icons.people,
+                            _primaryAqua,
+                          ),
+                          _summaryCard(
+                            'Checkup Records',
+                            _safeMetricText(_checkupsThisMonth),
+                            Icons.medical_services,
+                            _secondaryIceBlue,
+                          ),
+                          _summaryCard(
+                            'Active Prenatal Cases',
+                            _safeMetricText(_activePrenatal),
+                            Icons.pregnant_woman,
+                            _primaryAqua,
+                          ),
+                          _summaryCard(
+                            'Immunization Records',
+                            _safeMetricText(_immunizationRecords),
+                            Icons.vaccines,
+                            _chartLime,
+                          ),
+                          _summaryCard(
+                            'Morbidity Reports',
+                            _safeMetricText(_morbidityReports),
+                            Icons.monitor_heart,
+                            _chartCyan,
+                          ),
+                          _summaryCard(
+                            'Mortality Reports',
+                            _safeMetricText(_mortalityReports),
+                            Icons.heart_broken,
+                            _secondaryIceBlue,
+                          ),
+                          _summaryCard(
+                            'Referral Reports',
+                            _safeMetricText(_referralReports),
+                            Icons.assignment_ind_outlined,
+                            _primaryAqua,
+                          ),
+                        ];
+                        return Wrap(
+                          spacing: gap,
+                          runSpacing: gap,
+                          children: cards
+                              .map(
+                                (card) =>
+                                    SizedBox(width: cardWidth, child: card),
+                              )
+                              .toList(growable: false),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    _buildBarangayDemographicsExplorer(),
+                    const SizedBox(height: 14),
+                    _buildDoctorAvailabilityPlanner(),
+                    const SizedBox(height: 14),
+                    _buildPowerBiCharts(),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Population Follow-up Queue',
+                      style: TextStyle(
+                        color: _lightOffWhite,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Patient-level continuity view for scheduling and outreach coordination.',
+                      style: TextStyle(
+                        color: _lightOffWhite.withValues(alpha: 0.55),
+                        fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildPatientQueueSection(),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
       ),
     );
   }

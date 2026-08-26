@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
@@ -739,126 +740,119 @@ class _MorbidityPageState extends State<MorbidityPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          WebAppSidebar(
-            userName: userName,
-            activeItem: WebSidebarItem.morbidity,
-          ),
-          Expanded(
-            child: ColoredBox(
-              color: const Color(0xFFF5F7FA),
-              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: _morbidityStream(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return _buildStateMessage(
-                      context,
-                      icon: Icons.error_outline_rounded,
-                      title:
-                          'Linked check-up morbidity records could not be loaded.',
-                      subtitle:
-                          'Check the Firestore connection or record permissions for check-up records and try again.',
+      body: WebResponsiveBody(
+        sidebar: WebAppSidebar(
+          userName: userName,
+          activeItem: WebSidebarItem.morbidity,
+        ),
+        title: 'Morbidity Monitoring',
+        child: ColoredBox(
+          color: const Color(0xFFF5F7FA),
+          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: _morbidityStream(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return _buildStateMessage(
+                  context,
+                  icon: Icons.error_outline_rounded,
+                  title:
+                      'Linked check-up morbidity records could not be loaded.',
+                  subtitle:
+                      'Check the Firestore connection or record permissions for check-up records and try again.',
+                );
+              }
+
+              if (!snapshot.hasData) {
+                return const Center(
+                  child: CircularProgressIndicator(color: _primaryAqua),
+                );
+              }
+
+              final records = _normalizeRecords(
+                snapshot.data!.docs,
+                isFromCache: snapshot.data!.metadata.isFromCache,
+              );
+              final filteredRecords = _applyFilters(records);
+              _reportRecords = filteredRecords;
+              final insightsRecords = records
+                  .where(
+                    (r) => _matchesInsightsDateFilter(_coerceMorbidityDate(r)),
+                  )
+                  .toList(growable: false);
+              final summary = _summarizeRecords(insightsRecords);
+              final effectiveRowsPerPage = _rowsPerPage > 0 ? _rowsPerPage : 10;
+              final totalPages = filteredRecords.isEmpty
+                  ? 1
+                  : ((filteredRecords.length + effectiveRowsPerPage - 1) ~/
+                        effectiveRowsPerPage);
+              final currentPage = _currentPage < 1
+                  ? 1
+                  : (_currentPage > totalPages ? totalPages : _currentPage);
+              final pageStartIndex = filteredRecords.isEmpty
+                  ? 0
+                  : (currentPage - 1) * effectiveRowsPerPage;
+              final pageEndIndex = filteredRecords.isEmpty
+                  ? 0
+                  : math.min(
+                      pageStartIndex + effectiveRowsPerPage,
+                      filteredRecords.length,
                     );
-                  }
+              final pagedRecords = filteredRecords.isEmpty
+                  ? <Map<String, dynamic>>[]
+                  : filteredRecords.sublist(pageStartIndex, pageEndIndex);
 
-                  if (!snapshot.hasData) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: _primaryAqua),
-                    );
-                  }
-
-                  final records = _normalizeRecords(
-                    snapshot.data!.docs,
-                    isFromCache: snapshot.data!.metadata.isFromCache,
-                  );
-                  final filteredRecords = _applyFilters(records);
-                  _reportRecords = filteredRecords;
-                  final insightsRecords = records
-                      .where(
-                        (r) =>
-                            _matchesInsightsDateFilter(_coerceMorbidityDate(r)),
-                      )
-                      .toList(growable: false);
-                  final summary = _summarizeRecords(insightsRecords);
-                  final effectiveRowsPerPage = _rowsPerPage > 0
-                      ? _rowsPerPage
-                      : 10;
-                  final totalPages = filteredRecords.isEmpty
-                      ? 1
-                      : ((filteredRecords.length + effectiveRowsPerPage - 1) ~/
-                            effectiveRowsPerPage);
-                  final currentPage = _currentPage < 1
-                      ? 1
-                      : (_currentPage > totalPages ? totalPages : _currentPage);
-                  final pageStartIndex = filteredRecords.isEmpty
-                      ? 0
-                      : (currentPage - 1) * effectiveRowsPerPage;
-                  final pageEndIndex = filteredRecords.isEmpty
-                      ? 0
-                      : math.min(
-                          pageStartIndex + effectiveRowsPerPage,
-                          filteredRecords.length,
-                        );
-                  final pagedRecords = filteredRecords.isEmpty
-                      ? <Map<String, dynamic>>[]
-                      : filteredRecords.sublist(pageStartIndex, pageEndIndex);
-
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+              return SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    HealthModuleViewHeader(
+                      title: 'Morbidity Records',
+                      description:
+                          'Review morbidity activity and care priorities, or manage individual patient-linked case records.',
+                      activeView: _activeView,
+                      onViewChanged: _setActiveView,
+                      primaryColor: _primaryAqua,
+                      mutedColor: _mutedCoolGray,
+                      insightsLabel: 'Summary',
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        HealthModuleViewHeader(
-                          title: 'Morbidity Records',
-                          description:
-                              'Review morbidity activity and care priorities, or manage individual patient-linked case records.',
-                          activeView: _activeView,
-                          onViewChanged: _setActiveView,
-                          primaryColor: _primaryAqua,
-                          mutedColor: _mutedCoolGray,
-                          insightsLabel: 'Summary',
-                        ),
-                        const SizedBox(height: 16),
-                        if (_activeView == HealthModuleView.insights) ...[
-                          _buildInsightsFilterBar(),
-                          const SizedBox(height: 20),
-                          if (insightsRecords.isEmpty)
-                            const ModuleEmptyState(
-                              title: 'No morbidity insights for this period',
-                              message:
-                                  'Try selecting a different date range to view morbidity trends and case records.',
-                              icon: Icons.analytics_outlined,
-                            )
-                          else ...[
-                            _buildOverviewSection(summary),
-                            const SizedBox(height: 24),
-                            _buildOperationalPanels(summary),
-                          ],
-                        ] else
-                          _buildRecordsSection(
-                            context,
-                            filteredCount: filteredRecords.length,
-                            totalCount: records.length,
-                            pagedRecords: pagedRecords,
-                            currentPage: currentPage,
-                            totalPages: totalPages,
-                            effectiveRowsPerPage: effectiveRowsPerPage,
-                            pageStartIndex: pageStartIndex,
-                            pageEndIndex: pageEndIndex,
-                          ),
+                    const SizedBox(height: 16),
+                    if (_activeView == HealthModuleView.insights) ...[
+                      _buildInsightsFilterBar(),
+                      const SizedBox(height: 20),
+                      if (insightsRecords.isEmpty)
+                        const ModuleEmptyState(
+                          title: 'No morbidity insights for this period',
+                          message:
+                              'Try selecting a different date range to view morbidity trends and case records.',
+                          icon: Icons.analytics_outlined,
+                        )
+                      else ...[
+                        _buildOverviewSection(summary),
+                        const SizedBox(height: 24),
+                        _buildOperationalPanels(summary),
                       ],
-                    ),
-                  );
-                },
-              ),
-            ),
+                    ] else
+                      _buildRecordsSection(
+                        context,
+                        filteredCount: filteredRecords.length,
+                        totalCount: records.length,
+                        pagedRecords: pagedRecords,
+                        currentPage: currentPage,
+                        totalPages: totalPages,
+                        effectiveRowsPerPage: effectiveRowsPerPage,
+                        pageStartIndex: pageStartIndex,
+                        pageEndIndex: pageEndIndex,
+                      ),
+                  ],
+                ),
+              );
+            },
           ),
-        ],
+        ),
       ),
     );
   }

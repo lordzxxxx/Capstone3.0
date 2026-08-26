@@ -11,6 +11,7 @@ import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
@@ -666,60 +667,56 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          WebAppSidebar(
-            userName: userName,
-            activeItem: WebSidebarItem.immunization,
-          ),
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: _primaryAqua),
-                  )
-                : Stack(
-                    children: [
-                      SingleChildScrollView(
-                        child: WebPageContent(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              HealthModuleViewHeader(
-                                title: 'Immunization Management',
-                                description:
-                                    'Monitor vaccination performance and follow-up needs, or manage individual immunization records.',
-                                activeView: _activeView,
-                                onViewChanged: _setActiveView,
-                                primaryColor: _primaryAqua,
-                              ),
-                              const SizedBox(height: 20),
-                              if (_activeView == HealthModuleView.insights)
-                                if (_immunizationRecords.isEmpty)
-                                  const ModuleEmptyState(
-                                    title: 'No immunization insights yet',
-                                    message:
-                                        'Add an immunization record to begin monitoring vaccine activity, schedules, and follow-up needs.',
-                                    icon: Icons.vaccines_outlined,
-                                  )
-                                else
-                                  ImmunizationInsights(
-                                    records: _immunizationRecords,
-                                  )
-                              else ...[_buildImmunizationTable()],
-                              const SizedBox(
-                                height: 80,
-                              ), // Space for bottom selection action card
-                            ],
+      body: WebResponsiveBody(
+        sidebar: WebAppSidebar(
+          userName: userName,
+          activeItem: WebSidebarItem.immunization,
+        ),
+        title: 'Immunization Management',
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: _primaryAqua),
+              )
+            : Stack(
+                children: [
+                  SingleChildScrollView(
+                    child: WebPageContent(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          HealthModuleViewHeader(
+                            title: 'Immunization Management',
+                            description:
+                                'Monitor vaccination performance and follow-up needs, or manage individual immunization records.',
+                            activeView: _activeView,
+                            onViewChanged: _setActiveView,
+                            primaryColor: _primaryAqua,
                           ),
-                        ),
+                          const SizedBox(height: 20),
+                          if (_activeView == HealthModuleView.insights)
+                            if (_immunizationRecords.isEmpty)
+                              const ModuleEmptyState(
+                                title: 'No immunization insights yet',
+                                message:
+                                    'Add an immunization record to begin monitoring vaccine activity, schedules, and follow-up needs.',
+                                icon: Icons.vaccines_outlined,
+                              )
+                            else
+                              ImmunizationInsights(
+                                records: _immunizationRecords,
+                              )
+                          else ...[_buildImmunizationTable()],
+                          const SizedBox(
+                            height: 80,
+                          ), // Space for bottom selection action card
+                        ],
                       ),
-                      if (_activeView == HealthModuleView.records)
-                        _buildSelectionActionCard(),
-                    ],
+                    ),
                   ),
-          ),
-        ],
+                  if (_activeView == HealthModuleView.records)
+                    _buildSelectionActionCard(),
+                ],
+              ),
       ),
       floatingActionButton: null,
     );

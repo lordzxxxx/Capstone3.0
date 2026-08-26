@@ -10,6 +10,7 @@ import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/morbidity.dart';
 import 'package:mycapstone_project/web/roles/bhw/referrals/bhw_referral_management.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_database_helper.dart';
@@ -261,71 +262,65 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          WebAppSidebar(
-            userName: userName,
-            activeItem: WebSidebarItem.patientRecords,
-          ),
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: _primaryAqua),
-                  )
-                : _loadErrorMessage != null
-                ? _buildPatientLoadError()
-                : Stack(
-                    children: [
-                      SingleChildScrollView(
-                        child: WebPageContent(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              HealthModuleViewHeader(
-                                title: 'Patient Records',
-                                description:
-                                    'Review assigned-patient activity and demographics, or manage individual patient records.',
-                                activeView: _selectedPatientTab == 0
-                                    ? HealthModuleView.insights
-                                    : HealthModuleView.records,
-                                onViewChanged: (view) {
-                                  setState(() {
-                                    _selectedPatientTab =
-                                        view == HealthModuleView.insights
-                                        ? 0
-                                        : 1;
-                                    if (_selectedPatientTab == 0) {
-                                      _isSelectionMode = false;
-                                      _selectedIndices.clear();
-                                    }
-                                  });
-                                },
-                                primaryColor: _primaryAqua,
-                                insightsLabel: 'Summary',
-                              ),
-                              const SizedBox(height: 16),
-                              if (_selectedPatientTab == 0)
-                                PatientOperationalSummary(
-                                  patients: _patients,
-                                  onViewPatient: _showPatientDetails,
-                                  onViewAll: () =>
-                                      setState(() => _selectedPatientTab = 1),
-                                )
-                              else ...[
-                                _buildPatientTable(),
-                                const SizedBox(height: 80),
-                              ],
-                            ],
+      body: WebResponsiveBody(
+        sidebar: WebAppSidebar(
+          userName: userName,
+          activeItem: WebSidebarItem.patientRecords,
+        ),
+        title: 'Patient Records',
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: _primaryAqua),
+              )
+            : _loadErrorMessage != null
+            ? _buildPatientLoadError()
+            : Stack(
+                children: [
+                  SingleChildScrollView(
+                    child: WebPageContent(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          HealthModuleViewHeader(
+                            title: 'Patient Records',
+                            description:
+                                'Review assigned-patient activity and demographics, or manage individual patient records.',
+                            activeView: _selectedPatientTab == 0
+                                ? HealthModuleView.insights
+                                : HealthModuleView.records,
+                            onViewChanged: (view) {
+                              setState(() {
+                                _selectedPatientTab =
+                                    view == HealthModuleView.insights ? 0 : 1;
+                                if (_selectedPatientTab == 0) {
+                                  _isSelectionMode = false;
+                                  _selectedIndices.clear();
+                                }
+                              });
+                            },
+                            primaryColor: _primaryAqua,
+                            insightsLabel: 'Summary',
                           ),
-                        ),
+                          const SizedBox(height: 16),
+                          if (_selectedPatientTab == 0)
+                            PatientOperationalSummary(
+                              patients: _patients,
+                              onViewPatient: _showPatientDetails,
+                              onViewAll: () =>
+                                  setState(() => _selectedPatientTab = 1),
+                            )
+                          else ...[
+                            _buildPatientTable(),
+                            const SizedBox(height: 80),
+                          ],
+                        ],
                       ),
-                      if (_selectedPatientTab == 1) _buildSelectionActionCard(),
-                    ],
+                    ),
                   ),
-          ),
-        ],
+                  if (_selectedPatientTab == 1) _buildSelectionActionCard(),
+                ],
+              ),
       ),
     );
   }

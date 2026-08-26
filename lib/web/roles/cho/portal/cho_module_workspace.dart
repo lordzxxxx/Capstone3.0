@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
@@ -209,86 +210,79 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ChoColors.background,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ChoNavigationDrawer(current: widget.config.destination),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${widget.config.title} • CHO',
-                              style: const TextStyle(
-                                fontFamily: 'Manrope',
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: ChoColors.text,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              widget.config.description,
-                              style: const TextStyle(
-                                fontFamily: 'Manrope',
-                                fontSize: 12,
-                                color: ChoColors.muted,
-                              ),
-                            ),
-                          ],
+      body: WebResponsiveBody(
+        sidebar: ChoNavigationDrawer(current: widget.config.destination),
+        title: '${widget.config.title} • CHO',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${widget.config.title} • CHO',
+                          style: const TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: ChoColors.text,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      const ChoStatusBadge('City Health Office'),
-                      const SizedBox(width: 10),
-                      IconButton(
-                        tooltip: 'Refresh data',
-                        onPressed: _loadScope,
-                        icon: const Icon(
-                          Icons.refresh_rounded,
-                          color: ChoColors.text,
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.config.description,
+                          style: const TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 12,
+                            color: ChoColors.muted,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const Divider(height: 1, color: ChoColors.border),
-                Expanded(
-                  child: _accessError != null
-                      ? ChoErrorState(
-                          message: _accessError!,
-                          onRetry: _loadScope,
-                        )
-                      : _stream == null
-                      ? const ChoLoadingSkeleton()
-                      : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                          stream: _stream,
-                          builder: (context, snapshot) {
-                            if (snapshot.hasError) {
-                              return ChoErrorState(
-                                message: snapshot.error.toString(),
-                                onRetry: _loadScope,
-                              );
-                            }
-                            if (!snapshot.hasData) {
-                              return const ChoLoadingSkeleton();
-                            }
-                            return _content(snapshot.data!.docs);
-                          },
-                        ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  const ChoStatusBadge('City Health Office'),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    tooltip: 'Refresh data',
+                    onPressed: _loadScope,
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      color: ChoColors.text,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const Divider(height: 1, color: ChoColors.border),
+            Expanded(
+              child: _accessError != null
+                  ? ChoErrorState(message: _accessError!, onRetry: _loadScope)
+                  : _stream == null
+                  ? const ChoLoadingSkeleton()
+                  : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                      stream: _stream,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return ChoErrorState(
+                            message: snapshot.error.toString(),
+                            onRetry: _loadScope,
+                          );
+                        }
+                        if (!snapshot.hasData) {
+                          return const ChoLoadingSkeleton();
+                        }
+                        return _content(snapshot.data!.docs);
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

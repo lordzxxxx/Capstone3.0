@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
@@ -2865,169 +2866,160 @@ class _CHOReferralWorkspacePageState extends State<CHOReferralWorkspacePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _darkDeepTeal,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const ChoNavigationDrawer(current: ChoDestination.referrals),
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: _primaryAqua),
-                  )
-                : _loadErrorMessage != null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.error_outline_rounded,
-                            color: Colors.orangeAccent,
-                            size: 42,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            _loadErrorMessage!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: _lightOffWhite),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _loadScope,
-                            child: const Text('Retry'),
-                          ),
-                        ],
+      body: WebResponsiveBody(
+        sidebar: const ChoNavigationDrawer(current: ChoDestination.referrals),
+        title: 'Referral Management',
+        backgroundColor: _darkDeepTeal,
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: _primaryAqua),
+              )
+            : _loadErrorMessage != null
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.error_outline_rounded,
+                        color: Colors.orangeAccent,
+                        size: 42,
                       ),
-                    ),
-                  )
-                : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                    stream: _ensureReferralsStream(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) {
-                        final isTargetConflict = _isReferralsTargetConflict(
-                          snapshot.error,
-                        );
-
-                        if (isTargetConflict &&
-                            _referralsRecoveryAttempts < 2) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            _recoverReferralsStream();
-                          });
-                          return Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const CircularProgressIndicator(
-                                    color: _primaryAqua,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Recovering referral stream... (${_referralsRecoveryAttempts + 1}/2)',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: _lightOffWhite,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-
-                        if (isTargetConflict) {
-                          return FutureBuilder<
-                            QuerySnapshot<Map<String, dynamic>>
-                          >(
-                            future: _firestore.collection('referrals').get(),
-                            builder: (context, fallbackSnapshot) {
-                              if (fallbackSnapshot.hasData) {
-                                return _buildReferralsContent(
-                                  fallbackSnapshot.data!.docs,
-                                );
-                              }
-
-                              if (fallbackSnapshot.hasError) {
-                                return Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(24),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          'Referral records could not be loaded. Check your connection and try again.',
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            color: _lightOffWhite,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 14),
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              _referralsRecoveryAttempts = 0;
-                                              _referralsStream =
-                                                  _createReferralsStream();
-                                            });
-                                          },
-                                          child: const Text('Retry'),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              return const Center(
-                                child: CircularProgressIndicator(
-                                  color: _primaryAqua,
-                                ),
-                              );
-                            },
-                          );
-                        }
-
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Referral records could not be loaded. Check your connection and try again.',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(color: _lightOffWhite),
-                                ),
-                                const SizedBox(height: 14),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _referralsRecoveryAttempts = 0;
-                                      _referralsStream =
-                                          _createReferralsStream();
-                                    });
-                                  },
-                                  child: const Text('Retry'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-
-                      if (!snapshot.hasData) {
-                        return const Center(
-                          child: CircularProgressIndicator(color: _primaryAqua),
-                        );
-                      }
-
-                      return _buildReferralsContent(snapshot.data!.docs);
-                    },
+                      const SizedBox(height: 12),
+                      Text(
+                        _loadErrorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: _lightOffWhite),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadScope,
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
-          ),
-        ],
+                ),
+              )
+            : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: _ensureReferralsStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    final isTargetConflict = _isReferralsTargetConflict(
+                      snapshot.error,
+                    );
+
+                    if (isTargetConflict && _referralsRecoveryAttempts < 2) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        _recoverReferralsStream();
+                      });
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const CircularProgressIndicator(
+                                color: _primaryAqua,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Recovering referral stream... (${_referralsRecoveryAttempts + 1}/2)',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: _lightOffWhite),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    if (isTargetConflict) {
+                      return FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                        future: _firestore.collection('referrals').get(),
+                        builder: (context, fallbackSnapshot) {
+                          if (fallbackSnapshot.hasData) {
+                            return _buildReferralsContent(
+                              fallbackSnapshot.data!.docs,
+                            );
+                          }
+
+                          if (fallbackSnapshot.hasError) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Referral records could not be loaded. Check your connection and try again.',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: _lightOffWhite,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 14),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _referralsRecoveryAttempts = 0;
+                                          _referralsStream =
+                                              _createReferralsStream();
+                                        });
+                                      },
+                                      child: const Text('Retry'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: _primaryAqua,
+                            ),
+                          );
+                        },
+                      );
+                    }
+
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Referral records could not be loaded. Check your connection and try again.',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: _lightOffWhite),
+                            ),
+                            const SizedBox(height: 14),
+                            ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  _referralsRecoveryAttempts = 0;
+                                  _referralsStream = _createReferralsStream();
+                                });
+                              },
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (!snapshot.hasData) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: _primaryAqua),
+                    );
+                  }
+
+                  return _buildReferralsContent(snapshot.data!.docs);
+                },
+              ),
       ),
     );
   }

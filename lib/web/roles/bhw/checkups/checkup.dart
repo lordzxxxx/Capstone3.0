@@ -25,6 +25,7 @@ import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/shared/utils/vital_risk_flags.dart';
 import 'package:mycapstone_project/web/shared/widgets/web_sync_status_badge.dart';
 import 'package:mycapstone_project/web/shared/components/role_decision_support_panel.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
@@ -733,509 +734,457 @@ class _CheckUpPageState extends State<CheckUpPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          WebAppSidebar(
-            userName: userName,
-            activeItem: WebSidebarItem.checkups,
-          ),
-          Expanded(
-            child: _isLoading
-                ? Center(
+      body: WebResponsiveBody(
+        sidebar: WebAppSidebar(
+          userName: userName,
+          activeItem: WebSidebarItem.checkups,
+        ),
+        title: 'Check-up Management',
+        child: _isLoading
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(_primaryAqua),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Loading check-up records...',
+                      style: TextStyle(color: _lightOffWhite, fontSize: 16),
+                    ),
+                  ],
+                ),
+              )
+            : _loadErrorMessage != null
+            ? _buildLoadErrorState()
+            : Stack(
+                children: [
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
+                    ),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            _primaryAqua,
-                          ),
+                        HealthModuleViewHeader(
+                          title: 'Check-up Management',
+                          description:
+                              'Review service activity and vital-sign coverage, or manage individual check-up records.',
+                          activeView: _activeView,
+                          onViewChanged: _setActiveView,
+                          primaryColor: _primaryAqua,
                         ),
                         const SizedBox(height: 16),
-                        Text(
-                          'Loading check-up records...',
-                          style: TextStyle(color: _lightOffWhite, fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  )
-                : _loadErrorMessage != null
-                ? _buildLoadErrorState()
-                : Stack(
-                    children: [
-                      SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 12.0,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            HealthModuleViewHeader(
-                              title: 'Check-up Management',
-                              description:
-                                  'Review service activity and vital-sign coverage, or manage individual check-up records.',
-                              activeView: _activeView,
-                              onViewChanged: _setActiveView,
-                              primaryColor: _primaryAqua,
+                        // Dashboard Header with Metrics
+                        if (_activeView == HealthModuleView.insights) ...[
+                          if (_records.isEmpty)
+                            const ModuleEmptyState(
+                              title: 'No check-up insights yet',
+                              message:
+                                  'Add a check-up record to begin monitoring service activity and vital-sign coverage.',
+                              icon: Icons.monitor_heart_outlined,
+                            )
+                          else
+                            _CheckUpDashboardHeader(
+                              totalCheckups: _totalCheckups,
+                              thisMonthCheckups: _thisMonthCheckups,
+                              vitalRecordsCount: _vitalRecordsCount,
+                              records: _records,
                             ),
-                            const SizedBox(height: 16),
-                            // Dashboard Header with Metrics
-                            if (_activeView == HealthModuleView.insights) ...[
-                              if (_records.isEmpty)
-                                const ModuleEmptyState(
-                                  title: 'No check-up insights yet',
-                                  message:
-                                      'Add a check-up record to begin monitoring service activity and vital-sign coverage.',
-                                  icon: Icons.monitor_heart_outlined,
-                                )
-                              else
-                                _CheckUpDashboardHeader(
-                                  totalCheckups: _totalCheckups,
-                                  thisMonthCheckups: _thisMonthCheckups,
-                                  vitalRecordsCount: _vitalRecordsCount,
-                                  records: _records,
-                                ),
-                              const SizedBox(height: 16),
-                            ],
+                          const SizedBox(height: 16),
+                        ],
 
-                            // Records Section - Merged with Add, Filter, and Selection Controls
-                            if (_activeView == HealthModuleView.records)
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: _primaryAqua.withValues(alpha: 0.3),
-                                    width: 1,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.05,
-                                      ),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
+                        // Records Section - Merged with Add, Filter, and Selection Controls
+                        if (_activeView == HealthModuleView.records)
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _primaryAqua.withValues(alpha: 0.3),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
                                 ),
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Top Control Bar - Filter, Add Button, Mode Toggle
+                                Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Top Control Bar - Filter, Add Button, Mode Toggle
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    _buildSearchBar(),
+                                    if (_effectiveSearchQuery.isNotEmpty ||
+                                        _isSearchingSharedPatients) ...[
+                                      const SizedBox(height: 12),
+                                      SharedPatientSearchPanel(
+                                        query: _effectiveSearchQuery,
+                                        results: _sharedPatientMatches,
+                                        isLoading: _isSearchingSharedPatients,
+                                        primaryActionLabel:
+                                            'View Medical History',
+                                        onPrimaryAction:
+                                            _showSharedPatientTimeline,
+                                        secondaryActionLabel: 'Start Check-Up',
+                                        onSecondaryAction: (patient) =>
+                                            _openAddCheckUpModal(
+                                              patientSeed: patient,
+                                            ),
+                                      ),
+                                    ],
+                                    const SizedBox(height: 12),
+
+                                    // Filter Section
+                                    _buildFilterSection(),
+                                    const SizedBox(height: 12),
+
+                                    // Row with Selection Mode Toggle Button (from _buildActionMenuButton)
+                                    Row(
                                       children: [
-                                        _buildSearchBar(),
-                                        if (_effectiveSearchQuery.isNotEmpty ||
-                                            _isSearchingSharedPatients) ...[
-                                          const SizedBox(height: 12),
-                                          SharedPatientSearchPanel(
-                                            query: _effectiveSearchQuery,
-                                            results: _sharedPatientMatches,
-                                            isLoading:
-                                                _isSearchingSharedPatients,
-                                            primaryActionLabel:
-                                                'View Medical History',
-                                            onPrimaryAction:
-                                                _showSharedPatientTimeline,
-                                            secondaryActionLabel:
-                                                'Start Check-Up',
-                                            onSecondaryAction: (patient) =>
-                                                _openAddCheckUpModal(
-                                                  patientSeed: patient,
-                                                ),
-                                          ),
-                                        ],
-                                        const SizedBox(height: 12),
-
-                                        // Filter Section
-                                        _buildFilterSection(),
-                                        const SizedBox(height: 12),
-
-                                        // Row with Selection Mode Toggle Button (from _buildActionMenuButton)
-                                        Row(
-                                          children: [
-                                            // Selection Mode Toggle Button
-                                            if (!_isSelectionMode)
-                                              Material(
-                                                color: Colors.transparent,
-                                                child: InkWell(
-                                                  onTap: () {
-                                                    setState(() {
-                                                      _isSelectionMode = true;
-                                                      _selectedIndices.clear();
-                                                    });
-                                                  },
+                                        // Selection Mode Toggle Button
+                                        if (!_isSelectionMode)
+                                          Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              onTap: () {
+                                                setState(() {
+                                                  _isSelectionMode = true;
+                                                  _selectedIndices.clear();
+                                                });
+                                              },
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 10,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  border: Border.all(
+                                                    color: _primaryAqua
+                                                        .withValues(alpha: 0.3),
+                                                    width: 1,
+                                                  ),
                                                   borderRadius:
                                                       BorderRadius.circular(10),
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 12,
-                                                          vertical: 10,
-                                                        ),
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(
-                                                        color: _primaryAqua
-                                                            .withValues(
-                                                              alpha: 0.3,
-                                                            ),
-                                                        width: 1,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            10,
-                                                          ),
-                                                    ),
-                                                    child: Row(
-                                                      children: [
-                                                        Icon(
-                                                          Icons
-                                                              .check_circle_outline,
-                                                          color: _primaryAqua,
-                                                          size: 18,
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 6,
-                                                        ),
-                                                        const Text(
-                                                          'Select',
-                                                          style: TextStyle(
-                                                            color:
-                                                                _lightOffWhite,
-                                                            fontSize: 13,
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
                                                 ),
-                                              )
-                                            else
-                                              Material(
-                                                color: Colors.transparent,
-                                                child: InkWell(
-                                                  onTap: () {
-                                                    setState(() {
-                                                      _isSelectionMode = false;
-                                                      _selectedIndices.clear();
-                                                    });
-                                                  },
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 12,
-                                                          vertical: 10,
-                                                        ),
-                                                    decoration: BoxDecoration(
-                                                      color: _primaryAqua
-                                                          .withValues(
-                                                            alpha: 0.2,
-                                                          ),
-                                                      border: Border.all(
-                                                        color: _primaryAqua
-                                                            .withValues(
-                                                              alpha: 0.5,
-                                                            ),
-                                                        width: 1,
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons
+                                                          .check_circle_outline,
+                                                      color: _primaryAqua,
+                                                      size: 18,
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    const Text(
+                                                      'Select',
+                                                      style: TextStyle(
+                                                        color: _lightOffWhite,
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w600,
                                                       ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            10,
-                                                          ),
                                                     ),
-                                                    child: const Row(
-                                                      children: [
-                                                        Icon(
-                                                          Icons.check_circle,
-                                                          color: _primaryAqua,
-                                                          size: 18,
-                                                        ),
-                                                        SizedBox(width: 6),
-                                                        Text(
-                                                          'Done',
-                                                          style: TextStyle(
-                                                            color: _primaryAqua,
-                                                            fontSize: 13,
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
+                                                  ],
                                                 ),
                                               ),
-                                            const Spacer(),
-                                            _buildHighlightedAddButtonContainer(),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 16),
-                                      ],
-                                    ),
-
-                                    // Records Display
-                                    if (filteredRecords.isEmpty)
-                                      Center(
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(40),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Container(
-                                                padding: const EdgeInsets.all(
-                                                  20,
-                                                ),
+                                            ),
+                                          )
+                                        else
+                                          Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              onTap: () {
+                                                setState(() {
+                                                  _isSelectionMode = false;
+                                                  _selectedIndices.clear();
+                                                });
+                                              },
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 10,
+                                                    ),
                                                 decoration: BoxDecoration(
                                                   color: _primaryAqua
                                                       .withValues(alpha: 0.2),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: Icon(
-                                                  Icons.inbox_rounded,
-                                                  color: _primaryAqua,
-                                                  size: 48,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 16),
-                                              Text(
-                                                'No records found',
-                                                style: TextStyle(
-                                                  color: _lightOffWhite,
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                'Try adjusting your filters or add a new check-up record',
-                                                style: TextStyle(
-                                                  color: _mutedCoolGray,
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      )
-                                    else
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children: [
-                                          _buildCheckUpCardHeader(),
-                                          _CheckUpTable(
-                                            records: pagedRecords,
-                                            startIndex: pageStartIndex,
-                                            isSelectionMode: _isSelectionMode,
-                                            selectedIndices: _selectedIndices,
-                                            onSelectionChanged:
-                                                (index, selected) {
-                                                  setState(() {
-                                                    if (selected) {
-                                                      _selectedIndices.add(
-                                                        index,
-                                                      );
-                                                    } else {
-                                                      _selectedIndices.remove(
-                                                        index,
-                                                      );
-                                                    }
-                                                  });
-                                                },
-                                            onEdit: (record) async {
-                                              await showDialog<void>(
-                                                context: context,
-                                                builder: (context) =>
-                                                    _EditCheckUpFullScreenModal(
-                                                      record: record,
-                                                      onSave:
-                                                          (
-                                                            id,
-                                                            updatedRecord,
-                                                          ) => _dbHelper
-                                                              .updateRecord(
-                                                                id,
-                                                                updatedRecord,
-                                                              ),
-                                                      aiClassifier:
-                                                          _aiClassifier,
-                                                      guidanceApi: _guidanceApi,
-                                                    ),
-                                              );
-                                            },
-                                            onViewHistory: (record) =>
-                                                _showCheckUpHistory(
-                                                  context,
-                                                  record,
-                                                ),
-                                            onRefer: (record) =>
-                                                _openReferralForRecord(record),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  'Showing ${pageStartIndex + 1}-$pageEndIndex of ${filteredRecords.length} records',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: _mutedCoolGray,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 10,
-                                                      vertical: 2,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
                                                   border: Border.all(
                                                     color: _primaryAqua
-                                                        .withValues(
-                                                          alpha: 0.25,
-                                                        ),
+                                                        .withValues(alpha: 0.5),
+                                                    width: 1,
                                                   ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
                                                 ),
-                                                child:
-                                                    DropdownButtonHideUnderline(
-                                                      child: DropdownButton<int>(
-                                                        dropdownColor:
-                                                            Colors.white,
-                                                        value:
-                                                            effectiveRowsPerPage,
-                                                        style: const TextStyle(
-                                                          color: _lightOffWhite,
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                        ),
-                                                        iconEnabledColor:
-                                                            _primaryAqua,
-                                                        items: const [
-                                                          DropdownMenuItem(
-                                                            value: 10,
-                                                            child: Text(
-                                                              '10 / page',
-                                                            ),
-                                                          ),
-                                                          DropdownMenuItem(
-                                                            value: 20,
-                                                            child: Text(
-                                                              '20 / page',
-                                                            ),
-                                                          ),
-                                                          DropdownMenuItem(
-                                                            value: 50,
-                                                            child: Text(
-                                                              '50 / page',
-                                                            ),
-                                                          ),
-                                                        ],
-                                                        onChanged: (value) {
-                                                          if (value == null) {
-                                                            return;
-                                                          }
-                                                          setState(() {
-                                                            _rowsPerPage =
-                                                                value > 0
-                                                                ? value
-                                                                : 10;
-                                                            _currentPage = 1;
-                                                          });
-                                                        },
+                                                child: const Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.check_circle,
+                                                      color: _primaryAqua,
+                                                      size: 18,
+                                                    ),
+                                                    SizedBox(width: 6),
+                                                    Text(
+                                                      'Done',
+                                                      style: TextStyle(
+                                                        color: _primaryAqua,
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w600,
                                                       ),
                                                     ),
-                                              ),
-                                              const SizedBox(width: 10),
-                                              IconButton(
-                                                tooltip: 'Previous page',
-                                                onPressed: currentPage > 1
-                                                    ? () {
-                                                        setState(() {
-                                                          _currentPage =
-                                                              currentPage - 1;
-                                                        });
-                                                      }
-                                                    : null,
-                                                icon: const Icon(
-                                                  Icons.chevron_left,
-                                                ),
-                                                color: _mutedCoolGray,
-                                              ),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 10,
-                                                      vertical: 6,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                  border: Border.all(
-                                                    color: _primaryAqua
-                                                        .withValues(
-                                                          alpha: 0.25,
-                                                        ),
-                                                  ),
-                                                ),
-                                                child: Text(
-                                                  '$currentPage / $totalPages',
-                                                  style: const TextStyle(
-                                                    color: _lightOffWhite,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
+                                                  ],
                                                 ),
                                               ),
-                                              IconButton(
-                                                tooltip: 'Next page',
-                                                onPressed:
-                                                    currentPage < totalPages
-                                                    ? () {
-                                                        setState(() {
-                                                          _currentPage =
-                                                              currentPage + 1;
-                                                        });
-                                                      }
-                                                    : null,
-                                                icon: const Icon(
-                                                  Icons.chevron_right,
-                                                ),
-                                                color: _lightOffWhite,
+                                            ),
+                                          ),
+                                        const Spacer(),
+                                        _buildHighlightedAddButtonContainer(),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                  ],
+                                ),
+
+                                // Records Display
+                                if (filteredRecords.isEmpty)
+                                  Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(40),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(20),
+                                            decoration: BoxDecoration(
+                                              color: _primaryAqua.withValues(
+                                                alpha: 0.2,
                                               ),
-                                            ],
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.inbox_rounded,
+                                              color: _primaryAqua,
+                                              size: 48,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 16),
+                                          Text(
+                                            'No records found',
+                                            style: TextStyle(
+                                              color: _lightOffWhite,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Try adjusting your filters or add a new check-up record',
+                                            style: TextStyle(
+                                              color: _mutedCoolGray,
+                                              fontSize: 14,
+                                            ),
                                           ),
                                         ],
                                       ),
-                                  ],
-                                ),
-                              ),
-                            const SizedBox(height: 32),
-                          ],
-                        ),
-                      ),
-                      // Bulk Selection Action Card - Floating at bottom
-                      if (_activeView == HealthModuleView.records)
-                        _buildSelectionActionCard(),
-                    ],
+                                    ),
+                                  )
+                                else
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      _buildCheckUpCardHeader(),
+                                      _CheckUpTable(
+                                        records: pagedRecords,
+                                        startIndex: pageStartIndex,
+                                        isSelectionMode: _isSelectionMode,
+                                        selectedIndices: _selectedIndices,
+                                        onSelectionChanged: (index, selected) {
+                                          setState(() {
+                                            if (selected) {
+                                              _selectedIndices.add(index);
+                                            } else {
+                                              _selectedIndices.remove(index);
+                                            }
+                                          });
+                                        },
+                                        onEdit: (record) async {
+                                          await showDialog<void>(
+                                            context: context,
+                                            builder: (context) =>
+                                                _EditCheckUpFullScreenModal(
+                                                  record: record,
+                                                  onSave: (id, updatedRecord) =>
+                                                      _dbHelper.updateRecord(
+                                                        id,
+                                                        updatedRecord,
+                                                      ),
+                                                  aiClassifier: _aiClassifier,
+                                                  guidanceApi: _guidanceApi,
+                                                ),
+                                          );
+                                        },
+                                        onViewHistory: (record) =>
+                                            _showCheckUpHistory(
+                                              context,
+                                              record,
+                                            ),
+                                        onRefer: (record) =>
+                                            _openReferralForRecord(record),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              'Showing ${pageStartIndex + 1}-$pageEndIndex of ${filteredRecords.length} records',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: _mutedCoolGray,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: _primaryAqua.withValues(
+                                                  alpha: 0.25,
+                                                ),
+                                              ),
+                                            ),
+                                            child: DropdownButtonHideUnderline(
+                                              child: DropdownButton<int>(
+                                                dropdownColor: Colors.white,
+                                                value: effectiveRowsPerPage,
+                                                style: const TextStyle(
+                                                  color: _lightOffWhite,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                                iconEnabledColor: _primaryAqua,
+                                                items: const [
+                                                  DropdownMenuItem(
+                                                    value: 10,
+                                                    child: Text('10 / page'),
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    value: 20,
+                                                    child: Text('20 / page'),
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    value: 50,
+                                                    child: Text('50 / page'),
+                                                  ),
+                                                ],
+                                                onChanged: (value) {
+                                                  if (value == null) {
+                                                    return;
+                                                  }
+                                                  setState(() {
+                                                    _rowsPerPage = value > 0
+                                                        ? value
+                                                        : 10;
+                                                    _currentPage = 1;
+                                                  });
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          IconButton(
+                                            tooltip: 'Previous page',
+                                            onPressed: currentPage > 1
+                                                ? () {
+                                                    setState(() {
+                                                      _currentPage =
+                                                          currentPage - 1;
+                                                    });
+                                                  }
+                                                : null,
+                                            icon: const Icon(
+                                              Icons.chevron_left,
+                                            ),
+                                            color: _mutedCoolGray,
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: _primaryAqua.withValues(
+                                                  alpha: 0.25,
+                                                ),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              '$currentPage / $totalPages',
+                                              style: const TextStyle(
+                                                color: _lightOffWhite,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                          IconButton(
+                                            tooltip: 'Next page',
+                                            onPressed: currentPage < totalPages
+                                                ? () {
+                                                    setState(() {
+                                                      _currentPage =
+                                                          currentPage + 1;
+                                                    });
+                                                  }
+                                                : null,
+                                            icon: const Icon(
+                                              Icons.chevron_right,
+                                            ),
+                                            color: _lightOffWhite,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: 32),
+                      ],
+                    ),
                   ),
-          ),
-        ],
+                  // Bulk Selection Action Card - Floating at bottom
+                  if (_activeView == HealthModuleView.records)
+                    _buildSelectionActionCard(),
+                ],
+              ),
       ),
     );
   }
@@ -4828,7 +4777,11 @@ class _NewCheckUpFullScreenModalState
                       ),
                       elevation: 2,
                     ),
-                    icon: const Icon(Icons.local_hospital_outlined, size: 18, color: Colors.white),
+                    icon: const Icon(
+                      Icons.local_hospital_outlined,
+                      size: 18,
+                      color: Colors.white,
+                    ),
                     label: const Text(
                       'Save & Refer to CHO',
                       style: TextStyle(

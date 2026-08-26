@@ -2675,6 +2675,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
           : WebAppSidebar(
               userName: userName,
               activeItem: WebSidebarItem.referrals,
+              forceExpanded: true,
             ),
       appBar: AppBar(
         backgroundColor: _darkDeepTeal,

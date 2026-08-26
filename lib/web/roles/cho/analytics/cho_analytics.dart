@@ -15,6 +15,7 @@ import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
@@ -763,40 +764,37 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: _darkDeepTeal,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const ChoNavigationDrawer(current: ChoDestination.reports),
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: _primaryAqua),
-                  )
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeader(),
-                        const SizedBox(height: 14),
-                        _buildFilters(),
-                        const SizedBox(height: 14),
-                        _buildPlanningDecisionSupport(),
-                        const SizedBox(height: 14),
-                        _buildSummaryGrid(),
-                        const SizedBox(height: 14),
-                        _buildTrendSection(),
-                        const SizedBox(height: 14),
-                        _buildHeatmapSection(),
-                        const SizedBox(height: 14),
-                        _buildRecentRecordsSection(),
-                        const SizedBox(height: 20),
-                        _buildExportSection(),
-                      ],
-                    ),
-                  ),
-          ),
-        ],
+      body: WebResponsiveBody(
+        sidebar: const ChoNavigationDrawer(current: ChoDestination.reports),
+        title: 'CHO Reports and Analytics',
+        backgroundColor: _darkDeepTeal,
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: _primaryAqua),
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 14),
+                    _buildFilters(),
+                    const SizedBox(height: 14),
+                    _buildPlanningDecisionSupport(),
+                    const SizedBox(height: 14),
+                    _buildSummaryGrid(),
+                    const SizedBox(height: 14),
+                    _buildTrendSection(),
+                    const SizedBox(height: 14),
+                    _buildHeatmapSection(),
+                    const SizedBox(height: 14),
+                    _buildRecentRecordsSection(),
+                    const SizedBox(height: 20),
+                    _buildExportSection(),
+                  ],
+                ),
+              ),
       ),
     );
   }

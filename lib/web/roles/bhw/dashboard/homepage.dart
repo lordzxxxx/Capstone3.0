@@ -11,6 +11,7 @@ import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 
 // Professional Vibrant Color Palette - Matching Analytics Page
 // Names are historical (page was dark-themed); values now point at the
@@ -1255,37 +1256,33 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          WebAppSidebar(
-            userName: userName,
-            activeItem: WebSidebarItem.dashboard,
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              child: WebPageContent(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Welcome - Full Width
-                    _buildWelcomeCard(userName),
-                    const SizedBox(height: 24),
-                    if (_executiveOverviewError != null)
-                      _buildExecutiveOverviewError()
-                    else ...[
-                      _buildAnalyticsFilterBar(),
-                      const SizedBox(height: 24),
-                      _buildExecutiveKpiGrid(),
-                      const SizedBox(height: 28),
-                      _buildExecutiveAnalytics(),
-                    ],
-                  ],
-                ),
-              ),
+      body: WebResponsiveBody(
+        sidebar: WebAppSidebar(
+          userName: userName,
+          activeItem: WebSidebarItem.dashboard,
+        ),
+        title: 'BHW Dashboard',
+        child: SingleChildScrollView(
+          child: WebPageContent(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Welcome - Full Width
+                _buildWelcomeCard(userName),
+                const SizedBox(height: 24),
+                if (_executiveOverviewError != null)
+                  _buildExecutiveOverviewError()
+                else ...[
+                  _buildAnalyticsFilterBar(),
+                  const SizedBox(height: 24),
+                  _buildExecutiveKpiGrid(),
+                  const SizedBox(height: 28),
+                  _buildExecutiveAnalytics(),
+                ],
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
 const Color _profileAqua = Color(0xFF2F80ED);
@@ -134,141 +135,136 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          WebAppSidebar(
-            userName: _displayName,
-            activeItem: WebSidebarItem.profile,
-          ),
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: _profileAqua),
-                  )
-                : _error != null
-                ? _buildErrorState()
-                : RefreshIndicator(
-                    onRefresh: _loadProfile,
-                    color: _profileAqua,
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1180),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildProfileHero(),
-                              const SizedBox(height: 20),
-                              LayoutBuilder(
-                                builder: (context, constraints) {
-                                  final stacked = constraints.maxWidth < 850;
-                                  final identity = _buildInformationCard(
-                                    title: 'User Details',
-                                    icon: Icons.badge_outlined,
-                                    rows: [
-                                      _ProfileRow(
-                                        'Full name',
-                                        _displayName,
-                                        Icons.person_outline,
-                                      ),
-                                      _ProfileRow(
-                                        'Username',
-                                        _firstValue([
-                                          _profile['username'],
-                                        ], fallback: 'Not provided'),
-                                        Icons.alternate_email_rounded,
-                                      ),
-                                      _ProfileRow(
-                                        'Email address',
-                                        _firstValue([
-                                          _profile['email'],
-                                        ], fallback: 'Not provided'),
-                                        Icons.email_outlined,
-                                      ),
-                                      _ProfileRow(
-                                        'Contact number',
-                                        _firstValue([
-                                          _profile['contactNumber'],
-                                          _profile['phoneNumber'],
-                                          _profile['phone'],
-                                        ], fallback: 'Not provided'),
-                                        Icons.phone_outlined,
-                                      ),
-                                      _ProfileRow(
-                                        'Role',
-                                        'Barangay Health Worker (BHW)',
-                                        Icons.medical_services_outlined,
-                                      ),
-                                    ],
-                                  );
-                                  final assignment = _buildInformationCard(
-                                    title: 'Barangay Assignment',
-                                    icon: Icons.location_city_outlined,
-                                    rows: [
-                                      _ProfileRow(
-                                        'Assigned barangay',
-                                        _assignedBarangay,
-                                        Icons.location_on_outlined,
-                                      ),
-                                      _ProfileRow(
-                                        'Barangay code',
-                                        _firstValue([
-                                          _profile['barangayCode'],
-                                          _scope.barangayCode,
-                                        ], fallback: 'Not provided'),
-                                        Icons.tag_rounded,
-                                      ),
-                                      _ProfileRow(
-                                        'District',
-                                        _firstValue([
-                                          _profile['barangayDistrict'],
-                                          _scope.barangayDistrict,
-                                        ], fallback: 'Not provided'),
-                                        Icons.map_outlined,
-                                      ),
-                                      _ProfileRow(
-                                        'Access scope',
-                                        'Assigned barangay records only',
-                                        Icons.lock_outline_rounded,
-                                      ),
-                                      _ProfileRow(
-                                        'Member since',
-                                        _formatDate(_profile['createdAt']),
-                                        Icons.calendar_today_outlined,
-                                      ),
-                                    ],
-                                  );
-                                  if (stacked) {
-                                    return Column(
-                                      children: [
-                                        identity,
-                                        const SizedBox(height: 16),
-                                        assignment,
-                                      ],
-                                    );
-                                  }
-                                  return Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(child: identity),
-                                      const SizedBox(width: 20),
-                                      Expanded(child: assignment),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ],
+      body: WebResponsiveBody(
+        sidebar: WebAppSidebar(
+          userName: _displayName,
+          activeItem: WebSidebarItem.profile,
+        ),
+        title: 'Profile and Settings',
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: _profileAqua),
+              )
+            : _error != null
+            ? _buildErrorState()
+            : RefreshIndicator(
+                onRefresh: _loadProfile,
+                color: _profileAqua,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(24),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1180),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildProfileHero(),
+                          const SizedBox(height: 20),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final stacked = constraints.maxWidth < 850;
+                              final identity = _buildInformationCard(
+                                title: 'User Details',
+                                icon: Icons.badge_outlined,
+                                rows: [
+                                  _ProfileRow(
+                                    'Full name',
+                                    _displayName,
+                                    Icons.person_outline,
+                                  ),
+                                  _ProfileRow(
+                                    'Username',
+                                    _firstValue([
+                                      _profile['username'],
+                                    ], fallback: 'Not provided'),
+                                    Icons.alternate_email_rounded,
+                                  ),
+                                  _ProfileRow(
+                                    'Email address',
+                                    _firstValue([
+                                      _profile['email'],
+                                    ], fallback: 'Not provided'),
+                                    Icons.email_outlined,
+                                  ),
+                                  _ProfileRow(
+                                    'Contact number',
+                                    _firstValue([
+                                      _profile['contactNumber'],
+                                      _profile['phoneNumber'],
+                                      _profile['phone'],
+                                    ], fallback: 'Not provided'),
+                                    Icons.phone_outlined,
+                                  ),
+                                  _ProfileRow(
+                                    'Role',
+                                    'Barangay Health Worker (BHW)',
+                                    Icons.medical_services_outlined,
+                                  ),
+                                ],
+                              );
+                              final assignment = _buildInformationCard(
+                                title: 'Barangay Assignment',
+                                icon: Icons.location_city_outlined,
+                                rows: [
+                                  _ProfileRow(
+                                    'Assigned barangay',
+                                    _assignedBarangay,
+                                    Icons.location_on_outlined,
+                                  ),
+                                  _ProfileRow(
+                                    'Barangay code',
+                                    _firstValue([
+                                      _profile['barangayCode'],
+                                      _scope.barangayCode,
+                                    ], fallback: 'Not provided'),
+                                    Icons.tag_rounded,
+                                  ),
+                                  _ProfileRow(
+                                    'District',
+                                    _firstValue([
+                                      _profile['barangayDistrict'],
+                                      _scope.barangayDistrict,
+                                    ], fallback: 'Not provided'),
+                                    Icons.map_outlined,
+                                  ),
+                                  _ProfileRow(
+                                    'Access scope',
+                                    'Assigned barangay records only',
+                                    Icons.lock_outline_rounded,
+                                  ),
+                                  _ProfileRow(
+                                    'Member since',
+                                    _formatDate(_profile['createdAt']),
+                                    Icons.calendar_today_outlined,
+                                  ),
+                                ],
+                              );
+                              if (stacked) {
+                                return Column(
+                                  children: [
+                                    identity,
+                                    const SizedBox(height: 16),
+                                    assignment,
+                                  ],
+                                );
+                              }
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(child: identity),
+                                  const SizedBox(width: 20),
+                                  Expanded(child: assignment),
+                                ],
+                              );
+                            },
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
-          ),
-        ],
+                ),
+              ),
       ),
     );
   }

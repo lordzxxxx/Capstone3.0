@@ -9,6 +9,7 @@ import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/communicable_insights.dart';
@@ -282,90 +283,84 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          WebAppSidebar(
-            userName: userName,
-            activeItem: WebSidebarItem.nonCommunicable,
-          ),
-          Expanded(
-            child: RefreshIndicator(
-              backgroundColor: const Color(0xFFF5F7FA),
-              color: _primaryAqua,
-              onRefresh: () async {
-                await _loadPatients();
-              },
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 12.0,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    HealthModuleViewHeader(
-                      title: 'Non-Communicable Disease Management',
-                      description:
-                          'Review chronic-disease trends and case outcomes, or manage individual non-communicable records.',
-                      activeView: _resolvedView,
-                      onViewChanged: _setActiveView,
-                      primaryColor: _primaryAqua,
-                      recordsLabel: 'List of Records',
-                      actions: _resolvedView == HealthModuleView.insights
-                          ? const []
-                          : [
-                              if (!_isSelectionMode)
-                                IconButton(
-                                  icon: const Icon(Icons.checklist_rounded),
-                                  tooltip: 'Select records to delete',
-                                  color: _primaryAqua,
-                                  onPressed: () =>
-                                      setState(() => _isSelectionMode = true),
-                                ),
-                            ],
-                    ),
-                    const SizedBox(height: 20),
-                    if (_resolvedView != HealthModuleView.insights &&
-                        _isSelectionMode) ...[
-                      _buildSelectionToolbar(),
-                      const SizedBox(height: 16),
-                    ],
-                    if (_resolvedView == HealthModuleView.insights)
-                      if (_isLoadingMetrics)
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(40),
-                            child: CircularProgressIndicator(
+      body: WebResponsiveBody(
+        sidebar: WebAppSidebar(
+          userName: userName,
+          activeItem: WebSidebarItem.nonCommunicable,
+        ),
+        title: 'Non-Communicable Diseases',
+        child: RefreshIndicator(
+          backgroundColor: const Color(0xFFF5F7FA),
+          color: _primaryAqua,
+          onRefresh: () async {
+            await _loadPatients();
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                HealthModuleViewHeader(
+                  title: 'Non-Communicable Disease Management',
+                  description:
+                      'Review chronic-disease trends and case outcomes, or manage individual non-communicable records.',
+                  activeView: _resolvedView,
+                  onViewChanged: _setActiveView,
+                  primaryColor: _primaryAqua,
+                  recordsLabel: 'List of Records',
+                  actions: _resolvedView == HealthModuleView.insights
+                      ? const []
+                      : [
+                          if (!_isSelectionMode)
+                            IconButton(
+                              icon: const Icon(Icons.checklist_rounded),
+                              tooltip: 'Select records to delete',
                               color: _primaryAqua,
+                              onPressed: () =>
+                                  setState(() => _isSelectionMode = true),
                             ),
-                          ),
-                        )
-                      else if (_nonCommunicableRecords.isEmpty)
-                        const ModuleEmptyState(
-                          title: 'No non-communicable insights yet',
-                          message:
-                              'Non-communicable analytics will appear after records are saved in Firebase.',
-                          icon: Icons.health_and_safety_outlined,
-                        )
-                      else
-                        CommunicableInsights(
-                          records: _nonCommunicableRecords,
-                          caseLabel: 'Non-Communicable',
-                        )
-                    else ...[
-                      _buildSearchBar(),
-                      const SizedBox(height: 20),
-                      _buildPatientCards(),
-                    ],
-                    const SizedBox(height: 20),
-                  ],
+                        ],
                 ),
-              ),
+                const SizedBox(height: 20),
+                if (_resolvedView != HealthModuleView.insights &&
+                    _isSelectionMode) ...[
+                  _buildSelectionToolbar(),
+                  const SizedBox(height: 16),
+                ],
+                if (_resolvedView == HealthModuleView.insights)
+                  if (_isLoadingMetrics)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: CircularProgressIndicator(color: _primaryAqua),
+                      ),
+                    )
+                  else if (_nonCommunicableRecords.isEmpty)
+                    const ModuleEmptyState(
+                      title: 'No non-communicable insights yet',
+                      message:
+                          'Non-communicable analytics will appear after records are saved in Firebase.',
+                      icon: Icons.health_and_safety_outlined,
+                    )
+                  else
+                    CommunicableInsights(
+                      records: _nonCommunicableRecords,
+                      caseLabel: 'Non-Communicable',
+                    )
+                else ...[
+                  _buildSearchBar(),
+                  const SizedBox(height: 20),
+                  _buildPatientCards(),
+                ],
+                const SizedBox(height: 20),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

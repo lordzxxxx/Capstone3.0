@@ -9,6 +9,7 @@ import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/roles/bhw/analytics/ai_summary.dart'
     as ai;
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
@@ -539,66 +540,59 @@ class _HealthMetricsPageState extends State<HealthMetricsPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppColors.backgroundLight,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          WebAppSidebar(
-            userName: userName,
-            activeItem: WebSidebarItem.summaryGeneration,
-          ),
-          Expanded(
-            child: ColoredBox(
-              color: AppColors.backgroundLight,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1320),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeroSection(userName),
-                        const SizedBox(height: 20),
-                        _buildOverviewCards(),
-                        const SizedBox(height: 24),
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isWide = constraints.maxWidth >= 1080;
+      body: WebResponsiveBody(
+        sidebar: WebAppSidebar(
+          userName: userName,
+          activeItem: WebSidebarItem.summaryGeneration,
+        ),
+        title: 'Summary Generation',
+        child: ColoredBox(
+          color: AppColors.backgroundLight,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1320),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeroSection(userName),
+                    const SizedBox(height: 20),
+                    _buildOverviewCards(),
+                    const SizedBox(height: 24),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth >= 1080;
 
-                            if (isWide) {
-                              return Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    flex: 4,
-                                    child: _buildControlPanel(context),
-                                  ),
-                                  const SizedBox(width: 24),
-                                  Expanded(
-                                    flex: 6,
-                                    child: _buildSummaryPanel(),
-                                  ),
-                                ],
-                              );
-                            }
+                        if (isWide) {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 4,
+                                child: _buildControlPanel(context),
+                              ),
+                              const SizedBox(width: 24),
+                              Expanded(flex: 6, child: _buildSummaryPanel()),
+                            ],
+                          );
+                        }
 
-                            return Column(
-                              children: [
-                                _buildControlPanel(context),
-                                const SizedBox(height: 24),
-                                _buildSummaryPanel(),
-                              ],
-                            );
-                          },
-                        ),
-                      ],
+                        return Column(
+                          children: [
+                            _buildControlPanel(context),
+                            const SizedBox(height: 24),
+                            _buildSummaryPanel(),
+                          ],
+                        );
+                      },
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

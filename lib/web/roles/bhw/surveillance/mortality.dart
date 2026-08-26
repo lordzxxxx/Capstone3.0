@@ -8,6 +8,7 @@ import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
 import 'package:mycapstone_project/web/roles/bhw/surveillance/mortality_database_helper.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
@@ -1172,61 +1173,57 @@ class _MortalityPageState extends State<MortalityPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF5F7FA),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          WebAppSidebar(
-            userName: userName,
-            activeItem: WebSidebarItem.mortality,
-          ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _loadData,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 12.0,
+      body: WebResponsiveBody(
+        sidebar: WebAppSidebar(
+          userName: userName,
+          activeItem: WebSidebarItem.mortality,
+        ),
+        title: 'Mortality Monitoring',
+        child: RefreshIndicator(
+          onRefresh: _loadData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                HealthModuleViewHeader(
+                  title: 'Mortality Monitoring',
+                  description:
+                      'Review mortality trends and verified indicators, or manage individual mortality records.',
+                  activeView: _activeView,
+                  onViewChanged: _setActiveView,
+                  primaryColor: _primaryAqua,
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    HealthModuleViewHeader(
-                      title: 'Mortality Monitoring',
-                      description:
-                          'Review mortality trends and verified indicators, or manage individual mortality records.',
-                      activeView: _activeView,
-                      onViewChanged: _setActiveView,
-                      primaryColor: _primaryAqua,
-                    ),
+                const SizedBox(height: 20),
+                if (_activeView == HealthModuleView.insights) ...[
+                  _buildInsightsFilterBar(),
+                  const SizedBox(height: 20),
+                  if (_isDataLoaded && _mortalityRecords.isEmpty)
+                    const ModuleEmptyState(
+                      title: 'No mortality insights yet',
+                      message:
+                          'Mortality trends and cause distributions will appear when verified records are available.',
+                      icon: Icons.query_stats_rounded,
+                    )
+                  else ...[
+                    _buildOverviewDashboard(),
                     const SizedBox(height: 20),
-                    if (_activeView == HealthModuleView.insights) ...[
-                      _buildInsightsFilterBar(),
-                      const SizedBox(height: 20),
-                      if (_isDataLoaded && _mortalityRecords.isEmpty)
-                        const ModuleEmptyState(
-                          title: 'No mortality insights yet',
-                          message:
-                              'Mortality trends and cause distributions will appear when verified records are available.',
-                          icon: Icons.query_stats_rounded,
-                        )
-                      else ...[
-                        _buildOverviewDashboard(),
-                        const SizedBox(height: 20),
-                        _buildGraphsSection(),
-                        const SizedBox(height: 20),
-                        _buildTablesSection(),
-                      ],
-                    ] else
-                      _buildRecordsTableSection(),
+                    _buildGraphsSection(),
                     const SizedBox(height: 20),
+                    _buildTablesSection(),
                   ],
-                ),
-              ),
+                ] else
+                  _buildRecordsTableSection(),
+                const SizedBox(height: 20),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

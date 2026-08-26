@@ -11,8 +11,13 @@ import 'package:mycapstone_project/web/shared/components/web_navigation_item.dar
 
 class ChoNavigationDrawer extends StatefulWidget {
   final ChoDestination current;
+  final bool forceExpanded;
 
-  const ChoNavigationDrawer({super.key, required this.current});
+  const ChoNavigationDrawer({
+    super.key,
+    required this.current,
+    this.forceExpanded = false,
+  });
 
   static final ValueNotifier<bool> isCollapsedNotifier = ValueNotifier<bool>(
     false,
@@ -41,191 +46,192 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
       valueListenable: ChoNavigationDrawer.isCollapsedNotifier,
       builder: (context, isCollapsed, _) {
         final compactViewport = MediaQuery.sizeOf(context).width < 1180;
-        final effectiveCollapsed = isCollapsed || compactViewport;
+        final effectiveCollapsed =
+            !widget.forceExpanded && (isCollapsed || compactViewport);
         // The rail stays in the page layout while the content route changes.
         // Disable Hero flights so navigation never animates or carries the
         // sidebar with the destination page.
         return HeroMode(
           enabled: false,
           child: Hero(
-          tag: 'cho_navigation_sidebar',
-          flightShuttleBuilder:
-              (
-                flightContext,
-                animation,
-                flightDirection,
-                fromHeroContext,
-                toHeroContext,
-              ) {
-                return Material(
-                  type: MaterialType.transparency,
-                  child: toHeroContext.widget,
-                );
-              },
-          child: Material(
-            type: MaterialType.transparency,
-            child: AnimatedContainer(
-              duration: compactViewport
-                  ? Duration.zero
-                  : const Duration(milliseconds: 240),
-              curve: Curves.easeInOutCubic,
-              width: effectiveCollapsed ? 76.0 : 300.0,
-              height: double.infinity,
-              decoration: const BoxDecoration(
-                color: ChoColors.navBackground,
-                border: Border(
-                  right: BorderSide(color: ChoColors.navBorder, width: 1),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 6,
-                    offset: Offset(2, 0),
+            tag: 'cho_navigation_sidebar',
+            flightShuttleBuilder:
+                (
+                  flightContext,
+                  animation,
+                  flightDirection,
+                  fromHeroContext,
+                  toHeroContext,
+                ) {
+                  return Material(
+                    type: MaterialType.transparency,
+                    child: toHeroContext.widget,
+                  );
+                },
+            child: Material(
+              type: MaterialType.transparency,
+              child: AnimatedContainer(
+                duration: compactViewport
+                    ? Duration.zero
+                    : const Duration(milliseconds: 240),
+                curve: Curves.easeInOutCubic,
+                width: effectiveCollapsed ? 76.0 : 300.0,
+                height: double.infinity,
+                decoration: const BoxDecoration(
+                  color: ChoColors.navBackground,
+                  border: Border(
+                    right: BorderSide(color: ChoColors.navBorder, width: 1),
                   ),
-                ],
-              ),
-              child: ClipRect(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return OverflowBox(
-                      alignment: Alignment.topLeft,
-                      minWidth: effectiveCollapsed ? 76.0 : 300.0,
-                      maxWidth: effectiveCollapsed ? 76.0 : 300.0,
-                      minHeight: constraints.maxHeight,
-                      maxHeight: constraints.maxHeight,
-                      child: SafeArea(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _buildBrandHeader(effectiveCollapsed),
-                            _buildUserSection(userName, effectiveCollapsed),
-                            const SizedBox(height: 8),
-                            Expanded(
-                              child: ListView(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: effectiveCollapsed ? 8 : 10,
-                                  vertical: 4,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 6,
+                      offset: Offset(2, 0),
+                    ),
+                  ],
+                ),
+                child: ClipRect(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return OverflowBox(
+                        alignment: Alignment.topLeft,
+                        minWidth: effectiveCollapsed ? 76.0 : 300.0,
+                        maxWidth: effectiveCollapsed ? 76.0 : 300.0,
+                        minHeight: constraints.maxHeight,
+                        maxHeight: constraints.maxHeight,
+                        child: SafeArea(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildBrandHeader(effectiveCollapsed),
+                              _buildUserSection(userName, effectiveCollapsed),
+                              const SizedBox(height: 8),
+                              Expanded(
+                                child: ListView(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: effectiveCollapsed ? 8 : 10,
+                                    vertical: 4,
+                                  ),
+                                  children: [
+                                    _buildSectionHeader(
+                                      'OVERVIEW',
+                                      effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.dashboard,
+                                      label: 'Dashboard',
+                                      icon: Icons.dashboard_outlined,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSectionHeader(
+                                      'HEALTH PROGRAMS',
+                                      effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.patients,
+                                      label: 'Patients',
+                                      icon: Icons.people_alt_outlined,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.checkups,
+                                      label: 'Check-ups',
+                                      icon: Icons.medical_services_outlined,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.prenatal,
+                                      label: 'Prenatal',
+                                      icon: Icons.pregnant_woman_rounded,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.immunization,
+                                      label: 'Immunization',
+                                      icon: Icons.vaccines_outlined,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.morbidity,
+                                      label: 'Morbidity',
+                                      icon: Icons.monitor_heart_outlined,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.mortality,
+                                      label: 'Mortality',
+                                      icon: Icons.heart_broken_outlined,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.referrals,
+                                      label: 'Referrals',
+                                      icon: Icons.outbound_outlined,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSectionHeader(
+                                      'COORDINATION',
+                                      effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.bhwManagement,
+                                      label: 'BHW Management',
+                                      icon: Icons.groups_2_outlined,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.reports,
+                                      label: 'Reports',
+                                      icon: Icons.summarize_outlined,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.announcements,
+                                      label: 'Announcements',
+                                      icon: Icons.campaign_outlined,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSectionHeader(
+                                      'GOVERNANCE',
+                                      effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.dataQuality,
+                                      label: 'Data Quality',
+                                      icon: Icons.rule_folder_outlined,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.auditLogs,
+                                      label: 'Audit Logs',
+                                      icon: Icons.history_rounded,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.notifications,
+                                      label: 'Notifications',
+                                      icon: Icons.notifications_outlined,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
+                                      destination: ChoDestination.profile,
+                                      label: 'Profile and Settings',
+                                      icon: Icons.manage_accounts_outlined,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                  ],
                                 ),
-                                children: [
-                                  _buildSectionHeader(
-                                    'OVERVIEW',
-                                    effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.dashboard,
-                                    label: 'Dashboard',
-                                    icon: Icons.dashboard_outlined,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                  _buildSectionHeader(
-                                    'HEALTH PROGRAMS',
-                                    effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.patients,
-                                    label: 'Patients',
-                                    icon: Icons.people_alt_outlined,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.checkups,
-                                    label: 'Check-ups',
-                                    icon: Icons.medical_services_outlined,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.prenatal,
-                                    label: 'Prenatal',
-                                    icon: Icons.pregnant_woman_rounded,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.immunization,
-                                    label: 'Immunization',
-                                    icon: Icons.vaccines_outlined,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.morbidity,
-                                    label: 'Morbidity',
-                                    icon: Icons.monitor_heart_outlined,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.mortality,
-                                    label: 'Mortality',
-                                    icon: Icons.heart_broken_outlined,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.referrals,
-                                    label: 'Referrals',
-                                    icon: Icons.outbound_outlined,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                  _buildSectionHeader(
-                                    'COORDINATION',
-                                    effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.bhwManagement,
-                                    label: 'BHW Management',
-                                    icon: Icons.groups_2_outlined,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.reports,
-                                    label: 'Reports',
-                                    icon: Icons.summarize_outlined,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.announcements,
-                                    label: 'Announcements',
-                                    icon: Icons.campaign_outlined,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                  _buildSectionHeader(
-                                    'GOVERNANCE',
-                                    effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.dataQuality,
-                                    label: 'Data Quality',
-                                    icon: Icons.rule_folder_outlined,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.auditLogs,
-                                    label: 'Audit Logs',
-                                    icon: Icons.history_rounded,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.notifications,
-                                    label: 'Notifications',
-                                    icon: Icons.notifications_outlined,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                  _buildSidebarItem(
-                                    destination: ChoDestination.profile,
-                                    label: 'Profile and Settings',
-                                    icon: Icons.manage_accounts_outlined,
-                                    isCollapsed: effectiveCollapsed,
-                                  ),
-                                ],
                               ),
-                            ),
-                            _buildLogoutButton(context, effectiveCollapsed),
-                          ],
+                              _buildLogoutButton(context, effectiveCollapsed),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
-          ),
           ),
         );
       },

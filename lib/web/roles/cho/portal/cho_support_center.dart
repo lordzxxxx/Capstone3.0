@@ -7,6 +7,7 @@ import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
+import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
@@ -130,95 +131,90 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ChoColors.background,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ChoNavigationDrawer(current: _destination),
-          Expanded(
-            child: _checkingAccess
-                ? const ChoLoadingSkeleton()
-                : !_authorized
-                ? ChoErrorState(
-                    message: _error ?? 'Access denied.',
-                    onRetry: _verifyAccess,
-                  )
-                : ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                    children: [
-                      ChoPageHeader(
-                        title: _title,
-                        description: _description,
-                        icon: _icon,
-                        actions: [
-                          if (widget.section == ChoSupportSection.announcements)
-                            FilledButton.icon(
-                              onPressed: _createAnnouncement,
-                              icon: const Icon(Icons.add),
-                              label: const Text('New Announcement'),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      if (widget.section != ChoSupportSection.profile &&
-                          widget.section != ChoSupportSection.dataQuality)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: WebFilterSurface(
-                            padding: const EdgeInsets.all(10),
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                final width = constraints.maxWidth > 420
-                                    ? 420.0
-                                    : constraints.maxWidth;
-                                return WebSearchField(
-                                  controller: _search,
-                                  width: width,
-                                  hintText: 'Search this workspace',
-                                  onChanged: (value) {
-                                    _debounce?.cancel();
-                                    _debounce = Timer(
-                                      const Duration(milliseconds: 300),
-                                      () {
-                                        if (mounted) {
-                                          setState(
-                                            () => _query = value.toLowerCase(),
-                                          );
-                                        }
-                                      },
-                                    );
-                                  },
-                                  onClear: () {
-                                    _search.clear();
-                                    _debounce?.cancel();
-                                    setState(() => _query = '');
+      body: WebResponsiveBody(
+        sidebar: ChoNavigationDrawer(current: _destination),
+        title: _title,
+        child: _checkingAccess
+            ? const ChoLoadingSkeleton()
+            : !_authorized
+            ? ChoErrorState(
+                message: _error ?? 'Access denied.',
+                onRetry: _verifyAccess,
+              )
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                children: [
+                  ChoPageHeader(
+                    title: _title,
+                    description: _description,
+                    icon: _icon,
+                    actions: [
+                      if (widget.section == ChoSupportSection.announcements)
+                        FilledButton.icon(
+                          onPressed: _createAnnouncement,
+                          icon: const Icon(Icons.add),
+                          label: const Text('New Announcement'),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (widget.section != ChoSupportSection.profile &&
+                      widget.section != ChoSupportSection.dataQuality)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: WebFilterSurface(
+                        padding: const EdgeInsets.all(10),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final width = constraints.maxWidth > 420
+                                ? 420.0
+                                : constraints.maxWidth;
+                            return WebSearchField(
+                              controller: _search,
+                              width: width,
+                              hintText: 'Search this workspace',
+                              onChanged: (value) {
+                                _debounce?.cancel();
+                                _debounce = Timer(
+                                  const Duration(milliseconds: 300),
+                                  () {
+                                    if (mounted) {
+                                      setState(
+                                        () => _query = value.toLowerCase(),
+                                      );
+                                    }
                                   },
                                 );
                               },
-                            ),
-                          ),
+                              onClear: () {
+                                _search.clear();
+                                _debounce?.cancel();
+                                setState(() => _query = '');
+                              },
+                            );
+                          },
                         ),
-                      if (widget.section ==
-                          ChoSupportSection.bhwManagement) ...[
-                        ChoViewTabs(
-                          tabs: const [
-                            'Active BHWs',
-                            'Pending Registrations',
-                            'Assignments',
-                            'Activity Summary',
-                          ],
-                          selectedIndex: _bhwTab,
-                          onChanged: (value) => setState(() => _bhwTab = value),
-                        ),
-                        const SizedBox(height: 12),
+                      ),
+                    ),
+                  if (widget.section == ChoSupportSection.bhwManagement) ...[
+                    ChoViewTabs(
+                      tabs: const [
+                        'Active BHWs',
+                        'Pending Registrations',
+                        'Assignments',
+                        'Activity Summary',
                       ],
-                      if (_error != null)
-                        ChoErrorState(message: _error!, onRetry: _verifyAccess)
-                      else
-                        _body(),
-                    ],
-                  ),
-          ),
-        ],
+                      selectedIndex: _bhwTab,
+                      onChanged: (value) => setState(() => _bhwTab = value),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (_error != null)
+                    ChoErrorState(message: _error!, onRetry: _verifyAccess)
+                  else
+                    _body(),
+                ],
+              ),
       ),
     );
   }
