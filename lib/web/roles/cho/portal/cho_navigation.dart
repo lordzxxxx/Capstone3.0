@@ -22,6 +22,7 @@ class ChoNavigationDrawer extends StatefulWidget {
   static final ValueNotifier<bool> isCollapsedNotifier = ValueNotifier<bool>(
     false,
   );
+  static bool? _manualCollapsedOverride;
   static bool _logoutInProgress = false;
 
   @override
@@ -30,8 +31,9 @@ class ChoNavigationDrawer extends StatefulWidget {
 
 class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
   void _toggleCollapse() {
-    ChoNavigationDrawer.isCollapsedNotifier.value =
-        !ChoNavigationDrawer.isCollapsedNotifier.value;
+    final next = !ChoNavigationDrawer.isCollapsedNotifier.value;
+    ChoNavigationDrawer._manualCollapsedOverride = next;
+    ChoNavigationDrawer.isCollapsedNotifier.value = next;
   }
 
   @override
@@ -47,8 +49,11 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
       builder: (context, isCollapsed, _) {
         final viewport = MediaQuery.sizeOf(context);
         final compactViewport = viewport.width < 960 || viewport.height < 840;
+        final autoCollapsed =
+            compactViewport &&
+            ChoNavigationDrawer._manualCollapsedOverride != false;
         final effectiveCollapsed =
-            !widget.forceExpanded && (isCollapsed || compactViewport);
+            !widget.forceExpanded && (isCollapsed || autoCollapsed);
         // The rail stays in the page layout while the content route changes.
         // Disable Hero flights so navigation never animates or carries the
         // sidebar with the destination page.

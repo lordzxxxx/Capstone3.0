@@ -73,6 +73,7 @@ class WebAppSidebar extends StatefulWidget {
   static final ValueNotifier<bool> isCollapsedNotifier = ValueNotifier<bool>(
     false,
   );
+  static bool? _manualCollapsedOverride;
 
   static bool _logoutInProgress = false;
 
@@ -92,8 +93,9 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
   }
 
   void _toggleCollapse() {
-    WebAppSidebar.isCollapsedNotifier.value =
-        !WebAppSidebar.isCollapsedNotifier.value;
+    final next = !WebAppSidebar.isCollapsedNotifier.value;
+    WebAppSidebar._manualCollapsedOverride = next;
+    WebAppSidebar.isCollapsedNotifier.value = next;
   }
 
   @override
@@ -102,12 +104,14 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
       valueListenable: WebAppSidebar.isCollapsedNotifier,
       builder: (context, isCollapsed, _) {
         // Keep the content usable when the browser is narrower than a normal
-        // desktop. The user can still expand the rail later on a wide screen,
-        // but narrow screens never lose their main working area to the nav.
+        // desktop or the window is short. The chevron can still override this
+        // automatic compact mode when the user needs the labels.
         final viewport = MediaQuery.sizeOf(context);
         final compactViewport = viewport.width < 960 || viewport.height < 840;
+        final autoCollapsed =
+            compactViewport && WebAppSidebar._manualCollapsedOverride != false;
         final effectiveCollapsed =
-            !widget.forceExpanded && (isCollapsed || compactViewport);
+            !widget.forceExpanded && (isCollapsed || autoCollapsed);
         return FutureBuilder<UserAccessScope?>(
           future: _scopeFuture,
           builder: (context, scopeSnapshot) {
