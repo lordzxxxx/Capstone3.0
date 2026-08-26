@@ -745,68 +745,6 @@ class _LoginState extends State<Login> {
     return null;
   }
 
-  Future<void> signInWithGoogle() async {
-    if (_isLoading) return;
-    setState(() => _isLoading = true);
-    try {
-      final googleProvider = GoogleAuthProvider()
-        ..addScope('email')
-        ..setCustomParameters({'login_hint': 'user@example.com'});
-
-      final UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithPopup(googleProvider);
-      final user = userCredential.user;
-      if (user == null) return;
-
-      if (await _blockUnapprovedRegistration(user)) return;
-
-      if (kDebugMode) {
-        debugPrint(
-          'Verifying Google account from Firestore users collection...',
-        );
-      }
-
-      final roleCheckResult = await _hasChoOrBhwAccess(user);
-      if (!roleCheckResult.hasAccess) {
-        if (roleCheckResult.verificationUnavailable) {
-          final fallbackRole = await _tryRoleFallbackSources(user);
-          if (fallbackRole != null) {
-            await _cacheRoleLocally(user, fallbackRole);
-            await _showSuccessDialogAndNavigate(user, fallbackRole);
-            return;
-          }
-        }
-        await _handleRoleVerificationFailure(roleCheckResult);
-        return;
-      }
-
-      if (kDebugMode) {
-        debugPrint('Google login verified from Firestore users collection');
-      }
-      final resolvedRole = roleCheckResult.resolvedRole;
-      if (resolvedRole == null || !_isChoOrBhwRole(resolvedRole)) {
-        await _handleRoleVerificationFailure(const _RoleCheckResult.denied());
-        return;
-      }
-      await _cacheRoleLocally(user, resolvedRole);
-      await _showSuccessDialogAndNavigate(user, resolvedRole);
-    } catch (e) {
-      Get.snackbar(
-        'Google Sign-In Failed',
-        'Failed to sign in with Google. Please try again.',
-        backgroundColor: const Color(0xFFD32F2F),
-        colorText: Colors.white,
-      );
-      debugPrint('Google Sign-In Error: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -929,43 +867,13 @@ class _LoginState extends State<Login> {
           message = e.message ?? 'Login failed. Please try again.';
       }
 
-      // Build a helpful message; for credential/password errors suggest Google
       String displayMessage = kDebugMode ? '$message (${e.code})' : message;
-
-      // If the error indicates a credential/password issue, offer Google sign-in
-      if (e.code == 'invalid-credential' || e.code == 'wrong-password') {
-        displayMessage +=
-            '\nIf you originally signed up with Google, please use the Google sign-in button or reset your password.';
-
-        Get.snackbar(
-          'Login Failed',
-          displayMessage,
-          backgroundColor: const Color(0xFFD32F2F),
-          colorText: Colors.white,
-          mainButton: TextButton(
-            onPressed: _isLoading
-                ? null
-                : () {
-                    // Start Google sign-in flow
-                    signInWithGoogle();
-                  },
-            child: const Text(
-              'Sign in with Google',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        );
-      } else {
-        Get.snackbar(
-          'Login Failed',
-          displayMessage,
-          backgroundColor: const Color(0xFFD32F2F),
-          colorText: Colors.white,
-        );
-      }
+      Get.snackbar(
+        'Login Failed',
+        displayMessage,
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
 
       if (kDebugMode) {
         // ignore: avoid_print
@@ -1018,6 +926,10 @@ class _LoginState extends State<Login> {
   }
 
   Widget _buildHeroPanel({required bool isCompact}) {
+    final mobileMarkSize = (MediaQuery.sizeOf(context).width * 0.34).clamp(
+      116.0,
+      158.0,
+    );
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isCompact ? 20 : 48),
       child: Center(
@@ -1027,34 +939,34 @@ class _LoginState extends State<Login> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildBrandMark(isCompact ? 190 : 300),
-              const SizedBox(height: 28),
+              _buildBrandMark(isCompact ? mobileMarkSize : 300),
+              SizedBox(height: isCompact ? 18 : 28),
               Text(
                 'AI-DSUHIS',
                 style: TextStyle(
                   fontFamily: 'Manrope',
-                  fontSize: isCompact ? 32 : 52,
+                  fontSize: isCompact ? 30 : 52,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                   letterSpacing: -1.2,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: isCompact ? 8 : 12),
               Text(
                 'Secure access to unified city and barangay health information.',
                 style: TextStyle(
                   fontFamily: 'Manrope',
-                  fontSize: isCompact ? 15 : 20,
+                  fontSize: isCompact ? 14 : 20,
                   color: Colors.white.withValues(alpha: 0.88),
                   height: 1.45,
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: isCompact ? 14 : 20),
               Text(
                 'A trusted workspace for patient records, referrals, analytics, and community health operations.',
                 style: TextStyle(
                   fontFamily: 'Manrope',
-                  fontSize: isCompact ? 13 : 15,
+                  fontSize: isCompact ? 12.5 : 15,
                   color: Colors.white.withValues(alpha: 0.72),
                   height: 1.55,
                 ),
@@ -1097,7 +1009,7 @@ class _LoginState extends State<Login> {
                 builder: (context, constraints) {
                   final contentWidth =
                       (constraints.maxWidth - (isWideScreen ? 64 : 40))
-                          .clamp(280.0, 1200.0)
+                          .clamp(0.0, 1200.0)
                           .toDouble();
                   final composition = SizedBox(
                     width: contentWidth,
@@ -1115,7 +1027,14 @@ class _LoginState extends State<Login> {
                     return ClipRect(child: Center(child: composition));
                   }
                   return SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: EdgeInsets.fromLTRB(
+                      20,
+                      72,
+                      20,
+                      32 + MediaQuery.viewInsetsOf(context).bottom,
+                    ),
                     child: composition,
                   );
                 },
@@ -1198,7 +1117,7 @@ class _LoginState extends State<Login> {
   // Login card widget
   Widget _buildLoginCard(BuildContext context, {required bool isCompact}) {
     return Container(
-      padding: EdgeInsets.all(isCompact ? 20 : 28),
+      padding: EdgeInsets.all(isCompact ? 18 : 28),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
@@ -1222,7 +1141,7 @@ class _LoginState extends State<Login> {
                   : '$_portalName Portal Login',
               style: TextStyle(
                 fontFamily: 'Manrope',
-                fontSize: isCompact ? 28 : 34,
+                fontSize: isCompact ? 26 : 34,
                 fontWeight: FontWeight.w800,
                 color: _darkDeepTeal,
                 letterSpacing: -0.8,
@@ -1239,7 +1158,7 @@ class _LoginState extends State<Login> {
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 20),
             _buildFieldLabel(context, 'Email address'),
             const SizedBox(height: 8),
             _buildTextField(
@@ -1278,7 +1197,7 @@ class _LoginState extends State<Login> {
             _buildPasswordField(),
             const SizedBox(height: 22),
             SizedBox(
-              height: 50,
+              height: 52,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : signIn,
                 style: ElevatedButton.styleFrom(
@@ -1308,32 +1227,7 @@ class _LoginState extends State<Login> {
                       ),
               ),
             ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                const Expanded(child: Divider(color: Color(0xFFD8E2E4))),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'OR',
-                    style: TextStyle(
-                      color: _mutedCoolGray,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const Expanded(child: Divider(color: Color(0xFFD8E2E4))),
-              ],
-            ),
-            const SizedBox(height: 14),
-            _buildSocialButtonLarge(
-              label: 'Continue with Google',
-              icon: Icons.g_mobiledata,
-              color: const Color(0xFF4285F4),
-              onTap: _isLoading ? null : signInWithGoogle,
-            ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 22),
             Center(
               child: RichText(
                 text: TextSpan(
@@ -1502,54 +1396,6 @@ class _LoginState extends State<Login> {
             horizontal: 20,
             vertical: 18,
           ),
-        ),
-      ),
-    );
-  }
-
-  // Helper method for social login buttons (large with labels)
-  Widget _buildSocialButtonLarge({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFB9C7C9)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: _darkDeepTeal,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );

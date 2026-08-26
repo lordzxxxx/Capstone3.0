@@ -898,6 +898,10 @@ class _SignupState extends State<Signup> {
   }
 
   Widget _buildHeroPanel({required bool isCompact}) {
+    final mobileMarkSize = (MediaQuery.sizeOf(context).width * 0.34).clamp(
+      116.0,
+      158.0,
+    );
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isCompact ? 20 : 48),
       child: Center(
@@ -907,34 +911,34 @@ class _SignupState extends State<Signup> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildBrandMark(isCompact ? 190 : 300),
-              const SizedBox(height: 28),
+              _buildBrandMark(isCompact ? mobileMarkSize : 300),
+              SizedBox(height: isCompact ? 18 : 28),
               Text(
                 'AI-DSUHIS',
                 style: TextStyle(
                   fontFamily: 'Manrope',
-                  fontSize: isCompact ? 32 : 52,
+                  fontSize: isCompact ? 30 : 52,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                   letterSpacing: -1.2,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: isCompact ? 8 : 12),
               Text(
                 'Create secure access to unified city and barangay health information.',
                 style: TextStyle(
                   fontFamily: 'Manrope',
-                  fontSize: isCompact ? 15 : 20,
+                  fontSize: isCompact ? 14 : 20,
                   color: Colors.white.withValues(alpha: 0.88),
                   height: 1.45,
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: isCompact ? 14 : 20),
               Text(
                 'Choose the correct role and provide the details needed for a reliable, approval-aware account.',
                 style: TextStyle(
                   fontFamily: 'Manrope',
-                  fontSize: isCompact ? 13 : 15,
+                  fontSize: isCompact ? 12.5 : 15,
                   color: Colors.white.withValues(alpha: 0.72),
                   height: 1.55,
                 ),
@@ -975,9 +979,11 @@ class _SignupState extends State<Signup> {
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isWideScreen ? 32 : 24,
-                    vertical: 40,
+                  padding: EdgeInsets.fromLTRB(
+                    isWideScreen ? 32 : 20,
+                    isWideScreen ? 40 : 72,
+                    isWideScreen ? 32 : 20,
+                    40 + MediaQuery.viewInsetsOf(context).bottom,
                   ),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 1240),
@@ -1150,7 +1156,7 @@ class _SignupState extends State<Signup> {
     }
 
     return Container(
-      padding: EdgeInsets.all(isCompact ? 20 : 26),
+      padding: EdgeInsets.all(isCompact ? 18 : 26),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
@@ -1172,7 +1178,7 @@ class _SignupState extends State<Signup> {
               'Create your account',
               style: TextStyle(
                 fontFamily: 'Manrope',
-                fontSize: isCompact ? 27 : 32,
+                fontSize: isCompact ? 25 : 32,
                 fontWeight: FontWeight.w800,
                 color: _darkDeepTeal,
               ),

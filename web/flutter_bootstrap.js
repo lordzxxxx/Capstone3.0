@@ -1,13 +1,11 @@
 {{flutter_js}}
 {{flutter_build_config}}
 
-// Flutter 3.44 no longer ships a durable offline worker by default. Keep the
-// PWA shell worker explicit so its scope and cache policy stay reviewable.
+// Use Flutter's current loader without the deprecated service-worker hook.
+// Vercel already serves immutable Flutter assets with long-lived cache headers;
+// Firebase Auth/Firestore remain responsible for session and data persistence.
 _flutter.loader.load({
-  serviceWorkerSettings: {
-    // Use an origin-root URL so deep links such as /bhw/login do not resolve
-    // the worker against /bhw/pwa_service_worker.js and receive index.html.
-    serviceWorkerUrl: '/pwa_service_worker.js',
-    serviceWorkerVersion: {{flutter_service_worker_version}}
-  }
+  config: {
+    canvasKitBaseUrl: '/canvaskit/',
+  },
 });

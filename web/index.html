@@ -170,6 +170,24 @@
 
   </script>
 
+  <!-- Remove the legacy Flutter/PWA worker once for returning visitors. The
+       current web build intentionally does not register a Flutter worker. -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations
+          .filter((registration) => {
+            const scriptUrl = registration.active?.scriptURL || '';
+            return scriptUrl.includes('/pwa_service_worker.js') ||
+              scriptUrl.includes('/flutter_service_worker.js');
+          })
+          .forEach((registration) => registration.unregister());
+      }).catch(() => {
+        // A restricted browser context may not expose service-worker access.
+      });
+    }
+  </script>
+
   <!-- FlutterFire loads the compatible modular Firebase SDK. -->
   <script src="flutter_bootstrap.js" async></script>
   <script>

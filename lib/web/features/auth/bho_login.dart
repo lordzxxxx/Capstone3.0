@@ -42,36 +42,6 @@ class _BHOLoginState extends State<BHOLogin> {
     await _navigateToDashboard();
   }
 
-  Future<void> signInWithGoogle() async {
-    setState(() => _isLoading = true);
-    try {
-      // Use Firebase's built-in Google sign-in popup (works better for web)
-      GoogleAuthProvider googleProvider = GoogleAuthProvider();
-      googleProvider.addScope('email');
-      googleProvider.setCustomParameters({'login_hint': 'user@example.com'});
-
-      // Sign in with popup for web
-      final UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithPopup(googleProvider);
-
-      if (userCredential.user != null) {
-        await _showSuccessDialogAndNavigate();
-      }
-    } catch (e) {
-      Get.snackbar(
-        'Google Sign-In Failed',
-        'Failed to sign in with Google. Please try again.',
-        backgroundColor: const Color(0xFFD32F2F),
-        colorText: Colors.white,
-      );
-      debugPrint('Google Sign-In Error: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -148,43 +118,13 @@ class _BHOLoginState extends State<BHOLogin> {
           message = e.message ?? 'Login failed. Please try again.';
       }
 
-      // Build a helpful message; for credential/password errors suggest Google
       String displayMessage = kDebugMode ? '$message (${e.code})' : message;
-
-      // If the error indicates a credential/password issue, offer Google sign-in
-      if (e.code == 'invalid-credential' || e.code == 'wrong-password') {
-        displayMessage +=
-            '\nIf you originally signed up with Google, please use the Google sign-in button or reset your password.';
-
-        Get.snackbar(
-          'Login Failed',
-          displayMessage,
-          backgroundColor: const Color(0xFFD32F2F),
-          colorText: Colors.white,
-          mainButton: TextButton(
-            onPressed: _isLoading
-                ? null
-                : () {
-                    // Start Google sign-in flow
-                    signInWithGoogle();
-                  },
-            child: const Text(
-              'Sign in with Google',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        );
-      } else {
-        Get.snackbar(
-          'Login Failed',
-          displayMessage,
-          backgroundColor: const Color(0xFFD32F2F),
-          colorText: Colors.white,
-        );
-      }
+      Get.snackbar(
+        'Login Failed',
+        displayMessage,
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
 
       if (kDebugMode) {
         // ignore: avoid_print
@@ -230,10 +170,16 @@ class _BHOLoginState extends State<BHOLogin> {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isWideScreen ? 0 : 24,
-                    vertical: 40,
+                  padding: EdgeInsets.fromLTRB(
+                    isWideScreen ? 0 : 18,
+                    isWideScreen ? 40 : 72,
+                    isWideScreen ? 0 : 18,
+                    isWideScreen
+                        ? 40
+                        : 32 + MediaQuery.viewInsetsOf(context).bottom,
                   ),
                   child: isWideScreen
                       ? _buildWideScreenLayout(context)
@@ -397,12 +343,16 @@ class _BHOLoginState extends State<BHOLogin> {
 
   // Mobile layout
   Widget _buildMobileLayout(BuildContext context) {
+    final markSize = (MediaQuery.sizeOf(context).width * 0.3).clamp(
+      96.0,
+      132.0,
+    );
     return Column(
       children: [
         // Logo and title
         Container(
-          width: 100,
-          height: 100,
+          width: markSize,
+          height: markSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             boxShadow: [
@@ -416,8 +366,8 @@ class _BHOLoginState extends State<BHOLogin> {
           child: ClipOval(
             child: Image.asset(
               'assets/bg3.png',
-              width: 100,
-              height: 100,
+              width: markSize,
+              height: markSize,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
@@ -477,7 +427,7 @@ class _BHOLoginState extends State<BHOLogin> {
   // Login card widget
   Widget _buildLoginCard(BuildContext context, {required bool isCompact}) {
     return Container(
-      padding: EdgeInsets.all(isCompact ? 24 : 40),
+      padding: EdgeInsets.all(isCompact ? 18 : 40),
       decoration: BoxDecoration(
         color: _sidebarDark,
         borderRadius: BorderRadius.circular(24),
@@ -501,7 +451,7 @@ class _BHOLoginState extends State<BHOLogin> {
               Text(
                 'BHO Portal Login',
                 style: TextStyle(
-                  fontSize: isCompact ? 28 : 36,
+                  fontSize: isCompact ? 26 : 36,
                   fontWeight: FontWeight.bold,
                   color: _lightOffWhite,
                   letterSpacing: -0.5,
@@ -601,56 +551,7 @@ class _BHOLoginState extends State<BHOLogin> {
           ),
           const SizedBox(height: 24),
 
-          // Divider
-          Row(
-            children: [
-              Expanded(
-                child: Divider(color: _lightOffWhite.withValues(alpha: 0.2)),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'OR CONTINUE WITH',
-                  style: TextStyle(
-                    color: _lightOffWhite,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Divider(color: _lightOffWhite.withValues(alpha: 0.2)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Social Login Buttons
-          Row(
-            children: [
-              Expanded(
-                child: _buildSocialButtonLarge(
-                  label: 'Google',
-                  icon: Icons.g_mobiledata,
-                  color: const Color(0xFF4285F4),
-                  onTap: _isLoading ? null : signInWithGoogle,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildSocialButtonLarge(
-                  label: 'Facebook',
-                  icon: Icons.facebook,
-                  color: const Color(0xFF1877F3),
-                  onTap: () {
-                    // TODO: Implement Facebook sign-in
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
 
           // Back to landing
           OutlinedButton.icon(
@@ -815,52 +716,6 @@ class _BHOLoginState extends State<BHOLogin> {
             horizontal: 20,
             vertical: 18,
           ),
-        ),
-      ),
-    );
-  }
-
-  // Helper method for social login buttons (large with labels)
-  Widget _buildSocialButtonLarge({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: _panelSurface,
-          border: Border.all(
-            color: _primaryAqua.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: _lightOffWhite,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
-            ),
-          ],
         ),
       ),
     );

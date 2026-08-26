@@ -91,7 +91,9 @@ class _LandingPageState extends State<LandingPage>
       curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
     );
     if (_showIntroLoader) {
-      Future<void>.delayed(const Duration(milliseconds: 1150), () {
+      // Keep the first paint short on mobile. The loader is only a visual
+      // handoff; it should never make the sign-in choices feel delayed.
+      Future<void>.delayed(const Duration(milliseconds: 420), () {
         if (!mounted) return;
         setState(() => _showIntroLoader = false);
         _hasShownIntroLoader = true;
@@ -887,25 +889,29 @@ class _LandingPageState extends State<LandingPage>
     return LayoutBuilder(
       key: const ValueKey('landing_content'),
       builder: (context, constraints) {
-        final height = constraints.maxHeight;
         final isDesktop = constraints.maxWidth >= 980;
+        final isPhone = constraints.maxWidth < 640;
+        final isSmallPhone = constraints.maxWidth < 390;
+        final width = constraints.maxWidth;
         final logoSize = isDesktop
-            ? _responsive(height, 0.27, 220, 300)
-            : _responsive(height, 0.22, 160, 220);
+            ? _responsive(constraints.maxHeight, 0.27, 220, 300)
+            : (width * (isSmallPhone ? 0.34 : 0.38)).clamp(128.0, 178.0);
         final titleSize = isDesktop
-            ? _responsive(height, 0.086, 56, 96)
-            : _responsive(height, 0.064, 40, 60);
+            ? _responsive(constraints.maxHeight, 0.086, 56, 96)
+            : (width * 0.115).clamp(36.0, 48.0);
         final subtitleSize = isDesktop
-            ? _responsive(height, 0.022, 16, 23)
-            : _responsive(height, 0.019, 14, 19);
+            ? _responsive(constraints.maxHeight, 0.022, 16, 23)
+            : (width * 0.041).clamp(14.0, 17.0);
         final contentPadding = isDesktop
             ? EdgeInsets.symmetric(
                 horizontal: _responsive(constraints.maxWidth, 0.025, 22, 48),
-                vertical: _responsive(height, 0.014, 10, 18),
+                vertical: _responsive(constraints.maxHeight, 0.014, 10, 18),
               )
-            : EdgeInsets.symmetric(
-                horizontal: _responsive(constraints.maxWidth, 0.045, 14, 24),
-                vertical: _responsive(height, 0.012, 10, 16),
+            : EdgeInsets.fromLTRB(
+                isSmallPhone ? 14 : 18,
+                isPhone ? 74 : 52,
+                isSmallPhone ? 14 : 18,
+                12,
               );
 
         final hero = _fadeSlideIn(
@@ -969,7 +975,7 @@ class _LandingPageState extends State<LandingPage>
                   alignment: Alignment.topCenter,
                   child: SizedBox(width: constraints.maxWidth, child: hero),
                 ),
-                SizedBox(height: _responsive(height, 0.018, 10, 18)),
+                const SizedBox(height: 14),
                 _fadeSlideIn(
                   animation: _panelEntrance,
                   child: _buildAccessPanel(context, compact: true),
@@ -1083,11 +1089,17 @@ class _LandingPageState extends State<LandingPage>
   }
 
   Widget _buildAccessPanel(BuildContext context, {required bool compact}) {
+    final width = MediaQuery.sizeOf(context).width;
+    final panelPadding = compact && width < 390
+        ? 18.0
+        : compact
+        ? 22.0
+        : 36.0;
     return Container(
       constraints: compact ? null : const BoxConstraints(maxWidth: 500),
       padding: EdgeInsets.all(compact ? 0 : 40),
       child: Container(
-        padding: EdgeInsets.all(compact ? 24 : 36),
+        padding: EdgeInsets.all(panelPadding),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
@@ -1122,7 +1134,7 @@ class _LandingPageState extends State<LandingPage>
                 color: _mutedCoolGray,
               ),
             ),
-            SizedBox(height: compact ? 22 : 28),
+            SizedBox(height: compact ? 18 : 28),
             _buildActionButton(
               context: context,
               label: 'Login as BHW',
@@ -1132,7 +1144,7 @@ class _LandingPageState extends State<LandingPage>
                 Get.toNamed(WebRoutes.bhwLogin);
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: compact ? 10 : 16),
             _buildActionButton(
               context: context,
               label: 'Login as CHO',
@@ -1142,7 +1154,7 @@ class _LandingPageState extends State<LandingPage>
                 Get.toNamed(WebRoutes.choLogin);
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: compact ? 10 : 16),
             _buildActionButton(
               context: context,
               label: 'Create Account',
@@ -1158,7 +1170,7 @@ class _LandingPageState extends State<LandingPage>
                 );
               },
             ),
-            SizedBox(height: compact ? 20 : 24),
+            SizedBox(height: compact ? 16 : 24),
             Text(
               '(c) 2026 AI-DSUHIS. All rights reserved.',
               style: _body(
@@ -1225,8 +1237,9 @@ class _LandingPageState extends State<LandingPage>
     // Flat, solid navy for both variants — primary is fully filled, secondary
     // is a light tint of the same color — instead of the previous teal
     // gradient + neutral-gray split, for a cleaner, single-color system.
+    final isCompact = MediaQuery.sizeOf(context).width < 980;
     return Container(
-      height: 56,
+      height: isCompact ? 52 : 56,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         color: isPrimary ? _darkBlue : _darkBlue.withValues(alpha: 0.06),

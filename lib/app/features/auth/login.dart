@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/app/shell/landing.dart';
 import 'package:mycapstone_project/app/core/services/mobile_sync_bootstrap.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,12 +25,6 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  // Replace this with the OAuth 2.0 Client ID (Web application) from
-  // Google Cloud / Firebase console (looks like "...apps.googleusercontent.com").
-  // Required on Android for server-side auth flows.
-  static const String _googleServerClientId =
-      '628319595773-o2goeoicefu66u0kdpe1mcvf1q7jmn4l.apps.googleusercontent.com';
-  static bool _googleInitialized = false;
   static const String _roleCacheKeyPrefix = 'verified_role_';
   String _roleCacheKey(String uid) => '$_roleCacheKeyPrefix$uid';
 
@@ -85,99 +78,6 @@ class _LoginState extends State<Login> {
     // account's canonical backend role or custom claims.
     await _cacheMobileBhwRole(user);
     await _completeLoginFlow();
-  }
-
-  Future<void> signInWithGoogle() async {
-    if (_isLoading) return;
-    setState(() => _isLoading = true);
-    try {
-      User? user;
-
-      if (kIsWeb) {
-        final googleProvider = GoogleAuthProvider()
-          ..addScope('email')
-          ..setCustomParameters({'login_hint': 'user@example.com'});
-
-        final userCredential = await FirebaseAuth.instance.signInWithPopup(
-          googleProvider,
-        );
-        user = userCredential.user;
-      } else {
-        if (!_googleInitialized) {
-          await GoogleSignIn.instance.initialize(
-            serverClientId: _googleServerClientId,
-          );
-          _googleInitialized = true;
-        }
-
-        final GoogleSignInAccount account = await GoogleSignIn.instance
-            .authenticate();
-
-        final GoogleSignInAuthentication auth = account.authentication;
-
-        if (auth.idToken == null || auth.idToken!.isEmpty) {
-          throw FirebaseAuthException(
-            code: 'google-id-token-missing',
-            message:
-                'Google did not return an ID token. Check the Android OAuth client configuration.',
-          );
-        }
-
-        final AuthCredential credential = GoogleAuthProvider.credential(
-          idToken: auth.idToken,
-        );
-
-        final userCredential = await FirebaseAuth.instance.signInWithCredential(
-          credential,
-        );
-        user = userCredential.user;
-      }
-
-      if (user == null) {
-        throw FirebaseAuthException(
-          code: 'user-not-found',
-          message: 'Sign in succeeded but no user session found.',
-        );
-      }
-
-      await _finalizeAuthenticatedLogin(user);
-    } on GoogleSignInException catch (gse) {
-      if (gse.code == GoogleSignInExceptionCode.canceled) {
-        Get.snackbar(
-          'Google Sign-In Canceled',
-          'The Google account window was closed. If this appears after you select an account, update the Android SHA-1 and google-services.json in Firebase.',
-          backgroundColor: const Color(0xFFF57C00),
-          colorText: Colors.white,
-          duration: const Duration(seconds: 7),
-        );
-        return;
-      }
-
-      final configurationError =
-          gse.code == GoogleSignInExceptionCode.clientConfigurationError ||
-          gse.code == GoogleSignInExceptionCode.providerConfigurationError;
-      Get.snackbar(
-        'Google Sign-In Failed',
-        configurationError
-            ? 'Google authentication is not configured for this Android build. Add its SHA-1 in Firebase and download the updated google-services.json.'
-            : (gse.description ??
-                  'Google authentication could not be completed.'),
-        backgroundColor: const Color(0xFFD32F2F),
-        colorText: Colors.white,
-        duration: const Duration(seconds: 6),
-      );
-    } catch (e) {
-      Get.snackbar(
-        'Google Sign-In Failed',
-        e.toString(),
-        backgroundColor: const Color(0xFFD32F2F),
-        colorText: Colors.white,
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
   }
 
   /// Sign in with a Firebase-configured OAuth provider.  The provider is
@@ -412,15 +312,6 @@ class _LoginState extends State<Login> {
           const SizedBox(height: 20),
           const AuthDivider(),
           const SizedBox(height: 14),
-          SizedBox(
-            height: 50,
-            child: OutlinedButton.icon(
-              onPressed: _isLoading ? null : signInWithGoogle,
-              icon: const Icon(Icons.g_mobiledata_rounded, size: 27),
-              label: const Text('Continue with Google'),
-            ),
-          ),
-          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(

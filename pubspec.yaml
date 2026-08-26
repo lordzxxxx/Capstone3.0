@@ -45,7 +45,6 @@ dependencies:
   cloud_functions: ^6.0.6
   get: ^4.7.3
   google_fonts: ^6.2.1
-  google_sign_in: ^7.2.0
   fl_chart: ^1.1.1
   community_charts_flutter: ^1.0.4
   sqflite: ^2.4.1

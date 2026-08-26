@@ -512,9 +512,14 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
                 child: SingleChildScrollView(
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
-                  // Generous top padding keeps the form floating clear of the
-                  // back button instead of butting up against the top edge.
-                  padding: const EdgeInsets.fromLTRB(24, 96, 24, 72),
+                  // Keep the form clear of the back button and leave room for
+                  // the on-screen keyboard when a field receives focus.
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    84,
+                    20,
+                    48 + MediaQuery.viewInsetsOf(context).bottom,
+                  ),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 1180),
@@ -841,78 +846,85 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
     required String number,
     required String title,
     required List<Widget> children,
-  }) => Container(
-    width: double.infinity,
-    margin: const EdgeInsets.only(bottom: 16),
-    padding: const EdgeInsets.all(24),
-    decoration: BoxDecoration(
-      color: _surface,
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: _border),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.06),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text(
-              number,
-              style: const TextStyle(
-                fontFamily: 'Manrope',
-                color: _aqua,
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
+  }) {
+    final compact = MediaQuery.sizeOf(context).width < 600;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.all(compact ? 16 : 24),
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                number,
+                style: const TextStyle(
+                  fontFamily: 'Manrope',
+                  color: _aqua,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              title,
-              style: const TextStyle(
-                fontFamily: 'Manrope',
-                color: _ink,
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    color: _ink,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 22),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 900
-                ? 3
-                : constraints.maxWidth >= 580
-                ? 2
-                : 1;
-            final width = columns == 1
-                ? constraints.maxWidth
-                : (constraints.maxWidth - (columns - 1) * 16) / columns;
-            return Wrap(
-              spacing: 16,
-              runSpacing: 18,
-              children: children
-                  .map(
-                    (child) => SizedBox(
-                      width: child is _WideField ? constraints.maxWidth : width,
-                      child: child,
-                    ),
-                  )
-                  .toList(),
-            );
-          },
-        ),
-      ],
-    ),
-  );
+            ],
+          ),
+          const SizedBox(height: 22),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 900
+                  ? 3
+                  : constraints.maxWidth >= 580
+                  ? 2
+                  : 1;
+              final width = columns == 1
+                  ? constraints.maxWidth
+                  : (constraints.maxWidth - (columns - 1) * 16) / columns;
+              return Wrap(
+                spacing: 16,
+                runSpacing: 18,
+                children: children
+                    .map(
+                      (child) => SizedBox(
+                        width: child is _WideField
+                            ? constraints.maxWidth
+                            : width,
+                        child: child,
+                      ),
+                    )
+                    .toList(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _field(
     TextEditingController controller,
