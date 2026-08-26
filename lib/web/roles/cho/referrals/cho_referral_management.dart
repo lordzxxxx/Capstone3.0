@@ -34,6 +34,13 @@ import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 /// doctor-registry management, filters, and PDF printing this page
 /// doesn't have. See that file's doc comment for the full explanation —
 /// this is a known, documented divergence, not an oversight.
+class _DoctorDirectoryEntry {
+  _DoctorDirectoryEntry({required this.data, required this.references});
+
+  final Map<String, dynamic> data;
+  final List<DocumentReference<Map<String, dynamic>>> references;
+}
+
 class CHOPreferralPage extends StatefulWidget {
   const CHOPreferralPage({super.key});
 
@@ -51,8 +58,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
   bool _loadingScope = true;
   String? _accessError;
   Stream<QuerySnapshot<Map<String, dynamic>>>? _stream;
-  List<QueryDocumentSnapshot<Map<String, dynamic>>> _doctorDirectory =
-      <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+  List<_DoctorDirectoryEntry> _doctorDirectory = <_DoctorDirectoryEntry>[];
   bool _loadingDoctorDirectory = false;
   String? _requestedReferralId;
   bool _requestedReferralOpened = false;
@@ -303,20 +309,65 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
   Future<void> _loadDoctorDirectory() async {
     if (mounted) setState(() => _loadingDoctorDirectory = true);
     try {
-      final snapshot = await _firestore
+      final entries = <String, _DoctorDirectoryEntry>{};
+
+      String keyFor(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final data = doc.data();
+        final uid = _s(data, ['userUid', 'uid', 'userId']).toLowerCase();
+        if (uid.isNotEmpty) return 'uid:$uid';
+        final email = _s(data, ['email']).toLowerCase();
+        if (email.isNotEmpty) return 'email:$email';
+        final name = _s(data, [
+          'fullName',
+          'username',
+          'displayName',
+        ]).toLowerCase();
+        if (name.isNotEmpty) return 'name:$name';
+        return doc.reference.path;
+      }
+
+      void mergeDocs(
+        Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+      ) {
+        for (final doc in docs) {
+          final key = keyFor(doc);
+          final existing = entries[key];
+          if (existing == null) {
+            entries[key] = _DoctorDirectoryEntry(
+              data: <String, dynamic>{...doc.data()},
+              references: <DocumentReference<Map<String, dynamic>>>[
+                doc.reference,
+              ],
+            );
+          } else {
+            // Prefer the users record for overlapping account fields, while
+            // retaining registry-only fields such as availability/specialty.
+            existing.data.addAll(doc.data());
+            existing.references.add(doc.reference);
+          }
+        }
+      }
+
+      final registrySnapshot = await _firestore
+          .collection('doctor_registry')
+          .get();
+      mergeDocs(registrySnapshot.docs);
+      final usersSnapshot = await _firestore
           .collection('users')
           .where('role', whereIn: const <String>['DOCTOR', 'doctor'])
           .get();
-      final doctors = snapshot.docs.toList()
+      mergeDocs(usersSnapshot.docs);
+
+      final doctors = entries.values.toList()
         ..sort(
           (a, b) =>
-              _s(a.data(), [
+              _s(a.data, [
                 'fullName',
                 'username',
                 'displayName',
                 'email',
               ], fallback: 'Doctor').toLowerCase().compareTo(
-                _s(b.data(), [
+                _s(b.data, [
                   'fullName',
                   'username',
                   'displayName',
@@ -337,8 +388,8 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
 
   Widget _doctorDirectoryPanel() {
     final activeDoctors = _doctorDirectory
-        .where((doc) {
-          final data = doc.data();
+        .where((doctor) {
+          final data = doctor.data;
           final accountStatus = _s(data, [
             'accountStatus',
           ], fallback: 'active').toLowerCase().replaceAll('-', '_');
@@ -433,10 +484,8 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
     );
   }
 
-  Widget _doctorDirectoryCard(
-    QueryDocumentSnapshot<Map<String, dynamic>> doctor,
-  ) {
-    final data = doctor.data();
+  Widget _doctorDirectoryCard(_DoctorDirectoryEntry doctor) {
+    final data = doctor.data;
     final name = _s(data, [
       'fullName',
       'username',
@@ -684,10 +733,8 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
     specialization.dispose();
   }
 
-  Future<void> _showEditDoctorDialog(
-    QueryDocumentSnapshot<Map<String, dynamic>> doctor,
-  ) async {
-    final data = doctor.data();
+  Future<void> _showEditDoctorDialog(_DoctorDirectoryEntry doctor) async {
+    final data = doctor.data;
     final name = TextEditingController(
       text: _s(data, [
         'fullName',
@@ -780,7 +827,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                       }
                       setDialogState(() => saving = true);
                       try {
-                        await doctor.reference.set({
+                        final update = <String, dynamic>{
                           'fullName': name.text.trim(),
                           'username': name.text.trim(),
                           'displayName': name.text.trim(),
@@ -790,7 +837,13 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                           'doctorAvailability': availability,
                           'status': availability,
                           'updatedAt': FieldValue.serverTimestamp(),
-                        }, SetOptions(merge: true));
+                        };
+                        await Future.wait(
+                          doctor.references.map(
+                            (reference) =>
+                                reference.set(update, SetOptions(merge: true)),
+                          ),
+                        );
                         if (dialogContext.mounted) Navigator.pop(dialogContext);
                         await _loadDoctorDirectory();
                         _snack('Doctor details updated.');
@@ -814,9 +867,9 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
   }
 
   Future<void> _showDoctorAvailabilityDialog(
-    QueryDocumentSnapshot<Map<String, dynamic>> doctor,
+    _DoctorDirectoryEntry doctor,
   ) async {
-    final data = doctor.data();
+    final data = doctor.data;
     var availability = _s(data, [
       'availability',
       'doctorAvailability',
@@ -867,20 +920,23 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       ),
     );
     if (saved != true) return;
-    await doctor.reference.set({
+    final update = <String, dynamic>{
       'availability': availability,
       'doctorAvailability': availability,
       'status': availability,
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+    await Future.wait(
+      doctor.references.map(
+        (reference) => reference.set(update, SetOptions(merge: true)),
+      ),
+    );
     await _loadDoctorDirectory();
     if (mounted) _snack('Doctor availability updated.');
   }
 
-  Future<void> _deactivateDoctor(
-    QueryDocumentSnapshot<Map<String, dynamic>> doctor,
-  ) async {
-    final name = _s(doctor.data(), [
+  Future<void> _deactivateDoctor(_DoctorDirectoryEntry doctor) async {
+    final name = _s(doctor.data, [
       'fullName',
       'username',
       'displayName',
@@ -915,14 +971,19 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       ),
     );
     if (confirmed != true) return;
-    await doctor.reference.set({
+    final update = <String, dynamic>{
       'accountStatus': 'inactive',
       'isArchived': true,
       'availability': 'unavailable',
       'doctorAvailability': 'unavailable',
       'status': 'unavailable',
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+    await Future.wait(
+      doctor.references.map(
+        (reference) => reference.set(update, SetOptions(merge: true)),
+      ),
+    );
     await _loadDoctorDirectory();
     if (mounted) _snack('Doctor deactivated and removed from new assignments.');
   }
