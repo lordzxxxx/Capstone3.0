@@ -19,6 +19,7 @@ import 'package:mycapstone_project/web/shared/services/user_access_scope_service
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/widgets/sidebar_page_transition.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_navigation_coordinator.dart';
 import 'package:mycapstone_project/web/shared/widgets/bhw_notifications.dart';
 import 'package:mycapstone_project/web/shared/widgets/bhw_apk_download_action.dart';
 import 'package:mycapstone_project/web/shared/components/web_navigation_item.dart';
@@ -448,22 +449,22 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
     String? routeName,
   }) {
     return () async {
-      final navigator = Navigator.of(context);
-
       if (widget.activeItem == targetItem) return;
+      await WebNavigationCoordinator.run(context, () async {
+        if (routeName != null) {
+          final navigation = Get.offNamed<void>(routeName);
+          if (navigation != null) await navigation;
+          return;
+        }
 
-      if (routeName != null) {
-        await Get.offNamed(routeName);
-        return;
-      }
-
-      await navigator.pushReplacement(
-        buildSidebarPageRoute(
-          page: pageBuilder(),
-          begin: Offset.zero,
-          routeName: routeName,
-        ),
-      );
+        await Navigator.of(context).pushReplacement(
+          buildSidebarPageRoute(
+            page: pageBuilder(),
+            begin: Offset.zero,
+            routeName: routeName,
+          ),
+        );
+      });
     };
   }
 

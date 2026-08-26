@@ -8,9 +8,12 @@ Route<T> buildSidebarPageRoute<T>({
   return PageRouteBuilder<T>(
     settings: routeName == null ? null : RouteSettings(name: routeName),
     pageBuilder: (context, animation, secondaryAnimation) => page,
-    transitionDuration: const Duration(milliseconds: 200),
-    reverseTransitionDuration: const Duration(milliseconds: 180),
+    transitionDuration: const Duration(milliseconds: 180),
+    reverseTransitionDuration: const Duration(milliseconds: 160),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+        return child;
+      }
       final fadeAnimation = Tween<double>(
         begin: 0.0,
         end: 1.0,

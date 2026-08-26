@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:mycapstone_project/web/features/auth/cho_access_session.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
@@ -8,6 +7,7 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/components/web_navigation_item.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_navigation_coordinator.dart';
 
 class ChoNavigationDrawer extends StatefulWidget {
   final ChoDestination current;
@@ -477,13 +477,19 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
       label: label,
       isActive: isSelected,
       isCollapsed: isCollapsed,
-      onTap: () => _navigateToDestination(destination),
+      onTap: () => _navigateToDestination(context, destination),
     );
   }
 
-  void _navigateToDestination(ChoDestination destination) {
+  Future<void> _navigateToDestination(
+    BuildContext context,
+    ChoDestination destination,
+  ) async {
     if (destination == widget.current) return;
-    Get.offNamed(WebRoutes.choDestination(destination));
+    await WebNavigationCoordinator.goToNamed(
+      context,
+      WebRoutes.choDestination(destination),
+    );
   }
 
   Widget _buildLogoutButton(BuildContext drawerContext, bool isCollapsed) {

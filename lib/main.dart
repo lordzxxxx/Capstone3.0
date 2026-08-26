@@ -59,6 +59,7 @@ import 'package:mycapstone_project/web/features/auth/bhw_registration.dart'
 import 'package:mycapstone_project/web/features/auth/forgot.dart' as web_forgot;
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_page_transition.dart';
 import 'package:mycapstone_project/web/shared/utils/browser_location.dart';
 import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart'
     as web_bhw_dashboard;
@@ -329,7 +330,8 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.light,
       debugShowCheckedModeBanner: false,
       defaultTransition: kIsWeb ? Transition.fadeIn : null,
-      transitionDuration: kIsWeb ? const Duration(milliseconds: 200) : null,
+      customTransition: kIsWeb ? WebPageTransition() : null,
+      transitionDuration: kIsWeb ? const Duration(milliseconds: 180) : null,
       // Move the root entry to the branded path while preserving direct deep
       // links such as /login and /bhw/dashboard.
       initialRoute: initialRoute,

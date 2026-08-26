@@ -22,6 +22,7 @@ import 'package:mycapstone_project/web/shared/components/web_data_components.dar
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_navigation_coordinator.dart';
 
 // Names are historical (dashboard was dark-themed); values now point at the
 // white-card system used across the rest of the app. _darkDeepTeal/_panelTeal/
@@ -2338,7 +2339,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   _buildHeroAction(
                     icon: Icons.assignment_ind_outlined,
                     label: 'Referral workspace',
-                    onTap: () => Get.offNamed(WebRoutes.choReferrals),
+                    onTap: () => WebNavigationCoordinator.goToNamed(
+                      context,
+                      WebRoutes.choReferrals,
+                    ),
                     primary: true,
                   ),
                   _buildHeroAction(
@@ -3780,7 +3784,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: () => Get.offNamed(WebRoutes.choReferrals),
+                  onPressed: () => WebNavigationCoordinator.goToNamed(
+                    context,
+                    WebRoutes.choReferrals,
+                  ),
                   icon: const Icon(Icons.open_in_new_rounded, size: 16),
                   label: const Text('Open referrals'),
                 ),
