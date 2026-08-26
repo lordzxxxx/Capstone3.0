@@ -177,6 +177,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
   int _doctorAvailabilityDuration = 60;
   String _doctorSpecialtyFilter = 'All specialties';
   bool _isCheckingDoctorAvailability = false;
+  bool _showDoctorAvailabilityResults = true;
   String? _doctorAvailabilityError;
   List<Map<String, dynamic>> _doctorAvailabilityResults =
       <Map<String, dynamic>>[];
@@ -2279,6 +2280,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
   Future<void> _checkDoctorAvailability() async {
     setState(() {
       _isCheckingDoctorAvailability = true;
+      _showDoctorAvailabilityResults = true;
       _doctorAvailabilityError = null;
     });
     try {
@@ -2308,6 +2310,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       setState(() {
         _doctorAvailabilityResults = results;
         _isCheckingDoctorAvailability = false;
+        _showDoctorAvailabilityResults = true;
         if (doctors.isEmpty) {
           _doctorAvailabilityError =
               'No active doctors were found in the CHO directory.';
@@ -3803,6 +3806,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     child: FilledButton.icon(
                       onPressed: _isCheckingDoctorAvailability
                           ? null
+                          : _doctorAvailabilityResults.isNotEmpty
+                          ? () => setState(
+                              () => _showDoctorAvailabilityResults =
+                                  !_showDoctorAvailabilityResults,
+                            )
                           : _checkDoctorAvailability,
                       icon: _isCheckingDoctorAvailability
                           ? const SizedBox(
@@ -3813,10 +3821,18 @@ class _ChoDashboardState extends State<ChoDashboard> {
                                 color: _lightOffWhite,
                               ),
                             )
-                          : const Icon(Icons.manage_search_rounded),
+                          : Icon(
+                              _doctorAvailabilityResults.isNotEmpty &&
+                                      _showDoctorAvailabilityResults
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.manage_search_rounded,
+                            ),
                       label: Text(
                         _isCheckingDoctorAvailability
                             ? 'Checking...'
+                            : _doctorAvailabilityResults.isNotEmpty &&
+                                  _showDoctorAvailabilityResults
+                            ? 'Hide doctors'
                             : 'Check doctors',
                       ),
                       style: FilledButton.styleFrom(
@@ -3848,115 +3864,127 @@ class _ChoDashboardState extends State<ChoDashboard> {
               ),
             ),
           ],
-          const SizedBox(height: 18),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxWidth < 620;
-              final heading = Text(
-                'Availability for ${_dateLabel(requestedDateTime)} at ${_timeLabel(_doctorAvailabilityTime)}',
-                style: const TextStyle(
-                  color: ChoColors.text,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              );
-              final referralsButton = TextButton.icon(
-                onPressed: () => WebNavigationCoordinator.goToNamed(
-                  context,
-                  WebRoutes.choReferrals,
-                ),
-                icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                label: const Text('Open referrals'),
-              );
-              return compact
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[heading, referralsButton],
-                    )
-                  : Row(
-                      children: <Widget>[
-                        Expanded(child: heading),
-                        referralsButton,
-                      ],
-                    );
-            },
-          ),
-          const SizedBox(height: 10),
-          if (_isCheckingDoctorAvailability)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 26),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: ChoColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(color: ChoColors.border),
-              ),
-              child: const Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Loading referral doctor availability...',
-                    style: TextStyle(color: ChoColors.muted, fontSize: 11),
-                  ),
-                ],
-              ),
-            )
-          else if (_doctorAvailabilityResults.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-              decoration: BoxDecoration(
-                color: ChoColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(color: ChoColors.border),
-              ),
-              child: Text(
-                'No availability results yet. Adjust the filters and select “Check doctors”.',
-                style: const TextStyle(
-                  color: ChoColors.muted,
-                  fontSize: 11,
-                  height: 1.4,
-                ),
-              ),
-            )
-          else
+          if (_showDoctorAvailabilityResults) ...<Widget>[
+            const SizedBox(height: 18),
             LayoutBuilder(
               builder: (context, constraints) {
-                final cardWidth = constraints.maxWidth > 1000
-                    ? (constraints.maxWidth - 20) / 3
-                    : constraints.maxWidth > 620
-                    ? (constraints.maxWidth - 10) / 2
-                    : constraints.maxWidth;
-                return Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: _doctorAvailabilityResults
-                      .map(
-                        (doctor) => SizedBox(
-                          width: cardWidth,
-                          child: _buildDoctorAvailabilityResult(doctor),
-                        ),
-                      )
-                      .toList(growable: false),
+                final compact = constraints.maxWidth < 620;
+                final heading = Text(
+                  'Availability for ${_dateLabel(requestedDateTime)} at ${_timeLabel(_doctorAvailabilityTime)}',
+                  style: const TextStyle(
+                    color: ChoColors.text,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 );
+                final referralsButton = TextButton.icon(
+                  onPressed: () => WebNavigationCoordinator.goToNamed(
+                    context,
+                    WebRoutes.choReferrals,
+                  ),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                  label: const Text('Open referrals'),
+                );
+                return compact
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[heading, referralsButton],
+                      )
+                    : Row(
+                        children: <Widget>[
+                          Expanded(child: heading),
+                          referralsButton,
+                        ],
+                      );
               },
             ),
-          const SizedBox(height: 12),
-          Text(
-            'Availability is planning guidance. A result based only on directory status must be confirmed with the doctor before final referral assignment.',
-            style: TextStyle(
-              color: ChoColors.muted,
-              fontSize: 9.5,
-              height: 1.35,
+            const SizedBox(height: 10),
+            if (_isCheckingDoctorAvailability)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 26),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: ChoColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(13),
+                  border: Border.all(color: ChoColors.border),
+                ),
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Loading referral doctor availability...',
+                      style: TextStyle(color: ChoColors.muted, fontSize: 11),
+                    ),
+                  ],
+                ),
+              )
+            else if (_doctorAvailabilityResults.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 18,
+                ),
+                decoration: BoxDecoration(
+                  color: ChoColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(13),
+                  border: Border.all(color: ChoColors.border),
+                ),
+                child: Text(
+                  'No availability results yet. Adjust the filters and select “Check doctors”.',
+                  style: const TextStyle(
+                    color: ChoColors.muted,
+                    fontSize: 11,
+                    height: 1.4,
+                  ),
+                ),
+              )
+            else
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final cardWidth = constraints.maxWidth > 1000
+                      ? (constraints.maxWidth - 20) / 3
+                      : constraints.maxWidth > 620
+                      ? (constraints.maxWidth - 10) / 2
+                      : constraints.maxWidth;
+                  return Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: _doctorAvailabilityResults
+                        .map(
+                          (doctor) => SizedBox(
+                            width: cardWidth,
+                            child: _buildDoctorAvailabilityResult(doctor),
+                          ),
+                        )
+                        .toList(growable: false),
+                  );
+                },
+              ),
+            const SizedBox(height: 12),
+            Text(
+              'Availability is planning guidance. A result based only on directory status must be confirmed with the doctor before final referral assignment.',
+              style: TextStyle(
+                color: ChoColors.muted,
+                fontSize: 9.5,
+                height: 1.35,
+              ),
             ),
-          ),
+          ] else
+            const Padding(
+              padding: EdgeInsets.only(top: 14),
+              child: Text(
+                'Doctor list hidden. Select “Check doctors” to show availability.',
+                style: TextStyle(color: ChoColors.muted, fontSize: 11),
+              ),
+            ),
         ],
       ),
     );
