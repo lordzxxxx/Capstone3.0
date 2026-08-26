@@ -356,7 +356,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       decoration: BoxDecoration(
         color: ChoColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ChoColors.border),
+        border: Border.all(color: ChoColors.navBackground),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,12 +375,17 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                 ),
               ),
               Text(
-                '${activeDoctors.length} active',
-                style: const TextStyle(color: ChoColors.muted),
+                '${activeDoctors.length} active doctors',
+                style: const TextStyle(
+                  color: ChoColors.text,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               FilledButton.icon(
                 onPressed: _showCreateDoctorDialog,
-                style: AppButtonStyles.primary(),
+                style: AppButtonStyles.primary(
+                  background: ChoColors.navBackground,
+                ),
                 icon: const Icon(Icons.person_add_alt_1_outlined),
                 label: const Text('Add doctor'),
               ),
@@ -451,14 +456,20 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       'status',
     ], fallback: 'available').toLowerCase().replaceAll(RegExp(r'[\s-]+'), '_');
     final unavailable =
-        availability.contains('unavailable') || availability.contains('leave');
-    final statusColor = unavailable ? Colors.red : Colors.green;
+        availability.contains('unavailable') ||
+        availability.contains('leave') ||
+        availability == 'busy' ||
+        availability == 'inactive';
+    final statusIcon = unavailable
+        ? Icons.cancel_rounded
+        : Icons.check_circle_rounded;
+    final statusLabel = unavailable ? 'Not available' : 'Available';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: ChoColors.canvas,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: ChoColors.border),
+        border: Border.all(color: ChoColors.navBackground),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -472,31 +483,41 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
               fontWeight: FontWeight.w800,
             ),
           ),
+          const SizedBox(height: 8),
+          const Text(
+            'Email address',
+            style: TextStyle(
+              color: ChoColors.text,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
           const SizedBox(height: 4),
           Text(
             email,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: ChoColors.muted, fontSize: 12),
+            style: const TextStyle(color: ChoColors.text, fontSize: 12),
           ),
           const SizedBox(height: 10),
+          const Text(
+            'Specialization',
+            style: TextStyle(
+              color: ChoColors.text,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
           Wrap(
             spacing: 6,
             runSpacing: 6,
             children: [
-              Chip(
-                label: Text(specialization),
-                visualDensity: VisualDensity.compact,
-                labelStyle: const TextStyle(
-                  color: ChoColors.text,
-                  fontSize: 11,
-                ),
+              _doctorDetailPill(
+                icon: Icons.medical_services_outlined,
+                label: specialization,
               ),
-              Chip(
-                label: Text(_title(availability)),
-                visualDensity: VisualDensity.compact,
-                labelStyle: TextStyle(color: statusColor, fontSize: 11),
-              ),
+              _doctorDetailPill(icon: statusIcon, label: statusLabel),
             ],
           ),
           const SizedBox(height: 8),
@@ -506,13 +527,13 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
             children: [
               OutlinedButton.icon(
                 onPressed: () => _showEditDoctorDialog(doctor),
-                style: AppButtonStyles.outline(),
+                style: _doctorOutlineButtonStyle(),
                 icon: const Icon(Icons.edit_outlined, size: 17),
                 label: const Text('Edit'),
               ),
               OutlinedButton.icon(
                 onPressed: () => _showDoctorAvailabilityDialog(doctor),
-                style: AppButtonStyles.outline(),
+                style: _doctorOutlineButtonStyle(),
                 icon: const Icon(Icons.event_available_outlined, size: 17),
                 label: const Text('Availability'),
               ),
@@ -530,6 +551,44 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _doctorDetailPill({required IconData icon, required String label}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: ChoColors.navBackground),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: ChoColors.text, size: 15),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: ChoColors.text,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  ButtonStyle _doctorOutlineButtonStyle() {
+    return OutlinedButton.styleFrom(
+      foregroundColor: ChoColors.text,
+      backgroundColor: Colors.white,
+      side: const BorderSide(color: ChoColors.navBackground),
+      minimumSize: const Size(48, 44),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      textStyle: const TextStyle(fontWeight: FontWeight.w700),
     );
   }
 
@@ -574,6 +633,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                     'available': 'Available',
                     'busy': 'Busy',
                     'limited': 'Limited',
+                    'on_leave': 'On leave',
                     'unavailable': 'Unavailable',
                   },
                   onChanged: (value) =>
@@ -655,6 +715,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       'available',
       'busy',
       'limited',
+      'on_leave',
       'unavailable',
     }.contains(availability)) {
       availability = 'available';
@@ -698,6 +759,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                     'available': 'Available',
                     'busy': 'Busy',
                     'limited': 'Limited',
+                    'on_leave': 'On leave',
                     'unavailable': 'Unavailable',
                   },
                   onChanged: (value) =>
@@ -768,6 +830,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       'available',
       'busy',
       'limited',
+      'on_leave',
       'unavailable',
     }.contains(availability)) {
       availability = 'available';
@@ -788,6 +851,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
               'available': 'Available',
               'busy': 'Busy',
               'limited': 'Limited',
+              'on_leave': 'On leave',
               'unavailable': 'Unavailable',
             },
             onChanged: (value) => setDialogState(() => availability = value),

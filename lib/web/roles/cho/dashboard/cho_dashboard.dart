@@ -1899,7 +1899,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 'available')
             .toString()
             .trim()
-            .toLowerCase();
+            .toLowerCase()
+            .replaceAll(RegExp(r'[\s-]+'), '_');
     return value.isEmpty ? 'available' : value;
   }
 
@@ -2092,7 +2093,15 @@ class _ChoDashboardState extends State<ChoDashboard> {
       Duration(minutes: _doctorAvailabilityDuration),
     );
     final status = _doctorStatus(doctor);
-    if (status == 'unavailable' || status == 'busy' || status == 'inactive') {
+    if ({
+      'unavailable',
+      'inactive',
+      'busy',
+      'on_leave',
+      'leave',
+      'off_duty',
+      'deactivated',
+    }.contains(status)) {
       return <String, dynamic>{
         ...doctor,
         '_isAvailable': false,
@@ -2209,7 +2218,15 @@ class _ChoDashboardState extends State<ChoDashboard> {
   /// availability; it only describes what is actually on file.
   String _doctorScheduleSummary(Map<String, dynamic> doctor) {
     final status = _doctorStatus(doctor);
-    if (status == 'unavailable' || status == 'inactive') {
+    if ({
+      'unavailable',
+      'inactive',
+      'busy',
+      'on_leave',
+      'leave',
+      'off_duty',
+      'deactivated',
+    }.contains(status)) {
       return 'Marked unavailable in the doctor directory';
     }
 
@@ -2604,7 +2621,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
               title: 'Completed Referrals',
               value: _safeMetricText(_referralsCompleted),
               context: 'Referrals completed by the care team',
-              icon: Icons.task_alt_outlined,
+              // Keep this on a broadly supported Material glyph. The former
+              // task_alt outline did not render in the deployed web icon font.
+              icon: Icons.check_circle_outline_rounded,
               color: ChoColors.aqua,
               onTap: () => WebNavigationCoordinator.goToNamed(
                 context,
@@ -2864,7 +2883,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       decoration: BoxDecoration(
         color: ChoColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: ChoColors.border),
+        border: Border.all(color: ChoColors.navBackground),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -3541,7 +3560,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       decoration: BoxDecoration(
         color: _panelTeal,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: ChoColors.border),
+        border: Border.all(color: ChoColors.navBackground),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -3603,15 +3622,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   vertical: 9,
                 ),
                 decoration: BoxDecoration(
-                  color: availableCount > 0
-                      ? const Color(0xFFE9F8EF)
-                      : ChoColors.surfaceAlt,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: availableCount > 0
-                        ? const Color(0xFF9AD8B0)
-                        : ChoColors.border,
-                  ),
+                  border: Border.all(color: ChoColors.navBackground),
                 ),
                 child: Text(
                   _isCheckingDoctorAvailability
@@ -3619,14 +3632,29 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       : _doctorAvailabilityResults.isEmpty
                       ? 'Ready to check'
                       : '$availableCount available',
-                  style: TextStyle(
-                    color: availableCount > 0
-                        ? const Color(0xFF16803A)
-                        : ChoColors.muted,
+                  style: const TextStyle(
+                    color: ChoColors.text,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
+              );
+              final manageDoctorsButton = OutlinedButton.icon(
+                onPressed: () => WebNavigationCoordinator.goToNamed(
+                  context,
+                  WebRoutes.choReferrals,
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ChoColors.text,
+                  backgroundColor: Colors.white,
+                  side: const BorderSide(color: ChoColors.navBackground),
+                  minimumSize: const Size(48, 44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.edit_note_rounded, size: 17),
+                label: const Text('Manage doctors'),
               );
               if (compact) {
                 return Column(
@@ -3634,7 +3662,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   children: <Widget>[
                     heading,
                     const SizedBox(height: 12),
-                    resultBadge,
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
+                      children: <Widget>[resultBadge, manageDoctorsButton],
+                    ),
                   ],
                 );
               }
@@ -3642,7 +3674,14 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 children: <Widget>[
                   Expanded(child: heading),
                   const SizedBox(width: 16),
-                  resultBadge,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: <Widget>[
+                      resultBadge,
+                      const SizedBox(height: 8),
+                      manageDoctorsButton,
+                    ],
+                  ),
                 ],
               );
             },
@@ -3781,7 +3820,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                             : 'Check doctors',
                       ),
                       style: FilledButton.styleFrom(
-                        backgroundColor: _primaryAqua,
+                        backgroundColor: ChoColors.navBackground,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(13),
@@ -3799,18 +3838,13 @@ class _ChoDashboardState extends State<ChoDashboard> {
               width: double.infinity,
               padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
-                color: Colors.orangeAccent.withValues(alpha: 0.10),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(13),
-                border: Border.all(
-                  color: Colors.orangeAccent.withValues(alpha: 0.28),
-                ),
+                border: Border.all(color: ChoColors.navBackground),
               ),
               child: Text(
                 _doctorAvailabilityError!,
-                style: const TextStyle(
-                  color: Colors.orangeAccent,
-                  fontSize: 11,
-                ),
+                style: const TextStyle(color: ChoColors.text, fontSize: 11),
               ),
             ),
           ],
@@ -3931,18 +3965,21 @@ class _ChoDashboardState extends State<ChoDashboard> {
   InputDecoration _availabilityInputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: ChoColors.muted, fontSize: 11),
-      prefixIcon: Icon(icon, color: _primaryAqua, size: 19),
+      labelStyle: const TextStyle(color: ChoColors.text, fontSize: 11),
+      prefixIcon: Icon(icon, color: ChoColors.text, size: 19),
       filled: true,
-      fillColor: ChoColors.surfaceAlt,
+      fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 16),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: ChoColors.border),
+        borderSide: const BorderSide(color: ChoColors.navBackground),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: _primaryAqua, width: 1.5),
+        borderSide: const BorderSide(
+          color: ChoColors.navBackground,
+          width: 1.5,
+        ),
       ),
     );
   }
@@ -3974,13 +4011,16 @@ class _ChoDashboardState extends State<ChoDashboard> {
     final available = doctor['_isAvailable'] == true;
     final confidence = (doctor['_scheduleConfidence'] ?? '').toString();
     final reason = (doctor['_availabilityReason'] ?? '').toString();
-    final accent = available ? Colors.greenAccent : Colors.orangeAccent;
+    final statusIcon = available
+        ? Icons.check_circle_rounded
+        : Icons.cancel_rounded;
+    final statusLabel = available ? 'AVAILABLE' : 'NOT AVAILABLE';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: ChoColors.surfaceAlt,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withValues(alpha: 0.20)),
+        border: Border.all(color: ChoColors.navBackground),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3991,16 +4031,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.12),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(13),
+                  border: Border.all(color: ChoColors.navBackground),
                 ),
-                child: Icon(
-                  available
-                      ? Icons.person_search_rounded
-                      : Icons.event_busy_rounded,
-                  color: accent,
-                  size: 20,
-                ),
+                child: Icon(statusIcon, color: ChoColors.text, size: 20),
               ),
               const SizedBox(width: 11),
               Expanded(
@@ -4022,7 +4057,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       _doctorSpecialty(doctor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: ChoColors.muted, fontSize: 10),
+                      style: const TextStyle(
+                        color: ChoColors.text,
+                        fontSize: 10,
+                      ),
                     ),
                   ],
                 ),
@@ -4030,17 +4068,25 @@ class _ChoDashboardState extends State<ChoDashboard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.10),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: ChoColors.navBackground),
                 ),
-                child: Text(
-                  available ? 'AVAILABLE' : 'UNAVAILABLE',
-                  style: TextStyle(
-                    color: accent,
-                    fontSize: 8,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.4,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Icon(statusIcon, color: ChoColors.text, size: 14),
+                    const SizedBox(width: 5),
+                    Text(
+                      statusLabel,
+                      style: const TextStyle(
+                        color: ChoColors.text,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -4058,7 +4104,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
           Text(
             confidence,
             style: TextStyle(
-              color: accent.withValues(alpha: 0.82),
+              color: ChoColors.text,
               fontSize: 9,
               fontWeight: FontWeight.w700,
             ),
@@ -4070,7 +4116,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               Icon(
                 Icons.calendar_today_outlined,
                 size: 12,
-                color: ChoColors.muted,
+                color: ChoColors.text,
               ),
               const SizedBox(width: 6),
               Expanded(
