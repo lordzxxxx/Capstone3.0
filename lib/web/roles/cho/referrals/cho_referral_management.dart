@@ -407,7 +407,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       decoration: BoxDecoration(
         color: ChoColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ChoColors.ice),
+        border: Border.all(color: ChoColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -514,7 +514,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: ChoColors.ice),
+        border: Border.all(color: ChoColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -605,7 +605,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: ChoColors.ice),
+        border: Border.all(color: ChoColors.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -629,7 +629,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
     return OutlinedButton.styleFrom(
       foregroundColor: ChoColors.text,
       backgroundColor: Colors.white,
-      side: const BorderSide(color: ChoColors.ice),
+      side: const BorderSide(color: ChoColors.border),
       minimumSize: const Size(48, 44),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
