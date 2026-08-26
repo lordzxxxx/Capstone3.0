@@ -460,9 +460,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
         availability.contains('leave') ||
         availability == 'busy' ||
         availability == 'inactive';
-    final statusIcon = unavailable
-        ? Icons.cancel_rounded
-        : Icons.check_circle_rounded;
+    final statusIcon = unavailable ? Icons.cancel : Icons.check_circle;
     final statusLabel = unavailable ? 'Not available' : 'Available';
     return Container(
       padding: const EdgeInsets.all(14),

@@ -2623,7 +2623,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               context: 'Referrals completed by the care team',
               // Keep this on a broadly supported Material glyph. The former
               // task_alt outline did not render in the deployed web icon font.
-              icon: Icons.check_circle_outline_rounded,
+              icon: Icons.check_circle,
               color: ChoColors.aqua,
               onTap: () => WebNavigationCoordinator.goToNamed(
                 context,
@@ -4011,9 +4011,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
     final available = doctor['_isAvailable'] == true;
     final confidence = (doctor['_scheduleConfidence'] ?? '').toString();
     final reason = (doctor['_availabilityReason'] ?? '').toString();
-    final statusIcon = available
-        ? Icons.check_circle_rounded
-        : Icons.cancel_rounded;
+    // Use the base Material glyphs here. The rounded variants can resolve to
+    // empty boxes in some deployed web icon-font builds.
+    final statusIcon = available ? Icons.check_circle : Icons.cancel;
     final statusLabel = available ? 'AVAILABLE' : 'NOT AVAILABLE';
     return Container(
       padding: const EdgeInsets.all(14),
