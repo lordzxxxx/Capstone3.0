@@ -45,7 +45,7 @@ dependencies):
   referrals, doctor notes, disease/guidance content, and account records.
 - **Realtime Database** — secondary mirror of `users/{uid}` role/profile
   data, used as a fallback role source.
-- **Authentication** — email/password and Google Sign-In.
+- **Authentication** — email/password.
 - **App Check** — enforced on both the Flutter web client and the Python
   backend's protected endpoint.
 - **Cloud Storage** — referral file attachments only (`storage.rules`).

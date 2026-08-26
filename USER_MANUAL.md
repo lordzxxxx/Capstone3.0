@@ -16,8 +16,7 @@ pages. No patient data is accessible from this page.
 
 1. Choose "Login as CHO" or the equivalent BHW/health-worker entry point
    from the landing page.
-2. Enter your registered email and password (or use Google Sign-In where
-   offered).
+2. Enter your registered email and password.
 3. New BHW accounts require CHO approval before first login — if you see
    an "awaiting approval" message, contact your City Health Office.
 4. Forgot your password? Use the "Forgot Password" link. A reset
