@@ -29,8 +29,9 @@ class WebNavigationCoordinator {
   static Future<void> goToNamed(BuildContext context, String route) {
     return run(context, () async {
       if (route == Get.currentRoute) return;
-      final navigation = Get.offNamed<void>(route);
-      if (navigation != null) await navigation;
+      // Do not await this future: it resolves only when the destination is
+      // popped, which would leave the coordinator locked indefinitely.
+      Get.offNamed<void>(route);
     });
   }
 

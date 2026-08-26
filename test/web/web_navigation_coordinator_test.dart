@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_navigation_coordinator.dart';
 
 void main() {
@@ -35,6 +36,44 @@ void main() {
     gate.complete();
     await Future.wait<void>([first, second]);
     expect(calls, 1);
+    expect(WebNavigationCoordinator.isNavigating, isFalse);
+  });
+
+  testWidgets('releases the navigation lock after the route transition', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      GetMaterialApp(
+        initialRoute: '/first',
+        getPages: [
+          GetPage(name: '/first', page: () => const Text('First page')),
+          GetPage(name: '/second', page: () => const Text('Second page')),
+        ],
+      ),
+    );
+
+    final firstContext = tester.element(find.text('First page'));
+    final firstNavigation = WebNavigationCoordinator.goToNamed(
+      firstContext,
+      '/second',
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 240));
+    await firstNavigation;
+    await tester.pumpAndSettle();
+    expect(find.text('Second page'), findsOneWidget);
+    expect(WebNavigationCoordinator.isNavigating, isFalse);
+
+    final secondContext = tester.element(find.text('Second page'));
+    final secondNavigation = WebNavigationCoordinator.goToNamed(
+      secondContext,
+      '/first',
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 240));
+    await secondNavigation;
+    await tester.pumpAndSettle();
+    expect(find.text('First page'), findsOneWidget);
     expect(WebNavigationCoordinator.isNavigating, isFalse);
   });
 }

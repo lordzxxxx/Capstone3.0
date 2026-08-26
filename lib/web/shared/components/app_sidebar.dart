@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/web/roles/bhw/dashboard/bhw_profile.dart';
@@ -453,15 +455,20 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
       await WebNavigationCoordinator.run(context, () async {
         if (routeName != null) {
           final navigation = Get.offNamed<void>(routeName);
-          if (navigation != null) await navigation;
+          // This future resolves when the replacement route is popped, not
+          // when the route transition finishes. Waiting for it would disable
+          // every later sidebar tap on the destination page.
+          if (navigation != null) unawaited(navigation);
           return;
         }
 
-        await Navigator.of(context).pushReplacement(
-          buildSidebarPageRoute(
-            page: pageBuilder(),
-            begin: Offset.zero,
-            routeName: routeName,
+        unawaited(
+          Navigator.of(context).pushReplacement(
+            buildSidebarPageRoute(
+              page: pageBuilder(),
+              begin: Offset.zero,
+              routeName: routeName,
+            ),
           ),
         );
       });
