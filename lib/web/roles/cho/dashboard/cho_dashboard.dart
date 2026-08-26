@@ -2883,7 +2883,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       decoration: BoxDecoration(
         color: ChoColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: ChoColors.navBackground),
+        border: Border.all(color: ChoColors.ice),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -3560,7 +3560,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       decoration: BoxDecoration(
         color: _panelTeal,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: ChoColors.navBackground),
+        border: Border.all(color: ChoColors.ice),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -3624,7 +3624,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: ChoColors.navBackground),
+                  border: Border.all(color: ChoColors.ice),
                 ),
                 child: Text(
                   _isCheckingDoctorAvailability
@@ -3647,7 +3647,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: ChoColors.text,
                   backgroundColor: Colors.white,
-                  side: const BorderSide(color: ChoColors.navBackground),
+                  side: const BorderSide(color: ChoColors.ice),
                   minimumSize: const Size(48, 44),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -3820,7 +3820,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                             : 'Check doctors',
                       ),
                       style: FilledButton.styleFrom(
-                        backgroundColor: ChoColors.navBackground,
+                        backgroundColor: ChoColors.ice,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(13),
@@ -3840,7 +3840,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(13),
-                border: Border.all(color: ChoColors.navBackground),
+                border: Border.all(color: ChoColors.ice),
               ),
               child: Text(
                 _doctorAvailabilityError!,
@@ -3972,14 +3972,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 16),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: ChoColors.navBackground),
+        borderSide: const BorderSide(color: ChoColors.ice),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(
-          color: ChoColors.navBackground,
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: ChoColors.ice, width: 1.5),
       ),
     );
   }
@@ -4020,7 +4017,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ChoColors.navBackground),
+        border: Border.all(color: ChoColors.ice),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4033,7 +4030,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(13),
-                  border: Border.all(color: ChoColors.navBackground),
+                  border: Border.all(color: ChoColors.ice),
                 ),
                 child: Icon(statusIcon, color: ChoColors.text, size: 20),
               ),
@@ -4070,7 +4067,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: ChoColors.navBackground),
+                  border: Border.all(color: ChoColors.ice),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

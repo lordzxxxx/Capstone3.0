@@ -356,7 +356,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       decoration: BoxDecoration(
         color: ChoColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ChoColors.navBackground),
+        border: Border.all(color: ChoColors.ice),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,9 +383,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
               ),
               FilledButton.icon(
                 onPressed: _showCreateDoctorDialog,
-                style: AppButtonStyles.primary(
-                  background: ChoColors.navBackground,
-                ),
+                style: AppButtonStyles.primary(background: ChoColors.ice),
                 icon: const Icon(Icons.person_add_alt_1_outlined),
                 label: const Text('Add doctor'),
               ),
@@ -467,7 +465,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: ChoColors.navBackground),
+        border: Border.all(color: ChoColors.ice),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -558,7 +556,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: ChoColors.navBackground),
+        border: Border.all(color: ChoColors.ice),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -582,7 +580,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
     return OutlinedButton.styleFrom(
       foregroundColor: ChoColors.text,
       backgroundColor: Colors.white,
-      side: const BorderSide(color: ChoColors.navBackground),
+      side: const BorderSide(color: ChoColors.ice),
       minimumSize: const Size(48, 44),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
