@@ -122,6 +122,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
   bool _referralTargetRetryPending = false;
   bool _patientSyncFallbackAttempted = false;
   bool _initialDashboardSyncTriggered = false;
+  bool _initialDoctorAvailabilityCheckTriggered = false;
   bool _isRestartingDashboardSync = false;
   bool _roleMirrorResyncTriggered = false;
   UserAccessScope? _accessScope;
@@ -203,6 +204,12 @@ class _ChoDashboardState extends State<ChoDashboard> {
     if (_initialDashboardSyncTriggered) return;
     _initialDashboardSyncTriggered = true;
     unawaited(_startDashboardSync());
+    if (!_initialDoctorAvailabilityCheckTriggered) {
+      _initialDoctorAvailabilityCheckTriggered = true;
+      // Load the availability section with the dashboard so the result cards
+      // are visible without requiring a second, hidden interaction.
+      unawaited(_checkDoctorAvailability());
+    }
   }
 
   Future<UserAccessScope> _ensureAccessScopeLoaded() async {
@@ -3571,7 +3578,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   ),
                 ),
                 child: Text(
-                  _doctorAvailabilityResults.isEmpty
+                  _isCheckingDoctorAvailability
+                      ? 'Checking...'
+                      : _doctorAvailabilityResults.isEmpty
                       ? 'Ready to check'
                       : '$availableCount available',
                   style: TextStyle(
@@ -3769,31 +3778,85 @@ class _ChoDashboardState extends State<ChoDashboard> {
               ),
             ),
           ],
-          if (_doctorAvailabilityResults.isNotEmpty) ...<Widget>[
-            const SizedBox(height: 18),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    'Availability for ${_dateLabel(requestedDateTime)} at ${_timeLabel(_doctorAvailabilityTime)}',
-                    style: const TextStyle(
-                      color: ChoColors.text,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+          const SizedBox(height: 18),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 620;
+              final heading = Text(
+                'Availability for ${_dateLabel(requestedDateTime)} at ${_timeLabel(_doctorAvailabilityTime)}',
+                style: const TextStyle(
+                  color: ChoColors.text,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                 ),
-                TextButton.icon(
-                  onPressed: () => WebNavigationCoordinator.goToNamed(
-                    context,
-                    WebRoutes.choReferrals,
-                  ),
-                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                  label: const Text('Open referrals'),
+              );
+              final referralsButton = TextButton.icon(
+                onPressed: () => WebNavigationCoordinator.goToNamed(
+                  context,
+                  WebRoutes.choReferrals,
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
+                icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                label: const Text('Open referrals'),
+              );
+              return compact
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[heading, referralsButton],
+                    )
+                  : Row(
+                      children: <Widget>[
+                        Expanded(child: heading),
+                        referralsButton,
+                      ],
+                    );
+            },
+          ),
+          const SizedBox(height: 10),
+          if (_isCheckingDoctorAvailability)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 26),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: ChoColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(13),
+                border: Border.all(color: ChoColors.border),
+              ),
+              child: const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'Loading referral doctor availability...',
+                    style: TextStyle(color: ChoColors.muted, fontSize: 11),
+                  ),
+                ],
+              ),
+            )
+          else if (_doctorAvailabilityResults.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+              decoration: BoxDecoration(
+                color: ChoColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(13),
+                border: Border.all(color: ChoColors.border),
+              ),
+              child: Text(
+                'No availability results yet. Adjust the filters and select “Check doctors”.',
+                style: const TextStyle(
+                  color: ChoColors.muted,
+                  fontSize: 11,
+                  height: 1.4,
+                ),
+              ),
+            )
+          else
             LayoutBuilder(
               builder: (context, constraints) {
                 final cardWidth = constraints.maxWidth > 1000
@@ -3815,7 +3878,6 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 );
               },
             ),
-          ],
           const SizedBox(height: 12),
           Text(
             'Availability is planning guidance. A result based only on directory status must be confirmed with the doctor before final referral assignment.',
