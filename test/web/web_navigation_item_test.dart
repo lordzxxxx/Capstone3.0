@@ -69,6 +69,33 @@ void main() {
     expect(targetSize.width, greaterThanOrEqualTo(44));
     expect(targetSize.height, greaterThanOrEqualTo(44));
   });
+
+  testWidgets('expanded navigation item uses compact desktop density', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1366, 768);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: WebNavigationItem(
+            icon: Icons.dashboard_outlined,
+            label: 'Dashboard',
+            isCollapsed: false,
+            onTap: _noop,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Dashboard'), findsOneWidget);
+    final targetSize = tester.getSize(find.byType(InkWell));
+    expect(targetSize.height, lessThanOrEqualTo(42));
+    expect(tester.takeException(), isNull);
+  });
 }
 
 void _noop() {}

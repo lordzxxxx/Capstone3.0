@@ -49,9 +49,13 @@ class WebResponsiveBody extends StatelessWidget {
               // The navigation widgets use the ambient width to choose their
               // collapsed rail mode. A drawer is intentionally a full-label
               // navigation surface even when the browser viewport is narrow.
-              data: MediaQuery.of(
-                context,
-              ).copyWith(size: Size(1200, constraints.maxHeight)),
+              data: MediaQuery.of(context).copyWith(
+                // Keep the drawer in expanded-label mode even when the
+                // phone viewport itself is short. The desktop rail may
+                // auto-collapse for short windows, but a mobile drawer must
+                // remain discoverable without requiring icon-only tooltips.
+                size: Size(1200, math.max(1200, constraints.maxHeight)),
+              ),
               child: sidebar,
             ),
           ),

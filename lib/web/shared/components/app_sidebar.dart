@@ -104,7 +104,8 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
         // Keep the content usable when the browser is narrower than a normal
         // desktop. The user can still expand the rail later on a wide screen,
         // but narrow screens never lose their main working area to the nav.
-        final compactViewport = MediaQuery.sizeOf(context).width < 1180;
+        final viewport = MediaQuery.sizeOf(context);
+        final compactViewport = viewport.width < 960 || viewport.height < 840;
         final effectiveCollapsed =
             !widget.forceExpanded && (isCollapsed || compactViewport);
         return FutureBuilder<UserAccessScope?>(
@@ -150,7 +151,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
                         ? Duration.zero
                         : const Duration(milliseconds: 240),
                     curve: Curves.easeInOutCubic,
-                    width: effectiveCollapsed ? 76.0 : 300.0,
+                    width: effectiveCollapsed ? 72.0 : 268.0,
                     height: double.infinity,
                     decoration: const BoxDecoration(
                       color: _BhwDrawerColors.background,
@@ -173,8 +174,8 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
                         builder: (context, constraints) {
                           return OverflowBox(
                             alignment: Alignment.topLeft,
-                            minWidth: effectiveCollapsed ? 76.0 : 300.0,
-                            maxWidth: effectiveCollapsed ? 76.0 : 300.0,
+                            minWidth: effectiveCollapsed ? 72.0 : 268.0,
+                            maxWidth: effectiveCollapsed ? 72.0 : 268.0,
                             minHeight: constraints.maxHeight,
                             maxHeight: constraints.maxHeight,
                             child: SafeArea(
@@ -187,7 +188,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
                                     assignedBarangay,
                                     effectiveCollapsed,
                                   ),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 4),
                                   Expanded(
                                     child: ListView(
                                       padding: EdgeInsets.symmetric(
@@ -522,7 +523,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 14, 8, 12),
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 6),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         children: [
@@ -630,9 +631,9 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(7),
         decoration: BoxDecoration(
           color: _BhwDrawerColors.surface,
           borderRadius: BorderRadius.circular(12),
@@ -640,11 +641,11 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
         child: Row(
           children: [
             const CircleAvatar(
-              radius: 18,
+              radius: 16,
               backgroundColor: _BhwDrawerColors.surfaceAlt,
               child: Icon(Icons.person, color: _BhwDrawerColors.aqua, size: 20),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: ClipRect(
                 child: Column(
@@ -692,7 +693,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 14, 10, 6),
+      padding: const EdgeInsets.fromLTRB(10, 4, 10, 2),
       child: ClipRect(
         child: Text(
           title,
@@ -1126,7 +1127,7 @@ class _AnimatedLogoutButtonState extends State<_AnimatedLogoutButton> {
     }
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
       decoration: const BoxDecoration(
         border: Border(top: BorderSide(color: _BhwDrawerColors.border)),
       ),
@@ -1153,7 +1154,7 @@ class _AnimatedLogoutButtonState extends State<_AnimatedLogoutButton> {
                 duration: const Duration(milliseconds: 160),
                 curve: Curves.easeOutCubic,
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 13),
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.redAccent.withValues(
                     alpha: _isHovered ? 1 : 0.9,

@@ -13,6 +13,7 @@ class WebNavigationItem extends StatelessWidget {
     required this.isCollapsed,
     this.isActive = false,
     this.tooltip,
+    this.isDense,
     super.key,
   });
 
@@ -22,9 +23,14 @@ class WebNavigationItem extends StatelessWidget {
   final bool isCollapsed;
   final bool isActive;
   final String? tooltip;
+  final bool? isDense;
 
   @override
   Widget build(BuildContext context) {
+    final dense =
+        isDense ??
+        (MediaQuery.sizeOf(context).width >= 760 &&
+            MediaQuery.sizeOf(context).height < 1000);
     final item = Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(10),
@@ -37,8 +43,12 @@ class WebNavigationItem extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           curve: Curves.easeOutCubic,
-          constraints: BoxConstraints(minHeight: isCollapsed ? 44 : 46),
-          margin: EdgeInsets.symmetric(vertical: isCollapsed ? 3 : 2),
+          constraints: BoxConstraints(
+            minHeight: isCollapsed ? 44 : (dense ? 40 : 46),
+          ),
+          margin: EdgeInsets.symmetric(
+            vertical: isCollapsed ? 3 : (dense ? 1 : 2),
+          ),
           padding: EdgeInsets.symmetric(horizontal: isCollapsed ? 8 : 10),
           decoration: BoxDecoration(
             color: isActive ? AppColors.primary : Colors.transparent,
@@ -66,7 +76,7 @@ class WebNavigationItem extends StatelessWidget {
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 160),
                       width: isActive ? 4 : 0,
-                      height: isActive ? 22 : 0,
+                      height: isActive ? (dense ? 20 : 22) : 0,
                       margin: EdgeInsets.only(right: isActive ? 8 : 0),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -75,10 +85,10 @@ class WebNavigationItem extends StatelessWidget {
                     ),
                     Icon(
                       icon,
-                      size: 20,
+                      size: dense ? 19 : 20,
                       color: isActive ? Colors.white : AppColors.textOnDark,
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: dense ? 8 : 12),
                     Expanded(
                       child: Text(
                         label,
@@ -88,7 +98,7 @@ class WebNavigationItem extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: AppTheme.fontFamily,
                           color: isActive ? Colors.white : AppColors.textOnDark,
-                          fontSize: 13,
+                          fontSize: dense ? 12.5 : 13,
                           height: 1.15,
                           fontWeight: isActive
                               ? FontWeight.w800
@@ -97,8 +107,8 @@ class WebNavigationItem extends StatelessWidget {
                       ),
                     ),
                     if (isActive)
-                      const Padding(
-                        padding: EdgeInsets.only(left: 8),
+                      Padding(
+                        padding: EdgeInsets.only(left: dense ? 6 : 8),
                         child: Icon(Icons.circle, size: 6, color: Colors.white),
                       ),
                   ],

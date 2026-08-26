@@ -45,7 +45,8 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
     return ValueListenableBuilder<bool>(
       valueListenable: ChoNavigationDrawer.isCollapsedNotifier,
       builder: (context, isCollapsed, _) {
-        final compactViewport = MediaQuery.sizeOf(context).width < 1180;
+        final viewport = MediaQuery.sizeOf(context);
+        final compactViewport = viewport.width < 960 || viewport.height < 840;
         final effectiveCollapsed =
             !widget.forceExpanded && (isCollapsed || compactViewport);
         // The rail stays in the page layout while the content route changes.
@@ -75,7 +76,7 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
                     ? Duration.zero
                     : const Duration(milliseconds: 240),
                 curve: Curves.easeInOutCubic,
-                width: effectiveCollapsed ? 76.0 : 300.0,
+                width: effectiveCollapsed ? 72.0 : 268.0,
                 height: double.infinity,
                 decoration: const BoxDecoration(
                   color: ChoColors.navBackground,
@@ -95,8 +96,8 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
                     builder: (context, constraints) {
                       return OverflowBox(
                         alignment: Alignment.topLeft,
-                        minWidth: effectiveCollapsed ? 76.0 : 300.0,
-                        maxWidth: effectiveCollapsed ? 76.0 : 300.0,
+                        minWidth: effectiveCollapsed ? 72.0 : 268.0,
+                        maxWidth: effectiveCollapsed ? 72.0 : 268.0,
                         minHeight: constraints.maxHeight,
                         maxHeight: constraints.maxHeight,
                         child: SafeArea(
@@ -105,7 +106,7 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
                             children: [
                               _buildBrandHeader(effectiveCollapsed),
                               _buildUserSection(userName, effectiveCollapsed),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 4),
                               Expanded(
                                 child: ListView(
                                   padding: EdgeInsets.symmetric(
@@ -285,7 +286,7 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 14, 8, 12),
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 6),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         children: [
@@ -385,9 +386,9 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(7),
         decoration: BoxDecoration(
           color: ChoColors.navSurface,
           borderRadius: BorderRadius.circular(12),
@@ -395,11 +396,11 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
         child: Row(
           children: [
             const CircleAvatar(
-              radius: 18,
+              radius: 16,
               backgroundColor: ChoColors.navBackground,
               child: Icon(Icons.person, color: ChoColors.aqua, size: 20),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: ClipRect(
                 child: Column(
@@ -447,7 +448,7 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 14, 10, 6),
+      padding: const EdgeInsets.fromLTRB(10, 4, 10, 2),
       child: ClipRect(
         child: Text(
           title,
@@ -880,7 +881,7 @@ class _ChoAnimatedLogoutButtonState extends State<_ChoAnimatedLogoutButton> {
     }
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
       decoration: const BoxDecoration(
         border: Border(top: BorderSide(color: ChoColors.navBorder)),
       ),
@@ -907,7 +908,7 @@ class _ChoAnimatedLogoutButtonState extends State<_ChoAnimatedLogoutButton> {
                 duration: const Duration(milliseconds: 160),
                 curve: Curves.easeOutCubic,
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 13),
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.redAccent.withValues(
                     alpha: _isHovered ? 1 : 0.9,
