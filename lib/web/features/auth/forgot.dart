@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
+import 'package:mycapstone_project/shared/input_validation.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _secondaryIceBlue = Color(0xFF163B66);
@@ -25,11 +26,21 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   bool _isLoading = false;
 
   Future<void> resetPassword() async {
+    if (_isLoading) return;
     final email = emailController.text.trim();
     if (email.isEmpty) {
       Get.snackbar(
         'Error',
         'Please enter your email address',
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
+      return;
+    }
+    if (!InputValidation.isEmail(email)) {
+      Get.snackbar(
+        'Error',
+        'Please enter a valid email address.',
         backgroundColor: const Color(0xFFD32F2F),
         colorText: Colors.white,
       );
@@ -43,7 +54,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
 
       Get.snackbar(
         'Reset Email Sent',
-        'A password reset link has been sent to $email. Check your inbox and spam folder.',
+        'If an account exists, a reset link will be sent. Check your inbox and spam folder.',
         backgroundColor: const Color(0xFF388E3C),
         colorText: Colors.white,
       );
@@ -54,7 +65,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
           message = 'If an account exists, a reset link will be sent.';
           break;
         case 'invalid-email':
-          message = 'The email address is badly formatted.';
+          message = 'Please enter a valid email address.';
           break;
         case 'too-many-requests':
           message = 'Too many requests. Try again later.';
@@ -63,13 +74,13 @@ class _ForgotPasswordState extends State<ForgotPassword> {
           message = 'Network error. Check your connection.';
           break;
         default:
-          message = e.message ?? 'Failed to send password reset email.';
+          message =
+              'Unable to start password recovery right now. Please try again.';
       }
 
-      final displayMessage = kDebugMode ? '$message (${e.code})' : message;
       Get.snackbar(
         'Reset Failed',
-        displayMessage,
+        message,
         backgroundColor: const Color(0xFFD32F2F),
         colorText: Colors.white,
       );
@@ -89,7 +100,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
         debugPrint('Unexpected reset error: $e');
       }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

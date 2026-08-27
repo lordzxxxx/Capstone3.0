@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/app/features/patients/patient_database_helper.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/shared/patient_age_categories.dart';
 
 class PatientAnalyticsPage extends StatefulWidget {
   const PatientAnalyticsPage({super.key});
@@ -87,23 +88,12 @@ class _PatientAnalyticsPageState extends State<PatientAnalyticsPage> {
 
   Map<String, int> get _ageGroups {
     final counts = <String, int>{
-      '0–17': 0,
-      '18–35': 0,
-      '36–59': 0,
-      '60+': 0,
+      for (final category in PatientAgeCategories.ordered) category.label: 0,
       'Not recorded': 0,
     };
     for (final record in _records) {
-      final age = int.tryParse(_value(record, 'age'));
-      final group = age == null
-          ? 'Not recorded'
-          : age < 18
-          ? '0–17'
-          : age < 36
-          ? '18–35'
-          : age < 60
-          ? '36–59'
-          : '60+';
+      final group =
+          PatientAgeCategories.forValue(record['age'])?.label ?? 'Not recorded';
       counts[group] = counts[group]! + 1;
     }
     return counts;

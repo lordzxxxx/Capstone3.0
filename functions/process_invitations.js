@@ -3,6 +3,7 @@ const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 const { getFirestore } = require('firebase-admin/firestore');
 const nodemailer = require('nodemailer');
+const { generateTemporaryPassword } = require('./password_policy');
 
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 
@@ -81,7 +82,7 @@ exports.processInvitation = onDocumentCreated({
       userRecord = await admin.auth().getUserByEmail(email);
     } catch (e) {
       // Create user with a random temporary password
-      const tempPass = Math.random().toString(36).slice(-10) + 'A1!';
+      const tempPass = generateTemporaryPassword();
       userRecord = await admin.auth().createUser({ email, password: tempPass });
       console.log('Created user', userRecord.uid, 'for', email);
     }

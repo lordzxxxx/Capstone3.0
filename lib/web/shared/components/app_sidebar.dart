@@ -456,8 +456,11 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
     String? routeName,
   }) {
     return () async {
-      if (widget.activeItem == targetItem) return;
       await WebNavigationCoordinator.run(context, () async {
+        // Even when the current destination is selected, the tap may have
+        // originated in the mobile Drawer. Let the coordinator close that
+        // modal surface before treating the navigation as a no-op.
+        if (widget.activeItem == targetItem) return;
         if (routeName != null) {
           final navigation = Get.offNamed<void>(routeName);
           // This future resolves when the replacement route is popped, not

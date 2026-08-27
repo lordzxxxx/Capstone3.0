@@ -142,14 +142,13 @@ abstract final class WebRoutes {
 
   /// Selects only the startup overrides that GetX cannot infer safely.
   ///
-  /// Known deep links return `null` so their registered route and middleware
-  /// run normally. The root compatibility URL opens the branded landing path,
-  /// while an unregistered browser path gets a clear not-found page instead
-  /// of silently falling back to the landing screen.
+  /// Known deep links and unknown paths return `null` so GetX can resolve the
+  /// registered route or its `unknownRoute` page. The root compatibility URL
+  /// alone needs an explicit override to open the branded landing path.
   static String? startupOverride(String defaultRouteName) {
     final uri = Uri.tryParse(defaultRouteName);
     final path = uri?.path ?? '';
     if (path.isEmpty || path == legacyLanding) return landing;
-    return registeredPaths.contains(path) ? null : notFound;
+    return null;
   }
 }

@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
+import 'package:mycapstone_project/shared/patient_age_categories.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/features/auth/cho_access_session.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
@@ -2781,8 +2782,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
 
   int? _demographicAge(Map<String, dynamic> record) {
     final direct = record['age'] ?? record['patientAge'];
-    if (direct is num) return direct.toInt();
-    final parsed = int.tryParse(direct?.toString().trim() ?? '');
+    final parsed = PatientAgeCategories.parseYears(direct);
     if (parsed != null) return parsed;
     final birthDate = _parseDocDate(record, const <String>[
       'birthDate',
@@ -2790,13 +2790,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       'dob',
     ]);
     if (birthDate == null) return null;
-    final now = DateTime.now();
-    var age = now.year - birthDate.year;
-    if (now.month < birthDate.month ||
-        (now.month == birthDate.month && now.day < birthDate.day)) {
-      age--;
-    }
-    return age < 0 ? null : age;
+    return PatientAgeCategories.fromBirthDate(birthDate);
   }
 
   String _demographicSex(Map<String, dynamic> record) {
@@ -2814,11 +2808,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     Map<String, List<Map<String, dynamic>>> modules,
   ) {
     final counts = <String, int>{
-      '0–14': 0,
-      '15–24': 0,
-      '25–44': 0,
-      '45–64': 0,
-      '65+': 0,
+      for (final category in PatientAgeCategories.ordered) category.label: 0,
       'Unknown': 0,
     };
     final patients = modules['Patient Records'] ?? const [];
@@ -2831,17 +2821,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
           ]);
     for (final record in source) {
       final age = _demographicAge(record);
-      final bucket = age == null
-          ? 'Unknown'
-          : age <= 14
-          ? '0–14'
-          : age <= 24
-          ? '15–24'
-          : age <= 44
-          ? '25–44'
-          : age <= 64
-          ? '45–64'
-          : '65+';
+      final bucket = PatientAgeCategories.forYears(age)?.label ?? 'Unknown';
       counts[bucket] = (counts[bucket] ?? 0) + 1;
     }
     return counts;

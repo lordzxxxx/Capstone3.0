@@ -11,7 +11,10 @@ module.exports = defineConfig({
   workers: 1,
   reporter: [['list'], ['html', {open: 'never', outputFolder: 'qa/playwright-report'}]],
   use: {
-    baseURL: 'http://127.0.0.1:7357',
+    // Use localhost so firebase_auth_web can restore the emulator before its
+    // first Auth state read on a browser refresh. The emulator plugin only
+    // enables its localhost persistence hook for localhost origins.
+    baseURL: 'http://localhost:7357',
     ...(executablePath ? {launchOptions: {executablePath}} : {}),
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
@@ -19,8 +22,8 @@ module.exports = defineConfig({
   },
   webServer: {
     command:
-      'flutter build web --release --dart-define=USE_FIREBASE_EMULATOR=true --dart-define=BROWSER_QA=true --output=build/web-browser && bash tooling/prepare_web_artifact.sh build/web-browser && WEB_ROOT=build/web-browser node tests/browser/spa-server.cjs',
-    url: 'http://127.0.0.1:7357/aidsuhis',
+      'flutter build web --debug --dart-define=USE_FIREBASE_EMULATOR=true --dart-define=BROWSER_QA=true --output=build/web-browser && bash tooling/prepare_web_artifact.sh build/web-browser && WEB_ROOT=build/web-browser node tests/browser/spa-server.cjs',
+    url: 'http://localhost:7357/aidsuhis',
     reuseExistingServer: process.env.PLAYWRIGHT_REUSE_SERVER === 'true',
     timeout: 240_000,
   },

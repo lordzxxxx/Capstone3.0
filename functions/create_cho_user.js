@@ -6,7 +6,7 @@
  * password reset link to let the user set their password.
  *
  * Usage examples (from functions/):
- *  node create_cho_user.js cho@example.com --key ./service-account.json --password TempP@ssw0rd --send-reset
+ *  node create_cho_user.js cho@example.com --key ./service-account.json --password <StrongPassword> --send-reset
  *  node create_cho_user.js cho@example.com --key ./service-account.json --send-reset
  *  # Or use env var:
  *  $env:GOOGLE_APPLICATION_CREDENTIALS="C:\path\to\service-account.json"
@@ -16,6 +16,7 @@
 const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
+const { assertStrongPassword } = require('./password_policy');
 
 // CLI args: email [--key path] [--password pwd] [--send-reset]
 let emailArg = null;
@@ -67,6 +68,7 @@ function initAdmin() {
 
 async function createOrUpdateCho(email) {
   if (!email) throw new Error('Email required. Usage: node create_cho_user.js <email> [--password pass] [--key path] [--send-reset]');
+  if (password) assertStrongPassword(password);
 
   // Try to find existing user
   let userRecord = null;

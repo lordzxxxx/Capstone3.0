@@ -10,6 +10,9 @@ import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/features/auth/widgets/mobile_auth_shell.dart';
 import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 import 'package:mycapstone_project/app/core/services/login_attempt_limiter.dart';
+import 'package:mycapstone_project/shared/widgets/auth_error_banner.dart';
+import 'package:mycapstone_project/shared/input_validation.dart';
+import 'package:mycapstone_project/firebase_helper.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _darkDeepTeal = AppDesign.ink;
@@ -39,6 +42,46 @@ class _LoginState extends State<Login> {
 
   Future<void> _openMobileDashboard() async {
     Get.offAllNamed(MobileRoutes.dashboard);
+  }
+
+  bool _isApprovedActiveBhwProfile(Map<String, dynamic>? profile) {
+    if (profile == null) return false;
+    final role = (profile['role'] ?? '').toString().trim().toLowerCase();
+    if (role != 'bhw') return false;
+
+    final approval = (profile['approvalStatus'] ?? 'approved')
+        .toString()
+        .trim()
+        .toLowerCase();
+    final account = (profile['accountStatus'] ?? 'active')
+        .toString()
+        .trim()
+        .toLowerCase();
+    return approval == 'approved' &&
+        account != 'disabled' &&
+        account != 'archived' &&
+        account != 'pending' &&
+        account != 'pending_approval';
+  }
+
+  Future<void> _verifyMobileBhwAccess(User user) async {
+    try {
+      final profile = await getFirestoreInstance()
+          .collection('users')
+          .doc(user.uid)
+          .get()
+          .timeout(const Duration(seconds: 12));
+      if (_isApprovedActiveBhwProfile(profile.data())) return;
+    } catch (_) {
+      // An unavailable authorization check is a denial. Authentication alone
+      // must never grant access to the BHW workspace.
+    }
+
+    await FirebaseAuth.instance.signOut();
+    throw FirebaseAuthException(
+      code: 'unauthorized',
+      message: 'This account is not authorized for the BHW workspace.',
+    );
   }
 
   Future<void> _completeLoginFlow() async {
@@ -72,10 +115,10 @@ class _LoginState extends State<Login> {
   }
 
   Future<void> _finalizeAuthenticatedLogin(User user) async {
-    // The mobile application is the BHW workspace. Firebase authentication is
-    // sufficient here; CHO and Doctor routing remains exclusive to the web
-    // application. Keep this role local so mobile login never overwrites the
-    // account's canonical backend role or custom claims.
+    // The mobile application is the BHW workspace. Verify the canonical
+    // Firestore profile after every authentication method; Firebase
+    // authentication alone must not grant CHO or unapproved accounts access.
+    await _verifyMobileBhwAccess(user);
     await _cacheMobileBhwRole(user);
     await _completeLoginFlow();
   }
@@ -118,8 +161,10 @@ class _LoginState extends State<Login> {
           '$providerName sign-in is not enabled for this Firebase project.',
         'account-exists-with-different-credential' =>
           'This email already uses another sign-in method. Sign in with that method first.',
+        'unauthorized' =>
+          'This account is not authorized for the BHW mobile workspace.',
         'network-request-failed' => 'Network error. Check your connection.',
-        _ => error.message ?? '$providerName sign-in could not be completed.',
+        _ => '$providerName sign-in could not be completed. Please try again.',
       };
       Get.snackbar(
         '$providerName Sign-In Failed',
@@ -132,7 +177,7 @@ class _LoginState extends State<Login> {
       if (!mounted) return;
       Get.snackbar(
         '$providerName Sign-In Failed',
-        kDebugMode ? '$error' : 'The sign-in could not be completed.',
+        'The sign-in could not be completed. Please try again.',
         backgroundColor: const Color(0xFFD32F2F),
         colorText: Colors.white,
       );
@@ -145,34 +190,57 @@ class _LoginState extends State<Login> {
 
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  String? _authError;
+
+  void _clearAuthError() {
+    if (_authError != null && mounted) {
+      setState(() => _authError = null);
+    }
+  }
+
+  void _showAuthError(String title, String message, {bool refocus = false}) {
+    if (!mounted) return;
+    setState(() => _authError = message);
+    if (refocus) {
+      _passwordFocusNode.requestFocus();
+    }
+    Get.snackbar(
+      title,
+      message,
+      backgroundColor: const Color(0xFFD32F2F),
+      colorText: Colors.white,
+    );
+  }
 
   Future<void> signIn() async {
     if (_isLoading) return;
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please fill in all fields',
-        backgroundColor: const Color(0xFFD32F2F),
-        colorText: Colors.white,
-      );
+    final email = emailController.text.trim();
+    if (email.isEmpty || passwordController.text.isEmpty) {
+      _showAuthError('Error', 'Please fill in all fields');
+      return;
+    }
+    if (!InputValidation.isEmail(email)) {
+      _showAuthError('Error', 'Enter a valid email address.');
       return;
     }
 
-    final email = emailController.text.trim();
     final cooldown = LoginAttemptLimiter.remaining(email);
     if (cooldown != null) {
-      Get.snackbar(
+      _showAuthError(
         'Please wait',
         'Too many failed attempts. Try again in ${(cooldown.inMilliseconds / 1000).ceil()} seconds.',
-        backgroundColor: const Color(0xFFD32F2F),
-        colorText: Colors.white,
       );
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _authError = null;
+    });
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
@@ -197,47 +265,22 @@ class _LoginState extends State<Login> {
       }.contains(e.code)) {
         LoginAttemptLimiter.recordFailure(email);
       }
-      String message;
-      switch (e.code) {
-        case 'user-not-found':
-          message = 'Incorrect email or password. Please try again.';
-          break;
-        case 'wrong-password':
-        case 'invalid-credential':
-          message = 'Incorrect email or password. Please try again.';
-          break;
-        case 'invalid-email':
-          message = 'The email address is badly formatted.';
-          break;
-        case 'user-disabled':
-          message = 'This account has been disabled.';
-          break;
-        case 'too-many-requests':
-          message = 'Too many attempts. Try again later.';
-          break;
-        case 'network-request-failed':
-          message = 'Network error. Check your connection.';
-          break;
-        default:
-          message = e.message ?? 'Login failed. Please try again.';
-      }
-
-      final displayMessage = kDebugMode ? '$message (${e.code})' : message;
-      Get.snackbar(
-        'Login Failed',
-        displayMessage,
-        backgroundColor: const Color(0xFFD32F2F),
-        colorText: Colors.white,
-      );
+      final message = switch (e.code) {
+        'user-not-found' ||
+        'wrong-password' ||
+        'invalid-credential' ||
+        'invalid-email' ||
+        'user-disabled' => 'Invalid email or password.',
+        'too-many-requests' => 'Too many attempts. Try again later.',
+        'network-request-failed' => 'Network error. Check your connection.',
+        _ => 'The sign-in could not be completed. Please try again.',
+      };
+      _showAuthError('Login Failed', message, refocus: true);
     } catch (e) {
-      final message = kDebugMode
-          ? 'Unexpected error: $e'
-          : 'Unexpected error. Please try again.';
-      Get.snackbar(
+      _showAuthError(
         'Login Failed',
-        message,
-        backgroundColor: const Color(0xFFD32F2F),
-        colorText: Colors.white,
+        'The sign-in could not be completed. Please try again.',
+        refocus: true,
       );
     } finally {
       if (mounted) {
@@ -250,6 +293,8 @@ class _LoginState extends State<Login> {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -276,6 +321,7 @@ class _LoginState extends State<Login> {
           const SizedBox(height: 8),
           _buildTextField(
             controller: emailController,
+            focusNode: _emailFocusNode,
             hintText: 'you@example.com',
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
@@ -292,6 +338,10 @@ class _LoginState extends State<Login> {
             ],
           ),
           _buildPasswordField(),
+          if (_authError != null) ...[
+            const SizedBox(height: 12),
+            AuthErrorBanner(message: _authError!),
+          ],
           const SizedBox(height: 22),
           SizedBox(
             height: 52,
@@ -382,14 +432,17 @@ class _LoginState extends State<Login> {
     required TextEditingController controller,
     required String hintText,
     required IconData icon,
+    FocusNode? focusNode,
     TextInputType keyboardType = TextInputType.text,
   }) {
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       keyboardType: keyboardType,
       textInputAction: TextInputAction.next,
       autofillHints: const [AutofillHints.email, AutofillHints.username],
       onSubmitted: (_) => FocusScope.of(context).nextFocus(),
+      onChanged: (_) => _clearAuthError(),
       style: const TextStyle(color: _darkDeepTeal, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: hintText,
@@ -427,12 +480,14 @@ class _LoginState extends State<Login> {
   Widget _buildPasswordField() {
     return TextField(
       controller: passwordController,
+      focusNode: _passwordFocusNode,
       obscureText: _obscurePassword,
       textInputAction: TextInputAction.done,
       autofillHints: const [AutofillHints.password],
       onSubmitted: (_) {
         if (!_isLoading) signIn();
       },
+      onChanged: (_) => _clearAuthError(),
       style: const TextStyle(color: _darkDeepTeal, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: 'Enter your password',

@@ -121,6 +121,33 @@ service cloud.firestore {
       return roleEqualsAny(role, ['CHO', 'BHW']);
     }
 
+    function hasValidRegistrationIntent(userId, data) {
+      let intent = get(
+        /databases/$(database)/documents/registration_intents/$(userId)
+      );
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/registration_intents/$(userId)) &&
+        ('registrationNonce' in data) &&
+        data.registrationNonce is string &&
+        data.registrationNonce.matches('[A-Fa-f0-9]{64}') &&
+        ('username' in data) &&
+        ('usernameLower' in data) &&
+        data.username is string &&
+        data.usernameLower is string &&
+        intent.data.uid == userId &&
+        intent.data.registrationNonce == data.registrationNonce &&
+        intent.data.emailLower == data.email.lower() &&
+        intent.data.usernameLower == data.usernameLower &&
+        intent.data.role == data.role &&
+        intent.data.expiresAt > request.time &&
+        (
+          (data.role == 'BHW' &&
+            ('barangayCode' in data) &&
+            intent.data.barangayCode.lower() == data.barangayCode.lower()) ||
+          (data.role == 'CHO' && intent.data.barangayCode == '')
+        );
+    }
+
     function canCreateOwnUserProfile(userId, data) {
       return isSignedIn() &&
         request.auth.uid == userId &&
@@ -139,7 +166,8 @@ service cloud.firestore {
             data.accountStatus == 'active'
           )
         ) &&
-        data.email == authEmail();
+        data.email == authEmail() &&
+        hasValidRegistrationIntent(userId, data);
     }
 
     function preservesProtectedUserFields(existingData, newData) {
@@ -248,6 +276,61 @@ service cloud.firestore {
         );
     }
 
+    function canUpdateImmunizationRecord(existingData, newData) {
+      return isChoRole() ||
+        (isBhwRole() &&
+          sameBarangay(existingData) &&
+          sameBarangay(newData));
+    }
+
+    // Immunization records are intentionally validated at the write boundary.
+    // Reads remain compatible with historical documents that predate these
+    // checks; only new or edited values must satisfy the safe type/length
+    // constraints below.
+    function safeOptionalText(data, field, maxLength) {
+      return !(field in data) || (
+        data[field] is string &&
+        data[field].size() <= maxLength
+      );
+    }
+
+    function safeRequiredText(data, field, maxLength) {
+      return field in data &&
+        data[field] is string &&
+        data[field].size() > 0 &&
+        data[field].size() <= maxLength &&
+        data[field].matches('.*[^\\s].*');
+    }
+
+    function validImmunizationRecord(data, requireCoreFields) {
+      return (
+        (!requireCoreFields || safeRequiredText(data, 'patientName', 200)) &&
+        (!requireCoreFields || safeRequiredText(data, 'vaccine', 120)) &&
+        (!requireCoreFields || safeRequiredText(data, 'administrationDate', 40)) &&
+        (!requireCoreFields || safeRequiredText(data, 'status', 40)) &&
+        safeOptionalText(data, 'patientName', 200) &&
+        safeOptionalText(data, 'age', 16) &&
+        safeOptionalText(data, 'contactNumber', 32) &&
+        safeOptionalText(data, 'adverseEvents', 2000)
+      );
+    }
+
+    function validImmunizationUpdate(newData) {
+      // Legacy records may not contain every modern field. Validate the
+      // fields that are present while allowing those historical documents to
+      // remain editable; newly-created documents receive the complete
+      // core-field validation above.
+      return (!('patientName' in newData) ||
+          safeRequiredText(newData, 'patientName', 200)) &&
+        (!('vaccine' in newData) || safeRequiredText(newData, 'vaccine', 120)) &&
+        (!('administrationDate' in newData) ||
+          safeRequiredText(newData, 'administrationDate', 40)) &&
+        (!('status' in newData) || safeRequiredText(newData, 'status', 40)) &&
+        safeOptionalText(newData, 'age', 16) &&
+        safeOptionalText(newData, 'contactNumber', 32) &&
+        safeOptionalText(newData, 'adverseEvents', 2000);
+    }
+
     // Doctor notes are an append-only clinical log tied to a specific
     // check-up/consultation. Any CHO or DOCTOR account may read notes
     // (continuity of care requires a later doctor to see an earlier
@@ -342,7 +425,9 @@ service cloud.firestore {
       ) && (
         newData.status != 'completed' ||
         (
+          ('completionStatus' in newData) &&
           newData.completionStatus == 'completed' &&
+          ('completedByDoctorUid' in newData) &&
           newData.completedByDoctorUid == request.auth.uid
         )
       );
@@ -647,18 +732,21 @@ service cloud.firestore {
     }
     match /immunization_records/{recordId} {
       allow read: if canReadScopedRecord(resource.data);
-      allow create: if canWriteScopedRecord(request.resource.data);
-      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
+      allow create: if canWriteScopedRecord(request.resource.data) &&
+        validImmunizationRecord(request.resource.data, true);
+      allow update: if canUpdateImmunizationRecord(resource.data, request.resource.data) &&
+        validImmunizationUpdate(request.resource.data);
       allow delete: if canWriteScopedRecord(resource.data);
     }
     match /barangays/{barangayCode}/immunization_records/{recordId} {
       allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
       allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
-        request.resource.data.barangayCode == barangayCode;
-      allow update: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
-        canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        request.resource.data.barangayCode == barangayCode &&
+        validImmunizationRecord(request.resource.data, true);
+      allow update: if canUpdateImmunizationRecord(resource.data, request.resource.data) &&
         resource.data.barangayCode == barangayCode &&
-        request.resource.data.barangayCode == barangayCode;
+        request.resource.data.barangayCode == barangayCode &&
+        validImmunizationUpdate(request.resource.data);
       allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data);
     }
     match /patient_records/{recordId} {

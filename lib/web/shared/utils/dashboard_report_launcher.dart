@@ -1892,7 +1892,7 @@ Future<_DashboardReportPayload> _loadDashboardReportPayload(
             flex: 0.95,
           ),
           ReportCsvColumn(
-            'Adverse Events',
+            'Adverse Events Following Immunization (AEFI)',
             (record) => reportText(record['adverseEvents'], fallback: 'None'),
             flex: 1.2,
           ),

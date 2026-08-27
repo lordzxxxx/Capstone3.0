@@ -1580,7 +1580,7 @@ class PatientHistoryDialogs {
       'vaccineBrand': 'Vaccine Brand',
       'doseNumber': 'Dose Number',
       'administeredBy': 'Administered By',
-      'adverseEvents': 'Adverse Events',
+      'adverseEvents': 'Adverse Events Following Immunization (AEFI)',
       'nextDoseDueDate': 'Next Dose Due Date',
       'riskLevel': 'Risk Level',
       'ai_category': 'AI Category',

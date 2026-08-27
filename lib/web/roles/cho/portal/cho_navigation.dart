@@ -491,7 +491,8 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
     BuildContext context,
     ChoDestination destination,
   ) async {
-    if (destination == widget.current) return;
+    // A selected item can still be tapped from the mobile Drawer. The
+    // coordinator must run so it closes the modal Drawer before the no-op.
     await WebNavigationCoordinator.goToNamed(
       context,
       WebRoutes.choDestination(destination),

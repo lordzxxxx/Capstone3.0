@@ -4,6 +4,7 @@ import 'package:mycapstone_project/app/features/auth/reset_password_service.dart
 import 'package:mycapstone_project/app/features/auth/login.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
+import 'package:mycapstone_project/shared/password_policy.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.blueSoft;
@@ -32,21 +33,11 @@ class _NewPasswordState extends State<NewPassword> {
   Color _strengthColor = Colors.grey;
 
   List<String> _getPasswordRequirements() {
-    final String password = passwordController.text;
-    final List<String> unmet = [];
-
-    if (password.length < 8) unmet.add('At least 8 characters');
-    if (!RegExp(r'[A-Z]').hasMatch(password)) unmet.add('One uppercase letter');
-    if (!RegExp(r'[a-z]').hasMatch(password)) unmet.add('One lowercase letter');
-    if (!RegExp(r'[0-9]').hasMatch(password)) unmet.add('One number');
-    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) {
-      unmet.add(r'One special character (!@#$%^&*)');
-    }
-
-    return unmet;
+    return PasswordPolicy.unmetRequirements(passwordController.text);
   }
 
   void _updatePasswordStrength() {
+    if (!mounted) return;
     final List<String> unmet = _getPasswordRequirements();
     setState(() {
       if (unmet.isEmpty) {
@@ -63,6 +54,7 @@ class _NewPasswordState extends State<NewPassword> {
   }
 
   Future<void> _resetPassword() async {
+    if (_isLoading) return;
     final String password = passwordController.text;
     final String confirmPassword = confirmPasswordController.text;
 
@@ -104,6 +96,7 @@ class _NewPasswordState extends State<NewPassword> {
       // Complete the password reset via Cloud Function
       await ResetPasswordService.completePasswordReset(widget.email, password);
 
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
       Get.snackbar(
@@ -114,13 +107,15 @@ class _NewPasswordState extends State<NewPassword> {
       );
 
       Future.delayed(const Duration(seconds: 2), () {
+        if (!mounted) return;
         Get.offAllNamed(MobileRoutes.login);
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
       Get.snackbar(
         'Reset Failed',
-        e.toString().replaceFirst('Exception: ', ''),
+        'Unable to reset the password right now. Please request a new code and try again.',
         backgroundColor: const Color(0xFFD32F2F),
         colorText: Colors.white,
       );

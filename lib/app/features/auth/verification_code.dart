@@ -67,9 +67,10 @@ class _VerificationCodeState extends State<VerificationCode> {
   }
 
   Future<void> _verifyCode() async {
+    if (_isLoading) return;
     final String code = codeControllers.map((c) => c.text).join();
 
-    if (code.length != 6) {
+    if (!RegExp(r'^\d{6}$').hasMatch(code)) {
       setState(() {
         _hasError = true;
         _errorMessage = 'Please enter all 6 digits';
@@ -82,6 +83,7 @@ class _VerificationCodeState extends State<VerificationCode> {
     try {
       await ResetPasswordService.verifyCode(widget.email, code);
 
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
       Get.snackbar(
@@ -92,27 +94,33 @@ class _VerificationCodeState extends State<VerificationCode> {
       );
 
       Future.delayed(const Duration(seconds: 1), () {
+        if (!mounted) return;
         Get.offNamed(
           MobileRoutes.newPassword,
           arguments: {'email': widget.email, 'code': code},
         );
       });
     } catch (e) {
+      if (!mounted) return;
+      final errorText = e.toString().toLowerCase();
       setState(() {
         _hasError = true;
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _errorMessage = errorText.contains('too many')
+            ? 'Too many attempts. Request a new code later.'
+            : 'The verification code is invalid or expired. Request a new code.';
         _isLoading = false;
       });
     }
   }
 
   Future<void> _resendCode() async {
-    if (_resendCountdown > 0) return;
+    if (_resendCountdown > 0 || _isLoading) return;
 
     setState(() => _isLoading = true);
 
     try {
       await ResetPasswordService.resendVerificationCode(widget.email);
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
       Get.snackbar(
@@ -129,9 +137,13 @@ class _VerificationCodeState extends State<VerificationCode> {
       focusNodes[0].requestFocus();
       _startResendCountdown();
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _hasError = true;
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        final errorText = e.toString().toLowerCase();
+        _errorMessage = errorText.contains('too many')
+            ? 'Too many requests. Please wait before requesting another code.'
+            : 'Unable to resend the code right now. Please try again later.';
         _isLoading = false;
       });
     }

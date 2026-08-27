@@ -212,6 +212,9 @@ describe('connected workflow: real Firestore persistence and retrieval', () => {
       doctorDb.doc('referrals/workflow-referral-1').update({
         status: 'completed',
         assignedDoctorUid: 'doctor-1',
+        completionStatus: 'completed',
+        completedByDoctorUid: 'doctor-1',
+        completedByDoctorName: 'Workflow Test Doctor',
         doctorUpdatedAt: new Date(),
         updatedAt: new Date(),
       }),

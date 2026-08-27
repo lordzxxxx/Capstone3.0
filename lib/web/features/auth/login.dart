@@ -18,6 +18,8 @@ import 'package:mycapstone_project/web/roles/cho/dashboard/cho_dashboard.dart'
 import 'package:mycapstone_project/web/features/auth/cho_access_session.dart';
 import 'package:mycapstone_project/web/roles/bhw/referrals/referrals.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
+import 'package:mycapstone_project/shared/widgets/auth_error_banner.dart';
+import 'package:mycapstone_project/shared/input_validation.dart';
 import 'package:mycapstone_project/web/shared/widgets/login_success_sweet_alert.dart';
 import 'package:mycapstone_project/web/shared/services/firestore_rest_reader.dart';
 import 'package:mycapstone_project/app/core/services/login_attempt_limiter.dart';
@@ -401,7 +403,7 @@ class _LoginState extends State<Login> {
 
     if (snapshot.docs.isEmpty) {
       if (kDebugMode) {
-        debugPrint('Firestore email lookup - no users doc found for $email');
+        debugPrint('Firestore email lookup - no users document found');
       }
       return null;
     }
@@ -415,7 +417,7 @@ class _LoginState extends State<Login> {
     if (!_isApprovedActiveProfile(profile)) return null;
     final role = _normalizeRole((profile!['role'] ?? '').toString());
     if (kDebugMode) {
-      debugPrint('Firestore email lookup - role="$role" docId=${doc.id}');
+      debugPrint('Firestore email lookup completed; role resolved');
     }
 
     if (!_isChoOrBhwRole(role)) {
@@ -691,6 +693,17 @@ class _LoginState extends State<Login> {
     );
   }
 
+  Future<void> _rejectWrongPortal(User user) async {
+    await _clearCachedRoleLocally(user);
+    _clearRoleValidationForDashboard();
+    await FirebaseAuth.instance.signOut();
+    _showAuthError(
+      'Access Denied',
+      'This account is not authorized for the $_portalName portal.',
+      refocus: true,
+    );
+  }
+
   Future<String?> _readChoOrBhwRoleFromClaims(User user) async {
     try {
       if (kDebugMode) {
@@ -747,38 +760,60 @@ class _LoginState extends State<Login> {
 
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  String? _authError;
+
+  void _clearAuthError() {
+    if (_authError != null && mounted) {
+      setState(() => _authError = null);
+    }
+  }
+
+  void _showAuthError(String title, String message, {bool refocus = false}) {
+    if (!mounted) return;
+    setState(() => _authError = message);
+    if (refocus) {
+      _passwordFocusNode.requestFocus();
+    }
+    Get.snackbar(
+      title,
+      message,
+      backgroundColor: const Color(0xFFD32F2F),
+      colorText: Colors.white,
+    );
+  }
+
   Future<void> signIn() async {
     if (_isLoading) return;
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please fill in all fields',
-        backgroundColor: const Color(0xFFD32F2F),
-        colorText: Colors.white,
-      );
+    final email = emailController.text.trim();
+    if (email.isEmpty || passwordController.text.isEmpty) {
+      _showAuthError('Error', 'Please fill in all fields');
+      return;
+    }
+    if (!InputValidation.isEmail(email)) {
+      _showAuthError('Error', 'Enter a valid email address.');
       return;
     }
 
-    final email = emailController.text.trim();
     final cooldown = LoginAttemptLimiter.remaining(email);
     if (cooldown != null) {
-      Get.snackbar(
+      _showAuthError(
         'Please wait',
         'Too many failed attempts. Try again in ${(cooldown.inMilliseconds / 1000).ceil()} seconds.',
-        backgroundColor: const Color(0xFFD32F2F),
-        colorText: Colors.white,
       );
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _authError = null;
+    });
     if (kDebugMode) {
-      // Do not print the password itself; print length for debugging only
-      final pwdLen = passwordController.text.length;
       // ignore: avoid_print
-      debugPrint('Attempting signIn email=$email passwordLength=$pwdLen');
+      debugPrint('Attempting sign-in through Firebase Authentication');
     }
 
     try {
@@ -815,6 +850,10 @@ class _LoginState extends State<Login> {
                 'Login verified via fallback source (RTDB/custom claims): role=$fallbackRole',
               );
             }
+            if (!_matchesExpectedPortal(fallbackRole)) {
+              await _rejectWrongPortal(currentUser);
+              return;
+            }
             await _cacheRoleLocally(currentUser, fallbackRole);
             await _showSuccessDialogAndNavigate(currentUser, fallbackRole);
             return;
@@ -832,6 +871,10 @@ class _LoginState extends State<Login> {
         await _handleRoleVerificationFailure(const _RoleCheckResult.denied());
         return;
       }
+      if (!_matchesExpectedPortal(resolvedRole)) {
+        await _rejectWrongPortal(currentUser);
+        return;
+      }
       await _cacheRoleLocally(currentUser, resolvedRole);
       await _showSuccessDialogAndNavigate(currentUser, resolvedRole);
     } on FirebaseAuthException catch (e) {
@@ -842,54 +885,28 @@ class _LoginState extends State<Login> {
       }.contains(e.code)) {
         LoginAttemptLimiter.recordFailure(email);
       }
-      // Map common FirebaseAuth web error codes to friendly messages
-      String message;
-      switch (e.code) {
-        case 'user-not-found':
-          message = 'Incorrect email or password. Please try again.';
-          break;
-        case 'wrong-password':
-          message = 'Incorrect password. Please try again.';
-          break;
-        case 'invalid-email':
-          message = 'The email address is badly formatted.';
-          break;
-        case 'user-disabled':
-          message = 'This account has been disabled.';
-          break;
-        case 'too-many-requests':
-          message = 'Too many attempts. Try again later.';
-          break;
-        case 'network-request-failed':
-          message = 'Network error. Check your connection.';
-          break;
-        default:
-          message = e.message ?? 'Login failed. Please try again.';
-      }
-
-      String displayMessage = kDebugMode ? '$message (${e.code})' : message;
-      Get.snackbar(
-        'Login Failed',
-        displayMessage,
-        backgroundColor: const Color(0xFFD32F2F),
-        colorText: Colors.white,
-      );
+      final message = switch (e.code) {
+        'user-not-found' ||
+        'wrong-password' ||
+        'invalid-credential' ||
+        'invalid-email' ||
+        'user-disabled' => 'Invalid email or password.',
+        'too-many-requests' => 'Too many attempts. Try again later.',
+        'network-request-failed' => 'Network error. Check your connection.',
+        _ => 'The sign-in could not be completed. Please try again.',
+      };
+      _showAuthError('Login Failed', message, refocus: true);
 
       if (kDebugMode) {
-        // ignore: avoid_print
-        debugPrint(
-          'FirebaseAuthException during signIn: code=${e.code} message=${e.message}',
-        );
+        debugPrint('FirebaseAuthException during signIn: code=${e.code}');
       }
     } catch (e) {
-      Get.snackbar(
+      _showAuthError(
         'Login Failed',
-        'Unexpected error. Please try again.',
-        backgroundColor: const Color(0xFFD32F2F),
-        colorText: Colors.white,
+        'The sign-in could not be completed. Please try again.',
+        refocus: true,
       );
-      // ignore: avoid_print
-      debugPrint('Unexpected signIn error: $e');
+      if (kDebugMode) debugPrint('Unexpected signIn error: ${e.runtimeType}');
     } finally {
       if (mounted) {
         setState(() {
@@ -903,6 +920,8 @@ class _LoginState extends State<Login> {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -1163,6 +1182,7 @@ class _LoginState extends State<Login> {
             const SizedBox(height: 8),
             _buildTextField(
               controller: emailController,
+              focusNode: _emailFocusNode,
               hintText: 'you@example.com',
               icon: Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
@@ -1195,6 +1215,10 @@ class _LoginState extends State<Login> {
                     ],
                   ),
             _buildPasswordField(),
+            if (_authError != null) ...[
+              const SizedBox(height: 12),
+              AuthErrorBanner(message: _authError!),
+            ],
             const SizedBox(height: 22),
             SizedBox(
               height: 52,
@@ -1274,6 +1298,7 @@ class _LoginState extends State<Login> {
     required TextEditingController controller,
     required String hintText,
     required IconData icon,
+    FocusNode? focusNode,
     TextInputType keyboardType = TextInputType.text,
   }) {
     return Container(
@@ -1289,10 +1314,12 @@ class _LoginState extends State<Login> {
       ),
       child: TextField(
         controller: controller,
+        focusNode: focusNode,
         keyboardType: keyboardType,
         textInputAction: TextInputAction.next,
         autofillHints: const [AutofillHints.email, AutofillHints.username],
         onSubmitted: (_) => FocusScope.of(context).nextFocus(),
+        onChanged: (_) => _clearAuthError(),
         style: TextStyle(
           color: _darkDeepTeal,
           fontWeight: FontWeight.w600,
@@ -1343,12 +1370,14 @@ class _LoginState extends State<Login> {
       ),
       child: TextField(
         controller: passwordController,
+        focusNode: _passwordFocusNode,
         obscureText: _obscurePassword,
         textInputAction: TextInputAction.done,
         autofillHints: const [AutofillHints.password],
         onSubmitted: (_) {
           if (!_isLoading) signIn();
         },
+        onChanged: (_) => _clearAuthError(),
         style: TextStyle(
           color: _darkDeepTeal,
           fontWeight: FontWeight.w500,

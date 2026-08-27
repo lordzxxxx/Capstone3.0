@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
+import 'package:mycapstone_project/shared/patient_age_categories.dart';
 
 enum PatientDateFilterMode {
   today,
@@ -56,7 +57,7 @@ class _PatientOperationalSummaryState extends State<PatientOperationalSummary> {
   String _textValue(dynamic value) => value?.toString().trim() ?? '';
 
   int _age(Map<String, dynamic> patient) =>
-      int.tryParse(_textValue(patient['age'])) ?? -1;
+      PatientAgeCategories.parseYears(patient['age']) ?? -1;
 
   bool _truthy(dynamic value) {
     final normalized = _textValue(value).toLowerCase();
@@ -701,8 +702,8 @@ class _PatientOperationalSummaryState extends State<PatientOperationalSummary> {
             filteredPatients.length,
             Icons.people,
           ),
-          _Metric('Male Patients', male, Icons.male_rounded),
-          _Metric('Female Patients', female, Icons.female_rounded),
+          _Metric('Male', male, Icons.male_rounded),
+          _Metric('Female', female, Icons.female_rounded),
           _Metric(
             'Senior Citizens',
             filteredPatients.where((patient) => _age(patient) >= 60).length,

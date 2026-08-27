@@ -2,6 +2,11 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const { getFirestore } = require('firebase-admin/firestore');
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+const {
+  assertStrongPassword,
+  generateTemporaryPassword,
+} = require('./password_policy');
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -10,6 +15,7 @@ if (!admin.apps.length) {
 // Keep this aligned with lib/firebase_helper.dart.
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 const db = getFirestore(admin.app(), FIRESTORE_DATABASE_ID);
+const REGISTRATION_INTENT_TTL_MS = 30 * 60 * 1000;
 let assignmentEmailTransporter = null;
 
 function normalizeText(value) {
@@ -65,6 +71,225 @@ function maskEmail(email) {
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+}
+
+function profileText(value, field, {maxLength = 200, required = false} = {}) {
+  if (value !== undefined && value !== null && typeof value !== 'string') {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        `${field} must be text.`,
+    );
+  }
+  const text = String(value || '').trim();
+  if ((required && !text) || text.length > maxLength ||
+      (text.length > 0 && !/\S/.test(text))) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        `${field} is invalid.`,
+    );
+  }
+  return text;
+}
+
+function assertBhwRegistrationProfile(profile, {
+  assignedBarangay,
+  assignedBarangayCode,
+}) {
+  if (!profile || typeof profile !== 'object' || Array.isArray(profile)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'The BHW registration profile is required.',
+    );
+  }
+
+  const firstName = profileText(profile.firstName, 'First name', {
+    maxLength: 80,
+    required: true,
+  });
+  const middleName = profileText(profile.middleName, 'Middle name', {
+    maxLength: 80,
+  });
+  const lastName = profileText(profile.lastName, 'Last name', {
+    maxLength: 80,
+    required: true,
+  });
+  const suffix = profileText(profile.suffix, 'Suffix', {maxLength: 40});
+  const contactNumber = profileText(profile.contactNumber, 'Contact number', {
+    maxLength: 20,
+    required: true,
+  });
+  if (!/^(?:\+63|0)\d{10}$/.test(contactNumber)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Contact number is invalid.',
+    );
+  }
+
+  const dateOfBirth = profile.dateOfBirth;
+  if (!dateOfBirth || typeof dateOfBirth.toMillis !== 'function') {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Date of birth is required.',
+    );
+  }
+  const dateOfBirthMillis = dateOfBirth.toMillis();
+  if (!Number.isFinite(dateOfBirthMillis) || dateOfBirthMillis > Date.now() ||
+      dateOfBirthMillis < Date.now() - (130 * 366 * 24 * 60 * 60 * 1000)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Date of birth is invalid.',
+    );
+  }
+
+  const sex = profileText(profile.sex, 'Sex', {maxLength: 16, required: true});
+  if (!['Male', 'Female'].includes(sex)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Sex is invalid.',
+    );
+  }
+  const civilStatus = profileText(profile.civilStatus, 'Civil status', {
+    maxLength: 24,
+    required: true,
+  });
+  if (!['Single', 'Married', 'Widowed', 'Separated'].includes(civilStatus)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Civil status is invalid.',
+    );
+  }
+  const residentialAddress = profileText(
+      profile.residentialAddress,
+      'Residential address',
+      {maxLength: 240, required: true},
+  );
+
+  const address = profile.address;
+  if (!address || typeof address !== 'object' || Array.isArray(address)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Residential address details are required.',
+    );
+  }
+  const province = profileText(address.province, 'Province', {
+    maxLength: 80,
+    required: true,
+  });
+  const municipality = profileText(address.municipality, 'Municipality', {
+    maxLength: 120,
+    required: true,
+  });
+  const residentialBarangay = profileText(address.barangay, 'Barangay', {
+    maxLength: 120,
+    required: true,
+  });
+  const residentialBarangayCode = normalizeBarangayCode(address.barangayCode);
+  if (!residentialBarangayCode || residentialBarangayCode.length > 80) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Residential barangay is invalid.',
+    );
+  }
+  const residentialSitio = profileText(address.sitio, 'Residential sitio', {
+    maxLength: 120,
+  });
+
+  const bhw = profile.bhw;
+  if (!bhw || typeof bhw !== 'object' || Array.isArray(bhw)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'BHW information is required.',
+    );
+  }
+  const bhwId = profileText(bhw.bhwId, 'BHW ID', {maxLength: 64});
+  const assignedSitio = profileText(bhw.assignedSitio, 'Assigned sitio', {
+    maxLength: 120,
+  });
+  const yearsOfService = bhw.yearsOfService;
+  if (!Number.isInteger(yearsOfService) || yearsOfService < 0 ||
+      yearsOfService > 80) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Years of service is invalid.',
+    );
+  }
+  const dateStarted = bhw.dateStarted;
+  if (dateStarted !== '' && dateStarted !== null && dateStarted !== undefined &&
+      (!dateStarted || typeof dateStarted.toMillis !== 'function' ||
+        dateStarted.toMillis() > Date.now())) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Date started is invalid.',
+    );
+  }
+  const employmentStatus = profileText(
+      bhw.employmentStatus,
+      'Employment status',
+      {maxLength: 24, required: true},
+  );
+  if (!['Active', 'Volunteer', 'Contractual'].includes(employmentStatus)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Employment status is invalid.',
+    );
+  }
+
+  const declarations = profile.declarations;
+  if (!declarations || typeof declarations !== 'object' ||
+      declarations.informationCertified !== true ||
+      declarations.choReviewAcknowledged !== true ||
+      declarations.privacyPolicyAccepted !== true ||
+      declarations.dataPrivacyActAccepted !== true) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'All registration declarations must be accepted.',
+    );
+  }
+
+  const fullName = [firstName, middleName, lastName, suffix]
+      .filter(Boolean)
+      .join(' ');
+  return {
+    status: 'Pending Approval',
+    firstName,
+    middleName,
+    lastName,
+    suffix,
+    fullName,
+    dateOfBirth,
+    sex,
+    civilStatus,
+    contactNumber,
+    residentialAddress,
+    address: {
+      province,
+      municipality,
+      barangay: residentialBarangay,
+      barangayCode: residentialBarangayCode,
+      sitio: residentialSitio,
+    },
+    bhw: {
+      bhwId,
+      assignedBarangay,
+      assignedBarangayCode,
+      assignedSitio,
+      yearsOfService,
+      dateStarted: dateStarted || '',
+      position: 'Barangay Health Worker',
+      employmentStatus,
+    },
+    declarations: {
+      informationCertified: true,
+      choReviewAcknowledged: true,
+      privacyPolicyAccepted: true,
+      dataPrivacyActAccepted: true,
+      acceptedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    approvedBy: null,
+    approvedAt: null,
+    rejectionReason: null,
+    lastLogin: null,
+  };
 }
 
 function serializeError(error) {
@@ -646,6 +871,12 @@ function buildRootUserPayload({
   const barangayUserPath = isBarangayScoped ?
     barangayUserDocPath(normalizedBarangayCode, uid) :
     null;
+  const approvalStatus = isBarangayScoped
+    ? (previousData?.approvalStatus || 'pending')
+    : 'approved';
+  const accountStatus = isBarangayScoped
+    ? (previousData?.accountStatus || 'pending_approval')
+    : (previousData?.accountStatus || 'active');
 
   return {
     username,
@@ -671,8 +902,9 @@ function buildRootUserPayload({
     barangayVerified: isBarangayScoped,
     barangayPath: barangayPath || admin.firestore.FieldValue.delete(),
     barangayUserPath: barangayUserPath || admin.firestore.FieldValue.delete(),
-    approvalStatus: 'approved',
-    accountStatus: previousData?.accountStatus || 'active',
+    approvalStatus,
+    accountStatus,
+    isApproved: approvalStatus.toLowerCase() === 'approved',
     createdAt:
       previousData?.createdAt || admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -736,6 +968,17 @@ function buildBarangayDirectoryPayload(data) {
 function buildBarangayUserPayload(uid, data) {
   const normalizedRole = normalizeRole(data?.role || '');
   const normalizedBarangayCode = normalizeBarangayCode(data?.barangayCode || '');
+  const mirroredProfile = {};
+  for (const field of [
+    'status', 'firstName', 'middleName', 'lastName', 'suffix', 'fullName',
+    'dateOfBirth', 'sex', 'civilStatus', 'contactNumber',
+    'residentialAddress', 'address', 'bhw', 'declarations', 'approvedBy',
+    'approvedAt', 'rejectionReason', 'lastLogin',
+  ]) {
+    if (data?.[field] !== undefined) {
+      mirroredProfile[field] = data[field];
+    }
+  }
 
   return {
     uid,
@@ -765,6 +1008,7 @@ function buildBarangayUserPayload(uid, data) {
     createdAt:
       data?.createdAt || admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    ...mirroredProfile,
   };
 }
 
@@ -913,7 +1157,7 @@ async function syncBarangayRegistrationStatus(beforeData, afterData) {
 }
 
 exports.validateRegistrationPolicy = functions.https.onCall(async (data) => {
-  const email = String(data?.email || '').trim();
+  const email = String(data?.email || '').trim().toLowerCase();
   const username = String(data?.username || '').trim();
   const role = normalizeRole(data?.role || '');
   const barangayCode = normalizeBarangayCode(data?.barangayCode || '');
@@ -942,6 +1186,153 @@ exports.validateRegistrationPolicy = functions.https.onCall(async (data) => {
     });
     return buildValidationPolicyResult();
   }
+});
+
+// Public registration must create the Firebase Auth account on the trusted
+// backend. Creating it directly from the client would make the stronger
+// password policy advisory: a caller could bypass the UI and use the Auth SDK
+// with a weak password. The short-lived intent binds the subsequent profile
+// completion to this validated registration attempt.
+exports.createRegistrationAccount = functions.https.onCall(async (data, context) => {
+  if (context.auth) {
+    throw new functions.https.HttpsError(
+        'failed-precondition',
+        'Sign out before starting a new registration.',
+    );
+  }
+
+  const email = String(data?.email || '').trim().toLowerCase();
+  const username = String(data?.username || '').trim();
+  const role = normalizeRole(data?.role || '');
+  const barangayCode = normalizeBarangayCode(data?.barangayCode || '');
+  const password = data?.password;
+
+  if (!isValidEmail(email) || email.length > 320) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'A valid email address is required.',
+    );
+  }
+  if (username.length < 3 || username.length > 80 || !/\S/.test(username)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Username must be between 3 and 80 characters.',
+    );
+  }
+  if (!['CHO', 'BHW'].includes(role)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Unsupported role value.',
+    );
+  }
+  if (role === 'BHW' && !barangayCode) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Barangay assignment is required for BHW accounts.',
+    );
+  }
+  try {
+    assertStrongPassword(password);
+  } catch (_) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Password must be 8 to 128 characters and include uppercase, lowercase, a number, and a special character.',
+    );
+  }
+
+  let userRecord;
+  try {
+    userRecord = await admin.auth().createUser({
+      email,
+      password,
+      displayName: username,
+    });
+  } catch (error) {
+    if (error?.code === 'auth/email-already-exists') {
+      throw new functions.https.HttpsError(
+          'already-exists',
+          'This account is already registered. Please log in instead.',
+      );
+    }
+    if (error?.code === 'auth/invalid-email') {
+      throw new functions.https.HttpsError(
+          'invalid-argument',
+          'A valid email address is required.',
+      );
+    }
+    console.error('createRegistrationAccount Auth creation failed', {
+      code: error?.code || 'unknown',
+    });
+    throw new functions.https.HttpsError(
+        'internal',
+        'Unable to create the account right now. Please try again.',
+    );
+  }
+
+  const registrationNonce = crypto.randomBytes(32).toString('hex');
+  try {
+    await db.collection('registration_intents').doc(userRecord.uid).set({
+      uid: userRecord.uid,
+      email,
+      emailLower: email,
+      username,
+      usernameLower: normalizeText(username),
+      role,
+      barangayCode,
+      registrationNonce,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      expiresAt: admin.firestore.Timestamp.fromMillis(
+          Date.now() + REGISTRATION_INTENT_TTL_MS,
+      ),
+    });
+  } catch (error) {
+    try {
+      await admin.auth().deleteUser(userRecord.uid);
+    } catch (rollbackError) {
+      console.error('createRegistrationAccount Auth rollback failed', {
+        uid: userRecord.uid,
+        code: rollbackError?.code || 'unknown',
+      });
+    }
+    console.error('createRegistrationAccount intent write failed', {
+      uid: userRecord.uid,
+      code: error?.code || 'unknown',
+    });
+    throw new functions.https.HttpsError(
+        'internal',
+        'Unable to complete registration right now. Please try again.',
+    );
+  }
+
+  let customToken;
+  try {
+    customToken = await admin.auth().createCustomToken(userRecord.uid);
+  } catch (error) {
+    await db.collection('registration_intents').doc(userRecord.uid).delete();
+    try {
+      await admin.auth().deleteUser(userRecord.uid);
+    } catch (rollbackError) {
+      console.error('createRegistrationAccount token rollback failed', {
+        uid: userRecord.uid,
+        code: rollbackError?.code || 'unknown',
+      });
+    }
+    console.error('createRegistrationAccount token creation failed', {
+      uid: userRecord.uid,
+      code: error?.code || 'unknown',
+    });
+    throw new functions.https.HttpsError(
+        'internal',
+        'Unable to complete registration right now. Please try again.',
+    );
+  }
+
+  return {
+    success: true,
+    uid: userRecord.uid,
+    registrationNonce,
+    customToken,
+  };
 });
 
 exports.getBarangayAvailability = functions.https.onCall(async () => {
@@ -984,11 +1375,12 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
 
   const uid = String(data?.uid || '').trim();
   const username = String(data?.username || '').trim();
-  const email = String(data?.email || '').trim();
+  const email = String(data?.email || '').trim().toLowerCase();
   const role = normalizeRole(data?.role || '');
   const barangay = String(data?.barangay || '').trim();
   const barangayCode = normalizeBarangayCode(data?.barangayCode || '');
   const barangayDistrict = String(data?.barangayDistrict || '').trim();
+  const registrationNonce = String(data?.registrationNonce || '').trim();
 
   if (!uid || uid !== context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -1004,17 +1396,31 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
     );
   }
 
+  if (!/^[a-f0-9]{64}$/i.test(registrationNonce)) {
+    throw new functions.https.HttpsError(
+        'failed-precondition',
+        'Registration has expired. Please start again.',
+    );
+  }
+
+  if (!isValidEmail(email) || email.length > 320) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'A valid email address is required.',
+    );
+  }
+
+  if (username.length < 3 || username.length > 80) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Username must be between 3 and 80 characters.',
+    );
+  }
+
   if (!['CHO', 'BHW'].includes(role)) {
     throw new functions.https.HttpsError(
         'invalid-argument',
         'Unsupported role value.',
-    );
-  }
-
-  if (role === 'BHW') {
-    throw new functions.https.HttpsError(
-        'failed-precondition',
-        'BHW accounts must use the pending registration request workflow and require CHO approval.',
     );
   }
 
@@ -1025,6 +1431,19 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
     );
   }
 
+  if (data?.profile !== undefined && role !== 'BHW') {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Detailed registration profiles are only supported for BHW accounts.',
+    );
+  }
+  const detailedBhwProfile = data?.profile === undefined
+    ? null
+    : assertBhwRegistrationProfile(data.profile, {
+      assignedBarangay: barangay,
+      assignedBarangayCode: barangayCode,
+    });
+
   const userRef = db.collection('users').doc(uid);
   const emailLockRef = db.collection('registration_email_locks').doc(normalizeText(email));
   const usernameLockRef = db.collection('registration_username_locks').doc(normalizeText(username));
@@ -1034,15 +1453,35 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
   const barangayStatusRef = barangayCode
       ? db.collection('barangay_registration_status').doc(barangayCode)
       : null;
+  const registrationIntentRef = db.collection('registration_intents').doc(uid);
 
   let previousData = null;
+  let completedPayload = null;
   await db.runTransaction(async (transaction) => {
-    const [userSnap, emailLockSnap, usernameLockSnap, barangayLockSnap] = await Promise.all([
+    const [intentSnap, userSnap, emailLockSnap, usernameLockSnap, barangayLockSnap] = await Promise.all([
+      transaction.get(registrationIntentRef),
       transaction.get(userRef),
       transaction.get(emailLockRef),
       transaction.get(usernameLockRef),
       barangayLockRef ? transaction.get(barangayLockRef) : Promise.resolve(null),
     ]);
+
+    const intent = intentSnap.exists ? intentSnap.data() : null;
+    const intentExpiry = intent?.expiresAt;
+    if (!intent ||
+        intent.registrationNonce !== registrationNonce ||
+        intent.uid !== uid ||
+        intent.emailLower !== normalizeText(email) ||
+        intent.usernameLower !== normalizeText(username) ||
+        intent.role !== role ||
+        normalizeBarangayCode(intent.barangayCode || '') !== barangayCode ||
+        !intentExpiry ||
+        intentExpiry.toMillis() <= Date.now()) {
+      throw new functions.https.HttpsError(
+          'failed-precondition',
+          'Registration has expired. Please start again.',
+      );
+    }
 
     previousData = userSnap.exists ? userSnap.data() : null;
     const previousBarangayCode = normalizeBarangayCode(previousData?.barangayCode || '');
@@ -1082,7 +1521,7 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
       );
     }
 
-    const payload = buildRootUserPayload({
+    const basePayload = buildRootUserPayload({
       uid,
       username,
       email,
@@ -1092,8 +1531,13 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
       barangayDistrict,
       previousData,
     });
+    const payload = detailedBhwProfile
+      ? {...basePayload, ...detailedBhwProfile}
+      : basePayload;
+    completedPayload = payload;
 
     transaction.set(userRef, payload, { merge: true });
+    transaction.delete(registrationIntentRef);
     transaction.set(emailLockRef, {
       uid,
       email,
@@ -1115,8 +1559,8 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
         barangayDistrict,
         username,
         email,
-        accountStatus: previousData?.accountStatus || 'active',
-        approvalStatus: 'approved',
+        accountStatus: payload.accountStatus,
+        approvalStatus: payload.approvalStatus,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         source: 'registration-complete',
       }, { merge: true });
@@ -1128,8 +1572,8 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
         barangay,
         barangayCode,
         barangayDistrict,
-        accountStatus: previousData?.accountStatus || 'active',
-        approvalStatus: 'approved',
+        accountStatus: payload.accountStatus,
+        approvalStatus: payload.approvalStatus,
       }), { merge: true });
     }
 
@@ -1153,27 +1597,57 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
           { merge: true },
       );
     }
+
+    if (detailedBhwProfile) {
+      transaction.set(
+          db.collection('bhw_registration_requests').doc(uid),
+          {
+            ...payload,
+            requestId: uid,
+            applicantUid: uid,
+            requestType: 'BHW_ACCOUNT_REGISTRATION',
+            submissionStatus: 'submitted',
+            submittedAt: admin.firestore.FieldValue.serverTimestamp(),
+            profilePath: userRef.path,
+            barangayProfilePath: barangayUserDocRef(barangayCode, uid).path,
+            source: 'public-bhw-registration',
+          },
+      );
+    }
   });
 
   const existingAuthUser = await admin.auth().getUser(uid);
-  const existingClaims = existingAuthUser.customClaims || {};
-  await admin.auth().setCustomUserClaims(uid, {
-    ...existingClaims,
-    role,
-  });
+  const updatedClaims = {...(existingAuthUser.customClaims || {})};
+  const isApprovedAccount =
+    completedPayload.approvalStatus.toLowerCase() === 'approved' &&
+    ['active', 'approved'].includes(completedPayload.accountStatus.toLowerCase());
+  if (isApprovedAccount) {
+    updatedClaims.role = role;
+  } else {
+    delete updatedClaims.role;
+    if (Array.isArray(updatedClaims.roles)) {
+      updatedClaims.roles = updatedClaims.roles.filter((claimRole) =>
+        normalizeRole(claimRole) !== role,
+      );
+      if (updatedClaims.roles.length === 0) {
+        delete updatedClaims.roles;
+      }
+    }
+  }
+  await admin.auth().setCustomUserClaims(uid, updatedClaims);
 
   try {
     await admin.database().ref(`users/${uid}`).update({
       uid,
       username,
       email,
-      role,
+      role: completedPayload.role,
       accessScope: accessScopeForRole(role),
       barangay: isBarangayScopedRole(role) ? barangay : null,
       barangayCode: isBarangayScopedRole(role) ? barangayCode : null,
       barangayDistrict: isBarangayScopedRole(role) ? barangayDistrict : null,
-      approvalStatus: 'approved',
-      accountStatus: previousData?.accountStatus || 'active',
+      approvalStatus: completedPayload.approvalStatus,
+      accountStatus: completedPayload.accountStatus,
       updatedAt: admin.database.ServerValue.TIMESTAMP,
     });
   } catch (error) {
@@ -1292,7 +1766,7 @@ exports.registerDoctorAccount = functions.https.onCall(async (data, context) => 
         throw doctorRegistrationError(error, 'Failed to check whether the doctor account already exists.');
       }
 
-      const tempPassword = `${Math.random().toString(36).slice(-8)}A1!`;
+      const tempPassword = generateTemporaryPassword();
       try {
         userRecord = await admin.auth().createUser({
           email,

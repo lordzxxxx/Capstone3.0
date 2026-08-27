@@ -45,17 +45,50 @@ async function seed(pathName, data) {
   });
 }
 
+function registrationIntent(uid, email, username, role = 'BHW') {
+  return {
+    uid,
+    email,
+    emailLower: email.toLowerCase(),
+    username,
+    usernameLower: username.toLowerCase(),
+    role,
+    barangayCode: role === 'BHW' ? 'BARANGAY_10' : '',
+    registrationNonce: 'a'.repeat(64),
+    expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+  };
+}
+
 describe('user profile privilege boundaries', () => {
   it('allows pending BHW and active CHO signup but rejects active BHW and admin roles', async () => {
     const db = testEnv
       .authenticatedContext('bhw-1', {email: 'bhw@example.test'})
       .firestore();
     await assertFails(
+      db.doc('users/bhw-1').set(
+        activeProfile('bhw-1', 'bhw@example.test', {
+          username: 'bhw-user',
+          usernameLower: 'bhw-user',
+          status: 'Pending Approval',
+          approvalStatus: 'pending',
+          accountStatus: 'pending_approval',
+          isApproved: false,
+        }),
+      ),
+    );
+    await assertFails(
       db.doc('users/bhw-1').set(activeProfile('bhw-1', 'bhw@example.test')),
+    );
+    await seed(
+      'registration_intents/bhw-1',
+      registrationIntent('bhw-1', 'bhw@example.test', 'bhw-user'),
     );
     await assertSucceeds(
       db.doc('users/bhw-1').set(
         activeProfile('bhw-1', 'bhw@example.test', {
+          username: 'bhw-user',
+          usernameLower: 'bhw-user',
+          registrationNonce: 'a'.repeat(64),
           status: 'Pending Approval',
           approvalStatus: 'pending',
           accountStatus: 'pending_approval',
@@ -66,9 +99,16 @@ describe('user profile privilege boundaries', () => {
     const choDb = testEnv
       .authenticatedContext('cho-1', {email: 'cho@example.test'})
       .firestore();
+    await seed(
+      'registration_intents/cho-1',
+      registrationIntent('cho-1', 'cho@example.test', 'cho-user', 'CHO'),
+    );
     await assertSucceeds(
       choDb.doc('users/cho-1').set(
         activeProfile('cho-1', 'cho@example.test', {
+          username: 'cho-user',
+          usernameLower: 'cho-user',
+          registrationNonce: 'a'.repeat(64),
           role: 'CHO',
           accessScope: 'citywide',
           barangay: '',
@@ -228,6 +268,82 @@ describe('user profile privilege boundaries', () => {
       .authenticatedContext('bhw-1', {email: 'bhw@example.test'})
       .firestore();
     await assertSucceeds(db.doc('patient_records/patient-1').get());
+  });
+});
+
+describe('immunization record validation boundaries', () => {
+  beforeEach(async () => {
+    await seed(
+      'users/bhw-1',
+      activeProfile('bhw-1', 'bhw@example.test'),
+    );
+  });
+
+  const validRecord = (overrides = {}) => ({
+    id: 'immunization-1',
+    patientName: 'Test Patient',
+    patientId: 'patient-1',
+    age: '17',
+    contactNumber: '+639171234567',
+    vaccine: 'IPV',
+    vaccineBrand: 'Example Brand',
+    batchNumber: 'BATCH-1',
+    expirationDate: '2027-01-01T00:00:00.000Z',
+    administrationDate: '2026-08-28T00:00:00.000Z',
+    administrationTime: '09:00',
+    doseNumber: '1st dose',
+    routeOfAdministration: 'Intramuscular (IM)',
+    injectionSite: 'Left Upper Arm',
+    administeredBy: 'BHW One',
+    adverseEvents: '',
+    nextDoseDueDate: '',
+    status: 'Completed',
+    date: '2026-08-28T00:00:00.000Z',
+    barangay: 'Barangay 10',
+    barangayCode: 'barangay_10',
+    ...overrides,
+  });
+
+  it('allows valid records and rejects blank, oversized, and wrong-type values', async () => {
+    const db = testEnv
+      .authenticatedContext('bhw-1', {email: 'bhw@example.test'})
+      .firestore();
+
+    await assertSucceeds(
+      db.doc('immunization_records/valid-1').set(validRecord()),
+    );
+    await assertFails(
+      db.doc('immunization_records/blank-name').set(
+        validRecord({patientName: '   '}),
+      ),
+    );
+    await assertFails(
+      db.doc('immunization_records/oversized-notes').set(
+        validRecord({adverseEvents: 'x'.repeat(2001)}),
+      ),
+    );
+    await assertFails(
+      db.doc('immunization_records/wrong-type').set(
+        validRecord({age: 17}),
+      ),
+    );
+  });
+
+  it('keeps legacy documents readable and editable when their old shape is preserved', async () => {
+    await seed('immunization_records/legacy-1', {
+      patientName: 'Legacy Patient',
+      barangay: 'Barangay 10',
+      barangayCode: 'barangay_10',
+    });
+    const ref = testEnv
+      .authenticatedContext('bhw-1', {email: 'bhw@example.test'})
+      .firestore()
+      .doc('immunization_records/legacy-1');
+
+    await assertSucceeds(ref.get());
+    await assertSucceeds(ref.update({patientName: 'Updated Legacy Patient'}));
+    await assertFails(ref.update({patientName: '   '}));
+    await assertFails(ref.update({vaccine: '   '}));
   });
 });
 

@@ -119,7 +119,8 @@ class ImmunizationInsights extends StatelessWidget {
               icon: Icons.health_and_safety_outlined,
               child: _barChart(
                 adverseEvents,
-                emptyMessage: 'No adverse events have been reported.',
+                emptyMessage:
+                    'No adverse events following immunization have been reported.',
                 unit: 'report',
                 colors: const [Color(0xFF5B8CC9), Color(0xFFB8C9DB)],
               ),

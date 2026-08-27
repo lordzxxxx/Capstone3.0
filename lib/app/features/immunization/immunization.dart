@@ -15,6 +15,8 @@ import 'package:mycapstone_project/app/features/patients/patient_centered_histor
 import 'package:mycapstone_project/app/features/patients/patient.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
 import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
+import 'package:mycapstone_project/shared/immunization_reference_data.dart';
+import 'package:mycapstone_project/shared/input_validation.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _darkDeepTeal = AppDesign.page;
@@ -35,25 +37,11 @@ class ImmunizationPage extends StatefulWidget {
 }
 
 class _ImmunizationPageState extends State<ImmunizationPage> {
-  static const List<String> _vaccineTypeOptions = [
-    'BCG Vaccine',
-    'Hepatitis B',
-    'DPT Vaccine',
-    'Polio Vaccine',
-    'MMR Vaccine',
-    'Varicella Vaccine',
-    'Influenza',
-    'Pneumococcal',
-  ];
+  static const List<String> _vaccineTypeOptions = kImmunizationVaccineOptions;
   String _selectedVaccineFilter = 'All Vaccines';
   final List<String> _vaccineFilterOptions = [
     'All Vaccines',
-    'BCG Vaccine',
-    'Hepatitis B',
-    'DPT Vaccine',
-    'Polio Vaccine',
-    'MMR Vaccine',
-    'Varicella Vaccine',
+    ..._vaccineTypeOptions,
   ];
 
   String _searchQuery = '';
@@ -203,6 +191,28 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       'varicella vaccine': 'Varicella Vaccine',
       'influenza': 'Influenza',
       'pneumococcal': 'Pneumococcal',
+      'pentavalent': 'Pentavalent Vaccine',
+      'pentavalent vaccine': 'Pentavalent Vaccine',
+      'penta': 'Pentavalent Vaccine',
+      'opv': 'OPV',
+      'oral polio vaccine': 'OPV',
+      'oral polio vaccine (opv)': 'OPV',
+      'ipv': 'IPV',
+      'inactivated polio vaccine': 'IPV',
+      'inactivated polio vaccine (ipv)': 'IPV',
+      'pcv': 'PCV',
+      'pneumococcal conjugate vaccine': 'PCV',
+      'pneumococcal conjugate vaccine (pcv)': 'PCV',
+      'hepatitis a': 'Hepatitis A',
+      'hepa': 'Hepatitis A',
+      'mr': 'MR Vaccine',
+      'mr vaccine': 'MR Vaccine',
+      'japanese encephalitis': 'Japanese Encephalitis (JE)',
+      'je': 'Japanese Encephalitis (JE)',
+      'td': 'Tetanus-Diphtheria (Td)',
+      'hpv': 'HPV Vaccine',
+      'ppv': 'Pneumococcal Polysaccharide Vaccine (PPV)',
+      'rotavirus': 'Rotavirus Vaccine',
     };
 
     final aliased = aliases[normalized];
@@ -216,7 +226,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       }
     }
 
-    return _vaccineTypeOptions.first;
+    // Preserve a legacy/custom value while editing so opening a record never
+    // silently changes its stored vaccine.
+    return value;
   }
 
   String _getPatientHistoryKey(Map<String, dynamic> record) {
@@ -544,7 +556,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                       if (hasAdverseEvents) ...[
                                         const SizedBox(height: 8),
                                         Text(
-                                          'Adverse events: $adverseEvents',
+                                          'AEFI / adverse events: $adverseEvents',
                                           style: TextStyle(
                                             color: const Color(0xFFB45309),
                                             fontSize: 12,
@@ -788,7 +800,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       // Vaccine filter
       bool vaccineMatch = true;
       if (_selectedVaccineFilter != 'All Vaccines') {
-        vaccineMatch = record['vaccine'] == _selectedVaccineFilter;
+        vaccineMatch =
+            _normalizeVaccineType(record['vaccine']) == _selectedVaccineFilter;
       }
 
       // Date range filter
@@ -1483,7 +1496,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                             const SizedBox(height: 16),
                             _buildTextField(
                               controller: adverseEventsController,
-                              label: 'Adverse Events/Reactions',
+                              label:
+                                  'Adverse Events Following Immunization (AEFI)',
                               icon: Icons.warning,
                               hintText: 'Note any adverse reactions or events',
                               maxLines: 3,
@@ -1540,11 +1554,12 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 }
 
                                 // Create new immunization record
-                                final linkedPatientId = (patientSeed?['linkedPatientId'] ??
-                                        patientSeed?['id'] ??
-                                        patientIdController.text)
-                                    .toString()
-                                    .trim();
+                                final linkedPatientId =
+                                    (patientSeed?['linkedPatientId'] ??
+                                            patientSeed?['id'] ??
+                                            patientIdController.text)
+                                        .toString()
+                                        .trim();
                                 final newRecord = {
                                   if (linkedPatientId.isNotEmpty)
                                     'linkedPatientId': linkedPatientId,
@@ -1704,6 +1719,29 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     );
   }
 
+  String? _defaultTextFieldValidator(String label, String? value) {
+    final normalizedLabel = label.toLowerCase();
+    if (normalizedLabel == 'age') {
+      return InputValidation.age(value);
+    }
+    if (normalizedLabel.contains('contact')) {
+      return InputValidation.phone(value);
+    }
+    if (normalizedLabel.contains('vaccine brand')) {
+      return InputValidation.optionalText(value, label: label, maxLength: 120);
+    }
+    if (normalizedLabel.contains('batch')) {
+      return InputValidation.optionalText(value, label: label, maxLength: 80);
+    }
+    if (normalizedLabel.contains('dose')) {
+      return InputValidation.dose(value);
+    }
+    if (normalizedLabel.contains('adverse')) {
+      return InputValidation.optionalText(value, label: label, maxLength: 2000);
+    }
+    return null;
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -1713,6 +1751,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     int maxLines = 1,
     String? Function(String?)? validator,
   }) {
+    final effectiveValidator =
+        validator ?? ((value) => _defaultTextFieldValidator(label, value));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1729,7 +1769,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
-          validator: validator,
+          validator: (value) => effectiveValidator(value?.trim()),
           style: TextStyle(
             color: _lightOffWhite,
             fontSize: 14,
@@ -1971,9 +2011,16 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     required Function(String?) onChanged,
   }) {
     final sanitizedItems = _sanitizeDropdownItems(items);
-    final safeValue = sanitizedItems.contains(value)
-        ? value
-        : (sanitizedItems.isNotEmpty ? sanitizedItems.first : null);
+    final dropdownItems = [...sanitizedItems];
+    final preservedValue = value?.trim();
+    if (preservedValue != null &&
+        preservedValue.isNotEmpty &&
+        !dropdownItems.contains(preservedValue)) {
+      dropdownItems.insert(0, preservedValue);
+    }
+    final safeValue = dropdownItems.contains(preservedValue)
+        ? preservedValue
+        : (dropdownItems.isNotEmpty ? dropdownItems.first : null);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2009,7 +2056,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
-                    items: sanitizedItems.map((String item) {
+                    items: dropdownItems.map((String item) {
                       return DropdownMenuItem<String>(
                         value: item,
                         child: Text(item),
@@ -2649,7 +2696,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                       _buildDetailsSection('Additional Information', [
                         _buildDetailRowWithIcon(
                           Icons.warning_amber,
-                          'Adverse Events',
+                          'Adverse Events Following Immunization (AEFI)',
                           record['adverseEvents'] ?? 'None reported',
                         ),
                         _buildDetailRowWithIcon(
@@ -3038,7 +3085,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                         _buildFormCard([
                           _buildTextField(
                             controller: adverseEventsController,
-                            label: 'Adverse Events',
+                            label:
+                                'Adverse Events Following Immunization (AEFI)',
                             icon: Icons.warning_amber,
                             hintText: 'Any adverse reactions observed',
                             maxLines: 3,
@@ -3642,7 +3690,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
               context,
               formType: ClinicalFormType.immunization,
               record: record,
-              patientName: (record['patientName'] ?? record['childName'])?.toString(),
+              patientName: (record['patientName'] ?? record['childName'])
+                  ?.toString(),
             );
           },
         ),
@@ -3755,7 +3804,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                 const SizedBox(height: 16),
                 _buildDetailSection('Additional Information', [
                   _buildDetailRow(
-                    'Adverse Events',
+                    'Adverse Events Following Immunization (AEFI)',
                     record['adverseEvents'] ?? 'None',
                   ),
                   _buildDetailRow(

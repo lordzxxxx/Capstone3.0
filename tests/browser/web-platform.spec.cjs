@@ -65,14 +65,31 @@ async function openAuthenticatedRoute(page, route, expectedRoute = route) {
     {timeout: 30_000},
   );
   await page.locator('flutter-view').waitFor({state: 'attached'});
+  await enableFlutterSemantics(page);
 }
 
 async function navigateBhwMenu(page, label) {
+  const isMobile = (page.viewportSize()?.width ?? 0) < 760;
+  const mobileMenuButton = page.getByRole('button', {name: /Open navigation menu/i});
+  if (isMobile) {
+    await expect(mobileMenuButton).toBeVisible({timeout: 30_000});
+    await mobileMenuButton.click();
+    await enableFlutterSemantics(page);
+  }
   const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   await page
     .getByRole('button', {name: new RegExp(`^${escapedLabel}`, 'i')})
     .first()
     .click();
+}
+
+async function openBhwMobileNavigation(page) {
+  const isMobile = (page.viewportSize()?.width ?? 0) < 760;
+  if (!isMobile) return;
+  const mobileMenuButton = page.getByRole('button', {name: /Open navigation menu/i});
+  await expect(mobileMenuButton).toBeVisible({timeout: 30_000});
+  await mobileMenuButton.click();
+  await enableFlutterSemantics(page);
 }
 
 async function expectFlutterText(page, text) {
@@ -136,7 +153,7 @@ test.describe('public, deep-link, and responsive shell', () => {
       ['/cho/login', /CHO Portal Login/i],
       ['/signup', /Create|Register/i],
       ['/forgot-password', /Forgot|Reset/i],
-      ['/not-a-real-route', /Page not found|not found/i],
+      ['/not-found', /Page not found|not found/i],
     ]) {
       await openFlutterRoute(page, route);
       await expectFlutterText(page, heading);
@@ -171,6 +188,47 @@ test.describe('public, deep-link, and responsive shell', () => {
       await expectFlutterText(page, /Welcome back/i);
     }
   });
+});
+
+test.describe('authentication retry recovery', () => {
+  for (const [route, heading, identityKey, expectedRoute] of [
+    ['/bhw/login', /BHW Portal Login/i, 'bhw', '**/bhw/dashboard'],
+    ['/cho/login', /CHO Portal Login/i, 'cho', '**/cho/dashboard'],
+  ]) {
+    test(`${route} remains usable after invalid credentials`, async ({page}) => {
+      const identity = identities()[identityKey];
+      await openFlutterRoute(page, route);
+      await expectFlutterText(page, heading);
+
+      const emailField = page
+        .getByRole('textbox', {name: /you@example.com|email/i})
+        .first();
+      const passwordField = page
+        .getByRole('textbox', {name: /enter your password|password/i})
+        .first();
+      const signInButton = page.getByRole('button', {name: /^Sign in$/i});
+
+      await enterFlutterText(emailField, identity.email);
+      await enterFlutterText(passwordField, 'Wrong-QA-Password-123!');
+      await signInButton.click();
+
+      await expectFlutterText(page, /Invalid email or password/i);
+      await expect(signInButton).toBeEnabled({timeout: 30_000});
+      await expect(emailField).toBeEditable();
+      await expect(passwordField).toBeEditable();
+
+      // The second attempt uses the same page, fields, and focused browser
+      // session. A refresh must not be needed to recover the form.
+      await enterFlutterText(emailField, identity.email);
+      await enterFlutterText(passwordField, identity.password);
+      await signInButton.click();
+      await expectFlutterText(page, /Login successful/i);
+      await page
+        .getByRole('button', {name: /Open (Dashboard|CHO Dashboard)/i})
+        .click();
+      await page.waitForURL(expectedRoute, {timeout: 30_000});
+    });
+  }
 });
 
 test.describe('role routes and permissions', () => {
@@ -229,6 +287,7 @@ test.describe('critical controls and connection feedback', () => {
   test('BHW patient search, view switch, add action, and offline banner remain usable', async ({browser}, testInfo) => {
     const identity = {...identities().bhw, expectedRoute: '**/bhw/dashboard'};
     const {context, page} = await signOutToIsolatedContext(browser, testInfo.project, identity);
+    await openBhwMobileNavigation(page);
     const notificationButton = page.getByRole('button', {name: /Notifications navigation item/i});
     await expect(notificationButton).toBeVisible();
     await expect(

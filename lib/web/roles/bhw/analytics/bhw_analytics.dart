@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
+import 'package:mycapstone_project/shared/patient_age_categories.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
@@ -954,21 +955,14 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
   }
 
   int? _extractAgeFromRecord(Map<String, dynamic> record) {
-    final directAge = _extractDouble(record['age'])?.round();
-    if (directAge != null && directAge >= 0) {
-      return directAge;
-    }
+    final directAge = PatientAgeCategories.parseYears(record['age']);
+    if (PatientAgeCategories.forYears(directAge) != null) return directAge;
 
     final dobText = (record['dateOfBirth'] ?? '').toString().trim();
     final dob = dobText.isEmpty ? null : DateTime.tryParse(dobText);
     if (dob != null) {
-      final now = DateTime.now();
-      var age = now.year - dob.year;
-      if (now.month < dob.month ||
-          (now.month == dob.month && now.day < dob.day)) {
-        age -= 1;
-      }
-      if (age >= 0) return age;
+      final age = PatientAgeCategories.fromBirthDate(dob);
+      if (age != null) return age;
     }
 
     final detailsText = (record['details'] ?? '').toString();
@@ -977,7 +971,8 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       caseSensitive: false,
     ).firstMatch(detailsText);
     if (match != null) {
-      return int.tryParse(match.group(1)!);
+      final age = int.tryParse(match.group(1)!);
+      return PatientAgeCategories.forYears(age) == null ? null : age;
     }
 
     return null;
@@ -999,11 +994,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
   }
 
   String _ageBucketLabel(int age) {
-    if (age <= 14) return '0-14';
-    if (age <= 24) return '15-24';
-    if (age <= 44) return '25-44';
-    if (age <= 64) return '45-64';
-    return '65+';
+    return PatientAgeCategories.forYears(age)?.label ?? 'Unknown';
   }
 
   List<_ClinicalSlice> _bmiDistributionSlices() {
@@ -1105,11 +1096,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       _recordsWithinCurrentWindowRaw(_patientRawRecords),
     );
     final counts = <String, int>{
-      '0-14': 0,
-      '15-24': 0,
-      '25-44': 0,
-      '45-64': 0,
-      '65+': 0,
+      for (final category in PatientAgeCategories.ordered) category.label: 0,
     };
 
     for (final record in sourceRecords) {
@@ -1121,29 +1108,24 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
 
     return <_CountBarPoint>[
       _CountBarPoint(
-        label: '0-14',
-        value: counts['0-14'] ?? 0,
+        label: PatientAgeCategory.child.label,
+        value: counts[PatientAgeCategory.child.label] ?? 0,
         color: _chartBlue,
       ),
       _CountBarPoint(
-        label: '15-24',
-        value: counts['15-24'] ?? 0,
+        label: PatientAgeCategory.adolescent.label,
+        value: counts[PatientAgeCategory.adolescent.label] ?? 0,
         color: _chartNavy,
       ),
       _CountBarPoint(
-        label: '25-44',
-        value: counts['25-44'] ?? 0,
+        label: PatientAgeCategory.adult.label,
+        value: counts[PatientAgeCategory.adult.label] ?? 0,
         color: _chartMidBlue,
       ),
       _CountBarPoint(
-        label: '45-64',
-        value: counts['45-64'] ?? 0,
+        label: PatientAgeCategory.olderAdult.label,
+        value: counts[PatientAgeCategory.olderAdult.label] ?? 0,
         color: _chartSoftBlue,
-      ),
-      _CountBarPoint(
-        label: '65+',
-        value: counts['65+'] ?? 0,
-        color: _chartPaleBlue,
       ),
     ];
   }

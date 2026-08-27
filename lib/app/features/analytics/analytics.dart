@@ -28,6 +28,7 @@ import 'package:get/get.dart';
 import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/shared/patient_age_categories.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.navySoft;
@@ -285,8 +286,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       },
       {
         'title': 'Disease Monitoring',
-        'subtitle':
-            'Communicable Disease, Non Communicable Disease, Mortality',
+        'subtitle': 'Communicable Disease, Non Communicable Disease, Mortality',
         'icon': Icons.monitor_heart_rounded,
         'color': AppDesign.navy,
         'buttons': <Map<String, dynamic>>[
@@ -312,9 +312,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             'label': 'Mortality',
             'icon': Icons.airline_seat_flat,
             'onTap': () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const MortalityAnalyticsPage(),
-              ),
+              MaterialPageRoute(builder: (_) => const MortalityAnalyticsPage()),
             ),
           },
         ],
@@ -1437,10 +1435,9 @@ class _BuildDemographicsChart extends StatefulWidget {
 class _BuildDemographicsChartState extends State<_BuildDemographicsChart>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  int _age0to18 = 0;
-  int _age18to35 = 0;
-  int _age35to65 = 0;
-  int _age65plus = 0;
+  Map<PatientAgeCategory, int> _ageCounts = {
+    for (final category in PatientAgeCategories.ordered) category: 0,
+  };
   bool _isUpdating = false;
 
   @override
@@ -1465,33 +1462,22 @@ class _BuildDemographicsChartState extends State<_BuildDemographicsChart>
   void _calculateDemographics() {
     setState(() => _isUpdating = true);
 
-    int age0to18 = 0, age18to35 = 0, age35to65 = 0, age65plus = 0;
+    final ageCounts = <PatientAgeCategory, int>{
+      for (final category in PatientAgeCategories.ordered) category: 0,
+    };
 
     for (var record in widget.records) {
       try {
         final ageStr = record['age']?.toString() ?? '';
-        final age = int.tryParse(ageStr.replaceAll(RegExp(r'[^0-9]'), ''));
-        if (age != null) {
-          if (age < 18) {
-            age0to18++;
-          } else if (age < 35) {
-            age18to35++;
-          } else if (age < 65) {
-            age35to65++;
-          } else {
-            age65plus++;
-          }
-        }
+        final age = PatientAgeCategories.forValue(ageStr);
+        if (age != null) ageCounts[age] = ageCounts[age]! + 1;
       } catch (e) {
         // Skip invalid entries
       }
     }
 
     setState(() {
-      _age0to18 = age0to18;
-      _age18to35 = age18to35;
-      _age35to65 = age35to65;
-      _age65plus = age65plus;
+      _ageCounts = ageCounts;
       _isUpdating = false;
     });
 
@@ -1506,9 +1492,9 @@ class _BuildDemographicsChartState extends State<_BuildDemographicsChart>
 
   @override
   Widget build(BuildContext context) {
-    final total = _age0to18 + _age18to35 + _age35to65 + _age65plus;
+    final total = _ageCounts.values.fold<int>(0, (sum, value) => sum + value);
 
-    if (_age0to18 + _age18to35 + _age35to65 + _age65plus == 0) {
+    if (total == 0) {
       return Column(
         children: [
           _ChartStatusRow(
@@ -1547,33 +1533,22 @@ class _BuildDemographicsChartState extends State<_BuildDemographicsChart>
               ),
               child: Column(
                 children: [
-                  _DemographicItem(
-                    label: '0-17 years',
-                    value: _age0to18,
-                    total: total,
-                    color: AppDesign.navy,
-                  ),
-                  const SizedBox(height: 10),
-                  _DemographicItem(
-                    label: '18-34 years',
-                    value: _age18to35,
-                    total: total,
-                    color: AppDesign.blue,
-                  ),
-                  const SizedBox(height: 10),
-                  _DemographicItem(
-                    label: '35-64 years',
-                    value: _age35to65,
-                    total: total,
-                    color: AppDesign.skyBlue,
-                  ),
-                  const SizedBox(height: 10),
-                  _DemographicItem(
-                    label: '65+ years',
-                    value: _age65plus,
-                    total: total,
-                    color: AppDesign.teal,
-                  ),
+                  for (final (index, category)
+                      in PatientAgeCategories.ordered.indexed) ...[
+                    _DemographicItem(
+                      label: category.label,
+                      value: _ageCounts[category] ?? 0,
+                      total: total,
+                      color: <Color>[
+                        AppDesign.navy,
+                        AppDesign.blue,
+                        AppDesign.skyBlue,
+                        AppDesign.teal,
+                      ][index],
+                    ),
+                    if (index < PatientAgeCategories.ordered.length - 1)
+                      const SizedBox(height: 10),
+                  ],
                 ],
               ),
             ),

@@ -3,6 +3,10 @@ const admin = require('firebase-admin');
 const { getFirestore } = require('firebase-admin/firestore');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const {
+  assertStrongPassword,
+  MAXIMUM_PASSWORD_LENGTH,
+} = require('./password_policy');
 
 // Restrict to the deployed app origins plus localhost for development,
 // matching the CORS policy already used by the FastAPI backend
@@ -49,6 +53,19 @@ const INVALID_RESET_MESSAGE = 'The reset request is invalid or expired. Request 
 
 function normalizeEmail(email) {
   return email.trim().toLowerCase();
+}
+
+function isValidEmail(email) {
+  return email.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function htmlEscape(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function hashRateLimitKey(value) {
@@ -196,7 +213,7 @@ exports.sendPasswordResetEmail = functions.https.onRequest((req, res) => {
         return res.status(400).json({ error: 'Missing or invalid email' });
       }
       const email = normalizeEmail(rawEmail);
-      if (email.length > 320 || !email.includes('@')) {
+      if (!isValidEmail(email)) {
         return res.status(400).json({ error: 'Missing or invalid email' });
       }
 
@@ -229,7 +246,7 @@ exports.sendPasswordResetEmail = functions.https.onRequest((req, res) => {
         });
         return res.status(200).json({
           success: true,
-          message: 'If an account exists, a reset link will be sent',
+          message: 'If an account exists, a reset link will be sent.',
         });
       }
 
@@ -299,7 +316,7 @@ exports.sendPasswordResetEmail = functions.https.onRequest((req, res) => {
                     <h2>Password Reset Request</h2>
                   </div>
                   <div class="content">
-                    <p>Hi ${user.displayName || user.email},</p>
+                    <p>Hi ${htmlEscape(user.displayName || user.email || 'there')},</p>
                     <p>We received a request to reset your password for your DSUHIS account. If you didn't make this request, you can ignore this email.</p>
                     
                     <p><strong>Your verification code:</strong></p>
@@ -327,20 +344,24 @@ exports.sendPasswordResetEmail = functions.https.onRequest((req, res) => {
         };
 
         await mailer.sendMail(mailOptions);
-        console.log(`Password reset email sent to ${email}`);
+        console.log('Password reset email sent', {
+          emailHash: hashRateLimitKey(email),
+        });
 
         return res.status(200).json({
           success: true,
-          message: 'Password reset code sent to your email',
-          email: email,
+          message: 'If an account exists, a reset link will be sent.',
         });
       } catch (emailErr) {
         // Never log the raw code -- only the failure itself. The account
         // existence check above already ran, so an honest failure response
         // here does not create a new enumeration signal.
         console.error('Error sending password reset email:', emailErr.message || emailErr);
-        return res.status(502).json({
-          error: 'Could not send the reset email right now. Please try again shortly.',
+        // Keep the response indistinguishable from the unknown-account path;
+        // otherwise a mailer failure would disclose that the address exists.
+        return res.status(200).json({
+          success: true,
+          message: 'If an account exists, a reset link will be sent.',
         });
       }
     } catch (error) {
@@ -348,7 +369,7 @@ exports.sendPasswordResetEmail = functions.https.onRequest((req, res) => {
       return res
         .status(500)
         .json({
-          error: error.message || 'Internal server error',
+          error: 'Password reset is temporarily unavailable. Please try again later.',
         });
     }
   });
@@ -448,7 +469,7 @@ exports.verifyResetCode = functions.https.onRequest((req, res) => {
       return res
         .status(500)
         .json({
-          error: error.message || 'Internal server error',
+          error: 'Password reset is temporarily unavailable. Please try again later.',
         });
     }
   });
@@ -481,12 +502,17 @@ exports.completePasswordReset = functions.https.onRequest((req, res) => {
         return res.status(400).json({ error: INVALID_RESET_MESSAGE });
       }
       if (
-        typeof newPassword !== 'string' ||
-        newPassword.length < 8 ||
-        newPassword.length > 128
+        typeof newPassword !== 'string'
       ) {
         return res.status(400).json({
-          error: 'Password must be between 8 and 128 characters long.',
+          error: 'Password does not meet the password policy.',
+        });
+      }
+      try {
+        assertStrongPassword(newPassword);
+      } catch (_) {
+        return res.status(400).json({
+          error: `Password must be 8 to ${MAXIMUM_PASSWORD_LENGTH} characters and include uppercase, lowercase, a number, and a special character.`,
         });
       }
 
@@ -502,7 +528,12 @@ exports.completePasswordReset = functions.https.onRequest((req, res) => {
       const resetData = resetDoc.data();
 
       // Check verification and session token
-      if (!resetData.verified || resetData.sessionToken !== sessionToken) {
+      const storedToken = Buffer.from(String(resetData.sessionToken || ''), 'utf8');
+      const providedToken = Buffer.from(sessionToken, 'utf8');
+      const validToken = storedToken.length === providedToken.length &&
+        storedToken.length > 0 &&
+        crypto.timingSafeEqual(storedToken, providedToken);
+      if (!resetData.verified || !validToken) {
         return res.status(400).json({ error: INVALID_RESET_MESSAGE });
       }
 
@@ -558,7 +589,7 @@ exports.completePasswordReset = functions.https.onRequest((req, res) => {
       return res
         .status(500)
         .json({
-          error: error.message || 'Internal server error',
+          error: 'Password reset is temporarily unavailable. Please try again later.',
         });
     }
   });

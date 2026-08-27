@@ -46,7 +46,7 @@ class AppColors {
 
   // Status — formalized from the hex values already used consistently for
   // snackbars/validation across auth screens (forgot.dart, signup.dart,
-  // reset_with_code.dart, main.dart's error color).
+  // main.dart's error color).
   static const Color success = Color(0xFF388E3C);
   static const Color warning = Color(0xFFF57C00);
   static const Color error = Color(0xFFD32F2F);

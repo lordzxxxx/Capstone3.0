@@ -39,6 +39,26 @@ class RegistrationValidationResult {
   }
 }
 
+class RegistrationAccountResult {
+  final String uid;
+  final String registrationNonce;
+  final String customToken;
+
+  const RegistrationAccountResult({
+    required this.uid,
+    required this.registrationNonce,
+    required this.customToken,
+  });
+
+  factory RegistrationAccountResult.fromMap(Map<Object?, Object?> map) {
+    return RegistrationAccountResult(
+      uid: (map['uid'] ?? '').toString(),
+      registrationNonce: (map['registrationNonce'] ?? '').toString(),
+      customToken: (map['customToken'] ?? '').toString(),
+    );
+  }
+}
+
 class BarangayAvailabilityStatus {
   final String barangayCode;
   final String barangayName;
@@ -428,6 +448,26 @@ class AccountPolicyService {
     );
   }
 
+  Future<RegistrationAccountResult> createRegistrationAccount({
+    required String email,
+    required String username,
+    required String password,
+    required String role,
+    String? barangayCode,
+  }) async {
+    final callable = _functions.httpsCallable('createRegistrationAccount');
+    final response = await callable.call(<String, dynamic>{
+      'email': email.trim().toLowerCase(),
+      'username': username.trim(),
+      'password': password,
+      'role': role.trim(),
+      'barangayCode': barangayCode?.trim(),
+    });
+    return RegistrationAccountResult.fromMap(
+      Map<Object?, Object?>.from(response.data as Map),
+    );
+  }
+
   Future<Map<String, BarangayAvailabilityStatus>>
   getBarangayAvailability() async {
     try {
@@ -483,6 +523,8 @@ class AccountPolicyService {
     String? barangay,
     String? barangayCode,
     String? barangayDistrict,
+    required String registrationNonce,
+    Map<String, dynamic>? profile,
   }) async {
     final callable = _functions.httpsCallable('completeRegistration');
     await callable.call(<String, dynamic>{
@@ -493,6 +535,8 @@ class AccountPolicyService {
       'barangay': barangay?.trim(),
       'barangayCode': barangayCode?.trim(),
       'barangayDistrict': barangayDistrict?.trim(),
+      'registrationNonce': registrationNonce.trim(),
+      if (profile != null) 'profile': profile,
     });
   }
 

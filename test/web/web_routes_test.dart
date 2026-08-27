@@ -15,11 +15,8 @@ void main() {
       expect(WebRoutes.startupOverride('/cho/dataQuality'), isNull);
     });
 
-    test('sends only unknown paths to the not-found page', () {
-      expect(
-        WebRoutes.startupOverride('/not-a-real-route'),
-        WebRoutes.notFound,
-      );
+    test('lets GetX resolve unknown paths through its unknown-route page', () {
+      expect(WebRoutes.startupOverride('/not-a-real-route'), isNull);
     });
   });
 

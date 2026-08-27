@@ -13,9 +13,10 @@ const {
 	completePasswordReset,
 } = require('./send_password_reset');
 const {
-	validateRegistrationPolicy,
-	getBarangayAvailability,
-	completeRegistration,
+  validateRegistrationPolicy,
+  getBarangayAvailability,
+  createRegistrationAccount,
+  completeRegistration,
 	registerDoctorAccount,
 	assignDoctorToReferral,
 	sendDoctorReferralAssignmentEmail,
@@ -31,6 +32,7 @@ exports.verifyResetCode = verifyResetCode;
 exports.completePasswordReset = completePasswordReset;
 exports.validateRegistrationPolicy = validateRegistrationPolicy;
 exports.getBarangayAvailability = getBarangayAvailability;
+exports.createRegistrationAccount = createRegistrationAccount;
 exports.completeRegistration = completeRegistration;
 exports.registerDoctorAccount = registerDoctorAccount;
 exports.assignDoctorToReferral = assignDoctorToReferral;

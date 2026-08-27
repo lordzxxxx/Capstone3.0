@@ -4,12 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:get/get.dart';
 import 'package:flutter/gestures.dart';
-import 'package:mycapstone_project/firebase_helper.dart';
-import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/features/auth/landing.dart';
@@ -19,6 +16,8 @@ import 'package:mycapstone_project/web/shared/services/account_policy_service.da
 import 'package:mycapstone_project/web/shared/services/barangay_branding_service.dart';
 import 'package:mycapstone_project/web/shared/widgets/barangay_logo_image.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
+import 'package:mycapstone_project/shared/password_policy.dart';
+import 'package:mycapstone_project/shared/input_validation.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF071A33);
@@ -66,9 +65,6 @@ class _SignupState extends State<Signup> {
       <String, BarangayAvailabilityStatus>{};
   StreamSubscription<List<BarangayBrandingProfile>>? _brandingSubscription;
   static const int _realtimeDbWriteAttempts = 3;
-
-  static const String _duplicateAccountConflict = 'duplicate-account';
-  static const String _duplicateBarangayConflict = 'duplicate-barangay';
 
   @override
   void initState() {
@@ -316,6 +312,8 @@ class _SignupState extends State<Signup> {
     BarangayReference? barangay,
   }) async {
     final roleRef = FirebaseDatabase.instance.ref().child('users').child(uid);
+    final normalizedRole = role.trim().toUpperCase();
+    final isPendingApproval = normalizedRole == 'BHW';
 
     final payload = {
       'uid': uid,
@@ -327,8 +325,9 @@ class _SignupState extends State<Signup> {
       'barangay': barangay?.name,
       'barangayCode': barangay?.code,
       'barangayDistrict': barangay?.district,
-      'approvalStatus': 'approved',
-      'accountStatus': 'active',
+      'approvalStatus': isPendingApproval ? 'pending' : 'approved',
+      'accountStatus': isPendingApproval ? 'pending_approval' : 'active',
+      'isApproved': !isPendingApproval,
       'updatedAt': ServerValue.timestamp,
     };
 
@@ -357,180 +356,17 @@ class _SignupState extends State<Signup> {
     }
   }
 
-  Future<void> _writeUserProfileToFirestoreFallback({
-    required String uid,
-    required String username,
-    required String email,
-    required String role,
-    BarangayReference? barangay,
-  }) async {
-    final firestore = getFirestoreInstance();
-    final normalizedRole = role.trim().toUpperCase();
-    final normalizedUsername = username.toLowerCase().trim();
-    final isBarangayScoped = normalizedRole == 'BHW' && barangay != null;
-    final normalizedBarangayCode = isBarangayScoped
-        ? BarangayFirestorePaths.normalizeBarangayCode(barangay.code)
-        : '';
-    final barangayPath = isBarangayScoped
-        ? BarangayFirestorePaths.barangayDocumentPath(normalizedBarangayCode)
-        : null;
-    final barangayUserPath = isBarangayScoped
-        ? BarangayFirestorePaths.barangayUserDocumentPath(
-            normalizedBarangayCode,
-            uid,
-          )
-        : null;
-    final rootUserRef = firestore.collection('users').doc(uid);
-    final usernameLockRef = firestore
-        .collection('registration_username_locks')
-        .doc(normalizedUsername);
-    final barangayLockRef = isBarangayScoped
-        ? firestore
-              .collection('registration_barangay_locks')
-              .doc(normalizedBarangayCode)
-        : null;
-    final barangayStatusRef = isBarangayScoped
-        ? firestore
-              .collection('barangay_registration_status')
-              .doc(normalizedBarangayCode)
-        : null;
-    final barangayUserRef = isBarangayScoped
-        ? firestore
-              .collection('barangays')
-              .doc(normalizedBarangayCode)
-              .collection('users')
-              .doc(uid)
-        : null;
-
-    final rootPayload = <String, dynamic>{
-      'uid': uid,
-      'username': username,
-      'usernameLower': normalizedUsername,
-      'email': email,
-      'emailLower': email.toLowerCase().trim(),
-      'role': normalizedRole,
-      'accessScope': isBarangayScoped ? 'barangay' : 'citywide',
-      'organizationLevel': isBarangayScoped ? 'barangay' : 'citywide',
-      'dataVisibilityStartAt': FieldValue.serverTimestamp(),
-      'barangay': isBarangayScoped ? barangay.name : FieldValue.delete(),
-      'barangayCode': isBarangayScoped
-          ? normalizedBarangayCode
-          : FieldValue.delete(),
-      'barangayDistrict': isBarangayScoped
-          ? barangay.district
-          : FieldValue.delete(),
-      'barangayVerified': isBarangayScoped,
-      'barangayPath': barangayPath ?? FieldValue.delete(),
-      'barangayUserPath': barangayUserPath ?? FieldValue.delete(),
-      'approvalStatus': 'approved',
-      'accountStatus': 'active',
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
-
-    final conflict = await firestore.runTransaction<String?>((
-      transaction,
-    ) async {
-      final usernameLockSnapshot = await transaction.get(usernameLockRef);
-      if (usernameLockSnapshot.exists) {
-        final existingUid = (usernameLockSnapshot.data()?['uid'] ?? '')
-            .toString();
-        if (existingUid.isNotEmpty && existingUid != uid) {
-          return _duplicateAccountConflict;
-        }
-      }
-
-      if (barangayLockRef != null) {
-        final barangayLockSnapshot = await transaction.get(barangayLockRef);
-        if (barangayLockSnapshot.exists) {
-          final lockData = barangayLockSnapshot.data() ?? <String, dynamic>{};
-          final existingUid = (lockData['uid'] ?? '').toString();
-          final accountStatus = (lockData['accountStatus'] ?? 'active')
-              .toString();
-          final isActiveLock =
-              accountStatus != 'disabled' && accountStatus != 'archived';
-          if (existingUid.isNotEmpty && existingUid != uid && isActiveLock) {
-            return _duplicateBarangayConflict;
-          }
-        }
-      }
-
-      transaction.set(rootUserRef, rootPayload, SetOptions(merge: true));
-      transaction.set(usernameLockRef, {
-        'uid': uid,
-        'username': username,
-        'usernameLower': normalizedUsername,
-        'updatedAt': FieldValue.serverTimestamp(),
-        'source': 'firestore-signup-fallback',
-      }, SetOptions(merge: true));
-
-      if (barangayLockRef != null && barangay != null) {
-        transaction.set(barangayLockRef, {
-          'uid': uid,
-          'barangay': barangay.name,
-          'barangayCode': normalizedBarangayCode,
-          'barangayDistrict': barangay.district,
-          'username': username,
-          'email': email,
-          'accountStatus': 'active',
-          'approvalStatus': 'approved',
-          'updatedAt': FieldValue.serverTimestamp(),
-          'source': 'firestore-signup-fallback',
-        }, SetOptions(merge: true));
-      }
-
-      if (barangayStatusRef != null && barangay != null) {
-        transaction.set(barangayStatusRef, {
-          'uid': uid,
-          'barangay': barangay.name,
-          'barangayCode': normalizedBarangayCode,
-          'barangayDistrict': barangay.district,
-          'accountStatus': 'active',
-          'approvalStatus': 'approved',
-          'isAvailable': false,
-          'updatedAt': FieldValue.serverTimestamp(),
-          'source': 'firestore-signup-fallback',
-        }, SetOptions(merge: true));
-      }
-
-      if (barangayUserRef != null) {
-        transaction.set(barangayUserRef, {
-          ...rootPayload,
-          'rootUserPath': rootUserRef.path,
-          'storedUnderBarangay': true,
-        }, SetOptions(merge: true));
-      }
-
-      return null;
-    });
-
-    if (conflict == _duplicateAccountConflict) {
-      throw FirebaseException(
-        plugin: 'cloud_firestore',
-        code: 'already-exists',
-        message: 'This account is already registered. Please log in instead.',
-      );
-    }
-
-    if (conflict == _duplicateBarangayConflict) {
-      throw FirebaseException(
-        plugin: 'cloud_firestore',
-        code: 'already-exists',
-        message: 'This barangay is already registered under another account.',
-      );
-    }
-  }
-
   bool _requiresStrictBarangayPolicy(String? role) {
     return (role ?? '').trim().toUpperCase() == 'BHW';
   }
 
   Future<void> signup() async {
+    if (_isLoading) return;
     final username = usernameController.text.trim();
     final email = emailController.text.trim();
 
-    if (usernameController.text.isEmpty ||
-        emailController.text.isEmpty ||
+    if (username.isEmpty ||
+        email.isEmpty ||
         passwordController.text.isEmpty ||
         confirmPasswordController.text.isEmpty) {
       Get.snackbar(
@@ -542,10 +378,20 @@ class _SignupState extends State<Signup> {
       return;
     }
 
-    if (usernameController.text.length < 3) {
+    if (username.length < 3) {
       Get.snackbar(
         'Error',
         'Username must be at least 3 characters',
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (!InputValidation.isEmail(email)) {
+      Get.snackbar(
+        'Error',
+        'Please enter a valid email address.',
         backgroundColor: const Color(0xFFD32F2F),
         colorText: Colors.white,
       );
@@ -562,10 +408,13 @@ class _SignupState extends State<Signup> {
       return;
     }
 
-    if (passwordController.text.length < 6) {
+    final passwordValidationMessage = PasswordPolicy.validationMessage(
+      passwordController.text,
+    );
+    if (passwordValidationMessage.isNotEmpty) {
       Get.snackbar(
         'Error',
-        'Password must be at least 6 characters',
+        passwordValidationMessage,
         backgroundColor: const Color(0xFFD32F2F),
         colorText: Colors.white,
       );
@@ -617,7 +466,6 @@ class _SignupState extends State<Signup> {
       return;
     }
 
-    bool backendPolicyAvailable = true;
     try {
       final precheck = await _accountPolicyService.validateRegistrationPolicy(
         email: email,
@@ -666,7 +514,6 @@ class _SignupState extends State<Signup> {
         return;
       }
     } catch (e) {
-      backendPolicyAvailable = false;
       if (kDebugMode) {
         debugPrint(
           'Signup policy precheck unavailable, continuing with fallback: $e',
@@ -724,53 +571,41 @@ class _SignupState extends State<Signup> {
     setState(() => _isLoading = true);
     UserCredential? userCredential;
     try {
-      // Create user account
-      userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: emailController.text.trim(),
+      final registration = await _accountPolicyService
+          .createRegistrationAccount(
+            email: email,
+            username: username,
             password: passwordController.text,
+            role: _selectedRole!,
+            barangayCode: _selectedBarangay?.code,
           )
           .timeout(const Duration(seconds: 45));
+      if (registration.uid.isEmpty || registration.customToken.isEmpty) {
+        throw StateError('Registration did not return a valid account token.');
+      }
+
+      userCredential = await FirebaseAuth.instance
+          .signInWithCustomToken(registration.customToken)
+          .timeout(const Duration(seconds: 45));
+      if (userCredential.user?.uid != registration.uid) {
+        throw StateError('Registration account verification failed.');
+      }
 
       // Update display name
       await userCredential.user!
           .updateDisplayName(usernameController.text.trim())
           .timeout(const Duration(seconds: 20));
 
-      if (backendPolicyAvailable) {
-        try {
-          await _accountPolicyService.completeRegistration(
-            uid: userCredential.user!.uid,
-            username: username,
-            email: email,
-            role: _selectedRole!,
-            barangay: _selectedBarangay?.name,
-            barangayCode: _selectedBarangay?.code,
-            barangayDistrict: _selectedBarangay?.district,
-          );
-        } catch (e) {
-          if (kDebugMode) {
-            debugPrint(
-              'Signup completeRegistration failed, using Firestore fallback: $e',
-            );
-          }
-          await _writeUserProfileToFirestoreFallback(
-            uid: userCredential.user!.uid,
-            username: username,
-            email: email,
-            role: _selectedRole!,
-            barangay: _selectedBarangay,
-          );
-        }
-      } else {
-        await _writeUserProfileToFirestoreFallback(
-          uid: userCredential.user!.uid,
-          username: username,
-          email: email,
-          role: _selectedRole!,
-          barangay: _selectedBarangay,
-        );
-      }
+      await _accountPolicyService.completeRegistration(
+        uid: userCredential.user!.uid,
+        username: username,
+        email: email,
+        role: _selectedRole!,
+        barangay: _selectedBarangay?.name,
+        barangayCode: _selectedBarangay?.code,
+        barangayDistrict: _selectedBarangay?.district,
+        registrationNonce: registration.registrationNonce,
+      );
 
       // Best-effort mirror for login fallback when Firestore is temporarily unavailable.
       // Run in background so RTDB timeouts don't block signup completion.
@@ -788,9 +623,12 @@ class _SignupState extends State<Signup> {
         }),
       );
 
+      final isPendingApproval = _selectedRole == 'BHW';
       Get.snackbar(
-        'Account created',
-        'Your ${_selectedRole!} account is authenticated and ready to use.',
+        isPendingApproval ? 'Registration submitted' : 'Account created',
+        isPendingApproval
+            ? 'Your BHW registration is pending CHO approval.'
+            : 'Your ${_selectedRole!} account is authenticated and ready to use.',
         backgroundColor: const Color(0xFF388E3C),
         colorText: Colors.white,
         duration: const Duration(seconds: 2),
@@ -816,7 +654,7 @@ class _SignupState extends State<Signup> {
         );
       } else {
         ChoAccessSession.trustedUid = null;
-        Get.offAllNamed(WebRoutes.bhwDashboard);
+        Get.offAllNamed(WebRoutes.login);
       }
     } on TimeoutException {
       if (userCredential?.user != null) {
@@ -844,21 +682,23 @@ class _SignupState extends State<Signup> {
         } catch (_) {}
       }
 
-      String errorMessage = e.toString();
+      final rawError = e.toString();
+      var errorMessage =
+          'Unable to create your account right now. Please try again.';
 
       // Provide user-friendly error messages
-      if (errorMessage.contains('email-already-in-use')) {
+      if (rawError.contains('email-already-in-use')) {
         errorMessage =
             'This account is already registered. Please log in instead.';
-      } else if (errorMessage.contains('already-exists')) {
-        errorMessage = errorMessage.contains('barangay')
+      } else if (rawError.contains('already-exists')) {
+        errorMessage = rawError.contains('barangay')
             ? 'This barangay is already registered under another account.'
             : 'This account is already registered. Please log in instead.';
-      } else if (errorMessage.contains('invalid-email')) {
+      } else if (rawError.contains('invalid-email')) {
         errorMessage = 'Please enter a valid email address.';
-      } else if (errorMessage.contains('weak-password')) {
+      } else if (rawError.contains('weak-password')) {
         errorMessage = 'Password is too weak. Please use a stronger password.';
-      } else if (errorMessage.contains('network-request-failed')) {
+      } else if (rawError.contains('network-request-failed')) {
         errorMessage = 'Network error. Please check your internet connection.';
       }
 
@@ -1884,7 +1724,7 @@ class _SignupState extends State<Signup> {
           fontSize: 15,
         ),
         decoration: InputDecoration(
-          hintText: 'At least 6 characters',
+          hintText: '8+ chars: upper, lower, number, symbol',
           hintStyle: TextStyle(
             color: _mutedCoolGray.withValues(alpha: 0.72),
             fontSize: 15,

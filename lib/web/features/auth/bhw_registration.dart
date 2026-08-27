@@ -4,13 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/web/features/auth/landing.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
+import 'package:mycapstone_project/shared/password_policy.dart';
 
 const _blue = Color(0xFF2F80ED);
 const _aqua = Color(0xFF2F80ED);
@@ -30,7 +30,6 @@ class BhwRegistrationPage extends StatefulWidget {
 
 class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
   final _formKey = GlobalKey<FormState>();
-  final _firestore = getFirestoreInstance();
   final _policy = AccountPolicyService.instance;
 
   final _firstName = TextEditingController();
@@ -82,12 +81,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
       _privacyDeclaration &&
       _dataPrivacyDeclaration;
 
-  bool get _strongPassword =>
-      _password.text.length >= 8 &&
-      RegExp(r'[A-Z]').hasMatch(_password.text) &&
-      RegExp(r'[a-z]').hasMatch(_password.text) &&
-      RegExp(r'[0-9]').hasMatch(_password.text) &&
-      RegExp(r'[^A-Za-z0-9]').hasMatch(_password.text);
+  bool get _strongPassword => PasswordPolicy.isValid(_password.text);
 
   @override
   void initState() {
@@ -316,22 +310,28 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
         // optional policy endpoint is temporarily unavailable.
       }
 
-      credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _email.text.trim().toLowerCase(),
-        password: _password.text,
-      );
+      final registration = await _policy
+          .createRegistrationAccount(
+            email: _email.text.trim().toLowerCase(),
+            username: _username.text.trim(),
+            password: _password.text,
+            role: 'BHW',
+            barangayCode: _assignedBarangay!.code,
+          )
+          .timeout(const Duration(seconds: 45));
+      if (registration.uid.isEmpty || registration.customToken.isEmpty) {
+        throw StateError('Registration did not return a valid account token.');
+      }
+      credential = await FirebaseAuth.instance
+          .signInWithCustomToken(registration.customToken)
+          .timeout(const Duration(seconds: 45));
+      if (credential.user?.uid != registration.uid) {
+        throw StateError('Registration account verification failed.');
+      }
       final user = credential.user!;
       await user.updateDisplayName(
         '${_firstName.text.trim()} ${_lastName.text.trim()}',
       );
-      final usernameLower = _username.text.trim().toLowerCase();
-      final userRef = _firestore.collection('users').doc(user.uid);
-      final registrationRequestRef = _firestore
-          .collection('bhw_registration_requests')
-          .doc(user.uid);
-      final usernameRef = _firestore
-          .collection('registration_username_locks')
-          .doc(usernameLower);
       final assignedBarangayCode = BarangayFirestorePaths.normalizeBarangayCode(
         _assignedBarangay!.code,
       );
@@ -339,106 +339,49 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
           BarangayFirestorePaths.normalizeBarangayCode(
             _residentialBarangay!.code,
           );
-      final barangayUserRef = _firestore
-          .collection('barangays')
-          .doc(assignedBarangayCode)
-          .collection('users')
-          .doc(user.uid);
-      final now = FieldValue.serverTimestamp();
-      final payload = <String, dynamic>{
-        'uid': user.uid,
-        'role': 'BHW',
-        'status': 'Pending Approval',
-        'approvalStatus': 'pending',
-        'accountStatus': 'pending_approval',
-        'isApproved': false,
-        'firstName': _firstName.text.trim(),
-        'middleName': _middleName.text.trim(),
-        'lastName': _lastName.text.trim(),
-        'suffix': _suffix.text.trim(),
-        'fullName':
-            [_firstName.text, _middleName.text, _lastName.text, _suffix.text]
-                .map((value) => value.trim())
-                .where((value) => value.isNotEmpty)
-                .join(' '),
-        'dateOfBirth': Timestamp.fromDate(_dateOfBirth!),
-        'sex': _sex,
-        'civilStatus': _civilStatus,
-        'username': _username.text.trim(),
-        'usernameLower': usernameLower,
-        'email': _email.text.trim().toLowerCase(),
-        'emailLower': _email.text.trim().toLowerCase(),
-        'contactNumber': _contact.text.trim(),
-        'residentialAddress': _residentialAddress.text.trim(),
-        'address': {
-          'province': _province.text.trim(),
-          'municipality': _municipality.text.trim(),
-          'barangay': _residentialBarangay!.name,
-          'barangayCode': residentialBarangayCode,
-          'sitio': _sitio.text.trim(),
+      await _policy.completeRegistration(
+        uid: user.uid,
+        username: _username.text.trim(),
+        email: _email.text.trim().toLowerCase(),
+        role: 'BHW',
+        barangay: _assignedBarangay!.name,
+        barangayCode: assignedBarangayCode,
+        barangayDistrict: _assignedBarangay!.district,
+        registrationNonce: registration.registrationNonce,
+        profile: <String, dynamic>{
+          'firstName': _firstName.text.trim(),
+          'middleName': _middleName.text.trim(),
+          'lastName': _lastName.text.trim(),
+          'suffix': _suffix.text.trim(),
+          'dateOfBirth': Timestamp.fromDate(_dateOfBirth!),
+          'sex': _sex,
+          'civilStatus': _civilStatus,
+          'contactNumber': _contact.text.trim(),
+          'residentialAddress': _residentialAddress.text.trim(),
+          'address': <String, dynamic>{
+            'province': _province.text.trim(),
+            'municipality': _municipality.text.trim(),
+            'barangay': _residentialBarangay!.name,
+            'barangayCode': residentialBarangayCode,
+            'sitio': _sitio.text.trim(),
+          },
+          'bhw': <String, dynamic>{
+            'bhwId': _bhwId.text.trim(),
+            'assignedSitio': _assignedSitio.text.trim(),
+            'yearsOfService': int.tryParse(_yearsOfService.text.trim()) ?? 0,
+            'dateStarted': _dateStarted == null
+                ? ''
+                : Timestamp.fromDate(_dateStarted!),
+            'employmentStatus': _employmentStatus,
+          },
+          'declarations': <String, dynamic>{
+            'informationCertified': true,
+            'choReviewAcknowledged': true,
+            'privacyPolicyAccepted': true,
+            'dataPrivacyActAccepted': true,
+          },
         },
-        'barangay': _assignedBarangay!.name,
-        'barangayCode': assignedBarangayCode,
-        'barangayDistrict': _assignedBarangay!.district,
-        'accessScope': 'barangay',
-        'organizationLevel': 'barangay',
-        'barangayVerified': false,
-        'bhw': {
-          'bhwId': _bhwId.text.trim(),
-          'assignedBarangay': _assignedBarangay!.name,
-          'assignedBarangayCode': assignedBarangayCode,
-          'assignedSitio': _assignedSitio.text.trim(),
-          'yearsOfService': int.tryParse(_yearsOfService.text.trim()) ?? 0,
-          'dateStarted': _dateStarted == null
-              ? ''
-              : Timestamp.fromDate(_dateStarted!),
-          'position': 'Barangay Health Worker',
-          'employmentStatus': _employmentStatus,
-        },
-        'declarations': {
-          'informationCertified': true,
-          'choReviewAcknowledged': true,
-          'privacyPolicyAccepted': true,
-          'dataPrivacyActAccepted': true,
-          'acceptedAt': Timestamp.now(),
-        },
-        'createdAt': now,
-        'updatedAt': now,
-        'approvedBy': null,
-        'approvedAt': null,
-        'rejectionReason': null,
-        'lastLogin': null,
-      };
-
-      await _firestore.runTransaction((transaction) async {
-        final lock = await transaction.get(usernameRef);
-        if (lock.exists && lock.data()?['uid'] != user.uid) {
-          throw StateError('This username is already registered.');
-        }
-        transaction.set(userRef, payload);
-        transaction.set(barangayUserRef, {
-          ...payload,
-          'rootUserPath': userRef.path,
-        });
-        transaction.set(registrationRequestRef, {
-          ...payload,
-          'requestId': user.uid,
-          'applicantUid': user.uid,
-          'requestType': 'BHW_ACCOUNT_REGISTRATION',
-          'submissionStatus': 'submitted',
-          'submittedAt': now,
-          'profilePath': userRef.path,
-          'barangayProfilePath': barangayUserRef.path,
-          'source': 'public-bhw-registration',
-        });
-        transaction.set(usernameRef, {
-          'uid': user.uid,
-          'username': _username.text.trim(),
-          'usernameLower': usernameLower,
-          'updatedAt': now,
-          'source': 'bhw-registration-request',
-        });
-      });
+      );
 
       try {
         await FirebaseAuth.instance.signOut();
@@ -453,16 +396,15 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
         'weak-password' => 'Use a stronger password.',
         'network-request-failed' =>
           'Check your internet connection and try again.',
-        _ => error.message ?? 'Registration could not be submitted.',
+        _ => 'Registration could not be submitted. Please try again.',
       };
       _showMessage('Registration failed', message, error: true);
     } catch (error) {
       await _cleanupFailedRegistration(credential);
-      _showMessage(
-        'Registration failed',
-        error.toString().replaceFirst('Bad state: ', ''),
-        error: true,
-      );
+      final message = error is StateError
+          ? error.message
+          : 'Registration could not be submitted. Please try again.';
+      _showMessage('Registration failed', message, error: true);
     } finally {
       if (mounted) {
         setState(() {

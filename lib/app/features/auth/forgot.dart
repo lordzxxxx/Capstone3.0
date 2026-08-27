@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:mycapstone_project/app/features/auth/reset_password_service.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
+import 'package:mycapstone_project/shared/input_validation.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _darkDeepTeal = AppDesign.ink;
@@ -20,6 +21,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   bool _isLoading = false;
 
   Future<void> resetPassword() async {
+    if (_isLoading) return;
     final String email = emailController.text.trim();
     if (email.isEmpty) {
       Get.snackbar(
@@ -30,12 +32,21 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       );
       return;
     }
+    if (!InputValidation.isEmail(email)) {
+      Get.snackbar(
+        'Error',
+        'Please enter a valid email address.',
+        backgroundColor: const Color(0xFFD32F2F),
+        colorText: Colors.white,
+      );
+      return;
+    }
     setState(() => _isLoading = true);
     try {
       // Send verification code to email
       await ResetPasswordService.sendVerificationCode(email);
 
-      setState(() => _isLoading = false);
+      if (!mounted) return;
 
       Get.snackbar(
         'Success',
@@ -46,19 +57,28 @@ class _ForgotPasswordState extends State<ForgotPassword> {
 
       // Navigate to verification screen
       Future.delayed(const Duration(milliseconds: 500), () {
+        if (!mounted) return;
         Get.offAllNamed(
           MobileRoutes.verificationCode,
           arguments: {'email': email},
         );
       });
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (!mounted) return;
+      final errorText = e.toString().toLowerCase();
+      final message = errorText.contains('too many')
+          ? 'Too many requests. Please try again later.'
+          : errorText.contains('network')
+          ? 'Network error. Please check your connection.'
+          : 'Unable to start password recovery right now. Please try again.';
       Get.snackbar(
         'Reset Failed',
-        e.toString().replaceFirst('Exception: ', ''),
+        message,
         backgroundColor: const Color(0xFFD32F2F),
         colorText: Colors.white,
       );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

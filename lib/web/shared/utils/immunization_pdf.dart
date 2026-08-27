@@ -50,7 +50,7 @@ Future<List<int>> buildImmunizationPdfBytes(Map<String, dynamic> record) {
         title: 'Additional Information',
         fields: [
           pdfField(
-            'Adverse Events',
+            'Adverse Events Following Immunization (AEFI)',
             record['adverseEvents'],
             fallback: 'None reported',
           ),
