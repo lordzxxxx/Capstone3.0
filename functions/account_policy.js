@@ -1664,7 +1664,10 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
   };
 });
 
-exports.syncAccountGovernanceLocks = onDocumentWritten({
+// Firestore Enterprise requires Eventarc/2nd-gen triggers. This uses a new
+// export name because Firebase does not support upgrading an existing 1st-gen
+// function in place; the old trigger is removed after this replacement is live.
+exports.syncAccountGovernanceLocksV2 = onDocumentWritten({
   document: 'users/{uid}',
   database: FIRESTORE_DATABASE_ID,
   region: 'us-central1',

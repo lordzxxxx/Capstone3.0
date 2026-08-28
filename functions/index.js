@@ -20,7 +20,7 @@ const {
 	registerDoctorAccount,
 	assignDoctorToReferral,
 	sendDoctorReferralAssignmentEmail,
-	syncAccountGovernanceLocks,
+	syncAccountGovernanceLocksV2,
 	suggestDoctorAssignment,
 } = require('./account_policy');
 
@@ -37,7 +37,7 @@ exports.completeRegistration = completeRegistration;
 exports.registerDoctorAccount = registerDoctorAccount;
 exports.assignDoctorToReferral = assignDoctorToReferral;
 exports.sendDoctorReferralAssignmentEmail = sendDoctorReferralAssignmentEmail;
-exports.syncAccountGovernanceLocks = syncAccountGovernanceLocks;
+exports.syncAccountGovernanceLocksV2 = syncAccountGovernanceLocksV2;
 exports.suggestDoctorAssignment = suggestDoctorAssignment;
 
 // Additional utility functions can be added here as needed
