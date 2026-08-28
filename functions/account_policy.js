@@ -1,4 +1,5 @@
 const functions = require('firebase-functions');
+const { onDocumentWritten } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 const { getFirestore } = require('firebase-admin/firestore');
 const nodemailer = require('nodemailer');
@@ -1663,49 +1664,51 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
   };
 });
 
-exports.syncAccountGovernanceLocks = functions.firestore
-    .database(FIRESTORE_DATABASE_ID)
-    .document('users/{uid}')
-    .onWrite(async (change, context) => {
-      const uid = context.params.uid;
-      const beforeData = change.before.exists ? change.before.data() : null;
-      const afterData = change.after.exists ? change.after.data() : null;
+exports.syncAccountGovernanceLocks = onDocumentWritten({
+  document: 'users/{uid}',
+  database: FIRESTORE_DATABASE_ID,
+  region: 'us-central1',
+}, async (event) => {
+  const change = event.data;
+  const uid = event.params.uid;
+  const beforeData = change.before.exists ? change.before.data() : null;
+  const afterData = change.after.exists ? change.after.data() : null;
 
-      if (!afterData) {
-        await syncBarangayLock(uid, beforeData, null);
-        await syncBarangayUserMirror(uid, beforeData, null);
-        await syncBarangayRegistrationStatus(beforeData, null);
-        return null;
-      }
+  if (!afterData) {
+    await syncBarangayLock(uid, beforeData, null);
+    await syncBarangayUserMirror(uid, beforeData, null);
+    await syncBarangayRegistrationStatus(beforeData, null);
+    return null;
+  }
 
-      const email = String(afterData.email || '').trim();
-      const username = String(afterData.username || '').trim();
+  const email = String(afterData.email || '').trim();
+  const username = String(afterData.username || '').trim();
 
-      if (email) {
-        await db.collection('registration_email_locks').doc(normalizeText(email)).set({
-          uid,
-          email,
-          emailLower: normalizeText(email),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          source: 'users-sync',
-        }, { merge: true });
-      }
+  if (email) {
+    await db.collection('registration_email_locks').doc(normalizeText(email)).set({
+      uid,
+      email,
+      emailLower: normalizeText(email),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      source: 'users-sync',
+    }, { merge: true });
+  }
 
-      if (username) {
-        await db.collection('registration_username_locks').doc(normalizeText(username)).set({
-          uid,
-          username,
-          usernameLower: normalizeText(username),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          source: 'users-sync',
-        }, { merge: true });
-      }
+  if (username) {
+    await db.collection('registration_username_locks').doc(normalizeText(username)).set({
+      uid,
+      username,
+      usernameLower: normalizeText(username),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      source: 'users-sync',
+    }, { merge: true });
+  }
 
-      await syncBarangayLock(uid, beforeData, afterData);
-      await syncBarangayUserMirror(uid, beforeData, afterData);
-      await syncBarangayRegistrationStatus(beforeData, afterData);
-      return null;
-    });
+  await syncBarangayLock(uid, beforeData, afterData);
+  await syncBarangayUserMirror(uid, beforeData, afterData);
+  await syncBarangayRegistrationStatus(beforeData, afterData);
+  return null;
+});
 
 exports.registerDoctorAccount = functions.https.onCall(async (data, context) => {
   const fullName = String(data?.fullName || '').trim();
