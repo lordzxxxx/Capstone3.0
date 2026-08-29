@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:mycapstone_project/web/roles/bhw/prenatal/prenatal_database_helper.dart';
 import 'package:mycapstone_project/app/core/services/health_ai_classifier.dart';
+import 'package:mycapstone_project/app/core/services/health_screening_engine.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -1726,7 +1727,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                 setModalState(() => isSaving = true);
 
                                 // Create new prenatal record
-                                final newRecord = {
+                                final Map<String, dynamic> newRecord = {
                                   'patientName':
                                       '${firstNameController.text} ${surnameController.text}',
                                   'age': ageController.text,
@@ -1807,6 +1808,16 @@ class _PrenatalPageState extends State<PrenatalPage> {
                                 } catch (e) {
                                   // ignore
                                 }
+
+                                newRecord.addAll(
+                                  HealthScreeningEngine.attachToRecord(
+                                    newRecord,
+                                    HealthScreeningEngine.evaluate({
+                                      ...newRecord,
+                                      'pregnant': true,
+                                    }),
+                                  ),
+                                );
 
                                 // Save to database (offline + Firebase sync)
                                 try {

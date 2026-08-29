@@ -15,6 +15,7 @@ import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/shared/widgets/health_screening_insights_card.dart';
 
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF071A33);
@@ -1196,6 +1197,14 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeroSection(),
+                    const SizedBox(height: 20),
+                    HealthScreeningInsightsCard(
+                      records: _checkupRawRecords,
+                      scopeLabel: _accessScope.canViewAllBarangays
+                          ? 'Screening results across the authorized city-wide scope'
+                          : 'Screening results from the assigned barangay',
+                      onReviewReferral: () => Get.toNamed(WebRoutes.bhwReferrals),
+                    ),
                     const SizedBox(height: 20),
                     _buildProgramBoard(),
                     const SizedBox(height: 20),

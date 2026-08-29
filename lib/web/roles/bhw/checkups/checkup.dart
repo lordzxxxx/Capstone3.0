@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:mycapstone_project/web/roles/bhw/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/core/services/health_ai_classifier.dart';
+import 'package:mycapstone_project/app/core/services/health_screening_engine.dart';
 import 'package:mycapstone_project/app/core/services/disease_prediction_api_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
@@ -26,8 +27,8 @@ import 'package:mycapstone_project/web/shared/utils/vital_risk_flags.dart';
 import 'package:mycapstone_project/web/shared/widgets/web_sync_status_badge.dart';
 import 'package:mycapstone_project/web/shared/components/role_decision_support_panel.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
+import 'package:mycapstone_project/shared/widgets/health_screening_panel.dart';
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math' as math;
 
 const Color _primaryAqua = Color(0xFF2F80ED);
@@ -4927,12 +4928,19 @@ class _NewCheckUpFullScreenModalState
         newRecord['ai_severity'] = classification.severity;
         newRecord['ai_method'] = classification.method;
         newRecord['ai_keywords'] = classification.keywords.join(', ');
-        newRecord['ai_recovery_plan'] = jsonEncode(classification.recoveryPlan);
+        newRecord['ai_recovery_plan'] = classification.recoveryPlan;
       } catch (e) {
         newRecord.addAll(
           _localHealthCategoryFallback(_symptomsController.text),
         );
       }
+
+      newRecord.addAll(
+        HealthScreeningEngine.attachToRecord(
+          newRecord,
+          HealthScreeningEngine.evaluate(newRecord),
+        ),
+      );
 
       // Call the callback to save the record
       await widget.onSave(newRecord);
@@ -4941,7 +4949,11 @@ class _NewCheckUpFullScreenModalState
       // Show AI Classification modal
       if (classification != null) {
         setState(() => _isSaving = false);
-        await _showSymptomGuidanceModal(context, classification);
+        await _showSymptomGuidanceModal(
+          context,
+          classification,
+          record: newRecord,
+        );
       }
 
       return newRecord;
@@ -4960,8 +4972,9 @@ class _NewCheckUpFullScreenModalState
 
   Future<void> _showSymptomGuidanceModal(
     BuildContext context,
-    SymptomGuidanceResult result,
-  ) async {
+    SymptomGuidanceResult result, {
+    Map<String, dynamic>? record,
+  }) async {
     Widget section(
       String title,
       IconData icon,
@@ -5128,6 +5141,14 @@ class _NewCheckUpFullScreenModalState
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            if (record != null &&
+                                HealthScreeningEngine.resultFromRecord(
+                                      record,
+                                    ) !=
+                                    null) ...[
+                              HealthScreeningPanel(record: record),
+                              const SizedBox(height: 18),
+                            ],
                             const Text(
                               'Suggested Health Category',
                               style: TextStyle(
@@ -5561,6 +5582,13 @@ class _EditCheckUpFullScreenModalState
           _localHealthCategoryFallback(_symptomsController.text),
         );
       }
+
+      updatedRecord.addAll(
+        HealthScreeningEngine.attachToRecord(
+          updatedRecord,
+          HealthScreeningEngine.evaluate(updatedRecord),
+        ),
+      );
 
       final recordId = updatedRecord['id']?.toString() ?? '';
       if (recordId.isEmpty) {

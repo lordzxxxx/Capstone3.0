@@ -28,6 +28,7 @@ import 'package:mycapstone_project/web/shared/utils/report_download.dart';
 import 'package:mycapstone_project/web/shared/utils/report_branding.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/role_decision_support_panel.dart';
+import 'package:mycapstone_project/shared/widgets/health_screening_insights_card.dart';
 
 // Names are historical (page was dark-themed); values now point at the
 // white-card system used across the rest of the app.
@@ -782,6 +783,14 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     _buildFilters(),
                     const SizedBox(height: 14),
                     _buildPlanningDecisionSupport(),
+                    const SizedBox(height: 14),
+                    HealthScreeningInsightsCard(
+                      records: _records.map((record) => record.raw),
+                      title: 'CHO AI screening insights',
+                      scopeLabel: _accessScope.canViewAllBarangays
+                          ? 'Aggregated screening results across authorized barangay records'
+                          : 'Aggregated screening results in the authorized scope',
+                    ),
                     const SizedBox(height: 14),
                     _buildSummaryGrid(),
                     const SizedBox(height: 14),

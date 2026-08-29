@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helper.dart';
 import 'package:mycapstone_project/app/core/services/health_ai_classifier.dart';
+import 'package:mycapstone_project/app/core/services/health_screening_engine.dart';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls.dart';
@@ -2578,6 +2579,21 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                                 } catch (e) {
                                   debugPrint(
                                     '❌ Prenatal AI classification failed: $e',
+                                  );
+                                }
+
+                                newRecord.addAll(
+                                  HealthScreeningEngine.attachToRecord(
+                                    newRecord,
+                                    HealthScreeningEngine.evaluate({
+                                      ...newRecord,
+                                      'pregnant': true,
+                                    }),
+                                  ),
+                                );
+                                if (newRecord['ai_recovery_plan'] is Map) {
+                                  newRecord['ai_recovery_plan'] = jsonEncode(
+                                    newRecord['ai_recovery_plan'],
                                   );
                                 }
 

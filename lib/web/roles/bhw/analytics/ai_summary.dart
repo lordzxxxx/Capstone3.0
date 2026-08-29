@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
+import 'package:mycapstone_project/app/core/services/health_screening_engine.dart';
 
 class _MetricSpec {
   final String label;
@@ -334,21 +335,6 @@ List<Map<String, dynamic>> _filterRecordsByRange(
       .toList(growable: false);
 }
 
-int _countMetric(
-  List<Map<String, dynamic>> records,
-  String key,
-  bool Function(double value) predicate,
-) {
-  var count = 0;
-  for (final record in records) {
-    final value = record[key];
-    if (value is num && predicate(value.toDouble())) {
-      count++;
-    }
-  }
-  return count;
-}
-
 Map<String, dynamic> _normalizeRecord(
   String source,
   String recordId,
@@ -484,6 +470,11 @@ Map<String, dynamic> _normalizeRecord(
 
   if (timestamp != null) {
     out['timestamp'] = timestamp;
+  }
+
+  final screening = HealthScreeningEngine.resultFromRecord(doc);
+  if (screening != null) {
+    out['structured_screening'] = screening.toJson();
   }
 
   return out;
@@ -639,44 +630,30 @@ String _generateSummary({
   }
   buffer.writeln();
 
+  final screeningRecords = records
+      .where((record) => record['structured_screening'] is Map)
+      .map(
+        (record) => <String, dynamic>{
+          'ai_screening': record['structured_screening'],
+        },
+      );
+  final screeningSummary = HealthScreeningInsightSummary.fromRecords(
+    screeningRecords,
+  );
   final alerts = <String>[];
-  final feverCount = _countMetric(
-    records,
-    'temperature',
-    (value) => value >= 38.0,
-  );
-  if (feverCount > 0) {
+  for (final entry in screeningSummary.flaggedMeasurements.entries) {
     alerts.add(
-      '$feverCount record${feverCount == 1 ? '' : 's'} show fever-range temperature readings.',
+      '${entry.value} record${entry.value == 1 ? '' : 's'} show ${entry.key.toLowerCase()} screening findings.',
     );
   }
-
-  final lowOxygenCount = _countMetric(records, 'oxygen', (value) => value < 92);
-  if (lowOxygenCount > 0) {
+  if (screeningSummary.urgentFindings > 0) {
     alerts.add(
-      '$lowOxygenCount record${lowOxygenCount == 1 ? '' : 's'} show oxygen saturation below 92%.',
+      '${screeningSummary.urgentFindings} screening result${screeningSummary.urgentFindings == 1 ? '' : 's'} require urgent professional assessment.',
     );
   }
-
-  final elevatedSystolicCount = _countMetric(
-    records,
-    'blood_pressure_sys',
-    (value) => value >= 140,
-  );
-  if (elevatedSystolicCount > 0) {
+  if (screeningSummary.dataQualityIssues > 0) {
     alerts.add(
-      '$elevatedSystolicCount record${elevatedSystolicCount == 1 ? '' : 's'} show elevated systolic blood pressure.',
-    );
-  }
-
-  final abnormalHeartRateCount = _countMetric(
-    records,
-    'heart_rate',
-    (value) => value < 50 || value > 100,
-  );
-  if (abnormalHeartRateCount > 0) {
-    alerts.add(
-      '$abnormalHeartRateCount record${abnormalHeartRateCount == 1 ? '' : 's'} show outside-range heart rate readings.',
+      '${screeningSummary.dataQualityIssues} data-quality issue${screeningSummary.dataQualityIssues == 1 ? '' : 's'} require verification.',
     );
   }
 
@@ -717,6 +694,11 @@ String _generateSummary({
   if (metricLines == 0) {
     recommendations.add(
       'Capture vital signs in structured fields consistently so future summaries can generate stronger clinical insights.',
+    );
+  }
+  if (records.isNotEmpty && screeningSummary.evaluatedScreenings == 0) {
+    recommendations.add(
+      'Structured screening is not available for the selected records; review the standard workflow and verify new check-up inputs before relying on screening insights.',
     );
   }
   if (recommendations.isEmpty) {

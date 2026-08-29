@@ -7,8 +7,10 @@ import 'package:get/get.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/core/services/disease_prediction_api_service.dart';
 import 'package:mycapstone_project/app/core/services/health_ai_classifier.dart';
+import 'package:mycapstone_project/app/core/services/health_screening_engine.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
+import 'package:mycapstone_project/shared/widgets/health_screening_panel.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
 import 'package:mycapstone_project/app/features/patients/patient_centered_history_service.dart';
@@ -2983,10 +2985,15 @@ Widget _buildAIClassificationSection(Map<String, dynamic> record) {
   final keywords = _safeAiKeywords(record['ai_keywords']);
 
   final recoveryPlan = _parseAiRecoveryPlan(record['ai_recovery_plan']);
+  final screening = HealthScreeningEngine.resultFromRecord(record);
 
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
+      if (screening != null) ...[
+        HealthScreeningPanel(record: record),
+        const SizedBox(height: 16),
+      ],
       Row(
         children: [
           Icon(Icons.psychology, color: _primaryAqua, size: 20),
@@ -3874,7 +3881,7 @@ class _NewCheckUpFullScreenModalState
         .toString()
         .trim();
 
-    return <String, dynamic>{
+    final payload = <String, dynamic>{
       'id': now.millisecondsSinceEpoch.toString(),
       if (linkedPatientId.isNotEmpty) 'linkedPatientId': linkedPatientId,
       if (patientId.isNotEmpty) 'patientId': patientId,
@@ -3897,6 +3904,10 @@ class _NewCheckUpFullScreenModalState
           ? '${_followUpDate!.year}-${_followUpDate!.month.toString().padLeft(2, '0')}-${_followUpDate!.day.toString().padLeft(2, '0')}'
           : 'N/A',
     };
+    return HealthScreeningEngine.attachToRecord(
+      payload,
+      HealthScreeningEngine.evaluate(payload),
+    );
   }
 
   Future<void> _saveAndReferToCho() async {
@@ -4503,6 +4514,16 @@ class _NewCheckUpFullScreenModalState
                                         newRecord.addAll(
                                           guidance.toRecordFields(),
                                         );
+                                        final screening =
+                                            HealthScreeningEngine.evaluate(
+                                              newRecord,
+                                            );
+                                        newRecord.addAll(
+                                          HealthScreeningEngine.attachToRecord(
+                                            newRecord,
+                                            screening,
+                                          ),
+                                        );
                                         await widget.onGuidanceSave(newRecord);
                                         debugPrint(
                                           'Symptom guidance loaded for: '
@@ -4519,6 +4540,7 @@ class _NewCheckUpFullScreenModalState
                                         await _showSymptomGuidanceModal(
                                           context,
                                           guidance,
+                                          record: newRecord,
                                         );
                                       } else if (context.mounted) {
                                         ScaffoldMessenger.of(
@@ -4554,8 +4576,9 @@ class _NewCheckUpFullScreenModalState
 
   Future<void> _showSymptomGuidanceModal(
     BuildContext context,
-    SymptomGuidanceResult result,
-  ) async {
+    SymptomGuidanceResult result, {
+    Map<String, dynamic>? record,
+  }) async {
     if (!context.mounted) return;
     await showDialog(
       context: context,
@@ -4629,6 +4652,12 @@ class _NewCheckUpFullScreenModalState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (record != null &&
+                          HealthScreeningEngine.resultFromRecord(record) !=
+                              null) ...[
+                        HealthScreeningPanel(record: record),
+                        const SizedBox(height: 18),
+                      ],
                       const Text(
                         'Recognized Symptoms',
                         style: TextStyle(
@@ -6080,6 +6109,13 @@ class _EditCheckUpFullScreenModalState
                           } catch (e) {
                             debugPrint('AI classification failed on edit: $e');
                           }
+
+                          updatedRecord.addAll(
+                            HealthScreeningEngine.attachToRecord(
+                              updatedRecord,
+                              HealthScreeningEngine.evaluate(updatedRecord),
+                            ),
+                          );
 
                           await widget.onSave(updatedRecord);
 
