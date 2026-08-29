@@ -19,10 +19,9 @@ class LiquidGlassNavItem {
 /// A floating, translucent Apple/macOS "Liquid Glass" style navigation bar.
 ///
 /// Deliberately kept lighter and more transparent than the reference macOS
-/// widget style: a soft blur, a faint white tint, a thin glass border/top
-/// highlight, and a minimal shadow, so it reads as a clean floating capsule
-/// rather than a heavy opaque panel. It does not introduce any new brand
-/// colors — only whites/blacks layered over the caller's existing palette.
+/// widget style: a soft blur, a faint surface tint, one clear border, and a
+/// minimal shadow. The modest card-radius shape keeps it aligned with the
+/// existing AI-DSUHIS component language instead of reading as a pill.
 class LiquidGlassNavbar extends StatefulWidget {
   const LiquidGlassNavbar({
     super.key,
@@ -60,7 +59,7 @@ class _LiquidGlassNavbarState extends State<LiquidGlassNavbar> {
         final maxBarWidth = collapsed ? double.infinity : 1080.0;
 
         final bar = _GlassSurface(
-          borderRadius: 26,
+          borderRadius: 12,
           lightSurface: widget.lightSurface,
           child: Padding(
             padding: EdgeInsets.symmetric(
@@ -115,7 +114,7 @@ class _LiquidGlassNavbarState extends State<LiquidGlassNavbar> {
                     : Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: _GlassSurface(
-                          borderRadius: 20,
+                          borderRadius: 12,
                           lightSurface: widget.lightSurface,
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
@@ -177,15 +176,14 @@ class _GlassSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(borderRadius);
-    final topHighlight = lightSurface
-        ? AppColors.primary.withValues(alpha: 0.16)
-        : Colors.white.withValues(alpha: 0.55);
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: radius,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: lightSurface ? 0.14 : 0.10),
+            color: AppColors.backgroundDark.withValues(
+              alpha: lightSurface ? 0.14 : 0.10,
+            ),
             blurRadius: lightSurface ? 22 : 18,
             offset: Offset(0, lightSurface ? 8 : 6),
           ),
@@ -205,44 +203,22 @@ class _GlassSurface extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 colors: lightSurface
                     ? [
-                        Colors.white.withValues(alpha: 0.98),
-                        Colors.white.withValues(alpha: 0.92),
+                        AppColors.surfaceLight.withValues(alpha: 0.98),
+                        AppColors.surfaceLight.withValues(alpha: 0.92),
                       ]
                     : [
-                        Colors.white.withValues(alpha: 0.16),
-                        Colors.white.withValues(alpha: 0.07),
+                        AppColors.textOnDark.withValues(alpha: 0.16),
+                        AppColors.textOnDark.withValues(alpha: 0.07),
                       ],
               ),
               border: Border.all(
                 color: lightSurface
                     ? AppColors.border
-                    : Colors.white.withValues(alpha: 0.24),
+                    : AppColors.textOnDark.withValues(alpha: 0.24),
                 width: 1,
               ),
             ),
-            child: Stack(
-              children: [
-                // Thin inner top highlight — the classic glass "catch light".
-                Positioned(
-                  left: borderRadius,
-                  right: borderRadius,
-                  top: 1,
-                  child: Container(
-                    height: 1,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          topHighlight,
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                child,
-              ],
-            ),
+            child: child,
           ),
         ),
       ),
@@ -301,7 +277,9 @@ class _Brand extends StatelessWidget {
                     fontSize: compact ? 14 : 16,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.2,
-                    color: lightSurface ? AppColors.textPrimary : Colors.white,
+                    color: lightSurface
+                        ? AppColors.textPrimary
+                        : AppColors.textOnDark,
                   ),
                 ),
               ],
@@ -343,7 +321,7 @@ class _NavLinkState extends State<_NavLink> {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(8),
             onTap: widget.item.onTap,
             child: Semantics(
               button: true,
@@ -360,14 +338,14 @@ class _NavLinkState extends State<_NavLink> {
                   color: highlighted
                       ? (widget.lightSurface
                             ? AppColors.primary.withValues(alpha: 0.10)
-                            : Colors.white.withValues(alpha: 0.16))
+                            : AppColors.textOnDark.withValues(alpha: 0.16))
                       : Colors.transparent,
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: highlighted
                         ? (widget.lightSurface
                               ? AppColors.primary.withValues(alpha: 0.34)
-                              : Colors.white.withValues(alpha: 0.28))
+                              : AppColors.textOnDark.withValues(alpha: 0.28))
                         : (widget.lightSurface
                               ? AppColors.border
                               : Colors.transparent),
@@ -383,7 +361,7 @@ class _NavLinkState extends State<_NavLink> {
                         ? (highlighted
                               ? AppColors.textPrimary
                               : AppColors.textSecondary)
-                        : Colors.white.withValues(
+                        : AppColors.textOnDark.withValues(
                             alpha: highlighted ? 1 : 0.82,
                           ),
                   ),
@@ -437,7 +415,7 @@ class _MobileNavLink extends StatelessWidget {
                           ? (item.active
                                 ? AppColors.textPrimary
                                 : AppColors.textSecondary)
-                          : Colors.white.withValues(
+                          : AppColors.textOnDark.withValues(
                               alpha: item.active ? 1 : 0.86,
                             ),
                     ),
@@ -449,7 +427,7 @@ class _MobileNavLink extends StatelessWidget {
                     size: 13,
                     color: lightSurface
                         ? AppColors.textSecondary
-                        : Colors.white.withValues(alpha: 0.55),
+                        : AppColors.textOnDark.withValues(alpha: 0.55),
                   ),
                 ),
               ],
@@ -492,11 +470,13 @@ class _MenuToggleButton extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: lightSurface
                     ? AppColors.primary.withValues(alpha: isOpen ? 0.12 : 0.0)
-                    : Colors.white.withValues(alpha: isOpen ? 0.18 : 0.0),
+                    : AppColors.textOnDark.withValues(
+                        alpha: isOpen ? 0.18 : 0.0,
+                      ),
                 border: Border.all(
                   color: lightSurface
                       ? AppColors.borderStrong
-                      : Colors.white.withValues(alpha: 0.24),
+                      : AppColors.textOnDark.withValues(alpha: 0.24),
                 ),
               ),
               child: AnimatedSwitcher(
@@ -506,7 +486,9 @@ class _MenuToggleButton extends StatelessWidget {
                     isOpen ? Icons.close_rounded : Icons.menu_rounded,
                     key: ValueKey(isOpen),
                     size: 19,
-                    color: lightSurface ? AppColors.secondary : Colors.white,
+                    color: lightSurface
+                        ? AppColors.secondary
+                        : AppColors.textOnDark,
                   ),
                 ),
               ),

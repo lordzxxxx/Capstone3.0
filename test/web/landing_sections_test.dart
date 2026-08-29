@@ -45,6 +45,21 @@ void main() {
     expect(find.text('Role-scoped workspace'), findsNothing);
     expect(find.text('No live records shown'), findsNothing);
     expect(find.text('Does AI-DSUHIS diagnose patients?'), findsOneWidget);
+    for (final icon in [
+      Icons.people,
+      Icons.assignment,
+      Icons.favorite,
+      Icons.bar_chart,
+      Icons.edit,
+      Icons.dashboard,
+      Icons.business,
+      Icons.medical_services,
+      Icons.lock,
+    ]) {
+      expect(find.byIcon(icon), findsAtLeastNWidgets(1));
+    }
+    expect(find.byIcon(Icons.folder), findsNothing);
+    expect(find.byIcon(Icons.admin_panel_settings), findsNothing);
     expect(
       find.text(
         'No. AI-assisted output supports review by qualified health professionals. It is not a diagnosis, treatment, medication, or prescription tool.',

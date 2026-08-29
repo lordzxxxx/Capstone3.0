@@ -7,16 +7,16 @@ import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/shared/privacy_notice.dart';
 
 const Color _primaryAqua = AppColors.primary;
-const Color _primaryAquaBright = Color(0xFF4EA1FF);
+const Color _primaryAquaBright = AppColors.primary;
 const Color _secondaryIceBlue = AppColors.secondary;
 // Clean solid navy used for the access panel's buttons — flatter and more
 // restrained than the teal gradient, per request.
-const Color _darkBlue = Color(0xFF123A5C);
+const Color _darkBlue = AppColors.secondary;
 const Color _darkDeepTeal = AppColors.backgroundDark;
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFFF5F5F5);
+const Color _mutedCoolGray = AppColors.textSecondary;
+const Color _lightOffWhite = AppColors.textOnDark;
 const Color _sidebarDark = AppColors.surfaceDark;
-const Color _panelSurface = Color(0xFF0B1F3A);
+const Color _panelSurface = AppColors.textPrimary;
 
 // Manrope is the established typeface for the auth flow (login.dart,
 // signup.dart, bhw_registration.dart) — applied here too so the landing
@@ -188,7 +188,7 @@ class _LandingPageState extends State<LandingPage>
   Future<String?> _showRoleSelectionDialog(BuildContext context) {
     return showDialog<String>(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.68),
+      barrierColor: AppColors.backgroundDark.withValues(alpha: 0.68),
       builder: (dialogContext) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -197,12 +197,12 @@ class _LandingPageState extends State<LandingPage>
           child: Container(
             padding: const EdgeInsets.fromLTRB(28, 26, 28, 22),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surfaceLight,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFD9E5F2)),
-              boxShadow: const [
+              border: Border.all(color: AppColors.border),
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x66000000),
+                  color: AppColors.backgroundDark.withValues(alpha: 0.40),
                   blurRadius: 32,
                   offset: Offset(0, 18),
                 ),
@@ -369,7 +369,7 @@ class _LandingPageState extends State<LandingPage>
           child: Ink(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7FAFC),
+              color: AppColors.canvasLight,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: accent.withValues(alpha: 0.34)),
             ),
@@ -667,7 +667,7 @@ class _LandingPageState extends State<LandingPage>
               borderRadius: BorderRadius.circular(28),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.26),
+                  color: AppColors.backgroundDark.withValues(alpha: 0.26),
                   blurRadius: 32,
                   offset: const Offset(0, 14),
                 ),
@@ -919,7 +919,7 @@ class _LandingPageState extends State<LandingPage>
           style: _body(
             size: isDesktop ? 12 : 11,
             weight: FontWeight.w800,
-            color: Colors.white.withValues(alpha: 0.82),
+            color: AppColors.textOnDark.withValues(alpha: 0.82),
           ).copyWith(letterSpacing: 1.8),
           textAlign: TextAlign.center,
         ),
@@ -934,7 +934,7 @@ class _LandingPageState extends State<LandingPage>
               fontWeight: FontWeight.w700,
               letterSpacing: -0.5,
               height: 1.05,
-              color: Colors.white,
+              color: AppColors.textOnDark,
             ),
             textAlign: TextAlign.center,
           ),
@@ -945,7 +945,7 @@ class _LandingPageState extends State<LandingPage>
           style: _body(
             size: subtitleSize.clamp(15.0, 23.0).toDouble(),
             weight: FontWeight.w500,
-            color: Colors.white.withValues(alpha: 0.90),
+            color: AppColors.textOnDark.withValues(alpha: 0.90),
             height: 1.4,
           ),
           textAlign: TextAlign.center,
@@ -958,7 +958,7 @@ class _LandingPageState extends State<LandingPage>
             style: _body(
               size: isDesktop ? 14 : 13.5,
               weight: FontWeight.w400,
-              color: Colors.white.withValues(alpha: 0.76),
+              color: AppColors.textOnDark.withValues(alpha: 0.76),
               height: 1.45,
             ),
             textAlign: TextAlign.center,
@@ -1017,12 +1017,12 @@ class _LandingPageState extends State<LandingPage>
       child: Container(
         padding: EdgeInsets.all(panelPadding),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surfaceLight,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: const Color(0xFFE5EEF0)),
+          border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
+              color: AppColors.backgroundDark.withValues(alpha: 0.18),
               blurRadius: 32,
               offset: const Offset(0, 16),
             ),
@@ -1124,13 +1124,13 @@ class _LandingPageState extends State<LandingPage>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isPrimary
-                ? Colors.white.withValues(alpha: 0.16)
+                ? AppColors.textOnDark.withValues(alpha: 0.16)
                 : _darkBlue.withValues(alpha: 0.10),
           ),
           child: Icon(
             icon,
             size: 18,
-            color: isPrimary ? Colors.white : _darkBlue,
+            color: isPrimary ? AppColors.textOnDark : _darkBlue,
           ),
         ),
         const SizedBox(width: 14),
@@ -1141,7 +1141,7 @@ class _LandingPageState extends State<LandingPage>
               style: _body(
                 size: 16,
                 weight: FontWeight.w700,
-                color: isPrimary ? Colors.white : _darkBlue,
+                color: isPrimary ? AppColors.textOnDark : _darkBlue,
               ),
             ),
           ),
@@ -1169,7 +1169,7 @@ class _LandingPageState extends State<LandingPage>
           borderRadius: BorderRadius.circular(14),
           onTap: onPressed,
           hoverColor: isPrimary
-              ? Colors.white.withValues(alpha: 0.08)
+              ? AppColors.textOnDark.withValues(alpha: 0.08)
               : _darkBlue.withValues(alpha: 0.08),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1196,7 +1196,7 @@ class _LandingPageState extends State<LandingPage>
               'AI-DSUHIS',
               style: _display(
                 size: compact ? 24 : 30,
-                color: Colors.white,
+                color: AppColors.textOnDark,
                 letterSpacing: 0.2,
               ),
             ),
@@ -1208,7 +1208,7 @@ class _LandingPageState extends State<LandingPage>
           style: _body(
             size: 14,
             weight: FontWeight.w400,
-            color: Colors.white.withValues(alpha: 0.72),
+            color: AppColors.textOnDark.withValues(alpha: 0.72),
             height: 1.45,
           ),
         ),
@@ -1240,7 +1240,7 @@ class _LandingPageState extends State<LandingPage>
           style: _body(
             size: 13,
             weight: FontWeight.w400,
-            color: Colors.white.withValues(alpha: 0.72),
+            color: AppColors.textOnDark.withValues(alpha: 0.72),
             height: 1.45,
           ),
         ),
@@ -1251,8 +1251,18 @@ class _LandingPageState extends State<LandingPage>
           style: _body(
             size: 13,
             weight: FontWeight.w600,
-            color: Colors.white.withValues(alpha: 0.88),
+            color: AppColors.textOnDark.withValues(alpha: 0.88),
             height: 1.45,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'System-related inquiries only. Do not include patient records or other sensitive health information.',
+          style: _body(
+            size: 11.5,
+            weight: FontWeight.w400,
+            color: AppColors.textOnDark.withValues(alpha: 0.64),
+            height: 1.4,
           ),
         ),
         const SizedBox(height: 14),
@@ -1296,7 +1306,7 @@ class _LandingPageState extends State<LandingPage>
     return Container(
       key: _footerSectionKey,
       width: double.infinity,
-      color: const Color(0xFF061B3A),
+      color: AppColors.backgroundDark,
       padding: EdgeInsets.fromLTRB(
         horizontalPadding,
         compact ? 42 : 58,
@@ -1318,7 +1328,7 @@ class _LandingPageState extends State<LandingPage>
                   fontWeight: FontWeight.w700,
                   height: 0.8,
                   letterSpacing: -5,
-                  color: Colors.white.withValues(alpha: 0.035),
+                  color: AppColors.textOnDark.withValues(alpha: 0.035),
                 ),
               ),
             ),
@@ -1328,7 +1338,10 @@ class _LandingPageState extends State<LandingPage>
             children: [
               columns,
               const SizedBox(height: 44),
-              Divider(color: Colors.white.withValues(alpha: 0.16), height: 1),
+              Divider(
+                color: AppColors.textOnDark.withValues(alpha: 0.16),
+                height: 1,
+              ),
               const SizedBox(height: 18),
               if (compact)
                 Column(
@@ -1363,7 +1376,11 @@ class _LandingPageState extends State<LandingPage>
       children: [
         Text(
           title,
-          style: _display(size: 17, color: Colors.white, letterSpacing: 0.1),
+          style: _display(
+            size: 17,
+            color: AppColors.textOnDark,
+            letterSpacing: 0.1,
+          ),
         ),
         const SizedBox(height: 14),
         ...children,
@@ -1391,7 +1408,7 @@ class _LandingPageState extends State<LandingPage>
         style: _body(
           size: 12.5,
           weight: FontWeight.w500,
-          color: Colors.white.withValues(alpha: 0.82),
+          color: AppColors.textOnDark.withValues(alpha: 0.82),
           height: 1.25,
         ),
       ),
@@ -1410,7 +1427,7 @@ class _LandingPageState extends State<LandingPage>
         onPressed: () => _showLegalDialog(context, title, message),
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 5),
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.textOnDark,
           textStyle: _body(size: 13, weight: FontWeight.w700),
         ),
         child: Text(label),
@@ -1424,7 +1441,7 @@ class _LandingPageState extends State<LandingPage>
       style: _body(
         size: 12,
         weight: FontWeight.w400,
-        color: Colors.white.withValues(alpha: 0.68),
+        color: AppColors.textOnDark.withValues(alpha: 0.68),
       ),
     );
   }

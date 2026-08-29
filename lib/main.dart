@@ -342,8 +342,8 @@ class MyApp extends StatelessWidget {
       defaultTransition: kIsWeb ? Transition.fadeIn : null,
       customTransition: kIsWeb ? WebPageTransition() : null,
       transitionDuration: kIsWeb ? const Duration(milliseconds: 180) : null,
-      // Move the root entry to the branded path while preserving direct deep
-      // links such as /login and /bhw/dashboard.
+      // Keep the public landing page at the root while preserving the former
+      // /aidsuhis alias and direct deep links such as /login and /bhw/dashboard.
       initialRoute: initialRoute,
       // Platform-specific routing
       getPages: kIsWeb

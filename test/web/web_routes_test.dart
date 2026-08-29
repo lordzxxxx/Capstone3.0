@@ -4,9 +4,14 @@ import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 
 void main() {
   group('WebRoutes.startupOverride', () {
-    test('moves the root compatibility URL to the branded landing route', () {
-      expect(WebRoutes.startupOverride('/'), WebRoutes.landing);
+    test('moves the former branded URL to the canonical root route', () {
+      expect(WebRoutes.startupOverride('/'), isNull);
       expect(WebRoutes.startupOverride(''), WebRoutes.landing);
+      expect(WebRoutes.startupOverride('/aidsuhis'), WebRoutes.landing);
+      expect(
+        WebRoutes.startupOverride('/aidsuhis?from=bookmark'),
+        '/?from=bookmark',
+      );
     });
 
     test('preserves registered deep links and query parameters', () {

@@ -6,10 +6,10 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 /// GetX route registration cannot drift apart. Legacy paths remain registered
 /// in `main.dart` for compatibility, but all new navigation uses these paths.
 abstract final class WebRoutes {
-  /// Branded canonical entry path. `/` remains registered below as a
-  /// compatibility alias so existing bookmarks do not become dead links.
-  static const landing = '/aidsuhis';
-  static const legacyLanding = '/';
+  /// Root is the canonical public entry path. The former branded path remains
+  /// registered as a compatibility alias so existing bookmarks still work.
+  static const landing = '/';
+  static const legacyLanding = '/aidsuhis';
   static const login = '/login';
   static const bhwLogin = '/bhw/login';
   static const choLogin = '/cho/login';
@@ -143,12 +143,14 @@ abstract final class WebRoutes {
   /// Selects only the startup overrides that GetX cannot infer safely.
   ///
   /// Known deep links and unknown paths return `null` so GetX can resolve the
-  /// registered route or its `unknownRoute` page. The root compatibility URL
-  /// alone needs an explicit override to open the branded landing path.
+  /// registered route or its `unknownRoute` page. The former branded landing
+  /// path alone needs an explicit override to open the canonical root path.
   static String? startupOverride(String defaultRouteName) {
     final uri = Uri.tryParse(defaultRouteName);
-    final path = uri?.path ?? '';
-    if (path.isEmpty || path == legacyLanding) return landing;
+    if (uri == null) return landing;
+    final path = uri.path;
+    if (path.isEmpty) return landing;
+    if (path == legacyLanding) return uri.replace(path: landing).toString();
     return null;
   }
 }

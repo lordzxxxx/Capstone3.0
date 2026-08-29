@@ -44,7 +44,7 @@ class LandingSections extends StatelessWidget {
           'AI-DSUHIS brings the information used in community-health work into one coordinated place for authorized Barangay Health Workers and City Health Office teams.',
       child: _buildInfoGrid(const [
         _CardData(
-          icon: Icons.folder,
+          icon: Icons.dashboard,
           title: 'Fragmented records',
           body:
               'Keep patient and service information organized across the workflows that teams already use.',
@@ -94,7 +94,7 @@ class LandingSections extends StatelessWidget {
         body: 'Capture and update health information.',
       ),
       _FlowStep(
-        icon: Icons.description,
+        icon: Icons.assignment,
         title: 'Health information',
         body: 'Structured records, forms, and follow-up details.',
       ),
@@ -207,7 +207,7 @@ class LandingSections extends StatelessWidget {
             'Review city-facing information, reports, and operational workspaces.',
       ),
       _CardData(
-        icon: Icons.admin_panel_settings,
+        icon: Icons.lock,
         title: 'Authorized administrators',
         body: 'Manage approved accounts and role-governed system operations.',
       ),
@@ -242,7 +242,7 @@ class LandingSections extends StatelessWidget {
               'Use dedicated workflows for prenatal care and immunization monitoring.',
         ),
         _CardData(
-          icon: Icons.description,
+          icon: Icons.edit,
           title: 'OCR-assisted entry',
           body:
               'Scan supported forms on mobile, review extracted fields, and continue through normal validation.',
@@ -320,7 +320,7 @@ class LandingSections extends StatelessWidget {
 
   Widget _buildInfoCard(_CardData card) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 172),
+      constraints: const BoxConstraints(minHeight: 184),
       padding: const EdgeInsets.all(20),
       decoration: _cardDecoration(),
       child: Column(
