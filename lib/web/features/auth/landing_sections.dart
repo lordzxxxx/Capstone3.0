@@ -594,7 +594,7 @@ class _LandingSection extends StatelessWidget {
           Positioned.fill(
             child: IgnorePointer(
               child: Opacity(
-                opacity: 0.18,
+                opacity: 0.24,
                 child: Image.asset(
                   'assets/bg2.2.png',
                   fit: BoxFit.cover,
@@ -607,8 +607,19 @@ class _LandingSection extends StatelessWidget {
           ),
           Positioned.fill(
             child: IgnorePointer(
-              child: ColoredBox(
-                color: AppColors.surfaceLight.withValues(alpha: 0.82),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppColors.surfaceLight.withValues(alpha: 0.86),
+                      AppColors.surfaceLight.withValues(alpha: 0.62),
+                      AppColors.surfaceLight.withValues(alpha: 0.86),
+                    ],
+                    stops: [0.0, 0.48, 1.0],
+                  ),
+                ),
               ),
             ),
           ),
