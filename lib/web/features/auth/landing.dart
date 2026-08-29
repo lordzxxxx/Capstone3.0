@@ -67,7 +67,7 @@ class _LandingPageState extends State<LandingPage>
   final GlobalKey _featuresSectionKey = GlobalKey();
   final GlobalKey _howItWorksSectionKey = GlobalKey();
   final GlobalKey _securitySectionKey = GlobalKey();
-  final GlobalKey _contactSectionKey = GlobalKey();
+  final GlobalKey _footerSectionKey = GlobalKey();
 
   // Slow, continuous "Ken Burns" breathing zoom on the backdrop photo.
   late final AnimationController _bgController;
@@ -131,14 +131,14 @@ class _LandingPageState extends State<LandingPage>
   void _handleLandingScroll() {
     if (!mounted) return;
     final aboutTop = _sectionTop(_aboutSectionKey);
-    final contactTop = _sectionTop(_contactSectionKey);
-    if (aboutTop == null || contactTop == null) return;
+    final footerTop = _sectionTop(_footerSectionKey);
+    if (aboutTop == null || footerTop == null) return;
 
     // The navbar is pinned above the scroll surface. Switch foreground and
     // glass treatment when the light public sections pass beneath it, then
-    // return to the dark treatment when the final dark contact section does.
+    // return to the dark treatment when the final dark footer does.
     final navBottom = MediaQuery.of(context).padding.top + 88;
-    final onLightSurface = aboutTop <= navBottom && contactTop > navBottom;
+    final onLightSurface = aboutTop <= navBottom && footerTop > navBottom;
     if (onLightSurface == _navbarOnLightSurface) return;
     setState(() => _navbarOnLightSurface = onLightSurface);
   }
@@ -646,7 +646,7 @@ class _LandingPageState extends State<LandingPage>
         ),
         LiquidGlassNavItem(
           label: 'Contact',
-          onTap: () => _scrollToSection(_contactSectionKey),
+          onTap: () => _scrollToSection(_footerSectionKey),
         ),
       ],
     );
@@ -755,8 +755,6 @@ class _LandingPageState extends State<LandingPage>
                 featuresKey: _featuresSectionKey,
                 howItWorksKey: _howItWorksSectionKey,
                 securityKey: _securitySectionKey,
-                contactKey: _contactSectionKey,
-                onAccessSystem: () => Get.toNamed(WebRoutes.login),
                 onOpenPrivacy: () => _showLegalDialog(
                   context,
                   'AI-DSUHIS Privacy and permissions',
@@ -1247,6 +1245,17 @@ class _LandingPageState extends State<LandingPage>
           ),
         ),
         const SizedBox(height: 14),
+        _buildFooterLabel('SYSTEM EMAIL'),
+        SelectableText(
+          'aidsuhis@gmail.com',
+          style: _body(
+            size: 13,
+            weight: FontWeight.w600,
+            color: Colors.white.withValues(alpha: 0.88),
+            height: 1.45,
+          ),
+        ),
+        const SizedBox(height: 14),
         _buildFooterLink(
           context,
           'Privacy Policy',
@@ -1285,6 +1294,7 @@ class _LandingPageState extends State<LandingPage>
           );
 
     return Container(
+      key: _footerSectionKey,
       width: double.infinity,
       color: const Color(0xFF061B3A),
       padding: EdgeInsets.fromLTRB(

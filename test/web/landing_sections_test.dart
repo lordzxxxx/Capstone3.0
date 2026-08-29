@@ -12,8 +12,6 @@ Widget _buildSubject() {
         featuresKey: GlobalKey(),
         howItWorksKey: GlobalKey(),
         securityKey: GlobalKey(),
-        contactKey: GlobalKey(),
-        onAccessSystem: _noop,
         onOpenPrivacy: _noop,
         onOpenTerms: _noop,
       ),
@@ -42,7 +40,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Security & data privacy'), findsOneWidget);
-    expect(find.text('aidsuhis@gmail.com'), findsOneWidget);
+    expect(find.text('Ready to enter the workspace?'), findsNothing);
+    expect(find.text('Access system'), findsNothing);
     expect(find.text('Role-scoped workspace'), findsNothing);
     expect(find.text('No live records shown'), findsNothing);
     expect(find.text('Does AI-DSUHIS diagnose patients?'), findsOneWidget);

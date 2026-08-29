@@ -11,8 +11,6 @@ class LandingSections extends StatelessWidget {
     required this.featuresKey,
     required this.howItWorksKey,
     required this.securityKey,
-    required this.contactKey,
-    required this.onAccessSystem,
     required this.onOpenPrivacy,
     required this.onOpenTerms,
   });
@@ -21,8 +19,6 @@ class LandingSections extends StatelessWidget {
   final GlobalKey featuresKey;
   final GlobalKey howItWorksKey;
   final GlobalKey securityKey;
-  final GlobalKey contactKey;
-  final VoidCallback onAccessSystem;
   final VoidCallback onOpenPrivacy;
   final VoidCallback onOpenTerms;
 
@@ -35,7 +31,6 @@ class LandingSections extends StatelessWidget {
         _buildFeaturesSection(),
         _buildTrustAndPrivacySection(),
         _buildFaqSection(),
-        _buildContactSection(),
       ],
     );
   }
@@ -481,68 +476,6 @@ class LandingSections extends StatelessWidget {
     );
   }
 
-  Widget _buildContactSection() {
-    return _LandingSection(
-      anchorKey: contactKey,
-      dark: true,
-      eyebrow: 'AUTHORIZED ACCESS',
-      title: 'Ready to enter the workspace?',
-      body:
-          'AI-DSUHIS is intended for authorized health-service work. Contact the system team for public-site questions, or sign in through the appropriate role flow.',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'System email',
-            style: TextStyle(
-              fontFamily: AppTheme.fontFamily,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.5,
-              color: AppColors.textOnDarkMuted,
-            ),
-          ),
-          const SizedBox(height: 6),
-          SelectableText(
-            'aidsuhis@gmail.com',
-            style: TextStyle(
-              fontFamily: AppTheme.displayFontFamily,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textOnDark,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 660),
-            child: Text(
-              'For system-related inquiries only. Please do not include patient records or other sensitive health information.',
-              style: TextStyle(
-                fontFamily: AppTheme.fontFamily,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                height: 1.5,
-                color: AppColors.textOnDarkMuted,
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          FilledButton.icon(
-            onPressed: onAccessSystem,
-            icon: const Icon(Icons.login),
-            label: const Text('Access system'),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(48, 52),
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   static BoxDecoration _cardDecoration() {
     return BoxDecoration(
       color: AppColors.surfaceLight,
@@ -590,7 +523,6 @@ class _LandingSection extends StatelessWidget {
     required this.child,
     this.anchorKey,
     this.tinted = false,
-    this.dark = false,
   });
 
   final GlobalKey? anchorKey;
@@ -599,18 +531,13 @@ class _LandingSection extends StatelessWidget {
   final String body;
   final Widget child;
   final bool tinted;
-  final bool dark;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       key: anchorKey,
       width: double.infinity,
-      color: dark
-          ? AppColors.backgroundDark
-          : tinted
-          ? AppColors.canvasLight
-          : AppColors.backgroundLight,
+      color: tinted ? AppColors.canvasLight : AppColors.backgroundLight,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 700;
@@ -630,9 +557,7 @@ class _LandingSection extends StatelessWidget {
                   children: [
                     Text(
                       eyebrow,
-                      style: LandingSections._eyebrowStyle(
-                        dark ? AppColors.primary : AppColors.secondary,
-                      ),
+                      style: LandingSections._eyebrowStyle(AppColors.secondary),
                     ),
                     const SizedBox(height: 12),
                     Semantics(
@@ -645,9 +570,7 @@ class _LandingSection extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           height: 1.12,
                           letterSpacing: -0.4,
-                          color: dark
-                              ? AppColors.textOnDark
-                              : AppColors.textPrimary,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ),
@@ -661,9 +584,7 @@ class _LandingSection extends StatelessWidget {
                           fontSize: compact ? 14 : 15.5,
                           fontWeight: FontWeight.w500,
                           height: 1.55,
-                          color: dark
-                              ? AppColors.textOnDarkMuted
-                              : AppColors.textSecondary,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ),
