@@ -584,9 +584,9 @@ class _LandingSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compactViewport = MediaQuery.sizeOf(context).width < 700;
-    final backdropOpacity = compactViewport ? 0.30 : 0.24;
-    final whiteWash = compactViewport ? 0.82 : 0.86;
-    final whiteWashCenter = compactViewport ? 0.52 : 0.62;
+    final backdropOpacity = compactViewport ? 0.42 : 0.30;
+    final whiteWash = compactViewport ? 0.74 : 0.80;
+    final whiteWashCenter = compactViewport ? 0.38 : 0.50;
 
     return Container(
       key: anchorKey,
