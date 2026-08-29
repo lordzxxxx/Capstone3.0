@@ -583,6 +583,11 @@ class _LandingSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compactViewport = MediaQuery.sizeOf(context).width < 700;
+    final backdropOpacity = compactViewport ? 0.30 : 0.24;
+    final whiteWash = compactViewport ? 0.82 : 0.86;
+    final whiteWashCenter = compactViewport ? 0.52 : 0.62;
+
     return Container(
       key: anchorKey,
       width: double.infinity,
@@ -594,7 +599,7 @@ class _LandingSection extends StatelessWidget {
           Positioned.fill(
             child: IgnorePointer(
               child: Opacity(
-                opacity: 0.24,
+                opacity: backdropOpacity,
                 child: Image.asset(
                   'assets/bg2.2.png',
                   fit: BoxFit.cover,
@@ -613,9 +618,11 @@ class _LandingSection extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      AppColors.surfaceLight.withValues(alpha: 0.86),
-                      AppColors.surfaceLight.withValues(alpha: 0.62),
-                      AppColors.surfaceLight.withValues(alpha: 0.86),
+                      AppColors.surfaceLight.withValues(alpha: whiteWash),
+                      AppColors.surfaceLight.withValues(
+                        alpha: whiteWashCenter,
+                      ),
+                      AppColors.surfaceLight.withValues(alpha: whiteWash),
                     ],
                     stops: [0.0, 0.48, 1.0],
                   ),
