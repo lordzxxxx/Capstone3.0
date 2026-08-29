@@ -55,7 +55,7 @@ class _LiquidGlassNavbarState extends State<LiquidGlassNavbar> {
         final collapsed = width < 980;
         final isPhone = width < 640;
         final horizontalMargin = isPhone ? 12.0 : (collapsed ? 20.0 : 28.0);
-        final maxBarWidth = collapsed ? double.infinity : 880.0;
+        final maxBarWidth = collapsed ? double.infinity : 1080.0;
 
         final bar = _GlassSurface(
           borderRadius: 26,
@@ -242,28 +242,32 @@ class _Brand extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: compact ? 24 : 28,
-                height: compact ? 24 : 28,
-                child: logo,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: 'SpaceGrotesk',
-                  fontSize: compact ? 14 : 16,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
-                  color: Colors.white,
+        child: Semantics(
+          button: true,
+          label: '$label, return to top',
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: compact ? 24 : 28,
+                  height: compact ? 24 : 28,
+                  child: logo,
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    fontSize: compact ? 14 : 16,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -298,33 +302,40 @@ class _NavLinkState extends State<_NavLink> {
           child: InkWell(
             borderRadius: BorderRadius.circular(999),
             onTap: widget.item.onTap,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOut,
-              padding: EdgeInsets.symmetric(
-                horizontal: widget.dense ? 10 : 14,
-                vertical: 8,
-              ),
-              decoration: BoxDecoration(
-                color: highlighted
-                    ? Colors.white.withValues(alpha: 0.16)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: highlighted
-                      ? Colors.white.withValues(alpha: 0.28)
-                      : Colors.transparent,
-                ),
-              ),
-              child: AnimatedDefaultTextStyle(
+            child: Semantics(
+              button: true,
+              selected: widget.item.active,
+              label: widget.item.label,
+              child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
-                style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontSize: widget.dense ? 12.5 : 13.5,
-                  fontWeight: highlighted ? FontWeight.w700 : FontWeight.w600,
-                  color: Colors.white.withValues(alpha: highlighted ? 1 : 0.82),
+                curve: Curves.easeOut,
+                padding: EdgeInsets.symmetric(
+                  horizontal: widget.dense ? 10 : 14,
+                  vertical: 8,
                 ),
-                child: Text(widget.item.label),
+                decoration: BoxDecoration(
+                  color: highlighted
+                      ? Colors.white.withValues(alpha: 0.16)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: highlighted
+                        ? Colors.white.withValues(alpha: 0.28)
+                        : Colors.transparent,
+                  ),
+                ),
+                child: AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 180),
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: widget.dense ? 12.5 : 13.5,
+                    fontWeight: highlighted ? FontWeight.w700 : FontWeight.w600,
+                    color: Colors.white.withValues(
+                      alpha: highlighted ? 1 : 0.82,
+                    ),
+                  ),
+                  child: Text(widget.item.label),
+                ),
               ),
             ),
           ),
@@ -347,29 +358,38 @@ class _MobileNavLink extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  item.label,
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 14.5,
-                    fontWeight: item.active ? FontWeight.w700 : FontWeight.w600,
-                    color: Colors.white.withValues(
-                      alpha: item.active ? 1 : 0.86,
+        child: Semantics(
+          button: true,
+          selected: item.active,
+          label: item.label,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    item.label,
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 14.5,
+                      fontWeight: item.active
+                          ? FontWeight.w700
+                          : FontWeight.w600,
+                      color: Colors.white.withValues(
+                        alpha: item.active ? 1 : 0.86,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 13,
-                color: Colors.white.withValues(alpha: 0.55),
-              ),
-            ],
+                ExcludeSemantics(
+                  child: Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 13,
+                    color: Colors.white.withValues(alpha: 0.55),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -390,22 +410,31 @@ class _MenuToggleButton extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(999),
         onTap: onTap,
-        child: Container(
-          width: 36,
-          height: 36,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: isOpen ? 0.18 : 0.0),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
-          ),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 160),
-            child: Icon(
-              isOpen ? Icons.close_rounded : Icons.menu_rounded,
-              key: ValueKey(isOpen),
-              size: 19,
-              color: Colors.white,
+        child: Tooltip(
+          message: isOpen ? 'Close navigation menu' : 'Open navigation menu',
+          child: Semantics(
+            button: true,
+            label: isOpen ? 'Close navigation menu' : 'Open navigation menu',
+            child: Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: isOpen ? 0.18 : 0.0),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
+              ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 160),
+                child: ExcludeSemantics(
+                  child: Icon(
+                    isOpen ? Icons.close_rounded : Icons.menu_rounded,
+                    key: ValueKey(isOpen),
+                    size: 19,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             ),
           ),
         ),

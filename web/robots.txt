@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Sitemap: https://www.ai-dsuhis.com/sitemap.xml
 
 # Keep authenticated clinical workspaces out of search indexes while allowing
 # the public AI-DSUHIS landing page to be discovered.

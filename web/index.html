@@ -20,8 +20,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="application-name" content="AI-DSUHIS">
-  <meta name="description" content="AI-DSUHIS healthcare information system.">
+  <meta name="description" content="AI-DSUHIS is a unified health information system for Malaybalay City health teams, with role-scoped records, reporting, referrals, OCR-assisted entry, and AI-assisted decision support.">
+  <meta name="robots" content="index,follow">
   <meta name="theme-color" content="#071A33">
+
+  <!-- Public metadata for the canonical, crawlable landing route. -->
+  <link rel="canonical" href="https://www.ai-dsuhis.com/aidsuhis">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="AI-DSUHIS">
+  <meta property="og:title" content="AI-DSUHIS | Unified Health Information System">
+  <meta property="og:description" content="A unified health information system for authorized Barangay Health Workers and City Health Office teams in Malaybalay City.">
+  <meta property="og:url" content="https://www.ai-dsuhis.com/aidsuhis">
+  <meta property="og:image" content="https://www.ai-dsuhis.com/assets/ai_dsuhis_round.png">
+  <meta property="og:image:alt" content="AI-DSUHIS health information system logo">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AI-DSUHIS | Unified Health Information System">
+  <meta name="twitter:description" content="Health information, reporting, referrals, OCR-assisted entry, and AI-assisted decision support for authorized health teams.">
+  <meta name="twitter:image" content="https://www.ai-dsuhis.com/assets/ai_dsuhis_round.png">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -133,6 +148,54 @@
       <p>Preparing your AI-DSUHIS workspace…</p>
     </div>
   </div>
+
+  <!-- Flutter renders the interactive experience after bootstrap. This
+       semantic fallback keeps the public route meaningful when JavaScript is
+       disabled or a crawler cannot execute the Flutter canvas. -->
+  <noscript>
+    <style>
+      #app-startup-loader { display: none !important; }
+      #public-landing-fallback {
+        display: block !important;
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 48px 24px 72px;
+        color: #F8FBFF;
+      }
+      #public-landing-fallback a {
+        color: #9DC7FF;
+      }
+      #public-landing-fallback h1,
+      #public-landing-fallback h2 {
+        line-height: 1.2;
+      }
+      #public-landing-fallback p,
+      #public-landing-fallback li {
+        color: #D4E3F2;
+        line-height: 1.6;
+      }
+    </style>
+    <main id="public-landing-fallback">
+      <p>SMART HEALTH INTEGRATION</p>
+      <h1>AI-DSUHIS — A Unified Health Information System for Malaybalay City</h1>
+      <p>AI-DSUHIS helps authorized Barangay Health Workers and City Health Office teams organize health information, coordinate referrals, streamline reporting, and review data-informed insights.</p>
+      <p>
+        <a href="/bhw/login">Access the BHW portal</a>
+        ·
+        <a href="/cho/login">Access the CHO portal</a>
+      </p>
+      <h2>What the system supports</h2>
+      <ul>
+        <li>Patient, check-up, prenatal, immunization, and surveillance records.</li>
+        <li>Referrals, summaries, reports, and role-scoped analytics.</li>
+        <li>Mobile OCR-assisted entry with review and normal form validation.</li>
+        <li>Non-prescriptive AI-assisted health guidance and decision support.</li>
+      </ul>
+      <h2>Responsible use</h2>
+      <p>AI-DSUHIS does not diagnose patients, prescribe medication, or replace qualified health professionals. Protected information is for authorized health-service work and is not public.</p>
+      <p>Enable JavaScript to use the full responsive landing page and sign-in experience.</p>
+    </main>
+  </noscript>
 
   <script>
     // Browser connectivity owns this route-independent notice. Keeping it

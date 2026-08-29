@@ -1,8 +1,7 @@
-import 'dart:ui' show ImageFilter;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/features/auth/landing_sections.dart';
 import 'package:mycapstone_project/web/shared/widgets/liquid_glass_navbar.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/shared/privacy_notice.dart';
@@ -63,6 +62,11 @@ class _LandingPageState extends State<LandingPage>
   bool _showIntroLoader = !_hasShownIntroLoader;
   bool _didPrecacheLogo = false;
   final ScrollController _landingScrollController = ScrollController();
+  final GlobalKey _aboutSectionKey = GlobalKey();
+  final GlobalKey _featuresSectionKey = GlobalKey();
+  final GlobalKey _howItWorksSectionKey = GlobalKey();
+  final GlobalKey _securitySectionKey = GlobalKey();
+  final GlobalKey _contactSectionKey = GlobalKey();
 
   // Slow, continuous "Ken Burns" breathing zoom on the backdrop photo.
   late final AnimationController _bgController;
@@ -118,6 +122,17 @@ class _LandingPageState extends State<LandingPage>
       0,
       duration: const Duration(milliseconds: 420),
       curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _scrollToSection(GlobalKey sectionKey) {
+    final targetContext = sectionKey.currentContext;
+    if (targetContext == null) return;
+    Scrollable.ensureVisible(
+      targetContext,
+      duration: const Duration(milliseconds: 460),
+      curve: Curves.easeOutCubic,
+      alignment: 0.12,
     );
   }
 
@@ -589,193 +604,29 @@ class _LandingPageState extends State<LandingPage>
         LiquidGlassNavItem(label: 'Home', active: true, onTap: _scrollToTop),
         LiquidGlassNavItem(
           label: 'About',
-          onTap: () => _showGlassInfoDialog(
-            context,
-            icon: Icons.info_outline_rounded,
-            title: 'About AI-DSUHIS',
-            body: const [
-              'AI-DSUHIS (AI-Driven Solution For Unified Health Information '
-                  'System) unifies patient records, check-ups, immunization, '
-                  'prenatal care, and disease surveillance for Barangay Health '
-                  'Workers and the Malaybalay City Health Office in one '
-                  'coordinated platform.',
-              'It brings together health monitoring, advanced analytics, '
-                  'secure and private access, and cloud sync so every '
-                  "barangay's data stays connected, current, and protected.",
-            ],
-          ),
+          onTap: () => _scrollToSection(_aboutSectionKey),
         ),
         LiquidGlassNavItem(
-          label: 'Mission & Vision',
-          onTap: () => _showGlassInfoDialog(
-            context,
-            icon: Icons.flag_outlined,
-            title: 'Mission & Vision',
-            body: const [
-              'Mission: To equip Barangay Health Workers and the City Health '
-                  'Office with a unified, AI-assisted platform that makes '
-                  'health-service work faster, better coordinated, and '
-                  'centered on the people it serves.',
-              'Vision: A city where every barangay\'s health data is '
-                  'centralized, secure, and instantly accessible — enabling '
-                  'coordinated, human-led care across Malaybalay.',
-            ],
-          ),
+          label: 'Features',
+          onTap: () => _scrollToSection(_featuresSectionKey),
         ),
         LiquidGlassNavItem(
-          label: 'Terms and Conditions',
-          onTap: () => _showGlassInfoDialog(
-            context,
-            icon: Icons.gavel_outlined,
-            title: 'Terms and Conditions',
-            body: const [
-              'Use AI-DSUHIS only for authorized health-service work. AI '
-                  'guidance is supportive information; clinical decisions, '
-                  'referrals, and prescriptions remain the responsibility of '
-                  'qualified health professionals.',
-            ],
-          ),
+          label: 'How It Works',
+          onTap: () => _scrollToSection(_howItWorksSectionKey),
+        ),
+        LiquidGlassNavItem(
+          label: 'Security',
+          onTap: () => _scrollToSection(_securitySectionKey),
+        ),
+        LiquidGlassNavItem(
+          label: 'Contact',
+          onTap: () => _scrollToSection(_contactSectionKey),
+        ),
+        LiquidGlassNavItem(
+          label: 'Access System',
+          onTap: () => Get.toNamed(WebRoutes.login),
         ),
       ],
-    );
-  }
-
-  Future<void> _showGlassInfoDialog(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required List<String> body,
-  }) {
-    return showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.55),
-      builder: (dialogContext) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 680),
-          // The shadow lives on this outer, unclipped box. Putting it on the
-          // same decoration as the ClipRRect'd card below caused the blurred
-          // shadow to be sliced off right at the rounded corner, reading as
-          // a stray second line above the card's real border.
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x33123A5C),
-                  blurRadius: 36,
-                  offset: Offset(0, 18),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: BackdropFilter(
-                // Blurs the page behind the dialog for the glass backdrop
-                // feel; the card itself is opaque white to match this app's
-                // existing white-card pattern (see _showRoleSelectionDialog).
-                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(32, 30, 32, 26),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: const Color(0xFFD9E5F2)),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 46,
-                            height: 46,
-                            decoration: BoxDecoration(
-                              color: _primaryAqua.withValues(alpha: 0.14),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: _primaryAqua.withValues(alpha: 0.3),
-                              ),
-                            ),
-                            child: Icon(
-                              icon,
-                              color: _primaryAquaBright,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Text(
-                              title,
-                              style: _display(
-                                size: 23,
-                                letterSpacing: 0.1,
-                                color: _darkDeepTeal,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: 'Close',
-                            onPressed: () => Navigator.of(dialogContext).pop(),
-                            icon: const Icon(Icons.close_rounded),
-                            color: _darkDeepTeal.withValues(alpha: 0.6),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight: MediaQuery.of(context).size.height * 0.65,
-                        ),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              for (final paragraph in body) ...[
-                                Text(
-                                  paragraph,
-                                  style: _body(
-                                    size: 15,
-                                    weight: FontWeight.w400,
-                                    color: _mutedCoolGray,
-                                    height: 1.55,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () => Navigator.of(dialogContext).pop(),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            backgroundColor: _primaryAqua,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 22,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                          ),
-                          child: const Text('Close'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -877,6 +728,24 @@ class _LandingPageState extends State<LandingPage>
                   height: constraints.maxHeight,
                   child: _buildLandingContent(context),
                 ),
+              LandingSections(
+                aboutKey: _aboutSectionKey,
+                featuresKey: _featuresSectionKey,
+                howItWorksKey: _howItWorksSectionKey,
+                securityKey: _securitySectionKey,
+                contactKey: _contactSectionKey,
+                onAccessSystem: () => Get.toNamed(WebRoutes.login),
+                onOpenPrivacy: () => _showLegalDialog(
+                  context,
+                  'AI-DSUHIS Privacy and permissions',
+                  PrivacyNoticeContent.dialogText,
+                ),
+                onOpenTerms: () => _showLegalDialog(
+                  context,
+                  'AI-DSUHIS Terms of Service',
+                  'Use AI-DSUHIS only for authorized health-service work. AI guidance is supportive information; clinical decisions, referrals, and prescriptions remain the responsibility of qualified health professionals.',
+                ),
+              ),
               _buildLandingFooter(context),
             ],
           ),
@@ -1026,27 +895,54 @@ class _LandingPageState extends State<LandingPage>
         // Keep the wordmark a crisp solid white so it remains readable over
         // every part of the photographic backdrop.
         Text(
-          'AI-DSUHIS',
-          style: TextStyle(
-            fontFamily: 'SpaceGrotesk',
-            fontSize: titleSize,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
-            height: 1.05,
-            color: Colors.white,
-          ),
+          'SMART HEALTH INTEGRATION',
+          style: _body(
+            size: isDesktop ? 12 : 11,
+            weight: FontWeight.w800,
+            color: Colors.white.withValues(alpha: 0.82),
+          ).copyWith(letterSpacing: 1.8),
           textAlign: TextAlign.center,
+        ),
+        SizedBox(height: _responsive(titleSize, 0.14, 8, 12)),
+        Semantics(
+          header: true,
+          child: Text(
+            'AI-DSUHIS',
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontSize: titleSize,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+              height: 1.05,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ),
         SizedBox(height: _responsive(titleSize, 0.24, 8, 16)),
         Text(
-          'AI-Driven Solution For Unified Health Information System',
+          'A unified health information system for Malaybalay City',
           style: _body(
-            size: subtitleSize,
-            weight: FontWeight.w400,
+            size: subtitleSize.clamp(15.0, 23.0).toDouble(),
+            weight: FontWeight.w500,
             color: Colors.white.withValues(alpha: 0.90),
             height: 1.4,
           ),
           textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620),
+          child: Text(
+            'For Barangay Health Workers and City Health Office teams to organize records, coordinate referrals, streamline reporting, and review data-informed insights.',
+            style: _body(
+              size: isDesktop ? 14 : 13.5,
+              weight: FontWeight.w400,
+              color: Colors.white.withValues(alpha: 0.76),
+              height: 1.45,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ),
       ],
     );
