@@ -61,6 +61,7 @@ class _LandingPageState extends State<LandingPage>
 
   bool _showIntroLoader = !_hasShownIntroLoader;
   bool _didPrecacheLogo = false;
+  bool _navbarOnLightSurface = false;
   final ScrollController _landingScrollController = ScrollController();
   final GlobalKey _aboutSectionKey = GlobalKey();
   final GlobalKey _featuresSectionKey = GlobalKey();
@@ -86,6 +87,7 @@ class _LandingPageState extends State<LandingPage>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
+    _landingScrollController.addListener(_handleLandingScroll);
     _heroEntrance = CurvedAnimation(
       parent: _contentController,
       curve: const Interval(0.0, 0.75, curve: Curves.easeOut),
@@ -112,6 +114,7 @@ class _LandingPageState extends State<LandingPage>
   void dispose() {
     _bgController.dispose();
     _contentController.dispose();
+    _landingScrollController.removeListener(_handleLandingScroll);
     _landingScrollController.dispose();
     super.dispose();
   }
@@ -123,6 +126,28 @@ class _LandingPageState extends State<LandingPage>
       duration: const Duration(milliseconds: 420),
       curve: Curves.easeOutCubic,
     );
+  }
+
+  void _handleLandingScroll() {
+    if (!mounted) return;
+    final aboutTop = _sectionTop(_aboutSectionKey);
+    final contactTop = _sectionTop(_contactSectionKey);
+    if (aboutTop == null || contactTop == null) return;
+
+    // The navbar is pinned above the scroll surface. Switch foreground and
+    // glass treatment when the light public sections pass beneath it, then
+    // return to the dark treatment when the final dark contact section does.
+    final navBottom = MediaQuery.of(context).padding.top + 88;
+    final onLightSurface = aboutTop <= navBottom && contactTop > navBottom;
+    if (onLightSurface == _navbarOnLightSurface) return;
+    setState(() => _navbarOnLightSurface = onLightSurface);
+  }
+
+  double? _sectionTop(GlobalKey sectionKey) {
+    final sectionContext = sectionKey.currentContext;
+    final renderObject = sectionContext?.findRenderObject();
+    if (renderObject is! RenderBox || !renderObject.hasSize) return null;
+    return renderObject.localToGlobal(Offset.zero).dy;
   }
 
   void _scrollToSection(GlobalKey sectionKey) {
@@ -600,6 +625,7 @@ class _LandingPageState extends State<LandingPage>
       logo: _buildSystemLogo(size: 28),
       brandLabel: 'AI-DSUHIS',
       onBrandTap: _scrollToTop,
+      lightSurface: _navbarOnLightSurface,
       items: [
         LiquidGlassNavItem(label: 'Home', active: true, onTap: _scrollToTop),
         LiquidGlassNavItem(
@@ -621,10 +647,6 @@ class _LandingPageState extends State<LandingPage>
         LiquidGlassNavItem(
           label: 'Contact',
           onTap: () => _scrollToSection(_contactSectionKey),
-        ),
-        LiquidGlassNavItem(
-          label: 'Access System',
-          onTap: () => Get.toNamed(WebRoutes.login),
         ),
       ],
     );

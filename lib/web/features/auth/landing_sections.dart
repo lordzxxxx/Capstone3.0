@@ -33,7 +33,7 @@ class LandingSections extends StatelessWidget {
         _buildAboutSection(),
         _buildHowItWorksSection(),
         _buildFeaturesSection(),
-        _buildTrustAndPreviewSection(),
+        _buildTrustAndPrivacySection(),
         _buildFaqSection(),
         _buildContactSection(),
       ],
@@ -49,19 +49,19 @@ class LandingSections extends StatelessWidget {
           'AI-DSUHIS brings the information used in community-health work into one coordinated place for authorized Barangay Health Workers and City Health Office teams.',
       child: _buildInfoGrid(const [
         _CardData(
-          icon: Icons.folder_copy_outlined,
+          icon: Icons.folder,
           title: 'Fragmented records',
           body:
               'Keep patient and service information organized across the workflows that teams already use.',
         ),
         _CardData(
-          icon: Icons.edit_note_outlined,
+          icon: Icons.edit,
           title: 'Repetitive encoding',
           body:
               'Use structured forms and mobile OCR assistance to reduce avoidable re-entry while keeping fields reviewable.',
         ),
         _CardData(
-          icon: Icons.assessment_outlined,
+          icon: Icons.bar_chart,
           title: 'Delayed reporting',
           body:
               'Prepare summaries and reports from the same role-scoped records used for day-to-day work.',
@@ -94,27 +94,27 @@ class LandingSections extends StatelessWidget {
   Widget _buildWorkflow() {
     const steps = [
       _FlowStep(
-        icon: Icons.groups_outlined,
+        icon: Icons.people,
         title: 'Barangay Health Workers',
         body: 'Capture and update health information.',
       ),
       _FlowStep(
-        icon: Icons.description_outlined,
+        icon: Icons.description,
         title: 'Health information',
         body: 'Structured records, forms, and follow-up details.',
       ),
       _FlowStep(
-        icon: Icons.hub_outlined,
+        icon: Icons.dashboard,
         title: 'AI-DSUHIS',
         body: 'Connect the authorized workflow in one workspace.',
       ),
       _FlowStep(
-        icon: Icons.account_balance_outlined,
+        icon: Icons.business,
         title: 'City Health Office',
         body: 'Review role-scoped barangay information.',
       ),
       _FlowStep(
-        icon: Icons.insights_outlined,
+        icon: Icons.bar_chart,
         title: 'Reports & insights',
         body: 'Support monitoring, referrals, and planning.',
       ),
@@ -144,26 +144,28 @@ class LandingSections extends StatelessWidget {
           );
         }
 
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var index = 0; index < steps.length; index++) ...[
-              Expanded(child: _buildFlowStep(steps[index])),
-              if (index < steps.length - 1)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 7),
-                  child: Center(
-                    child: ExcludeSemantics(
-                      child: Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 18,
-                        color: AppColors.primary.withValues(alpha: 0.62),
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var index = 0; index < steps.length; index++) ...[
+                Expanded(child: _buildFlowStep(steps[index])),
+                if (index < steps.length - 1)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 7),
+                    child: Center(
+                      child: ExcludeSemantics(
+                        child: Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 18,
+                          color: AppColors.primary.withValues(alpha: 0.62),
+                        ),
                       ),
                     ),
                   ),
-                ),
+              ],
             ],
-          ],
+          ),
         );
       },
     );
@@ -199,18 +201,18 @@ class LandingSections extends StatelessWidget {
   Widget _buildRoleGrid() {
     const roles = [
       _CardData(
-        icon: Icons.medical_information_outlined,
+        icon: Icons.medical_services,
         title: 'Barangay Health Workers',
         body: 'Record community-level services, follow-ups, and referrals.',
       ),
       _CardData(
-        icon: Icons.account_balance_outlined,
+        icon: Icons.business,
         title: 'City Health Office',
         body:
             'Review city-facing information, reports, and operational workspaces.',
       ),
       _CardData(
-        icon: Icons.admin_panel_settings_outlined,
+        icon: Icons.admin_panel_settings,
         title: 'Authorized administrators',
         body: 'Manage approved accounts and role-governed system operations.',
       ),
@@ -227,37 +229,37 @@ class LandingSections extends StatelessWidget {
           'Each feature is designed around the records, service modules, and review responsibilities already present in AI-DSUHIS.',
       child: _buildInfoGrid(const [
         _CardData(
-          icon: Icons.person_search_outlined,
+          icon: Icons.people,
           title: 'Patient & household records',
           body:
               'Maintain structured information for authorized health-service work.',
         ),
         _CardData(
-          icon: Icons.assignment_outlined,
+          icon: Icons.assignment,
           title: 'Check-ups & referrals',
           body:
               'Document check-ups and move referral information through the appropriate review path.',
         ),
         _CardData(
-          icon: Icons.vaccines_outlined,
+          icon: Icons.favorite,
           title: 'Prenatal & immunization',
           body:
               'Use dedicated workflows for prenatal care and immunization monitoring.',
         ),
         _CardData(
-          icon: Icons.document_scanner_outlined,
+          icon: Icons.camera_alt,
           title: 'OCR-assisted entry',
           body:
               'Scan supported forms on mobile, review extracted fields, and continue through normal validation.',
         ),
         _CardData(
-          icon: Icons.bar_chart_outlined,
+          icon: Icons.bar_chart,
           title: 'Reports & analytics',
           body:
               'Prepare summaries, formal reports, and dashboard views for monitoring and planning.',
         ),
         _CardData(
-          icon: Icons.auto_graph_outlined,
+          icon: Icons.lightbulb,
           title: 'AI-assisted health insights',
           body:
               'Surface supportive guidance, warning signs, and human-review prompts for health workers.',
@@ -270,17 +272,51 @@ class LandingSections extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final cardWidth = width >= 920
-            ? (width - 32) / 3
+        final columns = width >= 920
+            ? 3
             : width >= 600
-            ? (width - 16) / 2
-            : width;
-        return Wrap(
-          spacing: 16,
-          runSpacing: 16,
+            ? 2
+            : 1;
+        if (columns == 1) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var index = 0; index < cards.length; index++) ...[
+                _buildInfoCard(cards[index]),
+                if (index < cards.length - 1) const SizedBox(height: 16),
+              ],
+            ],
+          );
+        }
+
+        final rowCount = (cards.length / columns).ceil();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            for (final card in cards)
-              SizedBox(width: cardWidth, child: _buildInfoCard(card)),
+            for (var rowIndex = 0; rowIndex < rowCount; rowIndex++) ...[
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (
+                      var columnIndex = 0;
+                      columnIndex < columns;
+                      columnIndex++
+                    ) ...[
+                      if (columnIndex > 0) const SizedBox(width: 16),
+                      Expanded(
+                        child: rowIndex * columns + columnIndex < cards.length
+                            ? _buildInfoCard(
+                                cards[rowIndex * columns + columnIndex],
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (rowIndex < rowCount - 1) const SizedBox(height: 16),
+            ],
           ],
         );
       },
@@ -289,7 +325,7 @@ class LandingSections extends StatelessWidget {
 
   Widget _buildInfoCard(_CardData card) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 148),
+      constraints: const BoxConstraints(minHeight: 172),
       padding: const EdgeInsets.all(20),
       decoration: _cardDecoration(),
       child: Column(
@@ -305,7 +341,7 @@ class LandingSections extends StatelessWidget {
     );
   }
 
-  Widget _buildTrustAndPreviewSection() {
+  Widget _buildTrustAndPrivacySection() {
     return _LandingSection(
       anchorKey: securityKey,
       tinted: true,
@@ -325,18 +361,18 @@ class LandingSections extends StatelessWidget {
                   children: [aiCard, const SizedBox(height: 16), privacyCard],
                 );
               }
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: aiCard),
-                  const SizedBox(width: 16),
-                  Expanded(child: privacyCard),
-                ],
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: aiCard),
+                    const SizedBox(width: 16),
+                    Expanded(child: privacyCard),
+                  ],
+                ),
               );
             },
           ),
-          const SizedBox(height: 32),
-          _buildSystemPreview(),
         ],
       ),
     );
@@ -344,7 +380,7 @@ class LandingSections extends StatelessWidget {
 
   Widget _buildAiCard() {
     return _DetailCard(
-      icon: Icons.psychology_outlined,
+      icon: Icons.lightbulb,
       title: 'AI-assisted health insights',
       body:
           'Active symptom guidance uses authenticated requests and reviewed content to surface supportive information, emergency warnings, referral prompts, and human-review messaging.',
@@ -355,7 +391,7 @@ class LandingSections extends StatelessWidget {
 
   Widget _buildPrivacyCard() {
     return _DetailCard(
-      icon: Icons.verified_user_outlined,
+      icon: Icons.lock,
       title: 'Security & data privacy',
       body:
           'Protected workflows use Firebase Authentication and Firestore security rules. Access is governed by approved roles and assigned barangay scope.',
@@ -378,181 +414,6 @@ class LandingSections extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSystemPreview() {
-    return Semantics(
-      container: true,
-      label: 'Illustrative AI-DSUHIS workspace preview with no patient data',
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceDark,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.secondary.withValues(alpha: 0.55),
-          ),
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxWidth < 640;
-            final workspace = _buildPreviewWorkspace(compact: compact);
-            if (compact) return workspace;
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildPreviewSidebar(),
-                const SizedBox(width: 18),
-                Expanded(child: workspace),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPreviewSidebar() {
-    const items = ['Dashboard', 'Patient records', 'Check-ups', 'Reports'];
-    return SizedBox(
-      width: 142,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'AI-DSUHIS',
-            style: TextStyle(
-              fontFamily: AppTheme.displayFontFamily,
-              color: AppColors.textOnDark,
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 20),
-          for (var index = 0; index < items.length; index++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(
-                items[index],
-                style: TextStyle(
-                  color: AppColors.textOnDark.withValues(
-                    alpha: index == 0 ? 1 : 0.64,
-                  ),
-                  fontSize: 12,
-                  fontWeight: index == 0 ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPreviewWorkspace({required bool compact}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Role-scoped workspace',
-                    style: TextStyle(
-                      fontFamily: AppTheme.displayFontFamily,
-                      color: AppColors.textOnDark,
-                      fontSize: compact ? 20 : 23,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    'A representative view of the records, follow-up, and reporting areas available after authorized sign-in.',
-                    style: TextStyle(
-                      color: AppColors.textOnDarkMuted,
-                      fontSize: 12.5,
-                      height: 1.45,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (!compact) ...[
-              const SizedBox(width: 16),
-              _PreviewPill(label: 'No live records shown'),
-            ],
-          ],
-        ),
-        if (compact) ...[
-          const SizedBox(height: 14),
-          _PreviewPill(label: 'No live records shown'),
-        ],
-        const SizedBox(height: 18),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            for (final area in const [
-              _PreviewArea(
-                icon: Icons.people_alt_outlined,
-                label: 'Patient registry',
-              ),
-              _PreviewArea(
-                icon: Icons.assignment_turned_in_outlined,
-                label: 'Service records',
-              ),
-              _PreviewArea(
-                icon: Icons.compare_arrows_outlined,
-                label: 'Referrals',
-              ),
-              _PreviewArea(
-                icon: Icons.insights_outlined,
-                label: 'Reports & insights',
-              ),
-            ])
-              if (compact)
-                SizedBox(width: double.infinity, child: area)
-              else
-                area,
-          ],
-        ),
-        const SizedBox(height: 18),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.07),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.11)),
-          ),
-          child: Row(
-            children: [
-              ExcludeSemantics(
-                child: Icon(
-                  Icons.info_outline_rounded,
-                  size: 18,
-                  color: AppColors.textOnDarkMuted,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Illustrative interface only. Public pages never display production patient information.',
-                  style: TextStyle(
-                    color: AppColors.textOnDarkMuted,
-                    fontSize: 12,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
@@ -627,20 +488,57 @@ class LandingSections extends StatelessWidget {
       eyebrow: 'AUTHORIZED ACCESS',
       title: 'Ready to enter the workspace?',
       body:
-          'AI-DSUHIS is intended for authorized health-service work. Sign in to continue, or use the account flow that matches your approved role.',
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: FilledButton.icon(
-          onPressed: onAccessSystem,
-          icon: const Icon(Icons.login_rounded),
-          label: const Text('Access system'),
-          style: FilledButton.styleFrom(
-            minimumSize: const Size(48, 52),
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
+          'AI-DSUHIS is intended for authorized health-service work. Contact the system team for public-site questions, or sign in through the appropriate role flow.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'System email',
+            style: TextStyle(
+              fontFamily: AppTheme.fontFamily,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
+              color: AppColors.textOnDarkMuted,
+            ),
           ),
-        ),
+          const SizedBox(height: 6),
+          SelectableText(
+            'aidsuhis@gmail.com',
+            style: TextStyle(
+              fontFamily: AppTheme.displayFontFamily,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textOnDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 660),
+            child: Text(
+              'For system-related inquiries only. Please do not include patient records or other sensitive health information.',
+              style: TextStyle(
+                fontFamily: AppTheme.fontFamily,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                height: 1.5,
+                color: AppColors.textOnDarkMuted,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          FilledButton.icon(
+            onPressed: onAccessSystem,
+            icon: const Icon(Icons.login),
+            label: const Text('Access system'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(48, 52),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -880,72 +778,6 @@ class _IconBadge extends StatelessWidget {
           border: Border.all(color: color.withValues(alpha: 0.18)),
         ),
         child: Icon(icon, color: color, size: 22),
-      ),
-    );
-  }
-}
-
-class _PreviewPill extends StatelessWidget {
-  const _PreviewPill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontFamily: AppTheme.fontFamily,
-          color: AppColors.textOnDarkMuted,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _PreviewArea extends StatelessWidget {
-  const _PreviewArea({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.13)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ExcludeSemantics(
-            child: Icon(icon, size: 17, color: AppColors.primary),
-          ),
-          const SizedBox(width: 7),
-          Flexible(
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontFamily: AppTheme.fontFamily,
-                color: AppColors.textOnDark,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

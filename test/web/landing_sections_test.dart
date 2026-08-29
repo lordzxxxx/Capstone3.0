@@ -42,6 +42,9 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Security & data privacy'), findsOneWidget);
+    expect(find.text('aidsuhis@gmail.com'), findsOneWidget);
+    expect(find.text('Role-scoped workspace'), findsNothing);
+    expect(find.text('No live records shown'), findsNothing);
     expect(find.text('Does AI-DSUHIS diagnose patients?'), findsOneWidget);
     expect(
       find.text(
