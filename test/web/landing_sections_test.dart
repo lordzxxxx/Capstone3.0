@@ -98,4 +98,27 @@ void main() {
     }
     addTearDown(() => tester.binding.setSurfaceSize(null));
   });
+
+  testWidgets('uses compact two-column cards on mobile widths', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(375, 1200));
+    await tester.pumpWidget(_buildSubject());
+    await tester.pump();
+
+    final firstTitle = tester.getTopLeft(find.text('Fragmented records'));
+    final secondTitle = tester.getTopLeft(find.text('Repetitive encoding'));
+
+    expect(secondTitle.dx, greaterThan(firstTitle.dx));
+    expect(secondTitle.dy, closeTo(firstTitle.dy, 1));
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Image &&
+            widget.image is AssetImage &&
+            (widget.image as AssetImage).assetName == 'assets/bg2.2.png',
+      ),
+      findsAtLeastNWidgets(1),
+    );
+
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+  });
 }

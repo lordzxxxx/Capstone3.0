@@ -119,24 +119,7 @@ class LandingSections extends StatelessWidget {
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 820;
         if (compact) {
-          return Column(
-            children: [
-              for (var index = 0; index < steps.length; index++) ...[
-                _buildFlowStep(steps[index], compact: true),
-                if (index < steps.length - 1)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: ExcludeSemantics(
-                      child: Icon(
-                        Icons.arrow_downward_rounded,
-                        size: 18,
-                        color: AppColors.primary.withValues(alpha: 0.62),
-                      ),
-                    ),
-                  ),
-              ],
-            ],
-          );
+          return _buildCompactWorkflow(steps);
         }
 
         return IntrinsicHeight(
@@ -166,24 +149,87 @@ class LandingSections extends StatelessWidget {
     );
   }
 
-  Widget _buildFlowStep(_FlowStep step, {bool compact = false}) {
-    final content = Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildCompactWorkflow(List<_FlowStep> steps) {
+    final rowCount = (steps.length / 2).ceil();
+    return Column(
       children: [
-        _IconBadge(icon: step.icon, color: AppColors.primary),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
+        for (var rowIndex = 0; rowIndex < rowCount; rowIndex++) ...[
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _buildFlowStep(steps[rowIndex * 2], compact: true),
+                ),
+                if (rowIndex * 2 + 1 < steps.length) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    child: Center(
+                      child: ExcludeSemantics(
+                        child: Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 16,
+                          color: AppColors.primary.withValues(alpha: 0.62),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildFlowStep(
+                      steps[rowIndex * 2 + 1],
+                      compact: true,
+                    ),
+                  ),
+                ] else
+                  const Expanded(child: SizedBox.shrink()),
+              ],
+            ),
+          ),
+          if (rowIndex < rowCount - 1)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 7),
+              child: ExcludeSemantics(
+                child: Icon(
+                  Icons.arrow_downward_rounded,
+                  size: 17,
+                  color: AppColors.primary.withValues(alpha: 0.62),
+                ),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildFlowStep(_FlowStep step, {bool compact = false}) {
+    final content = compact
+        ? Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _IconBadge(icon: step.icon, color: AppColors.primary),
+              const SizedBox(height: 10),
               Text(step.title, style: _cardTitleStyle()),
               const SizedBox(height: 5),
               Text(step.body, style: _cardBodyStyle()),
             ],
-          ),
-        ),
-      ],
-    );
+          )
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _IconBadge(icon: step.icon, color: AppColors.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(step.title, style: _cardTitleStyle()),
+                    const SizedBox(height: 5),
+                    Text(step.body, style: _cardBodyStyle()),
+                  ],
+                ),
+              ),
+            ],
+          );
 
     return Container(
       constraints: compact ? const BoxConstraints(minHeight: 86) : null,
@@ -269,15 +315,17 @@ class LandingSections extends StatelessWidget {
         final width = constraints.maxWidth;
         final columns = width >= 920
             ? 3
-            : width >= 600
+            : width >= 260
             ? 2
             : 1;
+        final gap = width < 600 ? 12.0 : 16.0;
+        final narrow = width < 380;
         if (columns == 1) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (var index = 0; index < cards.length; index++) ...[
-                _buildInfoCard(cards[index]),
+                _buildInfoCard(cards[index], narrow: narrow),
                 if (index < cards.length - 1) const SizedBox(height: 16),
               ],
             ],
@@ -298,11 +346,12 @@ class LandingSections extends StatelessWidget {
                       columnIndex < columns;
                       columnIndex++
                     ) ...[
-                      if (columnIndex > 0) const SizedBox(width: 16),
+                      if (columnIndex > 0) SizedBox(width: gap),
                       Expanded(
                         child: rowIndex * columns + columnIndex < cards.length
                             ? _buildInfoCard(
                                 cards[rowIndex * columns + columnIndex],
+                                narrow: narrow,
                               )
                             : const SizedBox.shrink(),
                       ),
@@ -310,7 +359,7 @@ class LandingSections extends StatelessWidget {
                   ],
                 ),
               ),
-              if (rowIndex < rowCount - 1) const SizedBox(height: 16),
+              if (rowIndex < rowCount - 1) SizedBox(height: gap),
             ],
           ],
         );
@@ -318,16 +367,16 @@ class LandingSections extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCard(_CardData card) {
+  Widget _buildInfoCard(_CardData card, {required bool narrow}) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 184),
-      padding: const EdgeInsets.all(20),
+      constraints: BoxConstraints(minHeight: narrow ? 176 : 184),
+      padding: EdgeInsets.all(narrow ? 14 : 20),
       decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _IconBadge(icon: card.icon, color: AppColors.primary),
-          const SizedBox(height: 15),
+          SizedBox(height: narrow ? 12 : 15),
           Text(card.title, style: _cardTitleStyle()),
           const SizedBox(height: 7),
           Text(card.body, style: _cardBodyStyle()),
@@ -538,64 +587,97 @@ class _LandingSection extends StatelessWidget {
       key: anchorKey,
       width: double.infinity,
       color: tinted ? AppColors.canvasLight : AppColors.backgroundLight,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 700;
-          final horizontal = compact ? 20.0 : 48.0;
-          return Padding(
-            padding: EdgeInsets.fromLTRB(
-              horizontal,
-              compact ? 52 : 72,
-              horizontal,
-              compact ? 52 : 72,
-            ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1160),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      eyebrow,
-                      style: LandingSections._eyebrowStyle(AppColors.secondary),
-                    ),
-                    const SizedBox(height: 12),
-                    Semantics(
-                      header: true,
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          fontFamily: AppTheme.displayFontFamily,
-                          fontSize: compact ? 27 : 38,
-                          fontWeight: FontWeight.w700,
-                          height: 1.12,
-                          letterSpacing: -0.4,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 13),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 760),
-                      child: Text(
-                        body,
-                        style: TextStyle(
-                          fontFamily: AppTheme.fontFamily,
-                          fontSize: compact ? 14 : 15.5,
-                          fontWeight: FontWeight.w500,
-                          height: 1.55,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    child,
-                  ],
+      child: Stack(
+        fit: StackFit.passthrough,
+        clipBehavior: Clip.hardEdge,
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.18,
+                child: Image.asset(
+                  'assets/bg2.2.png',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                  filterQuality: FilterQuality.low,
+                  excludeFromSemantics: true,
                 ),
               ),
             ),
-          );
-        },
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ColoredBox(
+                color: AppColors.surfaceLight.withValues(alpha: 0.82),
+              ),
+            ),
+          ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 700;
+              final horizontal = constraints.maxWidth < 380
+                  ? 16.0
+                  : compact
+                  ? 20.0
+                  : 48.0;
+              return Padding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontal,
+                  compact ? 44 : 72,
+                  horizontal,
+                  compact ? 44 : 72,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1160),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          eyebrow,
+                          style: LandingSections._eyebrowStyle(
+                            AppColors.secondary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              fontFamily: AppTheme.displayFontFamily,
+                              fontSize: compact ? 27 : 38,
+                              fontWeight: FontWeight.w700,
+                              height: 1.12,
+                              letterSpacing: -0.4,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 13),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 760),
+                          child: Text(
+                            body,
+                            style: TextStyle(
+                              fontFamily: AppTheme.fontFamily,
+                              fontSize: compact ? 14 : 15.5,
+                              fontWeight: FontWeight.w500,
+                              height: 1.55,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                        child,
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
