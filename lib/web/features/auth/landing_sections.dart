@@ -242,7 +242,7 @@ class LandingSections extends StatelessWidget {
               'Use dedicated workflows for prenatal care and immunization monitoring.',
         ),
         _CardData(
-          icon: Icons.camera_alt,
+          icon: Icons.description,
           title: 'OCR-assisted entry',
           body:
               'Scan supported forms on mobile, review extracted fields, and continue through normal validation.',
@@ -254,7 +254,7 @@ class LandingSections extends StatelessWidget {
               'Prepare summaries, formal reports, and dashboard views for monitoring and planning.',
         ),
         _CardData(
-          icon: Icons.lightbulb,
+          icon: Icons.bar_chart,
           title: 'AI-assisted health insights',
           body:
               'Surface supportive guidance, warning signs, and human-review prompts for health workers.',
@@ -375,7 +375,7 @@ class LandingSections extends StatelessWidget {
 
   Widget _buildAiCard() {
     return _DetailCard(
-      icon: Icons.lightbulb,
+      icon: Icons.bar_chart,
       title: 'AI-assisted health insights',
       body:
           'Active symptom guidance uses authenticated requests and reviewed content to surface supportive information, emergency warnings, referral prompts, and human-review messaging.',
