@@ -16,6 +16,7 @@ void main() {
       expect(ClinicalFormPdfService.getFormTitle(ClinicalFormType.checkup), contains('Check-Up'));
       expect(ClinicalFormPdfService.getFormTitle(ClinicalFormType.prenatal), contains('Prenatal'));
       expect(ClinicalFormPdfService.getFormTitle(ClinicalFormType.immunization), contains('Immunization'));
+      expect(ClinicalFormPdfService.getFormTitle(ClinicalFormType.immunization), isNot(contains('Child')));
     });
 
     test('generates valid PDF bytes for Check-Up Form (CHK-2026) filled & blank', () async {

@@ -327,6 +327,16 @@ describe('immunization record validation boundaries', () => {
         validRecord({age: 17}),
       ),
     );
+    await assertFails(
+      db.doc('immunization_records/wrong-dose-type').set(
+        validRecord({doseNumber: 2}),
+      ),
+    );
+    await assertFails(
+      db.doc('immunization_records/wrong-linked-patient-type').set(
+        validRecord({linkedPatientId: 17}),
+      ),
+    );
   });
 
   it('keeps legacy documents readable and editable when their old shape is preserved', async () => {

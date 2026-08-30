@@ -1,7 +1,9 @@
 import 'package:mycapstone_project/web/shared/utils/record_pdf_builder.dart';
 import 'package:intl/intl.dart';
+import 'package:mycapstone_project/shared/immunization_record_utils.dart';
 
 Future<List<int>> buildImmunizationPdfBytes(Map<String, dynamic> record) {
+  final isPediatric = immunizationPatientIsPediatric(record);
   return buildRecordPdfBytes(
     title: 'Immunization Record',
     barangayName: pdfText(record['barangay']),
@@ -16,8 +18,19 @@ Future<List<int>> buildImmunizationPdfBytes(Map<String, dynamic> record) {
         fields: [
           pdfField('Patient Name', record['patientName']),
           pdfField('Patient ID', record['patientId']),
+          pdfField('Middle Name', record['middleName']),
+          pdfField('Date of Birth', record['dateOfBirth'] ?? record['dob']),
           pdfField('Age', record['age']),
+          pdfField('Sex', record['sex'] ?? record['gender']),
+          pdfField('Blood Type', record['bloodType']),
           pdfField('Contact Number', record['contactNumber']),
+          pdfField('Address', record['address'] ?? record['street']),
+          pdfField('Barangay', record['barangay'] ?? record['barangayName']),
+          if (isPediatric)
+            pdfField(
+              'Parent/Guardian Name',
+              record['parentGuardianName'] ?? record['guardian'],
+            ),
         ],
       ),
       RecordPdfSection(

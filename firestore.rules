@@ -309,8 +309,12 @@ service cloud.firestore {
         (!requireCoreFields || safeRequiredText(data, 'administrationDate', 40)) &&
         (!requireCoreFields || safeRequiredText(data, 'status', 40)) &&
         safeOptionalText(data, 'patientName', 200) &&
+        safeOptionalText(data, 'patientId', 120) &&
+        safeOptionalText(data, 'linkedPatientId', 120) &&
+        safeOptionalText(data, 'middleName', 120) &&
         safeOptionalText(data, 'age', 16) &&
         safeOptionalText(data, 'contactNumber', 32) &&
+        safeOptionalText(data, 'doseNumber', 40) &&
         safeOptionalText(data, 'parentGuardianName', 200) &&
         safeOptionalText(data, 'adverseEvents', 2000)
       );
@@ -326,11 +330,7 @@ service cloud.firestore {
         (!('vaccine' in newData) || safeRequiredText(newData, 'vaccine', 120)) &&
         (!('administrationDate' in newData) ||
           safeRequiredText(newData, 'administrationDate', 40)) &&
-        (!('status' in newData) || safeRequiredText(newData, 'status', 40)) &&
-        safeOptionalText(newData, 'age', 16) &&
-        safeOptionalText(newData, 'contactNumber', 32) &&
-        safeOptionalText(newData, 'parentGuardianName', 200) &&
-        safeOptionalText(newData, 'adverseEvents', 2000);
+        (!('status' in newData) || safeRequiredText(newData, 'status', 40));
     }
 
     // Doctor notes are an append-only clinical log tied to a specific

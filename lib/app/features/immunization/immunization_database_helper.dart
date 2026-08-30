@@ -28,7 +28,35 @@ class ImmunizationDatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    return await openDatabase(
+      path,
+      version: 2,
+      onCreate: _createDB,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        await _ensureCanonicalColumns(db);
+      },
+      onOpen: (db) async => _ensureCanonicalColumns(db),
+    );
+  }
+
+  Future<void> _ensureCanonicalColumns(Database db) async {
+    final columns = await db.rawQuery(
+      'PRAGMA table_info(immunization_records)',
+    );
+    final existing = columns
+        .map((column) => column['name']?.toString() ?? '')
+        .toSet();
+    for (final column in const [
+      'linkedPatientId',
+      'middleName',
+      'parentGuardianName',
+    ]) {
+      if (!existing.contains(column)) {
+        await db.execute(
+          "ALTER TABLE immunization_records ADD COLUMN $column TEXT NOT NULL DEFAULT ''",
+        );
+      }
+    }
   }
 
   Future _createDB(Database db, int version) async {
@@ -42,6 +70,9 @@ class ImmunizationDatabaseHelper {
         time $textType,
         patientName $textType,
         patientId $textType,
+        linkedPatientId $textType,
+        middleName $textType,
+        parentGuardianName $textType,
         age $textType,
         contactNumber $textType,
         vaccine $textType,
@@ -75,6 +106,10 @@ class ImmunizationDatabaseHelper {
           'time': record['time'] ?? '',
           'patientName': record['patientName'] ?? '',
           'patientId': record['patientId'] ?? '',
+          'linkedPatientId':
+              record['linkedPatientId'] ?? record['patientId'] ?? '',
+          'middleName': record['middleName'] ?? '',
+          'parentGuardianName': record['parentGuardianName'] ?? '',
           'age': record['age'] ?? '',
           'contactNumber': record['contactNumber'] ?? '',
           'vaccine': record['vaccine'] ?? '',
@@ -113,6 +148,9 @@ class ImmunizationDatabaseHelper {
       'time': record['time'] ?? '',
       'patientName': record['patientName'] ?? '',
       'patientId': record['patientId'] ?? '',
+      'linkedPatientId': record['linkedPatientId'] ?? record['patientId'] ?? '',
+      'middleName': record['middleName'] ?? '',
+      'parentGuardianName': record['parentGuardianName'] ?? '',
       'age': record['age'] ?? '',
       'contactNumber': record['contactNumber'] ?? '',
       'vaccine': record['vaccine'] ?? '',
@@ -446,6 +484,9 @@ class ImmunizationDatabaseHelper {
           'time': data['time'] ?? '',
           'patientName': data['patientName'] ?? '',
           'patientId': data['patientId'] ?? '',
+          'linkedPatientId': data['linkedPatientId'] ?? data['patientId'] ?? '',
+          'middleName': data['middleName'] ?? '',
+          'parentGuardianName': data['parentGuardianName'] ?? '',
           'age': data['age'] ?? '',
           'contactNumber': data['contactNumber'] ?? '',
           'vaccine': data['vaccine'] ?? '',

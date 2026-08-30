@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart' as web_download;
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/shared/immunization_record_utils.dart';
 
 enum ClinicalFormType {
   checkup,
@@ -18,7 +19,6 @@ enum ClinicalFormType {
   patientRegistration,
   referral,
 }
-
 class ClinicalFormPdfService {
   static const Map<ClinicalFormType, String> _formCodes = {
     ClinicalFormType.checkup: 'CHK-2026',
@@ -33,7 +33,7 @@ class ClinicalFormPdfService {
   static const Map<ClinicalFormType, String> _formTitles = {
     ClinicalFormType.checkup: 'General Clinical Check-Up Record',
     ClinicalFormType.prenatal: 'Maternal & Prenatal Care Record',
-    ClinicalFormType.immunization: 'EPI Child Immunization Card',
+    ClinicalFormType.immunization: 'Patient Immunization Record',
     ClinicalFormType.morbidity: 'Notifiable Disease Morbidity Surveillance',
     ClinicalFormType.mortality: 'Community Mortality Reporting Notification',
     ClinicalFormType.patientRegistration: 'Patient Master Registration Card',
@@ -761,60 +761,182 @@ class ClinicalFormPdfService {
     ];
   }
 
-  static List<pw.Widget> _buildImmunizationContent(Map<String, dynamic> r, {bool isBlank = false}) {
-    final child = (r['patient'] ?? r['patientName'] ?? r['childName'] ?? 'Baby Gabriel Reyes').toString();
-    final pid = (r['patientId'] ?? r['id'] ?? 'PAT-2026-088').toString();
-    final dob = (r['dateOfBirth'] ?? '2026-02-14').toString();
-    final age = (r['age'] ?? '6 mos').toString();
-    final sex = (r['gender'] ?? r['sex'] ?? 'Male').toString();
-    final guardian = (r['guardianName'] ?? r['motherName'] ?? 'Elena Reyes').toString();
-    final contact = (r['contactNumber'] ?? '0920-555-1234').toString();
-    final address = (r['address'] ?? 'Purok 2, Brgy. Aglayan').toString();
-    final barangay = (r['barangay'] ?? 'Aglayan').toString();
+  static List<pw.Widget> _buildImmunizationContent(
+    Map<String, dynamic> r, {
+    bool isBlank = false,
+  }) {
+    final patient = (r['patient'] ?? r['patientName'] ?? r['childName'] ?? '')
+        .toString();
+    final pid = (r['patientId'] ?? r['id'] ?? '').toString();
+    final middleName = (r['middleName'] ?? '').toString();
+    final dob = (r['dateOfBirth'] ?? '').toString();
+    final age = (r['age'] ?? '').toString();
+    final sex = (r['gender'] ?? r['sex'] ?? '').toString();
+    final isPediatric = isBlank || immunizationPatientIsPediatric(r);
+    final guardian = (r['guardianName'] ?? r['parentGuardianName'] ?? '')
+        .toString();
+    final contact = (r['contactNumber'] ?? '').toString();
+    final bloodType = (r['bloodType'] ?? '').toString();
+    final address = (r['address'] ?? '').toString();
+    final barangay = (r['barangay'] ?? '').toString();
 
-    final vaccine = (r['vaccine'] ?? r['vaccineType'] ?? 'Pentavalent Vaccine').toString();
-    final dose = (r['dose'] ?? r['doseNumber'] ?? '2nd Dose').toString();
-    final batch = (r['batchNumber'] ?? r['batch'] ?? 'BATCH-PENTA-992').toString();
-    final exp = (r['expirationDate'] ?? '2027-12-31').toString();
-    final adminDate = (r['date'] ?? r['dateAdministered'] ?? '2026-08-14').toString();
-    final nextDose = (r['nextVisitDate'] ?? r['nextDoseDueDate'] ?? '2026-09-14').toString();
-    final vaccinator = (r['reportedBy'] ?? r['vaccinatorName'] ?? 'Nurse Sarah Jenkins, RN').toString();
+    final vaccine = (r['vaccine'] ?? r['vaccineType'] ?? '').toString();
+    final dose = (r['dose'] ?? r['doseNumber'] ?? '').toString();
+    final batch = (r['batchNumber'] ?? r['batch'] ?? '').toString();
+    final exp = (r['expirationDate'] ?? '').toString();
+    final adminDate =
+        (r['administrationDate'] ?? r['date'] ?? r['dateAdministered'] ?? '')
+            .toString();
+    final nextDose = (r['nextVisitDate'] ?? r['nextDoseDueDate'] ?? '')
+        .toString();
+    final vaccinator =
+        (r['reportedBy'] ?? r['vaccinatorName'] ?? r['administeredBy'] ?? '')
+            .toString();
+    final route = (r['routeOfAdministration'] ?? '').toString();
+    final site = (r['injectionSite'] ?? '').toString();
+    final adverseEvents = (r['adverseEvents'] ?? '').toString();
+    final status = (r['status'] ?? '').toString();
 
     return [
-      _buildSection('1. INFANT / CHILD DEMOGRAPHIC INFORMATION'),
+      _buildSection('1. PATIENT DEMOGRAPHIC INFORMATION'),
       _buildFieldRow([
-        {'label': 'Patient / Child Full Name', 'value': child, 'blankGuide': '______________________________', 'flex': '2'},
-        {'label': 'Patient ID', 'value': pid, 'blankGuide': 'PAT-2026-____', 'flex': '1'},
+        {
+          'label': 'Patient Full Name',
+          'value': patient,
+          'blankGuide': '______________________________',
+          'flex': '2',
+        },
+        {
+          'label': 'Patient ID',
+          'value': pid,
+          'blankGuide': 'PAT-2026-____',
+          'flex': '1',
+        },
+      ], isBlank: isBlank),
+      _buildFieldRow([
+        {
+          'label': 'Middle Name',
+          'value': middleName,
+          'blankGuide': '______________________________',
+          'flex': '2',
+        },
+        {
+          'label': 'Blood Type',
+          'value': bloodType,
+          'blankGuide': '[ ] A [ ] B [ ] AB [ ] O (+/-)',
+          'flex': '1',
+        },
       ], isBlank: isBlank),
       _buildFieldRow([
         {'label': 'Date of Birth', 'value': dob, 'blankGuide': 'YYYY-MM-DD'},
         {'label': 'Age', 'value': age, 'blankGuide': '___ mos/yrs'},
         {'label': 'Sex', 'value': sex, 'blankGuide': '[ ] Male  [ ] Female'},
       ], isBlank: isBlank),
+      if (isPediatric)
+        _buildFieldRow([
+          {
+            'label': 'Parent / Guardian Full Name',
+            'value': guardian,
+            'blankGuide': '______________________________',
+            'flex': '2',
+          },
+          {
+            'label': 'Contact Number',
+            'value': contact,
+            'blankGuide': '09XX-XXX-XXXX',
+            'flex': '1',
+          },
+        ], isBlank: isBlank)
+      else
+        _buildFieldRow([
+          {
+            'label': 'Contact Number',
+            'value': contact,
+            'blankGuide': '09XX-XXX-XXXX',
+          },
+        ], isBlank: isBlank),
       _buildFieldRow([
-        {'label': 'Mother / Father / Guardian Full Name', 'value': guardian, 'blankGuide': '______________________________', 'flex': '2'},
-        {'label': 'Contact Number', 'value': contact, 'blankGuide': '09XX-XXX-XXXX', 'flex': '1'},
-      ], isBlank: isBlank),
-      _buildFieldRow([
-        {'label': 'Residence Address', 'value': address, 'blankGuide': '______________________________', 'flex': '2'},
-        {'label': 'Barangay', 'value': barangay, 'blankGuide': '____________________', 'flex': '1'},
+        {
+          'label': 'Residence Address',
+          'value': address,
+          'blankGuide': '______________________________',
+          'flex': '2',
+        },
+        {
+          'label': 'Barangay',
+          'value': barangay,
+          'blankGuide': '____________________',
+          'flex': '1',
+        },
       ], isBlank: isBlank),
 
       _buildSection('2. VACCINE & IMMUNIZATION ADMINISTRATION DETAILS'),
       _buildFieldRow([
-        {'label': 'Vaccine / Antigen Type', 'value': vaccine, 'blankGuide': '[ ] BCG [ ] HepB [ ] Pentavalent [ ] OPV [ ] IPV [ ] PCV [ ] MMR', 'flex': '2'},
-        {'label': 'Dose Number', 'value': dose, 'blankGuide': '[ ] 1st [ ] 2nd [ ] 3rd [ ] Booster', 'flex': '1'},
+        {
+          'label': 'Vaccine / Antigen Type',
+          'value': vaccine,
+          'blankGuide':
+              '[ ] BCG [ ] HepB [ ] Pentavalent [ ] OPV [ ] IPV [ ] PCV [ ] MMR',
+          'flex': '2',
+        },
+        {
+          'label': 'Dose Number',
+          'value': dose,
+          'blankGuide': '[ ] 1st [ ] 2nd [ ] 3rd [ ] Booster',
+          'flex': '1',
+        },
       ], isBlank: isBlank),
       _buildFieldRow([
-        {'label': 'Batch / Lot Number', 'value': batch, 'blankGuide': '____________________'},
+        {
+          'label': 'Batch / Lot Number',
+          'value': batch,
+          'blankGuide': '____________________',
+        },
         {'label': 'Expiration Date', 'value': exp, 'blankGuide': 'YYYY-MM-DD'},
       ], isBlank: isBlank),
       _buildFieldRow([
-        {'label': 'Date Administered', 'value': adminDate, 'blankGuide': 'YYYY-MM-DD'},
-        {'label': 'Next Dose Due Date', 'value': nextDose, 'blankGuide': 'YYYY-MM-DD'},
+        {
+          'label': 'Date Administered',
+          'value': adminDate,
+          'blankGuide': 'YYYY-MM-DD',
+        },
+        {
+          'label': 'Next Dose Due Date',
+          'value': nextDose,
+          'blankGuide': 'YYYY-MM-DD',
+        },
       ], isBlank: isBlank),
       _buildFieldRow([
-        {'label': 'Vaccinator Name & Title', 'value': vaccinator, 'blankGuide': '______________________________'},
+        {
+          'label': 'Route of Administration',
+          'value': route,
+          'blankGuide': '______________________________',
+        },
+        {
+          'label': 'Administration Site',
+          'value': site,
+          'blankGuide': '____________________',
+        },
+      ], isBlank: isBlank),
+      _buildFieldRow([
+        {
+          'label': 'Vaccinator Name & Title',
+          'value': vaccinator,
+          'blankGuide': '______________________________',
+        },
+      ], isBlank: isBlank),
+      _buildFieldRow([
+        {
+          'label': 'AEFI / Adverse Events',
+          'value': adverseEvents,
+          'blankGuide': 'None reported / ____________________',
+          'flex': '2',
+        },
+        {
+          'label': 'Status',
+          'value': status,
+          'blankGuide': '____________________',
+        },
       ], isBlank: isBlank),
     ];
   }

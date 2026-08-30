@@ -24,17 +24,18 @@ import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/shared/input_validation.dart';
 import 'package:mycapstone_project/web/shared/widgets/web_sync_status_badge.dart';
 import 'package:mycapstone_project/shared/immunization_reference_data.dart';
+import 'package:mycapstone_project/shared/immunization_record_utils.dart';
 
-const Color _primaryAqua = Color(0xFF2F80ED);
-const Color _darkDeepTeal = Color(0xFF071A33);
-const Color _mutedCoolGray = Color(0xFF4B6075);
-const Color _lightOffWhite = Color(0xFF0B1F3A);
-const Color _sidebarDark = Colors.white;
-const Color _historyBackground = Color(0xFFF5F7FA);
-const Color _historySurface = Colors.white;
-const Color _historyAccent = Color(0xFF2563EB);
-const Color _historyMuted = Color(0xFF4B6075);
-const Color _historyBorder = Color(0xFFE2E8F0);
+const Color _primaryAqua = AppColors.primary;
+const Color _darkDeepTeal = AppColors.backgroundDark;
+const Color _mutedCoolGray = AppColors.textSecondary;
+const Color _lightOffWhite = AppColors.textPrimary;
+const Color _sidebarDark = AppColors.surfaceLight;
+const Color _historyBackground = AppColors.backgroundLight;
+const Color _historySurface = AppColors.surfaceLight;
+const Color _historyAccent = AppColors.primary;
+const Color _historyMuted = AppColors.textSecondary;
+const Color _historyBorder = AppColors.border;
 
 class ImmunizationPage extends StatefulWidget {
   const ImmunizationPage({super.key, this.initialPatient});
@@ -186,15 +187,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
   }
 
   String _getPatientHistoryKey(Map<String, dynamic> record) {
-    final patientId = (record['patientId'] ?? record['linkedPatientId'] ?? '')
-        .toString()
-        .trim();
-    if (patientId.isNotEmpty) {
-      return 'id:${patientId.toLowerCase()}';
-    }
-
-    final patientName = (record['patientName'] ?? '').toString().trim();
-    return 'name:${patientName.toLowerCase()}';
+    return immunizationPatientKey(record);
   }
 
   List<Map<String, dynamic>> _getPatientHistoryRecords(
@@ -225,6 +218,42 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     return history;
   }
 
+  Future<bool> _confirmPotentialDuplicate(
+    BuildContext context,
+    Map<String, dynamic> candidate, {
+    String? excludeId,
+  }) async {
+    final hasDuplicate = _immunizationRecords.any(
+      (record) => immunizationLooksLikeDuplicate(
+        record,
+        candidate,
+        excludeId: excludeId,
+      ),
+    );
+    if (!hasDuplicate || !context.mounted) return true;
+
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Possible duplicate immunization'),
+        content: const Text(
+          'This patient already has the same vaccine and dose recorded on this date. Review the history before continuing.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Review history'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Continue anyway'),
+          ),
+        ],
+      ),
+    );
+    return proceed == true;
+  }
+
   Map<String, dynamic> _buildDisplayRecord(Map<String, dynamic> record) {
     return {
       ...record,
@@ -232,23 +261,58 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     };
   }
 
-  void _showPatientImmunizationHistory(
+  Future<void> _showPatientImmunizationHistory(
     BuildContext context,
     Map<String, dynamic> seedRecord,
-  ) {
+  ) async {
+    final resolvedPatient = await _patientHistoryService
+        .resolveRegisteredPatient(seedRecord);
+    if (!context.mounted) return;
+
     final history = _getPatientHistoryRecords(seedRecord);
     final latestRecord = history.isNotEmpty ? history.first : seedRecord;
-    final patientName = (latestRecord['patientName'] ?? 'Unknown Patient')
-        .toString();
-    final patientId =
-        (latestRecord['patientId'] ??
-                latestRecord['linkedPatientId'] ??
-                'No patient ID')
-            .toString()
-            .trim();
-    final parentGuardian = (latestRecord['parentGuardianName'] ?? '')
-        .toString()
-        .trim();
+    final patientProfile = <String, dynamic>{
+      ...latestRecord,
+      if (resolvedPatient != null) ...resolvedPatient,
+    };
+    final patientName = immunizationRecordText(patientProfile, const [
+      'fullName',
+      'patientName',
+      'name',
+    ], fallback: 'Unknown Patient');
+    final patientId = immunizationRecordText(patientProfile, const [
+      'patientId',
+      'linkedPatientId',
+      'id',
+    ]);
+    final isPediatric = immunizationPatientIsPediatric(patientProfile);
+    final parentGuardian = isPediatric
+        ? immunizationRecordText(patientProfile, const [
+            'guardian',
+            'parentGuardianName',
+          ])
+        : '';
+    final profileItems = <String, String>{
+      'Date of Birth': immunizationRecordText(patientProfile, const [
+        'dateOfBirth',
+        'dob',
+      ]),
+      'Sex': immunizationRecordText(patientProfile, const ['sex', 'gender']),
+      'Contact': immunizationRecordText(patientProfile, const [
+        'contactNumber',
+        'phoneNumber',
+        'phone',
+      ]),
+      'Address': immunizationRecordText(patientProfile, const [
+        'address',
+        'street',
+        'fullAddress',
+      ]),
+      'Barangay': immunizationRecordText(patientProfile, const [
+        'barangay',
+        'barangayName',
+      ]),
+    }..removeWhere((_, value) => value.isEmpty);
     final latestVaccine = (latestRecord['vaccine'] ?? 'No vaccine recorded')
         .toString();
     final latestStatus = (latestRecord['status'] ?? 'Completed')
@@ -273,7 +337,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
               border: Border.all(color: _historyBorder),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.35),
+                  color: AppColors.secondary.withValues(alpha: 0.35),
                   blurRadius: 26,
                   offset: const Offset(0, 12),
                 ),
@@ -330,6 +394,24 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   color: _historyMuted,
                                   fontSize: 13,
                                 ),
+                              ),
+                            ],
+                            if (profileItems.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 14,
+                                runSpacing: 6,
+                                children: profileItems.entries
+                                    .map(
+                                      (entry) => Text(
+                                        '${entry.key}: ${entry.value}',
+                                        style: TextStyle(
+                                          color: _historyMuted,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
                               ),
                             ],
                             const SizedBox(height: 12),
@@ -672,7 +754,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppColors.backgroundLight,
       body: WebResponsiveBody(
         sidebar: WebAppSidebar(
           userName: userName,
@@ -859,7 +941,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
         color: _primaryAqua.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFF00E5FF).withValues(alpha: 0.55),
+          color: AppColors.primary.withValues(alpha: 0.55),
           width: 1.2,
         ),
       ),
@@ -1017,7 +1099,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                         child: Icon(
                                           Icons.clear,
                                           size: 18,
-                                          color: Colors.red,
+                                          color: AppColors.error,
                                         ),
                                       ),
                                     ),
@@ -1177,7 +1259,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                             Navigator.pop(context, true),
                                         child: const Text(
                                           'Delete',
-                                          style: TextStyle(color: Colors.red),
+                                          style: TextStyle(
+                                            color: AppColors.error,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -1194,7 +1278,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                         content: Text(
                                           'Failed to delete immunization record: $e',
                                         ),
-                                        backgroundColor: Colors.red,
+                                        backgroundColor: AppColors.error,
                                         behavior: SnackBarBehavior.floating,
                                       ),
                                     );
@@ -1306,7 +1390,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF163B66),
+        color: AppColors.secondary,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _primaryAqua.withValues(alpha: 0.25),
@@ -1506,7 +1590,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                 ? () => setState(() => _currentPage = currentPage + 1)
                 : null,
             icon: const Icon(Icons.chevron_right_rounded),
-            color: canGoNext ? _primaryAqua : const Color(0xFFB8C9DB),
+            color: canGoNext ? _primaryAqua : AppColors.borderStrong,
             tooltip: 'Next page',
           ),
         ],
@@ -1589,7 +1673,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                     icon: Icon(Icons.select_all, size: 18),
                     label: Text('Select All'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -1605,7 +1689,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                     icon: Icon(Icons.delete, size: 18),
                     label: Text('Delete'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
+                      backgroundColor: AppColors.error,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -1659,7 +1743,10 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
               Navigator.pop(context);
               await _deleteSelectedRecords();
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -1733,7 +1820,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
   String _normalizeVaccineType(dynamic rawValue) {
     final value = (rawValue ?? '').toString().trim();
     if (value.isEmpty) {
-      return _vaccineTypeOptions.first;
+      return '';
     }
 
     final normalized = value.toLowerCase();
@@ -1855,6 +1942,11 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       );
       if (!context.mounted || patientSeed == null) return;
     }
+    final selectedPatient = patientSeed;
+    final patientIdentity = immunizationIdentitySnapshot(
+      patient: selectedPatient,
+    );
+    final isPediatricPatient = immunizationPatientIsPediatric(selectedPatient);
     // Controllers
     final firstNameController = TextEditingController();
     final middleNameController = TextEditingController();
@@ -1864,19 +1956,20 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     final contactNumberController = TextEditingController();
     final guardianController = TextEditingController();
 
-    final name = patientNameParts(patientSeed);
+    final name = patientNameParts(selectedPatient);
     firstNameController.text = name.firstName;
     middleNameController.text = name.middleName;
     surnameController.text = name.surname;
-    patientIdController.text = (patientSeed['patientId'] ?? '').toString();
-    ageController.text = (patientSeed['age'] ?? '').toString();
-    contactNumberController.text = (patientSeed['contactNumber'] ?? '')
+    patientIdController.text = (patientIdentity['patientId'] ?? '').toString();
+    ageController.text = (patientIdentity['age'] ?? '').toString();
+    contactNumberController.text = (patientIdentity['contactNumber'] ?? '')
         .toString();
-    guardianController.text =
-        (patientSeed['guardian'] ?? patientSeed['parentGuardianName'] ?? '')
-            .toString();
+    guardianController.text = (patientIdentity['parentGuardianName'] ?? '')
+        .toString();
 
-    String selectedVaccineType = _normalizeVaccineType(patientSeed['vaccine']);
+    String selectedVaccineType = _normalizeVaccineType(
+      selectedPatient['vaccine'],
+    );
     final vaccineBrandController = TextEditingController();
     final batchNumberController = TextEditingController();
     DateTime? expirationDate;
@@ -1884,7 +1977,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     DateTime? administrationDate = DateTime.now();
     TimeOfDay? administrationTime = TimeOfDay.now();
     bool isSaving = false;
-    final doseNumberController = TextEditingController();
+    String selectedDose = 'Initial';
     String selectedRouteOfAdministration = 'Intramuscular (IM)';
     String selectedInjectionSite = 'Left Upper Arm';
     final administeredByController = TextEditingController();
@@ -1995,6 +2088,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                         label: 'First Name',
                                         icon: Icons.person_outline,
                                         hintText: 'Enter first name',
+                                        readOnly: true,
                                         validator: (value) =>
                                             value == null || value.isEmpty
                                             ? 'Required'
@@ -2008,6 +2102,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                         label: 'Surname',
                                         icon: Icons.person,
                                         hintText: 'Enter surname',
+                                        readOnly: true,
                                         validator: (value) =>
                                             value == null || value.isEmpty
                                             ? 'Required'
@@ -2022,6 +2117,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   label: 'Middle Name',
                                   icon: Icons.person_outline,
                                   hintText: 'Optional middle name',
+                                  readOnly: true,
                                 ),
                                 const SizedBox(height: 16),
                                 Row(
@@ -2032,6 +2128,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                         label: 'Patient ID',
                                         icon: Icons.badge,
                                         hintText: 'e.g., PAT-2026-001',
+                                        readOnly: true,
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -2041,6 +2138,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                         label: 'Age',
                                         icon: Icons.cake,
                                         hintText: 'Enter age',
+                                        readOnly: true,
                                         keyboardType: TextInputType.number,
                                       ),
                                     ),
@@ -2052,17 +2150,26 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   label: 'Contact Number',
                                   icon: Icons.phone,
                                   hintText: 'e.g., +63 912 345 6789',
+                                  readOnly: true,
                                   keyboardType: TextInputType.phone,
                                 ),
-                                const SizedBox(height: 16),
-                                _buildTextField(
-                                  controller: guardianController,
-                                  label: 'Parent/Guardian Name',
-                                  icon: Icons.family_restroom,
-                                  hintText:
-                                      'For children or dependent patients',
-                                ),
+                                if (isPediatricPatient) ...[
+                                  const SizedBox(height: 16),
+                                  _buildTextField(
+                                    controller: guardianController,
+                                    label: 'Parent/Guardian Name',
+                                    icon: Icons.family_restroom,
+                                    hintText:
+                                        'For children or dependent patients',
+                                    readOnly: true,
+                                  ),
+                                ],
                               ]),
+                              const SizedBox(height: 12),
+                              _buildPatientProfileReference(
+                                selectedPatient,
+                                isPediatric: isPediatricPatient,
+                              ),
                             ],
                           );
 
@@ -2079,6 +2186,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   value: selectedVaccineType,
                                   icon: Icons.vaccines,
                                   items: _vaccineTypeOptions,
+                                  allowEmpty: true,
                                   onChanged: (value) {
                                     if (value != null) {
                                       setModalState(
@@ -2193,24 +2301,25 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   ],
                                 ),
                                 const SizedBox(height: 16),
-                                _buildTextField(
-                                  controller: doseNumberController,
+                                _buildDropdownField(
                                   label: 'Dose Number',
                                   icon: Icons.format_list_numbered,
-                                  hintText: 'e.g., 1st dose, 2nd dose',
+                                  value: selectedDose,
+                                  items: immunizationDoseOptions(
+                                    existing: selectedDose,
+                                  ),
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      setModalState(() => selectedDose = value);
+                                    }
+                                  },
                                 ),
                                 const SizedBox(height: 16),
                                 _buildDropdownField(
                                   label: 'Route of Administration',
                                   value: selectedRouteOfAdministration,
                                   icon: Icons.medical_information,
-                                  items: [
-                                    'Intramuscular (IM)',
-                                    'Subcutaneous (SC)',
-                                    'Intradermal (ID)',
-                                    'Oral',
-                                    'Intranasal',
-                                  ],
+                                  items: kImmunizationRouteOptions,
                                   onChanged: (value) {
                                     if (value != null) {
                                       setModalState(
@@ -2225,14 +2334,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   label: 'Injection Site',
                                   value: selectedInjectionSite,
                                   icon: Icons.place,
-                                  items: [
-                                    'Left Upper Arm',
-                                    'Right Upper Arm',
-                                    'Left Thigh',
-                                    'Right Thigh',
-                                    'Left Buttock',
-                                    'Right Buttock',
-                                  ],
+                                  items: kImmunizationSiteOptions,
                                   onChanged: (value) {
                                     if (value != null) {
                                       setModalState(
@@ -2353,13 +2455,13 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                     color: Colors.white,
                     border: Border(
                       top: BorderSide(
-                        color: Colors.black.withValues(alpha: 0.08),
+                        color: AppColors.secondary.withValues(alpha: 0.08),
                         width: 1,
                       ),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
+                        color: AppColors.secondary.withValues(alpha: 0.03),
                         blurRadius: 8,
                         offset: const Offset(0, -2),
                       ),
@@ -2372,7 +2474,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: _lightOffWhite,
                           side: BorderSide(
-                            color: Colors.black.withValues(alpha: 0.18),
+                            color: AppColors.secondary.withValues(alpha: 0.18),
                             width: 1.2,
                           ),
                           padding: const EdgeInsets.symmetric(
@@ -2435,7 +2537,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text('Vaccine type is required'),
-                                      backgroundColor: Colors.red,
+                                      backgroundColor: AppColors.error,
                                       behavior: SnackBarBehavior.floating,
                                     ),
                                   );
@@ -2447,10 +2549,37 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                       content: Text(
                                         'Administration date is required',
                                       ),
-                                      backgroundColor: Colors.red,
+                                      backgroundColor: AppColors.error,
                                       behavior: SnackBarBehavior.floating,
                                     ),
                                   );
+                                  return;
+                                }
+                                final canonicalPatientId =
+                                    (patientIdentity['patientId'] ?? '')
+                                        .toString()
+                                        .trim();
+                                if (canonicalPatientId.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Select a registered patient before saving.',
+                                      ),
+                                      backgroundColor: AppColors.error,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                final shouldContinue =
+                                    await _confirmPotentialDuplicate(context, {
+                                      'patientId': canonicalPatientId,
+                                      'vaccine': selectedVaccineType,
+                                      'doseNumber': selectedDose,
+                                      'administrationDate': administrationDate!
+                                          .toIso8601String(),
+                                    });
+                                if (!shouldContinue || !context.mounted) {
                                   return;
                                 }
 
@@ -2468,25 +2597,22 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                           ]
                                           .where((value) => value.isNotEmpty)
                                           .join(' '),
-                                  'patientId':
-                                      (patientSeed?['patientId'] ??
-                                              patientSeed?['id'] ??
-                                              patientIdController.text)
-                                          .toString(),
+                                  'patientId': canonicalPatientId,
                                   'linkedPatientId':
-                                      (patientSeed?['linkedPatientId'] ??
-                                              patientSeed?['patientId'] ??
-                                              patientSeed?['id'] ??
-                                              '')
+                                      (patientIdentity['linkedPatientId'] ??
+                                              canonicalPatientId)
                                           .toString(),
                                   'firstName': firstNameController.text.trim(),
                                   'middleName': middleNameController.text
                                       .trim(),
                                   'surname': surnameController.text.trim(),
-                                  'parentGuardianName': guardianController.text
-                                      .trim(),
-                                  'age': ageController.text,
-                                  'contactNumber': contactNumberController.text,
+                                  if (isPediatricPatient)
+                                    'parentGuardianName':
+                                        patientIdentity['parentGuardianName'] ??
+                                        '',
+                                  'age': patientIdentity['age'] ?? '',
+                                  'contactNumber':
+                                      patientIdentity['contactNumber'] ?? '',
                                   'vaccine': selectedVaccineType,
                                   'vaccineBrand': vaccineBrandController.text,
                                   'batchNumber': batchNumberController.text,
@@ -2497,7 +2623,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                       '',
                                   'administrationTime':
                                       '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
-                                  'doseNumber': doseNumberController.text,
+                                  'doseNumber': selectedDose,
                                   'routeOfAdministration':
                                       selectedRouteOfAdministration,
                                   'injectionSite': selectedInjectionSite,
@@ -2525,7 +2651,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      backgroundColor: Colors.red,
+                                      backgroundColor: AppColors.error,
                                       behavior: SnackBarBehavior.floating,
                                     ),
                                   );
@@ -2546,7 +2672,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      backgroundColor: Colors.green,
+                                      backgroundColor: AppColors.success,
                                       behavior: SnackBarBehavior.floating,
                                     ),
                                   );
@@ -2627,7 +2753,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.secondary.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -2637,6 +2763,81 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: children,
       ),
+    );
+  }
+
+  Widget _buildPatientProfileReference(
+    Map<String, dynamic> patient, {
+    required bool isPediatric,
+  }) {
+    final fields = <String, String>{
+      'Date of Birth': immunizationRecordText(patient, const [
+        'dateOfBirth',
+        'dob',
+      ]),
+      'Sex': immunizationRecordText(patient, const ['sex', 'gender']),
+      'Blood Type': immunizationRecordText(patient, const ['bloodType']),
+      'Address': immunizationRecordText(patient, const [
+        'address',
+        'street',
+        'fullAddress',
+      ]),
+      'Barangay': immunizationRecordText(patient, const [
+        'barangay',
+        'barangayName',
+      ]),
+    }..removeWhere((_, value) => value.isEmpty);
+    if (isPediatric) {
+      final guardian = immunizationRecordText(patient, const [
+        'guardian',
+        'parentGuardianName',
+      ]);
+      if (guardian.isNotEmpty) fields['Parent/Guardian'] = guardian;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSubtle,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: fields.isEmpty
+          ? const Text(
+              'Additional patient information is not recorded.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            )
+          : Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              children: fields.entries
+                  .map(
+                    (entry) => Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '${entry.key}: ',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          TextSpan(
+                            text: entry.value,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
     );
   }
 
@@ -2670,6 +2871,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     String? hintText,
     TextInputType? keyboardType,
     int maxLines = 1,
+    bool readOnly = false,
     String? Function(String?)? validator,
   }) {
     final effectiveValidator =
@@ -2691,6 +2893,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
+          readOnly: readOnly,
           validator: (value) => effectiveValidator(value?.trim()),
           style: const TextStyle(
             color: _lightOffWhite,
@@ -2706,20 +2909,14 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             ),
             prefixIcon: Icon(icon, color: _primaryAqua, size: 20),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: readOnly ? AppColors.surfaceSubtle : Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: Colors.black.withValues(alpha: 0.12),
-                width: 1,
-              ),
+              borderSide: BorderSide(color: AppColors.border, width: 1),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: Colors.black.withValues(alpha: 0.12),
-                width: 1,
-              ),
+              borderSide: BorderSide(color: AppColors.border, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -2727,11 +2924,11 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+              borderSide: const BorderSide(color: AppColors.error, width: 1.2),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+              borderSide: const BorderSide(color: AppColors.error, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
@@ -2774,7 +2971,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
               border: Border.all(
                 color: date != null
                     ? _primaryAqua.withValues(alpha: 0.5)
-                    : Colors.black.withValues(alpha: 0.12),
+                    : AppColors.border,
                 width: date != null ? 1.5 : 1,
               ),
             ),
@@ -2843,7 +3040,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
               border: Border.all(
                 color: time != null
                     ? _primaryAqua.withValues(alpha: 0.5)
-                    : Colors.black.withValues(alpha: 0.12),
+                    : AppColors.border,
                 width: time != null ? 1.5 : 1,
               ),
             ),
@@ -2923,6 +3120,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     required IconData icon,
     required List<String> items,
     required Function(String?) onChanged,
+    bool allowEmpty = false,
   }) {
     final sanitizedItems = _sanitizeDropdownItems(items);
     final dropdownItems = [...sanitizedItems];
@@ -2934,7 +3132,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     }
     final safeValue = dropdownItems.contains(preservedValue)
         ? preservedValue
-        : (dropdownItems.isNotEmpty ? dropdownItems.first : null);
+        : (allowEmpty
+              ? null
+              : (dropdownItems.isNotEmpty ? dropdownItems.first : null));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2954,10 +3154,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.black.withValues(alpha: 0.12),
-              width: 1,
-            ),
+            border: Border.all(color: AppColors.border, width: 1),
           ),
           child: Row(
             children: [
@@ -2978,6 +3175,16 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                       fontWeight: FontWeight.w600,
                     ),
                     dropdownColor: Colors.white,
+                    hint: allowEmpty
+                        ? Text(
+                            'Select $label',
+                            style: TextStyle(
+                              color: _mutedCoolGray.withValues(alpha: 0.7),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          )
+                        : null,
                     items: dropdownItems.map((String item) {
                       return DropdownMenuItem<String>(
                         value: item,
@@ -3047,16 +3254,16 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     Color statusColor;
     switch (status) {
       case 'Completed':
-        statusColor = const Color(0xFF4CAF50);
+        statusColor = AppColors.success;
         break;
       case 'Scheduled':
-        statusColor = const Color(0xFFFF9800);
+        statusColor = AppColors.warning;
         break;
       case 'In Progress':
-        statusColor = const Color(0xFF2196F3);
+        statusColor = AppColors.primary;
         break;
       default:
-        statusColor = const Color(0xFFB8C9DB);
+        statusColor = AppColors.borderStrong;
     }
 
     return Container(
@@ -3077,16 +3284,32 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     );
   }
 
-  void _showImmunizationDetails(
+  Future<void> _showImmunizationDetails(
     BuildContext context,
     Map<String, dynamic> record,
-  ) {
+  ) async {
+    final resolvedPatient = await _patientHistoryService
+        .resolveRegisteredPatient(record);
+    if (!context.mounted) return;
+    final patientProfile = <String, dynamic>{
+      ...record,
+      if (resolvedPatient != null) ...resolvedPatient,
+    };
+    final isPediatric = immunizationPatientIsPediatric(patientProfile);
     final patientName = _safeImmunizationDetailText(
-      record['patientName'],
+      immunizationRecordText(patientProfile, const [
+        'fullName',
+        'patientName',
+        'name',
+      ]),
       fallback: 'Unknown Patient',
     );
     final patientId = _safeImmunizationDetailText(
-      record['patientId'] ?? record['linkedPatientId'],
+      immunizationRecordText(patientProfile, const [
+        'patientId',
+        'linkedPatientId',
+        'id',
+      ]),
     );
     final vaccine = _safeImmunizationDetailText(record['vaccine']);
     final status = _safeImmunizationDetailText(
@@ -3113,18 +3336,68 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
         DetailTableItem(
           icon: Icons.cake_outlined,
           label: 'Age',
-          value: _safeImmunizationDetailText(record['age']),
+          value: _safeImmunizationDetailText(patientProfile['age']),
         ),
         DetailTableItem(
           icon: Icons.phone_outlined,
           label: 'Contact Number',
-          value: _safeImmunizationDetailText(record['contactNumber']),
+          value: _safeImmunizationDetailText(
+            immunizationRecordText(patientProfile, const [
+              'contactNumber',
+              'phoneNumber',
+              'phone',
+            ]),
+          ),
         ),
         DetailTableItem(
-          icon: Icons.family_restroom_outlined,
-          label: 'Parent/Guardian Name',
-          value: _safeImmunizationDetailText(record['parentGuardianName']),
+          icon: Icons.calendar_month_outlined,
+          label: 'Date of Birth',
+          value: _safeImmunizationDetailText(
+            immunizationRecordText(patientProfile, const [
+              'dateOfBirth',
+              'dob',
+            ]),
+          ),
         ),
+        DetailTableItem(
+          icon: Icons.wc_outlined,
+          label: 'Sex',
+          value: _safeImmunizationDetailText(
+            immunizationRecordText(patientProfile, const ['sex', 'gender']),
+          ),
+        ),
+        DetailTableItem(
+          icon: Icons.home_outlined,
+          label: 'Address',
+          value: _safeImmunizationDetailText(
+            immunizationRecordText(patientProfile, const [
+              'address',
+              'street',
+              'fullAddress',
+            ]),
+          ),
+        ),
+        DetailTableItem(
+          icon: Icons.location_city_outlined,
+          label: 'Barangay',
+          value: _safeImmunizationDetailText(
+            immunizationRecordText(patientProfile, const [
+              'barangay',
+              'barangayName',
+            ]),
+          ),
+        ),
+        if (isPediatric)
+          DetailTableItem(
+            icon: Icons.family_restroom_outlined,
+            label: 'Parent/Guardian Name',
+            value: _safeImmunizationDetailText(
+              immunizationRecordText(patientProfile, const [
+                'guardian',
+                'parentGuardianName',
+              ]),
+            ),
+          ),
         DetailTableItem(
           icon: Icons.vaccines_outlined,
           label: 'Vaccine Type',
@@ -3226,6 +3499,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       }
     }
     final name = patientNameParts(identity);
+    final isPediatricPatient = immunizationPatientIsPediatric(
+      resolvedPatient ?? identity,
+    );
 
     String firstNonEmpty(Iterable<dynamic> values) {
       for (final value in values) {
@@ -3239,14 +3515,19 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     final firstNameController = TextEditingController(text: name.firstName);
     final middleNameController = TextEditingController(text: name.middleName);
     final surnameController = TextEditingController(text: name.surname);
-    final patientIdController = TextEditingController(
-      text: firstNonEmpty([
-        record['patientId'],
-        record['linkedPatientId'],
-        resolvedPatient?['patientId'],
-        resolvedPatient?['id'],
-      ]),
-    );
+    final canonicalPatientId = firstNonEmpty([
+      resolvedPatient?['patientId'],
+      resolvedPatient?['id'],
+      record['patientId'],
+      record['linkedPatientId'],
+    ]);
+    final canonicalLinkedPatientId = firstNonEmpty([
+      resolvedPatient?['patientId'],
+      resolvedPatient?['id'],
+      record['linkedPatientId'],
+      record['patientId'],
+    ]);
+    final patientIdController = TextEditingController(text: canonicalPatientId);
     final ageController = TextEditingController(
       text: firstNonEmpty([record['age'], resolvedPatient?['age']]),
     );
@@ -3311,38 +3592,17 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       administrationTime = TimeOfDay.now();
     }
 
-    final doseNumberController = TextEditingController(
-      text: record['doseNumber'],
-    );
+    String selectedDose = firstNonEmpty([record['doseNumber'], record['dose']]);
+    if (selectedDose.isEmpty) selectedDose = 'Initial';
     String selectedRouteOfAdministration =
-        record['routeOfAdministration'] ?? 'Intramuscular (IM)';
-    // Ensure the route exists in available options
-    final routeOptions = [
-      'Intramuscular (IM)',
-      'Subcutaneous (SC)',
-      'Intradermal (ID)',
-      'Oral (PO)',
-    ];
-    if (!routeOptions.contains(selectedRouteOfAdministration)) {
-      selectedRouteOfAdministration = 'Intramuscular (IM)';
-    }
-
-    String selectedInjectionSite = record['injectionSite'] ?? 'Left Upper Arm';
-    // Ensure the injection site exists in available options
-    final siteOptions = [
-      'Left Upper Arm',
-      'Right Upper Arm',
-      'Left Thigh',
-      'Right Thigh',
-    ];
-    if (!siteOptions.contains(selectedInjectionSite)) {
-      selectedInjectionSite = 'Left Upper Arm';
-    }
+        (record['routeOfAdministration'] ?? 'Intramuscular (IM)').toString();
+    String selectedInjectionSite = (record['injectionSite'] ?? 'Left Upper Arm')
+        .toString();
     final administeredByController = TextEditingController(
-      text: record['administeredBy'],
+      text: (record['administeredBy'] ?? '').toString(),
     );
     final adverseEventsController = TextEditingController(
-      text: record['adverseEvents'],
+      text: (record['adverseEvents'] ?? '').toString(),
     );
     DateTime? nextDoseDueDate;
     try {
@@ -3454,6 +3714,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                       label: 'First Name',
                                       icon: Icons.person_outline,
                                       hintText: 'Enter first name',
+                                      readOnly: true,
                                       validator: (value) =>
                                           value == null || value.isEmpty
                                           ? 'Required'
@@ -3467,6 +3728,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                       label: 'Surname',
                                       icon: Icons.person,
                                       hintText: 'Enter surname',
+                                      readOnly: true,
                                       validator: (value) =>
                                           value == null || value.isEmpty
                                           ? 'Required'
@@ -3481,6 +3743,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 label: 'Middle Name',
                                 icon: Icons.person_outline,
                                 hintText: 'Optional middle name',
+                                readOnly: true,
                               ),
                               const SizedBox(height: 16),
                               Row(
@@ -3491,6 +3754,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                       label: 'Patient ID',
                                       icon: Icons.badge,
                                       hintText: 'e.g., PAT-2026-001',
+                                      readOnly: true,
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -3500,6 +3764,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                       label: 'Age',
                                       icon: Icons.cake,
                                       hintText: 'Enter age',
+                                      readOnly: true,
                                       keyboardType: TextInputType.number,
                                     ),
                                   ),
@@ -3511,16 +3776,26 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 label: 'Contact Number',
                                 icon: Icons.phone,
                                 hintText: 'e.g., +63 912 345 6789',
+                                readOnly: true,
                                 keyboardType: TextInputType.phone,
                               ),
-                              const SizedBox(height: 16),
-                              _buildTextField(
-                                controller: guardianController,
-                                label: 'Parent/Guardian Name',
-                                icon: Icons.family_restroom,
-                                hintText: 'For children or dependent patients',
-                              ),
+                              if (isPediatricPatient) ...[
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: guardianController,
+                                  label: 'Parent/Guardian Name',
+                                  icon: Icons.family_restroom,
+                                  hintText:
+                                      'For children or dependent patients',
+                                  readOnly: true,
+                                ),
+                              ],
                             ]),
+                            const SizedBox(height: 12),
+                            _buildPatientProfileReference(
+                              resolvedPatient ?? identity,
+                              isPediatric: isPediatricPatient,
+                            ),
                             const SizedBox(height: 14),
 
                             // Vaccine Details
@@ -3617,25 +3892,25 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 },
                               ),
                               const SizedBox(height: 16),
-                              _buildTextField(
-                                controller: doseNumberController,
+                              _buildDropdownField(
                                 label: 'Dose Number',
                                 icon: Icons.filter_1,
-                                hintText: 'e.g., 1, 2, 3',
-                                keyboardType: TextInputType.number,
+                                value: selectedDose,
+                                items: immunizationDoseOptions(
+                                  existing: selectedDose,
+                                ),
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setModalState(() => selectedDose = value);
+                                  }
+                                },
                               ),
                               const SizedBox(height: 16),
                               _buildDropdownField(
                                 label: 'Route of Administration',
                                 value: selectedRouteOfAdministration,
                                 icon: Icons.route,
-                                items: [
-                                  'Intramuscular (IM)',
-                                  'Subcutaneous (SC)',
-                                  'Intradermal (ID)',
-                                  'Oral',
-                                  'Intranasal',
-                                ],
+                                items: kImmunizationRouteOptions,
                                 onChanged: (value) {
                                   if (value != null) {
                                     setModalState(
@@ -3650,14 +3925,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 label: 'Injection Site',
                                 value: selectedInjectionSite,
                                 icon: Icons.place,
-                                items: [
-                                  'Left Upper Arm',
-                                  'Right Upper Arm',
-                                  'Left Thigh',
-                                  'Right Thigh',
-                                  'Abdomen',
-                                  'Buttocks',
-                                ],
+                                items: kImmunizationSiteOptions,
                                 onChanged: (value) {
                                   if (value != null) {
                                     setModalState(
@@ -3735,7 +4003,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                               content: Text(
                                                 'Vaccine type is required',
                                               ),
-                                              backgroundColor: Colors.red,
+                                              backgroundColor: AppColors.error,
                                               behavior:
                                                   SnackBarBehavior.floating,
                                             ),
@@ -3750,11 +4018,29 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                               content: Text(
                                                 'Administration date is required',
                                               ),
-                                              backgroundColor: Colors.red,
+                                              backgroundColor: AppColors.error,
                                               behavior:
                                                   SnackBarBehavior.floating,
                                             ),
                                           );
+                                          return;
+                                        }
+                                        final shouldContinue =
+                                            await _confirmPotentialDuplicate(
+                                              context,
+                                              {
+                                                'patientId': canonicalPatientId,
+                                                'vaccine': selectedVaccineType,
+                                                'doseNumber': selectedDose,
+                                                'administrationDate':
+                                                    administrationDate!
+                                                        .toIso8601String(),
+                                              },
+                                              excludeId: record['id']
+                                                  ?.toString(),
+                                            );
+                                        if (!shouldContinue ||
+                                            !context.mounted) {
                                           return;
                                         }
 
@@ -3777,10 +4063,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                                     (value) => value.isNotEmpty,
                                                   )
                                                   .join(' '),
-                                          'patientId': patientIdController.text,
+                                          'patientId': canonicalPatientId,
                                           'linkedPatientId':
-                                              record['linkedPatientId'] ??
-                                              patientIdController.text,
+                                              canonicalLinkedPatientId,
                                           'firstName': firstNameController.text
                                               .trim(),
                                           'middleName': middleNameController
@@ -3789,7 +4074,11 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                           'surname': surnameController.text
                                               .trim(),
                                           'parentGuardianName':
-                                              guardianController.text.trim(),
+                                              immunizationPatientIsPediatric(
+                                                resolvedPatient ?? identity,
+                                              )
+                                              ? guardianController.text.trim()
+                                              : '',
                                           'age': ageController.text,
                                           'contactNumber':
                                               contactNumberController.text,
@@ -3808,8 +4097,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                               '',
                                           'administrationTime':
                                               '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
-                                          'doseNumber':
-                                              doseNumberController.text,
+                                          'doseNumber': selectedDose,
                                           'routeOfAdministration':
                                               selectedRouteOfAdministration,
                                           'injectionSite':
@@ -3851,7 +4139,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
-                                                backgroundColor: Colors.red,
+                                                backgroundColor:
+                                                    AppColors.error,
                                                 behavior:
                                                     SnackBarBehavior.floating,
                                               ),
@@ -3878,7 +4167,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
-                                            backgroundColor: Colors.green,
+                                            backgroundColor: AppColors.success,
                                             behavior: SnackBarBehavior.floating,
                                           ),
                                         );
@@ -3971,7 +4260,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             'Successfully deleted ${succeededIds.length} record(s)',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -3982,7 +4271,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             'Deleted ${succeededIds.length} of ${idsToDelete.length} record(s); $failedCount failed',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          backgroundColor: succeededIds.isEmpty ? Colors.red : Colors.orange,
+          backgroundColor: succeededIds.isEmpty
+              ? AppColors.error
+              : AppColors.warning,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -4035,36 +4326,32 @@ class _ImmunizationCard extends StatelessWidget {
 
   Color _statusColor(String status) {
     final lower = status.toLowerCase();
-    if (lower.contains('overdue')) return const Color(0xFFE53935);
-    if (lower.contains('adverse')) return const Color(0xFFE53935);
-    if (lower.contains('completed')) return const Color(0xFF4CAF50);
-    if (lower.contains('progress')) return const Color(0xFF2196F3);
+    if (lower.contains('overdue') || lower.contains('adverse')) {
+      return AppColors.secondary;
+    }
+    if (lower.contains('completed') || lower.contains('progress')) {
+      return AppColors.primary;
+    }
     if (lower.contains('scheduled') ||
         lower.contains('pending') ||
         lower.contains('due')) {
-      return const Color(0xFFFF9800);
+      return AppColors.secondary;
     }
-    return const Color(0xFFB8C9DB);
+    return AppColors.textSecondary;
   }
 
-  Color _vaccineChipColor(String vaccine) {
-    final lower = vaccine.toLowerCase();
-    if (lower.contains('hepatitis')) return const Color(0xFFF5D9D9);
-    if (lower.contains('polio') || lower.contains('mmr')) {
-      return const Color(0xFFDDE4F3);
-    }
-    if (lower.contains('bcg')) return const Color(0xFFDDE9D4);
-    return const Color(0xFFE9D6E0);
+  Color _vaccineChipColor(String _) {
+    return AppColors.surfaceSubtle;
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 70, color: const Color(0xFF26476B));
+    return Container(width: 1, height: 70, color: AppColors.border);
   }
 
   Widget _buildActionButton({
     required IconData icon,
     required VoidCallback onTap,
-    Color backgroundColor = const Color(0xFF163B66),
+    Color backgroundColor = AppColors.secondary,
     Color iconColor = Colors.white,
   }) {
     return Container(
@@ -4159,10 +4446,10 @@ class _ImmunizationCard extends StatelessWidget {
     final nextDoseDate = _formatDateLabel(record['nextDoseDueDate']);
     final adverseEvents = _safe(record['adverseEvents'], 'None reported');
     final statusColor = _statusColor(status);
-    const rowBg = Colors.white;
-    const adminLabelText = Color(0xFF2F80ED);
-    const rowText = Color(0xFF0B1F3A);
-    const mutedText = Color(0xFF546E7A);
+    const rowBg = AppColors.surfaceLight;
+    const adminLabelText = AppColors.primary;
+    const rowText = AppColors.textPrimary;
+    const mutedText = AppColors.textSecondary;
 
     return GestureDetector(
       onTap: isSelectionMode
@@ -4178,7 +4465,7 @@ class _ImmunizationCard extends StatelessWidget {
           border: Border.all(
             color: isSelected
                 ? _primaryAqua.withValues(alpha: 0.85)
-                : const Color(0xFFD9E5F2),
+                : AppColors.border,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -4198,7 +4485,7 @@ class _ImmunizationCard extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     side: BorderSide(
-                      color: const Color(0xFFB1C4D5).withValues(alpha: 0.8),
+                      color: AppColors.borderStrong.withValues(alpha: 0.8),
                       width: 1.2,
                     ),
                   ),
@@ -4386,7 +4673,7 @@ class _ImmunizationCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Color(0xFF163B66),
+                          color: AppColors.secondary,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
@@ -4492,8 +4779,14 @@ Future<void> _downloadImmunizationRecordPdf(
   await Future<void>.delayed(const Duration(milliseconds: 16));
 
   try {
-    final pdfBytes = await buildImmunizationPdfBytes(record);
-    final filename = buildImmunizationPdfFilename(record);
+    final resolvedPatient = await PatientCenteredHistoryService()
+        .resolveRegisteredPatient(record);
+    final pdfRecord = <String, dynamic>{
+      ...record,
+      if (resolvedPatient != null) ...resolvedPatient,
+    };
+    final pdfBytes = await buildImmunizationPdfBytes(pdfRecord);
+    final filename = buildImmunizationPdfFilename(pdfRecord);
     final downloaded = downloadFile(
       bytes: pdfBytes,
       filename: filename,
@@ -4504,10 +4797,10 @@ Future<void> _downloadImmunizationRecordPdf(
       SnackBar(
         content: Text(
           downloaded
-              ? 'PDF generated for ${record['patientName'] ?? 'this record'}.'
+              ? 'PDF generated for ${pdfRecord['patientName'] ?? 'this record'}.'
               : 'PDF generation is not supported on this platform.',
         ),
-        backgroundColor: downloaded ? _primaryAqua : Colors.orange,
+        backgroundColor: downloaded ? _primaryAqua : AppColors.warning,
         duration: const Duration(seconds: 2),
       ),
     );
@@ -4515,7 +4808,7 @@ Future<void> _downloadImmunizationRecordPdf(
     messenger?.showSnackBar(
       SnackBar(
         content: Text('Failed to generate PDF: $e'),
-        backgroundColor: Colors.red,
+        backgroundColor: AppColors.error,
         duration: const Duration(seconds: 3),
       ),
     );
