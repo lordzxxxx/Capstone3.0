@@ -849,7 +849,7 @@ class _SidebarAnimatedItem extends StatefulWidget {
   }) : isActive = false,
        activeColor = _BhwDrawerColors.aqua,
        inactiveTextColor = _BhwDrawerColors.text,
-       hoverColor = const Color(0x2600C0A3);
+       hoverColor = const Color(0x262F80ED);
 
   @override
   State<_SidebarAnimatedItem> createState() => _SidebarAnimatedItemState();

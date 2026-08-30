@@ -24,17 +24,15 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.da
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_navigation_coordinator.dart';
 
-// Names are historical (dashboard was dark-themed); values now point at the
-// white-card system used across the rest of the app. _darkDeepTeal/_panelTeal/
-// _panelTealAlt were background/surface roles (now light); _lightOffWhite was
-// the near-white text-on-dark color (now dark navy text-on-light).
-const Color _primaryAqua = Color(0xFF2F80ED);
-const Color _secondaryIceBlue = Color(0xFF163B66);
-const Color _panelTeal = Colors.white;
-const Color _mutedCoolGray = Color(0xFF546E7A);
-const Color _lightOffWhite = Color(0xFF0A1F24);
-const Color _chartText = Color(0xFF4B6075);
-const Color _chartGrid = Color(0xFFD9E5F2);
+// Names are historical (dashboard was dark-themed); these aliases now use
+// the centralized AI-DSUHIS palette while preserving the existing layout.
+const Color _primaryAqua = ChoColors.aqua;
+const Color _secondaryIceBlue = ChoColors.ice;
+const Color _panelTeal = ChoColors.surface;
+const Color _mutedCoolGray = ChoColors.muted;
+const Color _lightOffWhite = ChoColors.text;
+const Color _chartText = ChoColors.muted;
+const Color _chartGrid = ChoColors.border;
 const Color _chartGreen = _primaryAqua;
 const Color _chartCyan = _secondaryIceBlue;
 const Color _chartLime = Color(0xFF5B8CC9);

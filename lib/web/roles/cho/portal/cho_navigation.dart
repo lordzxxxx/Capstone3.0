@@ -90,7 +90,7 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black12,
+                      color: Color(0x29163B66),
                       blurRadius: 6,
                       offset: Offset(2, 0),
                     ),
