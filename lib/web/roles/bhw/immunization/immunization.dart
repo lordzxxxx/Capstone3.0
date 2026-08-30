@@ -28,7 +28,7 @@ import 'package:mycapstone_project/shared/immunization_reference_data.dart';
 const Color _primaryAqua = Color(0xFF2F80ED);
 const Color _darkDeepTeal = Color(0xFF071A33);
 const Color _mutedCoolGray = Color(0xFF4B6075);
-const Color _lightOffWhite = Color(0xFFEBF3FC);
+const Color _lightOffWhite = Color(0xFF0B1F3A);
 const Color _sidebarDark = Colors.white;
 const Color _historyBackground = Color(0xFFF5F7FA);
 const Color _historySurface = Colors.white;
@@ -1879,28 +1879,22 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height,
             decoration: BoxDecoration(
-              color: _sidebarDark,
-              border: Border.all(
-                color: _primaryAqua.withValues(alpha: 0.2),
-                width: 1.2,
-              ),
+              color: _historyBackground,
+              border: Border.all(color: _historyBorder, width: 1.2),
             ),
             child: Column(
               children: [
                 // Modal Header
                 Container(
-                  height: 86,
+                  height: 76,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 28,
+                    horizontal: 24,
                     vertical: 12,
                   ),
-                  decoration: BoxDecoration(
-                    color: _sidebarDark,
+                  decoration: const BoxDecoration(
+                    color: _darkDeepTeal,
                     border: Border(
-                      bottom: BorderSide(
-                        color: _primaryAqua.withValues(alpha: 0.28),
-                        width: 1.2,
-                      ),
+                      bottom: BorderSide(color: Color(0x20FFFFFF), width: 1),
                     ),
                   ),
                   child: Row(
@@ -1914,16 +1908,17 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                               modalTitle,
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.2,
                               ),
                             ),
+                            const SizedBox(height: 2),
                             Text(
                               'Vaccine administration and follow-up planning',
-                              style: TextStyle(
-                                color: _lightOffWhite.withValues(alpha: 0.72),
-                                fontSize: 12.5,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -1931,21 +1926,17 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: _primaryAqua.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _primaryAqua.withValues(alpha: 0.2),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        tooltip: 'Close modal',
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.close_rounded,
-                            color: Colors.white,
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                        ),
+                        icon: const Icon(Icons.close_rounded, size: 20),
                       ),
                     ],
                   ),
@@ -2532,11 +2523,11 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
+            colorScheme: ColorScheme.light(
               primary: _primaryAqua,
               onPrimary: Colors.white,
-              surface: _darkDeepTeal,
-              onSurface: Colors.white,
+              surface: Colors.white,
+              onSurface: _lightOffWhite,
             ),
           ),
           child: child!,
@@ -2547,24 +2538,25 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
 
   Widget _buildSectionHeader(String title, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12, top: 8),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _primaryAqua.withValues(alpha: 0.25),
-              borderRadius: BorderRadius.circular(8),
+              color: _primaryAqua.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: Colors.white, size: 20),
+            child: Icon(icon, color: _primaryAqua, size: 20),
           ),
           const SizedBox(width: 10),
           Text(
             title,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+            style: const TextStyle(
+              color: _lightOffWhite,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.2,
             ),
           ),
         ],
@@ -2574,19 +2566,20 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
 
   Widget _buildFormCard(List<Widget> children) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: _sidebarDark,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _primaryAqua.withValues(alpha: 0.3),
-          width: 1.5,
+          color: _primaryAqua.withValues(alpha: 0.16),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -2636,52 +2629,63 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            color: _lightOffWhite,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+          style: const TextStyle(
+            color: _mutedCoolGray,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
           validator: (value) => effectiveValidator(value?.trim()),
-          style: TextStyle(
-            color: Colors.white,
+          style: const TextStyle(
+            color: _lightOffWhite,
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: TextStyle(
-              color: Colors.white.withValues(alpha: 0.5),
-              fontSize: 14,
+              color: _mutedCoolGray.withValues(alpha: 0.55),
+              fontSize: 13.5,
               fontWeight: FontWeight.normal,
             ),
-            prefixIcon: Icon(icon, color: Colors.white, size: 20),
+            prefixIcon: Icon(icon, color: _primaryAqua, size: 20),
             filled: true,
-            fillColor: _darkDeepTeal,
+            fillColor: Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.black.withValues(alpha: 0.12),
+                width: 1,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.black.withValues(alpha: 0.12),
+                width: 1,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _primaryAqua, width: 2),
+              borderSide: const BorderSide(color: _primaryAqua, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
-              vertical: 10,
+              vertical: 12,
             ),
           ),
         ),
@@ -2701,44 +2705,55 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+          style: const TextStyle(
+            color: _mutedCoolGray,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: _darkDeepTeal,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: date != null
-                    ? _primaryAqua
-                    : Colors.white.withValues(alpha: 0.2),
-                width: date != null ? 2 : 1,
+                    ? _primaryAqua.withValues(alpha: 0.5)
+                    : Colors.black.withValues(alpha: 0.12),
+                width: date != null ? 1.5 : 1,
               ),
             ),
             child: Row(
               children: [
-                Icon(icon, color: Colors.white, size: 20),
+                Icon(icon, color: _primaryAqua, size: 20),
                 const SizedBox(width: 12),
-                Text(
-                  date != null
-                      ? '${date.day}/${date.month}/${date.year}'
-                      : 'Select Date',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: date != null
-                        ? FontWeight.w600
-                        : FontWeight.normal,
+                Expanded(
+                  child: Text(
+                    date != null
+                        ? '${date.day}/${date.month}/${date.year}'
+                        : 'Select Date',
+                    style: TextStyle(
+                      color: date != null
+                          ? _lightOffWhite
+                          : _mutedCoolGray.withValues(alpha: 0.6),
+                      fontSize: 14,
+                      fontWeight: date != null
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
                   ),
                 ),
+                if (date != null)
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: _primaryAqua,
+                    size: 16,
+                  ),
               ],
             ),
           ),
@@ -2759,42 +2774,53 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             color: _mutedCoolGray,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: _lightOffWhite,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: time != null
-                    ? _primaryAqua
-                    : _mutedCoolGray.withValues(alpha: 0.3),
-                width: time != null ? 2 : 1,
+                    ? _primaryAqua.withValues(alpha: 0.5)
+                    : Colors.black.withValues(alpha: 0.12),
+                width: time != null ? 1.5 : 1,
               ),
             ),
             child: Row(
               children: [
                 Icon(icon, color: _primaryAqua, size: 20),
                 const SizedBox(width: 12),
-                Text(
-                  time != null ? time.format(context) : 'Select Time',
-                  style: TextStyle(
-                    color: time != null ? _darkDeepTeal : _mutedCoolGray,
-                    fontSize: 14,
-                    fontWeight: time != null
-                        ? FontWeight.w600
-                        : FontWeight.normal,
+                Expanded(
+                  child: Text(
+                    time != null ? time.format(context) : 'Select Time',
+                    style: TextStyle(
+                      color: time != null
+                          ? _lightOffWhite
+                          : _mutedCoolGray.withValues(alpha: 0.6),
+                      fontSize: 14,
+                      fontWeight: time != null
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
                   ),
                 ),
+                if (time != null)
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: _primaryAqua,
+                    size: 16,
+                  ),
               ],
             ),
           ),
@@ -2810,52 +2836,12 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: _darkDeepTeal,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: time != null
-                    ? _primaryAqua
-                    : Colors.white.withValues(alpha: 0.2),
-                width: time != null ? 2 : 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(icon, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Text(
-                  time != null ? time.format(context) : 'Select Time',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: time != null
-                        ? FontWeight.w600
-                        : FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+    return _buildTimePickerField(
+      context: context,
+      label: label,
+      time: time,
+      icon: icon,
+      onTap: onTap,
     );
   }
 
@@ -2905,21 +2891,22 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+          style: const TextStyle(
+            color: _mutedCoolGray,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: _primaryAqua.withValues(alpha: 0.35),
-              width: 1.2,
+              color: Colors.black.withValues(alpha: 0.12),
+              width: 1,
             ),
           ),
           child: Row(
@@ -2931,8 +2918,11 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                   child: DropdownButton<String>(
                     value: safeValue,
                     isExpanded: true,
-                    icon: Icon(Icons.arrow_drop_down, color: _mutedCoolGray),
-                    style: TextStyle(
+                    icon: const Icon(
+                      Icons.arrow_drop_down_rounded,
+                      color: _primaryAqua,
+                    ),
+                    style: const TextStyle(
                       color: _lightOffWhite,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -3263,58 +3253,81 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
         child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          decoration: const BoxDecoration(
-            color: _darkDeepTeal,
-            borderRadius: BorderRadius.all(Radius.circular(20)),
-          ),
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
+          color: _historyBackground,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
               // Modal Header
               Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _primaryAqua,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
+                height: 76,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                decoration: const BoxDecoration(
+                  color: _darkDeepTeal,
+                  border: Border(
+                    bottom: BorderSide(color: Color(0x20FFFFFF), width: 1),
                   ),
                 ),
                 child: Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      tooltip: 'Close',
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.edit, color: Colors.white, size: 28),
-                    const SizedBox(width: 12),
                     const Expanded(
-                      child: Text(
-                        'Edit Immunization Record',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Edit Immunization Record',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Update vaccine administration and follow-up details',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      tooltip: 'Close modal',
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.1),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
+                      icon: const Icon(Icons.close_rounded, size: 20),
                     ),
                   ],
                 ),
               ),
 
               // Form Content
-              Flexible(
+              Expanded(
                 child: StatefulBuilder(
                   builder: (context, setModalState) {
                     return SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 20,
+                      ),
                       child: Form(
                         key: formKey,
                         child: Column(
@@ -3656,8 +3669,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                               doseNumberController.text,
                                           'routeOfAdministration':
                                               selectedRouteOfAdministration,
-                                          'injectionSite':
-                                              selectedInjectionSite,
+                                          'injectionSite': selectedInjectionSite,
                                           'administeredBy':
                                               administeredByController.text,
                                           'adverseEvents':
@@ -3734,7 +3746,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                     vertical: 16,
                                   ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                   elevation: 2,
                                 ),
@@ -3753,8 +3765,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                     : const Text(
                                         'Update Immunization Record',
                                         style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w800,
                                         ),
                                       ),
                               ),
