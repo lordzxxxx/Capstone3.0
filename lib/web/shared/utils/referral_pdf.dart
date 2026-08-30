@@ -9,7 +9,11 @@ const String _productionBaseUrl = String.fromEnvironment(
 );
 
 Future<List<int>> buildReferralPdfBytes(Map<String, dynamic> record) async {
-  final patientName = _buildPatientName(record);
+  final patientInformation = record['patientInformation'] is Map
+      ? Map<String, dynamic>.from(record['patientInformation'] as Map)
+      : const <String, dynamic>{};
+  final resolvedRecord = <String, dynamic>{...patientInformation, ...record};
+  final patientName = _buildPatientName(resolvedRecord);
   final referralCategories = _safeStringList(record['referralCategories']);
   final referralType = referralCategories.isEmpty
       ? pdfText(record['referralType'], fallback: 'Not selected')
@@ -44,9 +48,35 @@ Future<List<int>> buildReferralPdfBytes(Map<String, dynamic> record) async {
 
   final patientFields = <MapEntry<String, String>>[
     pdfField('Patient Name', patientName, fallback: 'Unnamed patient'),
-    pdfField('Age', record['patientAge'], fallback: 'N/A'),
-    pdfField('Sex', record['patientSex'], fallback: 'N/A'),
-    pdfField('Address', record['patientAddress'], fallback: 'Not provided'),
+    pdfField(
+      'Age',
+      _firstValue(resolvedRecord, ['patientAge', 'age']),
+      fallback: 'N/A',
+    ),
+    pdfField(
+      'Sex',
+      _firstValue(resolvedRecord, ['patientSex', 'sex', 'gender']),
+      fallback: 'N/A',
+    ),
+    pdfField(
+      'Contact Number',
+      _firstValue(resolvedRecord, [
+        'patientContactNumber',
+        'contactNumber',
+        'phoneNumber',
+      ]),
+      fallback: 'Not provided',
+    ),
+    pdfField(
+      'Date of Birth',
+      _firstValue(resolvedRecord, ['patientDateOfBirth', 'dateOfBirth', 'dob']),
+      fallback: 'Not provided',
+    ),
+    pdfField(
+      'Address',
+      _firstValue(resolvedRecord, ['patientAddress', 'address', 'street']),
+      fallback: 'Not provided',
+    ),
     pdfField('Barangay', record['barangay'], fallback: 'Unassigned barangay'),
   ];
 
@@ -73,7 +103,16 @@ Future<List<int>> buildReferralPdfBytes(Map<String, dynamic> record) async {
 
   final clinicalFields = <MapEntry<String, String>>[
     pdfField('Medical History', record['medicalHistory']),
-    pdfField('Complete Vital Signs', record['completeVitalSigns']),
+    pdfField(
+      'Complete Vital Signs',
+      _firstValue(record, [
+        'completeVitalSigns',
+        'latestVitalSigns',
+        'vitalsigns',
+        'vitalSigns',
+        'vitals',
+      ]),
+    ),
     pdfField(
       'Impression',
       record['impression'] ?? record['currentDiagnosis'],
@@ -173,9 +212,18 @@ String buildReferralPdfFilename(Map<String, dynamic> record) {
 }
 
 String _buildPatientName(Map<String, dynamic> data) {
-  final surname = pdfText(data['patientSurname'], fallback: '').trim();
-  final firstName = pdfText(data['patientFirstName'], fallback: '').trim();
-  final middleName = pdfText(data['patientMiddleName'], fallback: '').trim();
+  final surname = pdfText(
+    _firstValue(data, ['patientSurname', 'surname', 'lastName']),
+    fallback: '',
+  ).trim();
+  final firstName = pdfText(
+    _firstValue(data, ['patientFirstName', 'firstName']),
+    fallback: '',
+  ).trim();
+  final middleName = pdfText(
+    _firstValue(data, ['patientMiddleName', 'middleName']),
+    fallback: '',
+  ).trim();
   final combined = <String>[
     firstName,
     middleName,
@@ -185,12 +233,24 @@ String _buildPatientName(Map<String, dynamic> data) {
     return '$surname, $combined';
   }
 
-  final storedName = pdfText(data['patientName'], fallback: '').trim();
+  final storedName = pdfText(
+    _firstValue(data, ['patientName', 'fullName', 'name']),
+    fallback: '',
+  ).trim();
   if (storedName.isNotEmpty) {
     return storedName;
   }
 
   return 'patient';
+}
+
+dynamic _firstValue(Map<String, dynamic> data, List<String> keys) {
+  for (final key in keys) {
+    final value = data[key];
+    if (value == null) continue;
+    if (value.toString().trim().isNotEmpty) return value;
+  }
+  return null;
 }
 
 List<String> _safeStringList(dynamic value) {

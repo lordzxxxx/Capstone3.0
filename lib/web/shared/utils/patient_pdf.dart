@@ -1,11 +1,8 @@
 import 'package:mycapstone_project/web/shared/utils/record_pdf_builder.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
 
 Future<List<int>> buildPatientPdfBytes(Map<String, dynamic> patient) {
-  final patientName = pdfJoin(
-    [patient['firstName'], patient['surname']],
-    separator: ' ',
-    fallback: 'Unknown Patient',
-  );
+  final patientName = patientDisplayName(patient, fallback: 'Unknown Patient');
 
   return buildRecordPdfBytes(
     title: 'Patient Record',
@@ -19,6 +16,7 @@ Future<List<int>> buildPatientPdfBytes(Map<String, dynamic> patient) {
         fields: [
           pdfField('Record ID', patient['id']),
           pdfField('First Name', patient['firstName']),
+          pdfField('Middle Name', patient['middleName']),
           pdfField('Surname', patient['surname']),
           pdfField('Mother\'s Maiden Name', patient['mothersMaidenName']),
           pdfField('Date of Birth', patient['dateOfBirth']),
@@ -161,11 +159,7 @@ Future<List<int>> buildPatientPdfBytes(Map<String, dynamic> patient) {
 String buildPatientPdfFilename(Map<String, dynamic> patient) {
   return buildRecordPdfFilename(
     prefix: 'patient',
-    subject: pdfJoin(
-      [patient['firstName'], patient['surname']],
-      separator: ' ',
-      fallback: 'patient',
-    ),
+    subject: patientDisplayName(patient, fallback: 'patient'),
     rawDate: patient['registrationDate'],
   );
 }

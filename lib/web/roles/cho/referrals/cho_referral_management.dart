@@ -19,6 +19,7 @@ import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
+import 'package:mycapstone_project/web/shared/utils/clinical_record_mapping.dart';
 
 /// CHO referral review/approval workspace — reached from the sidebar
 /// "Referrals" destination (`cho_navigation.dart`). Owns the referral
@@ -1596,6 +1597,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
     ]);
     final patient = <String, dynamic>{
       ...record.data,
+      ...record.patientInformation,
       'id': patientId.isEmpty ? record.id : patientId,
       'patientId': patientId.isEmpty ? record.id : patientId,
       'patientName': record.patientName,
@@ -1830,6 +1832,13 @@ class _ReferralDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final allItems = <MapEntry<String, String>>[
+      MapEntry('Patient ID', record.patientId),
+      MapEntry('Patient', record.patientName),
+      MapEntry('Date of Birth', record.patientDateOfBirth),
+      MapEntry('Sex', record.patientSex),
+      MapEntry('Contact Number', record.patientContactNumber),
+      MapEntry('Barangay', record.barangay),
+      MapEntry('Address', record.patientAddress),
       MapEntry('Referral Reason', record.reason),
       MapEntry('Symptoms', record.symptoms),
       MapEntry('Latest Check-up', record.latestCheckup),
@@ -2159,11 +2168,65 @@ class _ReferralRecord {
   }.contains(status);
   bool get isClosed =>
       const {'completed', 'returned', 'rejected'}.contains(status);
-  String get patientName => _s(data, [
-    'patientName',
-    'fullName',
+  Map<String, dynamic> get patientInformation {
+    final value = data['patientInformation'];
+    return value is Map ? Map<String, dynamic>.from(value) : const {};
+  }
+
+  String get patientName => _s(
+    data,
+    ['patientName', 'fullName'],
+    fallback: _s(patientInformation, [
+      'patientName',
+      'fullName',
+      'name',
+      'patientRecordId',
+    ], fallback: 'Unnamed patient'),
+  );
+
+  String get patientId => _s(data, [
+    'patientId',
+    'linkedPatientId',
     'patientRecordId',
-  ], fallback: 'Unnamed patient');
+  ], fallback: id);
+  String get patientDateOfBirth => _s(
+    patientInformation,
+    ['dateOfBirth', 'dob', 'patientDateOfBirth'],
+    fallback: _s(data, [
+      'dateOfBirth',
+      'dob',
+      'patientDateOfBirth',
+    ], fallback: 'Not provided'),
+  );
+  String get patientSex => _s(
+    patientInformation,
+    ['sex', 'gender', 'patientSex'],
+    fallback: _s(data, [
+      'sex',
+      'gender',
+      'patientSex',
+    ], fallback: 'Not provided'),
+  );
+  String get patientContactNumber => _s(
+    patientInformation,
+    ['contactNumber', 'phoneNumber', 'phone', 'patientContactNumber'],
+    fallback: _s(data, [
+      'contactNumber',
+      'phoneNumber',
+      'phone',
+      'patientContactNumber',
+    ], fallback: 'Not provided'),
+  );
+  String get patientAddress => _s(
+    patientInformation,
+    ['address', 'street', 'fullAddress', 'patientAddress'],
+    fallback: _s(data, [
+      'address',
+      'street',
+      'fullAddress',
+      'patientAddress',
+    ], fallback: 'Not provided'),
+  );
   String get barangay =>
       _s(data, ['barangay', 'barangayName'], fallback: 'Unassigned barangay');
   String get barangayCode => _s(data, ['barangayCode', 'assignedBarangayCode']);
@@ -2176,11 +2239,13 @@ class _ReferralRecord {
     'checkupSummary',
     'lastCheckupDate',
   ], fallback: 'Not linked');
-  String get vitals => _s(data, [
-    'completeVitalSigns',
-    'vitalSigns',
-    'vitals',
-  ], fallback: 'Not provided');
+  String get vitals => summarizeVitalSigns(
+    data,
+    fallbackRecord: data['latestCheckup'] is Map
+        ? Map<String, dynamic>.from(data['latestCheckup'] as Map)
+        : null,
+    fallback: 'Not provided',
+  );
   String get prenatal => _s(data, [
     'prenatalInformation',
     'prenatalSummary',

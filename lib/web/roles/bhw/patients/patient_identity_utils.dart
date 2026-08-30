@@ -1,12 +1,23 @@
-typedef PatientNameParts = ({String firstName, String surname});
+typedef PatientNameParts = ({
+  String firstName,
+  String middleName,
+  String surname,
+});
 
 String _text(dynamic value) => value?.toString().trim() ?? '';
 
 PatientNameParts patientNameParts(Map<String, dynamic> patient) {
   final storedFirstName = _text(patient['firstName']);
+  final storedMiddleName = _text(patient['middleName']);
   final storedSurname = _text(patient['surname']);
-  if (storedFirstName.isNotEmpty || storedSurname.isNotEmpty) {
-    return (firstName: storedFirstName, surname: storedSurname);
+  if (storedFirstName.isNotEmpty ||
+      storedMiddleName.isNotEmpty ||
+      storedSurname.isNotEmpty) {
+    return (
+      firstName: storedFirstName,
+      middleName: storedMiddleName,
+      surname: storedSurname,
+    );
   }
 
   final fullName = [
@@ -15,23 +26,27 @@ PatientNameParts patientNameParts(Map<String, dynamic> patient) {
     patient['patient'],
     patient['name'],
   ].map(_text).firstWhere((value) => value.isNotEmpty, orElse: () => '');
-  if (fullName.isEmpty) return (firstName: '', surname: '');
+  if (fullName.isEmpty) {
+    return (firstName: '', middleName: '', surname: '');
+  }
 
   final normalized = fullName.replaceAll(RegExp(r'\s+'), ' ');
   if (normalized.contains(',')) {
     final parts = normalized.split(',');
     return (
       firstName: parts.skip(1).join(' ').trim(),
+      middleName: '',
       surname: parts.first.trim(),
     );
   }
 
   final parts = normalized.split(' ');
   if (parts.length == 1) {
-    return (firstName: parts.first, surname: '');
+    return (firstName: parts.first, middleName: '', surname: '');
   }
   return (
     firstName: parts.sublist(0, parts.length - 1).join(' '),
+    middleName: '',
     surname: parts.last,
   );
 }
@@ -41,6 +56,10 @@ String patientDisplayName(
   String fallback = 'Unknown patient',
 }) {
   final parts = patientNameParts(patient);
-  final combined = '${parts.firstName} ${parts.surname}'.trim();
+  final combined = [
+    parts.firstName,
+    parts.middleName,
+    parts.surname,
+  ].where((value) => value.isNotEmpty).join(' ').trim();
   return combined.isEmpty ? fallback : combined;
 }

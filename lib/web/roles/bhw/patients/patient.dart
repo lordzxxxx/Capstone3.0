@@ -17,6 +17,7 @@ import 'package:mycapstone_project/web/roles/bhw/patients/patient_database_helpe
 import 'package:mycapstone_project/web/roles/bhw/patients/canonical_patient_registration_modal.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/canonical_patient_details_modal.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_operational_summary.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/shared/utils/patient_pdf.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
@@ -204,10 +205,13 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           patient['patientId'],
           patient['fullName'],
           patient['firstName'],
+          patient['middleName'],
           patient['surname'],
           patient['phoneNumber'],
           patient['contactNumber'],
           patient['emergencyContact'],
+          patient['emergencyContactName'],
+          patient['emergencyRelationship'],
           patient['emergencyContactNumber'],
           patient['emergencyContactPhone'],
           patient['address'],
@@ -239,10 +243,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           'Registration Date' =>
             DateTime.tryParse((patient['registrationDate'] ?? '').toString()) ??
                 DateTime(1900),
-          _ =>
-            '${patient['firstName'] ?? ''} ${patient['surname'] ?? ''}'
-                .trim()
-                .toLowerCase(),
+          _ => patientDisplayName(patient).toLowerCase(),
         };
       }
 
@@ -1431,9 +1432,9 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     final legacyPatientName = constructedName.isEmpty
         ? 'Unknown'
         : constructedName;
-    final patientName = _safePatientValue(
-      patient['fullName'],
-      _safePatientValue(patient['name'], legacyPatientName),
+    final patientName = patientDisplayName(
+      patient,
+      fallback: _safePatientValue(patient['name'], legacyPatientName),
     );
     final patientId = _safePatientValue(
       patient['patientId'],
@@ -2158,8 +2159,7 @@ Future<void> _downloadPatientRecordPdf(
 ) async {
   const pdfActionColor = Color(0xFF2F80ED);
   final messenger = ScaffoldMessenger.maybeOf(context);
-  final patientName =
-      '${patient['firstName'] ?? ''} ${patient['surname'] ?? ''}'.trim();
+  final patientName = patientDisplayName(patient, fallback: 'this patient');
 
   showDialog<void>(
     context: context,
@@ -2185,7 +2185,7 @@ Future<void> _downloadPatientRecordPdf(
       SnackBar(
         content: Text(
           downloaded
-              ? 'PDF generated for ${patientName.isEmpty ? 'this patient' : patientName}.'
+              ? 'PDF generated for $patientName.'
               : 'PDF generation is not supported on this platform.',
         ),
         backgroundColor: downloaded ? pdfActionColor : Colors.orange,

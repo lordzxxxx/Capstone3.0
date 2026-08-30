@@ -21,6 +21,7 @@ import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/utils/web_file_picker.dart';
 import 'package:mycapstone_project/web/shared/utils/referral_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/report_download.dart';
+import 'package:mycapstone_project/web/shared/utils/clinical_record_mapping.dart';
 
 const _aqua = AppColors.primary;
 const _background = AppColors.backgroundLight;
@@ -1345,8 +1346,16 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
               MapEntry('Date', _date(record.createdAt)),
               MapEntry('Priority', record.priorityLabel),
               MapEntry('Status', record.statusLabel),
+              MapEntry('Patient ID', record.patientId),
+              MapEntry('Patient', record.patientName),
+              MapEntry('Date of Birth', record.patientDateOfBirth),
+              MapEntry('Sex', record.patientSex),
+              MapEntry('Contact Number', record.patientContactNumber),
+              MapEntry('Barangay', record.patientBarangay),
+              MapEntry('Address', record.patientAddress),
               MapEntry('Referral Reason', record.reason),
               MapEntry('Observations', record.observations),
+              MapEntry('Latest Vital Signs', record.vitalSigns),
               MapEntry('Supporting Notes', record.notes),
               MapEntry('Destination Facility', record.destination),
               MapEntry('CHO Remarks', record.choRemarks),
@@ -1786,25 +1795,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
   }
 
   String _vitalSummary(Map<String, dynamic>? record) {
-    if (record == null) return 'No linked vital signs';
-    final direct = _textOf(record, [
-      'completeVitalSigns',
-      'vitalSigns',
-      'vitals',
-      'vital_signs',
-    ]);
-    if (direct.isNotEmpty) return direct;
-    final values = <String>[];
-    void add(String label, List<String> keys) {
-      final value = _textOf(record, keys);
-      if (value.isNotEmpty) values.add('$label: $value');
-    }
-
-    add('BP', ['bloodPressure', 'blood_pressure', 'bp']);
-    add('Temp', ['temperature', 'temp']);
-    add('Pulse', ['pulseRate', 'pulse']);
-    add('SpO₂', ['oxygenSaturation', 'spo2']);
-    return values.isEmpty ? 'No linked vital signs' : values.join(' • ');
+    return summarizeVitalSigns(record);
   }
 
   String _homeCare(Map<String, dynamic>? record) {
@@ -1867,6 +1858,59 @@ class _BhwReferralRecord {
 
   String get reason =>
       _textOf(data, ['referralReason', 'reason'], fallback: 'Not provided');
+  String get patientDateOfBirth => _textOf(
+    patientInformation,
+    ['dateOfBirth', 'dob', 'patientDateOfBirth'],
+    fallback: _textOf(data, [
+      'dateOfBirth',
+      'dob',
+      'patientDateOfBirth',
+    ], fallback: 'Not provided'),
+  );
+  String get patientSex => _textOf(
+    patientInformation,
+    ['sex', 'gender', 'patientSex'],
+    fallback: _textOf(data, [
+      'sex',
+      'gender',
+      'patientSex',
+    ], fallback: 'Not provided'),
+  );
+  String get patientContactNumber => _textOf(
+    patientInformation,
+    ['contactNumber', 'phoneNumber', 'phone', 'patientContactNumber'],
+    fallback: _textOf(data, [
+      'contactNumber',
+      'phoneNumber',
+      'phone',
+      'patientContactNumber',
+    ], fallback: 'Not provided'),
+  );
+  String get patientBarangay => _textOf(
+    data,
+    ['barangay', 'barangayName'],
+    fallback: _textOf(patientInformation, [
+      'barangay',
+      'barangayName',
+    ], fallback: 'Not provided'),
+  );
+  String get patientAddress => _textOf(
+    patientInformation,
+    ['address', 'street', 'fullAddress', 'patientAddress'],
+    fallback: _textOf(data, [
+      'address',
+      'street',
+      'fullAddress',
+      'patientAddress',
+    ], fallback: 'Not provided'),
+  );
+  String get vitalSigns => summarizeVitalSigns(
+    data,
+    fallbackRecord: data['latestCheckup'] is Map
+        ? Map<String, dynamic>.from(data['latestCheckup'] as Map)
+        : null,
+    fallback: 'Not provided',
+  );
   String get observations => _textOf(data, [
     'observations',
     'chiefComplaint',

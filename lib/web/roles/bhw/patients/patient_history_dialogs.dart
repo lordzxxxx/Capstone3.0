@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
 import 'package:mycapstone_project/web/shared/widgets/doctor_notes_section.dart';
 
 class PatientHistoryDialogs {
@@ -2284,13 +2285,7 @@ class PatientHistoryDialogs {
   }
 
   static String _patientName(Map<String, dynamic> record) {
-    return _safeText(
-      record['patientName'],
-      fallback: _safeText(
-        record['patient'],
-        fallback: _safeText(record['name'], fallback: 'Unknown Patient'),
-      ),
-    );
+    return patientDisplayName(record, fallback: 'Unknown Patient');
   }
 
   static String _patientId(Map<String, dynamic> record) {
@@ -2301,13 +2296,7 @@ class PatientHistoryDialogs {
   }
 
   static String _buildPatientName(Map<String, dynamic> patient) {
-    final firstName = _safeText(patient['firstName']);
-    final surname = _safeText(patient['surname']);
-    final combined = '$firstName $surname'.trim();
-    if (combined.isNotEmpty) {
-      return combined;
-    }
-    return _patientName(patient);
+    return patientDisplayName(patient, fallback: 'Unknown Patient');
   }
 
   static String _formatDate(DateTime value) {

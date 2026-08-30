@@ -911,7 +911,7 @@ String _normalizeSexValue(dynamic value) {
 
 String _patientLookupKey(Map<String, dynamic> record) {
   final fullName = reportJoin(
-    [record['firstName'], record['surname']],
+    [record['firstName'], record['middleName'], record['surname']],
     separator: ' ',
     fallback: '',
   );
@@ -2037,7 +2037,11 @@ Future<_DashboardReportPayload> _loadDashboardReportPayload(
           ),
           ReportCsvColumn(
             'Patient Name',
-            (record) => reportJoin([record['firstName'], record['surname']]),
+            (record) => reportJoin([
+              record['firstName'],
+              record['middleName'],
+              record['surname'],
+            ]),
             flex: 1.35,
           ),
           ReportCsvColumn(
@@ -2086,7 +2090,7 @@ Future<_DashboardReportPayload> _loadDashboardReportPayload(
           ),
         ],
         sectionTitleBuilder: (record, index) =>
-            'Record ${index + 1}: ${reportJoin([record['firstName'], record['surname']], fallback: 'Patient')}',
+            'Record ${index + 1}: ${reportJoin([record['firstName'], record['middleName'], record['surname']], fallback: 'Patient')}',
       );
   }
 }

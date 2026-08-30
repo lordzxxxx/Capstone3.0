@@ -311,6 +311,7 @@ service cloud.firestore {
         safeOptionalText(data, 'patientName', 200) &&
         safeOptionalText(data, 'age', 16) &&
         safeOptionalText(data, 'contactNumber', 32) &&
+        safeOptionalText(data, 'parentGuardianName', 200) &&
         safeOptionalText(data, 'adverseEvents', 2000)
       );
     }
@@ -328,6 +329,7 @@ service cloud.firestore {
         (!('status' in newData) || safeRequiredText(newData, 'status', 40)) &&
         safeOptionalText(newData, 'age', 16) &&
         safeOptionalText(newData, 'contactNumber', 32) &&
+        safeOptionalText(newData, 'parentGuardianName', 200) &&
         safeOptionalText(newData, 'adverseEvents', 2000);
     }
 

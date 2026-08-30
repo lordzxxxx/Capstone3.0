@@ -33,6 +33,7 @@ class _CanonicalPatientRegistrationModalState
   final _formKey = GlobalKey<FormState>();
   final _patientService = PatientCenteredHistoryService();
   final _firstNameController = TextEditingController();
+  final _middleNameController = TextEditingController();
   final _surnameController = TextEditingController();
   final _dateOfBirthController = TextEditingController();
   final _ageController = TextEditingController();
@@ -41,7 +42,9 @@ class _CanonicalPatientRegistrationModalState
   final _householdIdController = TextEditingController();
   final _contactNumberController = TextEditingController();
   final _emergencyContactController = TextEditingController();
+  final _emergencyRelationshipController = TextEditingController();
   final _emergencyContactNumberController = TextEditingController();
+  final _guardianController = TextEditingController();
   final _medicalHistoryController = TextEditingController();
   final _allergiesController = TextEditingController();
 
@@ -63,6 +66,9 @@ class _CanonicalPatientRegistrationModalState
     final legacyName = _splitFullName(_textValue(patient['fullName']) ?? '');
     _firstNameController.text =
         _textValue(patient['firstName'], fallback: legacyName.firstName) ?? '';
+    _middleNameController.text =
+        _textValue(patient['middleName'], fallback: legacyName.middleName) ??
+        '';
     _surnameController.text =
         _textValue(patient['surname'], fallback: legacyName.surname) ?? '';
     _dateOfBirthController.text = _textValue(patient['dateOfBirth']) ?? '';
@@ -96,10 +102,18 @@ class _CanonicalPatientRegistrationModalState
           fallback: _textValue(patient['emergencyContactName']),
         ) ??
         '';
+    _emergencyRelationshipController.text =
+        _textValue(patient['emergencyRelationship']) ?? '';
     _emergencyContactNumberController.text =
         _textValue(
           patient['emergencyContactNumber'],
           fallback: _textValue(patient['emergencyContactPhone']),
+        ) ??
+        '';
+    _guardianController.text =
+        _textValue(
+          patient['guardian'],
+          fallback: _textValue(patient['parentGuardianName']),
         ) ??
         '';
     _medicalHistoryController.text =
@@ -134,6 +148,7 @@ class _CanonicalPatientRegistrationModalState
   @override
   void dispose() {
     _firstNameController.dispose();
+    _middleNameController.dispose();
     _surnameController.dispose();
     _dateOfBirthController.dispose();
     _ageController.dispose();
@@ -142,7 +157,9 @@ class _CanonicalPatientRegistrationModalState
     _householdIdController.dispose();
     _contactNumberController.dispose();
     _emergencyContactController.dispose();
+    _emergencyRelationshipController.dispose();
     _emergencyContactNumberController.dispose();
+    _guardianController.dispose();
     _medicalHistoryController.dispose();
     _allergiesController.dispose();
     super.dispose();
@@ -231,7 +248,13 @@ class _CanonicalPatientRegistrationModalState
                       _fieldWidget(
                         'First Name',
                         _firstNameController,
-                        hint: 'First and middle name',
+                        hint: 'Given name',
+                      ),
+                      _fieldWidget(
+                        'Middle Name',
+                        _middleNameController,
+                        required: false,
+                        hint: 'Optional middle name',
                       ),
                       _fieldWidget(
                         'Surname',
@@ -277,9 +300,20 @@ class _CanonicalPatientRegistrationModalState
                         hint: '09XXXXXXXXX',
                       ),
                       _fieldWidget(
-                        'Emergency Contact',
+                        'Parent/Guardian Name (Optional)',
+                        _guardianController,
+                        required: false,
+                        hint: 'For children or dependent patients',
+                      ),
+                      _fieldWidget(
+                        'Emergency Contact Name',
                         _emergencyContactController,
-                        hint: 'Name and relationship',
+                        hint: 'Full name',
+                      ),
+                      _fieldWidget(
+                        'Emergency Contact Relationship',
+                        _emergencyRelationshipController,
+                        hint: 'e.g., Parent, spouse, sibling',
                       ),
                       _fieldWidget(
                         'Emergency Contact Number',
@@ -552,24 +586,28 @@ class _CanonicalPatientRegistrationModalState
     return age;
   }
 
-  ({String firstName, String surname}) _splitFullName(String fullName) {
+  ({String firstName, String middleName, String surname}) _splitFullName(
+    String fullName,
+  ) {
     final normalized = fullName.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (normalized.isEmpty) {
-      return (firstName: '', surname: '');
+      return (firstName: '', middleName: '', surname: '');
     }
     if (normalized.contains(',')) {
       final parts = normalized.split(',');
       return (
         firstName: parts.skip(1).join(' ').trim(),
+        middleName: '',
         surname: parts.first.trim(),
       );
     }
     final parts = normalized.split(' ');
     if (parts.length == 1) {
-      return (firstName: parts.first, surname: '');
+      return (firstName: parts.first, middleName: '', surname: '');
     }
     return (
       firstName: parts.sublist(0, parts.length - 1).join(' '),
+      middleName: '',
       surname: parts.last,
     );
   }
@@ -577,10 +615,12 @@ class _CanonicalPatientRegistrationModalState
   Future<void> _save() async {
     if (!_formKey.currentState!.validate() || _isSaving) return;
     final firstName = _firstNameController.text.trim();
+    final middleName = _middleNameController.text.trim();
     final surname = _surnameController.text.trim();
     if (!_isEditing) {
       final duplicates = await _patientService.findDuplicateCandidates(
         firstName: firstName,
+        middleName: middleName,
         surname: surname,
         dateOfBirth: _dateOfBirthController.text,
         phoneNumber: _contactNumberController.text,
@@ -614,7 +654,11 @@ class _CanonicalPatientRegistrationModalState
     setState(() => _isSaving = true);
     try {
       final user = FirebaseAuth.instance.currentUser;
-      final fullName = '$firstName $surname'.trim();
+      final fullName = [
+        firstName,
+        middleName,
+        surname,
+      ].where((value) => value.isNotEmpty).join(' ');
       final address = _addressController.text.trim();
       final contact = _contactNumberController.text.trim();
       final emergencyContact = _emergencyContactController.text.trim();
@@ -628,6 +672,7 @@ class _CanonicalPatientRegistrationModalState
         'patientId': _patientId,
         'fullName': fullName,
         'firstName': firstName,
+        'middleName': middleName,
         'surname': surname,
         'dateOfBirth': _dateOfBirthController.text,
         'age': _ageController.text,
@@ -641,8 +686,10 @@ class _CanonicalPatientRegistrationModalState
         'phoneNumber': contact,
         'emergencyContact': emergencyContact,
         'emergencyContactName': emergencyContact,
+        'emergencyRelationship': _emergencyRelationshipController.text.trim(),
         'emergencyContactNumber': emergencyContactNumber,
         'emergencyContactPhone': emergencyContactNumber,
+        'guardian': _guardianController.text.trim(),
         'medicalHistory': medicalHistory,
         'pastMedicalHistory': medicalHistory,
         'allergies': _allergiesController.text.trim(),

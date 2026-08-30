@@ -375,25 +375,70 @@ class _CheckUpPageState extends State<CheckUpPage> {
       record['patientName'] ?? record['patient'] ?? record['name'],
       fallback: '',
     );
-    final nameParts = patientName.isEmpty
-        ? <String>[]
-        : patientName.split(RegExp(r'\s+'));
+    final nameParts = patientNameParts({
+      'patientName': patientName,
+      'firstName': record['firstName'],
+      'middleName': record['middleName'],
+      'surname': record['surname'],
+    });
 
     return {
       'id': record['linkedPatientId'] ?? record['patientId'] ?? record['id'],
       'patientId': record['patientId'] ?? record['linkedPatientId'] ?? '',
+      'linkedPatientId': record['linkedPatientId'] ?? record['patientId'] ?? '',
       'patientCode': record['patientCode'] ?? '',
       'patientName': patientName,
-      'firstName': nameParts.isNotEmpty ? nameParts.first : '',
-      'surname': nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '',
+      'fullName': patientName,
+      'firstName': nameParts.firstName,
+      'middleName': nameParts.middleName,
+      'surname': nameParts.surname,
+      'dateOfBirth': record['dateOfBirth'] ?? record['dob'] ?? '',
+      'age': record['age'] ?? '',
+      'sex': record['sex'] ?? record['gender'] ?? '',
+      'gender': record['gender'] ?? record['sex'] ?? '',
+      'contactNumber': record['contactNumber'] ?? record['phoneNumber'] ?? '',
+      'phoneNumber': record['phoneNumber'] ?? record['contactNumber'] ?? '',
+      'address': record['address'] ?? '',
+      'barangay': record['barangay'] ?? '',
     };
+  }
+
+  Future<Map<String, dynamic>> _resolvePatientSeed(
+    Map<String, dynamic> record,
+  ) async {
+    final seed = _buildPatientHistorySeed(record);
+    final resolved = await _patientHistoryService.resolveRegisteredPatient(
+      seed,
+    );
+    if (resolved == null) return seed;
+
+    // Registered patient data is authoritative. Keep legacy check-up values
+    // only when that patient record does not contain the field yet.
+    final merged = <String, dynamic>{...seed, ...resolved};
+    for (final key in const [
+      'dateOfBirth',
+      'age',
+      'sex',
+      'gender',
+      'contactNumber',
+      'phoneNumber',
+      'address',
+      'barangay',
+      'middleName',
+    ]) {
+      final resolvedValue = (resolved[key] ?? '').toString().trim();
+      if (resolvedValue.isEmpty && seed.containsKey(key)) {
+        merged[key] = seed[key];
+      }
+    }
+    return merged;
   }
 
   Future<void> _showPatientMedicalHistory(
     BuildContext context,
     Map<String, dynamic> record,
   ) async {
-    final patient = _buildPatientHistorySeed(record);
+    final patient = await _resolvePatientSeed(record);
     final snapshot = await _patientHistoryService.loadPatientHistory(patient);
     if (!context.mounted) {
       return;
@@ -437,11 +482,12 @@ class _CheckUpPageState extends State<CheckUpPage> {
     );
   }
 
-  void _openReferralForRecord(Map<String, dynamic> record) {
-    final patientSeed = _buildPatientHistorySeed(record);
+  Future<void> _openReferralForRecord(Map<String, dynamic> record) async {
+    final patientSeed = await _resolvePatientSeed(record);
+    if (!mounted) return;
     final hasLinkedPatient =
-        (patientSeed['patientId'] as String?)?.isNotEmpty == true ||
-        (patientSeed['id']?.toString().isNotEmpty ?? false);
+        (patientSeed['patientId']?.toString().trim().isNotEmpty ?? false) ||
+        (patientSeed['id']?.toString().trim().isNotEmpty ?? false);
 
     if (!hasLinkedPatient) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -455,12 +501,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
       return;
     }
 
-    final referralSeed = <String, dynamic>{
-      ...patientSeed,
-      'age': record['age'],
-      'address': record['address'],
-      'barangay': record['barangay'],
-    };
+    final referralSeed = <String, dynamic>{...patientSeed};
 
     final vitals = _safeCheckUpText(record['vitalsigns'], fallback: '');
     final symptoms = _safeCheckUpText(record['symptoms'], fallback: '');
@@ -497,7 +538,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
 
   /// Opens the referral overlay for a check-up record that was just saved
   /// from the "Add Another Check-Up" modal (see [_ReferralHandoff]).
-  void _openReferralAfterSave(Map<String, dynamic> savedRecord) {
+  Future<void> _openReferralAfterSave(Map<String, dynamic> savedRecord) async {
     final patientId = (savedRecord['patientId'] ?? '').toString().trim();
     final linkedPatientId = (savedRecord['linkedPatientId'] ?? '')
         .toString()
@@ -514,15 +555,13 @@ class _CheckUpPageState extends State<CheckUpPage> {
       return;
     }
 
-    final referralSeed = <String, dynamic>{
-      'patientId': patientId.isNotEmpty ? patientId : linkedPatientId,
-      'linkedPatientId': linkedPatientId.isNotEmpty
-          ? linkedPatientId
-          : patientId,
-      'patientName': savedRecord['patientName'],
-      'age': savedRecord['age'],
-      'address': savedRecord['address'],
-    };
+    final referralSeed = await _resolvePatientSeed(savedRecord);
+    referralSeed['patientId'] = patientId.isNotEmpty
+        ? patientId
+        : linkedPatientId;
+    referralSeed['linkedPatientId'] = linkedPatientId.isNotEmpty
+        ? linkedPatientId
+        : patientId;
 
     final vitals = (savedRecord['vitalsigns'] ?? '').toString();
     final symptoms = (savedRecord['symptoms'] ?? '').toString();
@@ -4890,6 +4929,12 @@ class _NewCheckUpFullScreenModalState
       String vitalSignsString = vitalSignsParts.join(', ');
 
       final now = DateTime.now();
+      final patientParts = patientNameParts(widget.patientSeed ?? const {});
+      final patientName = [
+        _firstNameController.text.trim(),
+        patientParts.middleName,
+        _surnameController.text.trim(),
+      ].where((value) => value.isNotEmpty).join(' ');
       final linkedPatientId =
           widget.patientSeed?['linkedPatientId']?.toString().trim() ?? '';
       final patientId =
@@ -4902,11 +4947,27 @@ class _NewCheckUpFullScreenModalState
         'status': 'Completed',
         'type': 'General',
         'diseaseType': _diseaseType,
-        'patient': '${_firstNameController.text} ${_surnameController.text}',
-        'patientName':
-            '${_firstNameController.text} ${_surnameController.text}',
+        'patient': patientName,
+        'patientName': patientName,
+        'firstName': _firstNameController.text.trim(),
+        'middleName': patientParts.middleName,
+        'surname': _surnameController.text.trim(),
         'age': _ageController.text,
         'address': _addressController.text,
+        'barangay': widget.patientSeed?['barangay'] ?? '',
+        'dateOfBirth': widget.patientSeed?['dateOfBirth'] ?? '',
+        'sex':
+            widget.patientSeed?['sex'] ?? widget.patientSeed?['gender'] ?? '',
+        'gender':
+            widget.patientSeed?['gender'] ?? widget.patientSeed?['sex'] ?? '',
+        'contactNumber':
+            widget.patientSeed?['contactNumber'] ??
+            widget.patientSeed?['phoneNumber'] ??
+            '',
+        'phoneNumber':
+            widget.patientSeed?['phoneNumber'] ??
+            widget.patientSeed?['contactNumber'] ??
+            '',
         'vitalsigns': vitalSignsString,
         'symptoms': _symptomsController.text,
         'details': vitalSignsString.isNotEmpty

@@ -186,7 +186,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
   }
 
   String _getPatientHistoryKey(Map<String, dynamic> record) {
-    final patientId = (record['patientId'] ?? '').toString().trim();
+    final patientId = (record['patientId'] ?? record['linkedPatientId'] ?? '')
+        .toString()
+        .trim();
     if (patientId.isNotEmpty) {
       return 'id:${patientId.toLowerCase()}';
     }
@@ -238,7 +240,13 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     final latestRecord = history.isNotEmpty ? history.first : seedRecord;
     final patientName = (latestRecord['patientName'] ?? 'Unknown Patient')
         .toString();
-    final patientId = (latestRecord['patientId'] ?? 'No patient ID')
+    final patientId =
+        (latestRecord['patientId'] ??
+                latestRecord['linkedPatientId'] ??
+                'No patient ID')
+            .toString()
+            .trim();
+    final parentGuardian = (latestRecord['parentGuardianName'] ?? '')
         .toString()
         .trim();
     final latestVaccine = (latestRecord['vaccine'] ?? 'No vaccine recorded')
@@ -314,6 +322,16 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
+                            if (parentGuardian.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                'Parent/Guardian: $parentGuardian',
+                                style: TextStyle(
+                                  color: _historyMuted,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 12),
                             Wrap(
                               spacing: 10,
@@ -1839,18 +1857,24 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     }
     // Controllers
     final firstNameController = TextEditingController();
+    final middleNameController = TextEditingController();
     final surnameController = TextEditingController();
     final patientIdController = TextEditingController();
     final ageController = TextEditingController();
     final contactNumberController = TextEditingController();
+    final guardianController = TextEditingController();
 
     final name = patientNameParts(patientSeed);
     firstNameController.text = name.firstName;
+    middleNameController.text = name.middleName;
     surnameController.text = name.surname;
     patientIdController.text = (patientSeed['patientId'] ?? '').toString();
     ageController.text = (patientSeed['age'] ?? '').toString();
     contactNumberController.text = (patientSeed['contactNumber'] ?? '')
         .toString();
+    guardianController.text =
+        (patientSeed['guardian'] ?? patientSeed['parentGuardianName'] ?? '')
+            .toString();
 
     String selectedVaccineType = _normalizeVaccineType(patientSeed['vaccine']);
     final vaccineBrandController = TextEditingController();
@@ -1993,6 +2017,13 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   ],
                                 ),
                                 const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: middleNameController,
+                                  label: 'Middle Name',
+                                  icon: Icons.person_outline,
+                                  hintText: 'Optional middle name',
+                                ),
+                                const SizedBox(height: 16),
                                 Row(
                                   children: [
                                     Expanded(
@@ -2022,6 +2053,14 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   icon: Icons.phone,
                                   hintText: 'e.g., +63 912 345 6789',
                                   keyboardType: TextInputType.phone,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: guardianController,
+                                  label: 'Parent/Guardian Name',
+                                  icon: Icons.family_restroom,
+                                  hintText:
+                                      'For children or dependent patients',
                                 ),
                               ]),
                             ],
@@ -2422,8 +2461,13 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                   'time':
                                       '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
                                   'patientName':
-                                      '${firstNameController.text} ${surnameController.text}'
-                                          .trim(),
+                                      [
+                                            firstNameController.text.trim(),
+                                            middleNameController.text.trim(),
+                                            surnameController.text.trim(),
+                                          ]
+                                          .where((value) => value.isNotEmpty)
+                                          .join(' '),
                                   'patientId':
                                       (patientSeed?['patientId'] ??
                                               patientSeed?['id'] ??
@@ -2435,6 +2479,12 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                               patientSeed?['id'] ??
                                               '')
                                           .toString(),
+                                  'firstName': firstNameController.text.trim(),
+                                  'middleName': middleNameController.text
+                                      .trim(),
+                                  'surname': surnameController.text.trim(),
+                                  'parentGuardianName': guardianController.text
+                                      .trim(),
                                   'age': ageController.text,
                                   'contactNumber': contactNumberController.text,
                                   'vaccine': selectedVaccineType,
@@ -3035,7 +3085,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       record['patientName'],
       fallback: 'Unknown Patient',
     );
-    final patientId = _safeImmunizationDetailText(record['patientId']);
+    final patientId = _safeImmunizationDetailText(
+      record['patientId'] ?? record['linkedPatientId'],
+    );
     final vaccine = _safeImmunizationDetailText(record['vaccine']);
     final status = _safeImmunizationDetailText(
       record['status'],
@@ -3067,6 +3119,11 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           icon: Icons.phone_outlined,
           label: 'Contact Number',
           value: _safeImmunizationDetailText(record['contactNumber']),
+        ),
+        DetailTableItem(
+          icon: Icons.family_restroom_outlined,
+          label: 'Parent/Guardian Name',
+          value: _safeImmunizationDetailText(record['parentGuardianName']),
         ),
         DetailTableItem(
           icon: Icons.vaccines_outlined,
@@ -3138,24 +3195,74 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     return;
   }
 
-  void _showEditDialog(BuildContext context, Map<String, dynamic> record) {
-    // Parse patient name into first name and surname
-    final patientName = record['patientName'] ?? '';
-    final nameParts = patientName.split(' ');
+  Future<void> _showEditDialog(
+    BuildContext context,
+    Map<String, dynamic> record,
+  ) async {
+    final resolvedPatient = await _patientHistoryService
+        .resolveRegisteredPatient(record);
+    if (!context.mounted) return;
+    // Preserve values already stored on the immunization while allowing
+    // non-empty fields from the registered patient to fill or correct them.
+    final identity = <String, dynamic>{...record};
+    for (final key in const [
+      'id',
+      'patientId',
+      'linkedPatientId',
+      'fullName',
+      'patientName',
+      'firstName',
+      'middleName',
+      'surname',
+      'age',
+      'contactNumber',
+      'phoneNumber',
+      'guardian',
+      'parentGuardianName',
+    ]) {
+      final value = resolvedPatient?[key];
+      if (value != null && value.toString().trim().isNotEmpty) {
+        identity[key] = value;
+      }
+    }
+    final name = patientNameParts(identity);
+
+    String firstNonEmpty(Iterable<dynamic> values) {
+      for (final value in values) {
+        final text = value?.toString().trim() ?? '';
+        if (text.isNotEmpty) return text;
+      }
+      return '';
+    }
 
     // Pre-fill controllers with existing data
-    final firstNameController = TextEditingController(
-      text: nameParts.isNotEmpty ? nameParts[0] : '',
-    );
-    final surnameController = TextEditingController(
-      text: nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '',
-    );
+    final firstNameController = TextEditingController(text: name.firstName);
+    final middleNameController = TextEditingController(text: name.middleName);
+    final surnameController = TextEditingController(text: name.surname);
     final patientIdController = TextEditingController(
-      text: record['patientId'],
+      text: firstNonEmpty([
+        record['patientId'],
+        record['linkedPatientId'],
+        resolvedPatient?['patientId'],
+        resolvedPatient?['id'],
+      ]),
     );
-    final ageController = TextEditingController(text: record['age']);
+    final ageController = TextEditingController(
+      text: firstNonEmpty([record['age'], resolvedPatient?['age']]),
+    );
     final contactNumberController = TextEditingController(
-      text: record['contactNumber'],
+      text: firstNonEmpty([
+        record['contactNumber'],
+        resolvedPatient?['contactNumber'],
+        resolvedPatient?['phoneNumber'],
+      ]),
+    );
+    final guardianController = TextEditingController(
+      text:
+          record['parentGuardianName'] ??
+          identity['guardian'] ??
+          identity['parentGuardianName'] ??
+          '',
     );
 
     String selectedVaccineType = _normalizeVaccineType(record['vaccine']);
@@ -3369,6 +3476,13 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 ],
                               ),
                               const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: middleNameController,
+                                label: 'Middle Name',
+                                icon: Icons.person_outline,
+                                hintText: 'Optional middle name',
+                              ),
+                              const SizedBox(height: 16),
                               Row(
                                 children: [
                                   Expanded(
@@ -3398,6 +3512,13 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                 icon: Icons.phone,
                                 hintText: 'e.g., +63 912 345 6789',
                                 keyboardType: TextInputType.phone,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: guardianController,
+                                label: 'Parent/Guardian Name',
+                                icon: Icons.family_restroom,
+                                hintText: 'For children or dependent patients',
                               ),
                             ]),
                             const SizedBox(height: 14),
@@ -3644,9 +3765,31 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                           'time':
                                               '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
                                           'patientName':
-                                              '${firstNameController.text} ${surnameController.text}'
-                                                  .trim(),
+                                              [
+                                                    firstNameController.text
+                                                        .trim(),
+                                                    middleNameController.text
+                                                        .trim(),
+                                                    surnameController.text
+                                                        .trim(),
+                                                  ]
+                                                  .where(
+                                                    (value) => value.isNotEmpty,
+                                                  )
+                                                  .join(' '),
                                           'patientId': patientIdController.text,
+                                          'linkedPatientId':
+                                              record['linkedPatientId'] ??
+                                              patientIdController.text,
+                                          'firstName': firstNameController.text
+                                              .trim(),
+                                          'middleName': middleNameController
+                                              .text
+                                              .trim(),
+                                          'surname': surnameController.text
+                                              .trim(),
+                                          'parentGuardianName':
+                                              guardianController.text.trim(),
                                           'age': ageController.text,
                                           'contactNumber':
                                               contactNumberController.text,
@@ -3669,7 +3812,8 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                                               doseNumberController.text,
                                           'routeOfAdministration':
                                               selectedRouteOfAdministration,
-                                          'injectionSite': selectedInjectionSite,
+                                          'injectionSite':
+                                              selectedInjectionSite,
                                           'administeredBy':
                                               administeredByController.text,
                                           'adverseEvents':

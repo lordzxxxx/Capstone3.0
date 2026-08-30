@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
 import 'package:mycapstone_project/web/shared/widgets/doctor_notes_section.dart';
 
 class CanonicalPatientDetailsModal extends StatelessWidget {
@@ -36,49 +37,47 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
   }
 
   String get _fullName {
-    final canonical = patient['fullName']?.toString().trim() ?? '';
-    if (canonical.isNotEmpty) return canonical;
-    final legacy = [patient['firstName'], patient['surname']]
-        .map((value) => value?.toString().trim() ?? '')
-        .where((value) => value.isNotEmpty)
-        .join(' ');
-    return legacy.isEmpty ? 'Unknown Patient' : legacy;
+    return patientDisplayName(patient, fallback: 'Unknown Patient');
   }
 
-  ({String firstName, String surname}) get _nameParts {
-    var legacyFirstName = '';
-    var legacySurname = '';
-    final fullName = patient['fullName']?.toString().trim() ?? '';
-    final normalized = fullName.replaceAll(RegExp(r'\s+'), ' ');
-    if (normalized.contains(',')) {
-      final parts = normalized.split(',');
-      legacySurname = parts.first.trim();
-      legacyFirstName = parts.skip(1).join(' ').trim();
-    } else if (normalized.isNotEmpty) {
-      final parts = normalized.split(' ');
-      legacyFirstName = parts.length == 1
-          ? parts.first
-          : parts.sublist(0, parts.length - 1).join(' ');
-      legacySurname = parts.length == 1 ? '' : parts.last;
-    }
+  PatientNameParts get _nameParts => patientNameParts(patient);
 
-    return (
-      firstName: _value(
-        patient['firstName'],
-        fallback: legacyFirstName.isEmpty ? 'Not provided' : legacyFirstName,
-      ),
-      surname: _value(
-        patient['surname'],
-        fallback: legacySurname.isEmpty ? 'Not provided' : legacySurname,
-      ),
-    );
+  String _namePart(String value) {
+    final text = value.trim();
+    return text.isEmpty ? 'Not provided' : text;
+  }
+
+  String _emergencyValue(String key, String fallbackKey) {
+    return _fallbackValue(key, fallbackKey);
+  }
+
+  String get _middleName => _namePart(_nameParts.middleName);
+
+  String get _firstName => _namePart(_nameParts.firstName);
+
+  String get _surname => _namePart(_nameParts.surname);
+
+  String get _guardian => _fallbackValue('guardian', 'parentGuardianName');
+
+  String get _emergencyRelationship => _value(patient['emergencyRelationship']);
+
+  String get _emergencyName =>
+      _emergencyValue('emergencyContactName', 'emergencyContact');
+
+  String get _emergencyPhone =>
+      _emergencyValue('emergencyContactPhone', 'emergencyContactNumber');
+
+  // The explicit getters above make the identity/contact mapping easy to
+  // audit and keep the rendered fields independent.
+  ({String firstName, String middleName, String surname}) get _legacyNameParts {
+    return (firstName: _firstName, middleName: _middleName, surname: _surname);
   }
 
   @override
   Widget build(BuildContext context) {
     final patientId = _fallbackValue('patientId', 'id');
     final status = _value(patient['status'], fallback: 'Active');
-    final name = _nameParts;
+    final name = _legacyNameParts;
     return Dialog.fullscreen(
       backgroundColor: _background,
       child: Scaffold(
@@ -141,6 +140,7 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
                       name.firstName,
                       Icons.person_outline_rounded,
                     ),
+                    ('Middle Name', name.middleName, Icons.person_rounded),
                     ('Surname', name.surname, Icons.badge_outlined),
                     (
                       'Date of Birth',
@@ -178,19 +178,23 @@ class CanonicalPatientDetailsModal extends StatelessWidget {
                       Icons.phone_outlined,
                     ),
                     (
-                      'Emergency Contact',
-                      _fallbackValue(
-                        'emergencyContact',
-                        'emergencyContactName',
-                      ),
+                      'Parent/Guardian Name',
+                      _guardian,
+                      Icons.family_restroom_outlined,
+                    ),
+                    (
+                      'Emergency Contact Name',
+                      _emergencyName,
                       Icons.contact_emergency_outlined,
                     ),
                     (
+                      'Emergency Contact Relationship',
+                      _emergencyRelationship,
+                      Icons.diversity_1_outlined,
+                    ),
+                    (
                       'Emergency Contact Number',
-                      _fallbackValue(
-                        'emergencyContactNumber',
-                        'emergencyContactPhone',
-                      ),
+                      _emergencyPhone,
                       Icons.phone_in_talk_outlined,
                     ),
                   ],

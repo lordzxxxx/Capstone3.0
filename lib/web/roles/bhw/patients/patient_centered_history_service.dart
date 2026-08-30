@@ -472,6 +472,7 @@ class PatientCenteredHistoryService {
         patient['patientId'],
         patient['patientCode'],
         patient['firstName'],
+        patient['middleName'],
         patient['surname'],
         _buildPatientName(patient),
         patient['dateOfBirth'],
@@ -607,12 +608,19 @@ class PatientCenteredHistoryService {
 
   Future<List<Map<String, dynamic>>> findDuplicateCandidates({
     required String firstName,
+    String? middleName,
     required String surname,
     String? dateOfBirth,
     String? phoneNumber,
   }) async {
     final patients = await _patientHelper.getAllRecords();
-    final normalizedName = _normalize('$firstName $surname');
+    final normalizedName = _normalize(
+      [
+        firstName,
+        middleName,
+        surname,
+      ].where((value) => value?.trim().isNotEmpty == true).join(' '),
+    );
     final normalizedDob = _normalize(dateOfBirth);
     final normalizedPhone = _normalize(phoneNumber);
 
@@ -901,6 +909,7 @@ class PatientCenteredHistoryService {
       candidate['patientCode'],
       candidate['fullName'],
       candidate['firstName'],
+      candidate['middleName'],
       candidate['surname'],
       candidate['patientName'],
       candidate['name'],
@@ -942,6 +951,12 @@ class PatientCenteredHistoryService {
       'patient': patientName,
       'name': patientName,
       'firstName': _safeText(patient['firstName'], fallback: nameParts.first),
+      'middleName': _safeText(
+        patient['middleName'],
+        fallback: nameParts.length > 2
+            ? nameParts.sublist(1, nameParts.length - 1).join(' ')
+            : '',
+      ),
       'surname': _safeText(patient['surname'], fallback: nameParts.last),
       'age': _safeText(patient['age']),
       'address': _composeAddress(patient),
@@ -962,6 +977,15 @@ class PatientCenteredHistoryService {
       'emergencyContactNumber': _safeText(
         patient['emergencyContactNumber'],
         fallback: _safeText(patient['emergencyContactPhone']),
+      ),
+      'emergencyContactName': _safeText(
+        patient['emergencyContactName'],
+        fallback: _safeText(patient['emergencyContact']),
+      ),
+      'emergencyRelationship': _safeText(patient['emergencyRelationship']),
+      'guardian': _safeText(
+        patient['guardian'],
+        fallback: _safeText(patient['parentGuardianName']),
       ),
       'gender': _safeText(
         patient['gender'],
@@ -1004,6 +1028,12 @@ class PatientCenteredHistoryService {
       'patient': patientName,
       'name': patientName,
       'firstName': _safeText(record['firstName'], fallback: nameParts.first),
+      'middleName': _safeText(
+        record['middleName'],
+        fallback: nameParts.length > 2
+            ? nameParts.sublist(1, nameParts.length - 1).join(' ')
+            : '',
+      ),
       'surname': _safeText(record['surname'], fallback: nameParts.last),
       'age': _firstText(record, ageKeys),
       'address': _firstText(record, addressKeys),
@@ -1153,7 +1183,11 @@ class PatientCenteredHistoryService {
 
   List<String> _splitName(String fullName) {
     final parts = patientNameParts({'fullName': fullName});
-    return [parts.firstName, parts.surname];
+    return [
+      parts.firstName,
+      parts.middleName,
+      parts.surname,
+    ].where((value) => value.isNotEmpty).toList(growable: false);
   }
 
   void _sortRecordsByDate(

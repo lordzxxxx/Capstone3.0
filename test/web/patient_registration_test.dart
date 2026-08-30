@@ -17,12 +17,21 @@ void main() {
   test('patient names preserve first-name and surname positions', () {
     expect(
       patientNameParts({'firstName': 'Maria Elena', 'surname': 'Santos'}),
-      (firstName: 'Maria Elena', surname: 'Santos'),
+      (firstName: 'Maria Elena', middleName: '', surname: 'Santos'),
     );
     expect(patientNameParts({'fullName': 'Maria Elena Santos'}), (
       firstName: 'Maria Elena',
+      middleName: '',
       surname: 'Santos',
     ));
+    expect(
+      patientNameParts({
+        'firstName': 'Maria',
+        'middleName': 'Elena',
+        'surname': 'Santos',
+      }),
+      (firstName: 'Maria', middleName: 'Elena', surname: 'Santos'),
+    );
   });
 
   testWidgets('registration form exposes the canonical patient fields', (
@@ -40,6 +49,7 @@ void main() {
 
     expect(find.text('PAT-TEST-001'), findsOneWidget);
     expect(find.text('First Name'), findsOneWidget);
+    expect(find.text('Middle Name'), findsOneWidget);
     expect(find.text('Surname'), findsOneWidget);
     expect(find.text('Date of Birth'), findsOneWidget);
     expect(find.text('Age'), findsOneWidget);
@@ -48,8 +58,10 @@ void main() {
     expect(find.text('Barangay'), findsOneWidget);
     expect(find.text('Household ID'), findsOneWidget);
     expect(find.text('Contact Number'), findsOneWidget);
-    expect(find.text('Emergency Contact'), findsOneWidget);
+    expect(find.text('Emergency Contact Name'), findsOneWidget);
+    expect(find.text('Emergency Contact Relationship'), findsOneWidget);
     expect(find.text('Emergency Contact Number'), findsOneWidget);
+    expect(find.text('Parent/Guardian Name (Optional)'), findsOneWidget);
     expect(find.text('Medical History'), findsOneWidget);
     expect(find.text('Allergies (Optional)'), findsOneWidget);
   });
@@ -64,6 +76,9 @@ void main() {
               'id': 'PAT-EDIT-001',
               'patientId': 'PAT-EDIT-001',
               'fullName': 'Maria Santos',
+              'firstName': 'Maria',
+              'middleName': 'Clara',
+              'surname': 'Santos',
               'dateOfBirth': '1990-05-12',
               'age': '36',
               'sex': 'Female',
@@ -72,6 +87,8 @@ void main() {
               'householdId': 'HH-100',
               'contactNumber': '09123456789',
               'emergencyContact': 'Juan Santos - 09987654321',
+              'emergencyContactName': 'Juan Santos',
+              'emergencyRelationship': 'Parent',
               'emergencyContactNumber': '09987654321',
               'medicalHistory': 'Hypertension',
               'allergies': 'Penicillin',
@@ -85,7 +102,9 @@ void main() {
       expect(find.text('Save Changes'), findsOneWidget);
       expect(find.text('PAT-EDIT-001'), findsOneWidget);
       expect(find.widgetWithText(TextFormField, 'Maria'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, 'Clara'), findsOneWidget);
       expect(find.widgetWithText(TextFormField, 'Santos'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, 'Parent'), findsOneWidget);
       expect(find.widgetWithText(TextFormField, 'Laguitas'), findsOneWidget);
       expect(
         find.widgetWithText(TextFormField, 'Hypertension'),
@@ -103,6 +122,9 @@ void main() {
           patient: {
             'patientId': 'PAT-VIEW-001',
             'fullName': 'Ana Reyes',
+            'firstName': 'Ana',
+            'middleName': 'Marie',
+            'surname': 'Reyes',
             'dateOfBirth': '1995-03-01',
             'age': '31',
             'sex': 'Female',
@@ -111,6 +133,8 @@ void main() {
             'householdId': 'HH-200',
             'contactNumber': '09170000000',
             'emergencyContact': 'Pedro Reyes',
+            'emergencyContactName': 'Pedro Reyes',
+            'emergencyRelationship': 'Sibling',
             'emergencyContactNumber': '09181111111',
             'medicalHistory': 'None',
             'allergies': 'None',
@@ -122,14 +146,19 @@ void main() {
 
     expect(find.text('Patient Details'), findsOneWidget);
     expect(find.textContaining('PAT-VIEW-001'), findsOneWidget);
-    expect(find.text('Ana Reyes'), findsOneWidget);
+    expect(find.text('Ana Marie Reyes'), findsOneWidget);
     expect(find.text('First Name'), findsOneWidget);
     expect(find.text('Ana'), findsOneWidget);
     expect(find.text('Surname'), findsOneWidget);
     expect(find.text('Reyes'), findsOneWidget);
+    expect(find.text('Middle Name'), findsOneWidget);
+    expect(find.text('Marie'), findsOneWidget);
     expect(find.text('Address'), findsOneWidget);
     expect(find.text('Household ID'), findsOneWidget);
     expect(find.text('Emergency Contact Number'), findsOneWidget);
+    expect(find.text('Emergency Contact Name'), findsOneWidget);
+    expect(find.text('Emergency Contact Relationship'), findsOneWidget);
+    expect(find.text('Sibling'), findsOneWidget);
     expect(find.text('09181111111'), findsOneWidget);
     expect(find.text('Medical History'), findsOneWidget);
     expect(find.text('Allergies'), findsOneWidget);
