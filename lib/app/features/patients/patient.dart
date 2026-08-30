@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'dart:math' as math;
@@ -1468,9 +1470,10 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   }
 
   void _editPatient(Map<String, dynamic> patient) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: false,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) =>
           EditPatientModal(patient: patient, onSaved: _loadPatients),
     );
@@ -1980,9 +1983,10 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
 
   // Add Patient Modal
   void _showAddPatientModal({Map<String, dynamic>? initialValues}) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: false,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => AddPatientModal(
         initialValues: initialValues,
         onSaved: _handlePatientSaved,
@@ -2016,1580 +2020,852 @@ class AddPatientModal extends StatefulWidget {
 
 class _AddPatientModalState extends State<AddPatientModal> {
   final _formKey = GlobalKey<FormState>();
-  final _pageController = PageController();
-  int _currentPage = 0;
-  final int _totalPages = 10;
+  final _patientHistoryService = PatientCenteredHistoryService();
 
-  // Color scheme
+  // Color scheme matching Check-up modal
   static const Color _primaryAqua = AppDesign.blue;
   static const Color _darkDeepTeal = AppDesign.page;
   static const Color _mutedCoolGray = AppDesign.muted;
   static const Color _lightOffWhite = AppDesign.ink;
 
-  // Personal Details Controllers
+  // Controllers for Canonical Details & Credentials (consistent with Web)
   final _firstNameController = TextEditingController();
+  final _middleNameController = TextEditingController();
   final _surnameController = TextEditingController();
-  final _mothersMaidenNameController = TextEditingController();
-  final _dobController = TextEditingController();
+  final _dateOfBirthController = TextEditingController();
   final _ageController = TextEditingController();
-  final _placeOfBirthController = TextEditingController();
-  final _nationalityController = TextEditingController();
-  String _civilStatus = 'Single';
-  String _gender = 'Male';
-  final _religionController = TextEditingController();
-  final _occupationController = TextEditingController();
-  String _educationalAttainment = 'Elementary';
-  String _employeeStatus = 'Employed';
-
-  // Contact Information Controllers
-  final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _altPhoneController = TextEditingController();
-  final _guardianController = TextEditingController();
-  final _streetController = TextEditingController();
+  final _addressController = TextEditingController();
   final _barangayController = TextEditingController();
-  final _municipalityController = TextEditingController();
-  final _provinceController = TextEditingController();
-
-  // Medical Details Controllers
-  final _heightController = TextEditingController();
-  final _weightController = TextEditingController();
-  final _bmiController = TextEditingController();
-  String _bloodType = 'A+';
-  final _allergiesController = TextEditingController();
-  final _immunizationStatusController = TextEditingController();
-  final _familyMedicalHistoryController = TextEditingController();
-  final _pastMedicalHistoryController = TextEditingController();
-  final _currentMedicationsController = TextEditingController();
-  final _chronicConditionsController = TextEditingController();
-  final _chiefComplaintController = TextEditingController();
-  final _currentSymptomsController = TextEditingController();
-
-  // Vital Signs
-  final _bodyTempController = TextEditingController();
-  String _tempUnit = '°C';
-  final _bpSystolicController = TextEditingController();
-  final _bpDiastolicController = TextEditingController();
-  final _heartRateController = TextEditingController();
-  final _respiratoryRateController = TextEditingController();
-  final _oxygenSaturationController = TextEditingController();
-
-  final _disabilityController = TextEditingController();
-  String _mentalHealthStatus = 'Good';
-  final _substanceUseController = TextEditingController();
-  final _lastCheckupController = TextEditingController();
-  final _nextCheckupController = TextEditingController();
-
-  // Emergency Contact Controllers
-  final _emergencyNameController = TextEditingController();
+  final _householdIdController = TextEditingController();
+  final _contactNumberController = TextEditingController();
+  final _guardianController = TextEditingController();
+  final _emergencyContactController = TextEditingController();
   final _emergencyRelationshipController = TextEditingController();
-  final _emergencyPhoneController = TextEditingController();
-  final _emergencyAddressController = TextEditingController();
-
-  // Lifestyle and Habits Controllers
-  String _smokingStatus = 'Never';
-  String _exerciseFrequency = 'Daily';
-  String _alcoholConsumption = 'Never';
-  final _dietaryRestrictionsController = TextEditingController();
-  String _mentalHealthStatusLifestyle = 'Good';
-  String _sleepQuality = 'Excellent';
-
-  // Morbidity Assessment Controllers
-  String _morbidityRiskLevel = 'Low';
-  final _numberOfComorbiditiesController = TextEditingController();
-  String _functionalStatus = 'Independent';
-  String _mobilityStatus = 'Fully Mobile';
-  final _frailtyIndexController = TextEditingController();
-  String _polypharmacyRisk = 'Low';
-  String _preventiveCareCompliance = 'Full Compliance';
-  String _healthLiteracyLevel = 'High';
-  String _socialSupportLevel = 'Strong';
-  String _economicStatusImpact = 'Minimal';
-  final _morbidityNotesController = TextEditingController();
-
-  // Insurance and Coverage Controllers
-  final _insuranceProviderController = TextEditingController();
-  final _insuranceNumberController = TextEditingController();
-  final _insuranceExpiryController = TextEditingController();
-  final _monthlyIncomeController = TextEditingController();
-
-  // Additional Details Controllers
-  final _additionalInfoController = TextEditingController();
-  String _educationLevel = 'High School';
-  String _preferredLanguage = 'Filipino';
-  String _referralSource = 'Walk-in';
-  final _transportationController = TextEditingController();
-
-  // Consent
-  bool _consentGiven = false;
-
-  // Registration Details Controllers
+  final _emergencyContactNumberController = TextEditingController();
+  final _medicalHistoryController = TextEditingController();
+  final _allergiesController = TextEditingController();
   final _registrationDateController = TextEditingController();
   final _registeredByController = TextEditingController();
-  final _additionalNotesController = TextEditingController();
+
+  late final String _patientId;
+  DateTime? _dateOfBirth;
+  String _sex = 'Female';
+  bool _consentGiven = true;
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    _registrationDateController.text = '01/29/2026';
-    final values = widget.initialValues;
-    if (values != null) {
-      final name =
-          (values['patientName'] ??
-                  values['fullName'] ??
-                  values['patient'] ??
-                  values['name'] ??
-                  '')
-              .toString()
-              .trim();
-      final parts = name
-          .split(RegExp(r'\s+'))
-          .where((part) => part.isNotEmpty)
-          .toList(growable: false);
-      _firstNameController.text =
-          (values['firstName'] ?? (parts.isNotEmpty ? parts.first : ''))
-              .toString();
-      _surnameController.text =
-          (values['surname'] ??
-                  (parts.length > 1 ? parts.sublist(1).join(' ') : ''))
-              .toString();
-      _dobController.text = (values['dateOfBirth'] ?? values['dob'] ?? '')
-          .toString();
-      _ageController.text = (values['age'] ?? '').toString();
-      _phoneController.text =
-          (values['contactNumber'] ??
-                  values['phoneNumber'] ??
-                  values['phone'] ??
-                  '')
-              .toString();
-      _emailController.text = (values['email'] ?? values['emailAddress'] ?? '')
-          .toString();
-      _streetController.text = (values['address'] ?? values['street'] ?? '')
-          .toString();
-      _barangayController.text = (values['barangay'] ?? '').toString();
-      _municipalityController.text = (values['municipality'] ?? '').toString();
-      _provinceController.text = (values['province'] ?? '').toString();
-      _chiefComplaintController.text =
-          (values['symptoms'] ?? values['chiefComplaint'] ?? '').toString();
-      _currentSymptomsController.text =
-          (values['symptoms'] ?? values['chiefComplaint'] ?? '').toString();
-      _bodyTempController.text = (values['temperature'] ?? values['temp'] ?? '')
-          .toString();
-      _heartRateController.text =
-          (values['heartRate'] ?? values['hr'] ?? values['pulse'] ?? '')
-              .toString();
-      _respiratoryRateController.text =
-          (values['respiratoryRate'] ?? values['rr'] ?? '').toString();
-      _oxygenSaturationController.text =
-          (values['oxygenSaturation'] ?? values['spo2'] ?? '').toString();
-      _weightController.text = (values['weight'] ?? values['wt'] ?? '')
-          .toString();
-      _heightController.text = (values['height'] ?? values['ht'] ?? '')
-          .toString();
+    final values = widget.initialValues ?? const <String, dynamic>{};
+    _patientId = (values['patientId'] ?? values['id'] ?? PatientDatabaseHelper.generatePatientId()).toString().trim();
 
-      final bp = (values['bloodPressure'] ?? values['bp'] ?? '')
-          .toString()
-          .trim();
-      if (bp.isNotEmpty) {
-        final bpParts = bp.split('/');
-        if (bpParts.length == 2) {
-          _bpSystolicController.text = bpParts[0].trim();
-          _bpDiastolicController.text = bpParts[1].trim();
-        }
-      }
-
-      if (values['gender'] != null || values['sex'] != null) {
-        final g = (values['gender'] ?? values['sex']).toString().toLowerCase();
-        if (g == 'female' || g == 'f') {
-          _gender = 'Female';
-        } else if (g == 'male' || g == 'm') {
-          _gender = 'Male';
-        }
-      }
-      if (values['civilStatus'] != null) {
-        final cs = values['civilStatus'].toString();
-        if (['Single', 'Married', 'Widowed', 'Separated'].contains(cs)) {
-          _civilStatus = cs;
-        }
+    final directFirst = (values['firstName'] ?? '').toString().trim();
+    final directMiddle = (values['middleName'] ?? '').toString().trim();
+    final directSurname = (values['surname'] ?? '').toString().trim();
+    if (directFirst.isNotEmpty || directSurname.isNotEmpty) {
+      _firstNameController.text = directFirst;
+      _middleNameController.text = directMiddle;
+      _surnameController.text = directSurname;
+    } else {
+      final name = (values['fullName'] ?? values['patientName'] ?? values['patient'] ?? values['name'] ?? '').toString().trim();
+      if (name.contains(',')) {
+        final commaParts = name.split(',');
+        _surnameController.text = commaParts.first.trim();
+        _firstNameController.text = commaParts.sublist(1).join(' ').trim();
+      } else {
+        final parts = name.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList(growable: false);
+        _firstNameController.text = parts.isNotEmpty ? parts.first : '';
+        _surnameController.text = parts.length > 1 ? parts.sublist(1).join(' ') : '';
       }
     }
+
+    _dateOfBirthController.text = (values['dateOfBirth'] ?? values['dob'] ?? '').toString().trim();
+    _dateOfBirth = DateTime.tryParse(_dateOfBirthController.text);
+    
+    final rawAge = (values['age'] ?? '').toString().trim();
+    final ageDigits = RegExp(r'\d+').firstMatch(rawAge);
+    _ageController.text = ageDigits != null ? ageDigits.group(0)! : rawAge;
+
+    final sexVal = (values['sex'] ?? values['gender'] ?? 'Female').toString().trim();
+    _sex = const ['Female', 'Male', 'Other'].contains(sexVal) ? sexVal : 'Female';
+
+    _addressController.text = (values['address'] ?? values['street'] ?? '').toString().trim();
+    _householdIdController.text = (values['householdId'] ?? '').toString().trim();
+    _contactNumberController.text = (values['contactNumber'] ?? values['phoneNumber'] ?? values['phone'] ?? '').toString().trim();
+    _guardianController.text = (values['guardian'] ?? values['parentName'] ?? values['parentGuardianName'] ?? '').toString().trim();
+    _emergencyContactController.text = (values['emergencyContact'] ?? values['emergencyContactName'] ?? '').toString().trim();
+    _emergencyRelationshipController.text = (values['emergencyRelationship'] ?? '').toString().trim();
+    _emergencyContactNumberController.text = (values['emergencyContactNumber'] ?? values['emergencyContactPhone'] ?? '').toString().trim();
+    _medicalHistoryController.text = (values['medicalHistory'] ?? values['pastMedicalHistory'] ?? '').toString().trim();
+    _allergiesController.text = (values['allergies'] ?? '').toString().trim();
+
+    final now = DateTime.now();
+    _registrationDateController.text = (values['registrationDate'] ?? '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}').toString().trim();
+
+    String? currentUserName;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      currentUserName = user?.displayName ?? user?.email;
+    } catch (_) {}
+    _registeredByController.text = (values['registeredBy'] ?? currentUserName ?? 'BHW').toString().trim();
+
+    final initialBarangay = (values['barangay'] ?? '').toString().trim();
+    if (initialBarangay.isNotEmpty) {
+      _barangayController.text = initialBarangay;
+    } else {
+      _loadAssignedBarangay();
+    }
+  }
+
+  Future<void> _loadAssignedBarangay() async {
+    try {
+      final scope = await UserAccessScopeService.instance.loadCurrentScope();
+      if (!mounted || scope.barangay.isEmpty) return;
+      setState(() => _barangayController.text = scope.barangay);
+    } catch (_) {}
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
-    // Dispose all controllers
     _firstNameController.dispose();
+    _middleNameController.dispose();
     _surnameController.dispose();
-    _mothersMaidenNameController.dispose();
-    _dobController.dispose();
+    _dateOfBirthController.dispose();
     _ageController.dispose();
-    _placeOfBirthController.dispose();
-    _nationalityController.dispose();
-    _religionController.dispose();
-    _occupationController.dispose();
-    _phoneController.dispose();
-    _emailController.dispose();
-    _altPhoneController.dispose();
-    _guardianController.dispose();
-    _streetController.dispose();
+    _addressController.dispose();
     _barangayController.dispose();
-    _municipalityController.dispose();
-    _provinceController.dispose();
-    _heightController.dispose();
-    _weightController.dispose();
-    _bmiController.dispose();
-    _allergiesController.dispose();
-    _immunizationStatusController.dispose();
-    _familyMedicalHistoryController.dispose();
-    _pastMedicalHistoryController.dispose();
-    _currentMedicationsController.dispose();
-    _chronicConditionsController.dispose();
-    _chiefComplaintController.dispose();
-    _currentSymptomsController.dispose();
-    _bodyTempController.dispose();
-    _bpSystolicController.dispose();
-    _bpDiastolicController.dispose();
-    _heartRateController.dispose();
-    _respiratoryRateController.dispose();
-    _oxygenSaturationController.dispose();
-    _disabilityController.dispose();
-    _substanceUseController.dispose();
-    _lastCheckupController.dispose();
-    _nextCheckupController.dispose();
-    _emergencyNameController.dispose();
+    _householdIdController.dispose();
+    _contactNumberController.dispose();
+    _guardianController.dispose();
+    _emergencyContactController.dispose();
     _emergencyRelationshipController.dispose();
-    _emergencyPhoneController.dispose();
-    _emergencyAddressController.dispose();
-    _dietaryRestrictionsController.dispose();
-    _numberOfComorbiditiesController.dispose();
-    _frailtyIndexController.dispose();
-    _morbidityNotesController.dispose();
-    _insuranceProviderController.dispose();
-    _insuranceNumberController.dispose();
-    _insuranceExpiryController.dispose();
-    _monthlyIncomeController.dispose();
-    _additionalInfoController.dispose();
-    _transportationController.dispose();
+    _emergencyContactNumberController.dispose();
+    _medicalHistoryController.dispose();
+    _allergiesController.dispose();
     _registrationDateController.dispose();
     _registeredByController.dispose();
-    _additionalNotesController.dispose();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Dialog.fullscreen(
-      child: Scaffold(
-        backgroundColor: _darkDeepTeal,
-        appBar: AppBar(
-          backgroundColor: AppDesign.surface,
-          title: const Text(
-            'Add New Patient',
-            style: TextStyle(
-              color: AppDesign.ink,
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
-            ),
-          ),
-          leading: IconButton(
-            icon: const Icon(Icons.close_rounded, color: AppDesign.ink),
-            onPressed: () => _showExitConfirmation(),
-          ),
-          actions: [
-            TextButton.icon(
-              icon: const Icon(Icons.save_outlined, color: AppDesign.blue),
-              label: const Text(
-                'Save',
-                style: TextStyle(
-                  color: AppDesign.blue,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              onPressed: _savePatient,
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            _buildProgressIndicator(),
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  onPageChanged: (page) {
-                    setState(() {
-                      _currentPage = page;
-                    });
-                  },
-                  children: [
-                    // Wrapped with _KeepAlivePage so every page's
-                    // TextFormFields stay registered with _formKey's Form
-                    // even after scrolling off-screen; otherwise PageView
-                    // disposes off-screen pages and validate() would skip
-                    // required fields that aren't on the current page.
-                    _KeepAlivePage(child: _buildPersonalDetailsPage()),
-                    _KeepAlivePage(child: _buildContactInformationPage()),
-                    _KeepAlivePage(child: _buildMedicalDetailsPage()),
-                    _KeepAlivePage(child: _buildVitalSignsPage()),
-                    _KeepAlivePage(child: _buildEmergencyContactPage()),
-                    _KeepAlivePage(child: _buildLifestyleHabitsPage()),
-                    _KeepAlivePage(child: _buildMorbidityAssessmentPage()),
-                    _KeepAlivePage(child: _buildInsuranceCoveragePage()),
-                    _KeepAlivePage(child: _buildAdditionalDetailsPage()),
-                    _KeepAlivePage(child: _buildConsentAndRegistrationPage()),
-                  ],
-                ),
-              ),
-            ),
-            _buildNavigationButtons(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressIndicator() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-      color: AppDesign.surface,
-      child: Column(
-        children: [
-          Row(
-            children: List.generate(_totalPages, (index) {
-              return Expanded(
-                child: Container(
-                  height: 4,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  decoration: BoxDecoration(
-                    color: index <= _currentPage
-                        ? _primaryAqua
-                        : AppDesign.borderStrong,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Step ${_currentPage + 1} of $_totalPages: ${_getPageTitle()}',
-            style: TextStyle(
-              color: AppDesign.muted,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getPageTitle() {
-    switch (_currentPage) {
-      case 0:
-        return 'Personal Details';
-      case 1:
-        return 'Contact Information';
-      case 2:
-        return 'Medical Details';
-      case 3:
-        return 'Vital Signs';
-      case 4:
-        return 'Emergency Contact';
-      case 5:
-        return 'Lifestyle & Habits';
-      case 6:
-        return 'Morbidity Assessment';
-      case 7:
-        return 'Insurance & Coverage';
-      case 8:
-        return 'Additional Details';
-      case 9:
-        return 'Consent & Registration';
-      default:
-        return '';
-    }
-  }
-
-  Widget _buildNavigationButtons() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-      decoration: BoxDecoration(
-        color: AppDesign.surface,
-        boxShadow: [
-          BoxShadow(
-            color: AppDesign.navy.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          if (_currentPage > 0)
-            Expanded(
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.arrow_back),
-                label: const Text('Previous'),
-                onPressed: () {
-                  _pageController.previousPage(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppDesign.navy,
-                  side: const BorderSide(color: AppDesign.borderStrong),
-                  minimumSize: const Size(0, 44),
-                  padding: const EdgeInsets.symmetric(vertical: 11),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-          if (_currentPage > 0) const SizedBox(width: 16),
-          Expanded(
-            flex: 2,
-            child: ElevatedButton.icon(
-              icon: Icon(
-                _currentPage < _totalPages - 1
-                    ? Icons.arrow_forward
-                    : Icons.check,
-              ),
-              label: Text(_currentPage < _totalPages - 1 ? 'Next' : 'Complete'),
-              onPressed: () {
-                if (_currentPage < _totalPages - 1) {
-                  _pageController.nextPage(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                } else {
-                  _savePatient();
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _primaryAqua,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(0, 44),
-                padding: const EdgeInsets.symmetric(vertical: 11),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 1: Personal Details
-  Widget _buildPersonalDetailsPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Personal Details'),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'First Name',
-            _firstNameController,
-            required: true,
-            hint: 'Enter first name',
-            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-          ),
-          _buildTextField(
-            'Surname',
-            _surnameController,
-            required: true,
-            hint: 'Enter surname/last name',
-            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-          ),
-          _buildTextField(
-            'Mothers Maiden Name',
-            _mothersMaidenNameController,
-            hint: 'Enter mother\'s maiden name',
-          ),
-          _buildDateField('Date of Birth', _dobController, required: true),
-          _buildTextField(
-            'Age',
-            _ageController,
-            keyboardType: TextInputType.number,
-            hint: 'e.g., 25',
-          ),
-          _buildTextField(
-            'Place of Birth',
-            _placeOfBirthController,
-            hint: 'City/Municipality of birth',
-          ),
-          _buildTextField(
-            'Nationality',
-            _nationalityController,
-            hint: 'e.g., Filipino',
-          ),
-          _buildDropdownField(
-            'Civil Status',
-            _civilStatus,
-            ['Single', 'Married', 'Widowed', 'Separated', 'Divorced'],
-            (value) => setState(() => _civilStatus = value!),
-          ),
-          _buildDropdownField('Gender', _gender, [
-            'Male',
-            'Female',
-            'Other',
-          ], (value) => setState(() => _gender = value!)),
-          _buildTextField(
-            'Religion',
-            _religionController,
-            hint: 'e.g., Catholic, Islam, Protestant',
-          ),
-          _buildTextField(
-            'Occupation',
-            _occupationController,
-            hint: 'Current occupation or job title',
-          ),
-          _buildDropdownField(
-            'Educational Attainment',
-            _educationalAttainment,
-            [
-              'Elementary',
-              'High School',
-              'College',
-              'Vocational',
-              'Graduate',
-              'Post-Graduate',
-            ],
-            (value) => setState(() => _educationalAttainment = value!),
-          ),
-          _buildDropdownField(
-            'Employee Status',
-            _employeeStatus,
-            ['Employed', 'Unemployed', 'Self-Employed', 'Retired', 'Student'],
-            (value) => setState(() => _employeeStatus = value!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 2: Contact Information
-  Widget _buildContactInformationPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Contact Information'),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Phone Number',
-            _phoneController,
-            keyboardType: TextInputType.phone,
-            required: true,
-            hint: '0912-345-6789',
-            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-          ),
-          _buildTextField(
-            'Email Address',
-            _emailController,
-            keyboardType: TextInputType.emailAddress,
-            hint: 'example@email.com',
-          ),
-          _buildTextField(
-            'Alternative Phone Number',
-            _altPhoneController,
-            keyboardType: TextInputType.phone,
-            hint: 'Optional contact number',
-          ),
-          _buildTextField(
-            'Guardian',
-            _guardianController,
-            hint: 'Guardian or next of kin name',
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Address',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppDesign.navy,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _buildTextField(
-            'Street of Address',
-            _streetController,
-            hint: 'House number, street name',
-          ),
-          _buildTextField(
-            'Barangay',
-            _barangayController,
-            required: true,
-            hint: 'Barangay name',
-          ),
-          _buildTextField(
-            'Municipality',
-            _municipalityController,
-            required: true,
-            hint: 'City/Municipality',
-          ),
-          _buildTextField(
-            'Province',
-            _provinceController,
-            required: true,
-            hint: 'Province name',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 3: Medical Details
-  Widget _buildMedicalDetailsPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Medical Details'),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Height (cm)',
-            _heightController,
-            keyboardType: TextInputType.number,
-            hint: 'e.g., 165',
-          ),
-          _buildTextField(
-            'Weight (kg)',
-            _weightController,
-            keyboardType: TextInputType.number,
-            hint: 'e.g., 60',
-          ),
-          _buildTextField(
-            'BMI',
-            _bmiController,
-            keyboardType: TextInputType.number,
-            hint: 'Body Mass Index (calculated)',
-          ),
-          _buildDropdownField('Blood Type', _bloodType, [
-            'A+',
-            'A-',
-            'B+',
-            'B-',
-            'AB+',
-            'AB-',
-            'O+',
-            'O-',
-            'Unknown',
-          ], (value) => setState(() => _bloodType = value!)),
-          _buildTextField(
-            'Allergies',
-            _allergiesController,
-            maxLines: 2,
-            hint: 'List any known allergies (food, drugs, etc.)',
-          ),
-          _buildTextField(
-            'Immunization Status',
-            _immunizationStatusController,
-            maxLines: 2,
-            hint: 'Vaccination history and status',
-          ),
-          _buildTextField(
-            'Family Medical History',
-            _familyMedicalHistoryController,
-            maxLines: 3,
-            hint: 'Hereditary conditions, family health conditions',
-          ),
-          _buildTextField(
-            'Past Medical History',
-            _pastMedicalHistoryController,
-            maxLines: 3,
-            hint: 'Previous illnesses, surgeries, hospitalizations',
-          ),
-          _buildTextField(
-            'Current Medications',
-            _currentMedicationsController,
-            maxLines: 2,
-            hint: 'Medications currently taking with dosage',
-          ),
-          _buildTextField(
-            'Chronic Conditions',
-            _chronicConditionsController,
-            maxLines: 2,
-            hint: 'Long-term health conditions (e.g., diabetes, hypertension)',
-          ),
-          _buildTextField(
-            'Chief Complaint',
-            _chiefComplaintController,
-            maxLines: 2,
-            hint: 'Primary reason for visit',
-          ),
-          _buildTextField(
-            'Current Symptoms',
-            _currentSymptomsController,
-            maxLines: 3,
-            hint: 'Current symptoms being experienced',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 4: Vital Signs
-  Widget _buildVitalSignsPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Vital Signs'),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: _buildTextField(
-                  'Body Temperature',
-                  _bodyTempController,
-                  keyboardType: TextInputType.number,
-                  hint: 'e.g., 36.5 or 98.6',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildDropdownField('Unit', _tempUnit, [
-                  '°C',
-                  '°F',
-                ], (value) => setState(() => _tempUnit = value!)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Blood Pressure',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppDesign.ink,
-            ),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: _buildTextField(
-                  'Systolic',
-                  _bpSystolicController,
-                  keyboardType: TextInputType.number,
-                  hint: 'e.g., 120',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildTextField(
-                  'Diastolic',
-                  _bpDiastolicController,
-                  keyboardType: TextInputType.number,
-                  hint: 'e.g., 80',
-                ),
-              ),
-            ],
-          ),
-          _buildTextField(
-            'Heart Rate (Pulse)',
-            _heartRateController,
-            keyboardType: TextInputType.number,
-            hint: 'beats per minute (e.g., 72)',
-          ),
-          _buildTextField(
-            'Respiratory Rate',
-            _respiratoryRateController,
-            keyboardType: TextInputType.number,
-            hint: 'breaths per minute (e.g., 16)',
-          ),
-          _buildTextField(
-            'Oxygen Saturation (SpO2)',
-            _oxygenSaturationController,
-            keyboardType: TextInputType.number,
-            hint: 'percentage (e.g., 98)',
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Disability/Impairment',
-            _disabilityController,
-            maxLines: 2,
-            hint: 'Any physical or cognitive disabilities',
-          ),
-          _buildDropdownField(
-            'Mental Health Status',
-            _mentalHealthStatus,
-            ['Excellent', 'Good', 'Fair', 'Poor', 'Critical'],
-            (value) => setState(() => _mentalHealthStatus = value!),
-          ),
-          _buildTextField(
-            'Substance Use History',
-            _substanceUseController,
-            maxLines: 2,
-            hint: 'Tobacco, alcohol, or drug use history',
-          ),
-          _buildDateField('Last Medical Check Up', _lastCheckupController),
-          _buildDateField('Recommended Next Check Up', _nextCheckupController),
-        ],
-      ),
-    );
-  }
-
-  // Page 5: Emergency Contact Details
-  Widget _buildEmergencyContactPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Emergency Contact Details'),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Emergency Contact Name',
-            _emergencyNameController,
-            required: true,
-            hint: 'Full name of emergency contact',
-            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-          ),
-          _buildTextField(
-            'Relationship',
-            _emergencyRelationshipController,
-            required: true,
-            hint: 'e.g., Spouse, Parent, Sibling',
-          ),
-          _buildTextField(
-            'Emergency Contact Phone',
-            _emergencyPhoneController,
-            keyboardType: TextInputType.phone,
-            required: true,
-            hint: '0912-345-6789',
-          ),
-          _buildTextField(
-            'Emergency Contact Address',
-            _emergencyAddressController,
-            maxLines: 2,
-            hint: 'Complete address of emergency contact',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 6: Lifestyle and Habits
-  Widget _buildLifestyleHabitsPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Lifestyle and Habits'),
-          const SizedBox(height: 16),
-          _buildDropdownField(
-            'Smoking Status',
-            _smokingStatus,
-            [
-              'Never',
-              'Former',
-              'Current - Light',
-              'Current - Moderate',
-              'Current - Heavy',
-            ],
-            (value) => setState(() => _smokingStatus = value!),
-          ),
-          _buildDropdownField(
-            'Exercise Frequency',
-            _exerciseFrequency,
-            ['Daily', '3-5 times/week', '1-2 times/week', 'Rarely', 'Never'],
-            (value) => setState(() => _exerciseFrequency = value!),
-          ),
-          _buildDropdownField(
-            'Alcohol Consumption',
-            _alcoholConsumption,
-            ['Never', 'Rarely', 'Socially', 'Moderate', 'Heavy'],
-            (value) => setState(() => _alcoholConsumption = value!),
-          ),
-          _buildTextField(
-            'Dietary Restrictions',
-            _dietaryRestrictionsController,
-            maxLines: 2,
-            hint: 'Vegetarian, allergies, religious restrictions, etc.',
-          ),
-          _buildDropdownField(
-            'Mental Health Status',
-            _mentalHealthStatusLifestyle,
-            ['Excellent', 'Good', 'Fair', 'Poor'],
-            (value) => setState(() => _mentalHealthStatusLifestyle = value!),
-          ),
-          _buildDropdownField(
-            'Sleep Quality',
-            _sleepQuality,
-            ['Excellent', 'Good', 'Fair', 'Poor', 'Very Poor'],
-            (value) => setState(() => _sleepQuality = value!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 7: Morbidity Assessment
-  Widget _buildMorbidityAssessmentPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Morbidity Assessment'),
-          const SizedBox(height: 16),
-          _buildDropdownField(
-            'Morbidity Risk Level',
-            _morbidityRiskLevel,
-            ['Low', 'Moderate', 'High', 'Very High'],
-            (value) => setState(() => _morbidityRiskLevel = value!),
-            required: true,
-          ),
-          _buildTextField(
-            'Number of Comorbidities',
-            _numberOfComorbiditiesController,
-            keyboardType: TextInputType.number,
-            hint: 'e.g., 2',
-          ),
-          _buildDropdownField(
-            'Functional Status',
-            _functionalStatus,
-            ['Independent', 'Partially Dependent', 'Fully Dependent'],
-            (value) => setState(() => _functionalStatus = value!),
-          ),
-          _buildDropdownField(
-            'Mobility Status',
-            _mobilityStatus,
-            [
-              'Fully Mobile',
-              'Assisted Walking',
-              'Wheelchair Bound',
-              'Bedridden',
-            ],
-            (value) => setState(() => _mobilityStatus = value!),
-          ),
-          _buildTextField(
-            'Frailty Index Score',
-            _frailtyIndexController,
-            keyboardType: TextInputType.number,
-            hint: 'e.g., 0.25 (0.0 = Robust, 1.0 = Severely Frail)',
-          ),
-          _buildDropdownField(
-            'Polypharmacy Risk',
-            _polypharmacyRisk,
-            ['Low', 'Moderate', 'High'],
-            (value) => setState(() => _polypharmacyRisk = value!),
-          ),
-          _buildDropdownField(
-            'Preventive Care Compliance',
-            _preventiveCareCompliance,
-            ['Full Compliance', 'Partial Compliance', 'Non-Compliant'],
-            (value) => setState(() => _preventiveCareCompliance = value!),
-          ),
-          _buildDropdownField(
-            'Health Literacy Level',
-            _healthLiteracyLevel,
-            ['High', 'Moderate', 'Low'],
-            (value) => setState(() => _healthLiteracyLevel = value!),
-          ),
-          _buildDropdownField(
-            'Social Support Level',
-            _socialSupportLevel,
-            ['Strong', 'Moderate', 'Weak', 'None'],
-            (value) => setState(() => _socialSupportLevel = value!),
-          ),
-          _buildDropdownField(
-            'Economic Status Impact',
-            _economicStatusImpact,
-            ['Minimal', 'Moderate', 'Significant', 'Severe'],
-            (value) => setState(() => _economicStatusImpact = value!),
-          ),
-          _buildTextField(
-            'Morbidity Assessment Notes',
-            _morbidityNotesController,
-            maxLines: 4,
-            hint:
-                'Include specific concerns, interventions needed, and follow-up requirements',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 8: Insurance and Coverage
-  Widget _buildInsuranceCoveragePage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Insurance and Coverage'),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Insurance Provider',
-            _insuranceProviderController,
-            hint: 'e.g., PhilHealth, Private Insurance',
-          ),
-          _buildTextField(
-            'Insurance/Membership Number',
-            _insuranceNumberController,
-            hint: 'Policy or membership number',
-          ),
-          _buildDateField('Insurance Expiry Date', _insuranceExpiryController),
-          _buildTextField(
-            'Monthly Income Level',
-            _monthlyIncomeController,
-            keyboardType: TextInputType.number,
-            hint: 'Monthly income in PHP',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 9: Additional Details
-  Widget _buildAdditionalDetailsPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Additional Details'),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Additional Information',
-            _additionalInfoController,
-            maxLines: 3,
-            hint: 'Any other relevant information',
-          ),
-          _buildDropdownField(
-            'Education Level',
-            _educationLevel,
-            [
-              'Elementary',
-              'High School',
-              'Vocational',
-              'College',
-              'Graduate',
-              'Post-Graduate',
-            ],
-            (value) => setState(() => _educationLevel = value!),
-          ),
-          _buildDropdownField(
-            'Preferred Language',
-            _preferredLanguage,
-            [
-              'Filipino',
-              'English',
-              'Cebuano',
-              'Ilocano',
-              'Hiligaynon',
-              'Other',
-            ],
-            (value) => setState(() => _preferredLanguage = value!),
-          ),
-          _buildDropdownField(
-            'How did you hear about us?',
-            _referralSource,
-            [
-              'Walk-in',
-              'Referral',
-              'Social Media',
-              'Community Event',
-              'Website',
-              'Other',
-            ],
-            (value) => setState(() => _referralSource = value!),
-          ),
-          _buildTextField(
-            'Transportation Method',
-            _transportationController,
-            hint: 'e.g., Tricycle, Jeepney, Private vehicle',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 10: Consent and Registration
-  Widget _buildConsentAndRegistrationPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Consent and Privacy'),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _darkDeepTeal,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _lightOffWhite.withValues(alpha: 0.3)),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _consentGiven,
-                      onChanged: (value) =>
-                          setState(() => _consentGiven = value!),
-                      activeColor: _primaryAqua,
-                    ),
-                    Expanded(
-                      child: Text(
-                        'I consent to the collection, storage, and processing of my personal and medical information for healthcare purposes in accordance with data privacy laws.',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppDesign.ink,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          _buildSectionTitle('Registration Details'),
-          const SizedBox(height: 16),
-          _buildDateField(
-            'Registration Date',
-            _registrationDateController,
-            required: true,
-          ),
-          _buildTextField(
-            'Registered By',
-            _registeredByController,
-            hint: 'Health Worker Name',
-            required: true,
-            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-          ),
-          _buildTextField(
-            'Additional Notes',
-            _additionalNotesController,
-            maxLines: 3,
-            hint: 'Any additional notes or remarks',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Helper Methods
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w800,
-        color: AppDesign.navy,
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-    String label,
-    TextEditingController controller, {
-    bool required = false,
-    int maxLines = 1,
-    TextInputType keyboardType = TextInputType.text,
-    String? hint,
-    FormFieldValidator<String>? validator,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppDesign.ink,
-                ),
-              ),
-              if (required)
-                const Text(
-                  ' *',
-                  style: TextStyle(color: Colors.red, fontSize: 14),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: controller,
-            maxLines: maxLines,
-            keyboardType: keyboardType,
-            style: const TextStyle(color: AppDesign.ink, fontSize: 14),
-            validator: validator,
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: const TextStyle(color: AppDesign.subtle),
-              filled: true,
-              fillColor: AppDesign.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppDesign.borderStrong),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppDesign.borderStrong),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _primaryAqua, width: 2),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDropdownField(
-    String label,
-    String value,
-    List<String> items,
-    ValueChanged<String?> onChanged, {
-    bool required = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppDesign.ink,
-                ),
-              ),
-              if (required)
-                const Text(
-                  ' *',
-                  style: TextStyle(color: Colors.red, fontSize: 14),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: AppDesign.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: const Border.fromBorderSide(
-                BorderSide(color: AppDesign.borderStrong),
-              ),
-            ),
-            child: DropdownButtonFormField<String>(
-              initialValue: value,
-              style: const TextStyle(color: AppDesign.ink, fontSize: 14),
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                filled: false,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-              ),
-              dropdownColor: AppDesign.surface,
-              items: items.map((item) {
-                return DropdownMenuItem(
-                  value: item,
-                  child: Text(
-                    item,
-                    style: const TextStyle(color: AppDesign.ink),
-                  ),
-                );
-              }).toList(),
-              onChanged: onChanged,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDateField(
-    String label,
-    TextEditingController controller, {
-    bool required = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppDesign.ink,
-                ),
-              ),
-              if (required)
-                const Text(
-                  ' *',
-                  style: TextStyle(color: Colors.red, fontSize: 14),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: controller,
-            readOnly: true,
-            style: const TextStyle(color: AppDesign.ink, fontSize: 14),
-            decoration: InputDecoration(
-              hintText: 'mm/dd/yyyy',
-              hintStyle: const TextStyle(color: AppDesign.subtle),
-              filled: true,
-              fillColor: AppDesign.surface,
-              suffixIcon: Icon(
-                Icons.calendar_today_outlined,
-                color: AppDesign.muted,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppDesign.borderStrong),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppDesign.borderStrong),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _primaryAqua, width: 2),
-              ),
-            ),
-            onTap: () async {
-              final date = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now(),
-                firstDate: DateTime(1900),
-                lastDate: DateTime(2100),
-              );
-              if (date != null) {
-                controller.text =
-                    '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showExitConfirmation() {
-    showDialog(
+  Future<void> _pickDateOfBirth() async {
+    final now = DateTime.now();
+    final selected = await showDatePicker(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppDesign.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Discard Changes?',
-          style: TextStyle(color: AppDesign.ink),
+      initialDate: _dateOfBirth ?? DateTime(now.year - 20),
+      firstDate: DateTime(1900),
+      lastDate: now,
+    );
+    if (selected == null) return;
+    final age = _calculateAge(selected, now);
+    setState(() {
+      _dateOfBirth = selected;
+      _dateOfBirthController.text = '${selected.year}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')}';
+      _ageController.text = age.toString();
+    });
+  }
+
+  int _calculateAge(DateTime birthDate, DateTime today) {
+    var age = today.year - birthDate.year;
+    if (today.month < birthDate.month || (today.month == birthDate.month && today.day < birthDate.day)) {
+      age--;
+    }
+    return age < 0 ? 0 : age;
+  }
+
+  Widget _buildSectionCard({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _lightOffWhite.withValues(alpha: 0.3),
+          width: 1.5,
         ),
-        content: const Text(
-          'Are you sure you want to exit? All unsaved data will be lost.',
-          style: TextStyle(color: AppDesign.muted),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: _primaryAqua)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _lightOffWhite.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: _lightOffWhite, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: _lightOffWhite,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Close modal
-            },
-            child: const Text('Discard', style: TextStyle(color: Colors.red)),
-          ),
+          const SizedBox(height: 16),
+          child,
         ],
       ),
     );
   }
 
-  void _savePatient() async {
+  InputDecoration _buildInputDecoration(String label, {String? hintText, Widget? suffixIcon}) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hintText,
+      labelStyle: const TextStyle(color: _lightOffWhite),
+      hintStyle: TextStyle(color: _lightOffWhite.withValues(alpha: 0.5)),
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _primaryAqua, width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.transparent,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    );
+  }
+
+  Future<void> _savePatient() async {
     if (!_consentGiven) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please provide consent to continue'),
+          content: Text('Please confirm patient consent and data privacy compliance.'),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
-    // Validate required fields
-    if (!(_formKey.currentState?.validate() ?? false)) {
+    if (!(_formKey.currentState?.validate() ?? false) || _isSaving) {
       return;
     }
 
+    final firstName = _firstNameController.text.trim();
+    final middleName = _middleNameController.text.trim();
+    final surname = _surnameController.text.trim();
+
+    setState(() => _isSaving = true);
+
     try {
-      // Prepare patient data
-      final patientData = {
-        'firstName': _firstNameController.text,
-        'surname': _surnameController.text,
-        'mothersMaidenName': _mothersMaidenNameController.text,
-        'dateOfBirth': _dobController.text,
-        'age': _ageController.text,
-        'placeOfBirth': _placeOfBirthController.text,
-        'nationality': _nationalityController.text,
-        'civilStatus': _civilStatus,
-        'gender': _gender,
-        'religion': _religionController.text,
-        'occupation': _occupationController.text,
-        'educationalAttainment': _educationalAttainment,
-        'employeeStatus': _employeeStatus,
-        'phoneNumber': _phoneController.text,
-        'emailAddress': _emailController.text,
-        'alternativePhone': _altPhoneController.text,
-        'guardian': _guardianController.text,
-        'street': _streetController.text,
-        'barangay': _barangayController.text,
-        'municipality': _municipalityController.text,
-        'province': _provinceController.text,
-        'height': _heightController.text,
-        'weight': _weightController.text,
-        'bmi': _bmiController.text,
-        'bloodType': _bloodType,
-        'allergies': _allergiesController.text,
-        'immunizationStatus': _immunizationStatusController.text,
-        'familyMedicalHistory': _familyMedicalHistoryController.text,
-        'pastMedicalHistory': _pastMedicalHistoryController.text,
-        'currentMedications': _currentMedicationsController.text,
-        'chronicConditions': _chronicConditionsController.text,
-        'chiefComplaint': _chiefComplaintController.text,
-        'currentSymptoms': _currentSymptomsController.text,
-        'bodyTemperature': _bodyTempController.text,
-        'temperatureUnit': _tempUnit,
-        'bpSystolic': _bpSystolicController.text,
-        'bpDiastolic': _bpDiastolicController.text,
-        'heartRate': _heartRateController.text,
-        'respiratoryRate': _respiratoryRateController.text,
-        'oxygenSaturation': _oxygenSaturationController.text,
-        'disability': _disabilityController.text,
-        'mentalHealthStatus': _mentalHealthStatus,
-        'substanceUseHistory': _substanceUseController.text,
-        'lastCheckup': _lastCheckupController.text,
-        'nextCheckup': _nextCheckupController.text,
-        'emergencyContactName': _emergencyNameController.text,
-        'emergencyRelationship': _emergencyRelationshipController.text,
-        'emergencyContactPhone': _emergencyPhoneController.text,
-        'emergencyContactAddress': _emergencyAddressController.text,
-        'smokingStatus': _smokingStatus,
-        'exerciseFrequency': _exerciseFrequency,
-        'alcoholConsumption': _alcoholConsumption,
-        'dietaryRestrictions': _dietaryRestrictionsController.text,
-        'mentalHealthStatusLifestyle': _mentalHealthStatusLifestyle,
-        'sleepQuality': _sleepQuality,
-        'morbidityRiskLevel': _morbidityRiskLevel,
-        'numberOfComorbidities': _numberOfComorbiditiesController.text,
-        'functionalStatus': _functionalStatus,
-        'mobilityStatus': _mobilityStatus,
-        'frailtyIndex': _frailtyIndexController.text,
-        'polypharmacyRisk': _polypharmacyRisk,
-        'preventiveCareCompliance': _preventiveCareCompliance,
-        'healthLiteracyLevel': _healthLiteracyLevel,
-        'socialSupportLevel': _socialSupportLevel,
-        'economicStatusImpact': _economicStatusImpact,
-        'morbidityNotes': _morbidityNotesController.text,
-        'insuranceProvider': _insuranceProviderController.text,
-        'insuranceNumber': _insuranceNumberController.text,
-        'insuranceExpiry': _insuranceExpiryController.text,
-        'monthlyIncome': _monthlyIncomeController.text,
-        'additionalInfo': _additionalInfoController.text,
-        'educationLevel': _educationLevel,
-        'preferredLanguage': _preferredLanguage,
-        'referralSource': _referralSource,
-        'transportation': _transportationController.text,
+      final duplicates = await _patientHistoryService.findDuplicateCandidates(
+        firstName: firstName,
+        surname: surname,
+        dateOfBirth: _dateOfBirthController.text.trim(),
+        phoneNumber: _contactNumberController.text.trim(),
+      );
+
+      if (!mounted) return;
+      if (duplicates.isNotEmpty) {
+        final proceed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: _darkDeepTeal,
+            title: const Text(
+              'Patient May Already Be Registered',
+              style: TextStyle(color: _lightOffWhite, fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              'A matching patient record already exists. Are you sure you want to register this patient as a new separate entry?',
+              style: TextStyle(color: _mutedCoolGray),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel', style: TextStyle(color: _mutedCoolGray)),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(backgroundColor: _primaryAqua, foregroundColor: Colors.white),
+                child: const Text('Proceed Anyway'),
+              ),
+            ],
+          ),
+        );
+        if (proceed != true) {
+          setState(() => _isSaving = false);
+          return;
+        }
+      }
+
+      final fullName = [firstName, middleName, surname].where((s) => s.isNotEmpty).join(' ');
+      final address = _addressController.text.trim();
+      final contact = _contactNumberController.text.trim();
+      final emergencyContact = _emergencyContactController.text.trim();
+      final emergencyContactNumber = _emergencyContactNumberController.text.trim();
+      final medicalHistory = _medicalHistoryController.text.trim();
+      String? currentUserName;
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        currentUserName = user?.displayName ?? user?.email;
+      } catch (_) {}
+      final registeredBy = _registeredByController.text.trim().isNotEmpty
+          ? _registeredByController.text.trim()
+          : (currentUserName ?? 'BHW');
+
+      final patientData = <String, dynamic>{
+        'id': _patientId,
+        'patientId': _patientId,
+        'fullName': fullName,
+        'firstName': firstName,
+        'middleName': middleName,
+        'surname': surname,
+        'dateOfBirth': _dateOfBirthController.text.trim(),
+        'dob': _dateOfBirthController.text.trim(),
+        'age': _ageController.text.trim(),
+        'gender': _sex,
+        'sex': _sex,
+        'address': address,
+        'street': address,
+        'barangay': _barangayController.text.trim(),
+        'householdId': _householdIdController.text.trim(),
+        'phoneNumber': contact,
+        'contactNumber': contact,
+        'phone': contact,
+        'guardian': _guardianController.text.trim(),
+        'parentName': _guardianController.text.trim(),
+        'emergencyContactName': emergencyContact,
+        'emergencyContact': emergencyContact,
+        'emergencyRelationship': _emergencyRelationshipController.text.trim(),
+        'emergencyContactPhone': emergencyContactNumber,
+        'emergencyContactNumber': emergencyContactNumber,
+        'medicalHistory': medicalHistory,
+        'pastMedicalHistory': medicalHistory,
+        'allergies': _allergiesController.text.trim(),
+        'registrationDate': _registrationDateController.text.trim(),
+        'registeredBy': registeredBy,
         'consentGiven': _consentGiven.toString(),
-        'registrationDate': _registrationDateController.text,
-        'registeredBy': _registeredByController.text,
-        'additionalNotes': _additionalNotesController.text,
         'status': 'Active',
       };
 
-      // Save to database
       final dbHelper = PatientDatabaseHelper.instance;
       await dbHelper.insertRecord(patientData);
 
-      final patientName =
-          '${_firstNameController.text.trim()} ${_surnameController.text.trim()}'
-              .trim();
-      if (!context.mounted) return;
-
-      // The dialog route is not a descendant of PatientRecordPage, so an
-      // ancestor-state lookup cannot reliably reach the page that owns the
-      // patient list. Notify it through the explicit callback instead.
-      Navigator.pop(context);
-      await widget.onSaved?.call(patientName);
+      if (!mounted) return;
+      Navigator.pop(context, true);
+      await widget.onSaved?.call(fullName);
     } catch (e) {
-      print('Error saving patient: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving patient: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving patient: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isSaving = false);
+      }
     }
   }
-}
-
-// Keeps a PageView page's element tree alive when scrolled off-screen so its
-// TextFormFields stay registered with the modal's shared Form/validate().
-class _KeepAlivePage extends StatefulWidget {
-  const _KeepAlivePage({required this.child});
-
-  final Widget child;
-
-  @override
-  State<_KeepAlivePage> createState() => _KeepAlivePageState();
-}
-
-class _KeepAlivePageState extends State<_KeepAlivePage>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-    return widget.child;
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.95,
+      minChildSize: 0.7,
+      maxChildSize: 0.98,
+      builder: (context, scrollController) => Container(
+        decoration: BoxDecoration(
+          color: _darkDeepTeal,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            controller: scrollController,
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header with Close and Export buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Add New Patient',
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: _lightOffWhite,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'One-time canonical patient registration used across all health modules',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: _lightOffWhite.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Print / Export Patient Form PDF',
+                        icon: const Icon(
+                          Icons.picture_as_pdf_outlined,
+                          color: _primaryAqua,
+                          size: 22,
+                        ),
+                        onPressed: () {
+                          ClinicalFormPdfService.showExportDialog(
+                            context,
+                            formType: ClinicalFormType.patientRegistration,
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: _lightOffWhite.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.close, color: _lightOffWhite, size: 24),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Auto-generated Patient ID Banner
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _primaryAqua.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _primaryAqua.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: _primaryAqua.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.badge_outlined, color: _primaryAqua, size: 24),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Patient ID (Auto-generated)',
+                                style: TextStyle(
+                                  color: _mutedCoolGray,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              SelectableText(
+                                _patientId,
+                                style: const TextStyle(
+                                  color: _lightOffWhite,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Section 1: Patient Identity
+                  _buildSectionCard(
+                    context: context,
+                    title: 'Patient Identity',
+                    icon: Icons.person_outline_rounded,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _firstNameController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('First Name *', hintText: 'Given name'),
+                                validator: (val) => val?.trim().isEmpty == true ? 'First Name is required' : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _surnameController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Surname *', hintText: 'Family name'),
+                                validator: (val) => val?.trim().isEmpty == true ? 'Surname is required' : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _middleNameController,
+                          style: const TextStyle(color: _lightOffWhite),
+                          decoration: _buildInputDecoration('Middle Name (Optional)', hintText: 'Middle name'),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: TextFormField(
+                                controller: _dateOfBirthController,
+                                readOnly: true,
+                                onTap: _pickDateOfBirth,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration(
+                                  'Date of Birth *',
+                                  hintText: 'YYYY-MM-DD',
+                                  suffixIcon: const Icon(Icons.calendar_today_outlined, color: _primaryAqua),
+                                ),
+                                validator: (val) => val?.trim().isEmpty == true ? 'Date of Birth is required' : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 1,
+                              child: TextFormField(
+                                controller: _ageController,
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Age', hintText: 'Auto / manual'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        DropdownButtonFormField<String>(
+                          initialValue: _sex,
+                          dropdownColor: _darkDeepTeal,
+                          style: const TextStyle(color: _lightOffWhite),
+                          decoration: _buildInputDecoration('Sex / Gender *'),
+                          items: const ['Female', 'Male', 'Other']
+                              .map((v) => DropdownMenuItem(value: v, child: Text(v, style: const TextStyle(color: _lightOffWhite))))
+                              .toList(growable: false),
+                          onChanged: (v) => setState(() => _sex = v ?? _sex),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Section 2: Address and Contact Information
+                  _buildSectionCard(
+                    context: context,
+                    title: 'Address & Contact Information',
+                    icon: Icons.home_outlined,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextFormField(
+                          controller: _addressController,
+                          maxLines: 2,
+                          style: const TextStyle(color: _lightOffWhite),
+                          decoration: _buildInputDecoration('Address *', hintText: 'House number, street, or purok'),
+                          validator: (val) => val?.trim().isEmpty == true ? 'Address is required' : null,
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _barangayController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Barangay *', hintText: 'Assigned barangay'),
+                                validator: (val) => val?.trim().isEmpty == true ? 'Barangay is required' : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _householdIdController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Household ID (Optional)', hintText: 'Family record #'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _contactNumberController,
+                                keyboardType: TextInputType.phone,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Phone Number', hintText: '09XXXXXXXXX'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _guardianController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Parent/Guardian (Optional)', hintText: 'For dependents'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Section 3: Emergency Contact
+                  _buildSectionCard(
+                    context: context,
+                    title: 'Emergency Contact',
+                    icon: Icons.contact_phone_outlined,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _emergencyContactController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Emergency Contact Name *', hintText: 'Full name'),
+                                validator: (val) => val?.trim().isEmpty == true ? 'Emergency Contact Name is required' : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _emergencyRelationshipController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Relationship', hintText: 'Parent, spouse, sibling'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _emergencyContactNumberController,
+                          keyboardType: TextInputType.phone,
+                          style: const TextStyle(color: _lightOffWhite),
+                          decoration: _buildInputDecoration('Emergency Contact Number *', hintText: '09XXXXXXXXX'),
+                          validator: (val) => val?.trim().isEmpty == true ? 'Emergency Contact Number is required' : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Section 4: Baseline Health Information
+                  _buildSectionCard(
+                    context: context,
+                    title: 'Baseline Health Information',
+                    icon: Icons.health_and_safety_outlined,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextFormField(
+                          controller: _medicalHistoryController,
+                          maxLines: 3,
+                          style: const TextStyle(color: _lightOffWhite),
+                          decoration: _buildInputDecoration(
+                            'Medical History',
+                            hintText: 'Existing conditions, previous diagnoses, or "None"',
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _allergiesController,
+                          maxLines: 2,
+                          style: const TextStyle(color: _lightOffWhite),
+                          decoration: _buildInputDecoration(
+                            'Allergies (Optional)',
+                            hintText: 'Food, medicine, environmental allergies, or leave blank',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Section 5: Registration Details & Consent
+                  _buildSectionCard(
+                    context: context,
+                    title: 'Registration & Data Consent',
+                    icon: Icons.verified_user_outlined,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _registrationDateController,
+                                readOnly: true,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Registration Date'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _registeredByController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Registered By'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        InkWell(
+                          onTap: () => setState(() => _consentGiven = !_consentGiven),
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              children: [
+                                Checkbox(
+                                  value: _consentGiven,
+                                  activeColor: _primaryAqua,
+                                  onChanged: (val) => setState(() => _consentGiven = val ?? true),
+                                ),
+                                const Expanded(
+                                  child: Text(
+                                    'I confirm patient consent and compliance with data privacy policies.',
+                                    style: TextStyle(color: _lightOffWhite, fontSize: 13),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Service Interoperability Info Banner
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _primaryAqua.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: _primaryAqua.withValues(alpha: 0.24)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.info_outline_rounded, color: _primaryAqua, size: 22),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'After registration, this patient becomes searchable in Check-up, Prenatal, Immunization, Morbidity, Mortality, and Referrals.',
+                            style: TextStyle(color: _lightOffWhite, height: 1.45, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Bottom Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _lightOffWhite,
+                            side: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton.icon(
+                          onPressed: _isSaving ? null : _savePatient,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _primaryAqua,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon: _isSaving
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Icon(Icons.person_add_alt_1_rounded, size: 20),
+                          label: Text(
+                            _isSaving ? 'Registering...' : 'Register Patient',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
 // Edit Patient Modal Widget
 class EditPatientModal extends StatefulWidget {
   final Map<String, dynamic> patient;
-  final VoidCallback onSaved;
+  final VoidCallback? onSaved;
 
   const EditPatientModal({
     super.key,
     required this.patient,
-    required this.onSaved,
+    this.onSaved,
   });
 
   @override
@@ -3598,1581 +2874,664 @@ class EditPatientModal extends StatefulWidget {
 
 class _EditPatientModalState extends State<EditPatientModal> {
   final _formKey = GlobalKey<FormState>();
-  final _pageController = PageController();
-  int _currentPage = 0;
-  final int _totalPages = 10;
 
-  // Color scheme
   static const Color _primaryAqua = AppDesign.blue;
+  static const Color _darkDeepTeal = AppDesign.page;
   static const Color _mutedCoolGray = AppDesign.muted;
+  static const Color _lightOffWhite = AppDesign.ink;
 
-  // Controllers - will be initialized with existing data
-  late TextEditingController _firstNameController;
-  late TextEditingController _surnameController;
-  late TextEditingController _mothersMaidenNameController;
-  late TextEditingController _dobController;
-  late TextEditingController _ageController;
-  late TextEditingController _placeOfBirthController;
-  late TextEditingController _nationalityController;
-  late String _civilStatus;
-  late String _gender;
-  late TextEditingController _religionController;
-  late TextEditingController _occupationController;
-  late String _educationalAttainment;
-  late String _employeeStatus;
+  final _firstNameController = TextEditingController();
+  final _middleNameController = TextEditingController();
+  final _surnameController = TextEditingController();
+  final _dateOfBirthController = TextEditingController();
+  final _ageController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _barangayController = TextEditingController();
+  final _householdIdController = TextEditingController();
+  final _contactNumberController = TextEditingController();
+  final _guardianController = TextEditingController();
+  final _emergencyContactController = TextEditingController();
+  final _emergencyRelationshipController = TextEditingController();
+  final _emergencyContactNumberController = TextEditingController();
+  final _medicalHistoryController = TextEditingController();
+  final _allergiesController = TextEditingController();
 
-  late TextEditingController _phoneController;
-  late TextEditingController _emailController;
-  late TextEditingController _altPhoneController;
-  late TextEditingController _guardianController;
-  late TextEditingController _streetController;
-  late TextEditingController _barangayController;
-  late TextEditingController _municipalityController;
-  late TextEditingController _provinceController;
-
-  late TextEditingController _heightController;
-  late TextEditingController _weightController;
-  late TextEditingController _bmiController;
-  late String _bloodType;
-  late TextEditingController _allergiesController;
-  late TextEditingController _immunizationStatusController;
-  late TextEditingController _familyMedicalHistoryController;
-  late TextEditingController _pastMedicalHistoryController;
-  late TextEditingController _currentMedicationsController;
-  late TextEditingController _chronicConditionsController;
-  late TextEditingController _chiefComplaintController;
-  late TextEditingController _currentSymptomsController;
-
-  late TextEditingController _bodyTempController;
-  late String _tempUnit;
-  late TextEditingController _bpSystolicController;
-  late TextEditingController _bpDiastolicController;
-  late TextEditingController _heartRateController;
-  late TextEditingController _respiratoryRateController;
-  late TextEditingController _oxygenSaturationController;
-
-  late TextEditingController _disabilityController;
-  late String _mentalHealthStatus;
-  late TextEditingController _substanceUseController;
-  late TextEditingController _lastCheckupController;
-  late TextEditingController _nextCheckupController;
-
-  late TextEditingController _emergencyNameController;
-  late TextEditingController _emergencyRelationshipController;
-  late TextEditingController _emergencyPhoneController;
-  late TextEditingController _emergencyAddressController;
-
-  late String _smokingStatus;
-  late String _exerciseFrequency;
-  late String _alcoholConsumption;
-  late TextEditingController _dietaryRestrictionsController;
-  late String _mentalHealthStatusLifestyle;
-  late String _sleepQuality;
-
-  late String _morbidityRiskLevel;
-  late TextEditingController _numberOfComorbiditiesController;
-  late String _functionalStatus;
-  late String _mobilityStatus;
-  late TextEditingController _frailtyIndexController;
-  late String _polypharmacyRisk;
-  late String _preventiveCareCompliance;
-  late String _healthLiteracyLevel;
-  late String _socialSupportLevel;
-  late String _economicStatusImpact;
-  late TextEditingController _morbidityNotesController;
-
-  late TextEditingController _insuranceProviderController;
-  late TextEditingController _insuranceNumberController;
-  late TextEditingController _insuranceExpiryController;
-  late TextEditingController _monthlyIncomeController;
-
-  late TextEditingController _additionalInfoController;
-  late String _educationLevel;
-  late String _preferredLanguage;
-  late String _referralSource;
-  late TextEditingController _transportationController;
-
-  late bool _consentGiven;
-
-  late TextEditingController _registrationDateController;
-  late TextEditingController _registeredByController;
-  late TextEditingController _additionalNotesController;
+  late final String _patientId;
+  DateTime? _dateOfBirth;
+  String _sex = 'Female';
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
+    final patient = widget.patient;
+    _patientId = (patient['patientId'] ?? patient['id'] ?? '').toString().trim();
 
-    // Initialize all controllers with existing patient data
-    final p = widget.patient;
+    final directFirst = (patient['firstName'] ?? '').toString().trim();
+    final directMiddle = (patient['middleName'] ?? '').toString().trim();
+    final directSurname = (patient['surname'] ?? '').toString().trim();
+    if (directFirst.isNotEmpty || directSurname.isNotEmpty) {
+      _firstNameController.text = directFirst;
+      _middleNameController.text = directMiddle;
+      _surnameController.text = directSurname;
+    } else {
+      final name = (patient['fullName'] ?? patient['patientName'] ?? patient['patient'] ?? patient['name'] ?? '').toString().trim();
+      if (name.contains(',')) {
+        final commaParts = name.split(',');
+        _surnameController.text = commaParts.first.trim();
+        _firstNameController.text = commaParts.sublist(1).join(' ').trim();
+      } else {
+        final parts = name.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList(growable: false);
+        _firstNameController.text = parts.isNotEmpty ? parts.first : '';
+        _surnameController.text = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+      }
+    }
 
-    _firstNameController = TextEditingController(
-      text: p['firstName']?.toString() ?? '',
-    );
-    _surnameController = TextEditingController(
-      text: p['surname']?.toString() ?? '',
-    );
-    _mothersMaidenNameController = TextEditingController(
-      text: p['mothersMaidenName']?.toString() ?? '',
-    );
-    _dobController = TextEditingController(
-      text: p['dateOfBirth']?.toString() ?? '',
-    );
-    _ageController = TextEditingController(text: p['age']?.toString() ?? '');
-    _placeOfBirthController = TextEditingController(
-      text: p['placeOfBirth']?.toString() ?? '',
-    );
-    _nationalityController = TextEditingController(
-      text: p['nationality']?.toString() ?? '',
-    );
-    _civilStatus = p['civilStatus']?.toString() ?? 'Single';
-    _gender = p['gender']?.toString() ?? 'Male';
-    _religionController = TextEditingController(
-      text: p['religion']?.toString() ?? '',
-    );
-    _occupationController = TextEditingController(
-      text: p['occupation']?.toString() ?? '',
-    );
-    _educationalAttainment =
-        p['educationalAttainment']?.toString() ?? 'Elementary';
-    _employeeStatus = p['employeeStatus']?.toString() ?? 'Employed';
+    _dateOfBirthController.text = (patient['dateOfBirth'] ?? patient['dob'] ?? '').toString().trim();
+    _dateOfBirth = DateTime.tryParse(_dateOfBirthController.text);
 
-    _phoneController = TextEditingController(
-      text: p['phoneNumber']?.toString() ?? '',
-    );
-    _emailController = TextEditingController(
-      text: p['emailAddress']?.toString() ?? '',
-    );
-    _altPhoneController = TextEditingController(
-      text: p['alternativePhone']?.toString() ?? '',
-    );
-    _guardianController = TextEditingController(
-      text: p['guardian']?.toString() ?? '',
-    );
-    _streetController = TextEditingController(
-      text: p['street']?.toString() ?? '',
-    );
-    _barangayController = TextEditingController(
-      text: p['barangay']?.toString() ?? '',
-    );
-    _municipalityController = TextEditingController(
-      text: p['municipality']?.toString() ?? '',
-    );
-    _provinceController = TextEditingController(
-      text: p['province']?.toString() ?? '',
-    );
+    final rawAge = (patient['age'] ?? '').toString().trim();
+    final ageDigits = RegExp(r'\d+').firstMatch(rawAge);
+    _ageController.text = ageDigits != null ? ageDigits.group(0)! : rawAge;
 
-    _heightController = TextEditingController(
-      text: p['height']?.toString() ?? '',
-    );
-    _weightController = TextEditingController(
-      text: p['weight']?.toString() ?? '',
-    );
-    _bmiController = TextEditingController(text: p['bmi']?.toString() ?? '');
-    _bloodType = p['bloodType']?.toString() ?? 'A+';
-    _allergiesController = TextEditingController(
-      text: p['allergies']?.toString() ?? '',
-    );
-    _immunizationStatusController = TextEditingController(
-      text: p['immunizationStatus']?.toString() ?? '',
-    );
-    _familyMedicalHistoryController = TextEditingController(
-      text: p['familyMedicalHistory']?.toString() ?? '',
-    );
-    _pastMedicalHistoryController = TextEditingController(
-      text: p['pastMedicalHistory']?.toString() ?? '',
-    );
-    _currentMedicationsController = TextEditingController(
-      text: p['currentMedications']?.toString() ?? '',
-    );
-    _chronicConditionsController = TextEditingController(
-      text: p['chronicConditions']?.toString() ?? '',
-    );
-    _chiefComplaintController = TextEditingController(
-      text: p['chiefComplaint']?.toString() ?? '',
-    );
-    _currentSymptomsController = TextEditingController(
-      text: p['currentSymptoms']?.toString() ?? '',
-    );
+    final sexVal = (patient['sex'] ?? patient['gender'] ?? 'Female').toString().trim();
+    _sex = const ['Female', 'Male', 'Other'].contains(sexVal) ? sexVal : 'Female';
 
-    _bodyTempController = TextEditingController(
-      text: p['bodyTemperature']?.toString() ?? '',
-    );
-    _tempUnit = p['temperatureUnit']?.toString() ?? '°C';
-    _bpSystolicController = TextEditingController(
-      text: p['bpSystolic']?.toString() ?? '',
-    );
-    _bpDiastolicController = TextEditingController(
-      text: p['bpDiastolic']?.toString() ?? '',
-    );
-    _heartRateController = TextEditingController(
-      text: p['heartRate']?.toString() ?? '',
-    );
-    _respiratoryRateController = TextEditingController(
-      text: p['respiratoryRate']?.toString() ?? '',
-    );
-    _oxygenSaturationController = TextEditingController(
-      text: p['oxygenSaturation']?.toString() ?? '',
-    );
-
-    _disabilityController = TextEditingController(
-      text: p['disability']?.toString() ?? '',
-    );
-    _mentalHealthStatus = p['mentalHealthStatus']?.toString() ?? 'Good';
-    _substanceUseController = TextEditingController(
-      text: p['substanceUseHistory']?.toString() ?? '',
-    );
-    _lastCheckupController = TextEditingController(
-      text: p['lastCheckup']?.toString() ?? '',
-    );
-    _nextCheckupController = TextEditingController(
-      text: p['nextCheckup']?.toString() ?? '',
-    );
-
-    _emergencyNameController = TextEditingController(
-      text: p['emergencyContactName']?.toString() ?? '',
-    );
-    _emergencyRelationshipController = TextEditingController(
-      text: p['emergencyRelationship']?.toString() ?? '',
-    );
-    _emergencyPhoneController = TextEditingController(
-      text: p['emergencyContactPhone']?.toString() ?? '',
-    );
-    _emergencyAddressController = TextEditingController(
-      text: p['emergencyContactAddress']?.toString() ?? '',
-    );
-
-    _smokingStatus = p['smokingStatus']?.toString() ?? 'Never';
-    _exerciseFrequency = p['exerciseFrequency']?.toString() ?? 'Daily';
-    _alcoholConsumption = p['alcoholConsumption']?.toString() ?? 'Never';
-    _dietaryRestrictionsController = TextEditingController(
-      text: p['dietaryRestrictions']?.toString() ?? '',
-    );
-    _mentalHealthStatusLifestyle =
-        p['mentalHealthStatusLifestyle']?.toString() ?? 'Good';
-    _sleepQuality = p['sleepQuality']?.toString() ?? 'Excellent';
-
-    _morbidityRiskLevel = p['morbidityRiskLevel']?.toString() ?? 'Low';
-    _numberOfComorbiditiesController = TextEditingController(
-      text: p['numberOfComorbidities']?.toString() ?? '',
-    );
-    _functionalStatus = p['functionalStatus']?.toString() ?? 'Independent';
-    _mobilityStatus = p['mobilityStatus']?.toString() ?? 'Fully Mobile';
-    _frailtyIndexController = TextEditingController(
-      text: p['frailtyIndex']?.toString() ?? '',
-    );
-    _polypharmacyRisk = p['polypharmacyRisk']?.toString() ?? 'Low';
-    _preventiveCareCompliance =
-        p['preventiveCareCompliance']?.toString() ?? 'Full Compliance';
-    _healthLiteracyLevel = p['healthLiteracyLevel']?.toString() ?? 'High';
-    _socialSupportLevel = p['socialSupportLevel']?.toString() ?? 'Strong';
-    _economicStatusImpact = p['economicStatusImpact']?.toString() ?? 'Minimal';
-    _morbidityNotesController = TextEditingController(
-      text: p['morbidityNotes']?.toString() ?? '',
-    );
-
-    _insuranceProviderController = TextEditingController(
-      text: p['insuranceProvider']?.toString() ?? '',
-    );
-    _insuranceNumberController = TextEditingController(
-      text: p['insuranceNumber']?.toString() ?? '',
-    );
-    _insuranceExpiryController = TextEditingController(
-      text: p['insuranceExpiry']?.toString() ?? '',
-    );
-    _monthlyIncomeController = TextEditingController(
-      text: p['monthlyIncome']?.toString() ?? '',
-    );
-
-    _additionalInfoController = TextEditingController(
-      text: p['additionalInfo']?.toString() ?? '',
-    );
-    _educationLevel = p['educationLevel']?.toString() ?? 'High School';
-    _preferredLanguage = p['preferredLanguage']?.toString() ?? 'Filipino';
-    _referralSource = p['referralSource']?.toString() ?? 'Walk-in';
-    _transportationController = TextEditingController(
-      text: p['transportation']?.toString() ?? '',
-    );
-
-    _consentGiven = p['consentGiven']?.toString() == 'true';
-
-    _registrationDateController = TextEditingController(
-      text: p['registrationDate']?.toString() ?? '',
-    );
-    _registeredByController = TextEditingController(
-      text: p['registeredBy']?.toString() ?? '',
-    );
-    _additionalNotesController = TextEditingController(
-      text: p['additionalNotes']?.toString() ?? '',
-    );
+    _addressController.text = (patient['address'] ?? patient['street'] ?? '').toString().trim();
+    _barangayController.text = (patient['barangay'] ?? '').toString().trim();
+    _householdIdController.text = (patient['householdId'] ?? '').toString().trim();
+    _contactNumberController.text = (patient['contactNumber'] ?? patient['phoneNumber'] ?? patient['phone'] ?? '').toString().trim();
+    _guardianController.text = (patient['guardian'] ?? patient['parentName'] ?? patient['parentGuardianName'] ?? '').toString().trim();
+    _emergencyContactController.text = (patient['emergencyContact'] ?? patient['emergencyContactName'] ?? '').toString().trim();
+    _emergencyRelationshipController.text = (patient['emergencyRelationship'] ?? '').toString().trim();
+    _emergencyContactNumberController.text = (patient['emergencyContactNumber'] ?? patient['emergencyContactPhone'] ?? '').toString().trim();
+    _medicalHistoryController.text = (patient['medicalHistory'] ?? patient['pastMedicalHistory'] ?? '').toString().trim();
+    _allergiesController.text = (patient['allergies'] ?? '').toString().trim();
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
     _firstNameController.dispose();
+    _middleNameController.dispose();
     _surnameController.dispose();
-    _mothersMaidenNameController.dispose();
-    _dobController.dispose();
+    _dateOfBirthController.dispose();
     _ageController.dispose();
-    _placeOfBirthController.dispose();
-    _nationalityController.dispose();
-    _religionController.dispose();
-    _occupationController.dispose();
-    _phoneController.dispose();
-    _emailController.dispose();
-    _altPhoneController.dispose();
-    _guardianController.dispose();
-    _streetController.dispose();
+    _addressController.dispose();
     _barangayController.dispose();
-    _municipalityController.dispose();
-    _provinceController.dispose();
-    _heightController.dispose();
-    _weightController.dispose();
-    _bmiController.dispose();
-    _allergiesController.dispose();
-    _immunizationStatusController.dispose();
-    _familyMedicalHistoryController.dispose();
-    _pastMedicalHistoryController.dispose();
-    _currentMedicationsController.dispose();
-    _chronicConditionsController.dispose();
-    _chiefComplaintController.dispose();
-    _currentSymptomsController.dispose();
-    _bodyTempController.dispose();
-    _bpSystolicController.dispose();
-    _bpDiastolicController.dispose();
-    _heartRateController.dispose();
-    _respiratoryRateController.dispose();
-    _oxygenSaturationController.dispose();
-    _disabilityController.dispose();
-    _substanceUseController.dispose();
-    _lastCheckupController.dispose();
-    _nextCheckupController.dispose();
-    _emergencyNameController.dispose();
+    _householdIdController.dispose();
+    _contactNumberController.dispose();
+    _guardianController.dispose();
+    _emergencyContactController.dispose();
     _emergencyRelationshipController.dispose();
-    _emergencyPhoneController.dispose();
-    _emergencyAddressController.dispose();
-    _dietaryRestrictionsController.dispose();
-    _numberOfComorbiditiesController.dispose();
-    _frailtyIndexController.dispose();
-    _morbidityNotesController.dispose();
-    _insuranceProviderController.dispose();
-    _insuranceNumberController.dispose();
-    _insuranceExpiryController.dispose();
-    _monthlyIncomeController.dispose();
-    _additionalInfoController.dispose();
-    _transportationController.dispose();
-    _registrationDateController.dispose();
-    _registeredByController.dispose();
-    _additionalNotesController.dispose();
+    _emergencyContactNumberController.dispose();
+    _medicalHistoryController.dispose();
+    _allergiesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDateOfBirth() async {
+    final now = DateTime.now();
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: _dateOfBirth ?? DateTime(now.year - 20),
+      firstDate: DateTime(1900),
+      lastDate: now,
+    );
+    if (selected == null) return;
+    final age = _calculateAge(selected, now);
+    setState(() {
+      _dateOfBirth = selected;
+      _dateOfBirthController.text = '${selected.year}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')}';
+      _ageController.text = age.toString();
+    });
+  }
+
+  int _calculateAge(DateTime birthDate, DateTime today) {
+    var age = today.year - birthDate.year;
+    if (today.month < birthDate.month || (today.month == birthDate.month && today.day < birthDate.day)) {
+      age--;
+    }
+    return age < 0 ? 0 : age;
+  }
+
+  Widget _buildSectionCard({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _lightOffWhite.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _lightOffWhite.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: _lightOffWhite, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: _lightOffWhite,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _buildInputDecoration(String label, {String? hintText, Widget? suffixIcon}) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hintText,
+      labelStyle: const TextStyle(color: _lightOffWhite),
+      hintStyle: TextStyle(color: _lightOffWhite.withValues(alpha: 0.5)),
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _primaryAqua, width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.transparent,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    );
+  }
+
+  Future<void> _saveChanges() async {
+    if (!(_formKey.currentState?.validate() ?? false) || _isSaving) {
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      final firstName = _firstNameController.text.trim();
+      final middleName = _middleNameController.text.trim();
+      final surname = _surnameController.text.trim();
+      final fullName = [firstName, middleName, surname].where((s) => s.isNotEmpty).join(' ');
+      final address = _addressController.text.trim();
+      final contact = _contactNumberController.text.trim();
+      final emergencyContact = _emergencyContactController.text.trim();
+      final emergencyContactNumber = _emergencyContactNumberController.text.trim();
+      final medicalHistory = _medicalHistoryController.text.trim();
+
+      final existing = widget.patient;
+      final updatedData = <String, dynamic>{
+        ...existing,
+        'id': _patientId,
+        'patientId': _patientId,
+        'fullName': fullName,
+        'firstName': firstName,
+        'middleName': middleName,
+        'surname': surname,
+        'dateOfBirth': _dateOfBirthController.text.trim(),
+        'dob': _dateOfBirthController.text.trim(),
+        'age': _ageController.text.trim(),
+        'gender': _sex,
+        'sex': _sex,
+        'address': address,
+        'street': address,
+        'barangay': _barangayController.text.trim(),
+        'householdId': _householdIdController.text.trim(),
+        'phoneNumber': contact,
+        'contactNumber': contact,
+        'phone': contact,
+        'guardian': _guardianController.text.trim(),
+        'parentName': _guardianController.text.trim(),
+        'emergencyContactName': emergencyContact,
+        'emergencyContact': emergencyContact,
+        'emergencyRelationship': _emergencyRelationshipController.text.trim(),
+        'emergencyContactPhone': emergencyContactNumber,
+        'emergencyContactNumber': emergencyContactNumber,
+        'medicalHistory': medicalHistory,
+        'pastMedicalHistory': medicalHistory,
+        'allergies': _allergiesController.text.trim(),
+      };
+
+      final recordId = (existing['id'] ?? _patientId).toString();
+      await PatientDatabaseHelper.instance.updateRecord(recordId, updatedData);
+
+      if (!mounted) return;
+      Navigator.pop(context, true);
+      widget.onSaved?.call();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating patient: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isSaving = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog.fullscreen(
-      child: Scaffold(
-        backgroundColor: AppDesign.page,
-        appBar: AppBar(
-          backgroundColor: AppDesign.surface,
-          title: const Text(
-            'Edit Patient',
-            style: TextStyle(
-              color: AppDesign.ink,
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
-            ),
-          ),
-          leading: IconButton(
-            icon: const Icon(Icons.close_rounded, color: AppDesign.ink),
-            onPressed: () => _showExitConfirmation(),
-          ),
-          actions: [
-            TextButton.icon(
-              icon: const Icon(Icons.save_outlined, color: AppDesign.blue),
-              label: const Text(
-                'Update',
-                style: TextStyle(
-                  color: AppDesign.blue,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              onPressed: _updatePatient,
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.95,
+      minChildSize: 0.7,
+      maxChildSize: 0.98,
+      builder: (context, scrollController) => Container(
+        decoration: BoxDecoration(
+          color: _darkDeepTeal,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
             ),
           ],
         ),
-        body: Column(
-          children: [
-            // Progress Indicator
-            Container(
-              color: AppDesign.surface,
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-              child: Row(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            controller: scrollController,
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: LinearProgressIndicator(
-                      value: (_currentPage + 1) / _totalPages,
-                      backgroundColor: _mutedCoolGray.withValues(alpha: 0.2),
-                      valueColor: AlwaysStoppedAnimation<Color>(_primaryAqua),
-                      minHeight: 6,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    '${_currentPage + 1}/$_totalPages',
-                    style: TextStyle(
-                      color: AppDesign.navy,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Form Content
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
-                },
-                children: [
-                  _buildPersonalDetailsPage(),
-                  _buildContactInfoPage(),
-                  _buildMedicalDetailsPage(),
-                  _buildVitalSignsPage(),
-                  _buildHealthStatusPage(),
-                  _buildEmergencyContactPage(),
-                  _buildLifestylePage(),
-                  _buildMorbidityAssessmentPage(),
-                  _buildInsurancePage(),
-                  _buildFinalPage(),
-                ],
-              ),
-            ),
-
-            // Navigation Buttons
-            Container(
-              color: AppDesign.surface,
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-              child: Row(
-                children: [
-                  if (_currentPage > 0)
-                    Expanded(
-                      child: OutlinedButton.icon(
+                  // Header with Close and Export buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Edit Patient Record',
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: _lightOffWhite,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Update patient identity, contact, and medical information',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: _lightOffWhite.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Print / Export Patient Form PDF',
+                        icon: const Icon(
+                          Icons.picture_as_pdf_outlined,
+                          color: _primaryAqua,
+                          size: 22,
+                        ),
                         onPressed: () {
-                          _pageController.previousPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
+                          ClinicalFormPdfService.showExportDialog(
+                            context,
+                            formType: ClinicalFormType.patientRegistration,
                           );
                         },
-                        icon: const Icon(Icons.arrow_back),
-                        label: const Text('Previous'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppDesign.navy,
-                          side: const BorderSide(color: AppDesign.borderStrong),
-                          minimumSize: const Size(0, 44),
-                          padding: const EdgeInsets.symmetric(vertical: 11),
-                          shape: RoundedRectangleBorder(
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: _lightOffWhite.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.close, color: _lightOffWhite, size: 24),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Patient ID Banner
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _primaryAqua.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _primaryAqua.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: _primaryAqua.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.badge_outlined, color: _primaryAqua, size: 24),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Patient ID',
+                                style: TextStyle(
+                                  color: _mutedCoolGray,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              SelectableText(
+                                _patientId,
+                                style: const TextStyle(
+                                  color: _lightOffWhite,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Section 1: Patient Identity
+                  _buildSectionCard(
+                    context: context,
+                    title: 'Patient Identity',
+                    icon: Icons.person_outline_rounded,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _firstNameController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('First Name *', hintText: 'Given name'),
+                                validator: (val) => val?.trim().isEmpty == true ? 'First Name is required' : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _surnameController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Surname *', hintText: 'Family name'),
+                                validator: (val) => val?.trim().isEmpty == true ? 'Surname is required' : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _middleNameController,
+                          style: const TextStyle(color: _lightOffWhite),
+                          decoration: _buildInputDecoration('Middle Name (Optional)', hintText: 'Middle name'),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: TextFormField(
+                                controller: _dateOfBirthController,
+                                readOnly: true,
+                                onTap: _pickDateOfBirth,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration(
+                                  'Date of Birth *',
+                                  hintText: 'YYYY-MM-DD',
+                                  suffixIcon: const Icon(Icons.calendar_today_outlined, color: _primaryAqua),
+                                ),
+                                validator: (val) => val?.trim().isEmpty == true ? 'Date of Birth is required' : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 1,
+                              child: TextFormField(
+                                controller: _ageController,
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Age', hintText: 'Auto / manual'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        DropdownButtonFormField<String>(
+                          initialValue: _sex,
+                          dropdownColor: _darkDeepTeal,
+                          style: const TextStyle(color: _lightOffWhite),
+                          decoration: _buildInputDecoration('Sex / Gender *'),
+                          items: const ['Female', 'Male', 'Other']
+                              .map((v) => DropdownMenuItem(value: v, child: Text(v, style: const TextStyle(color: _lightOffWhite))))
+                              .toList(growable: false),
+                          onChanged: (v) => setState(() => _sex = v ?? _sex),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Section 2: Address and Contact Information
+                  _buildSectionCard(
+                    context: context,
+                    title: 'Address & Contact Information',
+                    icon: Icons.home_outlined,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextFormField(
+                          controller: _addressController,
+                          maxLines: 2,
+                          style: const TextStyle(color: _lightOffWhite),
+                          decoration: _buildInputDecoration('Address *', hintText: 'House number, street, or purok'),
+                          validator: (val) => val?.trim().isEmpty == true ? 'Address is required' : null,
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _barangayController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Barangay *', hintText: 'Assigned barangay'),
+                                validator: (val) => val?.trim().isEmpty == true ? 'Barangay is required' : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _householdIdController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Household ID (Optional)', hintText: 'Family record #'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _contactNumberController,
+                                keyboardType: TextInputType.phone,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Phone Number', hintText: '09XXXXXXXXX'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _guardianController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Parent/Guardian (Optional)', hintText: 'For dependents'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Section 3: Emergency Contact
+                  _buildSectionCard(
+                    context: context,
+                    title: 'Emergency Contact',
+                    icon: Icons.contact_phone_outlined,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _emergencyContactController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Emergency Contact Name *', hintText: 'Full name'),
+                                validator: (val) => val?.trim().isEmpty == true ? 'Emergency Contact Name is required' : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _emergencyRelationshipController,
+                                style: const TextStyle(color: _lightOffWhite),
+                                decoration: _buildInputDecoration('Relationship', hintText: 'Parent, spouse, sibling'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _emergencyContactNumberController,
+                          keyboardType: TextInputType.phone,
+                          style: const TextStyle(color: _lightOffWhite),
+                          decoration: _buildInputDecoration('Emergency Contact Number *', hintText: '09XXXXXXXXX'),
+                          validator: (val) => val?.trim().isEmpty == true ? 'Emergency Contact Number is required' : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Section 4: Baseline Health Information
+                  _buildSectionCard(
+                    context: context,
+                    title: 'Baseline Health Information',
+                    icon: Icons.health_and_safety_outlined,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextFormField(
+                          controller: _medicalHistoryController,
+                          maxLines: 3,
+                          style: const TextStyle(color: _lightOffWhite),
+                          decoration: _buildInputDecoration(
+                            'Medical History',
+                            hintText: 'Existing conditions, previous diagnoses, or "None"',
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _allergiesController,
+                          maxLines: 2,
+                          style: const TextStyle(color: _lightOffWhite),
+                          decoration: _buildInputDecoration(
+                            'Allergies (Optional)',
+                            hintText: 'Food, medicine, environmental allergies, or leave blank',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Bottom Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _lightOffWhite,
+                            side: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton.icon(
+                          onPressed: _isSaving ? null : _saveChanges,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _primaryAqua,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon: _isSaving
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Icon(Icons.save_rounded, size: 20),
+                          label: Text(
+                            _isSaving ? 'Saving...' : 'Save Changes',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                           ),
                         ),
                       ),
-                    ),
-                  if (_currentPage > 0) const SizedBox(width: 16),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        if (_currentPage < _totalPages - 1) {
-                          _pageController.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        } else {
-                          _updatePatient();
-                        }
-                      },
-                      icon: Icon(
-                        _currentPage < _totalPages - 1
-                            ? Icons.arrow_forward
-                            : Icons.check,
-                      ),
-                      label: Text(
-                        _currentPage < _totalPages - 1
-                            ? 'Next'
-                            : 'Update Patient',
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryAqua,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(0, 44),
-                        padding: const EdgeInsets.symmetric(vertical: 11),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 2,
-                      ),
-                    ),
+                    ],
                   ),
+                  const SizedBox(height: 12),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
-  }
-
-  // Page 1: Personal Details (same as Add but with pre-filled data)
-  Widget _buildPersonalDetailsPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Personal Details'),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'First Name',
-            _firstNameController,
-            required: true,
-            hint: 'Enter first name',
-          ),
-          _buildTextField(
-            'Surname',
-            _surnameController,
-            required: true,
-            hint: 'Enter surname/last name',
-          ),
-          _buildTextField(
-            'Mothers Maiden Name',
-            _mothersMaidenNameController,
-            hint: 'Enter mother\'s maiden name',
-          ),
-          _buildDateField('Date of Birth', _dobController, required: true),
-          _buildTextField(
-            'Age',
-            _ageController,
-            keyboardType: TextInputType.number,
-            hint: 'e.g., 25',
-          ),
-          _buildTextField(
-            'Place of Birth',
-            _placeOfBirthController,
-            hint: 'City/Municipality of birth',
-          ),
-          _buildTextField(
-            'Nationality',
-            _nationalityController,
-            hint: 'e.g., Filipino',
-          ),
-          _buildDropdownField(
-            'Civil Status',
-            _civilStatus,
-            ['Single', 'Married', 'Widowed', 'Separated', 'Divorced'],
-            (value) => setState(() => _civilStatus = value!),
-          ),
-          _buildDropdownField('Gender', _gender, [
-            'Male',
-            'Female',
-            'Other',
-          ], (value) => setState(() => _gender = value!)),
-          _buildTextField(
-            'Religion',
-            _religionController,
-            hint: 'e.g., Catholic, Islam, Protestant',
-          ),
-          _buildTextField(
-            'Occupation',
-            _occupationController,
-            hint: 'Current occupation or job title',
-          ),
-          _buildDropdownField(
-            'Educational Attainment',
-            _educationalAttainment,
-            [
-              'Elementary',
-              'High School',
-              'College',
-              'Vocational',
-              'Graduate',
-              'Post-Graduate',
-            ],
-            (value) => setState(() => _educationalAttainment = value!),
-          ),
-          _buildDropdownField(
-            'Employee Status',
-            _employeeStatus,
-            ['Employed', 'Unemployed', 'Self-Employed', 'Retired', 'Student'],
-            (value) => setState(() => _employeeStatus = value!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 2: Contact Information
-  Widget _buildContactInfoPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Contact Information'),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Phone Number',
-            _phoneController,
-            keyboardType: TextInputType.phone,
-            required: true,
-            hint: '0912-345-6789',
-          ),
-          _buildTextField(
-            'Email Address',
-            _emailController,
-            keyboardType: TextInputType.emailAddress,
-            hint: 'example@email.com',
-          ),
-          _buildTextField(
-            'Alternative Phone Number',
-            _altPhoneController,
-            keyboardType: TextInputType.phone,
-            hint: 'Optional contact number',
-          ),
-          _buildTextField(
-            'Guardian',
-            _guardianController,
-            hint: 'Guardian or next of kin name',
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Address',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppDesign.navy,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _buildTextField(
-            'Street of Address',
-            _streetController,
-            hint: 'House number, street name',
-          ),
-          _buildTextField(
-            'Barangay',
-            _barangayController,
-            required: true,
-            hint: 'Barangay name',
-          ),
-          _buildTextField(
-            'Municipality',
-            _municipalityController,
-            required: true,
-            hint: 'City/Municipality',
-          ),
-          _buildTextField(
-            'Province',
-            _provinceController,
-            required: true,
-            hint: 'Province name',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 3: Medical Details
-  Widget _buildMedicalDetailsPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Medical Details'),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Height (cm)',
-            _heightController,
-            keyboardType: TextInputType.number,
-            hint: 'e.g., 165',
-          ),
-          _buildTextField(
-            'Weight (kg)',
-            _weightController,
-            keyboardType: TextInputType.number,
-            hint: 'e.g., 60',
-          ),
-          _buildTextField(
-            'BMI',
-            _bmiController,
-            keyboardType: TextInputType.number,
-            hint: 'Body Mass Index',
-          ),
-          _buildDropdownField('Blood Type', _bloodType, [
-            'A+',
-            'A-',
-            'B+',
-            'B-',
-            'AB+',
-            'AB-',
-            'O+',
-            'O-',
-            'Unknown',
-          ], (value) => setState(() => _bloodType = value!)),
-          _buildTextField(
-            'Allergies',
-            _allergiesController,
-            maxLines: 2,
-            hint: 'List any known allergies',
-          ),
-          _buildTextField(
-            'Immunization Status',
-            _immunizationStatusController,
-            maxLines: 2,
-            hint: 'Vaccination history',
-          ),
-          _buildTextField(
-            'Family Medical History',
-            _familyMedicalHistoryController,
-            maxLines: 3,
-            hint: 'Hereditary conditions',
-          ),
-          _buildTextField(
-            'Past Medical History',
-            _pastMedicalHistoryController,
-            maxLines: 3,
-            hint: 'Previous illnesses, surgeries',
-          ),
-          _buildTextField(
-            'Current Medications',
-            _currentMedicationsController,
-            maxLines: 2,
-            hint: 'Medications currently taking',
-          ),
-          _buildTextField(
-            'Chronic Conditions',
-            _chronicConditionsController,
-            maxLines: 2,
-            hint: 'Long-term health conditions',
-          ),
-          _buildTextField(
-            'Chief Complaint',
-            _chiefComplaintController,
-            maxLines: 2,
-            hint: 'Primary reason for visit',
-          ),
-          _buildTextField(
-            'Current Symptoms',
-            _currentSymptomsController,
-            maxLines: 3,
-            hint: 'Current symptoms',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 4: Vital Signs
-  Widget _buildVitalSignsPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Vital Signs'),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: _buildTextField(
-                  'Body Temperature',
-                  _bodyTempController,
-                  keyboardType: TextInputType.number,
-                  hint: 'e.g., 36.5',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildDropdownField('Unit', _tempUnit, [
-                  '°C',
-                  '°F',
-                ], (value) => setState(() => _tempUnit = value!)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Blood Pressure',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppDesign.ink,
-            ),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: _buildTextField(
-                  'Systolic',
-                  _bpSystolicController,
-                  keyboardType: TextInputType.number,
-                  hint: '120',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildTextField(
-                  'Diastolic',
-                  _bpDiastolicController,
-                  keyboardType: TextInputType.number,
-                  hint: '80',
-                ),
-              ),
-            ],
-          ),
-          _buildTextField(
-            'Heart Rate',
-            _heartRateController,
-            keyboardType: TextInputType.number,
-            hint: 'e.g., 72 bpm',
-          ),
-          _buildTextField(
-            'Respiratory Rate',
-            _respiratoryRateController,
-            keyboardType: TextInputType.number,
-            hint: 'breaths per minute',
-          ),
-          _buildTextField(
-            'Oxygen Saturation',
-            _oxygenSaturationController,
-            keyboardType: TextInputType.number,
-            hint: 'e.g., 98%',
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Disability/Impairment',
-            _disabilityController,
-            maxLines: 2,
-            hint: 'Any physical or cognitive disabilities',
-          ),
-          _buildDropdownField(
-            'Mental Health Status',
-            _mentalHealthStatus,
-            ['Excellent', 'Good', 'Fair', 'Poor', 'Critical'],
-            (value) => setState(() => _mentalHealthStatus = value!),
-          ),
-          _buildTextField(
-            'Substance Use History',
-            _substanceUseController,
-            maxLines: 2,
-            hint: 'Tobacco, alcohol, drug use',
-          ),
-          _buildDateField('Last Medical Check Up', _lastCheckupController),
-          _buildDateField('Next Check Up', _nextCheckupController),
-        ],
-      ),
-    );
-  }
-
-  // Page 5: Health Status Page (keep naming as in EditPatientModal)
-  Widget _buildHealthStatusPage() {
-    return _buildEmergencyContactPage(); // Reference to page 5 content
-  }
-
-  // Page 6: Emergency Contact
-  Widget _buildEmergencyContactPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Emergency Contact'),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Emergency Contact Name',
-            _emergencyNameController,
-            required: true,
-            hint: 'Full name',
-          ),
-          _buildTextField(
-            'Relationship',
-            _emergencyRelationshipController,
-            required: true,
-            hint: 'e.g., Spouse, Parent',
-          ),
-          _buildTextField(
-            'Emergency Phone',
-            _emergencyPhoneController,
-            keyboardType: TextInputType.phone,
-            required: true,
-            hint: '0912-345-6789',
-          ),
-          _buildTextField(
-            'Emergency Address',
-            _emergencyAddressController,
-            maxLines: 2,
-            hint: 'Complete address',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 7: Lifestyle
-  Widget _buildLifestylePage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Lifestyle & Habits'),
-          const SizedBox(height: 16),
-          _buildDropdownField(
-            'Smoking Status',
-            _smokingStatus,
-            [
-              'Never',
-              'Former',
-              'Current - Light',
-              'Current - Moderate',
-              'Current - Heavy',
-            ],
-            (value) => setState(() => _smokingStatus = value!),
-          ),
-          _buildDropdownField(
-            'Exercise Frequency',
-            _exerciseFrequency,
-            ['Daily', '3-5 times/week', '1-2 times/week', 'Rarely', 'Never'],
-            (value) => setState(() => _exerciseFrequency = value!),
-          ),
-          _buildDropdownField(
-            'Alcohol Consumption',
-            _alcoholConsumption,
-            ['Never', 'Rarely', 'Socially', 'Moderate', 'Heavy'],
-            (value) => setState(() => _alcoholConsumption = value!),
-          ),
-          _buildTextField(
-            'Dietary Restrictions',
-            _dietaryRestrictionsController,
-            maxLines: 2,
-            hint: 'Vegetarian, allergies, etc.',
-          ),
-          _buildDropdownField(
-            'Mental Health',
-            _mentalHealthStatusLifestyle,
-            ['Excellent', 'Good', 'Fair', 'Poor'],
-            (value) => setState(() => _mentalHealthStatusLifestyle = value!),
-          ),
-          _buildDropdownField(
-            'Sleep Quality',
-            _sleepQuality,
-            ['Excellent', 'Good', 'Fair', 'Poor', 'Very Poor'],
-            (value) => setState(() => _sleepQuality = value!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 8: Morbidity Assessment
-  Widget _buildMorbidityAssessmentPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Morbidity Assessment'),
-          const SizedBox(height: 16),
-          _buildDropdownField(
-            'Risk Level',
-            _morbidityRiskLevel,
-            ['Low', 'Moderate', 'High', 'Very High'],
-            (value) => setState(() => _morbidityRiskLevel = value!),
-          ),
-          _buildTextField(
-            'Number of Comorbidities',
-            _numberOfComorbiditiesController,
-            keyboardType: TextInputType.number,
-            hint: 'e.g., 2',
-          ),
-          _buildDropdownField(
-            'Functional Status',
-            _functionalStatus,
-            ['Independent', 'Partially Dependent', 'Fully Dependent'],
-            (value) => setState(() => _functionalStatus = value!),
-          ),
-          _buildDropdownField(
-            'Mobility Status',
-            _mobilityStatus,
-            [
-              'Fully Mobile',
-              'Assisted Walking',
-              'Wheelchair Bound',
-              'Bedridden',
-            ],
-            (value) => setState(() => _mobilityStatus = value!),
-          ),
-          _buildTextField(
-            'Frailty Index',
-            _frailtyIndexController,
-            keyboardType: TextInputType.number,
-            hint: '0.0 = Robust, 1.0 = Frail',
-          ),
-          _buildDropdownField(
-            'Polypharmacy Risk',
-            _polypharmacyRisk,
-            ['Low', 'Moderate', 'High'],
-            (value) => setState(() => _polypharmacyRisk = value!),
-          ),
-          _buildDropdownField(
-            'Preventive Care Compliance',
-            _preventiveCareCompliance,
-            ['Full Compliance', 'Partial Compliance', 'Non-Compliant'],
-            (value) => setState(() => _preventiveCareCompliance = value!),
-          ),
-          _buildDropdownField(
-            'Health Literacy',
-            _healthLiteracyLevel,
-            ['High', 'Moderate', 'Low'],
-            (value) => setState(() => _healthLiteracyLevel = value!),
-          ),
-          _buildDropdownField(
-            'Social Support',
-            _socialSupportLevel,
-            ['Strong', 'Moderate', 'Weak', 'None'],
-            (value) => setState(() => _socialSupportLevel = value!),
-          ),
-          _buildDropdownField(
-            'Economic Impact',
-            _economicStatusImpact,
-            ['Minimal', 'Moderate', 'Significant', 'Severe'],
-            (value) => setState(() => _economicStatusImpact = value!),
-          ),
-          _buildTextField(
-            'Notes',
-            _morbidityNotesController,
-            maxLines: 4,
-            hint: 'Assessment notes',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 9: Insurance
-  Widget _buildInsurancePage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Insurance & Coverage'),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Insurance Provider',
-            _insuranceProviderController,
-            hint: 'e.g., PhilHealth',
-          ),
-          _buildTextField(
-            'Insurance Number',
-            _insuranceNumberController,
-            hint: 'Policy number',
-          ),
-          _buildDateField('Insurance Expiry', _insuranceExpiryController),
-          _buildTextField(
-            'Monthly Income',
-            _monthlyIncomeController,
-            keyboardType: TextInputType.number,
-            hint: 'PHP',
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Additional Info',
-            _additionalInfoController,
-            maxLines: 3,
-            hint: 'Other relevant information',
-          ),
-          _buildDropdownField(
-            'Education Level',
-            _educationLevel,
-            [
-              'Elementary',
-              'High School',
-              'Vocational',
-              'College',
-              'Graduate',
-              'Post-Graduate',
-            ],
-            (value) => setState(() => _educationLevel = value!),
-          ),
-          _buildDropdownField(
-            'Preferred Language',
-            _preferredLanguage,
-            [
-              'Filipino',
-              'English',
-              'Cebuano',
-              'Ilocano',
-              'Hiligaynon',
-              'Other',
-            ],
-            (value) => setState(() => _preferredLanguage = value!),
-          ),
-          _buildDropdownField(
-            'Referral Source',
-            _referralSource,
-            [
-              'Walk-in',
-              'Referral',
-              'Social Media',
-              'Community Event',
-              'Website',
-              'Other',
-            ],
-            (value) => setState(() => _referralSource = value!),
-          ),
-          _buildTextField(
-            'Transportation',
-            _transportationController,
-            hint: 'e.g., Tricycle, Jeepney',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Page 10: Final/Consent Page
-  Widget _buildFinalPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Consent & Registration'),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: Row(
-              children: [
-                Checkbox(
-                  value: _consentGiven,
-                  onChanged: (value) => setState(() => _consentGiven = value!),
-                  activeColor: _primaryAqua,
-                ),
-                Expanded(
-                  child: Text(
-                    'I consent to the collection, storage, and processing of my personal and medical information for healthcare purposes.',
-                    style: TextStyle(fontSize: 13, color: AppDesign.ink),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          _buildSectionTitle('Registration Details'),
-          const SizedBox(height: 16),
-          _buildDateField(
-            'Registration Date',
-            _registrationDateController,
-            required: true,
-          ),
-          _buildTextField(
-            'Registered By',
-            _registeredByController,
-            hint: 'Health Worker Name',
-            required: true,
-          ),
-          _buildTextField(
-            'Additional Notes',
-            _additionalNotesController,
-            maxLines: 3,
-            hint: 'Any additional notes',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Helper Methods
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-        color: AppDesign.navy,
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-    String label,
-    TextEditingController controller, {
-    bool required = false,
-    int maxLines = 1,
-    TextInputType keyboardType = TextInputType.text,
-    String? hint,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppDesign.ink,
-                ),
-              ),
-              if (required)
-                const Text(
-                  ' *',
-                  style: TextStyle(color: Colors.red, fontSize: 14),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: controller,
-            maxLines: maxLines,
-            keyboardType: keyboardType,
-            decoration: InputDecoration(
-              hintText: hint,
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _primaryAqua, width: 2),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDropdownField(
-    String label,
-    String value,
-    List<String> items,
-    ValueChanged<String?> onChanged, {
-    bool required = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppDesign.ink,
-                ),
-              ),
-              if (required)
-                const Text(
-                  ' *',
-                  style: TextStyle(color: Colors.red, fontSize: 14),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: DropdownButtonFormField<String>(
-              initialValue: value,
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-              ),
-              items: items
-                  .map(
-                    (item) => DropdownMenuItem(value: item, child: Text(item)),
-                  )
-                  .toList(),
-              onChanged: onChanged,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDateField(
-    String label,
-    TextEditingController controller, {
-    bool required = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppDesign.ink,
-                ),
-              ),
-              if (required)
-                const Text(
-                  ' *',
-                  style: TextStyle(color: Colors.red, fontSize: 14),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: controller,
-            readOnly: true,
-            decoration: InputDecoration(
-              hintText: 'mm/dd/yyyy',
-              filled: true,
-              fillColor: Colors.white,
-              suffixIcon: const Icon(Icons.calendar_today),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _primaryAqua, width: 2),
-              ),
-            ),
-            onTap: () async {
-              final date = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now(),
-                firstDate: DateTime(1900),
-                lastDate: DateTime(2100),
-              );
-              if (date != null) {
-                controller.text =
-                    '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showExitConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppDesign.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Discard Changes?',
-          style: TextStyle(color: AppDesign.ink),
-        ),
-        content: const Text(
-          'Are you sure you want to exit without saving changes?',
-          style: TextStyle(color: AppDesign.muted),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: _primaryAqua)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Close modal
-            },
-            child: const Text('Discard', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _updatePatient() async {
-    if (!_consentGiven) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please provide consent to continue'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    // Validate required fields
-    if (_firstNameController.text.isEmpty ||
-        _surnameController.text.isEmpty ||
-        _phoneController.text.isEmpty ||
-        _emergencyNameController.text.isEmpty ||
-        _registeredByController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in all required fields'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    try {
-      // Prepare updated patient data
-      final patientData = {
-        'id': widget.patient['id'], // Keep original ID
-        'firstName': _firstNameController.text,
-        'surname': _surnameController.text,
-        'mothersMaidenName': _mothersMaidenNameController.text,
-        'dateOfBirth': _dobController.text,
-        'age': _ageController.text,
-        'placeOfBirth': _placeOfBirthController.text,
-        'nationality': _nationalityController.text,
-        'civilStatus': _civilStatus,
-        'gender': _gender,
-        'religion': _religionController.text,
-        'occupation': _occupationController.text,
-        'educationalAttainment': _educationalAttainment,
-        'employeeStatus': _employeeStatus,
-        'phoneNumber': _phoneController.text,
-        'emailAddress': _emailController.text,
-        'alternativePhone': _altPhoneController.text,
-        'guardian': _guardianController.text,
-        'street': _streetController.text,
-        'barangay': _barangayController.text,
-        'municipality': _municipalityController.text,
-        'province': _provinceController.text,
-        'height': _heightController.text,
-        'weight': _weightController.text,
-        'bmi': _bmiController.text,
-        'bloodType': _bloodType,
-        'allergies': _allergiesController.text,
-        'immunizationStatus': _immunizationStatusController.text,
-        'familyMedicalHistory': _familyMedicalHistoryController.text,
-        'pastMedicalHistory': _pastMedicalHistoryController.text,
-        'currentMedications': _currentMedicationsController.text,
-        'chronicConditions': _chronicConditionsController.text,
-        'chiefComplaint': _chiefComplaintController.text,
-        'currentSymptoms': _currentSymptomsController.text,
-        'bodyTemperature': _bodyTempController.text,
-        'temperatureUnit': _tempUnit,
-        'bpSystolic': _bpSystolicController.text,
-        'bpDiastolic': _bpDiastolicController.text,
-        'heartRate': _heartRateController.text,
-        'respiratoryRate': _respiratoryRateController.text,
-        'oxygenSaturation': _oxygenSaturationController.text,
-        'disability': _disabilityController.text,
-        'mentalHealthStatus': _mentalHealthStatus,
-        'substanceUseHistory': _substanceUseController.text,
-        'lastCheckup': _lastCheckupController.text,
-        'nextCheckup': _nextCheckupController.text,
-        'emergencyContactName': _emergencyNameController.text,
-        'emergencyRelationship': _emergencyRelationshipController.text,
-        'emergencyContactPhone': _emergencyPhoneController.text,
-        'emergencyContactAddress': _emergencyAddressController.text,
-        'smokingStatus': _smokingStatus,
-        'exerciseFrequency': _exerciseFrequency,
-        'alcoholConsumption': _alcoholConsumption,
-        'dietaryRestrictions': _dietaryRestrictionsController.text,
-        'mentalHealthStatusLifestyle': _mentalHealthStatusLifestyle,
-        'sleepQuality': _sleepQuality,
-        'morbidityRiskLevel': _morbidityRiskLevel,
-        'numberOfComorbidities': _numberOfComorbiditiesController.text,
-        'functionalStatus': _functionalStatus,
-        'mobilityStatus': _mobilityStatus,
-        'frailtyIndex': _frailtyIndexController.text,
-        'polypharmacyRisk': _polypharmacyRisk,
-        'preventiveCareCompliance': _preventiveCareCompliance,
-        'healthLiteracyLevel': _healthLiteracyLevel,
-        'socialSupportLevel': _socialSupportLevel,
-        'economicStatusImpact': _economicStatusImpact,
-        'morbidityNotes': _morbidityNotesController.text,
-        'insuranceProvider': _insuranceProviderController.text,
-        'insuranceNumber': _insuranceNumberController.text,
-        'insuranceExpiry': _insuranceExpiryController.text,
-        'monthlyIncome': _monthlyIncomeController.text,
-        'additionalInfo': _additionalInfoController.text,
-        'educationLevel': _educationLevel,
-        'preferredLanguage': _preferredLanguage,
-        'referralSource': _referralSource,
-        'transportation': _transportationController.text,
-        'consentGiven': _consentGiven.toString(),
-        'registrationDate': _registrationDateController.text,
-        'registeredBy': _registeredByController.text,
-        'additionalNotes': _additionalNotesController.text,
-        'status': widget.patient['status'] ?? 'Active',
-      };
-
-      // Update in database
-      final dbHelper = PatientDatabaseHelper.instance;
-      final id = widget.patient['id']?.toString() ?? '';
-      if (id.isNotEmpty) {
-        await dbHelper.updateRecord(id, patientData);
-
-        // Close modal and trigger reload
-        Navigator.pop(context);
-        widget.onSaved();
-
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Patient ${_firstNameController.text} ${_surnameController.text} updated successfully',
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } else {
-        throw Exception('Patient ID not found');
-      }
-    } catch (e) {
-      print('Error updating patient: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error updating patient: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
   }
 }

@@ -119,6 +119,22 @@ class _ReferralsPageState extends State<ReferralsPage> {
   bool _isSearchingSharedPatients = false;
   Map<String, dynamic>? _selectedPatientSeed;
 
+  int _selectedTab = 0;
+  static const List<String> _views = [
+    'Dashboard',
+    'Create Referral',
+    'Referral Records',
+    'Follow-up',
+  ];
+  String _priority = 'routine';
+  String _statusFilter = 'all';
+  String _priorityFilter = 'all';
+  DateTime? _recordsFromDate;
+  DateTime? _recordsToDate;
+  final TextEditingController _recordSearchController = TextEditingController();
+  String _followUpStatusFilter = 'all';
+  final TextEditingController _followUpSearchController = TextEditingController();
+
   bool get _isDoctor => _scope.role == 'doctor';
   bool get _isBhw => _scope.role == 'bhw';
   bool get _isChoOperator => _scope.canViewAllBarangays;
@@ -129,6 +145,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
     _referralDateTimeController.text = _formatDateTimeInput(DateTime.now());
     final syncSeed = widget.initialRecord ?? widget.initialPatient;
     if (syncSeed != null) {
+      _selectedTab = 1;
       _prefillFromRecordOrPatient(
         syncSeed,
         observations: widget.initialObservations,
@@ -145,6 +162,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                   ? Map<String, dynamic>.from(Get.arguments as Map)
                   : null));
       if (seed != null) {
+        _selectedTab = 1;
         _prefillFromRecordOrPatient(
           seed,
           observations: widget.initialObservations,
@@ -297,14 +315,23 @@ class _ReferralsPageState extends State<ReferralsPage> {
       _selectedReferralReasons.add('Hospital Capability');
     }
 
-    final severity = (data['ai_severity'] ?? '').toString().toLowerCase();
+    final severity = (data['ai_severity'] ?? data['priority'] ?? '').toString().toLowerCase();
     final category = (data['ai_category'] ?? '').toString().toLowerCase();
     if (severity == 'critical' ||
-        severity == 'high' ||
+        severity == 'emergency' ||
         category.contains('emergency')) {
+      _priority = 'emergency';
       _selectedReferralCategories.add('Emergency');
-    } else if (_selectedReferralCategories.isEmpty) {
-      _selectedReferralCategories.add('Ambulatory');
+    } else if (severity == 'high' || severity == 'urgent') {
+      _priority = 'urgent';
+      if (_selectedReferralCategories.isEmpty) {
+        _selectedReferralCategories.add('Ambulatory');
+      }
+    } else {
+      _priority = 'routine';
+      if (_selectedReferralCategories.isEmpty) {
+        _selectedReferralCategories.add('Ambulatory');
+      }
     }
 
     if (mounted) {
@@ -332,6 +359,8 @@ class _ReferralsPageState extends State<ReferralsPage> {
     _actionTakenController.dispose();
     _healthInsuranceCoverageTypeController.dispose();
     _referralReasonOtherController.dispose();
+    _recordSearchController.dispose();
+    _followUpSearchController.dispose();
     super.dispose();
   }
 
@@ -687,6 +716,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
       final referralReasonSummary = _composeReferralReasonSummary();
       final referralCategorySummary = _selectedReferralCategories.join(', ');
       final payload = <String, dynamic>{
+        'priority': _priority,
         'referralCategories': _selectedReferralCategories.toList()..sort(),
         'referralCategorySummary': referralCategorySummary,
         'referredTo': _selectedPreferredDoctorUid?.isNotEmpty == true
@@ -1445,6 +1475,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
       _hasHealthInsuranceCoverage = null;
       _selectedPreferredDoctorUid = null;
       _autoAssignDoctor = true;
+      _priority = 'routine';
     });
   }
 
@@ -1539,9 +1570,60 @@ class _ReferralsPageState extends State<ReferralsPage> {
     );
   }
 
+  Widget _buildPriorityPill(String label, String value, Color color) {
+    final isSelected = _priority == value;
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _priority = value;
+            if (value == 'emergency') {
+              _selectedReferralCategories.add('Emergency');
+            }
+          });
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? color.withValues(alpha: 0.25) : _darkDeepTeal,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? color : color.withValues(alpha: 0.3),
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? color : _lightOffWhite.withValues(alpha: 0.7),
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildReferralForm() {
     if (!_isBhw) {
-      return const SizedBox.shrink();
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: _panelSurface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+        ),
+        child: Center(
+          child: Text(
+            'Referral submission is reserved for Barangay Health Workers (BHWs). As ${_scope.role.toUpperCase()}, please use the Referral Records tab to review and manage referrals.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: _lightOffWhite, height: 1.4),
+          ),
+        ),
+      );
     }
 
     return Container(
@@ -1570,6 +1652,17 @@ class _ReferralsPageState extends State<ReferralsPage> {
               style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72)),
             ),
             const SizedBox(height: 18),
+            _buildFormSection('Triage Priority Level', [
+              Row(
+                children: [
+                  _buildPriorityPill('Routine', 'routine', Colors.blue),
+                  const SizedBox(width: 8),
+                  _buildPriorityPill('Urgent', 'urgent', Colors.amber),
+                  const SizedBox(width: 8),
+                  _buildPriorityPill('Emergency', 'emergency', Colors.redAccent),
+                ],
+              ),
+            ]),
             _buildFormSection('Registered Patient Lookup & Timeline', [
               TextFormField(
                 controller: _patientLookupController,
@@ -1607,7 +1700,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                   child: ListView.separated(
                     shrinkWrap: true,
                     itemCount: _sharedPatientMatches.length,
-                    separatorBuilder: (_, __) => Divider(color: _primaryAqua.withValues(alpha: 0.1), height: 1),
+                    separatorBuilder: (_, _) => Divider(color: _primaryAqua.withValues(alpha: 0.1), height: 1),
                     itemBuilder: (context, index) {
                       final match = _sharedPatientMatches[index];
                       final name = (match['patientName'] ?? match['name'] ?? 'Unnamed').toString();
@@ -1898,17 +1991,55 @@ class _ReferralsPageState extends State<ReferralsPage> {
             const SizedBox(height: 4),
             _buildDoctorMatchingPanel(),
             const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton.icon(
-                onPressed: _isSubmitting ? null : _submitReferral,
-                icon: const Icon(Icons.send_outlined),
-                label: Text(_isSubmitting ? 'Submitting...' : 'Send referral'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _primaryAqua,
-                  foregroundColor: Colors.white,
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submitReferral,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaryAqua,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Submit Referral to CHO',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                 ),
-              ),
+                OutlinedButton(
+                  onPressed: _resetReferralForm,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _lightOffWhite,
+                    side: BorderSide(
+                      color: _primaryAqua.withValues(alpha: 0.32),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text('Reset Form'),
+                ),
+              ],
             ),
           ],
         ),
@@ -1917,86 +2048,69 @@ class _ReferralsPageState extends State<ReferralsPage> {
   }
 
   Widget _buildDoctorMatchingPanel() {
-    final availableDoctors = _availableDoctorDocs;
+    final availableDocs = _availableDoctorDocs;
     final selectedDoctor = _selectedPreferredDoctorData;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _panelAlt,
-        borderRadius: BorderRadius.circular(18),
+        color: _darkDeepTeal,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Doctor Matching',
+            'Doctor & Specialist Destination',
             style: TextStyle(
               color: _lightOffWhite,
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
-            'Choose a doctor directly when needed, or leave it open and let AI assign the strongest available match.',
-            style: TextStyle(
-              color: _lightOffWhite.withValues(alpha: 0.76),
-              height: 1.45,
-            ),
+            _doctorDocs.isEmpty
+                ? 'No registered doctor accounts yet. Referrals will still be sent to CHO for centralized review.'
+                : 'Select an available doctor or let the system route automatically after review.',
+            style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72)),
           ),
-          const SizedBox(height: 12),
-          if (availableDoctors.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: _panelSurface,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Text(
-                'No doctor accounts are available yet. You can still submit and CHO can assign later.',
-                style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.76)),
-              ),
-            )
-          else ...[
+          if (_doctorDocs.isNotEmpty) ...[
+            const SizedBox(height: 14),
             DropdownButtonFormField<String>(
               initialValue: _selectedPreferredDoctorUid,
               dropdownColor: _panelAlt,
               style: const TextStyle(color: _lightOffWhite),
               decoration: _inputDecoration('Preferred doctor (optional)'),
-              items: <DropdownMenuItem<String>>[
+              items: [
                 const DropdownMenuItem<String>(
-                  value: '',
-                  child: Text('Let AI choose the best doctor'),
+                  value: null,
+                  child: Text('Auto-assign by system (recommended)'),
                 ),
-                ...availableDoctors.map((doctorDoc) {
-                  final doctorData = doctorDoc.data();
-                  final label =
-                      '${_doctorDisplayName(doctorData)} • ${_doctorSpecialization(doctorData)} • ${_doctorAvailabilityLabel(_doctorAvailability(doctorData))}';
+                ...availableDocs.map((doctorDoc) {
+                  final data = doctorDoc.data();
+                  final name = _doctorDisplayName(data);
+                  final spec = _doctorSpecialization(data);
+                  final avail = _doctorAvailability(data);
                   return DropdownMenuItem<String>(
                     value: doctorDoc.id,
-                    child: Text(label, overflow: TextOverflow.ellipsis),
+                    child: Text('$name • $spec (${_doctorAvailabilityLabel(avail)})'),
                   );
                 }),
               ],
               onChanged: (value) {
-                setState(() {
-                  _selectedPreferredDoctorUid = value == null || value.isEmpty
-                      ? null
-                      : value;
-                });
+                setState(() => _selectedPreferredDoctorUid = value);
               },
             ),
             const SizedBox(height: 12),
-            SwitchListTile.adaptive(
+            SwitchListTile(
               contentPadding: EdgeInsets.zero,
               value: _autoAssignDoctor,
               activeThumbColor: _primaryAqua,
               title: const Text(
-                'Use AI auto-assignment',
+                'Auto-assign doctor on submission',
                 style: TextStyle(color: _lightOffWhite),
               ),
               subtitle: Text(
@@ -2166,9 +2280,6 @@ class _ReferralsPageState extends State<ReferralsPage> {
     );
   }
 
-  Widget _buildSizedInput({required double width, required Widget child}) {
-    return SizedBox(width: width, child: child);
-  }
 
   Widget _buildSummaryCards(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
@@ -2177,43 +2288,52 @@ class _ReferralsPageState extends State<ReferralsPage> {
     int assigned = 0;
     int inTreatment = 0;
     int completed = 0;
+    int followUpNeeded = 0;
 
     for (final doc in docs) {
-      switch ((doc.data()['status'] ?? 'submitted').toString()) {
-        case 'assigned':
-          assigned++;
-          break;
-        case 'in_treatment':
-          inTreatment++;
-          break;
-        case 'completed':
-          completed++;
-          break;
-        default:
-          submitted++;
+      final data = doc.data();
+      final status = (data['status'] ?? 'submitted').toString();
+      if (status == 'assigned' || status == 'doctor_assigned') {
+        assigned++;
+      } else if (status == 'in_treatment' || status == 'waiting_consultation' || status == 'consulted') {
+        inTreatment++;
+      } else if (status == 'completed') {
+        completed++;
+      } else {
+        submitted++;
+      }
+
+      if (data['followUpRequired'] == true || (status == 'completed' && data['followUpCompleted'] != true)) {
+        followUpNeeded++;
       }
     }
 
     final screenWidth = MediaQuery.of(context).size.width;
     final crossAxisCount = screenWidth > 1180
-        ? 4
+        ? 6
         : screenWidth > 820
         ? 3
         : 2;
 
     final summaries = <({String label, String value, IconData icon})>[
       (
-        label: 'Visible referrals',
+        label: 'Total Referrals',
         value: '${docs.length}',
-        icon: Icons.folder_shared_outlined,
+        icon: Icons.swap_horiz_rounded,
       ),
-      (label: 'Submitted', value: '$submitted', icon: Icons.outbox_outlined),
+      (label: 'Pending CHO Review', value: '$submitted', icon: Icons.rate_review_outlined),
       (
-        label: 'Assigned / Active',
-        value: '${assigned + inTreatment}',
+        label: 'Doctor Assigned',
+        value: '$assigned',
         icon: Icons.assignment_ind_outlined,
       ),
-      (label: 'Completed', value: '$completed', icon: Icons.verified_outlined),
+      (
+        label: 'In Care / Consulted',
+        value: '$inTreatment',
+        icon: Icons.medical_services_outlined,
+      ),
+      (label: 'Completed', value: '$completed', icon: Icons.task_alt_rounded),
+      (label: 'Follow-ups Required', value: '$followUpNeeded', icon: Icons.home_work_outlined),
     ];
 
     return GridView.builder(
@@ -2223,8 +2343,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        // Keep enough vertical room to prevent label/value overflow on mobile.
-        mainAxisExtent: 150,
+        mainAxisExtent: 140,
       ),
       itemCount: summaries.length,
       itemBuilder: (context, index) {
@@ -2238,9 +2357,1049 @@ class _ReferralsPageState extends State<ReferralsPage> {
     return AppMetricCard(label: label, value: value, icon: icon);
   }
 
+  Widget _buildTabs() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: _panelSurface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _primaryAqua.withValues(alpha: 0.15)),
+        ),
+        child: Row(
+          children: List.generate(_views.length, (index) {
+            final selected = _selectedTab == index;
+            final icons = [
+              Icons.dashboard_outlined,
+              Icons.add_circle_outline,
+              Icons.list_alt_outlined,
+              Icons.home_work_outlined,
+            ];
+            return TextButton.icon(
+              onPressed: () => setState(() => _selectedTab = index),
+              icon: Icon(icons[index], size: 18),
+              label: Text(_views[index]),
+              style: TextButton.styleFrom(
+                foregroundColor: selected ? Colors.white : _lightOffWhite,
+                backgroundColor: selected ? _primaryAqua : Colors.transparent,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDashboardTab(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+    final recentDocs = docs.take(5).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSummaryCards(docs),
+        const SizedBox(height: 20),
+        // Quick Action Shortcuts
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _panelSurface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Quick Actions',
+                style: TextStyle(
+                  color: _lightOffWhite,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () => setState(() => _selectedTab = 1),
+                    icon: const Icon(Icons.add_circle_outline, size: 18),
+                    label: const Text('Create New Referral'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _primaryAqua,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => setState(() => _selectedTab = 2),
+                    icon: const Icon(Icons.list_alt_outlined, size: 18),
+                    label: const Text('View Live Referral Queue'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _lightOffWhite,
+                      side: BorderSide(color: _primaryAqua.withValues(alpha: 0.3)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => ClinicalFormPdfService.showExportDialog(
+                      context,
+                      formType: ClinicalFormType.referral,
+                    ),
+                    icon: const Icon(Icons.picture_as_pdf_outlined, color: _primaryAqua, size: 18),
+                    label: const Text('Export Blank Form (REF-2026)'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _lightOffWhite,
+                      side: BorderSide(color: _primaryAqua.withValues(alpha: 0.3)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        // Live Recent Activity
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: _panelSurface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Recent Referrals',
+                    style: TextStyle(
+                      color: _lightOffWhite,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => setState(() => _selectedTab = 2),
+                    child: const Text('See all records →'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (recentDocs.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Text(
+                      'No referrals submitted yet. Tap "+ Create New Referral" to start.',
+                      style: TextStyle(color: _mutedCoolGray),
+                    ),
+                  ),
+                )
+              else
+                ...recentDocs.map(_buildReferralCard),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCreateReferralTab() {
+    return _buildReferralForm();
+  }
+
+  Widget _buildRecordsTab(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+    final query = _recordSearchController.text.trim().toLowerCase();
+
+    final filteredDocs = docs.where((doc) {
+      final data = doc.data();
+      final status = (data['status'] ?? 'submitted').toString().toLowerCase();
+      final priority = (data['priority'] ?? 'routine').toString().toLowerCase();
+      final name = (data['patientName'] ?? '').toString().toLowerCase();
+      final patientId = (data['patientId'] ?? '').toString().toLowerCase();
+      final complaint = (data['chiefComplaint'] ?? '').toString().toLowerCase();
+      final reason = (data['referralReason'] ?? '').toString().toLowerCase();
+
+      // Search match
+      if (query.isNotEmpty) {
+        final matchesQuery = name.contains(query) ||
+            patientId.contains(query) ||
+            complaint.contains(query) ||
+            reason.contains(query) ||
+            doc.id.toLowerCase().contains(query);
+        if (!matchesQuery) return false;
+      }
+
+      // Status filter
+      if (_statusFilter != 'all') {
+        if (_statusFilter == 'pending' &&
+            !(status == 'submitted' || status == 'pending_review' || status == 'under_review')) {
+          return false;
+        }
+        if (_statusFilter == 'assigned' &&
+            !(status == 'assigned' || status == 'doctor_assigned')) {
+          return false;
+        }
+        if (_statusFilter == 'in_treatment' &&
+            !(status == 'in_treatment' || status == 'waiting_consultation' || status == 'consulted')) {
+          return false;
+        }
+        if (_statusFilter == 'completed' && status != 'completed') {
+          return false;
+        }
+        if (_statusFilter == 'returned' && status != 'returned_for_correction') {
+          return false;
+        }
+      }
+
+      // Priority filter
+      if (_priorityFilter != 'all') {
+        if (priority != _priorityFilter) return false;
+      }
+
+      // Date range filter
+      if (_recordsFromDate != null || _recordsToDate != null) {
+        final ts = data['createdAt'];
+        if (ts is Timestamp) {
+          final dt = ts.toDate();
+          if (_recordsFromDate != null && dt.isBefore(_recordsFromDate!)) return false;
+          if (_recordsToDate != null && dt.isAfter(_recordsToDate!.add(const Duration(days: 1)))) return false;
+        }
+      }
+
+      return true;
+    }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Search & Filter Panel
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _panelSurface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _recordSearchController,
+                style: const TextStyle(color: _lightOffWhite),
+                decoration: _inputDecoration('Search referral by patient name, ID, or symptoms...').copyWith(
+                  prefixIcon: const Icon(Icons.search, color: _primaryAqua),
+                  suffixIcon: _recordSearchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, color: _mutedCoolGray),
+                          onPressed: () {
+                            _recordSearchController.clear();
+                            setState(() {});
+                          },
+                        )
+                      : null,
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 12),
+              // Status Filters
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    const Text('Status: ', style: TextStyle(color: _mutedCoolGray, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    const SizedBox(width: 4),
+                    ...[
+                      ('All', 'all'),
+                      ('Pending', 'pending'),
+                      ('Assigned', 'assigned'),
+                      ('In Care', 'in_treatment'),
+                      ('Completed', 'completed'),
+                      ('Returned', 'returned'),
+                    ].map((item) {
+                      final isSelected = _statusFilter == item.$2;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: FilterChip(
+                          label: Text(item.$1, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : _lightOffWhite)),
+                          selected: isSelected,
+                          selectedColor: _primaryAqua,
+                          backgroundColor: _darkDeepTeal,
+                          onSelected: (_) => setState(() => _statusFilter = item.$2),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Priority Filters
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    const Text('Priority: ', style: TextStyle(color: _mutedCoolGray, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    const SizedBox(width: 4),
+                    ...[
+                      ('All', 'all'),
+                      ('Routine', 'routine'),
+                      ('Urgent', 'urgent'),
+                      ('Emergency', 'emergency'),
+                    ].map((item) {
+                      final isSelected = _priorityFilter == item.$2;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: FilterChip(
+                          label: Text(item.$1, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : _lightOffWhite)),
+                          selected: isSelected,
+                          selectedColor: _primaryAqua,
+                          backgroundColor: _darkDeepTeal,
+                          onSelected: (_) => setState(() => _priorityFilter = item.$2),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        // Live Queue Results
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: _panelSurface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Referral Records (${filteredDocs.length})',
+                    style: const TextStyle(
+                      color: _lightOffWhite,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (_statusFilter != 'all' || _priorityFilter != 'all' || _recordSearchController.text.isNotEmpty)
+                    TextButton.icon(
+                      icon: const Icon(Icons.filter_alt_off, size: 15),
+                      label: const Text('Clear Filters', style: TextStyle(fontSize: 12)),
+                      onPressed: () {
+                        setState(() {
+                          _statusFilter = 'all';
+                          _priorityFilter = 'all';
+                          _recordSearchController.clear();
+                        });
+                      },
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              if (filteredDocs.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        const Icon(Icons.search_off_rounded, size: 42, color: _mutedCoolGray),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'No referral records match your search or filter criteria.',
+                          style: TextStyle(color: _mutedCoolGray),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                ...filteredDocs.map(_buildReferralCard),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFollowUpTab(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+    final followUpDocs = docs.where((doc) {
+      final data = doc.data();
+      final status = (data['status'] ?? '').toString();
+      final isNeeded = data['followUpRequired'] == true || status == 'completed';
+      if (!isNeeded) return false;
+
+      final isDone = data['followUpCompleted'] == true;
+      if (_followUpStatusFilter == 'pending' && isDone) return false;
+      if (_followUpStatusFilter == 'completed' && !isDone) return false;
+
+      final query = _followUpSearchController.text.trim().toLowerCase();
+      if (query.isNotEmpty) {
+        final name = (data['patientName'] ?? '').toString().toLowerCase();
+        final addr = (data['patientAddress'] ?? '').toString().toLowerCase();
+        if (!name.contains(query) && !addr.contains(query)) return false;
+      }
+
+      return true;
+    }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Follow-up search & filter header
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _panelSurface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _followUpSearchController,
+                style: const TextStyle(color: _lightOffWhite),
+                decoration: _inputDecoration('Search follow-up patients by name or address...').copyWith(
+                  prefixIcon: const Icon(Icons.search, color: _primaryAqua),
+                  suffixIcon: _followUpSearchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, color: _mutedCoolGray),
+                          onPressed: () {
+                            _followUpSearchController.clear();
+                            setState(() {});
+                          },
+                        )
+                      : null,
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    const Text('Follow-up Status: ', style: TextStyle(color: _mutedCoolGray, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    const SizedBox(width: 6),
+                    ...[
+                      ('All', 'all'),
+                      ('Pending Visit', 'pending'),
+                      ('Completed', 'completed'),
+                    ].map((item) {
+                      final isSelected = _followUpStatusFilter == item.$2;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: FilterChip(
+                          label: Text(item.$1, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : _lightOffWhite)),
+                          selected: isSelected,
+                          selectedColor: _primaryAqua,
+                          backgroundColor: _darkDeepTeal,
+                          onSelected: (_) => setState(() => _followUpStatusFilter = item.$2),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: _panelSurface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _primaryAqua.withValues(alpha: 0.16)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Community Follow-up Queue (${followUpDocs.length})',
+                style: const TextStyle(
+                  color: _lightOffWhite,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Track discharged or high-risk referred patients who require home visits and recovery check-ins.',
+                style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72), fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              if (followUpDocs.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 32),
+                  child: Center(
+                    child: Text(
+                      'No patients currently pending post-referral community follow-up.',
+                      style: TextStyle(color: _mutedCoolGray),
+                    ),
+                  ),
+                )
+              else
+                ...followUpDocs.map(_buildFollowUpCard),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFollowUpCard(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data();
+    final patientName = (data['patientName'] ?? 'Patient').toString();
+    final isDone = data['followUpCompleted'] == true;
+    final doctorDiagnosis = (data['doctorDiagnosis'] ?? '').toString();
+    final doctorNotes = (data['doctorNotes'] ?? '').toString();
+    final recoveryStatus = (data['followUpRecoveryStatus'] ?? 'Pending visit').toString();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _darkDeepTeal,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDone ? Colors.green.withValues(alpha: 0.3) : Colors.amber.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  patientName,
+                  style: const TextStyle(color: _lightOffWhite, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isDone ? Colors.green.withValues(alpha: 0.2) : Colors.amber.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: isDone ? Colors.greenAccent : Colors.amberAccent),
+                ),
+                child: Text(
+                  isDone ? 'COMPLETED' : 'FOLLOW-UP NEEDED',
+                  style: TextStyle(
+                    color: isDone ? Colors.greenAccent : Colors.amberAccent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Address: ${(data['patientAddress'] ?? 'Barangay ${_scope.barangay}').toString()}',
+            style: const TextStyle(color: _mutedCoolGray, fontSize: 12.5),
+          ),
+          if (doctorDiagnosis.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Hospital Diagnosis: $doctorDiagnosis',
+              style: const TextStyle(color: _lightOffWhite, fontSize: 13),
+            ),
+          ],
+          if (doctorNotes.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Discharge Instructions: $doctorNotes',
+              style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.8), fontSize: 12.5),
+            ),
+          ],
+          if (isDone) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: _panelSurface,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Recorded by ${data['followUpCompletedBy'] ?? 'BHW'} • Recovery: $recoveryStatus',
+                    style: const TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  if ((data['followUpNotes'] ?? '').toString().isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text('Notes: ${data['followUpNotes']}', style: const TextStyle(color: _lightOffWhite, fontSize: 12)),
+                  ],
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () => _showFollowUpModal(doc),
+                icon: const Icon(Icons.edit_note, size: 18),
+                label: Text(isDone ? 'Edit Follow-up Record' : 'Record Home Visit'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primaryAqua,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _showReferralDetailsDialog(doc),
+                icon: const Icon(Icons.info_outline, size: 16),
+                label: const Text('View Referral Details'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _lightOffWhite,
+                  side: BorderSide(color: _primaryAqua.withValues(alpha: 0.3)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showFollowUpModal(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) async {
+    final data = doc.data();
+    final patientName = (data['patientName'] ?? 'Patient').toString();
+    final isAlreadyCompleted = data['followUpCompleted'] == true;
+
+    DateTime followUpDate = DateTime.now();
+    final bpCtrl = TextEditingController(text: (data['followUpBp'] ?? '').toString());
+    final tempCtrl = TextEditingController(text: (data['followUpTemp'] ?? '').toString());
+    final pulseCtrl = TextEditingController(text: (data['followUpPulse'] ?? '').toString());
+    final spo2Ctrl = TextEditingController(text: (data['followUpSpo2'] ?? '').toString());
+    final notesCtrl = TextEditingController(text: (data['followUpNotes'] ?? '').toString());
+    String recoveryStatus = (data['followUpRecoveryStatus'] ?? 'Improving').toString();
+    bool markCompleted = isAlreadyCompleted ? true : true;
+    bool isSaving = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) => Container(
+            decoration: BoxDecoration(
+              color: _darkDeepTeal,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
+            ),
+            child: SafeArea(
+              child: SingleChildScrollView(
+                controller: scrollController,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Record Community Follow-up',
+                                style: TextStyle(
+                                  color: _lightOffWhite,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Patient: $patientName',
+                                style: const TextStyle(color: _mutedCoolGray, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: _lightOffWhite),
+                          onPressed: () => Navigator.of(sheetContext).pop(),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 24),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Follow-up Visit Date', style: TextStyle(color: _lightOffWhite, fontSize: 14)),
+                      subtitle: Text('${followUpDate.year}-${followUpDate.month.toString().padLeft(2, '0')}-${followUpDate.day.toString().padLeft(2, '0')}', style: const TextStyle(color: _primaryAqua, fontWeight: FontWeight.bold)),
+                      trailing: const Icon(Icons.calendar_month, color: _primaryAqua),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: followUpDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now().add(const Duration(days: 365)),
+                        );
+                        if (picked != null) {
+                          setSheetState(() => followUpDate = picked);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: bpCtrl,
+                            style: const TextStyle(color: _lightOffWhite),
+                            decoration: _inputDecoration('Blood Pressure (BP)'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            controller: tempCtrl,
+                            style: const TextStyle(color: _lightOffWhite),
+                            decoration: _inputDecoration('Temp (°C)'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: pulseCtrl,
+                            style: const TextStyle(color: _lightOffWhite),
+                            decoration: _inputDecoration('Pulse / HR (bpm)'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            controller: spo2Ctrl,
+                            style: const TextStyle(color: _lightOffWhite),
+                            decoration: _inputDecoration('SpO2 (%)'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    DropdownButtonFormField<String>(
+                      initialValue: recoveryStatus,
+                      dropdownColor: _panelSurface,
+                      style: const TextStyle(color: _lightOffWhite),
+                      decoration: _inputDecoration('Patient Recovery Status'),
+                      items: const [
+                        'Improving',
+                        'Stable',
+                        'Needs Attention',
+                        'Re-referral Required',
+                      ].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                      onChanged: (v) {
+                        if (v != null) setSheetState(() => recoveryStatus = v);
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: notesCtrl,
+                      maxLines: 4,
+                      style: const TextStyle(color: _lightOffWhite),
+                      decoration: _inputDecoration('BHW Observations & Home Visit Notes'),
+                    ),
+                    const SizedBox(height: 14),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Mark Follow-up as Completed', style: TextStyle(color: _lightOffWhite, fontSize: 14)),
+                      subtitle: const Text('Confirms home visit and post-care monitoring has occurred', style: TextStyle(color: _mutedCoolGray, fontSize: 12)),
+                      value: markCompleted,
+                      activeThumbColor: _primaryAqua,
+                      onChanged: (v) => setSheetState(() => markCompleted = v),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primaryAqua,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: isSaving ? null : () async {
+                          setSheetState(() => isSaving = true);
+                          try {
+                            final user = FirebaseAuth.instance.currentUser;
+                            final payload = {
+                              'followUpCompleted': markCompleted,
+                              'followUpCompletedAt': markCompleted ? FieldValue.serverTimestamp() : null,
+                              'followUpCompletedBy': user?.displayName ?? user?.email ?? 'BHW',
+                              'followUpVisitDate': '${followUpDate.year}-${followUpDate.month.toString().padLeft(2, '0')}-${followUpDate.day.toString().padLeft(2, '0')}',
+                              'followUpBp': bpCtrl.text.trim(),
+                              'followUpTemp': tempCtrl.text.trim(),
+                              'followUpPulse': pulseCtrl.text.trim(),
+                              'followUpSpo2': spo2Ctrl.text.trim(),
+                              'followUpRecoveryStatus': recoveryStatus,
+                              'followUpNotes': notesCtrl.text.trim(),
+                              'updatedAt': FieldValue.serverTimestamp(),
+                            };
+                            await doc.reference.update(payload);
+
+                            final mirrorRef = _barangayReferralMirrorReference(
+                              barangayCode: _scope.barangayCode,
+                              referralId: doc.id,
+                            );
+                            if (mirrorRef != null) {
+                              await mirrorRef.update(payload);
+                            }
+
+                            if (sheetContext.mounted) {
+                              Navigator.of(sheetContext).pop();
+                            }
+                            Get.snackbar(
+                              'Follow-up saved',
+                              'Patient follow-up record successfully updated.',
+                              backgroundColor: Colors.green,
+                              colorText: Colors.white,
+                            );
+                          } catch (e) {
+                            setSheetState(() => isSaving = false);
+                            Get.snackbar(
+                              'Error saving follow-up',
+                              '$e',
+                              backgroundColor: Colors.redAccent,
+                              colorText: Colors.white,
+                            );
+                          }
+                        },
+                        child: isSaving
+                            ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                            : const Text('Save Follow-up Record', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showReferralDetailsDialog(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) async {
+    final data = doc.data();
+    final patientName = (data['patientName'] ?? 'Unnamed Patient').toString();
+    final referralId = doc.id;
+    final status = (data['status'] ?? 'submitted').toString();
+    final priority = (data['priority'] ?? 'routine').toString();
+    final doctorName = (data['assignedDoctorName'] ?? 'Unassigned').toString();
+    final doctorSpecialization = (data['assignedDoctorSpecialization'] ?? 'General Medicine').toString();
+    final doctorDiagnosis = (data['doctorDiagnosis'] ?? '').toString();
+    final doctorTreatment = (data['doctorTreatment'] ?? '').toString();
+    final doctorMedication = (data['doctorMedication'] ?? '').toString();
+    final doctorNotes = (data['doctorNotes'] ?? '').toString();
+    final choNotes = (data['choReviewNotes'] ?? '').toString();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: _panelSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(patientName, style: const TextStyle(color: _lightOffWhite, fontWeight: FontWeight.bold, fontSize: 18)),
+                  const SizedBox(height: 2),
+                  Text('Referral ID: $referralId', style: const TextStyle(color: _mutedCoolGray, fontSize: 12)),
+                ],
+              ),
+            ),
+            _buildPriorityBadge(priority),
+            const SizedBox(width: 6),
+            _buildStatusChip(status),
+          ],
+        ),
+        content: SizedBox(
+          width: 500,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDetailSection('Demographics & Intake', [
+                  _buildDetailRow('Age / Sex', '${data['patientAge'] ?? 'N/A'} • ${data['patientSex'] ?? 'N/A'}'),
+                  _buildDetailRow('Barangay', (data['barangay'] ?? 'N/A').toString()),
+                  _buildDetailRow('Address', (data['patientAddress'] ?? 'N/A').toString()),
+                  _buildDetailRow('Date & Time', (data['referralDateTime'] ?? 'N/A').toString()),
+                ]),
+                const SizedBox(height: 12),
+                _buildDetailSection('Clinical Findings', [
+                  _buildDetailRow('Chief Complaint', (data['chiefComplaint'] ?? 'None').toString()),
+                  _buildDetailRow('Medical History', (data['medicalHistory'] ?? 'None').toString()),
+                  _buildDetailRow('Vital Signs', (data['completeVitalSigns'] ?? 'N/A').toString()),
+                  _buildDetailRow('Impression', (data['impression'] ?? 'N/A').toString()),
+                  _buildDetailRow('Action Taken', (data['actionTaken'] ?? 'N/A').toString()),
+                  _buildDetailRow('Last Meal', (data['lastMealTime'] ?? 'N/A').toString()),
+                  _buildDetailRow('Surgical History', data['hasSurgicalOperations'] == true ? 'Yes - ${data['surgicalProcedure']}' : 'No'),
+                  _buildDetailRow('Insurance', data['hasHealthInsuranceCoverage'] == true ? 'Yes - ${data['healthInsuranceCoverageType']}' : 'No'),
+                ]),
+                const SizedBox(height: 12),
+                _buildDetailSection('Routing & Doctor Care', [
+                  _buildDetailRow('Assigned Doctor', '$doctorName ($doctorSpecialization)'),
+                  if (doctorDiagnosis.isNotEmpty) _buildDetailRow('Doctor Diagnosis', doctorDiagnosis),
+                  if (doctorTreatment.isNotEmpty) _buildDetailRow('Doctor Treatment', doctorTreatment),
+                  if (doctorMedication.isNotEmpty) _buildDetailRow('Prescribed Meds', doctorMedication),
+                  if (doctorNotes.isNotEmpty) _buildDetailRow('Doctor Notes', doctorNotes),
+                  if (choNotes.isNotEmpty) _buildDetailRow('CHO Review Notes', choNotes),
+                  _buildDetailRow('Submitted By', '${data['createdByName'] ?? data['createdByEmail'] ?? 'BHW'} (${_formatTimestamp(data['createdAt'])})'),
+                ]),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton.icon(
+            onPressed: () => ClinicalFormPdfService.showExportDialog(
+              context,
+              formType: ClinicalFormType.referral,
+              record: {
+                ...data,
+                'id': doc.id,
+              },
+            ),
+            icon: const Icon(Icons.picture_as_pdf_outlined, color: _primaryAqua, size: 18),
+            label: const Text('Export PDF'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriorityBadge(String priority) {
+    Color color;
+    switch (priority.toLowerCase()) {
+      case 'emergency':
+        color = Colors.redAccent;
+        break;
+      case 'urgent':
+        color = Colors.amberAccent;
+        break;
+      default:
+        color = _primaryAqua;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        priority.toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontSize: 10.5,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailSection(String title, List<Widget> children) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _darkDeepTeal,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: _primaryAqua,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(color: _mutedCoolGray, fontSize: 12),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(color: _lightOffWhite, fontSize: 12.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildReferralCard(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     final status = (data['status'] ?? 'submitted').toString();
+    final priority = (data['priority'] ?? 'routine').toString();
     final doctorName = (data['assignedDoctorName'] ?? 'Unassigned').toString();
     final doctorDiagnosis = (data['doctorDiagnosis'] ?? '').toString();
     final doctorTreatment = (data['doctorTreatment'] ?? '').toString();
@@ -2268,10 +3427,11 @@ class _ReferralsPageState extends State<ReferralsPage> {
                 (data['patientName'] ?? 'Unnamed patient').toString(),
                 style: const TextStyle(
                   color: _lightOffWhite,
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              _buildPriorityBadge(priority),
               _buildStatusChip(status),
               if ((data['barangay'] ?? '').toString().isNotEmpty)
                 _buildInfoChip((data['barangay'] ?? '').toString()),
@@ -2377,9 +3537,31 @@ class _ReferralsPageState extends State<ReferralsPage> {
           ],
           const SizedBox(height: 14),
           Wrap(
-            spacing: 12,
-            runSpacing: 12,
+            spacing: 10,
+            runSpacing: 10,
             children: [
+              OutlinedButton.icon(
+                onPressed: () => _showReferralDetailsDialog(doc),
+                icon: const Icon(Icons.visibility_outlined, size: 16),
+                label: const Text('View Details'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _lightOffWhite,
+                  side: BorderSide(
+                    color: _primaryAqua.withValues(alpha: 0.32),
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _showFollowUpModal(doc),
+                icon: const Icon(Icons.home_work_outlined, size: 16),
+                label: const Text('Follow-up'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.amberAccent,
+                  side: BorderSide(
+                    color: Colors.amber.withValues(alpha: 0.4),
+                  ),
+                ),
+              ),
               if (_isChoOperator)
                 OutlinedButton.icon(
                   onPressed: () => _showAssignmentDialog(doc),
@@ -2411,8 +3593,8 @@ class _ReferralsPageState extends State<ReferralsPage> {
                     'id': doc.id,
                   },
                 ),
-                icon: const Icon(Icons.picture_as_pdf_outlined, color: _primaryAqua),
-                label: const Text('Export Form PDF / Print'),
+                icon: const Icon(Icons.picture_as_pdf_outlined, color: _primaryAqua, size: 16),
+                label: const Text('Export PDF'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _lightOffWhite,
                   side: BorderSide(
@@ -2488,11 +3670,21 @@ class _ReferralsPageState extends State<ReferralsPage> {
       appBar: AppBar(
         backgroundColor: AppDesign.navy,
         foregroundColor: Colors.white,
-        title: const Text('Referral Management'),
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+        title: const Text(
+          'Referral Management',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
         actions: [
           IconButton(
             onPressed: _loadScope,
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.white),
             tooltip: 'Refresh',
           ),
         ],
@@ -2574,55 +3766,15 @@ class _ReferralsPageState extends State<ReferralsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildHeader(),
-                      const SizedBox(height: 20),
-                      _buildReferralForm(),
-                      if (_isBhw) const SizedBox(height: 20),
-                      _buildSummaryCards(docs),
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: _panelSurface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: _primaryAqua.withValues(alpha: 0.16),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Live Referral Queue',
-                              style: TextStyle(
-                                color: _lightOffWhite,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _isChoOperator
-                                  ? 'CHO can review all referred patients and route them to doctors in real time.'
-                                  : _isDoctor
-                                  ? 'Only referrals assigned to you appear here.'
-                                  : 'Your submitted referrals remain visible here as CHO and doctors update patient care.',
-                              style: TextStyle(
-                                color: _lightOffWhite.withValues(alpha: 0.72),
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            if (docs.isEmpty)
-                              Text(
-                                'No referrals available for your role yet.',
-                                style: TextStyle(
-                                  color: _lightOffWhite.withValues(alpha: 0.72),
-                                ),
-                              )
-                            else
-                              ...docs.map(_buildReferralCard),
-                          ],
-                        ),
-                      ),
+                      const SizedBox(height: 18),
+                      _buildTabs(),
+                      const SizedBox(height: 18),
+                      switch (_selectedTab) {
+                        0 => _buildDashboardTab(docs),
+                        1 => _buildCreateReferralTab(),
+                        2 => _buildRecordsTab(docs),
+                        _ => _buildFollowUpTab(docs),
+                      },
                     ],
                   ),
                 );

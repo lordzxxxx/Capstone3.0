@@ -268,22 +268,71 @@ class PatientCenteredHistoryService {
     if (candidate['isRegisteredPatient'] == true) {
       return Map<String, dynamic>.from(candidate);
     }
+
+    final isOcrSeed = candidate['_ocrRawText'] != null ||
+        candidate['_ocrNeedsManualReview'] != null;
+
     final patientId = (candidate['patientId'] ??
             candidate['linkedPatientId'] ??
             candidate['id'] ??
             '')
         .toString()
         .trim();
+
     if (patientId.isNotEmpty) {
       final records = await _patientHelper.getAllRecords();
       for (final r in records) {
         if ((r['id']?.toString() == patientId ||
             r['patientId']?.toString() == patientId ||
             r['patientCode']?.toString() == patientId)) {
-          return Map<String, dynamic>.from(r);
+          final merged = Map<String, dynamic>.from(candidate);
+          for (final entry in r.entries) {
+            if (entry.value != null &&
+                entry.value.toString().trim().isNotEmpty) {
+              merged[entry.key] = entry.value;
+            }
+          }
+          merged['isRegisteredPatient'] = true;
+          return merged;
         }
       }
     }
+
+    // Try matching by candidate patient name if present
+    final candidateName = (candidate['patientName'] ??
+            candidate['fullName'] ??
+            candidate['patient'] ??
+            '')
+        .toString()
+        .trim();
+    if (candidateName.isNotEmpty) {
+      final records = await _patientHelper.getAllRecords();
+      final normCandName = _normalize(candidateName);
+      for (final r in records) {
+        final rName = _normalize(_buildPatientName(r));
+        if (rName.isNotEmpty &&
+            (rName == normCandName ||
+                normCandName.contains(rName) ||
+                rName.contains(normCandName))) {
+          final merged = Map<String, dynamic>.from(candidate);
+          for (final entry in r.entries) {
+            if (entry.value != null &&
+                entry.value.toString().trim().isNotEmpty) {
+              merged[entry.key] = entry.value;
+            }
+          }
+          merged['isRegisteredPatient'] = true;
+          return merged;
+        }
+      }
+    }
+
+    // If candidate came from an OCR scan, preserve it directly so health workers
+    // can review and edit the scanned clinical data in the form
+    if (isOcrSeed) {
+      return Map<String, dynamic>.from(candidate);
+    }
+
     return null;
   }
 

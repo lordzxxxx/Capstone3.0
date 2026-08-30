@@ -1275,72 +1275,92 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
-          return Container(
-            height: MediaQuery.of(context).size.height,
-            decoration: const BoxDecoration(
-              color: _darkDeepTeal,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              ),
-            ),
-            child: Column(
-              children: [
-                // Modal Header
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: _darkDeepTeal,
-                    border: Border(
-                      bottom: BorderSide(
-                        color: _lightOffWhite.withValues(alpha: 0.2),
-                        width: 1.5,
-                      ),
-                    ),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
+          return DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.95,
+            minChildSize: 0.7,
+            maxChildSize: 0.98,
+            builder: (context, scrollController) => Container(
+              decoration: BoxDecoration(
+                color: _darkDeepTeal,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
                   ),
-                  child: SafeArea(
-                    bottom: false,
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.close, color: _lightOffWhite),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.vaccines,
-                          color: _lightOffWhite,
-                          size: 28,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            modalTitle,
-                            style: const TextStyle(
-                              color: _lightOffWhite,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                ],
+              ),
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header with close and export buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  modalTitle,
+                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    color: _lightOffWhite,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Record vaccine administration and dose schedule details',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: _lightOffWhite.withValues(alpha: 0.8),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Form Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Form(
-                      key: formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                          IconButton(
+                            tooltip: 'Print / Export Form PDF',
+                            icon: const Icon(
+                              Icons.picture_as_pdf_outlined,
+                              color: _primaryAqua,
+                              size: 22,
+                            ),
+                            onPressed: () {
+                              ClinicalFormPdfService.showExportDialog(
+                                context,
+                                formType: ClinicalFormType.immunization,
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: _lightOffWhite.withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.close,
+                                color: _lightOffWhite,
+                                size: 24,
+                              ),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Form(
+                        key: formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                           // Patient Details
                           _buildSectionHeader('Patient Details', Icons.person),
                           _buildFormCard([
@@ -1791,14 +1811,15 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                         ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          );
-        },
-      ),
-    );
+          ),
+        );
+      },
+    ),
+  );
   }
 
   Future<DateTime?> _showModalDatePicker(BuildContext context) async {
@@ -3171,62 +3192,89 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
-          return Container(
-            height: MediaQuery.of(context).size.height,
-            decoration: const BoxDecoration(
-              color: _darkDeepTeal,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              ),
-            ),
-            child: Column(
-              children: [
-                // Modal Header
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: _primaryAqua,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
+          return DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.95,
+            minChildSize: 0.7,
+            maxChildSize: 0.98,
+            builder: (context, scrollController) => Container(
+              decoration: BoxDecoration(
+                color: _darkDeepTeal,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
                   ),
-                  child: SafeArea(
-                    bottom: false,
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.edit, color: Colors.white, size: 28),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Text(
-                            'Edit Immunization Record',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                ],
+              ),
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header with close and export buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Edit Immunization Record',
+                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    color: _lightOffWhite,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Update administration logs and dose schedule',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: _lightOffWhite.withValues(alpha: 0.8),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Form Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Patient Details
-                        _buildSectionHeader('Patient Details', Icons.person),
+                          IconButton(
+                            tooltip: 'Print / Export Form PDF',
+                            icon: const Icon(
+                              Icons.picture_as_pdf_outlined,
+                              color: _primaryAqua,
+                              size: 22,
+                            ),
+                            onPressed: () {
+                              ClinicalFormPdfService.showExportDialog(
+                                context,
+                                formType: ClinicalFormType.immunization,
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: _lightOffWhite.withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.close,
+                                color: _lightOffWhite,
+                                size: 24,
+                              ),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      // Patient Details
+                      _buildSectionHeader('Patient Details', Icons.person),
                         _buildFormCard([
                           Row(
                             children: [
@@ -3602,12 +3650,11 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                     ),
                   ),
                 ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
+              ),
+            );
+          },
+        ),
+      );
   }
 
   Widget _buildDetailRow(String label, String value) {

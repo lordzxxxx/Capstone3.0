@@ -1914,9 +1914,6 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
       return null;
     }
 
-    final modalTitle = patientSeed == null
-        ? 'New Prenatal Registration'
-        : 'Add Another Prenatal Visit';
 
     if (patientSeed != null) {
       final directFirstName = (patientSeed['firstName'] ?? '')
@@ -2006,72 +2003,106 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
       registrationDate = DateTime.now();
     }
 
+    final isFollowUpVisit = patientSeed != null;
+    final modalTitle = isFollowUpVisit
+        ? 'Add Another Prenatal Visit'
+        : 'New Prenatal Care Record';
+    final modalSubtitle = isFollowUpVisit
+        ? 'Record maternal health follow-up for the registered patient.'
+        : 'Register and evaluate a prenatal patient record';
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
-          return Container(
-            height: MediaQuery.of(context).size.height,
-            decoration: const BoxDecoration(
-              color: _darkDeepTeal,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              ),
-            ),
-            child: Column(
-              children: [
-                // Modal Header
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppDesign.navy,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
+          return DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.95,
+            minChildSize: 0.7,
+            maxChildSize: 0.98,
+            builder: (context, scrollController) => Container(
+              decoration: BoxDecoration(
+                color: _darkDeepTeal,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
                   ),
-                  child: SafeArea(
-                    bottom: false,
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.pregnant_woman,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            modalTitle,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                ],
+              ),
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header with close and export buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  modalTitle,
+                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    color: _lightOffWhite,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  modalSubtitle,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: _lightOffWhite.withValues(alpha: 0.8),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Form Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Form(
-                      key: formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                          IconButton(
+                            tooltip: 'Print / Export Form PDF',
+                            icon: const Icon(
+                              Icons.picture_as_pdf_outlined,
+                              color: _primaryAqua,
+                              size: 22,
+                            ),
+                            onPressed: () {
+                              ClinicalFormPdfService.showExportDialog(
+                                context,
+                                formType: ClinicalFormType.prenatal,
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: _lightOffWhite.withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.close,
+                                color: _lightOffWhite,
+                                size: 24,
+                              ),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Form(
+                        key: formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                           // Patient Information Area
                           _buildSectionHeader(
                             'Patient Information',
@@ -2653,14 +2684,15 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                         ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          );
-        },
-      ),
-    );
+          ),
+        );
+      },
+    ),
+  );
   }
 
   void _showEditPrenatalModal(

@@ -406,15 +406,15 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: _panelTop,
+                color: AppDesign.navy,
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(
-                  color: _panelStroke.withValues(alpha: 0.7),
+                  color: Colors.white.withValues(alpha: 0.15),
                   width: 1.1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.22),
+                    color: AppDesign.navy.withValues(alpha: 0.28),
                     blurRadius: 18,
                     offset: const Offset(0, 8),
                   ),
@@ -430,7 +430,7 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                         Text(
                           'Check-up Performance Dashboard',
                           style: theme.textTheme.headlineSmall?.copyWith(
-                            color: _lightOffWhite,
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -438,7 +438,7 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                         Text(
                           'Executive summary of totals, trends, demographics, and vital sign activity.',
                           style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.78),
+                            color: Colors.white.withValues(alpha: 0.85),
                             fontSize: 13,
                             height: 1.4,
                           ),
@@ -451,12 +451,12 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: _primaryAqua.withValues(alpha: 0.16),
+                      color: Colors.white.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
                       Icons.insights_rounded,
-                      color: _primaryAqua,
+                      color: Colors.white,
                       size: 22,
                     ),
                   ),

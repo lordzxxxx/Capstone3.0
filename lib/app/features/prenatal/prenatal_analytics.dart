@@ -474,21 +474,67 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
                 children: [
-                  Text(
-                    'Prenatal care insights',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: _lightOffWhite,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: AppDesign.navy,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        width: 1.1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppDesign.navy.withValues(alpha: 0.28),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _lastUpdated == null
-                        ? 'Current prenatal population overview'
-                        : 'Updated ${_lastUpdated!.hour.toString().padLeft(2, '0')}:${_lastUpdated!.minute.toString().padLeft(2, '0')}',
-                    style: TextStyle(
-                      color: _lightOffWhite.withValues(alpha: 0.65),
-                      fontSize: 13,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Prenatal Care Insights',
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                _lastUpdated == null
+                                    ? 'Executive maternal health overview & risk monitoring'
+                                    : 'Updated ${_lastUpdated!.hour.toString().padLeft(2, '0')}:${_lastUpdated!.minute.toString().padLeft(2, '0')}',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.85),
+                                  fontSize: 13,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.pregnant_woman_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),

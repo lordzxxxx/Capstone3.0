@@ -240,12 +240,21 @@ class OcrExtraction {
     if (seed.containsKey('dose')) {
       seed['doseNumber'] = seed['dose'];
     }
+    if (seed.containsKey('email')) {
+      seed['emailAddress'] = seed['email'];
+    }
     if (seed.containsKey('emergencyContact')) {
       seed['emergencyPerson'] = seed['emergencyContact'];
+      seed['emergencyContactName'] = seed['emergencyContact'];
+      seed['emergencyName'] = seed['emergencyContact'];
     }
     if (seed.containsKey('emergencyContactNumber')) {
       seed['emergencyPhone'] = seed['emergencyContactNumber'];
       seed['emergencyNumber'] = seed['emergencyContactNumber'];
+      seed['emergencyContactPhone'] = seed['emergencyContactNumber'];
+    }
+    if (seed.containsKey('mothersMaidenName')) {
+      seed['motherName'] = seed['mothersMaidenName'];
     }
     if (seed.containsKey('reportedBy')) {
       seed['registeredBy'] = seed['reportedBy'];
@@ -603,8 +612,11 @@ class OcrExtraction {
       'emergencyContact':
           r'(?:emergency\s*contact(?:\s*person)?|in\s*case\s*of\s*emergency|contact\s*person)',
       'emergencyContactNumber':
-          r'(?:emergency\s*contact\s*(?:number|no\.?|phone|tel)|emergency\s*phone|emergency\s*no\.?)',
-      'email': r'(?:email|e-mail)',
+          r'(?:emergency\s*(?:contact\s*)?(?:number|no\.?|phone|tel)|emergency\s*phone|emergency\s*no\.?)',
+      'emergencyRelationship':
+          r'(?:emergency\s*relationship|relationship|relasyon)',
+      'email':
+          r'(?:email(?:\s*address)?|e-mail(?:\s*address)?|email\s*add)',
       'age': r'(?:age\s*at\s*death|age|edad|y/?o|yrs?\.?\s*old)',
       'gender': r'(?:sex|gender|kasarian|m/?f|f/?m)',
       'civilStatus':
@@ -647,7 +659,14 @@ class OcrExtraction {
       'edd': r'(?:expected\s*delivery\s*date|edd|due\s*date)',
       'aog':
           r'(?:gestation\s*wks|age\s*of\s*gestation|gestational\s*age|aog)',
-      'bloodType': r'(?:blood\s*type|blood\s*group|abo|rh)',
+      'bloodType': r'(?:blood\s*type|blood\s*group|abo|rh|blood)',
+      'allergies': r'(?:known\s*allergies|allergies|allergy|mga\s*alerhiya)',
+      'chronicConditions':
+          r'(?:chronic\s*conditions?|chronic\s*illnesses?|past\s*medical\s*history|pre-existing\s*conditions?)',
+      'placeOfBirth':
+          r'(?:place\s*of\s*birth|birthplace|pob|lugar\s*ng\s*kapanganakan)',
+      'mothersMaidenName':
+          r'(?:mother(?:\x27s)?\s*maiden\s*name|mother\s*maiden\s*name|maiden\s*name)',
       'riskLevel':
           r'(?:pregnancy\s*risk\s*assessment\s*level|pregnancy\s*risk\s*level|risk\s*level|risk\s*assessment|risk)',
       'fundalHeight':
@@ -787,16 +806,80 @@ class OcrExtraction {
           'Contact Number',
         )
         .replaceFirst(
+          RegExp(r'^civilstatus\b', caseSensitive: false),
+          'Civil Status',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:philhealthid|philhealthno|philhealthnumber)\b', caseSensitive: false),
+          'PhilHealth ID / No.',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:bloodtype|bloodgroup)\b', caseSensitive: false),
+          'Blood Type',
+        )
+        .replaceFirst(
           RegExp(r'^bloodpressure\b', caseSensitive: false),
           'Blood Pressure',
         )
         .replaceFirst(
-          RegExp(r'^heartrate\b', caseSensitive: false),
+          RegExp(r'^(?:bodytemp|bodytemperature)\b', caseSensitive: false),
+          'Body Temp',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:heartrate|pulserate)\b', caseSensitive: false),
           'Heart Rate',
         )
         .replaceFirst(
-          RegExp(r'^respiratoryrate\b', caseSensitive: false),
+          RegExp(r'^(?:respiratoryrate|resprate)\b', caseSensitive: false),
           'Respiratory Rate',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:oxygensaturation|oxygensat)\b', caseSensitive: false),
+          'Oxygen Saturation',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:chiefcomplaint|reasonsforvisit)\b', caseSensitive: false),
+          'Chief Complaint',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:clinicaldiagnosis|diseasecondition)\b', caseSensitive: false),
+          'Clinical Diagnosis',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:treatmentplan|prescribedmedication)\b', caseSensitive: false),
+          'Treatment Plan',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:emergencycontact|emergencycontactperson)\b', caseSensitive: false),
+          'Emergency Contact Person',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:emergencyphone|emergencycontactnumber|emergencycontactno)\b', caseSensitive: false),
+          'Emergency Phone',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:mothersmaidenname|mothermaidenname)\b', caseSensitive: false),
+          "Mother's Maiden Name",
+        )
+        .replaceFirst(
+          RegExp(r'^(?:placeofbirth|birthplace)\b', caseSensitive: false),
+          'Place of Birth',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:registrationdate|dateofregistration)\b', caseSensitive: false),
+          'Registration Date',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:registeredby|recordedby)\b', caseSensitive: false),
+          'Registered By',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:dateofvisit|visitdate)\b', caseSensitive: false),
+          'Date of Visit',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:nextvisitdate|nextvisit)\b', caseSensitive: false),
+          'Next Visit Date',
         );
     return normalized;
   }
@@ -962,13 +1045,35 @@ class OcrExtraction {
         key == 'surname' ||
         key == 'guardianName' ||
         key == 'emergencyContact' ||
+        key == 'mothersMaidenName' ||
         key == 'reportedBy') {
       normalized = _normalizeName(normalized);
     } else if (key == 'barangay') {
       normalized = _normalizeBarangay(normalized);
+    } else if (key == 'bloodType') {
+      normalized = _normalizeBloodType(normalized);
+    } else if (key == 'allergies' || key == 'chronicConditions' || key == 'placeOfBirth') {
+      normalized = _stripFormHints(normalized);
     }
 
     return normalized;
+  }
+
+  static String _normalizeBloodType(String value) {
+    final lower = value.toLowerCase().trim();
+    if (lower.contains('ab') && (lower.contains('+') || lower.contains('pos'))) return 'AB+';
+    if (lower.contains('ab') && (lower.contains('-') || lower.contains('neg'))) return 'AB-';
+    if (lower.contains('a') && !lower.contains('b') && (lower.contains('+') || lower.contains('pos'))) return 'A+';
+    if (lower.contains('a') && !lower.contains('b') && (lower.contains('-') || lower.contains('neg'))) return 'A-';
+    if (lower.contains('b') && !lower.contains('a') && (lower.contains('+') || lower.contains('pos'))) return 'B+';
+    if (lower.contains('b') && !lower.contains('a') && (lower.contains('-') || lower.contains('neg'))) return 'B-';
+    if (lower.contains('o') && (lower.contains('+') || lower.contains('pos'))) return 'O+';
+    if (lower.contains('o') && (lower.contains('-') || lower.contains('neg'))) return 'O-';
+    final upper = value.toUpperCase().trim();
+    if (['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].contains(upper)) {
+      return upper;
+    }
+    return value.trim();
   }
 
   static String _normalizeName(String value) {

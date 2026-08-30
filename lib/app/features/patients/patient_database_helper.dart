@@ -52,6 +52,47 @@ class PatientDatabaseHelper {
     if (existing.isEmpty) {
       await _createDB(db, 1);
     }
+    await _ensureCanonicalColumns(db);
+  }
+
+  Future<void> _ensureCanonicalColumns(Database db) async {
+    final columns = await db.rawQuery('PRAGMA table_info(patient_records)');
+    final existing = columns
+        .map((column) => column['name']?.toString() ?? '')
+        .toSet();
+    const canonicalColumns = <String>[
+      'patientId',
+      'fullName',
+      'middleName',
+      'address',
+      'householdId',
+      'guardian',
+      'contactNumber',
+      'emergencyContactName',
+      'emergencyRelationship',
+      'emergencyContactPhone',
+      'emergencyContactAddress',
+      'emergencyContact',
+      'emergencyContactNumber',
+      'medicalHistory',
+    ];
+    for (final column in canonicalColumns) {
+      if (!existing.contains(column)) {
+        await db.execute(
+          "ALTER TABLE patient_records ADD COLUMN $column TEXT NOT NULL DEFAULT ''",
+        );
+      }
+    }
+  }
+
+  static String generatePatientId([DateTime? value]) {
+    final now = value ?? DateTime.now();
+    String two(int number) => number.toString().padLeft(2, '0');
+    final serial = now.millisecondsSinceEpoch
+        .remainder(1000)
+        .toString()
+        .padLeft(3, '0');
+    return 'PAT-${now.year}${two(now.month)}${two(now.day)}-${two(now.hour)}${two(now.minute)}${two(now.second)}-$serial';
   }
 
   Future _createDB(Database db, int version) async {
@@ -224,10 +265,32 @@ class PatientDatabaseHelper {
     Map<String, dynamic> record,
     String id,
   ) {
+    final firstName = (record['firstName'] ?? '').toString().trim();
+    final middleName = (record['middleName'] ?? '').toString().trim();
+    final surname = (record['surname'] ?? '').toString().trim();
+    final computedFullName = [firstName, middleName, surname]
+        .where((s) => s.isNotEmpty)
+        .join(' ');
+    final fullName = (record['fullName'] ?? computedFullName).toString().trim();
+    final address = (record['address'] ?? record['street'] ?? '').toString().trim();
+    final contactNumber = (record['contactNumber'] ?? record['phoneNumber'] ?? record['phone'] ?? '').toString().trim();
+    final emergencyContact = (record['emergencyContact'] ?? record['emergencyContactName'] ?? '').toString().trim();
+    final emergencyContactNumber = (record['emergencyContactNumber'] ?? record['emergencyContactPhone'] ?? '').toString().trim();
+    final medicalHistory = (record['medicalHistory'] ?? record['pastMedicalHistory'] ?? '').toString().trim();
+
     return {
       'id': id,
-      'firstName': record['firstName'] ?? '',
-      'surname': record['surname'] ?? '',
+      'patientId': record['patientId'] ?? id,
+      'fullName': fullName,
+      'firstName': firstName,
+      'middleName': middleName,
+      'surname': surname,
+      'address': address,
+      'householdId': record['householdId'] ?? '',
+      'contactNumber': contactNumber,
+      'emergencyContact': emergencyContact,
+      'emergencyContactNumber': emergencyContactNumber,
+      'medicalHistory': medicalHistory,
       'mothersMaidenName': record['mothersMaidenName'] ?? '',
       'dateOfBirth': record['dateOfBirth'] ?? '',
       'age': record['age'] ?? '',

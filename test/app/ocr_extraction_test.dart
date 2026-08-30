@@ -726,6 +726,89 @@ void main() {
       expect(seed['nextVisitDate'], '2026-08-25');
     });
 
+    test('accurately extracts and seeds realistic handwritten Patient Master Registration Form (PAT-2026) with noisy OCR substitutions', () {
+      const handwrittenPatientForm = '''
+        REPUBLIC OF THE PHILIPPINES
+        CITY HEALTH OFFICE - MALAYBALAY CITY
+        PATIENT MASTER REGISTRATION CARD
+        FORM: PAT-2026
+
+        1. PATIENT DEMOGRAPHIC INFORMATION
+        Patient Full Name: Fernandez, Rodrigo G.
+        Patient ID: PAT-2026-0350
+        Date of Birth: 1985-11-2O
+        Age: 4O yrs
+        Sex: [X] Male  [ ] Female
+        Civil Status: [X] Married  [ ] Single  [ ] Widowed  [ ] Separated
+        Blood Type: Type O+
+        Mother's Maiden Name: Lucia Garcia
+        Place of Birth: Malaybalay City
+        Religion: Roman Catholic
+        Occupation: Secondary School Teacher
+
+        2. RESIDENTIAL ADDRESS & CONTACT INFORMATION
+        Contact Number: O928-555-1234
+        Email Address: rodrigo.fernandez@deped.gov.ph
+        Residential Address: Block 12 Lot 5, Villa Corina Subd.
+        Barangay: Sumpong
+
+        3. VITAL SIGNS & CLINICAL BASELINE
+        Blood Pressure (BP): 13O/8S mmHg
+        Body Temp (T): 36,6 °C
+        Heart Rate (HR): 72 bpm
+        Respiratory Rate (RR): l8 cpm
+        Oxygen Saturation (SpO2): 99 %
+        Weight (WT): 72 kg
+        Height (HT): 17O cm
+        Known Allergies: Penicillin, Shellfish
+        Chronic Conditions: Essential Hypertension
+
+        4. EMERGENCY CONTACT & INSURANCE
+        Emergency Contact Person: Lucia Fernandez
+        Emergency Phone: O917-666-789O
+        Emergency Relationship: Spouse
+        PhilHealth ID / No.: 15-O98712345-6
+
+        5. REGISTRATION METADATA
+        Registration Date: 2026-08-24
+        Registered By: BHW Carmen Delgado
+      ''';
+
+      final extraction = OcrExtraction.fromText(handwrittenPatientForm);
+      final seed = extraction.toFormSeed();
+
+      expect(seed['fullName'], 'Fernandez, Rodrigo G.');
+      expect(seed['patientName'], 'Fernandez, Rodrigo G.');
+      expect(seed['patientId'], 'PAT-2026-0350');
+      expect(seed['dateOfBirth'], '1985-11-20');
+      expect(seed['age'], '40');
+      expect(seed['gender'], 'Male');
+      expect(seed['civilStatus'], 'Married');
+      expect(seed['bloodType'], 'O+');
+      expect(seed['mothersMaidenName'], 'Lucia Garcia');
+      expect(seed['placeOfBirth'], 'Malaybalay City');
+      expect(seed['religion'], 'Roman Catholic');
+      expect(seed['occupation'], 'Secondary School Teacher');
+      expect(seed['contactNumber'], '09285551234');
+      expect(seed['email'], 'rodrigo.fernandez@deped.gov.ph');
+      expect(seed['address'], 'Block 12 Lot 5, Villa Corina Subd.');
+      expect(seed['barangay'], 'Sumpong');
+      expect(seed['bloodPressure'], '130/85');
+      expect(seed['temperature'], '36.6');
+      expect(seed['heartRate'], '72');
+      expect(seed['respiratoryRate'], '18');
+      expect(seed['oxygenSaturation'], '99');
+      expect(seed['weight'], '72');
+      expect(seed['height'], '170');
+      expect(seed['allergies'], 'Penicillin, Shellfish');
+      expect(seed['chronicConditions'], 'Essential Hypertension');
+      expect(seed['emergencyContact'], 'Lucia Fernandez');
+      expect(seed['emergencyContactNumber'], '09176667890');
+      expect(seed['philhealthNumber'], '15-098712345-6');
+      expect(seed['registrationDate'], '2026-08-24');
+      expect(seed['registeredBy'], 'BHW Carmen Delgado');
+    });
+
     test('strips handwritten underline guides and empty guide boxes', () {
       const text = '''
         Patient Full Name: Juan Dela Cruz ___________

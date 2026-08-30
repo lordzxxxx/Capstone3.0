@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -31,6 +31,10 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 import 'package:mycapstone_project/app/shared/services/clinical_form_pdf_service.dart';
+import 'package:mycapstone_project/app/features/dashboard/widgets/dashboard_bottom_nav_bar.dart';
+import 'package:mycapstone_project/app/features/dashboard/widgets/modules_hub_view.dart';
+import 'package:mycapstone_project/app/features/dashboard/widgets/dashboard_navigation_drawer.dart';
+import 'package:mycapstone_project/app/features/dashboard/widgets/dashboard_notifications_sheet.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _secondaryIceBlue = AppDesign.navySoft;
@@ -115,8 +119,7 @@ class _HomePageState extends State<HomePage> {
   int? _selectedDotIndex;
 
   // Notification panel state
-  List<Map<String, dynamic>> _notificationsList = [];
-  bool _isLoadingNotificationsList = false;
+  int _unreadNotificationsCount = 0;
 
   // Notification plugin and tracking
   late FlutterLocalNotificationsPlugin _notificationsPlugin;
@@ -173,6 +176,7 @@ class _HomePageState extends State<HomePage> {
     }
     _keyMetricsSelectedDate ??= DateTime.now();
     _initializeNotifications();
+    _refreshUnreadNotificationsCount();
     _loadMetrics();
     _loadRecentActivities();
     _loadDiseaseTrends();
@@ -409,11 +413,9 @@ class _HomePageState extends State<HomePage> {
 
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
-          // Notification permission is not requested during app startup.
-          // A future notification opt-in flow must request it in context.
-          requestAlertPermission: false,
-          requestBadgePermission: false,
-          requestSoundPermission: false,
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
         );
 
     Future<void> initializeWithIcon(String iconName) async {
@@ -421,20 +423,103 @@ class _HomePageState extends State<HomePage> {
         android: AndroidInitializationSettings(iconName),
         iOS: initializationSettingsIOS,
       );
-      await _notificationsPlugin.initialize(initializationSettings);
+      await _notificationsPlugin.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse response) {
+          if (response.payload != null && response.payload!.isNotEmpty) {
+            _handleNotificationPayload(response.payload!);
+          }
+        },
+      );
     }
 
     try {
-      await initializeWithIcon('app_icon');
-    } on PlatformException catch (e) {
-      if (e.code == 'invalid_icon') {
+      await initializeWithIcon('@mipmap/ic_launcher');
+    } catch (_) {
+      try {
+        await initializeWithIcon('app_icon');
+      } catch (_) {
         try {
           await initializeWithIcon('launch_background');
-        } on PlatformException catch (fallbackError) {
-          print('Notification initialization failed: $fallbackError');
-        }
-      } else {
-        print('Notification initialization failed: $e');
+        } catch (_) {}
+      }
+    }
+
+    if (!kIsWeb) {
+      try {
+        await _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
+            ?.requestNotificationsPermission();
+      } catch (_) {}
+    }
+
+    _refreshUnreadNotificationsCount();
+  }
+
+  void _handleNotificationPayload(String payload) {
+    if (payload.isNotEmpty) {
+      Get.toNamed(payload);
+    }
+  }
+
+  Future<void> _refreshUnreadNotificationsCount() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser ?? widget.user;
+      final count = await DashboardNotificationsSheet.fetchUnreadCount(user);
+      if (mounted) {
+        setState(() => _unreadNotificationsCount = count);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _showSystemLocalNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    try {
+      if (!kIsWeb) {
+        await _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
+            ?.requestNotificationsPermission();
+      }
+
+      const AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
+        'dsuhis_health_alerts',
+        'DSUHIS Health Alerts',
+        channelDescription:
+            'Critical clinical alerts, referrals, and health announcements',
+        importance: Importance.max,
+        priority: Priority.high,
+        enableVibration: true,
+        playSound: true,
+        icon: '@mipmap/ic_launcher',
+      );
+
+      const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      const NotificationDetails details = NotificationDetails(
+        android: androidDetails,
+        iOS: iOSDetails,
+      );
+
+      await _notificationsPlugin.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title,
+        body,
+        details,
+        payload: payload,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error displaying local notification: $e');
       }
     }
   }
@@ -443,284 +528,33 @@ class _HomePageState extends State<HomePage> {
     final recommendation =
         _symptomRecommendations[symptom] ?? 'Monitor closely.';
 
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-          'symptom_alerts',
-          'Symptom Alerts',
-          channelDescription: 'Alerts when symptoms reach threshold',
-          importance: Importance.max,
-          priority: Priority.high,
-          enableVibration: true,
-          playSound: true,
-        );
-
-    const DarwinNotificationDetails iOSPlatformChannelSpecifics =
-        DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        );
-
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-      iOS: iOSPlatformChannelSpecifics,
-    );
-
-    await _notificationsPlugin.show(
-      symptom.hashCode,
-      '[ALERT] $symptom Alert',
-      'Total: $count cases\n\n[INFO] Recommendation:\n$recommendation',
-      platformChannelSpecifics,
+    await _showSystemLocalNotification(
+      title: '[ALERT] $symptom Cluster Alert',
+      body: 'Total: $count reported cases.\nRecommendation: $recommendation',
+      payload: MobileRoutes.morbidity,
     );
 
     _notifiedSymptoms.add(symptom);
-  }
-
-  Future<void> _generateNotificationsPanel() async {
-    if (!mounted) return;
-    setState(() => _isLoadingNotificationsList = true);
-
-    try {
-      final patients = await _patientHelper.getAllRecords();
-      final checkups = await _checkupHelper.getAllRecords();
-      final prenatal = await _prenatalHelper.getAllRecords();
-      final immunizations = await _immunizationHelper.getAllRecords();
-
-      List<Map<String, dynamic>> notifications = [];
-
-      // System Status Notification
-      notifications.add({
-        'title': 'System Status',
-        'message': 'All systems operational',
-        'type': 'info',
-        'icon': Icons.check_circle_outline,
-        'color': Colors.green,
-        'timestamp': DateTime.now(),
-      });
-
-      // Patient Check-up Reminder
-      if (_totalPatients > 0 && _checkupsThisMonth < _totalPatients ~/ 5) {
-        notifications.add({
-          'title': 'Check-up Reminder',
-          'message':
-              'Only $_checkupsThisMonth check-ups completed this month. Consider scheduling more.',
-          'type': 'warning',
-          'icon': Icons.warning_amber,
-          'color': Colors.orange,
-          'timestamp': DateTime.now().subtract(const Duration(minutes: 5)),
-        });
-      }
-
-      // Prenatal Care Alert
-      if (_prenatalRecords > 0) {
-        notifications.add({
-          'title': 'Prenatal Care Update',
-          'message': '$_prenatalRecords active prenatal records in system',
-          'type': 'info',
-          'icon': Icons.pregnant_woman_rounded,
-          'color': Color(0xFFD84315),
-          'timestamp': DateTime.now().subtract(const Duration(minutes: 15)),
-        });
-      }
-
-      // Immunization Update
-      if (_immunizationRecords > 0) {
-        notifications.add({
-          'title': 'Immunization Records',
-          'message': '$_immunizationRecords immunizations administered',
-          'type': 'success',
-          'icon': Icons.vaccines_rounded,
-          'color': Color(0xFF4CAF50),
-          'timestamp': DateTime.now().subtract(const Duration(hours: 1)),
-        });
-      }
-
-      // High Risk Cases Alert
-      if (_highRiskCases > 0) {
-        notifications.add({
-          'title': 'High Risk Cases',
-          'message':
-              '$_highRiskCases high-risk prenatal cases requiring attention',
-          'type': 'critical',
-          'icon': Icons.priority_high,
-          'color': Colors.red,
-          'timestamp': DateTime.now().subtract(const Duration(hours: 2)),
-        });
-      }
-
-      // Patient Count Alert
-      if (_totalPatients > 100) {
-        notifications.add({
-          'title': 'High Patient Load',
-          'message':
-              'System has $_totalPatients patients registered. Monitor workload.',
-          'type': 'info',
-          'icon': Icons.people_rounded,
-          'color': _primaryAqua,
-          'timestamp': DateTime.now().subtract(const Duration(hours: 3)),
-        });
-      }
-
-      if (!mounted) return;
-      setState(() {
-        _notificationsList = notifications;
-        _isLoadingNotificationsList = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoadingNotificationsList = false);
-    }
+    _refreshUnreadNotificationsCount();
   }
 
   void _showNotificationsPanel(BuildContext context) {
-    _generateNotificationsPanel();
-
-    showDialog(
+    final user = FirebaseAuth.instance.currentUser ?? widget.user;
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppDesign.surface,
-        surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.notifications_active, color: _primaryAqua, size: 24),
-            const SizedBox(width: 12),
-            const Text(
-              'Notifications',
-              style: TextStyle(
-                color: AppDesign.ink,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        content: SizedBox(
-          width: 300,
-          child: _isLoadingNotificationsList
-              ? const Center(
-                  child: CircularProgressIndicator(color: _primaryAqua),
-                )
-              : _notificationsList.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.notifications_off,
-                        size: 64,
-                        color: AppDesign.subtle,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'No notifications',
-                        style: TextStyle(color: AppDesign.muted),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _notificationsList.length,
-                  itemBuilder: (context, index) {
-                    final notif = _notificationsList[index];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: (notif['color'] as Color).withValues(
-                            alpha: 0.3,
-                          ),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        color: AppDesign.page,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: (notif['color'] as Color).withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Icon(
-                                  notif['icon'] as IconData,
-                                  color: notif['color'] as Color,
-                                  size: 16,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  notif['title'] as String,
-                                  style: const TextStyle(
-                                    color: AppDesign.ink,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            notif['message'] as String,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppDesign.muted,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            _formatNotificationTime(
-                              notif['timestamp'] as DateTime,
-                            ),
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: AppDesign.subtle,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-          ElevatedButton(
-            onPressed: _generateNotificationsPanel,
-            style: ElevatedButton.styleFrom(backgroundColor: _primaryAqua),
-            child: const Text('Refresh', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DashboardNotificationsSheet(
+        user: user,
+        onUnreadCountChanged: (count) {
+          if (mounted) {
+            setState(() => _unreadNotificationsCount = count);
+          }
+        },
+        onTriggerLocalNotification: ({required String title, required String body}) =>
+            _showSystemLocalNotification(title: title, body: body),
       ),
     );
-  }
-
-  String _formatNotificationTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inMinutes < 1) {
-      return 'Just now';
-    } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes} minutes ago';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours} hours ago';
-    } else {
-      return '${difference.inDays} days ago';
-    }
   }
 
   Future<void> _loadMetrics() async {
@@ -1576,68 +1410,26 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBottomNavBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppDesign.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-        border: Border.all(color: AppDesign.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppDesign.navy.withValues(alpha: 0.12),
-            blurRadius: 24,
-            offset: const Offset(0, -6),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: SafeArea(
-        top: false,
-        child: BottomNavigationBar(
-          currentIndex: _selectedBottomNavIndex,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          backgroundColor: AppDesign.surface,
-          selectedItemColor: _primaryAqua,
-          unselectedItemColor: AppDesign.subtle,
-          selectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 12,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 11,
-          ),
-          onTap: (index) {
-            setState(() {
-              _selectedBottomNavIndex = index;
-            });
-          },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_rounded),
-              activeIcon: _ActiveNavigationIcon(icon: Icons.dashboard_rounded),
-              label: 'Dashboard',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.analytics_rounded),
-              activeIcon: _ActiveNavigationIcon(icon: Icons.analytics_rounded),
-              label: 'Analytics',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.hub_rounded),
-              activeIcon: _ActiveNavigationIcon(icon: Icons.hub_rounded),
-              label: 'Hub',
-            ),
-          ],
-        ),
-      ),
+    return DashboardBottomNavBar(
+      currentIndex: _selectedBottomNavIndex,
+      onTap: (index) {
+        setState(() {
+          _selectedBottomNavIndex = index;
+        });
+      },
     );
   }
 
   Widget _buildBodyForSelectedTab(BuildContext context) {
     switch (_selectedBottomNavIndex) {
       case 2:
-        return _buildHubTab(context);
+        return ModulesHubView(
+          onSelectAnalytics: () {
+            setState(() {
+              _selectedBottomNavIndex = 1;
+            });
+          },
+        );
       case 1:
         return const AnalyticsPage(embedded: true);
       case 0:
@@ -1692,227 +1484,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHubTab(BuildContext context) {
-    final hubCategories = <Map<String, dynamic>>[
-      {
-        'title': 'Patient Management',
-        'subtitle': 'Check Up, Morbidity, Prenatal Care, Immunization',
-        'icon': Icons.local_hospital_rounded,
-        'color': _primaryAqua,
-        'buttons': <Map<String, dynamic>>[
-          {
-            'label': 'Check Up',
-            'icon': Icons.medical_services,
-            'onTap': () => Get.toNamed(MobileRoutes.checkups),
-          },
-          {
-            'label': 'Morbidity',
-            'icon': Icons.healing,
-            'onTap': () => Get.toNamed(MobileRoutes.morbidity),
-          },
-          {
-            'label': 'Prenatal Care',
-            'icon': Icons.pregnant_woman,
-            'onTap': () => Get.toNamed(MobileRoutes.prenatal),
-          },
-          {
-            'label': 'Immunization',
-            'icon': Icons.vaccines,
-            'onTap': () => Get.toNamed(MobileRoutes.immunization),
-          },
-        ],
-      },
-      {
-        'title': 'Records',
-        'subtitle': 'Patient Records',
-        'icon': Icons.folder_copy_rounded,
-        'color': AppDesign.blue,
-        'buttons': <Map<String, dynamic>>[
-          {
-            'label': 'Patient Records',
-            'icon': Icons.folder_special,
-            'onTap': () => Get.toNamed(MobileRoutes.patients),
-          },
-        ],
-      },
-      {
-        'title': 'Disease Monitoring',
-        'subtitle': 'Communicable Disease, Non Communicable Disease, Mortality',
-        'icon': Icons.monitor_heart_rounded,
-        'color': AppDesign.navy,
-        'buttons': <Map<String, dynamic>>[
-          {
-            'label': 'Communicable Disease',
-            'icon': Icons.coronavirus,
-            'onTap': () => Get.toNamed(MobileRoutes.communicable),
-          },
-          {
-            'label': 'Non Communicable Disease',
-            'icon': Icons.sick,
-            'onTap': () => Get.toNamed(MobileRoutes.nonCommunicable),
-          },
-          {
-            'label': 'Mortality',
-            'icon': Icons.airline_seat_flat,
-            'onTap': () => Get.toNamed(MobileRoutes.mortality),
-          },
-        ],
-      },
-      {
-        'title': 'Coordination',
-        'subtitle': 'Referrals',
-        'icon': Icons.forward_to_inbox_rounded,
-        'color': AppDesign.blue,
-        'buttons': <Map<String, dynamic>>[
-          {
-            'label': 'Referrals',
-            'icon': Icons.forward_to_inbox_rounded,
-            'onTap': () => Get.toNamed(MobileRoutes.referrals),
-          },
-        ],
-      },
-    ];
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'HUB',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: _darkDeepTeal,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Tap a category to open the related modules.',
-            style: TextStyle(color: AppDesign.muted, fontSize: 14),
-          ),
-          const SizedBox(height: 16),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: hubCategories.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final category = hubCategories[index];
-              final buttons = category['buttons'] as List<Map<String, dynamic>>;
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppDesign.surface,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppDesign.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppDesign.navy.withValues(alpha: 0.05),
-                      blurRadius: 14,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      category['title'] as String,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 18,
-                            mainAxisSpacing: 18,
-                            childAspectRatio: 1.15,
-                          ),
-                      itemCount: buttons.length,
-                      itemBuilder: (context, buttonIndex) {
-                        final button = buttons[buttonIndex];
-                        return _buildHubIconButton(
-                          icon: button['icon'] as IconData,
-                          label: button['label'] as String,
-                          onTap: button['onTap'] as void Function(),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHubIconButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          child: Column(
-            children: [
-              Expanded(
-                child: Center(
-                  child: Container(
-                    width: 88,
-                    height: 88,
-                    decoration: BoxDecoration(
-                      color: _primaryAqua.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: _primaryAqua.withValues(alpha: 0.45),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _primaryAqua.withValues(alpha: 0.12),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(icon, color: _primaryAqua, size: 48),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: _darkDeepTeal,
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w800,
-                  height: 1.18,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -1937,258 +1508,29 @@ class _HomePageState extends State<HomePage> {
         preferredSize: const Size.fromHeight(0),
         child: Container(),
       ),
-      drawer: SizedBox(
-        width: 350,
-        child: Drawer(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          child: SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              children: [
-                _buildDrawerProfileCard(
-                  context,
-                  user: user,
-                  isLoggedIn: isLoggedIn,
-                ),
-                const SizedBox(height: 20),
-                _buildDrawerSection(
-                  icon: Icons.local_hospital_rounded,
-                  title: 'Patient Management',
-                  subtitle: 'Daily clinical workflows and care tracking',
-                  child: GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.12,
-                    children: [
-                      _buildDrawerCardButton(
-                        icon: Icons.medical_services,
-                        label: 'Check Up',
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const CheckUpPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildDrawerCardButton(
-                        icon: Icons.healing,
-                        label: 'Morbidity',
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const MorbidityListPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildDrawerCardButton(
-                        icon: Icons.pregnant_woman,
-                        label: 'Prenatal Care',
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          Get.toNamed(MobileRoutes.prenatal);
-                        },
-                      ),
-                      _buildDrawerCardButton(
-                        icon: Icons.vaccines,
-                        label: 'Immunization',
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          Get.toNamed(MobileRoutes.immunization);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildDrawerSection(
-                  icon: Icons.folder_copy_rounded,
-                  title: 'Records Hub',
-                  subtitle: 'Community registries and patient files',
-                  child: GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.12,
-                    children: [
-                      _buildDrawerCardButton(
-                        icon: Icons.folder_special,
-                        label: 'Patient Records',
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          Get.toNamed(MobileRoutes.patients);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildDrawerSection(
-                  icon: Icons.monitor_heart_rounded,
-                  title: 'Disease Monitoring',
-                  subtitle: 'Population health surveillance and outcomes',
-                  child: GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.12,
-                    children: [
-                      _buildDrawerCardButton(
-                        icon: Icons.coronavirus,
-                        label: 'Communicable Disease',
-                        onTap: () {
-                          Navigator.pop(context);
-                          Get.toNamed(MobileRoutes.communicable);
-                        },
-                      ),
-                      _buildDrawerCardButton(
-                        icon: Icons.sick,
-                        label: 'Non Communicable Disease',
-                        onTap: () {
-                          Navigator.pop(context);
-                          Get.toNamed(MobileRoutes.nonCommunicable);
-                        },
-                      ),
-                      _buildDrawerCardButton(
-                        icon: Icons.airline_seat_flat,
-                        label: 'Mortality',
-                        onTap: () {
-                          Navigator.pop(context);
-                          Get.toNamed(MobileRoutes.mortality);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildDrawerSection(
-                  icon: Icons.hub_rounded,
-                  title: 'Insights & Coordination',
-                  subtitle: 'Open mobile analytics and referral workflows',
-                  child: GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.12,
-                    children: [
-                      _buildDrawerCardButton(
-                        icon: Icons.analytics_rounded,
-                        label: 'Analytics',
-                        onTap: () {
-                          Navigator.pop(context);
-                          setState(() {
-                            _selectedBottomNavIndex = 1;
-                          });
-                        },
-                      ),
-                      _buildDrawerCardButton(
-                        icon: Icons.forward_to_inbox_rounded,
-                        label: 'Referrals',
-                        onTap: () {
-                          Navigator.pop(context);
-                          Get.toNamed(MobileRoutes.referrals);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildDrawerSection(
-                  icon: isLoggedIn
-                      ? Icons.verified_user_rounded
-                      : Icons.login_rounded,
-                  title: isLoggedIn ? 'Account Access' : 'Ready To Sync',
-                  subtitle: isLoggedIn
-                      ? 'Manage your authenticated mobile session'
-                      : _isOfflineMode
-                      ? 'Sign in or create an account to upload offline records'
-                      : 'Sign in or create an account to unlock synced cloud access',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton.icon(
-                          onPressed: () async {
-                            if (isLoggedIn) {
-                              await signout();
-                              if (mounted) {
-                                _openLoginScreen(replaceCurrentRoute: true);
-                              }
-                              return;
-                            }
-
-                            _openLoginScreen(
-                              replaceCurrentRoute: !_isOfflineMode,
-                              syncOfflineAfterLogin: _isOfflineMode,
-                            );
-                          },
-                          icon: Icon(
-                            isLoggedIn ? Icons.logout : Icons.login,
-                            size: 20,
-                          ),
-                          label: Text(isLoggedIn ? 'Sign Out' : 'Sign In'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isLoggedIn
-                                ? Colors.red.shade700
-                                : _primaryAqua,
-                            foregroundColor: Colors.white,
-                            elevation: 6,
-                            shadowColor:
-                                (isLoggedIn
-                                        ? Colors.red.shade700
-                                        : _primaryAqua)
-                                    .withValues(alpha: 0.35),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (!isLoggedIn) ...[
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: OutlinedButton.icon(
-                            onPressed: _openSignupScreen,
-                            icon: const Icon(Icons.person_add_alt_1_rounded),
-                            label: const Text('Create Account'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: _secondaryIceBlue,
-                              side: BorderSide(
-                                color: _primaryAqua.withValues(alpha: 0.55),
-                                width: 1.4,
-                              ),
-                              backgroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+      drawer: DashboardNavigationDrawer(
+        user: user,
+        isLoggedIn: isLoggedIn,
+        isOfflineMode: _isOfflineMode,
+        buildProfileCard: _buildDrawerProfileCard,
+        onSignOut: () async {
+          await signout();
+          if (mounted) {
+            _openLoginScreen(replaceCurrentRoute: true);
+          }
+        },
+        onSignIn: () {
+          _openLoginScreen(
+            replaceCurrentRoute: !_isOfflineMode,
+            syncOfflineAfterLogin: _isOfflineMode,
+          );
+        },
+        onSignUp: _openSignupScreen,
+        onSelectAnalytics: () {
+          setState(() {
+            _selectedBottomNavIndex = 1;
+          });
+        },
       ),
       body: _buildBodyForSelectedTab(context),
       bottomNavigationBar: _buildBottomNavBar(),
@@ -2386,29 +1728,47 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     child: Stack(
+                      clipBehavior: Clip.none,
                       children: [
                         IconButton(
-                          icon: const Icon(
-                            Icons.notifications_none,
-                            color: _lightOffWhite,
-                            size: 28,
+                          icon: Icon(
+                            _unreadNotificationsCount > 0
+                                ? Icons.notifications_active_rounded
+                                : Icons.notifications_none_rounded,
+                            color: _unreadNotificationsCount > 0
+                                ? _primaryAqua
+                                : _lightOffWhite,
+                            size: 26,
                           ),
                           onPressed: () => _showNotificationsPanel(context),
                           tooltip: 'Notifications',
                           padding: const EdgeInsets.all(8),
                         ),
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: Color(0xFFFF5252),
-                              shape: BoxShape.circle,
+                        if (_unreadNotificationsCount > 0)
+                          Positioned(
+                            right: 4,
+                            top: 4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFF3D00),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppDesign.navy, width: 1.5),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  _unreadNotificationsCount > 9 ? '9+' : '$_unreadNotificationsCount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    height: 1,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -3793,73 +3153,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildDrawerSection({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Widget child,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppDesign.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppDesign.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppDesign.navy.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppDesign.blueSoft,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: AppDesign.blue, size: 18),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: _darkDeepTeal,
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: AppDesign.muted,
-                        fontSize: 12.2,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          child,
-        ],
-      ),
-    );
-  }
+
 
   // Helper method for user detail rows in drawer
   Widget _buildUserDetailRow({
@@ -4003,86 +3297,6 @@ class _HomePageState extends State<HomePage> {
                   Icons.arrow_forward_ios_rounded,
                   color: color.withValues(alpha: 0.5),
                   size: 16,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerCardButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: AppDesign.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppDesign.borderStrong),
-            boxShadow: [
-              BoxShadow(
-                color: AppDesign.navy.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppDesign.blueSoft,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(icon, color: AppDesign.blue, size: 18),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: AppDesign.canvas,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.arrow_outward_rounded,
-                        color: AppDesign.subtle,
-                        size: 14,
-                      ),
-                    ),
-                  ],
-                ),
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Text(
-                      label,
-                      style: const TextStyle(
-                        color: _darkDeepTeal,
-                        fontSize: 12.8,
-                        fontWeight: FontWeight.w800,
-                        height: 1.18,
-                        letterSpacing: 0.12,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
                 ),
               ],
             ),
