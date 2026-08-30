@@ -86,8 +86,8 @@ class HealthScreeningPanel extends StatelessWidget {
                           label: 'Data: ${result.dataQuality.label}',
                           color:
                               result.dataQuality == HealthDataQuality.complete
-                              ? AppColors.success
-                              : AppColors.warning,
+                              ? AppColors.primary
+                              : AppColors.secondary,
                         ),
                       ],
                     ),
@@ -200,8 +200,8 @@ class HealthScreeningPanel extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: onReferralRequested,
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.referralStrong,
-                        side: const BorderSide(color: AppColors.referral),
+                        foregroundColor: AppColors.secondary,
+                        side: const BorderSide(color: AppColors.primary),
                         minimumSize: const Size(0, 44),
                       ),
                       child: const Row(
@@ -236,15 +236,15 @@ class HealthScreeningPanel extends StatelessWidget {
   static Color _statusColor(HealthScreeningStatus status) {
     switch (status) {
       case HealthScreeningStatus.urgentAssessment:
-        return AppColors.error;
+        return AppColors.secondary;
       case HealthScreeningStatus.referralReview:
-        return AppColors.referral;
+        return AppColors.secondary;
       case HealthScreeningStatus.needsAttention:
-        return AppColors.warning;
+        return AppColors.secondary;
       case HealthScreeningStatus.needsProfessionalReview:
         return AppColors.secondary;
       case HealthScreeningStatus.withinExpectedRange:
-        return AppColors.success;
+        return AppColors.primary;
     }
   }
 

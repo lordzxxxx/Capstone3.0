@@ -12,24 +12,19 @@ import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
+import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
-// Professional Vibrant Color Palette - Matching Analytics Page
-// Names are historical (page was dark-themed); values now point at the
-// white-card system used across the rest of the app.
-const Color _primaryAqua = Color(0xFF2F80ED); // Shared dashboard blue
-const Color _secondaryIceBlue = Color(0xFF163B66); // Shared deep blue
-const Color _darkDeepTeal = Color(0xFFF5F7FA); // page background
-// card background
-const Color _mutedCoolGray = Color(0xFF4B6075); // Shared readable gray
-const Color _lightOffWhite = Color(0xFF0D274D); // primary text
-const Color _sidebarDark = Colors.white; // panel/surface background
-const Color _accentPurple = Color(0xFF7C3AED); // Vibrant Purple
-const Color _accentGreen = Color(0xFF10B981); // Bright Green
-const Color _accentOrange = Color(0xFFFF8C0D); // Vibrant Orange
-const Color _accentRed = Color(0xFFEF4444); // Vibrant Red
-// Shared dashboard blue
-// Analytics-aligned background
-// primary text
+// Use the same centralized palette as the shared BHW/CHO web components.
+// The dashboard uses navy and blue tones for all presentation accents; labels
+// and icons continue to communicate the underlying record state.
+const Color _primaryAqua = AppColors.primary;
+const Color _secondaryIceBlue = AppColors.secondary;
+const Color _darkDeepTeal = AppColors.backgroundLight;
+const Color _mutedCoolGray = AppColors.textSecondary;
+const Color _lightOffWhite = AppColors.surfaceDark;
+const Color _sidebarDark = AppColors.surfaceLight;
+const Color _insightBlue = AppColors.primary;
+const Color _insightNavy = AppColors.secondary;
 
 enum DashboardDateFilterMode {
   today,
@@ -548,28 +543,28 @@ class _HomePageState extends State<HomePage> {
       filteredCheckups,
       title: 'Consultation recorded',
       icon: Icons.medical_services_rounded,
-      color: _accentGreen,
+      color: _insightBlue,
       detailKeys: const ['patientName', 'patient', 'disease', 'type'],
     );
     addActivities(
       filteredPrenatal,
       title: 'Prenatal record updated',
       icon: Icons.pregnant_woman_rounded,
-      color: _accentPurple,
+      color: _insightBlue,
       detailKeys: const ['patientName', 'name', 'status'],
     );
     addActivities(
       filteredMorbidity,
       title: 'Morbidity case updated',
       icon: Icons.monitor_heart_rounded,
-      color: _accentOrange,
+      color: _insightNavy,
       detailKeys: const ['disease', 'condition', 'patientName'],
     );
     addActivities(
       filteredReferrals,
       title: 'Referral status updated',
       icon: Icons.assignment_ind_rounded,
-      color: const Color(0xFFF59E0B),
+      color: _insightNavy,
       detailKeys: const ['patientName', 'status', 'referralReason'],
     );
 
@@ -820,7 +815,7 @@ class _HomePageState extends State<HomePage> {
         'message':
             '$highRiskCount patients require immediate clinical prioritization and monitoring during this reporting period.',
         'severity': 'critical',
-        'color': _accentRed,
+        'color': _insightNavy,
       });
     } else {
       insights.add({
@@ -829,7 +824,7 @@ class _HomePageState extends State<HomePage> {
         'message':
             'No high-risk patient flags recorded in this period. Standard health monitoring continues.',
         'severity': 'success',
-        'color': _accentGreen,
+        'color': _insightBlue,
       });
     }
 
@@ -850,7 +845,7 @@ class _HomePageState extends State<HomePage> {
         'message':
             'Zero consultations recorded for this date window. Check community scheduling or pending walk-ins.',
         'severity': 'warning',
-        'color': _accentOrange,
+        'color': _insightNavy,
       });
     }
 
@@ -863,7 +858,7 @@ class _HomePageState extends State<HomePage> {
         'message':
             'Active prenatal care monitoring maintained. Ensure scheduled trimester follow-ups.',
         'severity': 'info',
-        'color': _accentPurple,
+        'color': _insightBlue,
       });
     }
 
@@ -888,7 +883,7 @@ class _HomePageState extends State<HomePage> {
           'message':
               '${top.value} case(s) reported in this window. Monitor community spread and stock appropriate supplies.',
           'severity': 'warning',
-          'color': _accentOrange,
+          'color': _insightNavy,
         });
       }
     }
@@ -902,7 +897,7 @@ class _HomePageState extends State<HomePage> {
         'message':
             '$pendingReferralsCount patient referrals are awaiting doctor or CHO confirmation and treatment follow-through.',
         'severity': 'warning',
-        'color': const Color(0xFFF59E0B),
+        'color': _insightNavy,
       });
     }
 
@@ -1015,14 +1010,14 @@ class _HomePageState extends State<HomePage> {
             final dialogTheme = Theme.of(context).copyWith(
               brightness: Brightness.dark,
               dialogTheme: Theme.of(context).dialogTheme.copyWith(
-                backgroundColor: const Color(0xFF0D274D),
+                backgroundColor: _lightOffWhite,
                 surfaceTintColor: Colors.transparent,
               ),
               colorScheme: Theme.of(context).colorScheme.copyWith(
                 brightness: Brightness.dark,
                 primary: _primaryAqua,
                 onPrimary: Colors.white,
-                surface: const Color(0xFF0D274D),
+                surface: _lightOffWhite,
                 onSurface: Colors.white,
               ),
               inputDecorationTheme: Theme.of(context).inputDecorationTheme
@@ -1032,7 +1027,7 @@ class _HomePageState extends State<HomePage> {
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(
-                        color: Colors.black.withValues(alpha: 0.2),
+                        color: _secondaryIceBlue.withValues(alpha: 0.35),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
@@ -1044,7 +1039,7 @@ class _HomePageState extends State<HomePage> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(
-                        color: Colors.black.withValues(alpha: 0.2),
+                        color: _secondaryIceBlue.withValues(alpha: 0.35),
                       ),
                     ),
                   ),
@@ -1053,7 +1048,7 @@ class _HomePageState extends State<HomePage> {
             return Theme(
               data: dialogTheme,
               child: AlertDialog(
-                backgroundColor: const Color(0xFF0D274D),
+                backgroundColor: _lightOffWhite,
                 title: Text(
                   helpText,
                   style: const TextStyle(color: Colors.white),
@@ -1063,7 +1058,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     DropdownButtonFormField<int>(
                       initialValue: tempMonth,
-                      dropdownColor: const Color(0xFF0D274D),
+                      dropdownColor: _lightOffWhite,
                       style: const TextStyle(color: Colors.white),
                       iconEnabledColor: Colors.white70,
                       iconDisabledColor: Colors.white54,
@@ -1099,7 +1094,7 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(height: 12),
                     DropdownButtonFormField<int>(
                       initialValue: tempYear,
-                      dropdownColor: const Color(0xFF0D274D),
+                      dropdownColor: _lightOffWhite,
                       style: const TextStyle(color: Colors.white),
                       iconEnabledColor: Colors.white70,
                       iconDisabledColor: Colors.white54,
@@ -1255,7 +1250,7 @@ class _HomePageState extends State<HomePage> {
         : user?.email?.split('@')[0] ?? 'User';
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: _darkDeepTeal,
       body: WebResponsiveBody(
         sidebar: WebAppSidebar(
           userName: userName,
@@ -1300,13 +1295,17 @@ class _HomePageState extends State<HomePage> {
       width: double.infinity,
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: _accentRed.withValues(alpha: 0.1),
+        color: _secondaryIceBlue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _accentRed.withValues(alpha: 0.35)),
+        border: Border.all(color: _secondaryIceBlue.withValues(alpha: 0.35)),
       ),
       child: Column(
         children: [
-          const Icon(Icons.cloud_off_rounded, color: _accentRed, size: 40),
+          const Icon(
+            Icons.cloud_off_rounded,
+            color: _secondaryIceBlue,
+            size: 40,
+          ),
           const SizedBox(height: 12),
           const Text(
             'Barangay dashboard could not be loaded',
@@ -1322,7 +1321,7 @@ class _HomePageState extends State<HomePage> {
                 ? 'Your BHW account could not read one or more barangay collections. Sign out, sign in again, and retry after deploying the latest Firestore rules.'
                 : 'Check your Firestore connection and account permissions, then try again.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black.withValues(alpha: 0.68)),
+            style: TextStyle(color: _mutedCoolGray.withValues(alpha: 0.9)),
           ),
           const SizedBox(height: 16),
           OutlinedButton.icon(
@@ -1492,7 +1491,7 @@ class _HomePageState extends State<HomePage> {
             border: Border.all(color: _primaryAqua.withValues(alpha: 0.15)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
+                color: _secondaryIceBlue.withValues(alpha: 0.03),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -1553,7 +1552,7 @@ class _HomePageState extends State<HomePage> {
           border: Border.all(
             color: isSelected
                 ? _primaryAqua
-                : Colors.black.withValues(alpha: 0.08),
+                : _secondaryIceBlue.withValues(alpha: 0.12),
           ),
           boxShadow: isSelected
               ? [
@@ -1698,7 +1697,7 @@ class _HomePageState extends State<HomePage> {
               ),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.today_rounded, color: _accentGreen),
+                leading: const Icon(Icons.today_rounded, color: _primaryAqua),
                 title: const Text(
                   'Quick: Today',
                   style: TextStyle(fontWeight: FontWeight.w600),
@@ -1714,7 +1713,7 @@ class _HomePageState extends State<HomePage> {
               ListTile(
                 leading: const Icon(
                   Icons.all_inclusive_rounded,
-                  color: _accentPurple,
+                  color: _secondaryIceBlue,
                 ),
                 title: const Text(
                   'Quick: All Time',
@@ -1787,7 +1786,7 @@ class _HomePageState extends State<HomePage> {
                             Text(
                               insight['message']?.toString() ?? '',
                               style: TextStyle(
-                                color: Colors.black.withValues(alpha: 0.72),
+                                color: _mutedCoolGray.withValues(alpha: 0.9),
                                 fontSize: 11.5,
                                 height: 1.3,
                               ),
@@ -1935,7 +1934,7 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        color: Colors.black.withValues(alpha: 0.58),
+                        color: _mutedCoolGray.withValues(alpha: 0.9),
                         fontSize: 11.5,
                       ),
                     ),
@@ -1960,14 +1959,14 @@ class _HomePageState extends State<HomePage> {
           children: [
             Icon(
               Icons.insert_chart_outlined_rounded,
-              color: Colors.black.withValues(alpha: 0.35),
+              color: _mutedCoolGray.withValues(alpha: 0.65),
               size: 34,
             ),
             const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black.withValues(alpha: 0.55)),
+              style: TextStyle(color: _mutedCoolGray.withValues(alpha: 0.9)),
             ),
           ],
         ),
@@ -2001,7 +2000,7 @@ class _HomePageState extends State<HomePage> {
                         ? 1
                         : (maxCount / 4).ceilToDouble(),
                     getDrawingHorizontalLine: (_) => FlLine(
-                      color: Colors.black.withValues(alpha: 0.08),
+                      color: _secondaryIceBlue.withValues(alpha: 0.12),
                       strokeWidth: 1,
                     ),
                   ),
@@ -2023,7 +2022,7 @@ class _HomePageState extends State<HomePage> {
                         getTitlesWidget: (value, meta) => Text(
                           value.toInt().toString(),
                           style: TextStyle(
-                            color: Colors.black.withValues(alpha: 0.5),
+                            color: _mutedCoolGray.withValues(alpha: 0.9),
                             fontSize: 10,
                           ),
                         ),
@@ -2044,7 +2043,7 @@ class _HomePageState extends State<HomePage> {
                             child: Text(
                               _consultationMonthLabels[index],
                               style: TextStyle(
-                                color: Colors.black.withValues(alpha: 0.62),
+                                color: _mutedCoolGray.withValues(alpha: 0.9),
                                 fontSize: 10,
                               ),
                             ),
@@ -2134,7 +2133,9 @@ class _HomePageState extends State<HomePage> {
                         child: LinearProgressIndicator(
                           minHeight: 7,
                           value: ratio,
-                          backgroundColor: Colors.black.withValues(alpha: 0.08),
+                          backgroundColor: _secondaryIceBlue.withValues(
+                            alpha: 0.12,
+                          ),
                           color: _primaryAqua,
                         ),
                       ),
@@ -2160,17 +2161,17 @@ class _HomePageState extends State<HomePage> {
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: _accentRed.withValues(alpha: 0.08),
+                    color: _secondaryIceBlue.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _accentRed.withValues(alpha: 0.18),
+                      color: _secondaryIceBlue.withValues(alpha: 0.22),
                     ),
                   ),
                   child: Row(
                     children: [
                       const Icon(
                         Icons.priority_high_rounded,
-                        color: _accentRed,
+                        color: _secondaryIceBlue,
                         size: 20,
                       ),
                       const SizedBox(width: 10),
@@ -2189,7 +2190,7 @@ class _HomePageState extends State<HomePage> {
                             Text(
                               alert['subtitle']?.toString() ?? '',
                               style: TextStyle(
-                                color: Colors.black.withValues(alpha: 0.62),
+                                color: _mutedCoolGray.withValues(alpha: 0.9),
                                 fontSize: 11,
                               ),
                             ),
@@ -2203,7 +2204,7 @@ class _HomePageState extends State<HomePage> {
                           Text(
                             alert['source']?.toString() ?? 'Record',
                             style: const TextStyle(
-                              color: _accentRed,
+                              color: _secondaryIceBlue,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                             ),
@@ -2212,7 +2213,7 @@ class _HomePageState extends State<HomePage> {
                             Text(
                               _formatTime(date),
                               style: TextStyle(
-                                color: Colors.black.withValues(alpha: 0.42),
+                                color: _mutedCoolGray.withValues(alpha: 0.75),
                                 fontSize: 9,
                               ),
                             ),
@@ -2441,9 +2442,9 @@ class _HomePageState extends State<HomePage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFEDF3FA),
+        color: AppColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFD9E5F2)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -2539,10 +2540,7 @@ class _HomePageState extends State<HomePage> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: const Color(0xFFD9E5F2),
-                            width: 1,
-                          ),
+                          border: Border.all(color: AppColors.border, width: 1),
                         ),
                         child: Row(
                           children: [

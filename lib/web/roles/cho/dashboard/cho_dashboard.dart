@@ -18,7 +18,6 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
-import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
@@ -351,7 +350,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         Get.snackbar(
           'Access',
           'Please sign in to access the CHO dashboard',
-          backgroundColor: Colors.orange,
+          backgroundColor: ChoColors.ice,
           colorText: Colors.white,
         );
         await Future.delayed(const Duration(milliseconds: 300));
@@ -440,7 +439,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       Get.snackbar(
         'Access denied',
         'You need a CHO role to access this dashboard.',
-        backgroundColor: Colors.redAccent,
+        backgroundColor: ChoColors.ice,
         colorText: Colors.white,
       );
       ChoAccessSession.trustedUid = null;
@@ -451,7 +450,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       Get.snackbar(
         'Error',
         'Could not verify access: $e',
-        backgroundColor: Colors.redAccent,
+        backgroundColor: ChoColors.ice,
         colorText: Colors.white,
       );
       ChoAccessSession.trustedUid = null;
@@ -1384,7 +1383,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             Get.snackbar(
               'Sync error',
               'Could not sync patient records from Firestore: $e',
-              backgroundColor: Colors.redAccent,
+              backgroundColor: ChoColors.ice,
               colorText: Colors.white,
               duration: const Duration(seconds: 5),
             );
@@ -1814,7 +1813,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       Get.snackbar(
         'No data',
         'No rows to export',
-        backgroundColor: Colors.orange,
+        backgroundColor: ChoColors.ice,
         colorText: Colors.white,
       );
       return;
@@ -1839,7 +1838,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       Get.snackbar(
         'Export unavailable',
         'CSV export is only supported in the web dashboard.',
-        backgroundColor: Colors.orange,
+        backgroundColor: ChoColors.ice,
         colorText: Colors.white,
       );
     }
@@ -2341,7 +2340,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         border: Border.all(color: _primaryAqua.withValues(alpha: 0.22)),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: ChoColors.ice.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -2405,9 +2404,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
             constraints: const BoxConstraints(maxWidth: 420),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.055),
+              color: ChoColors.ice.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.10)),
+              border: Border.all(color: ChoColors.ice.withValues(alpha: 0.16)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2418,7 +2417,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       allSynced
                           ? Icons.cloud_done_rounded
                           : Icons.cloud_sync_rounded,
-                      color: allSynced ? AppColors.success : _primaryAqua,
+                      color: _primaryAqua,
                       size: 20,
                     ),
                     const SizedBox(width: 9),
@@ -2448,14 +2447,14 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   'Referral completion',
                   '$completionRate%',
                   '${_safeMetricText(_referralsCompleted)} completed cases',
-                  AppColors.success,
+                  _primaryAqua,
                 ),
                 const SizedBox(height: 10),
                 _buildHeroMetric(
                   'Clinical attention',
                   _safeMetricText(_highRiskPatients + _followUpPatients),
                   'high-risk and follow-up cases',
-                  AppColors.warning,
+                  _secondaryIceBlue,
                 ),
               ],
             ),
@@ -2869,7 +2868,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         border: Border.all(color: ChoColors.border),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: ChoColors.ice.withValues(alpha: 0.07),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -2994,7 +2993,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         border: Border.all(color: ChoColors.border),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: ChoColors.ice.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -3362,7 +3361,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         gridData: FlGridData(
           drawVerticalLine: false,
           getDrawingHorizontalLine: (_) => FlLine(
-            color: Colors.black.withValues(alpha: 0.07),
+            color: ChoColors.ice.withValues(alpha: 0.09),
             strokeWidth: 1,
           ),
         ),
@@ -3546,7 +3545,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         border: Border.all(color: ChoColors.border),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: ChoColors.ice.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -4150,7 +4149,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         border: Border.all(color: ChoColors.border),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: ChoColors.ice.withValues(alpha: 0.07),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -4353,7 +4352,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                                   boxShadow: isSelected
                                       ? [
                                           BoxShadow(
-                                            color: Colors.black.withValues(
+                                            color: ChoColors.ice.withValues(
                                               alpha: 0.06,
                                             ),
                                             blurRadius: 12,
@@ -4606,7 +4605,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       width: 7,
                       height: 7,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF16875A),
+                        color: ChoColors.aqua,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -4614,7 +4613,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     const Text(
                       'Live data',
                       style: TextStyle(
-                        color: Color(0xFF16875A),
+                        color: ChoColors.aqua,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                       ),
@@ -5769,13 +5768,13 @@ class _ChoDashboardState extends State<ChoDashboard> {
   Color _riskColor(String riskLabel) {
     switch (riskLabel.toLowerCase()) {
       case 'high':
-        return Colors.redAccent;
+        return ChoColors.ice;
       case 'moderate':
-        return Colors.orangeAccent;
+        return ChoColors.aqua;
       case 'low':
-        return Colors.lightGreenAccent;
+        return ChoColors.aqua;
       default:
-        return Colors.blueGrey;
+        return ChoColors.muted;
     }
   }
 
@@ -6193,7 +6192,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                                       ? Icons.cloud_done
                                       : Icons.cloud_sync,
                                   color: _syncStatus.values.every((v) => v)
-                                      ? AppColors.success
+                                      ? ChoColors.aqua
                                       : ChoColors.aqua,
                                   size: 16,
                                 ),
@@ -6204,7 +6203,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                                       : 'Syncing Firestore collections...',
                                   style: TextStyle(
                                     color: _syncStatus.values.every((v) => v)
-                                        ? AppColors.success
+                                        ? ChoColors.aqua
                                         : ChoColors.aqua,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,

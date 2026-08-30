@@ -513,11 +513,7 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
       useRootNavigator: true,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: ChoColors.surface,
-        icon: const Icon(
-          Icons.logout_rounded,
-          color: Colors.redAccent,
-          size: 34,
-        ),
+        icon: const Icon(Icons.logout_rounded, color: ChoColors.ice, size: 34),
         title: const Text(
           'Logout from CHO Portal?',
           style: TextStyle(fontFamily: 'Manrope', color: ChoColors.text),
@@ -539,8 +535,8 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
           FilledButton.icon(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
+              backgroundColor: ChoColors.aqua,
+              foregroundColor: ChoColors.navText,
               minimumSize: const Size(48, 44),
             ),
             icon: const Icon(Icons.logout_rounded, size: 18),
@@ -573,7 +569,7 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
           content: Text(
             'Logout failed. Please check your connection and try again.',
           ),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: ChoColors.ice,
         ),
       );
     } finally {
@@ -729,7 +725,9 @@ class _ChoSidebarAnimatedItemState extends State<_ChoSidebarAnimatedItem> {
                         : (_isHovered
                               ? [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.08),
+                                    color: ChoColors.ice.withValues(
+                                      alpha: 0.14,
+                                    ),
                                     blurRadius: 6,
                                     offset: const Offset(0, 2),
                                   ),
@@ -861,12 +859,12 @@ class _ChoAnimatedLogoutButtonState extends State<_ChoAnimatedLogoutButton> {
                   curve: Curves.easeOutCubic,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.redAccent.withValues(
+                    color: ChoColors.aqua.withValues(
                       alpha: _isHovered ? 1 : 0.9,
                     ),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: Colors.redAccent.withValues(
+                      color: ChoColors.aqua.withValues(
                         alpha: _isHovered ? 0.6 : 0.2,
                       ),
                     ),
@@ -916,19 +914,17 @@ class _ChoAnimatedLogoutButtonState extends State<_ChoAnimatedLogoutButton> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.redAccent.withValues(
-                    alpha: _isHovered ? 1 : 0.9,
-                  ),
+                  color: ChoColors.aqua.withValues(alpha: _isHovered ? 1 : 0.9),
                   borderRadius: BorderRadius.circular(11),
                   border: Border.all(
-                    color: Colors.red.withValues(
+                    color: ChoColors.aqua.withValues(
                       alpha: _isHovered ? 0.55 : 0.35,
                     ),
                   ),
                   boxShadow: _isHovered
                       ? [
                           BoxShadow(
-                            color: Colors.red.withValues(alpha: 0.1),
+                            color: ChoColors.aqua.withValues(alpha: 0.18),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),

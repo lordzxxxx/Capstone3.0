@@ -103,29 +103,29 @@ class HealthScreeningInsightsCard extends StatelessWidget {
                   label: 'Needs review',
                   value: needsReview,
                   color: needsReview > 0
-                      ? AppColors.warning
-                      : AppColors.success,
+                      ? AppColors.secondary
+                      : AppColors.primary,
                 ),
                 _InsightMetric(
                   label: 'Urgent',
                   value: summary.urgentFindings,
                   color: summary.urgentFindings > 0
-                      ? AppColors.error
-                      : AppColors.success,
+                      ? AppColors.secondary
+                      : AppColors.primary,
                 ),
                 _InsightMetric(
                   label: 'Referral suggestions',
                   value: summary.referralRecommendations,
                   color: summary.referralRecommendations > 0
-                      ? AppColors.referral
-                      : AppColors.success,
+                      ? AppColors.secondary
+                      : AppColors.primary,
                 ),
                 _InsightMetric(
                   label: 'Data checks',
                   value: summary.dataQualityIssues,
                   color: summary.dataQualityIssues > 0
-                      ? AppColors.warning
-                      : AppColors.success,
+                      ? AppColors.secondary
+                      : AppColors.primary,
                 ),
               ];
               return Wrap(
@@ -183,8 +183,8 @@ class HealthScreeningInsightsCard extends StatelessWidget {
               child: OutlinedButton(
                 onPressed: onReviewReferral,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.referralStrong,
-                  side: const BorderSide(color: AppColors.referral),
+                  foregroundColor: AppColors.secondary,
+                  side: const BorderSide(color: AppColors.primary),
                   minimumSize: const Size(0, 44),
                 ),
                 child: const Row(

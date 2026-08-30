@@ -167,7 +167,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black12,
+                          color: Color(0x2E163B66),
                           blurRadius: 6,
                           offset: Offset(2, 0),
                         ),
@@ -765,7 +765,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
         backgroundColor: AppColors.surfaceLight,
         icon: const Icon(
           Icons.logout_rounded,
-          color: Colors.redAccent,
+          color: AppColors.secondary,
           size: 34,
         ),
         title: const Text(
@@ -789,8 +789,8 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
           FilledButton.icon(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.textOnDark,
               minimumSize: const Size(48, 44),
             ),
             icon: const Icon(Icons.logout_rounded, size: 18),
@@ -822,7 +822,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
           content: Text(
             'Logout failed. Please check your connection and try again.',
           ),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.secondary,
         ),
       );
     } finally {
@@ -980,7 +980,9 @@ class _SidebarAnimatedItemState extends State<_SidebarAnimatedItem> {
                         : (_isHovered
                               ? [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.08),
+                                    color: AppColors.secondary.withValues(
+                                      alpha: 0.14,
+                                    ),
                                     blurRadius: 6,
                                     offset: const Offset(0, 2),
                                   ),
@@ -1108,12 +1110,12 @@ class _AnimatedLogoutButtonState extends State<_AnimatedLogoutButton> {
                   curve: Curves.easeOutCubic,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.redAccent.withValues(
+                    color: AppColors.primary.withValues(
                       alpha: _isHovered ? 1 : 0.9,
                     ),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: Colors.redAccent.withValues(
+                      color: AppColors.primary.withValues(
                         alpha: _isHovered ? 0.6 : 0.2,
                       ),
                     ),
@@ -1163,19 +1165,19 @@ class _AnimatedLogoutButtonState extends State<_AnimatedLogoutButton> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.redAccent.withValues(
+                  color: AppColors.primary.withValues(
                     alpha: _isHovered ? 1 : 0.9,
                   ),
                   borderRadius: BorderRadius.circular(11),
                   border: Border.all(
-                    color: Colors.red.withValues(
+                    color: AppColors.primary.withValues(
                       alpha: _isHovered ? 0.55 : 0.35,
                     ),
                   ),
                   boxShadow: _isHovered
                       ? [
                           BoxShadow(
-                            color: Colors.red.withValues(alpha: 0.1),
+                            color: AppColors.primary.withValues(alpha: 0.18),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
