@@ -11,7 +11,6 @@ import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/features/auth/landing.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
-import 'package:mycapstone_project/web/features/auth/cho_access_session.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/services/barangay_branding_service.dart';
 import 'package:mycapstone_project/web/shared/widgets/barangay_logo_image.dart';
@@ -45,7 +44,7 @@ class _SignupState extends State<Signup> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
-  String? _selectedRole;
+  String? _selectedRole = 'BHW';
   BarangayReference? _selectedBarangay;
   bool _showBarangayValidationError = false;
   bool _emailExists = false;
@@ -70,7 +69,7 @@ class _SignupState extends State<Signup> {
   void initState() {
     super.initState();
     final incomingRole = widget.preselectedRole?.trim().toUpperCase();
-    if (incomingRole == 'CHO' || incomingRole == 'BHW') {
+    if (incomingRole == 'BHW') {
       _selectedRole = incomingRole;
     }
     _brandingSubscription = BarangayBrandingService.instance
@@ -105,8 +104,6 @@ class _SignupState extends State<Signup> {
   }
 
   bool get _requiresBarangayAssignment => _selectedRole == 'BHW';
-
-  bool get _isChoRegistration => _selectedRole == 'CHO';
 
   void _scheduleUsernameAvailabilityCheck() {
     _usernameValidationDebounce?.cancel();
@@ -421,10 +418,10 @@ class _SignupState extends State<Signup> {
       return;
     }
 
-    if (_selectedRole != 'CHO' && _selectedRole != 'BHW') {
+    if (_selectedRole != 'BHW') {
       Get.snackbar(
         'Error',
-        'Please select account type (CHO or BHW)',
+        'Only BHW registration requests are available here.',
         backgroundColor: const Color(0xFFD32F2F),
         colorText: Colors.white,
       );
@@ -623,39 +620,20 @@ class _SignupState extends State<Signup> {
         }),
       );
 
-      final isPendingApproval = _selectedRole == 'BHW';
       Get.snackbar(
-        isPendingApproval ? 'Registration submitted' : 'Account created',
-        isPendingApproval
-            ? 'Your BHW registration is pending CHO approval.'
-            : 'Your ${_selectedRole!} account is authenticated and ready to use.',
+        'Registration submitted',
+        'Your BHW registration is pending CHO approval.',
         backgroundColor: const Color(0xFF388E3C),
         colorText: Colors.white,
         duration: const Duration(seconds: 2),
       );
 
-      // Firebase authentication plus the validated BHW/CHO registration is
-      // sufficient for immediate access. Admin roles are never accepted here.
-      final role = (_selectedRole ?? '').toUpperCase();
       try {
         await userCredential.user!.getIdToken(true);
       } catch (_) {
-        // Firestore profile fallback still provides the approved role.
+        // The pending profile remains available for the approval workflow.
       }
-      if (role == 'CHO') {
-        ChoAccessSession.trustedUid = userCredential.user!.uid;
-        Get.offAllNamed(
-          WebRoutes.choDashboard,
-          arguments: {
-            'roleValidated': true,
-            'uid': userCredential.user!.uid,
-            'role': 'cho',
-          },
-        );
-      } else {
-        ChoAccessSession.trustedUid = null;
-        Get.offAllNamed(WebRoutes.login);
-      }
+      Get.offAllNamed(WebRoutes.login);
     } on TimeoutException {
       if (userCredential?.user != null) {
         try {
@@ -971,7 +949,7 @@ class _SignupState extends State<Signup> {
         ],
       ),
     );
-    final accountType = fieldLabel('Account type', _buildRoleSelector());
+    final accountType = fieldLabel('Account type', _buildFixedAccountType());
     final password = fieldLabel('Password', _buildPasswordField());
     final confirm = fieldLabel(
       'Confirm password',
@@ -1043,13 +1021,10 @@ class _SignupState extends State<Signup> {
                 const SizedBox(height: 12),
                 _buildBarangayLogoPreview(),
               ],
-            ] else if (_isChoRegistration) ...[
-              const SizedBox(height: 16),
-              _buildChoAccessNotice(),
             ],
             const SizedBox(height: 18),
             Text(
-              'CHO account registration is handled here. BHW applicants must use the dedicated BHW request page and wait for approval.',
+              'BHW requests remain pending until approved by the CHO Admin. CHO and doctor accounts are created by the CHO Admin.',
               style: TextStyle(
                 color: _mutedCoolGray,
                 fontSize: 12,
@@ -1250,16 +1225,24 @@ class _SignupState extends State<Signup> {
     );
   }
 
-  Widget _buildRoleSelector() {
+  Widget _buildFixedAccountType() {
     return Container(
-      padding: const EdgeInsets.all(6),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.32)),
         color: const Color(0xFFF8FBFB),
+        border: Border.all(color: _primaryAqua.withValues(alpha: 0.32)),
       ),
-      child: Row(
-        children: [Expanded(child: _buildRoleOption(label: 'CHO'))],
+      child: const Row(
+        children: [
+          Icon(Icons.health_and_safety_outlined, color: _primaryAqua),
+          SizedBox(width: 10),
+          Text(
+            'BHW registration request',
+            style: TextStyle(color: _darkDeepTeal, fontWeight: FontWeight.w700),
+          ),
+        ],
       ),
     );
   }
@@ -1615,84 +1598,6 @@ class _SignupState extends State<Signup> {
               color: _mutedCoolGray,
               fontSize: 12,
               fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRoleOption({required String label}) {
-    final isSelected = _selectedRole == label;
-    return InkWell(
-      onTap: () => setState(() {
-        _selectedRole = label;
-        if (label == 'CHO') {
-          _selectedBarangay = null;
-          _showBarangayValidationError = false;
-          _selectedBarangayUnavailable = false;
-          _barangayRestrictionMessage = null;
-        } else {
-          unawaited(_refreshBarangayAvailability(silent: true));
-        }
-      }),
-      borderRadius: BorderRadius.circular(12),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: isSelected ? _primaryAqua : const Color(0xFFF8FBFB),
-          border: Border.all(
-            color: isSelected
-                ? _primaryAqua
-                : _primaryAqua.withValues(alpha: 0.18),
-          ),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: _darkDeepTeal,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.4,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChoAccessNotice() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F8F8),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _primaryAqua.withValues(alpha: 0.22)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.admin_panel_settings_outlined, color: _primaryAqua),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'CHO accounts use city-wide access',
-                  style: TextStyle(
-                    color: _darkDeepTeal,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'No barangay assignment is required. A successfully registered CHO account receives city-wide access immediately.',
-                  style: TextStyle(color: _mutedCoolGray, height: 1.4),
-                ),
-              ],
             ),
           ),
         ],

@@ -27,7 +27,6 @@ const choRoutes = [
   ['/cho/morbidity', /Morbidity/i],
   ['/cho/mortality', /Mortality/i],
   ['/cho/referrals', /Referral/i],
-  ['/cho/bhw-management', /BHW/i],
   ['/cho/reports', /Analytics|Report/i],
   ['/cho/announcements', /Announcement/i],
   ['/cho/data-quality', /Data Quality/i],
@@ -273,7 +272,12 @@ test.describe('role routes and permissions', () => {
     const identity = {...identities().superAdmin, expectedRoute: '**/cho/super-admin'};
     const {context, page} = await signOutToIsolatedContext(browser, testInfo.project, identity);
     await expectFlutterText(page, /User Governance|Super Admin/i);
-    for (const route of ['/cho/dashboard', '/cho/role-manager', '/cho/super-admin']) {
+    for (const route of [
+      '/cho/dashboard',
+      '/cho/role-manager',
+      '/cho/super-admin',
+      '/cho/bhw-management',
+    ]) {
       await openAuthenticatedRoute(page, route);
       await expect(page.getByText(/Workspace unavailable/i)).toHaveCount(0);
     }

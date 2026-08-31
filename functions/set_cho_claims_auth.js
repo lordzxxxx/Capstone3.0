@@ -1,15 +1,20 @@
 /**
  * set_cho_claims_auth.js
  * 
- * Workaround to set custom claims using authenticated Firebase CLI
- * This directly modifies the Realtime Database to ensure role is set
+ * One-time bootstrap for the single main CHO Admin account.
+ * This is intentionally restricted to the exact bootstrap email; all other
+ * CHO/doctor accounts must be created by the CHO Admin callable workflow.
  * 
  * Usage:
  *   firebase login (already done)
- *   node set_cho_claims_auth.js theocaliao@gmail.com
+ *   node set_cho_claims_auth.js theo@gmail.com
  */
 
 const admin = require('firebase-admin');
+const { getFirestore } = require('firebase-admin/firestore');
+
+const MAIN_CHO_ADMIN_EMAIL = 'theo@gmail.com';
+const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 
 // Initialize with default credentials from authenticated Firebase CLI
 const serviceAccount = require('./serviceAccount.json');
@@ -21,6 +26,9 @@ admin.initializeApp({
 });
 
 async function fixCHORole(email) {
+  if (String(email || '').trim().toLowerCase() !== MAIN_CHO_ADMIN_EMAIL) {
+    throw new Error(`This bootstrap script only accepts ${MAIN_CHO_ADMIN_EMAIL}.`);
+  }
   console.log(`\nAttempting to fix CHO role for: ${email}\n`);
   
   try {
@@ -33,28 +41,51 @@ async function fixCHORole(email) {
     // Step 2: Set custom claims
     console.log('\nStep 2: Setting custom claims...');
     try {
-      await admin.auth().setCustomUserClaims(user.uid, { role: 'CHO' });
-      console.log('✓ Custom claims set to: { role: "CHO" }');
+      await admin.auth().setCustomUserClaims(user.uid, {
+        role: 'cho_admin',
+        approvalStatus: 'approved',
+        accountStatus: 'active',
+      });
+      console.log('✓ Custom claims set to the approved CHO Admin role');
     } catch (claimErr) {
       console.warn('⚠ Could not set custom claims (may require Blaze plan):', claimErr.message);
       console.warn('  But RTDB role will still work for login...');
     }
     
-    // Step 3: Ensure Realtime Database role is set
-    console.log('\nStep 3: Setting Realtime Database role...');
+    // Step 3: Ensure the Firestore governance profile is the source of truth.
+    console.log('\nStep 3: Setting the CHO Admin governance profile...');
+    await getFirestore(admin.app(), FIRESTORE_DATABASE_ID).collection('users').doc(user.uid).set({
+      uid: user.uid,
+      email: user.email || MAIN_CHO_ADMIN_EMAIL,
+      emailLower: MAIN_CHO_ADMIN_EMAIL,
+      role: 'CHO_ADMIN',
+      accessScope: 'citywide',
+      organizationLevel: 'citywide',
+      approvalStatus: 'approved',
+      accountStatus: 'active',
+      status: 'Active',
+      isApproved: true,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    console.log('✓ Firestore profile updated as approved CHO Admin');
+
+    // Step 4: Ensure Realtime Database mirror is set
+    console.log('\nStep 4: Setting Realtime Database role...');
     await admin.database().ref(`users/${user.uid}`).update({
-      role: 'CHO',
+      role: 'CHO_ADMIN',
+      approvalStatus: 'approved',
+      accountStatus: 'active',
       updatedAt: admin.database.ServerValue.TIMESTAMP,
     });
-    console.log('✓ RTDB role updated: users/' + user.uid + '/role = CHO');
+    console.log('✓ RTDB role updated: users/' + user.uid + '/role = CHO_ADMIN');
     
     // Step 4: Verify
-    console.log('\nStep 4: Verifying...');
+    console.log('\nStep 5: Verifying...');
     const snapshot = await admin.database().ref(`users/${user.uid}/role`).get();
     const savedRole = snapshot.val();
     console.log('✓ Verified RTDB role:', savedRole);
     
-    console.log('\n✅ SUCCESS! Your account is now set as CHO.');
+    console.log('\n✅ SUCCESS! The main account is now set as CHO Admin.');
     console.log('\nNext steps:');
     console.log('1. Sign out from your app completely');
     console.log('2. Clear browser cache (Ctrl+Shift+Delete)');
@@ -77,7 +108,7 @@ async function fixCHORole(email) {
 const email = process.argv[2];
 if (!email) {
   console.error('Usage: node set_cho_claims_auth.js <email>');
-  console.error('Example: node set_cho_claims_auth.js theocaliao@gmail.com');
+  console.error('Example: node set_cho_claims_auth.js theo@gmail.com');
   process.exit(1);
 }
 

@@ -1,8 +1,8 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const { getFirestore } = require('firebase-admin/firestore');
-const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const {sendSystemEmail} = require('./mailer');
 const {
   assertStrongPassword,
   MAXIMUM_PASSWORD_LENGTH,
@@ -165,37 +165,6 @@ async function checkAndRecordResetRequestRate(email, clientIp) {
   });
 }
 
-// Get SMTP configuration from Firebase functions config
-// Set these with: firebase functions:config:set smtp.user="..." smtp.pass="..." smtp.host="..." smtp.port="..."
-let transporter = null;
-
-function initializeMailer() {
-  if (transporter) return transporter;
-
-  const config = functions.config();
-  const smtpConfig = config.smtp || {};
-
-  // If SMTP is not configured, try using Gmail or provide clear error
-  if (!smtpConfig.user || !smtpConfig.pass) {
-    console.warn('SMTP configuration incomplete. Set firebase config with:');
-    console.warn('firebase functions:config:set smtp.user="your-email@gmail.com"');
-    console.warn('firebase functions:config:set smtp.pass="your-app-password"');
-    // Still try to create with defaults (may fail at runtime)
-  }
-
-  transporter = nodemailer.createTransport({
-    host: smtpConfig.host || 'smtp.gmail.com',
-    port: smtpConfig.port || 587,
-    secure: smtpConfig.secure || false, // true for 465, false for 587
-    auth: {
-      user: smtpConfig.user || process.env.SMTP_USER,
-      pass: smtpConfig.pass || process.env.SMTP_PASS,
-    },
-  });
-
-  return transporter;
-}
-
 /**
  * HTTP endpoint to send password reset email
  * POST /sendPasswordResetEmail
@@ -281,69 +250,21 @@ exports.sendPasswordResetEmail = functions.https.onRequest((req, res) => {
           verified: false,
         });
 
-      // Send email via nodemailer
+      // Send through the fixed AI-DSUHIS system identity. The raw code is
+      // never written to logs or returned by the endpoint.
       try {
-        const mailer = initializeMailer();
-
         const resetLink = `${process.env.APP_URL || 'https://your-app.com'}/reset-password?email=${encodeURIComponent(
           email
         )}&code=${code}`;
-
-        const mailOptions = {
-          from: functions.config().smtp?.user || 'noreply@dsuhis.com',
+        const mailResult = await sendSystemEmail({
           to: email,
-          subject: 'Password Reset Request - DSUHIS',
-          html: `
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <meta charset="UTF-8">
-                <style>
-                  body { font-family: Arial, sans-serif; background-color: #f5f5f5; }
-                  .container { max-width: 600px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-                  .header { background: linear-gradient(135deg, #00A8B5 0%, #1E5A7A 100%); color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-                  .header h2 { margin: 0; font-size: 24px; }
-                  .content { padding: 20px; color: #333; }
-                  .code { background: #f0f0f0; border: 2px solid #00A8B5; border-radius: 4px; padding: 15px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: bold; letter-spacing: 4px; }
-                  .button { display: inline-block; background: #00A8B5; color: white; padding: 12px 30px; border-radius: 4px; text-decoration: none; margin-top: 10px; }
-                  .footer { background: #f9f9f9; border-top: 1px solid #eee; padding: 15px; text-align: center; font-size: 12px; color: #666; }
-                  .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin: 10px 0; }
-                </style>
-              </head>
-              <body>
-                <div class="container">
-                  <div class="header">
-                    <h2>Password Reset Request</h2>
-                  </div>
-                  <div class="content">
-                    <p>Hi ${htmlEscape(user.displayName || user.email || 'there')},</p>
-                    <p>We received a request to reset your password for your DSUHIS account. If you didn't make this request, you can ignore this email.</p>
-                    
-                    <p><strong>Your verification code:</strong></p>
-                    <div class="code">${code}</div>
-                    
-                    <p>This code will expire in <strong>15 minutes</strong>.</p>
-                    
-                    <p>Enter this code in the password reset screen of the DSUHIS app to proceed with resetting your password.</p>
-                    
-                    <div class="warning">
-                      <strong>Security Note:</strong> Never share this code with anyone. DSUHIS staff will never ask for your password or verification code.
-                    </div>
-                    
-                    <p>If you need further assistance, please contact our support team.</p>
-                  </div>
-                  <div class="footer">
-                    <p>© 2026 DSUHIS - Smart Health Integration System</p>
-                    <p>This is an automated email. Please do not reply to this message.</p>
-                  </div>
-                </div>
-              </body>
-            </html>
-          `,
-          text: `Your password reset code is: ${code}\n\nThis code will expire in 15 minutes.`,
-        };
-
-        await mailer.sendMail(mailOptions);
+          subject: 'Password Reset Request – AI-DSUHIS',
+          html: `<p>Hi ${htmlEscape(user.displayName || user.email || 'there')},</p><p>Your AI-DSUHIS password reset code is:</p><p style="font-size:24px;font-weight:700;letter-spacing:4px;">${code}</p><p>This code expires in 15 minutes. Never share it with anyone.</p>`,
+          text: `Your AI-DSUHIS password reset code is: ${code}\n\nThis code will expire in 15 minutes. Never share it with anyone.`,
+        });
+        if (!mailResult.sent) {
+          throw new Error(mailResult.reason || 'system_mailer_unavailable');
+        }
         console.log('Password reset email sent', {
           emailHash: hashRateLimitKey(email),
         });

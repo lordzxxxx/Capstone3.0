@@ -11,7 +11,6 @@ import 'package:mycapstone_project/web/roles/cho/admin/cho_super_admin_center.da
 import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
 import 'package:mycapstone_project/web/features/auth/landing.dart';
 import 'package:flutter/gestures.dart';
-import 'package:mycapstone_project/web/features/auth/signup.dart';
 import 'package:mycapstone_project/web/features/auth/forgot.dart';
 import 'package:mycapstone_project/web/roles/cho/dashboard/cho_dashboard.dart'
     as cho;
@@ -225,7 +224,8 @@ class _LoginState extends State<Login> {
 
   bool _isChoSuperAdminRole(String role) {
     final normalized = _normalizeRole(role);
-    return normalized == 'cho_super_admin' ||
+    return normalized == 'cho_admin' ||
+        normalized == 'cho_super_admin' ||
         normalized == 'super_admin' ||
         normalized == 'admin';
   }
@@ -713,6 +713,16 @@ class _LoginState extends State<Login> {
           .getIdTokenResult(true)
           .timeout(const Duration(seconds: 12));
       final claims = idToken.claims ?? {};
+      final claimApproval = _normalizeRole(
+        (claims['approvalStatus'] ?? '').toString(),
+      );
+      final claimAccount = _normalizeRole(
+        (claims['accountStatus'] ?? '').toString(),
+      );
+      if (claimApproval != 'approved' ||
+          !const {'active', 'approved'}.contains(claimAccount)) {
+        return null;
+      }
       final claimRole = _normalizeRole((claims['role'] ?? '').toString());
       final claimRoles = (claims['roles'] is List)
           ? (claims['roles'] as List)
@@ -1252,28 +1262,29 @@ class _LoginState extends State<Login> {
               ),
             ),
             const SizedBox(height: 22),
-            Center(
-              child: RichText(
-                text: TextSpan(
-                  style: const TextStyle(color: _mutedCoolGray, fontSize: 13.5),
-                  children: [
-                    const TextSpan(text: "Don't have an account? "),
-                    TextSpan(
-                      text: 'Create one',
-                      style: const TextStyle(
-                        color: _primaryAqua,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () => pushAuthPage(
-                          context,
-                          const Signup(preselectedRole: 'CHO'),
-                        ),
+            if (widget.expectedRole != 'cho')
+              Center(
+                child: RichText(
+                  text: TextSpan(
+                    style: const TextStyle(
+                      color: _mutedCoolGray,
+                      fontSize: 13.5,
                     ),
-                  ],
+                    children: [
+                      const TextSpan(text: 'Need BHW access? '),
+                      TextSpan(
+                        text: 'Submit a registration request',
+                        style: const TextStyle(
+                          color: _primaryAqua,
+                          fontWeight: FontWeight.w800,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () => Get.toNamed(WebRoutes.bhwSignup),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),

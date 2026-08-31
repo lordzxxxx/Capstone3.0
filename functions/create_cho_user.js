@@ -1,36 +1,29 @@
 /**
  * create_cho_user.js
  *
- * Creates a Firebase Auth user (or uses existing), sets custom claim { role: 'CHO' },
- * writes/merges `users/{uid}/role = 'CHO'` in Realtime Database, and optionally generates a
- * password reset link to let the user set their password.
+ * Bootstraps the single CHO Admin account. Ordinary CHO and doctor accounts
+ * must be created by the callable CHO Admin workflow in account_policy.js.
  *
  * Usage examples (from functions/):
- *  node create_cho_user.js cho@example.com --key ./service-account.json --password <StrongPassword> --send-reset
- *  node create_cho_user.js cho@example.com --key ./service-account.json --send-reset
+ *  node create_cho_user.js theo@gmail.com --key ./service-account.json --send-reset
  *  # Or use env var:
  *  $env:GOOGLE_APPLICATION_CREDENTIALS="C:\path\to\service-account.json"
- *  node create_cho_user.js cho@example.com --send-reset
+ *  node create_cho_user.js theo@gmail.com --send-reset
  */
 
 const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
-const { assertStrongPassword } = require('./password_policy');
 
-// CLI args: email [--key path] [--password pwd] [--send-reset]
+// CLI args: theo@gmail.com [--key path] [--send-reset]
 let emailArg = null;
 let keyPath = null;
-let password = null;
 let sendReset = false;
 const args = process.argv.slice(2);
 for (let i = 0; i < args.length; i++) {
   const a = args[i];
   if (a === '--key' || a === '-k') {
     keyPath = args[i + 1];
-    i++;
-  } else if (a === '--password' || a === '-p') {
-    password = args[i + 1];
     i++;
   } else if (a === '--send-reset' || a === '-r') {
     sendReset = true;
@@ -67,8 +60,9 @@ function initAdmin() {
 }
 
 async function createOrUpdateCho(email) {
-  if (!email) throw new Error('Email required. Usage: node create_cho_user.js <email> [--password pass] [--key path] [--send-reset]');
-  if (password) assertStrongPassword(password);
+  if (email !== 'theo@gmail.com') {
+    throw new Error('This bootstrap utility only provisions theo@gmail.com.');
+  }
 
   // Try to find existing user
   let userRecord = null;
@@ -78,40 +72,51 @@ async function createOrUpdateCho(email) {
   } catch (e) {
     // user not found -> create
     console.log('User not found, creating new user for', email);
-    const createReq = { email };
-    if (password) createReq.password = password;
-    userRecord = await admin.auth().createUser(createReq);
+    userRecord = await admin.auth().createUser({ email, disabled: false });
     console.log('Created user:', userRecord.uid);
   }
 
-  // Set custom claim for role CHO
-  await admin.auth().setCustomUserClaims(userRecord.uid, { role: 'CHO' });
-  console.log('Set custom claim role:CHO for', userRecord.uid);
+  await admin.auth().setCustomUserClaims(userRecord.uid, {
+    role: 'CHO_ADMIN',
+    approvalStatus: 'approved',
+    accountStatus: 'active',
+  });
+  console.log('Set custom claim role:CHO_ADMIN for', userRecord.uid);
 
   // Write Realtime Database users node
-  await admin.database().ref(`users/${userRecord.uid}`).update({ role: 'CHO', email: email });
-  console.log('Wrote users/{uid}/role = CHO in Realtime Database');
+  await admin.database().ref(`users/${userRecord.uid}`).update({
+    role: 'CHO_ADMIN',
+    email,
+    approvalStatus: 'approved',
+    accountStatus: 'active',
+  });
+  console.log('Wrote the approved CHO Admin mirror');
 
   // Optionally generate password reset link
   let resetLink = null;
   if (sendReset) {
     try {
       resetLink = await admin.auth().generatePasswordResetLink(email);
-      console.log('Generated password reset link (share securely):');
-      console.log(resetLink);
+      const { sendSystemEmail } = require('./mailer');
+      await sendSystemEmail({
+        to: email,
+        subject: 'Your AI-DSUHIS Account Is Ready',
+        text: `Your AI-DSUHIS CHO Admin account is ready. Set your password securely: ${resetLink}`,
+        html: `<p>Your AI-DSUHIS CHO Admin account is ready.</p><p><a href="${resetLink}">Set your password securely</a></p>`,
+      });
+      console.log('Sent a secure password-setup email from the system mailer');
     } catch (e) {
       console.error('Failed to generate password reset link:', e);
     }
   }
 
-  return { uid: userRecord.uid, resetLink };
+  return { uid: userRecord.uid };
 }
 
 initAdmin();
 const email = emailArg;
 createOrUpdateCho(email).then((res) => {
   console.log('Done. UID:', res.uid);
-  if (res.resetLink) console.log('Reset link:', res.resetLink);
   process.exit(0);
 }).catch((err) => {
   console.error('Error:', err);

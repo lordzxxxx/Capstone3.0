@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -18,6 +17,7 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/components/role_decision_support_panel.dart';
 import 'package:mycapstone_project/web/shared/utils/web_file_picker.dart';
+import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 
 const Color _primaryAqua = AppColors.primary;
 // Super-admin uses the same light CHO content surfaces as the other CHO
@@ -50,6 +50,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
   final FirebaseFirestore _firestore = getFirestoreInstance();
   final BarangayBrandingService _brandingService =
       BarangayBrandingService.instance;
+  final AccountPolicyService _accountPolicyService =
+      AccountPolicyService.instance;
   final TextEditingController _searchController = TextEditingController();
 
   bool _checkingAccess = true;
@@ -79,7 +81,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
 
   bool _isSuperAdminRole(String role) {
     final normalized = role.trim().toLowerCase();
-    return normalized == 'cho_super_admin' ||
+    return normalized == 'cho_admin' ||
+        normalized == 'cho_super_admin' ||
         normalized == 'super_admin' ||
         normalized == 'admin';
   }
@@ -93,9 +96,18 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
       }
 
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
-      final role = (userDoc.data()?['role'] ?? '').toString();
+      final profile = userDoc.data() ?? <String, dynamic>{};
+      final role = (profile['role'] ?? '').toString();
+      final approval = (profile['approvalStatus'] ?? '')
+          .toString()
+          .toLowerCase();
+      final status = (profile['accountStatus'] ?? profile['status'] ?? '')
+          .toString()
+          .toLowerCase();
 
-      if (_isSuperAdminRole(role)) {
+      if (_isSuperAdminRole(role) &&
+          approval == 'approved' &&
+          status == 'active') {
         if (!mounted) return;
         setState(() {
           _authorized = true;
@@ -134,62 +146,33 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     String uid,
     Map<String, dynamic> updates,
   ) async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    final payload = <String, dynamic>{
-      ...updates,
-      'updatedAt': FieldValue.serverTimestamp(),
-      'updatedBy': currentUser?.uid,
-    };
-
-    await _firestore
-        .collection('users')
-        .doc(uid)
-        .set(payload, SetOptions(merge: true));
-
-    try {
-      final rtdbUpdates = <String, dynamic>{'updatedAt': ServerValue.timestamp};
-      if (updates.containsKey('role')) {
-        rtdbUpdates['role'] = updates['role'];
-      }
-      if (updates.containsKey('barangay')) {
-        rtdbUpdates['barangay'] = updates['barangay'] is FieldValue
-            ? null
-            : updates['barangay'];
-      }
-      if (updates.containsKey('barangayCode')) {
-        rtdbUpdates['barangayCode'] = updates['barangayCode'] is FieldValue
-            ? null
-            : updates['barangayCode'];
-      }
-      if (updates.containsKey('barangayDistrict')) {
-        rtdbUpdates['barangayDistrict'] =
-            updates['barangayDistrict'] is FieldValue
-            ? null
-            : updates['barangayDistrict'];
-      }
-      if (updates.containsKey('accountStatus')) {
-        rtdbUpdates['accountStatus'] = updates['accountStatus'];
-      }
-      if (updates.containsKey('approvalStatus')) {
-        rtdbUpdates['approvalStatus'] = updates['approvalStatus'];
-      }
-
-      await FirebaseDatabase.instance
-          .ref()
-          .child('users')
-          .child(uid)
-          .update(rtdbUpdates);
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('CHO Super Admin RTDB mirror update failed for $uid: $e');
-      }
-    }
+    await _accountPolicyService.updateChoAccount(
+      uid: uid,
+      role: updates['role']?.toString(),
+      accountStatus: updates['accountStatus']?.toString(),
+      barangay: updates.containsKey('barangay')
+          ? (updates['barangay'] is FieldValue
+                ? ''
+                : updates['barangay']?.toString())
+          : null,
+      barangayCode: updates.containsKey('barangayCode')
+          ? (updates['barangayCode'] is FieldValue
+                ? ''
+                : updates['barangayCode']?.toString())
+          : null,
+      barangayDistrict: updates.containsKey('barangayDistrict')
+          ? (updates['barangayDistrict'] is FieldValue
+                ? ''
+                : updates['barangayDistrict']?.toString())
+          : null,
+    );
   }
 
   Future<void> _setRole(String uid, String role) async {
     final isBarangayScoped = role.toUpperCase() == 'BHW';
     await _updateUserGovernance(uid, <String, dynamic>{
       'role': role,
+      if (isBarangayScoped) 'accountStatus': 'disabled',
       'accessScope': isBarangayScoped ? 'barangay' : 'citywide',
       if (!isBarangayScoped) 'barangay': FieldValue.delete(),
       if (!isBarangayScoped) 'barangayCode': FieldValue.delete(),
@@ -217,12 +200,16 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
   }
 
   Future<void> _setApprovalStatus(String uid, String status) async {
-    await _updateUserGovernance(uid, <String, dynamic>{
-      'approvalStatus': status,
-      if (status == 'approved') 'approvedAt': FieldValue.serverTimestamp(),
-      if (status == 'approved')
-        'approvedBy': FirebaseAuth.instance.currentUser?.uid,
-    });
+    if (status.toLowerCase() != 'approved') {
+      Get.snackbar(
+        'Approval is retained',
+        'Use account status to disable access. BHW approvals are not silently revoked from the user list.',
+        backgroundColor: AppColors.warning,
+        colorText: Colors.white,
+      );
+      return;
+    }
+    await _accountPolicyService.reviewBhwRegistration(uid: uid, approved: true);
     Get.snackbar(
       'Saved',
       'Approval status updated to $status.',
@@ -248,6 +235,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
 
   Future<void> _releaseBarangay(String uid) async {
     await _updateUserGovernance(uid, <String, dynamic>{
+      'accountStatus': 'disabled',
       'barangay': FieldValue.delete(),
       'barangayCode': FieldValue.delete(),
       'barangayDistrict': FieldValue.delete(),
@@ -395,9 +383,11 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
   }
 
   Future<void> _showInviteDialog() async {
+    final nameController = TextEditingController();
     final emailController = TextEditingController();
-    String selectedRole = 'BHW';
-    BarangayReference? selectedBarangay;
+    String selectedRole = 'DOCTOR';
+    String specialization = 'General Medicine';
+    String availability = 'available';
 
     await showDialog<void>(
       context: context,
@@ -415,6 +405,12 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    TextField(
+                      controller: nameController,
+                      style: const TextStyle(color: _lightOffWhite),
+                      decoration: const InputDecoration(labelText: 'Full name'),
+                    ),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: emailController,
                       style: const TextStyle(color: _lightOffWhite),
@@ -446,7 +442,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                           borderSide: BorderSide.none,
                         ),
                       ),
-                      items: MalaybalayBarangays.roleOptions
+                      items: const <String>['CHO', 'DOCTOR']
                           .map(
                             (role) => DropdownMenuItem<String>(
                               value: role,
@@ -461,38 +457,35 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                         });
                       },
                     ),
-                    if (selectedRole == 'BHW') ...[
+                    if (selectedRole == 'DOCTOR') ...[
                       const SizedBox(height: 16),
-                      ListTile(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: BorderSide(
-                            color: _primaryAqua.withValues(alpha: 0.18),
-                          ),
+                      TextField(
+                        style: const TextStyle(color: _lightOffWhite),
+                        decoration: const InputDecoration(
+                          labelText: 'Specialization',
                         ),
-                        tileColor: _panelSurface,
-                        title: Text(
-                          selectedBarangay?.name ?? 'Assign barangay',
-                          style: const TextStyle(color: _lightOffWhite),
+                        onChanged: (value) => specialization = value,
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: availability,
+                        items:
+                            const <String>[
+                                  'available',
+                                  'busy',
+                                  'limited',
+                                  'unavailable',
+                                ]
+                                .map(
+                                  (value) => DropdownMenuItem(
+                                    value: value,
+                                    child: Text(value),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (value) => setInviteState(
+                          () => availability = value ?? availability,
                         ),
-                        subtitle: Text(
-                          selectedBarangay?.district ??
-                              'Choose from the official Malaybalay directory',
-                          style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.65),
-                          ),
-                        ),
-                        trailing: const Icon(
-                          Icons.keyboard_arrow_down,
-                          color: _primaryAqua,
-                        ),
-                        onTap: () async {
-                          final picked = await _pickBarangay();
-                          if (picked == null) return;
-                          setInviteState(() {
-                            selectedBarangay = picked;
-                          });
-                        },
                       ),
                     ] else ...[
                       const SizedBox(height: 16),
@@ -507,7 +500,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                           ),
                         ),
                         child: Text(
-                          'No barangay assignment is required for $selectedRole invitations.',
+                          'CHO accounts receive city-wide access. The account holder will activate access through a secure email from AI-DSUHIS.',
                           style: TextStyle(
                             color: _lightOffWhite.withValues(alpha: 0.72),
                           ),
@@ -525,45 +518,50 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                 ElevatedButton(
                   onPressed: () async {
                     final email = emailController.text.trim();
-                    if (email.isEmpty ||
-                        (selectedRole == 'BHW' && selectedBarangay == null)) {
+                    final fullName = nameController.text.trim();
+                    if (email.isEmpty || fullName.isEmpty) {
                       Get.snackbar(
                         'Incomplete',
-                        selectedRole == 'BHW'
-                            ? 'Email and barangay are required for BHW invitations.'
-                            : 'Email is required for invitations.',
+                        'Full name and email are required.',
                         backgroundColor: Colors.orange,
                         colorText: Colors.white,
                       );
                       return;
                     }
-
-                    await _firestore.collection('invitations').add({
-                      'email': email,
-                      'emailLower': email.toLowerCase(),
-                      'role': selectedRole,
-                      'accessScope': selectedRole == 'BHW'
-                          ? 'barangay'
-                          : 'citywide',
-                      'barangay': selectedBarangay?.name,
-                      'barangayCode': selectedBarangay?.code,
-                      'barangayDistrict': selectedBarangay?.district,
-                      'status': 'pending',
-                      'createdAt': FieldValue.serverTimestamp(),
-                      'createdBy': FirebaseAuth.instance.currentUser?.uid,
-                    });
-
-                    if (context.mounted) {
-                      Navigator.of(dialogContext).pop();
+                    try {
+                      final result = await _accountPolicyService
+                          .createChoAccount(
+                            fullName: fullName,
+                            email: email,
+                            role: selectedRole,
+                            specialization: specialization,
+                            availability: availability,
+                          );
+                      if (dialogContext.mounted) {
+                        Navigator.of(dialogContext).pop();
+                      }
+                      Get.snackbar(
+                        result.activationEmailSent
+                            ? 'Account created'
+                            : 'Account created; email pending',
+                        result.activationEmailSent
+                            ? 'A secure activation email was sent from AI-DSUHIS.'
+                            : 'The account exists, but the system mailer could not send the activation email.',
+                        backgroundColor: result.activationEmailSent
+                            ? AppColors.success
+                            : AppColors.warning,
+                        colorText: Colors.white,
+                      );
+                    } catch (error) {
+                      Get.snackbar(
+                        'Account creation failed',
+                        error.toString(),
+                        backgroundColor: AppColors.error,
+                        colorText: Colors.white,
+                      );
                     }
-                    Get.snackbar(
-                      'Invitation recorded',
-                      'The invitation was stored for CHO review and onboarding.',
-                      backgroundColor: Colors.green,
-                      colorText: Colors.white,
-                    );
                   },
-                  child: const Text('Save invite'),
+                  child: const Text('Create account'),
                 ),
               ],
             );
@@ -572,6 +570,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
       },
     );
 
+    nameController.dispose();
     emailController.dispose();
   }
 
@@ -1210,28 +1209,23 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                     ),
                   ),
                 ),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  final nextStatus = approvalStatus.toLowerCase() == 'approved'
-                      ? 'pending'
-                      : 'approved';
-                  await _setApprovalStatus(doc.id, nextStatus);
-                },
-                icon: const Icon(Icons.verified_user_outlined),
-                label: Text(
-                  approvalStatus.toLowerCase() == 'approved'
-                      ? 'Mark pending'
-                      : 'Approve user',
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.success,
-                  side: const BorderSide(color: AppColors.success),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
+              if (requiresBarangay &&
+                  approvalStatus.toLowerCase() != 'approved')
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await _setApprovalStatus(doc.id, 'approved');
+                  },
+                  icon: const Icon(Icons.verified_user_outlined),
+                  label: const Text('Approve BHW'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.success,
+                    side: const BorderSide(color: AppColors.success),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                   ),
                 ),
-              ),
               OutlinedButton.icon(
                 onPressed: () async {
                   final nextStatus = accountStatus.toLowerCase() == 'disabled'
@@ -1497,9 +1491,12 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
             final docs = snapshot.data!.docs;
             final filteredDocs = _filterUsers(docs);
             final pendingApprovals = docs.where((doc) {
-              final approval = (doc.data()['approvalStatus'] ?? 'pending')
-                  .toString();
-              return approval.toLowerCase() != 'approved';
+              final data = doc.data();
+              final role = (data['role'] ?? '').toString().toUpperCase();
+              final approval = (data['approvalStatus'] ?? 'pending')
+                  .toString()
+                  .toLowerCase();
+              return role == 'BHW' && approval != 'approved';
             }).length;
             final activeBhw = docs.where((doc) {
               final role = (doc.data()['role'] ?? '').toString().toUpperCase();
@@ -1507,7 +1504,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
             }).length;
             final choScoped = docs.where((doc) {
               final role = (doc.data()['role'] ?? '').toString().toUpperCase();
-              return role == 'CHO' || role == 'CHO_SUPER_ADMIN';
+              return role == 'CHO' ||
+                  role == 'CHO_ADMIN' ||
+                  role == 'CHO_SUPER_ADMIN';
             }).length;
 
             return SingleChildScrollView(
@@ -1577,7 +1576,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                             icon: Icons.admin_panel_settings_outlined,
                           ),
                           _buildStatCard(
-                            label: 'Pending approvals',
+                            label: 'Pending BHW approvals',
                             value: pendingApprovals.toString(),
                             icon: Icons.rule_folder_outlined,
                           ),
@@ -1613,7 +1612,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                             ElevatedButton.icon(
                               onPressed: _showInviteDialog,
                               icon: const Icon(Icons.person_add_alt_1_outlined),
-                              label: const Text('Record invite'),
+                              label: const Text('Create CHO account'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: _primaryAqua,
                                 foregroundColor: Colors.white,

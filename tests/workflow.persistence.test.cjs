@@ -70,7 +70,7 @@ describe('connected workflow: real Firestore persistence and retrieval', () => {
     await seed(
       'users/cho-1',
       activeProfile('cho-1', 'cho@example.test', {
-        role: 'CHO',
+        role: 'CHO_ADMIN',
         accessScope: 'citywide',
         barangay: '',
         barangayCode: '',

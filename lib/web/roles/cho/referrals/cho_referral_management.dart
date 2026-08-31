@@ -61,6 +61,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
   Stream<QuerySnapshot<Map<String, dynamic>>>? _stream;
   List<_DoctorDirectoryEntry> _doctorDirectory = <_DoctorDirectoryEntry>[];
   bool _loadingDoctorDirectory = false;
+  bool _isChoAdmin = false;
   String? _requestedReferralId;
   bool _requestedReferralOpened = false;
 
@@ -97,6 +98,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           .timeout(const Duration(seconds: 12));
       final allowed = const {
         'cho',
+        'cho_admin',
         'cho_super_admin',
         'super_admin',
         'admin',
@@ -107,6 +109,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       if (!mounted) return;
       setState(() {
         _stream = _firestore.collection('referrals').snapshots();
+        _isChoAdmin = scope.isChoAdmin;
         _loadingScope = false;
       });
       unawaited(_loadDoctorDirectory());
@@ -394,12 +397,10 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           final accountStatus = _s(data, [
             'accountStatus',
           ], fallback: 'active').toLowerCase().replaceAll('-', '_');
-          return !{
-            'disabled',
-            'archived',
-            'inactive',
-            'deactivated',
-          }.contains(accountStatus);
+          final approvalStatus = _s(data, [
+            'approvalStatus',
+          ], fallback: 'pending').toLowerCase();
+          return approvalStatus == 'approved' && accountStatus == 'active';
         })
         .toList(growable: false);
     return Container(
@@ -433,12 +434,13 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              FilledButton.icon(
-                onPressed: _showCreateDoctorDialog,
-                style: AppButtonStyles.primary(background: ChoColors.ice),
-                icon: const Icon(Icons.person_add_alt_1_outlined),
-                label: const Text('Add doctor'),
-              ),
+              if (_isChoAdmin)
+                FilledButton.icon(
+                  onPressed: _showCreateDoctorDialog,
+                  style: AppButtonStyles.primary(background: ChoColors.ice),
+                  icon: const Icon(Icons.person_add_alt_1_outlined),
+                  label: const Text('Add doctor'),
+                ),
               IconButton(
                 tooltip: 'Refresh doctors',
                 onPressed: _loadDoctorDirectory,
@@ -704,9 +706,10 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                       }
                       setDialogState(() => saving = true);
                       try {
-                        await _accountPolicyService.registerDoctorAccount(
+                        await _accountPolicyService.createChoAccount(
                           fullName: name.text,
                           email: email.text,
+                          role: 'DOCTOR',
                           specialization: specialization.text,
                           availability: availability,
                         );
@@ -921,22 +924,16 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       ),
     );
     if (saved != true) return;
-    final update = <String, dynamic>{
-      'availability': availability,
-      'doctorAvailability': availability,
-      'status': availability,
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
-    await Future.wait(
-      doctor.references.map(
-        (reference) => reference.set(update, SetOptions(merge: true)),
-      ),
+    await _accountPolicyService.updateChoAccount(
+      uid: _s(data, ['userUid', 'uid', 'userId']),
+      availability: availability,
     );
     await _loadDoctorDirectory();
     if (mounted) _snack('Doctor availability updated.');
   }
 
   Future<void> _deactivateDoctor(_DoctorDirectoryEntry doctor) async {
+    final data = doctor.data;
     final name = _s(doctor.data, [
       'fullName',
       'username',
@@ -972,18 +969,10 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       ),
     );
     if (confirmed != true) return;
-    final update = <String, dynamic>{
-      'accountStatus': 'inactive',
-      'isArchived': true,
-      'availability': 'unavailable',
-      'doctorAvailability': 'unavailable',
-      'status': 'unavailable',
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
-    await Future.wait(
-      doctor.references.map(
-        (reference) => reference.set(update, SetOptions(merge: true)),
-      ),
+    await _accountPolicyService.updateChoAccount(
+      uid: _s(data, ['userUid', 'uid', 'userId']),
+      accountStatus: 'disabled',
+      availability: 'unavailable',
     );
     await _loadDoctorDirectory();
     if (mounted) _snack('Doctor deactivated and removed from new assignments.');
@@ -1133,6 +1122,9 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                     onReview: () => _review(record),
                     onAdvance: () => _advance(record),
                     onDetails: () => _details(record),
+                    onReassign: _isChoAdmin && record.doctorUid.isNotEmpty
+                        ? () => _reassign(record)
+                        : null,
                   ),
                 )
                 .toList(growable: false),
@@ -1329,6 +1321,62 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
     }
   }
 
+  Future<void> _reassign(_ReferralRecord record) async {
+    final doctors = await _doctorOptions();
+    if (!mounted) return;
+    if (doctors.isEmpty) {
+      _snack(
+        'No approved and available doctors are eligible for reassignment.',
+      );
+      return;
+    }
+    var selectedUid = doctors.any((doctor) => doctor.id == record.doctorUid)
+        ? record.doctorUid
+        : doctors.first.id;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: ChoColors.surface,
+          title: const Text(
+            'Reassign referral',
+            style: TextStyle(color: ChoColors.text),
+          ),
+          content: _lightDropdown(
+            label: 'Approved available doctor',
+            value: selectedUid,
+            values: {for (final doctor in doctors) doctor.id: doctor.label},
+            onChanged: (value) => setState(() => selectedUid = value),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Reassign'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _accountPolicyService.assignDoctorToReferral(
+        referralId: record.id,
+        preferredDoctorUid: selectedUid,
+      );
+      if (mounted) {
+        _snack(
+          'Referral reassigned and the doctor notification was processed.',
+        );
+      }
+    } catch (error) {
+      if (mounted) _snack('Could not reassign referral: $error');
+    }
+  }
+
   Future<void> _saveReview(
     _ReferralRecord record, {
     required String action,
@@ -1498,6 +1546,9 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
             final accountStatus = _s(data, [
               'accountStatus',
             ], fallback: 'active').toLowerCase().replaceAll('-', '_');
+            final approvalStatus = _s(data, [
+              'approvalStatus',
+            ], fallback: 'pending').toLowerCase();
             final unavailable =
                 availability.contains('unavailable') ||
                 availability.contains('on_leave') ||
@@ -1508,7 +1559,10 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                   'inactive',
                   'deactivated',
                 }.contains(accountStatus);
-            return role == 'doctor' && !unavailable;
+            return role == 'doctor' &&
+                approvalStatus == 'approved' &&
+                accountStatus == 'active' &&
+                !unavailable;
           })
           .map((doc) {
             final data = doc.data();
@@ -1737,12 +1791,14 @@ class _ReferralCard extends StatelessWidget {
     required this.onReview,
     required this.onAdvance,
     required this.onDetails,
+    this.onReassign,
   });
   final _ReferralRecord record;
   final _QueueMode mode;
   final VoidCallback onReview;
   final VoidCallback onAdvance;
   final VoidCallback onDetails;
+  final VoidCallback? onReassign;
 
   @override
   Widget build(BuildContext context) {
@@ -1810,6 +1866,12 @@ class _ReferralCard extends StatelessWidget {
                   onPressed: onAdvance,
                   icon: const Icon(Icons.trending_flat_rounded),
                   label: const Text('Update progress'),
+                ),
+              if (mode == _QueueMode.active && onReassign != null)
+                OutlinedButton.icon(
+                  onPressed: onReassign,
+                  icon: const Icon(Icons.swap_horiz_rounded),
+                  label: const Text('Reassign doctor'),
                 ),
             ],
           ),

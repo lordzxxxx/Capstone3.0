@@ -39,6 +39,7 @@ class WebRoleGate extends StatefulWidget {
       case 'doctor':
         return WebRoutes.doctorReferrals;
       case 'cho':
+      case 'cho_admin':
       case 'cho_super_admin':
       case 'super_admin':
       case 'admin':

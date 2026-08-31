@@ -2,8 +2,8 @@ const functions = require('firebase-functions');
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 const { getFirestore } = require('firebase-admin/firestore');
-const nodemailer = require('nodemailer');
 const { generateTemporaryPassword } = require('./password_policy');
+const { sendSystemEmail } = require('./mailer');
 
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 
@@ -13,44 +13,11 @@ if (!admin.apps.length) {
 
 const db = getFirestore(admin.app(), FIRESTORE_DATABASE_ID);
 
-let transporter = null;
-
-// Initialize Nodemailer transporter with SMTP configuration
-function initializeTransporter() {
-  if (transporter) return transporter;
-
-  try {
-    // Get SMTP configuration from Firebase Config or environment variables
-    const smtpConfig = {
-      host: process.env.SMTP_HOST || (functions.config && functions.config().smtp && functions.config().smtp.host),
-      port: parseInt(process.env.SMTP_PORT || (functions.config && functions.config().smtp && functions.config().smtp.port) || '587'),
-      secure: (process.env.SMTP_SECURE || (functions.config && functions.config().smtp && functions.config().smtp.secure) || 'false') === 'true', // true for 465, false for other ports
-      auth: {
-        user: process.env.SMTP_USER || (functions.config && functions.config().smtp && functions.config().smtp.user),
-        pass: process.env.SMTP_PASSWORD || (functions.config && functions.config().smtp && functions.config().smtp.password),
-      },
-    };
-
-    // Validate SMTP configuration
-    if (!smtpConfig.auth.user || !smtpConfig.auth.pass) {
-      console.warn('SMTP credentials not configured. Email sending will be disabled.');
-      return null;
-    }
-
-    transporter = nodemailer.createTransport(smtpConfig);
-    console.log('Nodemailer transporter initialized successfully');
-    return transporter;
-  } catch (err) {
-    console.error('Failed to initialize Nodemailer transporter:', err);
-    return null;
-  }
-}
-
 /**
  * Firestore trigger: when an admin writes an `invitations` document, this function
  * will create the Auth user if missing, set a custom claim role (e.g., 'CHO'),
- * write the Realtime Database `users/{uid}` node with role/email, and generate a password reset link.
- * The invitation document will be updated with processing status and resetLink.
+ * write the Realtime Database `users/{uid}` node with role/email, and email a
+ * secure password-setup link. The link is never persisted in Firestore logs.
  */
 exports.processInvitation = onDocumentCreated({
   document: 'invitations/{invId}',
@@ -75,6 +42,22 @@ exports.processInvitation = onDocumentCreated({
     return;
   }
 
+  const inviter = createdBy ? await db.collection('users').doc(createdBy).get() : null;
+  const inviterData = inviter?.exists ? inviter.data() || {} : {};
+  const inviterRole = String(inviterData.role || '').trim().toUpperCase();
+  const inviterApproval = String(inviterData.approvalStatus || '').trim().toLowerCase();
+  const inviterStatus = String(inviterData.accountStatus || inviterData.status || '').trim().toLowerCase();
+  const authorizedInviter = ['CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'].includes(inviterRole) &&
+    inviterApproval === 'approved' && ['active', 'approved'].includes(inviterStatus);
+  if (!authorizedInviter || !['CHO', 'DOCTOR'].includes(requestedRole.toUpperCase())) {
+    await snap.ref.update({
+      status: 'rejected',
+      error: 'Only the CHO Admin may create CHO or doctor accounts.',
+      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return;
+  }
+
   try {
     // Try to find existing user
     let userRecord;
@@ -86,6 +69,11 @@ exports.processInvitation = onDocumentCreated({
       userRecord = await admin.auth().createUser({ email, password: tempPass });
       console.log('Created user', userRecord.uid, 'for', email);
     }
+
+    await admin.auth().updateUser(userRecord.uid, {
+      displayName: fullName || userRecord.displayName || email,
+      disabled: false,
+    });
 
     // Set custom claims
     const roleClaim = requestedRole.toLowerCase();
@@ -160,81 +148,22 @@ exports.processInvitation = onDocumentCreated({
       console.warn('Could not generate reset link:', e);
     }
 
-    // Send email via SMTP/Nodemailer
+    // Send through the fixed AI-DSUHIS system mailer.
     let emailSent = false;
     let emailError = null;
-    
-    const mailTransporter = initializeTransporter();
-    if (mailTransporter) {
-      try {
-        const fromEmail = process.env.SMTP_FROM_EMAIL ||
-          (functions.config && functions.config().smtp && (functions.config().smtp.fromEmail || functions.config().smtp.fromemail)) ||
-          'noreply@example.com';
-        const appName = 'Health Care System';
-
-        const mailOptions = {
-          from: fromEmail,
-          to: email,
-          subject: `You're Invited to ${appName}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
-              <div style="background-color: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <h2 style="color: #0E2F34; margin-top: 0;">Welcome to ${appName}</h2>
-                <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                  You have been invited to join <b>${appName}</b> with the role: <b>${requestedRole}</b>
-                </p>
-                <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                  Please click the button below to set your password and complete your registration:
-                </p>
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${resetLink}" style="background-color: #00A8B5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                    Set Your Password
-                  </a>
-                </div>
-                <p style="color: #999; font-size: 14px;">
-                  Or copy and paste this link in your browser:<br>
-                  <code style="background-color: #f0f0f0; padding: 2px 6px; border-radius: 3px;">${resetLink}</code>
-                </p>
-                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-                <p style="color: #999; font-size: 12px; text-align: center;">
-                  If you did not request this invitation, please ignore this email or contact support.<br>
-                  © 2026 ${appName}. All rights reserved.
-                </p>
-              </div>
-            </div>
-          `,
-          text: `You were invited to ${appName} with role ${requestedRole}.\n\nSet your password using this link: ${resetLink}`,
-        };
-
-        // Send email
-        const result = await mailTransporter.sendMail(mailOptions);
-        emailSent = true;
-        emailError = null;
-        console.log('Invitation email sent successfully to', email, '- Message ID:', result.messageId);
-        
-        // Optionally log the response
-        await snap.ref.update({ smtpResponse: { messageId: result.messageId, accepted: result.accepted } });
-      } catch (sendErr) {
-        emailSent = false;
-        emailError = sendErr && sendErr.message ? sendErr.message : String(sendErr);
-        console.error('Failed to send invitation email via SMTP:', sendErr);
-        
-        try {
-          await snap.ref.update({ smtpError: emailError });
-        } catch (updateErr) {
-          console.warn('Failed to log SMTP error to invitation doc:', updateErr);
-        }
-      }
-    } else {
-      emailError = 'smtp_not_configured';
-      console.warn('SMTP transporter not available; email not sent');
-    }
+    const emailResult = resetLink ? await sendSystemEmail({
+      to: email,
+      subject: 'Your AI-DSUHIS Account Is Ready',
+      text: `A CHO Admin created your AI-DSUHIS ${requestedRole.toUpperCase()} account. Set your password securely: ${resetLink}`,
+      html: `<p>A CHO Admin created your AI-DSUHIS ${requestedRole.toUpperCase()} account.</p><p><a href="${resetLink}">Set your password securely</a></p>`,
+    }) : {sent: false, reason: 'activation_link_unavailable'};
+    emailSent = emailResult.sent;
+    emailError = emailResult.sent ? null : emailResult.reason;
 
     // Update invitation doc with result
     await snap.ref.update({
       status: 'processed',
       uid: userRecord.uid,
-      resetLink: resetLink || null,
       emailSent: emailSent,
       emailError: emailError,
       processedAt: admin.firestore.FieldValue.serverTimestamp(),

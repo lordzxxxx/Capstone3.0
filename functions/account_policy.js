@@ -2,8 +2,8 @@ const functions = require('firebase-functions');
 const { onDocumentWritten } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 const { getFirestore } = require('firebase-admin/firestore');
-const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const {sendSystemEmail} = require('./mailer');
 const {
   assertStrongPassword,
   generateTemporaryPassword,
@@ -17,7 +17,6 @@ if (!admin.apps.length) {
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 const db = getFirestore(admin.app(), FIRESTORE_DATABASE_ID);
 const REGISTRATION_INTENT_TTL_MS = 30 * 60 * 1000;
-let assignmentEmailTransporter = null;
 
 function normalizeText(value) {
   return String(value || '').trim().toLowerCase();
@@ -58,6 +57,13 @@ function barangayUserDocRef(barangayCode, uid) {
 function isActiveAccount(data) {
   const accountStatus = normalizeText(data.accountStatus || 'active');
   return accountStatus != 'disabled' && accountStatus != 'archived';
+}
+
+function isApprovedActiveProfile(data) {
+  const approval = normalizeText(data?.approvalStatus || '');
+  const status = normalizeText(data?.accountStatus || data?.status || '');
+  return ['approved'].includes(approval) &&
+    ['active', 'approved'].includes(status);
 }
 
 function maskEmail(email) {
@@ -305,97 +311,6 @@ function serializeError(error) {
   };
 }
 
-function smtpConfigValue(config, key, envKeys, fallback = '') {
-  const envValue = envKeys
-      .map((envKey) => process.env[envKey])
-      .find((value) => String(value || '').trim().length > 0);
-  if (String(envValue || '').trim().length > 0) {
-    return String(envValue).trim();
-  }
-
-  const configValue = config?.[key];
-  if (String(configValue || '').trim().length > 0) {
-    return String(configValue).trim();
-  }
-
-  return fallback;
-}
-
-function smtpConfigBool(config, key, envKeys, fallback = false) {
-  const envValue = envKeys
-      .map((envKey) => process.env[envKey])
-      .find((value) => value !== undefined && value !== null);
-  const rawValue = envValue !== undefined ? envValue : config?.[key];
-  if (rawValue === undefined || rawValue === null || rawValue === '') {
-    return fallback;
-  }
-  return String(rawValue).trim().toLowerCase() === 'true';
-}
-
-function getAssignmentEmailTransporter() {
-  if (assignmentEmailTransporter) {
-    return assignmentEmailTransporter;
-  }
-
-  let smtpConfig = {};
-  try {
-    smtpConfig = functions.config().smtp || {};
-  } catch (_) {
-    smtpConfig = {};
-  }
-
-  const smtpHost = smtpConfigValue(
-      smtpConfig,
-      'host',
-      ['SMTP_HOST'],
-      'smtp.gmail.com',
-  );
-  const smtpPortRaw = smtpConfigValue(
-      smtpConfig,
-      'port',
-      ['SMTP_PORT'],
-      '587',
-  );
-  const smtpPort = parseInt(smtpPortRaw, 10) || 587;
-  const smtpSecure = smtpConfigBool(
-      smtpConfig,
-      'secure',
-      ['SMTP_SECURE'],
-      false,
-  );
-  const smtpUser = smtpConfigValue(
-      smtpConfig,
-      'user',
-      ['SMTP_USER'],
-      '',
-  );
-  const smtpPass = smtpConfigValue(
-      smtpConfig,
-      'pass',
-      ['SMTP_PASSWORD', 'SMTP_PASS'],
-      smtpConfigValue(smtpConfig, 'password', ['SMTP_PASSWORD', 'SMTP_PASS'], ''),
-  );
-
-  if (!smtpUser || !smtpPass) {
-    console.warn(
-        'Assignment email not sent because SMTP credentials are not configured.',
-    );
-    return null;
-  }
-
-  assignmentEmailTransporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpSecure,
-    auth: {
-      user: smtpUser,
-      pass: smtpPass,
-    },
-  });
-
-  return assignmentEmailTransporter;
-}
-
 function htmlEscape(value) {
   return String(value || '')
       .replace(/&/g, '&amp;')
@@ -455,35 +370,22 @@ async function sendDoctorAssignmentEmail({
     };
   }
 
-  const mailer = getAssignmentEmailTransporter();
-  if (!mailer) {
-    return {
-      sent: false,
-      reason: 'smtp_not_configured',
-      message: 'SMTP is not configured for assignment notifications.',
-    };
-  }
-
-  let smtpConfig = {};
-  try {
-    smtpConfig = functions.config().smtp || {};
-  } catch (_) {
-    smtpConfig = {};
-  }
-
-  const fromEmail = smtpConfigValue(
-      smtpConfig,
-      'fromEmail',
-      ['SMTP_FROM_EMAIL'],
-      smtpConfigValue(
-          smtpConfig,
-          'fromemail',
-          ['SMTP_FROM_EMAIL'],
-          smtpConfigValue(smtpConfig, 'user', ['SMTP_USER'], 'noreply@dsuhis.com'),
-      ),
-  );
-
   const safeDoctorName = safeText(doctorName, 'Doctor');
+  const patientName = safeText(
+      referral?.patientName || referral?.patientInformation?.fullName,
+      'Patient',
+  );
+  const bhwName = safeText(
+      referral?.createdByName || referral?.bhwName || referral?.createdByEmail,
+      'Referring BHW',
+  );
+  const barangay = safeText(
+      referral?.barangay || referral?.barangayName,
+      'Not provided',
+  );
+  const referralDate = timestampText(
+      referral?.referralDate || referral?.createdAt || new Date(),
+  );
   const assignmentTime = timestampText(
       referral?.assignedAt || referral?.updatedAt || new Date(),
   );
@@ -492,57 +394,56 @@ async function sendDoctorAssignmentEmail({
   ).replace(/\/$/, '');
   const portalLink = `${appUrl}/doctor/referrals`;
 
-  const subject = `New Referral Assignment: ${referralId}`;
+  const subject = 'New Patient Referral Assigned – AI-DSUHIS';
   const text = [
     `Hello Dr. ${safeDoctorName},`,
     '',
-    'You have been assigned a referral case in DSUHIS.',
+    'A patient referral has been assigned to you in AI-DSUHIS.',
     '',
-    `Referral ID: ${referralId}`,
-    `Assigned At: ${assignmentTime}`,
+    `Doctor: ${safeDoctorName}`,
+    `Patient: ${patientName}`,
+    `Referral date: ${referralDate}`,
+    `Referring BHW: ${bhwName}`,
+    `Barangay: ${barangay}`,
+    `Reference: ${referralId}`,
+    `Assigned at: ${assignmentTime}`,
     '',
-    `Open the doctor portal: ${portalLink}`,
+    `Open the secure doctor portal: ${portalLink}`,
+    '',
+    'For privacy, clinical diagnosis, history, and AI analysis are available only after secure sign-in.',
   ].join('\n');
 
   const html = `
     <div style="font-family: Arial, sans-serif; color: #0A1F24; line-height: 1.5;">
       <h2 style="margin-bottom: 8px;">New Referral Assignment</h2>
       <p>Hello Dr. ${htmlEscape(safeDoctorName)},</p>
-      <p>You have been assigned a referral case in DSUHIS.</p>
+      <p>A patient referral has been assigned to you in AI-DSUHIS.</p>
       <table style="border-collapse: collapse; width: 100%; max-width: 640px;">
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Referral ID</td><td style="padding: 6px 8px;">${htmlEscape(referralId)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Assigned At</td><td style="padding: 6px 8px;">${htmlEscape(assignmentTime)}</td></tr>
+        <tr><td style="padding: 6px 8px; font-weight: 600;">Doctor</td><td style="padding: 6px 8px;">${htmlEscape(safeDoctorName)}</td></tr>
+        <tr><td style="padding: 6px 8px; font-weight: 600;">Patient</td><td style="padding: 6px 8px;">${htmlEscape(patientName)}</td></tr>
+        <tr><td style="padding: 6px 8px; font-weight: 600;">Referral date</td><td style="padding: 6px 8px;">${htmlEscape(referralDate)}</td></tr>
+        <tr><td style="padding: 6px 8px; font-weight: 600;">Referring BHW</td><td style="padding: 6px 8px;">${htmlEscape(bhwName)}</td></tr>
+        <tr><td style="padding: 6px 8px; font-weight: 600;">Barangay</td><td style="padding: 6px 8px;">${htmlEscape(barangay)}</td></tr>
+        <tr><td style="padding: 6px 8px; font-weight: 600;">Reference</td><td style="padding: 6px 8px;">${htmlEscape(referralId)}</td></tr>
       </table>
-      <p style="margin-top: 12px;"><a href="${htmlEscape(portalLink)}">Open the doctor portal</a></p>
+      <p style="margin-top: 12px;"><a href="${htmlEscape(portalLink)}">Open the secure doctor portal</a></p>
+      <p style="font-size: 12px; color: #4B6075;">Clinical diagnosis, history, and AI analysis are available only after secure sign-in.</p>
     </div>
   `;
 
-  try {
-    const mailResult = await mailer.sendMail({
-      from: fromEmail,
-      to: normalizedEmail,
-      subject,
-      text,
-      html,
-    });
-
-    return {
-      sent: true,
-      reason: null,
-      message: `Assignment email sent (messageId: ${mailResult.messageId || 'n/a'}).`,
-    };
-  } catch (error) {
-    console.error('sendDoctorAssignmentEmail failed', {
-      doctorEmail: normalizedEmail,
-      referralId,
-      error: serializeError(error),
-    });
-    return {
-      sent: false,
-      reason: 'send_failed',
-      message: 'Could not send assignment email.',
-    };
-  }
+  const result = await sendSystemEmail({
+    to: normalizedEmail,
+    subject,
+    text,
+    html,
+  });
+  return {
+    sent: result.sent,
+    reason: result.reason,
+    message: result.sent
+      ? 'Assignment email sent from the AI-DSUHIS system mailer.'
+      : 'Assignment persisted, but the system email could not be sent.',
+  };
 }
 
 function doctorRegistrationError(error, fallbackMessage) {
@@ -738,10 +639,22 @@ async function findBarangayOwnerInTransaction(transaction, barangayCode, current
 
 function ensureChoOperator(context, userData) {
   const role = normalizeRole(userData.role || '');
-  if (!context.auth || !['CHO', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'].includes(role)) {
+  if (!context.auth || !isApprovedActiveProfile(userData) ||
+      !['CHO', 'CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'].includes(role)) {
     throw new functions.https.HttpsError(
         'permission-denied',
         'Only CHO operators can use this action.',
+    );
+  }
+}
+
+function ensureChoAdmin(context, userData) {
+  const role = normalizeRole(userData.role || '');
+  if (!context.auth || !isApprovedActiveProfile(userData) ||
+      !['CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'].includes(role)) {
+    throw new functions.https.HttpsError(
+        'permission-denied',
+        'Only the CHO Admin can manage accounts, approvals, or assignments.',
     );
   }
 }
@@ -825,12 +738,13 @@ async function rankDoctorsForReferral(referral) {
         ].includes(normalizedAccountStatus) || [
           'unavailable', 'on_leave', 'leave', 'off_duty',
         ].includes(normalizedAvailability);
-        if (unavailable) return null;
+        if (unavailable || approvalStatus !== 'approved' ||
+            !['active', 'approved'].includes(accountStatus)) return null;
 
         const score = Math.max(0, 100 - workload * 10);
         const reasons = [
           `${workload} active referral${workload === 1 ? '' : 's'} in workload`,
-          approvalStatus === 'approved' ? 'Approved doctor account' : 'Doctor account pending approval',
+          'Approved and active doctor account',
           `Availability: ${availability}`,
         ];
 
@@ -1220,10 +1134,10 @@ exports.createRegistrationAccount = functions.https.onCall(async (data, context)
         'Username must be between 3 and 80 characters.',
     );
   }
-  if (!['CHO', 'BHW'].includes(role)) {
+  if (role !== 'BHW') {
     throw new functions.https.HttpsError(
         'invalid-argument',
-        'Unsupported role value.',
+        'CHO accounts are created by the CHO Admin. Submit a BHW registration request here.',
     );
   }
   if (role === 'BHW' && !barangayCode) {
@@ -1418,10 +1332,10 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
     );
   }
 
-  if (!['CHO', 'BHW'].includes(role)) {
+  if (role !== 'BHW') {
     throw new functions.https.HttpsError(
         'invalid-argument',
-        'Unsupported role value.',
+        'CHO accounts are created by the CHO Admin. Submit a BHW registration request here.',
     );
   }
 
@@ -1713,6 +1627,237 @@ exports.syncAccountGovernanceLocksV2 = onDocumentWritten({
   return null;
 });
 
+async function provisionManagedAccount(data, context) {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        'unauthenticated',
+        'You must be signed in to create a managed account.',
+    );
+  }
+
+  const callerDoc = await db.collection('users').doc(context.auth.uid).get();
+  ensureChoAdmin(context, callerDoc.data() || {});
+
+  const role = normalizeRole(data?.role || '');
+  const fullName = profileText(data?.fullName || data?.displayName, 'Full name', {
+    maxLength: 160,
+    required: true,
+  });
+  const email = String(data?.email || '').trim().toLowerCase();
+  if (!isValidEmail(email)) {
+    throw new functions.https.HttpsError('invalid-argument', 'A valid email address is required.');
+  }
+  if (!['CHO', 'DOCTOR'].includes(role)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Managed accounts can only be CHO or DOCTOR accounts. The main CHO Admin is not self-created.',
+    );
+  }
+
+  const specialization = role === 'DOCTOR'
+    ? doctorSpecializationValue(data || {})
+    : '';
+  const availability = role === 'DOCTOR'
+    ? doctorAvailabilityValue(data || {})
+    : 'available';
+  if (!['available', 'busy', 'limited', 'unavailable'].includes(availability)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Availability must be available, busy, limited, or unavailable.',
+    );
+  }
+  const accountStatus = normalizeText(data?.accountStatus || 'active');
+  if (!['active', 'disabled'].includes(accountStatus)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Account status must be active or disabled.',
+    );
+  }
+
+  let userRecord;
+  let created = false;
+  try {
+    userRecord = await admin.auth().getUserByEmail(email);
+  } catch (error) {
+    if (error.code !== 'auth/user-not-found') throw doctorRegistrationError(error, 'Failed to find the account.');
+    // The random password is only used to satisfy Auth account creation. It
+    // is never returned, logged, or stored; the activation link is the only
+    // onboarding path shown to the new user.
+    userRecord = await admin.auth().createUser({
+      email,
+      password: generateTemporaryPassword(),
+      displayName: fullName,
+      disabled: accountStatus === 'disabled',
+    });
+    created = true;
+  }
+
+  const userRef = db.collection('users').doc(userRecord.uid);
+  const emailLockRef = db.collection('registration_email_locks').doc(normalizeText(email));
+  const usernameLockRef = db.collection('registration_username_locks').doc(normalizeText(fullName));
+  const existingSnap = await userRef.get();
+  const existingData = existingSnap.data() || {};
+  const existingRole = normalizeRole(existingData.role || '');
+  if (existingRole && existingRole !== role) {
+    throw new functions.https.HttpsError(
+        'already-exists',
+        'This email is already linked to a different account role.',
+    );
+  }
+
+  for (const [lockRef, field, message] of [
+    [emailLockRef, 'email', 'This email is already linked to another account.'],
+    [usernameLockRef, 'username', 'This name is already linked to another account.'],
+  ]) {
+    const lockSnap = await lockRef.get();
+    if (lockSnap.exists && String(lockSnap.data()?.uid || '') !== userRecord.uid) {
+      throw new functions.https.HttpsError('already-exists', message);
+    }
+  }
+
+  const payload = {
+    uid: userRecord.uid,
+    username: fullName,
+    usernameLower: normalizeText(fullName),
+    fullName,
+    displayName: fullName,
+    email,
+    emailLower: normalizeText(email),
+    role,
+    accessScope: 'citywide',
+    organizationLevel: 'citywide',
+    approvalStatus: 'approved',
+    accountStatus,
+    status: accountStatus === 'active' ? 'Active' : 'Disabled',
+    isApproved: true,
+    dataVisibilityStartAt: existingData.dataVisibilityStartAt || admin.firestore.FieldValue.serverTimestamp(),
+    ...(role === 'DOCTOR' ? {
+      specialization,
+      doctorSpecialization: specialization,
+      specialty: specialization,
+      availability,
+      doctorAvailability: availability,
+      doctorRegistrySource: 'cho_admin',
+    } : {}),
+    createdByUid: existingData.createdByUid || context.auth.uid,
+    createdAt: existingData.createdAt || admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  try {
+    await db.runTransaction(async (transaction) => {
+      transaction.set(userRef, payload, {merge: true});
+      transaction.set(emailLockRef, {
+        uid: userRecord.uid,
+        email,
+        emailLower: normalizeText(email),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        source: 'cho-admin',
+      }, {merge: true});
+      transaction.set(usernameLockRef, {
+        uid: userRecord.uid,
+        username: fullName,
+        usernameLower: normalizeText(fullName),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        source: 'cho-admin',
+      }, {merge: true});
+    });
+
+    await admin.auth().updateUser(userRecord.uid, {
+      displayName: fullName,
+      disabled: accountStatus === 'disabled',
+    });
+    const freshAuth = await admin.auth().getUser(userRecord.uid);
+    await admin.auth().setCustomUserClaims(userRecord.uid, {
+      ...(freshAuth.customClaims || {}),
+      role: role.toLowerCase(),
+      approvalStatus: 'approved',
+      accountStatus,
+    });
+    await admin.database().ref(`users/${userRecord.uid}`).update({
+      uid: userRecord.uid,
+      username: fullName,
+      fullName,
+      email,
+      role,
+      accessScope: 'citywide',
+      approvalStatus: 'approved',
+      accountStatus,
+      ...(role === 'DOCTOR' ? {
+        specialization,
+        doctorSpecialization: specialization,
+        availability,
+        doctorAvailability: availability,
+      } : {}),
+      updatedAt: admin.database.ServerValue.TIMESTAMP,
+    });
+  } catch (error) {
+    if (created) {
+      try { await admin.auth().deleteUser(userRecord.uid); } catch (_) {}
+    }
+    throw doctorRegistrationError(error, 'Managed account creation failed.');
+  }
+
+  let resetLink = null;
+  try {
+    resetLink = await admin.auth().generatePasswordResetLink(email);
+  } catch (error) {
+    console.error('Managed account activation link generation failed', {
+      uid: userRecord.uid,
+      code: error?.code || 'unknown',
+    });
+  }
+
+  const activationEmail = resetLink
+    ? await sendSystemEmail({
+      to: email,
+      subject: 'Your AI-DSUHIS Account Is Ready',
+      text: [
+        `Hello ${fullName},`,
+        '',
+        `A CHO Admin created your AI-DSUHIS ${role === 'DOCTOR' ? 'doctor' : 'CHO'} account.`,
+        'Use this secure link to set your password and activate access:',
+        resetLink,
+        '',
+        'Never share your password or activation link.',
+      ].join('\n'),
+      html: `<p>Hello ${htmlEscape(fullName)},</p><p>A CHO Admin created your AI-DSUHIS ${role === 'DOCTOR' ? 'doctor' : 'CHO'} account.</p><p><a href="${htmlEscape(resetLink)}">Set your password and activate access</a></p><p>Never share your password or activation link.</p>`,
+    })
+    : {sent: false, reason: 'activation_link_unavailable'};
+
+  await db.collection('audit_logs').add({
+    action: 'managed_account_created',
+    actorUid: context.auth.uid,
+    targetUid: userRecord.uid,
+    role,
+    accountStatus,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return {
+    success: true,
+    created,
+    uid: userRecord.uid,
+    fullName,
+    email,
+    role,
+    specialization,
+    availability,
+    accountStatus,
+    approvalStatus: 'approved',
+    activationEmailSent: activationEmail.sent,
+    activationEmailReason: activationEmail.reason,
+  };
+}
+
+exports.createChoAccount = functions.https.onCall(async (data, context) => {
+  try {
+    return await provisionManagedAccount(data || {}, context);
+  } catch (error) {
+    throw doctorRegistrationError(error, 'Managed account creation failed.');
+  }
+});
+
 exports.registerDoctorAccount = functions.https.onCall(async (data, context) => {
   const fullName = String(data?.fullName || '').trim();
   const email = String(data?.email || '').trim().toLowerCase();
@@ -1738,7 +1883,7 @@ exports.registerDoctorAccount = functions.https.onCall(async (data, context) => 
     }
 
     const callerDoc = await db.collection('users').doc(context.auth.uid).get();
-    ensureChoOperator(context, callerDoc.data() || {});
+    ensureChoAdmin(context, callerDoc.data() || {});
 
     if (!fullName || !email || !specialization) {
       throw new functions.https.HttpsError(
@@ -1892,6 +2037,8 @@ exports.registerDoctorAccount = functions.https.onCall(async (data, context) => 
       await admin.auth().setCustomUserClaims(userRecord.uid, {
         ...existingClaims,
         role: 'DOCTOR',
+        approvalStatus: 'approved',
+        accountStatus: 'active',
       });
     } catch (error) {
       claimsSynced = false;
@@ -1934,6 +2081,23 @@ exports.registerDoctorAccount = functions.https.onCall(async (data, context) => 
       });
     }
 
+    const activationEmail = resetLink
+      ? await sendSystemEmail({
+        to: email,
+        subject: 'Your AI-DSUHIS Account Is Ready',
+        text: [
+          `Hello ${fullName},`,
+          '',
+          'A CHO Admin created your AI-DSUHIS doctor account.',
+          'Use this secure link to set your password and activate access:',
+          resetLink,
+          '',
+          'For your security, the link is time-limited. Never share your password.',
+        ].join('\n'),
+        html: `<p>Hello ${htmlEscape(fullName)},</p><p>A CHO Admin created your AI-DSUHIS doctor account.</p><p><a href="${htmlEscape(resetLink)}">Set your password and activate access</a></p><p>This secure link is time-limited. Never share your password.</p>`,
+      })
+      : {sent: false, reason: 'activation_link_unavailable'};
+
     console.log('registerDoctorAccount completed', {
       email,
       doctorUid: userRecord.uid,
@@ -1950,7 +2114,8 @@ exports.registerDoctorAccount = functions.https.onCall(async (data, context) => 
       specialization,
       availability,
       claimsSynced,
-      resetLink,
+      activationEmailSent: activationEmail.sent,
+      activationEmailReason: activationEmail.reason,
     };
   } catch (error) {
     console.error('registerDoctorAccount failed', {
@@ -1967,6 +2132,232 @@ exports.registerDoctorAccount = functions.https.onCall(async (data, context) => 
   }
 });
 
+exports.reviewBhwRegistration = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'You must be signed in to review registrations.');
+  }
+  const callerDoc = await db.collection('users').doc(context.auth.uid).get();
+  ensureChoAdmin(context, callerDoc.data() || {});
+
+  const uid = String(data?.uid || '').trim();
+  const approved = data?.approved === true;
+  const rejectionReason = String(data?.rejectionReason || '').trim();
+  if (!uid) throw new functions.https.HttpsError('invalid-argument', 'Applicant UID is required.');
+  if (!approved && !rejectionReason) {
+    throw new functions.https.HttpsError('invalid-argument', 'A rejection reason is required.');
+  }
+
+  const userRef = db.collection('users').doc(uid);
+  const requestRef = db.collection('bhw_registration_requests').doc(uid);
+  const userSnap = await userRef.get();
+  if (!userSnap.exists) throw new functions.https.HttpsError('not-found', 'The BHW account was not found.');
+  const userData = userSnap.data() || {};
+  if (normalizeRole(userData.role || '') !== 'BHW') {
+    throw new functions.https.HttpsError('failed-precondition', 'Only BHW registrations can be reviewed here.');
+  }
+
+  const nextApproval = approved ? 'approved' : 'rejected';
+  const nextAccount = approved ? 'active' : 'rejected';
+  const nextStatus = approved ? 'Active' : 'Rejected';
+  const updatePayload = {
+    approvalStatus: nextApproval,
+    accountStatus: nextAccount,
+    status: nextStatus,
+    isApproved: approved,
+    ...(approved ? {
+      approvedBy: context.auth.uid,
+      approvedAt: admin.firestore.FieldValue.serverTimestamp(),
+    } : {
+      reviewedBy: context.auth.uid,
+      reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
+      rejectionReason,
+    }),
+    updatedBy: context.auth.uid,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  const batch = db.batch();
+  batch.set(userRef, updatePayload, {merge: true});
+  batch.set(requestRef, {
+    ...updatePayload,
+    reviewStatus: nextApproval,
+    reviewCompletedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, {merge: true});
+  const barangayCode = normalizeBarangayCode(userData.barangayCode || '');
+  if (barangayCode) {
+    batch.set(barangayUserDocRef(barangayCode, uid), {
+      ...updatePayload,
+      approvalStatus: nextApproval,
+      accountStatus: nextAccount,
+      barangayCode,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
+  }
+  await batch.commit();
+
+  const authUser = await admin.auth().getUser(uid);
+  const claims = {...(authUser.customClaims || {})};
+  if (approved) {
+    claims.role = 'bhw';
+    claims.approvalStatus = 'approved';
+    claims.accountStatus = 'active';
+  } else {
+    delete claims.role;
+    delete claims.approvalStatus;
+    delete claims.accountStatus;
+    if (Array.isArray(claims.roles)) {
+      claims.roles = claims.roles.filter((role) => normalizeRole(role) !== 'BHW');
+      if (!claims.roles.length) delete claims.roles;
+    }
+  }
+  await admin.auth().setCustomUserClaims(uid, claims);
+  await admin.auth().updateUser(uid, {disabled: !approved});
+  await admin.database().ref(`users/${uid}`).update({
+    role: 'BHW',
+    status: nextStatus,
+    approvalStatus: nextApproval,
+    accountStatus: nextAccount,
+    isApproved: approved,
+    ...(approved ? {approvedBy: context.auth.uid} : {
+      reviewedBy: context.auth.uid,
+      rejectionReason,
+    }),
+    updatedAt: admin.database.ServerValue.TIMESTAMP,
+  });
+
+  const applicantEmail = String(userData.email || '').trim().toLowerCase();
+  if (approved && isValidEmail(applicantEmail)) {
+    await sendSystemEmail({
+      to: applicantEmail,
+      subject: 'Your AI-DSUHIS BHW registration was approved',
+      text: 'Your BHW registration was approved by the CHO Admin. You may now sign in to AI-DSUHIS.',
+      html: '<p>Your BHW registration was approved by the CHO Admin.</p><p>You may now sign in to AI-DSUHIS.</p>',
+    });
+  }
+
+  await db.collection('audit_logs').add({
+    action: approved ? 'bhw_registration_approved' : 'bhw_registration_rejected',
+    actorUid: context.auth.uid,
+    targetUid: uid,
+    reason: approved ? null : rejectionReason,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return {success: true, uid, approvalStatus: nextApproval, accountStatus: nextAccount};
+});
+
+exports.updateChoAccount = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'You must be signed in to manage accounts.');
+  const callerDoc = await db.collection('users').doc(context.auth.uid).get();
+  ensureChoAdmin(context, callerDoc.data() || {});
+
+  const uid = String(data?.uid || '').trim();
+  if (!uid) throw new functions.https.HttpsError('invalid-argument', 'Target UID is required.');
+  if (uid === context.auth.uid) {
+    throw new functions.https.HttpsError('failed-precondition', 'The main CHO Admin account cannot be changed from this screen.');
+  }
+  const targetRef = db.collection('users').doc(uid);
+  const targetSnap = await targetRef.get();
+  if (!targetSnap.exists) throw new functions.https.HttpsError('not-found', 'The target account was not found.');
+  const current = targetSnap.data() || {};
+  const currentRole = normalizeRole(current.role || '');
+  if (['CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'].includes(currentRole)) {
+    throw new functions.https.HttpsError('permission-denied', 'Privileged CHO Admin accounts are managed through deployment controls.');
+  }
+
+  const nextRole = data?.role === undefined ? currentRole : normalizeRole(data.role);
+  if (!['BHW', 'CHO', 'DOCTOR'].includes(nextRole)) {
+    throw new functions.https.HttpsError('invalid-argument', 'Role must be BHW, CHO, or DOCTOR.');
+  }
+  const nextAccountStatus = data?.accountStatus === undefined
+    ? normalizeText(current.accountStatus || 'active')
+    : normalizeText(data.accountStatus);
+  if (!['active', 'disabled', 'rejected', 'pending_approval'].includes(nextAccountStatus)) {
+    throw new functions.https.HttpsError('invalid-argument', 'Account status is invalid.');
+  }
+  if (nextRole === 'BHW' && nextAccountStatus === 'active' &&
+      normalizeText(current.approvalStatus || '') !== 'approved') {
+    throw new functions.https.HttpsError('failed-precondition', 'A BHW must be approved before activation.');
+  }
+
+  const barangayCode = data?.barangayCode === null
+    ? ''
+    : normalizeBarangayCode(data?.barangayCode === undefined ? current.barangayCode : data.barangayCode);
+  const barangay = data?.barangay === null
+    ? ''
+    : String(data?.barangay === undefined ? current.barangay || '' : data.barangay).trim();
+  const barangayDistrict = data?.barangayDistrict === null
+    ? ''
+    : String(data?.barangayDistrict === undefined ? current.barangayDistrict || '' : data.barangayDistrict).trim();
+  if (nextRole === 'BHW' && nextAccountStatus === 'active' && !barangayCode) {
+    throw new functions.https.HttpsError('failed-precondition', 'An active BHW must have an assigned barangay.');
+  }
+  const specialization = nextRole === 'DOCTOR'
+    ? doctorSpecializationValue({specialization: data?.specialization || current.specialization})
+    : '';
+  const availability = nextRole === 'DOCTOR'
+    ? doctorAvailabilityValue({availability: data?.availability || current.availability})
+    : 'available';
+
+  const payload = {
+    role: nextRole,
+    accessScope: nextRole === 'BHW' ? 'barangay' : 'citywide',
+    organizationLevel: nextRole === 'BHW' ? 'barangay' : 'citywide',
+    accountStatus: nextAccountStatus,
+    status: nextAccountStatus === 'active' ? 'Active' : nextAccountStatus,
+    isApproved: normalizeText(current.approvalStatus || '') === 'approved',
+    barangay: nextRole === 'BHW' ? barangay : admin.firestore.FieldValue.delete(),
+    barangayCode: nextRole === 'BHW' ? barangayCode : admin.firestore.FieldValue.delete(),
+    barangayDistrict: nextRole === 'BHW' ? barangayDistrict : admin.firestore.FieldValue.delete(),
+    barangayVerified: nextRole === 'BHW' && !!barangayCode,
+    ...(nextRole === 'DOCTOR' ? {
+      specialization,
+      doctorSpecialization: specialization,
+      specialty: specialization,
+      availability,
+      doctorAvailability: availability,
+    } : {}),
+    updatedBy: context.auth.uid,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+  await targetRef.set(payload, {merge: true});
+
+  const targetAuth = await admin.auth().getUser(uid);
+  const claims = {...(targetAuth.customClaims || {})};
+  if (nextAccountStatus === 'active' && ['approved', 'active'].includes(normalizeText(current.approvalStatus || ''))) {
+    claims.role = nextRole.toLowerCase();
+    claims.approvalStatus = 'approved';
+    claims.accountStatus = 'active';
+  } else {
+    delete claims.role;
+    delete claims.approvalStatus;
+    delete claims.accountStatus;
+  }
+  await admin.auth().setCustomUserClaims(uid, claims);
+  await admin.auth().updateUser(uid, {disabled: nextAccountStatus !== 'active'});
+  await admin.database().ref(`users/${uid}`).update({
+    role: nextRole,
+    accessScope: nextRole === 'BHW' ? 'barangay' : 'citywide',
+    accountStatus: nextAccountStatus,
+    approvalStatus: current.approvalStatus || 'approved',
+    ...(nextRole === 'BHW' ? {barangay, barangayCode, barangayDistrict} : {
+      barangay: null,
+      barangayCode: null,
+      barangayDistrict: null,
+    }),
+    ...(nextRole === 'DOCTOR' ? {specialization, availability} : {}),
+    updatedAt: admin.database.ServerValue.TIMESTAMP,
+  });
+  await db.collection('audit_logs').add({
+    action: 'managed_account_updated',
+    actorUid: context.auth.uid,
+    targetUid: uid,
+    role: nextRole,
+    accountStatus: nextAccountStatus,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return {success: true, uid, role: nextRole, accountStatus: nextAccountStatus};
+});
+
 exports.assignDoctorToReferral = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -1976,7 +2367,7 @@ exports.assignDoctorToReferral = functions.https.onCall(async (data, context) =>
   }
 
   const referralId = String(data?.referralId || '').trim();
-  const preferredDoctorUid = String(data?.preferredDoctorUid || '').trim();
+  let preferredDoctorUid = String(data?.preferredDoctorUid || '').trim();
   if (!referralId) {
     throw new functions.https.HttpsError(
         'invalid-argument',
@@ -1995,14 +2386,30 @@ exports.assignDoctorToReferral = functions.https.onCall(async (data, context) =>
 
   const callerData = callerDoc.data() || {};
   const callerRole = normalizeRole(callerData.role || '');
-  const isChoOperator = ['CHO', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'].includes(callerRole);
+  const callerIsApprovedActive = isApprovedActiveProfile(callerData);
+  const isBhwCaller = callerRole === 'BHW' && callerIsApprovedActive;
+  const isChoOperator = ['CHO', 'CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'].includes(callerRole) &&
+    callerIsApprovedActive;
+  const isChoAdmin = ['CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'].includes(callerRole) &&
+    callerIsApprovedActive;
+  // BHW submissions may include a UI preference, but only the CHO Admin may
+  // override the deterministic workload-based assignment rule.
+  if (!isChoAdmin) preferredDoctorUid = '';
   const referral = referralDoc.data() || {};
   const createdByUid = String(referral.createdByUid || '').trim();
 
-  if (!isChoOperator && createdByUid !== context.auth.uid) {
+  if (!isChoOperator && (!isBhwCaller || createdByUid !== context.auth.uid)) {
     throw new functions.https.HttpsError(
         'permission-denied',
         'Only the referring BHW or a CHO operator can assign this referral.',
+    );
+  }
+
+  if (referral.assignedDoctorUid && !isChoAdmin &&
+      String(referral.assignedDoctorUid) !== preferredDoctorUid) {
+    throw new functions.https.HttpsError(
+        'permission-denied',
+        'Only the CHO Admin can reassign an existing referral.',
     );
   }
 
@@ -2055,22 +2462,63 @@ exports.assignDoctorToReferral = functions.https.onCall(async (data, context) =>
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
 
-  await referralDoc.ref.set(updatePayload, { merge: true });
-  await syncReferralMirror(referralId, {
+  let shouldNotify = false;
+  let alreadyHandled = false;
+  await db.runTransaction(async (transaction) => {
+    const latestSnap = await transaction.get(referralDoc.ref);
+    const latest = latestSnap.data() || {};
+    const sameAssignment = String(latest.assignmentEventId || '') === assignmentEventId &&
+      String(latest.assignedDoctorUid || '') === assignedDoctor.doctorUid;
+    if (sameAssignment && latest.assignmentNotificationSentFor === assignmentEventId) {
+      alreadyHandled = true;
+      return;
+    }
+    if (sameAssignment && latest.assignmentNotificationClaimedFor === assignmentEventId) {
+      alreadyHandled = true;
+      return;
+    }
+
+    const payload = sameAssignment
+      ? {
+          assignmentNotificationClaimedFor: assignmentEventId,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }
+      : {
+          ...updatePayload,
+          assignmentNotificationClaimedFor: assignmentEventId,
+        };
+    transaction.set(referralDoc.ref, payload, {merge: true});
+    shouldNotify = true;
+  });
+
+  if (alreadyHandled) {
+    return {
+      success: true,
+      recommendation: assignedDoctor,
+      rankedDoctors: rankedDoctors.slice(0, 5),
+      assignmentMode,
+      assignmentSource,
+      assignmentEmailSent: true,
+      assignmentEmailReason: 'already_handled',
+      assignmentEmailMessage: 'This referral assignment was already persisted and notified.',
+    };
+  }
+
+  const persistedReferral = {
     ...referral,
     ...updatePayload,
     barangayCode: referral.barangayCode || '',
-  });
+  };
+  await syncReferralMirror(referralId, persistedReferral);
 
-  const assignmentEmail = await sendDoctorAssignmentEmail({
+  const assignmentEmail = shouldNotify ? await sendDoctorAssignmentEmail({
     doctorEmail: assignedDoctor.doctorEmail,
     doctorName: assignedDoctor.doctorName,
     referralId,
     referral: {
-      ...referral,
-      ...updatePayload,
+      ...persistedReferral,
     },
-  });
+  }) : {sent: false, reason: 'already_handled', message: 'Already handled.'};
   if (assignmentEmail.sent) {
     await referralDoc.ref.update({
       assignmentNotificationSentFor: assignmentEventId,
@@ -2111,7 +2559,7 @@ exports.sendDoctorReferralAssignmentEmail = functions.https.onCall(async (data, 
     db.collection('referrals').doc(referralId).get(),
   ]);
 
-  ensureChoOperator(context, callerDoc.data() || {});
+  ensureChoAdmin(context, callerDoc.data() || {});
 
   if (!referralDoc.exists) {
     throw new functions.https.HttpsError(
@@ -2121,9 +2569,24 @@ exports.sendDoctorReferralAssignmentEmail = functions.https.onCall(async (data, 
   }
 
   const referral = referralDoc.data() || {};
+  const assignedDoctorUid = String(referral.assignedDoctorUid || '').trim();
+  if (!assignedDoctorUid) {
+    throw new functions.https.HttpsError(
+        'failed-precondition',
+        'Only referrals with a persisted doctor assignment can be notified.',
+    );
+  }
+  const assignedDoctorDoc = await db.collection('users').doc(assignedDoctorUid).get();
+  const assignedDoctorData = assignedDoctorDoc.data() || {};
+  if (!assignedDoctorDoc.exists || normalizeRole(assignedDoctorData.role || '') !== 'DOCTOR') {
+    throw new functions.https.HttpsError(
+        'failed-precondition',
+        'The persisted referral assignment does not point to a doctor account.',
+    );
+  }
   const assignmentEventId = String(
       referral.assignmentEventId ||
-      `legacy:${referralId}:${referral.assignedDoctorUid || 'unassigned'}`,
+      `legacy:${referralId}:${assignedDoctorUid}`,
   );
   if (referral.assignmentNotificationSentFor === assignmentEventId) {
     return {
@@ -2133,15 +2596,8 @@ exports.sendDoctorReferralAssignmentEmail = functions.https.onCall(async (data, 
       message: 'The assignment notification was already sent for this assignment.',
     };
   }
-  const doctorEmail = normalizeText(
-      data?.doctorEmail || referral.assignedDoctorEmail || '',
-  );
-  const doctorName = String(
-      data?.doctorName ||
-      referral.assignedDoctorName ||
-      referral.referredTo ||
-      'Doctor',
-  ).trim() || 'Doctor';
+  const doctorEmail = normalizeText(assignedDoctorData.email || '');
+  const doctorName = doctorDisplayName(assignedDoctorData);
 
   const assignmentEmail = await sendDoctorAssignmentEmail({
     doctorEmail,

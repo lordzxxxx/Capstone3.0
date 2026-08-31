@@ -249,10 +249,10 @@ class _SignupState extends State<Signup> {
       return;
     }
 
-    if (_selectedRole != 'CHO' && _selectedRole != 'BHW') {
+    if (_selectedRole != 'BHW') {
       Get.snackbar(
         'Error',
-        'Please select account type (CHO or BHW)',
+        'Only BHW registration requests are available here.',
         backgroundColor: const Color(0xFFD32F2F),
         colorText: Colors.white,
       );

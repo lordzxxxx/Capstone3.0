@@ -19,12 +19,19 @@ class UserAccessScope {
 
   bool get canViewAllBarangays {
     return role == 'cho' ||
+        role == 'cho_admin' ||
         role == 'cho_super_admin' ||
         role == 'super_admin' ||
         role == 'admin';
   }
 
   bool get isBhw => role == 'bhw';
+
+  bool get isChoAdmin =>
+      role == 'cho_admin' ||
+      role == 'cho_super_admin' ||
+      role == 'super_admin' ||
+      role == 'admin';
 
   bool get hasVisibilityBoundary => dataVisibleFrom != null;
 

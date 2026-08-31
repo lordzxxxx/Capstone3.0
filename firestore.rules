@@ -77,15 +77,11 @@ service cloud.firestore {
     }
 
     function userRole() {
-      return tokenRole() != ''
-        ? tokenRole()
-        : (
-          hasApprovedActiveProfile() &&
-          ('role' in currentUser()) &&
-          currentUser().role != ''
-            ? currentUser().role
-            : ''
-        );
+      return hasApprovedActiveProfile() &&
+        ('role' in currentUser()) &&
+        currentUser().role != ''
+          ? currentUser().role
+          : '';
     }
 
     function userBarangay() {
@@ -118,7 +114,7 @@ service cloud.firestore {
     }
 
     function isAllowedSignupRole(role) {
-      return roleEqualsAny(role, ['CHO', 'BHW']);
+      return roleEqualsAny(role, ['BHW']);
     }
 
     function hasValidRegistrationIntent(userId, data) {
@@ -140,12 +136,9 @@ service cloud.firestore {
         intent.data.usernameLower == data.usernameLower &&
         intent.data.role == data.role &&
         intent.data.expiresAt > request.time &&
-        (
-          (data.role == 'BHW' &&
-            ('barangayCode' in data) &&
-            intent.data.barangayCode.lower() == data.barangayCode.lower()) ||
-          (data.role == 'CHO' && intent.data.barangayCode == '')
-        );
+        (data.role == 'BHW' &&
+          ('barangayCode' in data) &&
+          intent.data.barangayCode.lower() == data.barangayCode.lower());
     }
 
     function canCreateOwnUserProfile(userId, data) {
@@ -154,17 +147,10 @@ service cloud.firestore {
         data.uid == request.auth.uid &&
         isAllowedSignupRole(data.role) &&
         (
-          (
-            data.role == 'BHW' &&
-            data.approvalStatus == 'pending' &&
-            data.accountStatus == 'pending_approval' &&
-            data.isApproved == false
-          ) ||
-          (
-            data.role == 'CHO' &&
-            data.approvalStatus == 'approved' &&
-            data.accountStatus == 'active'
-          )
+          data.role == 'BHW' &&
+          data.approvalStatus == 'pending' &&
+          data.accountStatus == 'pending_approval' &&
+          data.isApproved == false
         ) &&
         data.email == authEmail() &&
         hasValidRegistrationIntent(userId, data);
@@ -198,6 +184,8 @@ service cloud.firestore {
       let choRoles = [
         'CHO',
         'cho',
+        'CHO_ADMIN',
+        'cho_admin',
         'CHO_SUPER_ADMIN',
         'cho_super_admin',
         'SUPER_ADMIN',
@@ -205,33 +193,31 @@ service cloud.firestore {
         'ADMIN',
         'admin'
       ];
-      return isSignedIn() && (
-        roleEqualsAny(tokenRole(), choRoles) ||
-        tokenRolesHasAny(choRoles) ||
-        (
-          hasApprovedActiveProfile() &&
-          ('role' in currentUser()) &&
-          roleEqualsAny(currentUser().role, choRoles)
-        )
-      );
+      return isSignedIn() && hasApprovedActiveProfile() &&
+        ('role' in currentUser()) && roleEqualsAny(currentUser().role, choRoles);
+    }
+
+    function isChoAdmin() {
+      let adminRoles = [
+        'CHO_ADMIN', 'cho_admin',
+        'CHO_SUPER_ADMIN', 'cho_super_admin',
+        'SUPER_ADMIN', 'super_admin',
+        'ADMIN', 'admin'
+      ];
+      return isSignedIn() && hasApprovedActiveProfile() &&
+        ('role' in currentUser()) && roleEqualsAny(currentUser().role, adminRoles);
     }
 
     function isBhwRole() {
       let bhwRoles = ['BHW', 'bhw'];
-      return isSignedIn() && (
-        roleEqualsAny(userRole(), bhwRoles) ||
-        roleEqualsAny(tokenRole(), bhwRoles) ||
-        tokenRolesHasAny(bhwRoles)
-      );
+      return isSignedIn() && hasApprovedActiveProfile() &&
+        roleEqualsAny(userRole(), bhwRoles);
     }
 
     function isDoctorRole() {
       let doctorRoles = ['DOCTOR', 'doctor'];
-      return isSignedIn() && (
-        roleEqualsAny(userRole(), doctorRoles) ||
-        roleEqualsAny(tokenRole(), doctorRoles) ||
-        tokenRolesHasAny(doctorRoles)
-      );
+      return isSignedIn() && hasApprovedActiveProfile() &&
+        roleEqualsAny(userRole(), doctorRoles);
     }
 
     function sameBarangay(data) {
@@ -363,7 +349,11 @@ service cloud.firestore {
 
     function canCreateReferral(data) {
       return isChoRole() ||
-        (isBhwRole() && data.createdByUid == request.auth.uid && sameBarangay(data));
+        (isBhwRole() && data.createdByUid == request.auth.uid && sameBarangay(data) &&
+          !('assignedDoctorUid' in data) &&
+          !('assignedDoctorName' in data) &&
+          !('assignmentEventId' in data) &&
+          !('assignmentNotificationSentFor' in data));
     }
 
     function isAllowedDoctorReferralTransition(currentStatus, nextStatus) {
@@ -433,10 +423,17 @@ service cloud.firestore {
           newData.completedByDoctorUid == request.auth.uid
         )
       );
+      let choReview = changed.hasOnly([
+        'status', 'submissionStatus', 'priority', 'choReviewNotes',
+        'reviewedByUid', 'reviewedByEmail', 'reviewedAt', 'updatedAt',
+        'assignedHospital', 'receivingHospital',
+        'expectedConsultationDate', 'approvedAt', 'statusHistory'
+      ]);
       return role in [
-          'CHO', 'cho', 'CHO_SUPER_ADMIN', 'cho_super_admin',
+          'CHO_ADMIN', 'cho_admin', 'CHO_SUPER_ADMIN', 'cho_super_admin',
           'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
         ] ||
+        (role in ['CHO', 'cho'] && choReview) ||
         (role in ['DOCTOR', 'doctor'] &&
           existingData.assignedDoctorUid == request.auth.uid &&
           newData.assignedDoctorUid == request.auth.uid &&
@@ -448,6 +445,8 @@ service cloud.firestore {
 
     function isSuperAdmin() {
       let superRoles = [
+        'CHO_ADMIN',
+        'cho_admin',
         'CHO_SUPER_ADMIN',
         'cho_super_admin',
         'SUPER_ADMIN',
@@ -455,91 +454,59 @@ service cloud.firestore {
         'ADMIN',
         'admin'
       ];
-      return isSignedIn() &&
-        (
-          roleEqualsAny(userRole(), superRoles) ||
-          roleEqualsAny(tokenRole(), superRoles) ||
-          tokenRolesHasAny(superRoles)
-        );
+      return isSignedIn() && hasApprovedActiveProfile() &&
+        ('role' in currentUser()) && roleEqualsAny(currentUser().role, superRoles);
     }
     
     // User profile/role docs - Allow authenticated users to create and update their own profile
     // This is used during signup and user profile management
     match /users/{userId} {
-      allow get: if canReadOwnUserDoc(userId, resource.data) || isChoRole() || isSuperAdmin();
-      allow list: if isSignedIn() && (
-        (
-          ('role' in request.auth.token) &&
-          request.auth.token.role in [
-            'CHO', 'cho', 'CHO_SUPER_ADMIN', 'cho_super_admin',
-            'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
-          ]
-        ) ||
-        tokenRolesHasAny([
-          'CHO', 'cho', 'CHO_SUPER_ADMIN', 'cho_super_admin',
-          'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
-        ]) ||
-        isChoRole() ||
-        isSuperAdmin()
-      );
-      allow create: if canCreateOwnUserProfile(userId, request.resource.data) || isSuperAdmin();
+      allow get: if canReadOwnUserDoc(userId, resource.data) || isChoRole();
+      allow list: if isChoRole();
+      allow create: if canCreateOwnUserProfile(userId, request.resource.data) || isChoAdmin();
       allow update: if (
         isSignedIn() &&
         request.auth.uid == userId &&
         preservesProtectedUserFields(resource.data, request.resource.data)
-      ) || isChoRole() || isSuperAdmin();
-      allow delete: if isSuperAdmin();
+      ) || isChoAdmin();
+      allow delete: if isChoAdmin();
     }
 
     // Dedicated CHO review queue. A BHW creates exactly one pending request
     // using their own UID during the same transaction as account registration.
     match /bhw_registration_requests/{userId} {
-      allow get: if canReadOwnUserDoc(userId, resource.data) || isChoRole() || isSuperAdmin();
-      allow list: if isSignedIn() && (
-        (
-          ('role' in request.auth.token) &&
-          request.auth.token.role in [
-            'CHO', 'cho', 'CHO_SUPER_ADMIN', 'cho_super_admin',
-            'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
-          ]
-        ) ||
-        tokenRolesHasAny([
-          'CHO', 'cho', 'CHO_SUPER_ADMIN', 'cho_super_admin',
-          'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
-        ]) ||
-        isChoRole() ||
-        isSuperAdmin()
-      );
+      allow get: if canReadOwnUserDoc(userId, resource.data) || isChoAdmin();
+      allow list: if isChoAdmin();
       allow create: if canCreateOwnUserProfile(userId, request.resource.data) &&
         request.resource.data.requestId == userId &&
         request.resource.data.applicantUid == request.auth.uid &&
         request.resource.data.requestType == 'BHW_ACCOUNT_REGISTRATION' &&
         request.resource.data.submissionStatus == 'submitted';
-      allow update: if isChoRole() || isSuperAdmin();
-      allow delete: if isSuperAdmin();
+      allow update: if isChoAdmin();
+      allow delete: if isChoAdmin();
     }
 
     // CHO-managed doctor registry for referral assignment workflows
     match /doctor_registry/{doctorId} {
       allow read: if isChoRole() || isSuperAdmin();
-      allow create, update, delete: if isChoRole() || isSuperAdmin();
+      allow create, update, delete: if isChoAdmin();
     }
 
     match /barangays/{barangayCode}/users/{userId} {
-      allow read: if canReadOwnUserDoc(userId, resource.data) || isChoRole() || isSuperAdmin();
+      allow read: if canReadOwnUserDoc(userId, resource.data) || isChoRole();
       allow create: if isSignedIn() &&
-        (canCreateOwnUserProfile(userId, request.resource.data) || isSuperAdmin()) &&
+        (canCreateOwnUserProfile(userId, request.resource.data) || isChoAdmin()) &&
         request.resource.data.barangayCode == barangayCode;
       allow update: if isSignedIn() &&
         (
           (
             request.auth.uid == userId &&
             preservesProtectedUserFields(resource.data, request.resource.data)
-          ) || isChoRole() || isSuperAdmin()
+          ) || isChoAdmin()
         ) &&
         resource.data.barangayCode == barangayCode &&
         request.resource.data.barangayCode == barangayCode;
-      allow delete: if isSuperAdmin();
+      allow delete: if isChoAdmin();
     }
 
     match /barangays/{barangayCode} {
@@ -636,17 +603,7 @@ service cloud.firestore {
     }
 
     match /invitations/{invitationId} {
-      allow read: if isSuperAdmin() ||
-        (isChoRole() && resource.data.createdBy == request.auth.uid);
-      allow create: if isSuperAdmin() ||
-        (
-          isChoRole() &&
-          request.resource.data.createdBy == request.auth.uid &&
-          request.resource.data.role in ['DOCTOR', 'doctor']
-        );
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin() ||
-        (isChoRole() && resource.data.createdBy == request.auth.uid);
+      allow read, create, update, delete: if isChoAdmin();
     }
 
     match /barangay_branding/{barangayCode} {

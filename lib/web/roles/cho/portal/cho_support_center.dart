@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
-import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
@@ -13,6 +12,7 @@ import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 import 'package:mycapstone_project/web/shared/services/firestore_rest_reader.dart';
+import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 
 enum ChoSupportSection {
   bhwManagement,
@@ -35,6 +35,8 @@ class ChoSupportCenter extends StatefulWidget {
 class _ChoSupportCenterState extends State<ChoSupportCenter> {
   final FirebaseFirestore _firestore = getFirestoreInstance();
   final FirestoreRestReader _restReader = const FirestoreRestReader();
+  final AccountPolicyService _accountPolicyService =
+      AccountPolicyService.instance;
   final TextEditingController _search = TextEditingController();
   Timer? _debounce;
   String _query = '';
@@ -56,7 +58,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
           .loadCurrentScope(forceRefresh: true)
           .timeout(const Duration(seconds: 12));
       final allowed = const {
-        'cho',
+        'cho_admin',
         'cho_super_admin',
         'super_admin',
         'admin',
@@ -795,45 +797,11 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
       return;
     }
     try {
-      final data = doc.data();
-      final barangayCode = BarangayFirestorePaths.normalizeBarangayCode(
-        (data['barangayCode'] ?? '').toString(),
+      await _accountPolicyService.reviewBhwRegistration(
+        uid: doc.id,
+        approved: approved,
+        rejectionReason: approved ? null : reason.text.trim(),
       );
-      final updates = <String, dynamic>{
-        'status': approved ? 'Active' : 'Rejected',
-        'accountStatus': approved ? 'active' : 'rejected',
-        'approvalStatus': approved ? 'approved' : 'rejected',
-        'isApproved': approved,
-        'updatedAt': FieldValue.serverTimestamp(),
-        approved ? 'approvedBy' : 'reviewedBy':
-            FirebaseAuth.instance.currentUser?.uid,
-        approved ? 'approvedAt' : 'reviewedAt': FieldValue.serverTimestamp(),
-        if (!approved) 'rejectionReason': reason.text.trim(),
-        if (barangayCode.isNotEmpty) 'barangayCode': barangayCode,
-      };
-      final rootReference = _firestore.collection('users').doc(doc.id);
-      final batch = _firestore.batch()..update(rootReference, updates);
-      batch.set(
-        _firestore.collection('bhw_registration_requests').doc(doc.id),
-        {
-          ...updates,
-          'reviewStatus': approved ? 'approved' : 'rejected',
-          'reviewedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
-      if (barangayCode.isNotEmpty) {
-        batch.set(
-          _firestore
-              .collection('barangays')
-              .doc(barangayCode)
-              .collection('users')
-              .doc(doc.id),
-          {...data, ...updates, 'barangayCode': barangayCode},
-          SetOptions(merge: true),
-        );
-      }
-      await batch.commit();
       _refreshBhwAccounts();
     } catch (error) {
       if (mounted) {

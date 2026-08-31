@@ -793,7 +793,11 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                               ImmunizationInsights(
                                 records: _immunizationRecords,
                               )
-                          else ...[_buildImmunizationTable()],
+                          else ...[
+                            _buildVaccineMasterTable(),
+                            const SizedBox(height: 18),
+                            _buildImmunizationTable(),
+                          ],
                           const SizedBox(
                             height: 80,
                           ), // Space for bottom selection action card
@@ -811,6 +815,78 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
   }
 
   // Search Bar Widget
+  Widget _buildVaccineMasterTable() {
+    final vaccines = kImmunizationVaccineMaster
+        .where((vaccine) => vaccine.active)
+        .toList();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: _historySurface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _historyBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.vaccines_outlined, color: _primaryAqua),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Vaccine List / Master Table',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: _darkDeepTeal,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Chip(
+                label: Text('${vaccines.length} active'),
+                visualDensity: VisualDensity.compact,
+                backgroundColor: _primaryAqua.withValues(alpha: 0.10),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Authoritative vaccine reference used by immunization entry and patient records. Select the vaccine name exactly as listed.',
+            style: TextStyle(color: _mutedCoolGray, height: 1.4),
+          ),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowColor: WidgetStatePropertyAll(
+                _primaryAqua.withValues(alpha: 0.08),
+              ),
+              columns: const [
+                DataColumn(label: Text('Vaccine')),
+                DataColumn(label: Text('Code')),
+                DataColumn(label: Text('Dose reference')),
+                DataColumn(label: Text('Status')),
+              ],
+              rows: vaccines
+                  .map(
+                    (vaccine) => DataRow(
+                      cells: [
+                        DataCell(Text(vaccine.name)),
+                        DataCell(Text(vaccine.code)),
+                        DataCell(Text(vaccine.doseSequence)),
+                        const DataCell(Text('Active')),
+                      ],
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSearchBar() {
     final showAddButton =
         !(_isDeleteDialogShowing ||

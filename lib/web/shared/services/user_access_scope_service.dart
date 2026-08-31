@@ -48,6 +48,19 @@ class UserAccessScopeService {
     return (data['role'] ?? '').toString().trim().isNotEmpty;
   }
 
+  bool _hasApprovedActiveProfile(Map<String, dynamic> data) {
+    final approval = (data['approvalStatus'] ?? '')
+        .toString()
+        .trim()
+        .toLowerCase();
+    final status = (data['accountStatus'] ?? data['status'] ?? '')
+        .toString()
+        .trim()
+        .toLowerCase();
+    return approval == 'approved' &&
+        (status == 'active' || status == 'approved');
+  }
+
   String _normalizedRoleValue(Object? value) =>
       value == null ? '' : value.toString().trim().toLowerCase();
 
@@ -60,7 +73,7 @@ class UserAccessScopeService {
   }
 
   bool _hasResolvedScope(Map<String, dynamic> data) {
-    if (!_hasResolvedRole(data)) {
+    if (!_hasResolvedRole(data) || !_hasApprovedActiveProfile(data)) {
       return false;
     }
 
@@ -269,6 +282,8 @@ class UserAccessScopeService {
         'organizationLevel': _normalizedRoleValue(role) == 'bhw'
             ? 'barangay'
             : 'citywide',
+        'approvalStatus': data['approvalStatus'],
+        'accountStatus': data['accountStatus'],
         'barangay': (data['barangay'] ?? '').toString().trim(),
         'barangayCode': (data['barangayCode'] ?? '').toString().trim(),
         'barangayDistrict': (data['barangayDistrict'] ?? '').toString().trim(),
@@ -282,13 +297,22 @@ class UserAccessScopeService {
     try {
       final token = await user.getIdTokenResult(true);
       final claims = token.claims ?? const <String, dynamic>{};
+      if ((claims['approvalStatus'] ?? '').toString().trim().toLowerCase() !=
+              'approved' ||
+          !['active', 'approved'].contains(
+            (claims['accountStatus'] ?? '').toString().trim().toLowerCase(),
+          )) {
+        return null;
+      }
       String role = (claims['role'] ?? '').toString().trim();
       if (role.isEmpty && claims['roles'] is List) {
         final roles = (claims['roles'] as List)
             .map((value) => value.toString().trim().toLowerCase())
             .where((value) => value.isNotEmpty)
             .toList(growable: false);
-        if (roles.contains('cho_super_admin')) {
+        if (roles.contains('cho_admin')) {
+          role = 'CHO_ADMIN';
+        } else if (roles.contains('cho_super_admin')) {
           role = 'CHO_SUPER_ADMIN';
         } else if (roles.contains('super_admin')) {
           role = 'SUPER_ADMIN';
@@ -317,6 +341,8 @@ class UserAccessScopeService {
         'organizationLevel': _normalizedRoleValue(role) == 'bhw'
             ? 'barangay'
             : 'citywide',
+        'approvalStatus': claims['approvalStatus'],
+        'accountStatus': claims['accountStatus'],
       };
     } catch (_) {
       return null;

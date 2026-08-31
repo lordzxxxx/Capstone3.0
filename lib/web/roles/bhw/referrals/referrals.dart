@@ -119,7 +119,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
 
   bool get _isDoctor => _scope.role == 'doctor';
   bool get _isBhw => _scope.role == 'bhw';
-  bool get _isChoOperator => _scope.canViewAllBarangays;
+  bool get _isChoOperator => _scope.isChoAdmin;
 
   DocumentReference<Map<String, dynamic>>? _barangayReferralMirrorReference({
     required String barangayCode,
@@ -730,7 +730,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
         try {
           assignmentResult = await _accountPolicyService.assignDoctorToReferral(
             referralId: referralRef.id,
-            preferredDoctorUid: _selectedPreferredDoctorUid,
+            preferredDoctorUid: _isBhw ? null : _selectedPreferredDoctorUid,
           );
         } catch (error) {
           assignmentError = error;
@@ -1965,14 +1965,29 @@ class _ReferralsPageState extends State<ReferralsPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Choose a doctor directly when needed, or leave it open for automatic assignment to the eligible doctor with the lowest active referral workload.',
+            _isBhw
+                ? 'The system assigns each BHW referral to an approved, active, available doctor using the lowest active referral workload. CHO Admin can reassign later.'
+                : 'Choose a doctor directly when needed, or leave it open for automatic assignment to the eligible doctor with the lowest active referral workload.',
             style: TextStyle(
               color: _lightOffWhite.withValues(alpha: 0.76),
               height: 1.45,
             ),
           ),
           const SizedBox(height: 16),
-          if (availableDoctors.isEmpty)
+          if (_isBhw)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _panelSurface,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Text(
+                'Automatic assignment is enabled for BHW referrals. Doctor selection is controlled by the CHO Admin workflow.',
+                style: TextStyle(color: _lightOffWhite),
+              ),
+            )
+          else if (availableDoctors.isEmpty)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(14),

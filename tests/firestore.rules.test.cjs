@@ -60,7 +60,7 @@ function registrationIntent(uid, email, username, role = 'BHW') {
 }
 
 describe('user profile privilege boundaries', () => {
-  it('allows pending BHW and active CHO signup but rejects active BHW and admin roles', async () => {
+  it('allows pending BHW signup but rejects CHO self-registration and active BHW self-activation', async () => {
     const db = testEnv
       .authenticatedContext('bhw-1', {email: 'bhw@example.test'})
       .firestore();
@@ -103,7 +103,7 @@ describe('user profile privilege boundaries', () => {
       'registration_intents/cho-1',
       registrationIntent('cho-1', 'cho@example.test', 'cho-user', 'CHO'),
     );
-    await assertSucceeds(
+    await assertFails(
       choDb.doc('users/cho-1').set(
         activeProfile('cho-1', 'cho@example.test', {
           username: 'cho-user',
@@ -159,7 +159,7 @@ describe('user profile privilege boundaries', () => {
     );
   });
 
-  it('blocks BHW self-approval and allows an active CHO to approve', async () => {
+  it('blocks BHW self-approval and allows the CHO Admin to approve', async () => {
     await seed(
       'users/bhw-1',
       activeProfile('bhw-1', 'bhw@example.test', {
@@ -186,7 +186,7 @@ describe('user profile privilege boundaries', () => {
     await seed(
       'users/cho-1',
       activeProfile('cho-1', 'cho@example.test', {
-        role: 'CHO',
+        role: 'CHO_ADMIN',
         accessScope: 'citywide',
         barangay: '',
         barangayCode: '',
@@ -795,16 +795,8 @@ describe('privilege escalation is denied', () => {
       await assertFails(ref.update({accessScope: 'citywide'}));
     });
 
-  // Note: a brand-new user self-registering with role: 'CHO' and an
-  // already-active/approved status is NOT escalation -- it is this
-  // system's intended, existing CHO signup path (see
-  // canCreateOwnUserProfile, and the first test in this file, "allows
-  // pending BHW and active CHO signup", which already covers it). The
-  // isAllowedSignupRole() allowlist is exactly ['CHO', 'BHW']; DOCTOR and
-  // SUPER_ADMIN have no self-service signup path at all, so that is the
-  // genuinely elevated-role case worth checking here.
   it('does not let an unapproved user self-register as an already-active '
-    + 'DOCTOR (no self-service signup path exists for that role at all)',
+    + 'DOCTOR or any privileged role (admin creates managed accounts)',
     async () => {
       const db = testEnv
         .authenticatedContext('attacker', {email: 'attacker@example.test'})

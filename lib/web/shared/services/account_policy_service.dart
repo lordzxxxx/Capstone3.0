@@ -1,9 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
-import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
 class RegistrationValidationResult {
   final bool emailExists;
@@ -195,6 +192,38 @@ class DoctorRegistrationResult {
   }
 }
 
+class ManagedAccountResult {
+  final bool success;
+  final String uid;
+  final String role;
+  final String email;
+  final String fullName;
+  final bool activationEmailSent;
+  final String activationEmailReason;
+
+  const ManagedAccountResult({
+    required this.success,
+    required this.uid,
+    required this.role,
+    required this.email,
+    required this.fullName,
+    required this.activationEmailSent,
+    required this.activationEmailReason,
+  });
+
+  factory ManagedAccountResult.fromMap(Map<Object?, Object?> map) {
+    return ManagedAccountResult(
+      success: map['success'] == true,
+      uid: (map['uid'] ?? '').toString(),
+      role: (map['role'] ?? '').toString(),
+      email: (map['email'] ?? '').toString(),
+      fullName: (map['fullName'] ?? '').toString(),
+      activationEmailSent: map['activationEmailSent'] == true,
+      activationEmailReason: (map['activationEmailReason'] ?? '').toString(),
+    );
+  }
+}
+
 class DoctorAssignmentExecutionResult {
   final bool success;
   final String assignmentMode;
@@ -273,137 +302,8 @@ class AccountPolicyService {
     app: Firebase.app(),
     region: _functionsRegion,
   );
-  FirebaseFirestore get _firestore => getFirestoreInstance();
-
   String _normalizeBarangayCode(String? value) =>
       (value ?? '').trim().toUpperCase();
-
-  bool _shouldFallbackDoctorRegistration(FirebaseFunctionsException error) {
-    switch (error.code) {
-      case 'internal':
-      case 'unavailable':
-      case 'unknown':
-      case 'deadline-exceeded':
-      case 'not-found':
-      case 'unimplemented':
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  Future<DoctorRegistrationResult> _registerDoctorViaInvitation({
-    required String fullName,
-    required String email,
-    required String specialization,
-    required String availability,
-  }) async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) {
-      throw FirebaseFunctionsException(
-        code: 'unauthenticated',
-        message: 'You must be signed in to register a doctor.',
-      );
-    }
-
-    final normalizedEmail = email.trim().toLowerCase();
-    final invitationPayload = <String, dynamic>{
-      'email': normalizedEmail,
-      'role': 'DOCTOR',
-      'fullName': fullName.trim(),
-      'displayName': fullName.trim(),
-      'specialization': specialization.trim(),
-      'doctorSpecialization': specialization.trim(),
-      'availability': availability.trim().toLowerCase(),
-      'doctorAvailability': availability.trim().toLowerCase(),
-      'createdBy': currentUser.uid,
-      'createdAt': FieldValue.serverTimestamp(),
-      'status': 'pending',
-      'source': 'cho_doctor_registry',
-    };
-
-    DocumentReference<Map<String, dynamic>> invitationRef;
-    try {
-      invitationRef = await _firestore
-          .collection('invitations')
-          .add(invitationPayload);
-    } on FirebaseException catch (error) {
-      if (error.code != 'permission-denied') {
-        rethrow;
-      }
-
-      await UserAccessScopeService.instance.ensureCurrentUserRootMirror();
-      invitationRef = await _firestore
-          .collection('invitations')
-          .add(invitationPayload);
-    }
-
-    for (var attempt = 0; attempt < 20; attempt++) {
-      final snapshot = await invitationRef.get();
-      final data = snapshot.data() ?? <String, dynamic>{};
-      final status = (data['status'] ?? '').toString().trim().toLowerCase();
-
-      if (status == 'processed') {
-        return DoctorRegistrationResult(
-          success: true,
-          created: true,
-          uid: (data['uid'] ?? '').toString(),
-          doctorName: fullName.trim(),
-          email: normalizedEmail,
-          specialization: specialization.trim(),
-          availability: availability.trim().toLowerCase(),
-          resetLink: (data['resetLink'] ?? '').toString().trim().isEmpty
-              ? null
-              : (data['resetLink'] ?? '').toString(),
-        );
-      }
-
-      if (status == 'error') {
-        final message = (data['error'] ?? 'Doctor registration failed.')
-            .toString();
-        throw FirebaseFunctionsException(code: 'internal', message: message);
-      }
-
-      await Future<void>.delayed(const Duration(seconds: 1));
-    }
-
-    final usersByEmail = await _firestore
-        .collection('users')
-        .where('emailLower', isEqualTo: normalizedEmail)
-        .limit(1)
-        .get();
-    if (usersByEmail.docs.isNotEmpty) {
-      final userDoc = usersByEmail.docs.first;
-      final data = userDoc.data();
-      return DoctorRegistrationResult(
-        success: true,
-        created: true,
-        uid: userDoc.id,
-        doctorName:
-            (data['fullName'] ??
-                    data['displayName'] ??
-                    data['username'] ??
-                    fullName)
-                .toString(),
-        email: (data['email'] ?? normalizedEmail).toString(),
-        specialization:
-            (data['doctorSpecialization'] ??
-                    data['specialization'] ??
-                    specialization)
-                .toString(),
-        availability:
-            (data['doctorAvailability'] ?? data['availability'] ?? availability)
-                .toString(),
-        resetLink: null,
-      );
-    }
-
-    throw FirebaseFunctionsException(
-      code: 'deadline-exceeded',
-      message:
-          'Doctor registration is still processing. Please try again in a few seconds.',
-    );
-  }
 
   Future<Map<String, BarangayAvailabilityStatus>>
   _getBarangayAvailabilityFromFirestore() async {
@@ -558,29 +458,75 @@ class AccountPolicyService {
     required String specialization,
     required String availability,
   }) async {
-    try {
-      final callable = _functions.httpsCallable('registerDoctorAccount');
-      final response = await callable.call(<String, dynamic>{
-        'fullName': fullName.trim(),
-        'email': email.trim(),
-        'specialization': specialization.trim(),
-        'availability': availability.trim(),
-      });
-      return DoctorRegistrationResult.fromMap(
-        Map<Object?, Object?>.from(response.data as Map),
-      );
-    } on FirebaseFunctionsException catch (error) {
-      if (!_shouldFallbackDoctorRegistration(error)) {
-        rethrow;
-      }
+    final callable = _functions.httpsCallable('registerDoctorAccount');
+    final response = await callable.call(<String, dynamic>{
+      'fullName': fullName.trim(),
+      'email': email.trim(),
+      'specialization': specialization.trim(),
+      'availability': availability.trim(),
+    });
+    return DoctorRegistrationResult.fromMap(
+      Map<Object?, Object?>.from(response.data as Map),
+    );
+  }
 
-      return _registerDoctorViaInvitation(
-        fullName: fullName,
-        email: email,
-        specialization: specialization,
-        availability: availability,
-      );
-    }
+  Future<ManagedAccountResult> createChoAccount({
+    required String fullName,
+    required String email,
+    required String role,
+    String specialization = '',
+    String availability = 'available',
+    String accountStatus = 'active',
+  }) async {
+    final callable = _functions.httpsCallable('createChoAccount');
+    final response = await callable.call(<String, dynamic>{
+      'fullName': fullName.trim(),
+      'email': email.trim(),
+      'role': role.trim().toUpperCase(),
+      'specialization': specialization.trim(),
+      'availability': availability.trim().toLowerCase(),
+      'accountStatus': accountStatus.trim().toLowerCase(),
+    });
+    return ManagedAccountResult.fromMap(
+      Map<Object?, Object?>.from(response.data as Map),
+    );
+  }
+
+  Future<void> updateChoAccount({
+    required String uid,
+    String? role,
+    String? accountStatus,
+    String? barangay,
+    String? barangayCode,
+    String? barangayDistrict,
+    String? specialization,
+    String? availability,
+  }) async {
+    final callable = _functions.httpsCallable('updateChoAccount');
+    await callable.call(<String, dynamic>{
+      'uid': uid,
+      if (role != null) 'role': role.trim().toUpperCase(),
+      if (accountStatus != null)
+        'accountStatus': accountStatus.trim().toLowerCase(),
+      if (barangay != null) 'barangay': barangay,
+      if (barangayCode != null) 'barangayCode': barangayCode,
+      if (barangayDistrict != null) 'barangayDistrict': barangayDistrict,
+      if (specialization != null) 'specialization': specialization,
+      if (availability != null) 'availability': availability,
+    });
+  }
+
+  Future<void> reviewBhwRegistration({
+    required String uid,
+    required bool approved,
+    String? rejectionReason,
+  }) async {
+    final callable = _functions.httpsCallable('reviewBhwRegistration');
+    await callable.call(<String, dynamic>{
+      'uid': uid,
+      'approved': approved,
+      if (rejectionReason != null) 'rejectionReason': rejectionReason.trim(),
+    });
   }
 
   Future<DoctorAssignmentExecutionResult> assignDoctorToReferral({

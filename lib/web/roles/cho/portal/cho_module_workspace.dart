@@ -58,6 +58,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
           .timeout(const Duration(seconds: 12));
       final allowed = const {
         'cho',
+        'cho_admin',
         'cho_super_admin',
         'super_admin',
         'admin',

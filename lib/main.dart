@@ -53,7 +53,6 @@ import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart' as app_theme;
 import 'package:mycapstone_project/web/features/auth/landing.dart' as web;
 import 'package:mycapstone_project/web/features/auth/login.dart' as web_login;
-import 'package:mycapstone_project/web/features/auth/signup.dart' as web_signup;
 import 'package:mycapstone_project/web/features/auth/bhw_registration.dart'
     as web_bhw_registration;
 import 'package:mycapstone_project/web/features/auth/forgot.dart' as web_forgot;
@@ -113,11 +112,13 @@ import 'package:mycapstone_project/web/shared/widgets/app_update_notification.da
 const Set<String> _bhwWebRoles = <String>{'bhw'};
 const Set<String> _choWebRoles = <String>{
   'cho',
+  'cho_admin',
   'cho_super_admin',
   'super_admin',
   'admin',
 };
 const Set<String> _choAdminWebRoles = <String>{
+  'cho_admin',
   'cho_super_admin',
   'super_admin',
   'admin',
@@ -370,7 +371,7 @@ class MyApp extends StatelessWidget {
               ),
               GetPage(
                 name: WebRoutes.signup,
-                page: () => const web_signup.Signup(),
+                page: () => const web_bhw_registration.BhwRegistrationPage(),
               ),
               GetPage(
                 name: WebRoutes.bhwSignup,
@@ -378,7 +379,7 @@ class MyApp extends StatelessWidget {
               ),
               GetPage(
                 name: WebRoutes.choSignup,
-                page: () => const web_signup.Signup(preselectedRole: 'CHO'),
+                page: () => const _ChoSignupRestrictedPage(),
               ),
               GetPage(
                 name: WebRoutes.forgotPassword,
@@ -591,7 +592,7 @@ class MyApp extends StatelessWidget {
               GetPage(
                 name: WebRoutes.choBhwManagement,
                 page: () => _guardWebPage(
-                  allowedRoles: _choWebRoles,
+                  allowedRoles: _choAdminWebRoles,
                   child: const web_cho_support.ChoSupportCenter(
                     section: web_cho_support.ChoSupportSection.bhwManagement,
                   ),
@@ -949,6 +950,49 @@ class _WebNotFoundPage extends StatelessWidget {
                   kIsWeb ? WebRoutes.landing : MobileRoutes.landing,
                 ),
                 child: const Text('Return to landing page'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ChoSignupRestrictedPage extends StatelessWidget {
+  const _ChoSignupRestrictedPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
+      appBar: AppBar(title: const Text('AI-DSUHIS')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.admin_panel_settings_outlined,
+                size: 54,
+                color: AppColors.primary,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'CHO accounts are admin-managed',
+                style: Theme.of(context).textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              const Text(
+                'A CHO Admin creates CHO and doctor accounts and sends a secure activation email. Public registration is available only for BHW approval requests.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              FilledButton(
+                onPressed: () => Get.offAllNamed(WebRoutes.choLogin),
+                child: const Text('Go to CHO login'),
               ),
             ],
           ),

@@ -16,7 +16,7 @@ if (!admin.apps.length) {
 // Keep this aligned with lib/firebase_helper.dart and account_policy.js.
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 const db = getFirestore(admin.app(), FIRESTORE_DATABASE_ID);
-const CHO_OPERATOR_ROLES = ['CHO', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'];
+const CHO_OPERATOR_ROLES = ['CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'];
 
 /**
  * Verifies the CALLER already holds a CHO-tier role before they are allowed
@@ -40,7 +40,11 @@ async function ensureCallerIsChoOperator(context) {
   const claimRole = String(authRecord.customClaims && authRecord.customClaims.role || '').toUpperCase();
   const profileRole = String(profileSnapshot.exists ? (profileSnapshot.data().role || '') : '').toUpperCase();
 
-  if (!CHO_OPERATOR_ROLES.includes(claimRole) && !CHO_OPERATOR_ROLES.includes(profileRole)) {
+  const profile = profileSnapshot.exists ? profileSnapshot.data() : {};
+  const approval = String(profile.approvalStatus || '').toLowerCase();
+  const accountStatus = String(profile.accountStatus || profile.status || '').toLowerCase();
+  if ((!CHO_OPERATOR_ROLES.includes(claimRole) && !CHO_OPERATOR_ROLES.includes(profileRole)) ||
+      approval !== 'approved' || !['active', 'approved'].includes(accountStatus)) {
     throw new functions.https.HttpsError(
       'permission-denied',
       'Only CHO or administrator accounts may assign user roles.'
@@ -82,7 +86,7 @@ exports.setUserRole = functions.https.onCall(async (data, context) => {
   }
 
   // Validate role
-  const validRoles = ['CHO', 'BHW'];
+  const validRoles = ['CHO', 'DOCTOR', 'BHW'];
   if (!validRoles.includes(role.toUpperCase())) {
     throw new functions.https.HttpsError(
       'invalid-argument',
@@ -91,20 +95,44 @@ exports.setUserRole = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Set custom claims in Firebase Auth
-    await admin.auth().setCustomUserClaims(uid, { role: role.toUpperCase() });
+    const normalizedRole = role.toUpperCase();
+    const targetRef = db.doc(`users/${uid}`);
+    const targetSnapshot = await targetRef.get();
+    if (!targetSnapshot.exists) {
+      throw new functions.https.HttpsError('not-found', 'The target account does not exist.');
+    }
+    const target = targetSnapshot.data() || {};
+    if (normalizedRole === 'BHW' &&
+        String(target.approvalStatus || '').toLowerCase() !== 'approved') {
+      throw new functions.https.HttpsError(
+          'failed-precondition',
+          'A BHW role can only be assigned after CHO approval.',
+      );
+    }
+    await targetRef.set({
+      role: normalizedRole,
+      accessScope: normalizedRole === 'BHW' ? 'barangay' : 'citywide',
+      updatedBy: context.auth.uid,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
+
+    const targetAuth = await admin.auth().getUser(uid);
+    await admin.auth().setCustomUserClaims(uid, {
+      ...(targetAuth.customClaims || {}),
+      role: normalizedRole.toLowerCase(),
+    });
 
     // Update Realtime Database
     await admin.database().ref(`users/${uid}`).update({
-      role: role.toUpperCase(),
+      role: normalizedRole,
       claimsSetAt: admin.database.ServerValue.TIMESTAMP,
     });
 
     return {
       success: true,
-      message: `Custom claims set for user ${uid} with role ${role.toUpperCase()}`,
+      message: `Custom claims set for user ${uid} with role ${normalizedRole}`,
       uid,
-      role: role.toUpperCase(),
+      role: normalizedRole,
     };
   } catch (error) {
     console.error('Error setting user role:', error);

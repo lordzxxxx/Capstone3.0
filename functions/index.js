@@ -18,6 +18,9 @@ const {
   createRegistrationAccount,
   completeRegistration,
 	registerDoctorAccount,
+	createChoAccount,
+	reviewBhwRegistration,
+	updateChoAccount,
 	assignDoctorToReferral,
 	sendDoctorReferralAssignmentEmail,
 	syncAccountGovernanceLocksV2,
@@ -35,6 +38,9 @@ exports.getBarangayAvailability = getBarangayAvailability;
 exports.createRegistrationAccount = createRegistrationAccount;
 exports.completeRegistration = completeRegistration;
 exports.registerDoctorAccount = registerDoctorAccount;
+exports.createChoAccount = createChoAccount;
+exports.reviewBhwRegistration = reviewBhwRegistration;
+exports.updateChoAccount = updateChoAccount;
 exports.assignDoctorToReferral = assignDoctorToReferral;
 exports.sendDoctorReferralAssignmentEmail = sendDoctorReferralAssignmentEmail;
 exports.syncAccountGovernanceLocksV2 = syncAccountGovernanceLocksV2;

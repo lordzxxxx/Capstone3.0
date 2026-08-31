@@ -66,6 +66,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
       return FirebaseFirestore.instance;
     }
   }
+
   final AccountPolicyService _accountPolicyService =
       AccountPolicyService.instance;
   final PatientCenteredHistoryService _patientHistoryService =
@@ -133,11 +134,12 @@ class _ReferralsPageState extends State<ReferralsPage> {
   DateTime? _recordsToDate;
   final TextEditingController _recordSearchController = TextEditingController();
   String _followUpStatusFilter = 'all';
-  final TextEditingController _followUpSearchController = TextEditingController();
+  final TextEditingController _followUpSearchController =
+      TextEditingController();
 
   bool get _isDoctor => _scope.role == 'doctor';
   bool get _isBhw => _scope.role == 'bhw';
-  bool get _isChoOperator => _scope.canViewAllBarangays;
+  bool get _isChoOperator => _scope.isChoAdmin;
 
   @override
   void initState() {
@@ -154,13 +156,14 @@ class _ReferralsPageState extends State<ReferralsPage> {
     _loadScope();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final seed = widget.initialRecord ??
+      final seed =
+          widget.initialRecord ??
           widget.initialPatient ??
           (Get.arguments is Map<String, dynamic>
               ? Get.arguments as Map<String, dynamic>
               : (Get.arguments is Map
-                  ? Map<String, dynamic>.from(Get.arguments as Map)
-                  : null));
+                    ? Map<String, dynamic>.from(Get.arguments as Map)
+                    : null));
       if (seed != null) {
         _selectedTab = 1;
         _prefillFromRecordOrPatient(
@@ -172,12 +175,10 @@ class _ReferralsPageState extends State<ReferralsPage> {
   }
 
   void _applyPatientSeed(Map<String, dynamic> patient) {
-    final patientName = (patient['patientName'] ??
-            patient['name'] ??
-            patient['patient'] ??
-            '')
-        .toString()
-        .trim();
+    final patientName =
+        (patient['patientName'] ?? patient['name'] ?? patient['patient'] ?? '')
+            .toString()
+            .trim();
     final parts = patientNameParts({
       'firstName': patient['firstName'] ?? patient['first_name'] ?? '',
       'surname': patient['surname'] ?? patient['last_name'] ?? '',
@@ -194,8 +195,9 @@ class _ReferralsPageState extends State<ReferralsPage> {
     _patientSurnameController.text = parts.surname;
     _patientFirstNameController.text = parts.firstName;
     if ((patient['middleName'] ?? '').toString().trim().isNotEmpty) {
-      _patientMiddleNameController.text =
-          (patient['middleName'] ?? '').toString().trim();
+      _patientMiddleNameController.text = (patient['middleName'] ?? '')
+          .toString()
+          .trim();
     }
 
     final age = (patient['age'] ?? '').toString().trim();
@@ -203,8 +205,9 @@ class _ReferralsPageState extends State<ReferralsPage> {
       _patientAgeController.text = age;
     }
 
-    final gender =
-        (patient['gender'] ?? patient['sex'] ?? '').toString().trim();
+    final gender = (patient['gender'] ?? patient['sex'] ?? '')
+        .toString()
+        .trim();
     if (gender.isNotEmpty) {
       _patientSexController.text = gender;
     }
@@ -214,8 +217,8 @@ class _ReferralsPageState extends State<ReferralsPage> {
     if (addr.isNotEmpty && brgy.isNotEmpty) {
       _patientAddressController.text =
           addr.toLowerCase().contains(brgy.toLowerCase())
-              ? addr
-              : '$addr, $brgy';
+          ? addr
+          : '$addr, $brgy';
     } else if (addr.isNotEmpty) {
       _patientAddressController.text = addr;
     } else if (brgy.isNotEmpty) {
@@ -234,33 +237,37 @@ class _ReferralsPageState extends State<ReferralsPage> {
   }) {
     _applyPatientSeed(data);
 
-    final symptoms = (data['symptoms'] ??
-            data['chiefComplaint'] ??
-            data['chiefComplaints'] ??
-            '')
-        .toString()
-        .trim();
-    final diagnosis = (data['diagnosis'] ??
-            data['disease'] ??
-            data['diseaseType'] ??
-            data['impression'] ??
-            data['ai_category'] ??
-            '')
-        .toString()
-        .trim();
-    final plan = (data['plan'] ??
-            data['treatment'] ??
-            data['treatmentPlan'] ??
-            data['actionTaken'] ??
-            '')
-        .toString()
-        .trim();
-    final vitalsRaw = (data['vitalsigns'] ??
-            data['vitalSigns'] ??
-            data['completeVitalSigns'] ??
-            '')
-        .toString()
-        .trim();
+    final symptoms =
+        (data['symptoms'] ??
+                data['chiefComplaint'] ??
+                data['chiefComplaints'] ??
+                '')
+            .toString()
+            .trim();
+    final diagnosis =
+        (data['diagnosis'] ??
+                data['disease'] ??
+                data['diseaseType'] ??
+                data['impression'] ??
+                data['ai_category'] ??
+                '')
+            .toString()
+            .trim();
+    final plan =
+        (data['plan'] ??
+                data['treatment'] ??
+                data['treatmentPlan'] ??
+                data['actionTaken'] ??
+                '')
+            .toString()
+            .trim();
+    final vitalsRaw =
+        (data['vitalsigns'] ??
+                data['vitalSigns'] ??
+                data['completeVitalSigns'] ??
+                '')
+            .toString()
+            .trim();
 
     if (symptoms.isNotEmpty) {
       _chiefComplaintController.text = symptoms;
@@ -280,13 +287,16 @@ class _ReferralsPageState extends State<ReferralsPage> {
       _completeVitalSignsController.text = vitalsRaw;
     } else {
       final bp = (data['bloodPressure'] ?? data['bp'] ?? '').toString().trim();
-      final temp =
-          (data['temperature'] ?? data['temp'] ?? '').toString().trim();
+      final temp = (data['temperature'] ?? data['temp'] ?? '')
+          .toString()
+          .trim();
       final hr = (data['heartRate'] ?? data['hr'] ?? '').toString().trim();
-      final rr =
-          (data['respiratoryRate'] ?? data['rr'] ?? '').toString().trim();
-      final spo2 =
-          (data['oxygenSaturation'] ?? data['spo2'] ?? '').toString().trim();
+      final rr = (data['respiratoryRate'] ?? data['rr'] ?? '')
+          .toString()
+          .trim();
+      final spo2 = (data['oxygenSaturation'] ?? data['spo2'] ?? '')
+          .toString()
+          .trim();
       final wt = (data['weight'] ?? data['wt'] ?? '').toString().trim();
       final ht = (data['height'] ?? data['ht'] ?? '').toString().trim();
       final parts = <String>[
@@ -315,7 +325,9 @@ class _ReferralsPageState extends State<ReferralsPage> {
       _selectedReferralReasons.add('Hospital Capability');
     }
 
-    final severity = (data['ai_severity'] ?? data['priority'] ?? '').toString().toLowerCase();
+    final severity = (data['ai_severity'] ?? data['priority'] ?? '')
+        .toString()
+        .toLowerCase();
     final category = (data['ai_category'] ?? '').toString().toLowerCase();
     if (severity == 'critical' ||
         severity == 'emergency' ||
@@ -369,11 +381,13 @@ class _ReferralsPageState extends State<ReferralsPage> {
   bool _matchesCurrentBarangay(Map<String, dynamic> patient) {
     final scopeBarangay = _normalizeSearchValue(_scope.barangay);
     if (scopeBarangay.isEmpty) return true;
-    final patientBarangay =
-        _normalizeSearchValue((patient['barangay'] ?? '').toString());
+    final patientBarangay = _normalizeSearchValue(
+      (patient['barangay'] ?? '').toString(),
+    );
     if (patientBarangay.isNotEmpty) return patientBarangay == scopeBarangay;
-    final address =
-        _normalizeSearchValue((patient['address'] ?? '').toString());
+    final address = _normalizeSearchValue(
+      (patient['address'] ?? '').toString(),
+    );
     return address.contains(scopeBarangay);
   }
 
@@ -401,23 +415,26 @@ class _ReferralsPageState extends State<ReferralsPage> {
 
     setState(() => _isSearchingSharedPatients = true);
 
-    _sharedPatientSearchDebounce =
-        Timer(const Duration(milliseconds: 250), () async {
-      final results =
-          await _patientHistoryService.searchRegisteredPatients(normalizedQuery);
-      if (!mounted ||
-          _patientLookupController.text.trim().toLowerCase() !=
-              normalizedQuery.toLowerCase()) {
-        return;
-      }
-      setState(() {
-        _sharedPatientMatches =
-            results.where(_matchesCurrentBarangay).toList(growable: false);
-        _isSearchingSharedPatients = false;
-      });
-    });
+    _sharedPatientSearchDebounce = Timer(
+      const Duration(milliseconds: 250),
+      () async {
+        final results = await _patientHistoryService.searchRegisteredPatients(
+          normalizedQuery,
+        );
+        if (!mounted ||
+            _patientLookupController.text.trim().toLowerCase() !=
+                normalizedQuery.toLowerCase()) {
+          return;
+        }
+        setState(() {
+          _sharedPatientMatches = results
+              .where(_matchesCurrentBarangay)
+              .toList(growable: false);
+          _isSearchingSharedPatients = false;
+        });
+      },
+    );
   }
-
 
   String _doctorDisplayName(Map<String, dynamic> data) {
     return (data['username'] ??
@@ -475,15 +492,19 @@ class _ReferralsPageState extends State<ReferralsPage> {
   }
 
   List<QueryDocumentSnapshot<Map<String, dynamic>>> get _availableDoctorDocs {
-    return _doctorDocs.where((doctorDoc) {
-      final data = doctorDoc.data();
-      final accountStatus =
-          (data['accountStatus'] ?? 'active').toString().trim().toLowerCase();
-      final availability = _doctorAvailability(data);
-      return accountStatus != 'disabled' &&
-          accountStatus != 'archived' &&
-          availability != 'unavailable';
-    }).toList(growable: false);
+    return _doctorDocs
+        .where((doctorDoc) {
+          final data = doctorDoc.data();
+          final accountStatus = (data['accountStatus'] ?? 'active')
+              .toString()
+              .trim()
+              .toLowerCase();
+          final availability = _doctorAvailability(data);
+          return accountStatus != 'disabled' &&
+              accountStatus != 'archived' &&
+              availability != 'unavailable';
+        })
+        .toList(growable: false);
   }
 
   Map<String, dynamic>? get _selectedPreferredDoctorData {
@@ -650,7 +671,6 @@ class _ReferralsPageState extends State<ReferralsPage> {
     }
   }
 
-
   Future<void> _submitReferral() async {
     if (_selectedPatientSeed == null ||
         _selectedPatientSeed!['isRegisteredPatient'] != true) {
@@ -730,19 +750,22 @@ class _ReferralsPageState extends State<ReferralsPage> {
         'patientSurname': _patientSurnameController.text.trim(),
         'patientFirstName': _patientFirstNameController.text.trim(),
         'patientMiddleName': _patientMiddleNameController.text.trim(),
-        'patientRecordId': (_selectedPatientSeed?['patientId'] ??
-                _selectedPatientSeed?['linkedPatientId'] ??
-                '')
-            .toString(),
-        'patientId': (_selectedPatientSeed?['patientId'] ??
-                _selectedPatientSeed?['id'] ??
-                '')
-            .toString(),
-        'linkedPatientId': (_selectedPatientSeed?['linkedPatientId'] ??
-                _selectedPatientSeed?['patientId'] ??
-                _selectedPatientSeed?['id'] ??
-                '')
-            .toString(),
+        'patientRecordId':
+            (_selectedPatientSeed?['patientId'] ??
+                    _selectedPatientSeed?['linkedPatientId'] ??
+                    '')
+                .toString(),
+        'patientId':
+            (_selectedPatientSeed?['patientId'] ??
+                    _selectedPatientSeed?['id'] ??
+                    '')
+                .toString(),
+        'linkedPatientId':
+            (_selectedPatientSeed?['linkedPatientId'] ??
+                    _selectedPatientSeed?['patientId'] ??
+                    _selectedPatientSeed?['id'] ??
+                    '')
+                .toString(),
         'patientAge': _patientAgeController.text.trim(),
         'patientSex': _patientSexController.text.trim(),
         'chiefComplaint': _chiefComplaintController.text.trim(),
@@ -835,7 +858,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
         try {
           assignmentResult = await _accountPolicyService.assignDoctorToReferral(
             referralId: referralRef.id,
-            preferredDoctorUid: _selectedPreferredDoctorUid,
+            preferredDoctorUid: _isBhw ? null : _selectedPreferredDoctorUid,
           );
         } catch (_) {}
       }
@@ -1659,7 +1682,11 @@ class _ReferralsPageState extends State<ReferralsPage> {
                   const SizedBox(width: 8),
                   _buildPriorityPill('Urgent', 'urgent', Colors.amber),
                   const SizedBox(width: 8),
-                  _buildPriorityPill('Emergency', 'emergency', Colors.redAccent),
+                  _buildPriorityPill(
+                    'Emergency',
+                    'emergency',
+                    Colors.redAccent,
+                  ),
                 ],
               ),
             ]),
@@ -1667,25 +1694,39 @@ class _ReferralsPageState extends State<ReferralsPage> {
               TextFormField(
                 controller: _patientLookupController,
                 style: const TextStyle(color: _lightOffWhite),
-                decoration: _inputDecoration('Search registered patient by name...').copyWith(
-                  prefixIcon: const Icon(Icons.person_search_outlined, color: _primaryAqua),
-                  suffixIcon: _isSearchingSharedPatients
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: CircularProgressIndicator(strokeWidth: 2, color: _primaryAqua),
-                          ),
-                        )
-                      : (_selectedPatientSeed != null
-                          ? IconButton(
-                              icon: const Icon(Icons.history_edu_rounded, color: Colors.greenAccent),
-                              tooltip: 'View Patient History Timeline',
-                              onPressed: () => _showSharedPatientTimeline(_selectedPatientSeed!),
+                decoration:
+                    _inputDecoration(
+                      'Search registered patient by name...',
+                    ).copyWith(
+                      prefixIcon: const Icon(
+                        Icons.person_search_outlined,
+                        color: _primaryAqua,
+                      ),
+                      suffixIcon: _isSearchingSharedPatients
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: Padding(
+                                padding: EdgeInsets.all(12),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: _primaryAqua,
+                                ),
+                              ),
                             )
-                          : null),
-                ),
+                          : (_selectedPatientSeed != null
+                                ? IconButton(
+                                    icon: const Icon(
+                                      Icons.history_edu_rounded,
+                                      color: Colors.greenAccent,
+                                    ),
+                                    tooltip: 'View Patient History Timeline',
+                                    onPressed: () => _showSharedPatientTimeline(
+                                      _selectedPatientSeed!,
+                                    ),
+                                  )
+                                : null),
+                    ),
                 onChanged: _scheduleSharedPatientSearch,
               ),
               if (_sharedPatientMatches.isNotEmpty) ...[
@@ -1695,31 +1736,60 @@ class _ReferralsPageState extends State<ReferralsPage> {
                   decoration: BoxDecoration(
                     color: _darkDeepTeal,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: _primaryAqua.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: ListView.separated(
                     shrinkWrap: true,
                     itemCount: _sharedPatientMatches.length,
-                    separatorBuilder: (_, _) => Divider(color: _primaryAqua.withValues(alpha: 0.1), height: 1),
+                    separatorBuilder: (_, _) => Divider(
+                      color: _primaryAqua.withValues(alpha: 0.1),
+                      height: 1,
+                    ),
                     itemBuilder: (context, index) {
                       final match = _sharedPatientMatches[index];
-                      final name = (match['patientName'] ?? match['name'] ?? 'Unnamed').toString();
+                      final name =
+                          (match['patientName'] ?? match['name'] ?? 'Unnamed')
+                              .toString();
                       final age = (match['age'] ?? '').toString();
-                      final sex = (match['gender'] ?? match['sex'] ?? '').toString();
+                      final sex = (match['gender'] ?? match['sex'] ?? '')
+                          .toString();
                       final brgy = (match['barangay'] ?? '').toString();
                       return ListTile(
                         dense: true,
-                        title: Text(name, style: const TextStyle(color: _lightOffWhite, fontWeight: FontWeight.w600)),
-                        subtitle: Text('$age yrs • $sex • $brgy', style: const TextStyle(color: _mutedCoolGray, fontSize: 11)),
+                        title: Text(
+                          name,
+                          style: const TextStyle(
+                            color: _lightOffWhite,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '$age yrs • $sex • $brgy',
+                          style: const TextStyle(
+                            color: _mutedCoolGray,
+                            fontSize: 11,
+                          ),
+                        ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.timeline_rounded, color: _primaryAqua, size: 18),
+                              icon: const Icon(
+                                Icons.timeline_rounded,
+                                color: _primaryAqua,
+                                size: 18,
+                              ),
                               tooltip: 'Patient Timeline',
-                              onPressed: () => _showSharedPatientTimeline(match),
+                              onPressed: () =>
+                                  _showSharedPatientTimeline(match),
                             ),
-                            const Icon(Icons.touch_app_outlined, color: Colors.greenAccent, size: 18),
+                            const Icon(
+                              Icons.touch_app_outlined,
+                              color: Colors.greenAccent,
+                              size: 18,
+                            ),
                           ],
                         ),
                         onTap: () => _applyPatientSeed(match),
@@ -1731,26 +1801,50 @@ class _ReferralsPageState extends State<ReferralsPage> {
               if (_selectedPatientSeed != null) ...[
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: Colors.green.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 18),
+                      const Icon(
+                        Icons.check_circle_outline,
+                        color: Colors.greenAccent,
+                        size: 18,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Linked Patient: ${_selectedPatientSeed!['patientName'] ?? _selectedPatientSeed!['name']}',
-                          style: const TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            color: Colors.greenAccent,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       TextButton.icon(
-                        onPressed: () => _showSharedPatientTimeline(_selectedPatientSeed!),
-                        icon: const Icon(Icons.history, size: 15, color: Colors.greenAccent),
-                        label: const Text('Timeline', style: TextStyle(color: Colors.greenAccent, fontSize: 11)),
+                        onPressed: () =>
+                            _showSharedPatientTimeline(_selectedPatientSeed!),
+                        icon: const Icon(
+                          Icons.history,
+                          size: 15,
+                          color: Colors.greenAccent,
+                        ),
+                        label: const Text(
+                          'Timeline',
+                          style: TextStyle(
+                            color: Colors.greenAccent,
+                            fontSize: 11,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -1765,9 +1859,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                     .map(
                       (option) => _buildCheckboxOption(
                         label: option,
-                        selected: _selectedReferralCategories.contains(
-                          option,
-                        ),
+                        selected: _selectedReferralCategories.contains(option),
                         onChanged: (selected) {
                           setState(() {
                             if (selected) {
@@ -2074,10 +2166,12 @@ class _ReferralsPageState extends State<ReferralsPage> {
           Text(
             _doctorDocs.isEmpty
                 ? 'No registered doctor accounts yet. Referrals will still be sent to CHO for centralized review.'
+                : _isBhw
+                ? 'The system automatically assigns each referral to an approved, active, available doctor using the lowest active referral workload. CHO Admin can reassign later.'
                 : 'Select an available doctor or let the system route automatically after review.',
             style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72)),
           ),
-          if (_doctorDocs.isNotEmpty) ...[
+          if (_doctorDocs.isNotEmpty && !_isBhw) ...[
             const SizedBox(height: 14),
             DropdownButtonFormField<String>(
               initialValue: _selectedPreferredDoctorUid,
@@ -2096,7 +2190,9 @@ class _ReferralsPageState extends State<ReferralsPage> {
                   final avail = _doctorAvailability(data);
                   return DropdownMenuItem<String>(
                     value: doctorDoc.id,
-                    child: Text('$name • $spec (${_doctorAvailabilityLabel(avail)})'),
+                    child: Text(
+                      '$name • $spec (${_doctorAvailabilityLabel(avail)})',
+                    ),
                   );
                 }),
               ],
@@ -2280,7 +2376,6 @@ class _ReferralsPageState extends State<ReferralsPage> {
     );
   }
 
-
   Widget _buildSummaryCards(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
   ) {
@@ -2295,7 +2390,9 @@ class _ReferralsPageState extends State<ReferralsPage> {
       final status = (data['status'] ?? 'submitted').toString();
       if (status == 'assigned' || status == 'doctor_assigned') {
         assigned++;
-      } else if (status == 'in_treatment' || status == 'waiting_consultation' || status == 'consulted') {
+      } else if (status == 'in_treatment' ||
+          status == 'waiting_consultation' ||
+          status == 'consulted') {
         inTreatment++;
       } else if (status == 'completed') {
         completed++;
@@ -2303,7 +2400,8 @@ class _ReferralsPageState extends State<ReferralsPage> {
         submitted++;
       }
 
-      if (data['followUpRequired'] == true || (status == 'completed' && data['followUpCompleted'] != true)) {
+      if (data['followUpRequired'] == true ||
+          (status == 'completed' && data['followUpCompleted'] != true)) {
         followUpNeeded++;
       }
     }
@@ -2321,7 +2419,11 @@ class _ReferralsPageState extends State<ReferralsPage> {
         value: '${docs.length}',
         icon: Icons.swap_horiz_rounded,
       ),
-      (label: 'Pending CHO Review', value: '$submitted', icon: Icons.rate_review_outlined),
+      (
+        label: 'Pending CHO Review',
+        value: '$submitted',
+        icon: Icons.rate_review_outlined,
+      ),
       (
         label: 'Doctor Assigned',
         value: '$assigned',
@@ -2333,7 +2435,11 @@ class _ReferralsPageState extends State<ReferralsPage> {
         icon: Icons.medical_services_outlined,
       ),
       (label: 'Completed', value: '$completed', icon: Icons.task_alt_rounded),
-      (label: 'Follow-ups Required', value: '$followUpNeeded', icon: Icons.home_work_outlined),
+      (
+        label: 'Follow-ups Required',
+        value: '$followUpNeeded',
+        icon: Icons.home_work_outlined,
+      ),
     ];
 
     return GridView.builder(
@@ -2383,7 +2489,10 @@ class _ReferralsPageState extends State<ReferralsPage> {
               style: TextButton.styleFrom(
                 foregroundColor: selected ? Colors.white : _lightOffWhite,
                 backgroundColor: selected ? _primaryAqua : Colors.transparent,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -2395,7 +2504,9 @@ class _ReferralsPageState extends State<ReferralsPage> {
     );
   }
 
-  Widget _buildDashboardTab(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+  Widget _buildDashboardTab(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
     final recentDocs = docs.take(5).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2434,8 +2545,13 @@ class _ReferralsPageState extends State<ReferralsPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _primaryAqua,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                   OutlinedButton.icon(
@@ -2444,9 +2560,16 @@ class _ReferralsPageState extends State<ReferralsPage> {
                     label: const Text('View Live Referral Queue'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _lightOffWhite,
-                      side: BorderSide(color: _primaryAqua.withValues(alpha: 0.3)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      side: BorderSide(
+                        color: _primaryAqua.withValues(alpha: 0.3),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                   OutlinedButton.icon(
@@ -2454,13 +2577,24 @@ class _ReferralsPageState extends State<ReferralsPage> {
                       context,
                       formType: ClinicalFormType.referral,
                     ),
-                    icon: const Icon(Icons.picture_as_pdf_outlined, color: _primaryAqua, size: 18),
+                    icon: const Icon(
+                      Icons.picture_as_pdf_outlined,
+                      color: _primaryAqua,
+                      size: 18,
+                    ),
                     label: const Text('Export Blank Form (REF-2026)'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _lightOffWhite,
-                      side: BorderSide(color: _primaryAqua.withValues(alpha: 0.3)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      side: BorderSide(
+                        color: _primaryAqua.withValues(alpha: 0.3),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ],
@@ -2521,7 +2655,9 @@ class _ReferralsPageState extends State<ReferralsPage> {
     return _buildReferralForm();
   }
 
-  Widget _buildRecordsTab(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+  Widget _buildRecordsTab(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
     final query = _recordSearchController.text.trim().toLowerCase();
 
     final filteredDocs = docs.where((doc) {
@@ -2535,7 +2671,8 @@ class _ReferralsPageState extends State<ReferralsPage> {
 
       // Search match
       if (query.isNotEmpty) {
-        final matchesQuery = name.contains(query) ||
+        final matchesQuery =
+            name.contains(query) ||
             patientId.contains(query) ||
             complaint.contains(query) ||
             reason.contains(query) ||
@@ -2546,7 +2683,9 @@ class _ReferralsPageState extends State<ReferralsPage> {
       // Status filter
       if (_statusFilter != 'all') {
         if (_statusFilter == 'pending' &&
-            !(status == 'submitted' || status == 'pending_review' || status == 'under_review')) {
+            !(status == 'submitted' ||
+                status == 'pending_review' ||
+                status == 'under_review')) {
           return false;
         }
         if (_statusFilter == 'assigned' &&
@@ -2554,13 +2693,16 @@ class _ReferralsPageState extends State<ReferralsPage> {
           return false;
         }
         if (_statusFilter == 'in_treatment' &&
-            !(status == 'in_treatment' || status == 'waiting_consultation' || status == 'consulted')) {
+            !(status == 'in_treatment' ||
+                status == 'waiting_consultation' ||
+                status == 'consulted')) {
           return false;
         }
         if (_statusFilter == 'completed' && status != 'completed') {
           return false;
         }
-        if (_statusFilter == 'returned' && status != 'returned_for_correction') {
+        if (_statusFilter == 'returned' &&
+            status != 'returned_for_correction') {
           return false;
         }
       }
@@ -2575,8 +2717,13 @@ class _ReferralsPageState extends State<ReferralsPage> {
         final ts = data['createdAt'];
         if (ts is Timestamp) {
           final dt = ts.toDate();
-          if (_recordsFromDate != null && dt.isBefore(_recordsFromDate!)) return false;
-          if (_recordsToDate != null && dt.isAfter(_recordsToDate!.add(const Duration(days: 1)))) return false;
+          if (_recordsFromDate != null && dt.isBefore(_recordsFromDate!)) {
+            return false;
+          }
+          if (_recordsToDate != null &&
+              dt.isAfter(_recordsToDate!.add(const Duration(days: 1)))) {
+            return false;
+          }
         }
       }
 
@@ -2600,18 +2747,24 @@ class _ReferralsPageState extends State<ReferralsPage> {
               TextField(
                 controller: _recordSearchController,
                 style: const TextStyle(color: _lightOffWhite),
-                decoration: _inputDecoration('Search referral by patient name, ID, or symptoms...').copyWith(
-                  prefixIcon: const Icon(Icons.search, color: _primaryAqua),
-                  suffixIcon: _recordSearchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, color: _mutedCoolGray),
-                          onPressed: () {
-                            _recordSearchController.clear();
-                            setState(() {});
-                          },
-                        )
-                      : null,
-                ),
+                decoration:
+                    _inputDecoration(
+                      'Search referral by patient name, ID, or symptoms...',
+                    ).copyWith(
+                      prefixIcon: const Icon(Icons.search, color: _primaryAqua),
+                      suffixIcon: _recordSearchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(
+                                Icons.clear,
+                                color: _mutedCoolGray,
+                              ),
+                              onPressed: () {
+                                _recordSearchController.clear();
+                                setState(() {});
+                              },
+                            )
+                          : null,
+                    ),
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 12),
@@ -2620,7 +2773,14 @@ class _ReferralsPageState extends State<ReferralsPage> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    const Text('Status: ', style: TextStyle(color: _mutedCoolGray, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    const Text(
+                      'Status: ',
+                      style: TextStyle(
+                        color: _mutedCoolGray,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(width: 4),
                     ...[
                       ('All', 'all'),
@@ -2634,11 +2794,18 @@ class _ReferralsPageState extends State<ReferralsPage> {
                       return Padding(
                         padding: const EdgeInsets.only(right: 6),
                         child: FilterChip(
-                          label: Text(item.$1, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : _lightOffWhite)),
+                          label: Text(
+                            item.$1,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isSelected ? Colors.white : _lightOffWhite,
+                            ),
+                          ),
                           selected: isSelected,
                           selectedColor: _primaryAqua,
                           backgroundColor: _darkDeepTeal,
-                          onSelected: (_) => setState(() => _statusFilter = item.$2),
+                          onSelected: (_) =>
+                              setState(() => _statusFilter = item.$2),
                         ),
                       );
                     }),
@@ -2651,7 +2818,14 @@ class _ReferralsPageState extends State<ReferralsPage> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    const Text('Priority: ', style: TextStyle(color: _mutedCoolGray, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    const Text(
+                      'Priority: ',
+                      style: TextStyle(
+                        color: _mutedCoolGray,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(width: 4),
                     ...[
                       ('All', 'all'),
@@ -2663,11 +2837,18 @@ class _ReferralsPageState extends State<ReferralsPage> {
                       return Padding(
                         padding: const EdgeInsets.only(right: 6),
                         child: FilterChip(
-                          label: Text(item.$1, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : _lightOffWhite)),
+                          label: Text(
+                            item.$1,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isSelected ? Colors.white : _lightOffWhite,
+                            ),
+                          ),
                           selected: isSelected,
                           selectedColor: _primaryAqua,
                           backgroundColor: _darkDeepTeal,
-                          onSelected: (_) => setState(() => _priorityFilter = item.$2),
+                          onSelected: (_) =>
+                              setState(() => _priorityFilter = item.$2),
                         ),
                       );
                     }),
@@ -2700,10 +2881,15 @@ class _ReferralsPageState extends State<ReferralsPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (_statusFilter != 'all' || _priorityFilter != 'all' || _recordSearchController.text.isNotEmpty)
+                  if (_statusFilter != 'all' ||
+                      _priorityFilter != 'all' ||
+                      _recordSearchController.text.isNotEmpty)
                     TextButton.icon(
                       icon: const Icon(Icons.filter_alt_off, size: 15),
-                      label: const Text('Clear Filters', style: TextStyle(fontSize: 12)),
+                      label: const Text(
+                        'Clear Filters',
+                        style: TextStyle(fontSize: 12),
+                      ),
                       onPressed: () {
                         setState(() {
                           _statusFilter = 'all';
@@ -2721,7 +2907,11 @@ class _ReferralsPageState extends State<ReferralsPage> {
                   child: Center(
                     child: Column(
                       children: [
-                        const Icon(Icons.search_off_rounded, size: 42, color: _mutedCoolGray),
+                        const Icon(
+                          Icons.search_off_rounded,
+                          size: 42,
+                          color: _mutedCoolGray,
+                        ),
                         const SizedBox(height: 8),
                         const Text(
                           'No referral records match your search or filter criteria.',
@@ -2740,11 +2930,14 @@ class _ReferralsPageState extends State<ReferralsPage> {
     );
   }
 
-  Widget _buildFollowUpTab(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+  Widget _buildFollowUpTab(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
     final followUpDocs = docs.where((doc) {
       final data = doc.data();
       final status = (data['status'] ?? '').toString();
-      final isNeeded = data['followUpRequired'] == true || status == 'completed';
+      final isNeeded =
+          data['followUpRequired'] == true || status == 'completed';
       if (!isNeeded) return false;
 
       final isDone = data['followUpCompleted'] == true;
@@ -2778,18 +2971,24 @@ class _ReferralsPageState extends State<ReferralsPage> {
               TextField(
                 controller: _followUpSearchController,
                 style: const TextStyle(color: _lightOffWhite),
-                decoration: _inputDecoration('Search follow-up patients by name or address...').copyWith(
-                  prefixIcon: const Icon(Icons.search, color: _primaryAqua),
-                  suffixIcon: _followUpSearchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, color: _mutedCoolGray),
-                          onPressed: () {
-                            _followUpSearchController.clear();
-                            setState(() {});
-                          },
-                        )
-                      : null,
-                ),
+                decoration:
+                    _inputDecoration(
+                      'Search follow-up patients by name or address...',
+                    ).copyWith(
+                      prefixIcon: const Icon(Icons.search, color: _primaryAqua),
+                      suffixIcon: _followUpSearchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(
+                                Icons.clear,
+                                color: _mutedCoolGray,
+                              ),
+                              onPressed: () {
+                                _followUpSearchController.clear();
+                                setState(() {});
+                              },
+                            )
+                          : null,
+                    ),
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 12),
@@ -2797,7 +2996,14 @@ class _ReferralsPageState extends State<ReferralsPage> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    const Text('Follow-up Status: ', style: TextStyle(color: _mutedCoolGray, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    const Text(
+                      'Follow-up Status: ',
+                      style: TextStyle(
+                        color: _mutedCoolGray,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(width: 6),
                     ...[
                       ('All', 'all'),
@@ -2808,11 +3014,18 @@ class _ReferralsPageState extends State<ReferralsPage> {
                       return Padding(
                         padding: const EdgeInsets.only(right: 6),
                         child: FilterChip(
-                          label: Text(item.$1, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : _lightOffWhite)),
+                          label: Text(
+                            item.$1,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isSelected ? Colors.white : _lightOffWhite,
+                            ),
+                          ),
                           selected: isSelected,
                           selectedColor: _primaryAqua,
                           backgroundColor: _darkDeepTeal,
-                          onSelected: (_) => setState(() => _followUpStatusFilter = item.$2),
+                          onSelected: (_) =>
+                              setState(() => _followUpStatusFilter = item.$2),
                         ),
                       );
                     }),
@@ -2844,7 +3057,10 @@ class _ReferralsPageState extends State<ReferralsPage> {
               const SizedBox(height: 6),
               Text(
                 'Track discharged or high-risk referred patients who require home visits and recovery check-ins.',
-                style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.72), fontSize: 13),
+                style: TextStyle(
+                  color: _lightOffWhite.withValues(alpha: 0.72),
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 16),
               if (followUpDocs.isEmpty)
@@ -2872,7 +3088,8 @@ class _ReferralsPageState extends State<ReferralsPage> {
     final isDone = data['followUpCompleted'] == true;
     final doctorDiagnosis = (data['doctorDiagnosis'] ?? '').toString();
     final doctorNotes = (data['doctorNotes'] ?? '').toString();
-    final recoveryStatus = (data['followUpRecoveryStatus'] ?? 'Pending visit').toString();
+    final recoveryStatus = (data['followUpRecoveryStatus'] ?? 'Pending visit')
+        .toString();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -2881,7 +3098,9 @@ class _ReferralsPageState extends State<ReferralsPage> {
         color: _darkDeepTeal,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDone ? Colors.green.withValues(alpha: 0.3) : Colors.amber.withValues(alpha: 0.4),
+          color: isDone
+              ? Colors.green.withValues(alpha: 0.3)
+              : Colors.amber.withValues(alpha: 0.4),
           width: 1.5,
         ),
       ),
@@ -2893,15 +3112,26 @@ class _ReferralsPageState extends State<ReferralsPage> {
               Expanded(
                 child: Text(
                   patientName,
-                  style: const TextStyle(color: _lightOffWhite, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    color: _lightOffWhite,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: isDone ? Colors.green.withValues(alpha: 0.2) : Colors.amber.withValues(alpha: 0.2),
+                  color: isDone
+                      ? Colors.green.withValues(alpha: 0.2)
+                      : Colors.amber.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: isDone ? Colors.greenAccent : Colors.amberAccent),
+                  border: Border.all(
+                    color: isDone ? Colors.greenAccent : Colors.amberAccent,
+                  ),
                 ),
                 child: Text(
                   isDone ? 'COMPLETED' : 'FOLLOW-UP NEEDED',
@@ -2930,7 +3160,10 @@ class _ReferralsPageState extends State<ReferralsPage> {
             const SizedBox(height: 4),
             Text(
               'Discharge Instructions: $doctorNotes',
-              style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.8), fontSize: 12.5),
+              style: TextStyle(
+                color: _lightOffWhite.withValues(alpha: 0.8),
+                fontSize: 12.5,
+              ),
             ),
           ],
           if (isDone) ...[
@@ -2946,11 +3179,21 @@ class _ReferralsPageState extends State<ReferralsPage> {
                 children: [
                   Text(
                     'Recorded by ${data['followUpCompletedBy'] ?? 'BHW'} • Recovery: $recoveryStatus',
-                    style: const TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      color: Colors.greenAccent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   if ((data['followUpNotes'] ?? '').toString().isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text('Notes: ${data['followUpNotes']}', style: const TextStyle(color: _lightOffWhite, fontSize: 12)),
+                    Text(
+                      'Notes: ${data['followUpNotes']}',
+                      style: const TextStyle(
+                        color: _lightOffWhite,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ],
               ),
@@ -2964,12 +3207,19 @@ class _ReferralsPageState extends State<ReferralsPage> {
               ElevatedButton.icon(
                 onPressed: () => _showFollowUpModal(doc),
                 icon: const Icon(Icons.edit_note, size: 18),
-                label: Text(isDone ? 'Edit Follow-up Record' : 'Record Home Visit'),
+                label: Text(
+                  isDone ? 'Edit Follow-up Record' : 'Record Home Visit',
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primaryAqua,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
               OutlinedButton.icon(
@@ -2979,8 +3229,13 @@ class _ReferralsPageState extends State<ReferralsPage> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _lightOffWhite,
                   side: BorderSide(color: _primaryAqua.withValues(alpha: 0.3)),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ],
@@ -2998,12 +3253,23 @@ class _ReferralsPageState extends State<ReferralsPage> {
     final isAlreadyCompleted = data['followUpCompleted'] == true;
 
     DateTime followUpDate = DateTime.now();
-    final bpCtrl = TextEditingController(text: (data['followUpBp'] ?? '').toString());
-    final tempCtrl = TextEditingController(text: (data['followUpTemp'] ?? '').toString());
-    final pulseCtrl = TextEditingController(text: (data['followUpPulse'] ?? '').toString());
-    final spo2Ctrl = TextEditingController(text: (data['followUpSpo2'] ?? '').toString());
-    final notesCtrl = TextEditingController(text: (data['followUpNotes'] ?? '').toString());
-    String recoveryStatus = (data['followUpRecoveryStatus'] ?? 'Improving').toString();
+    final bpCtrl = TextEditingController(
+      text: (data['followUpBp'] ?? '').toString(),
+    );
+    final tempCtrl = TextEditingController(
+      text: (data['followUpTemp'] ?? '').toString(),
+    );
+    final pulseCtrl = TextEditingController(
+      text: (data['followUpPulse'] ?? '').toString(),
+    );
+    final spo2Ctrl = TextEditingController(
+      text: (data['followUpSpo2'] ?? '').toString(),
+    );
+    final notesCtrl = TextEditingController(
+      text: (data['followUpNotes'] ?? '').toString(),
+    );
+    String recoveryStatus = (data['followUpRecoveryStatus'] ?? 'Improving')
+        .toString();
     bool markCompleted = isAlreadyCompleted ? true : true;
     bool isSaving = false;
 
@@ -3020,7 +3286,9 @@ class _ReferralsPageState extends State<ReferralsPage> {
           builder: (context, scrollController) => Container(
             decoration: BoxDecoration(
               color: _darkDeepTeal,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
               border: Border.all(color: _primaryAqua.withValues(alpha: 0.2)),
             ),
             child: SafeArea(
@@ -3047,7 +3315,10 @@ class _ReferralsPageState extends State<ReferralsPage> {
                               const SizedBox(height: 2),
                               Text(
                                 'Patient: $patientName',
-                                style: const TextStyle(color: _mutedCoolGray, fontSize: 13),
+                                style: const TextStyle(
+                                  color: _mutedCoolGray,
+                                  fontSize: 13,
+                                ),
                               ),
                             ],
                           ),
@@ -3061,15 +3332,29 @@ class _ReferralsPageState extends State<ReferralsPage> {
                     const Divider(height: 24),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Follow-up Visit Date', style: TextStyle(color: _lightOffWhite, fontSize: 14)),
-                      subtitle: Text('${followUpDate.year}-${followUpDate.month.toString().padLeft(2, '0')}-${followUpDate.day.toString().padLeft(2, '0')}', style: const TextStyle(color: _primaryAqua, fontWeight: FontWeight.bold)),
-                      trailing: const Icon(Icons.calendar_month, color: _primaryAqua),
+                      title: const Text(
+                        'Follow-up Visit Date',
+                        style: TextStyle(color: _lightOffWhite, fontSize: 14),
+                      ),
+                      subtitle: Text(
+                        '${followUpDate.year}-${followUpDate.month.toString().padLeft(2, '0')}-${followUpDate.day.toString().padLeft(2, '0')}',
+                        style: const TextStyle(
+                          color: _primaryAqua,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.calendar_month,
+                        color: _primaryAqua,
+                      ),
                       onTap: () async {
                         final picked = await showDatePicker(
                           context: context,
                           initialDate: followUpDate,
                           firstDate: DateTime(2020),
-                          lastDate: DateTime.now().add(const Duration(days: 365)),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 365),
+                          ),
                         );
                         if (picked != null) {
                           setSheetState(() => followUpDate = picked);
@@ -3122,12 +3407,18 @@ class _ReferralsPageState extends State<ReferralsPage> {
                       dropdownColor: _panelSurface,
                       style: const TextStyle(color: _lightOffWhite),
                       decoration: _inputDecoration('Patient Recovery Status'),
-                      items: const [
-                        'Improving',
-                        'Stable',
-                        'Needs Attention',
-                        'Re-referral Required',
-                      ].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                      items:
+                          const [
+                                'Improving',
+                                'Stable',
+                                'Needs Attention',
+                                'Re-referral Required',
+                              ]
+                              .map(
+                                (s) =>
+                                    DropdownMenuItem(value: s, child: Text(s)),
+                              )
+                              .toList(),
                       onChanged: (v) {
                         if (v != null) setSheetState(() => recoveryStatus = v);
                       },
@@ -3137,13 +3428,21 @@ class _ReferralsPageState extends State<ReferralsPage> {
                       controller: notesCtrl,
                       maxLines: 4,
                       style: const TextStyle(color: _lightOffWhite),
-                      decoration: _inputDecoration('BHW Observations & Home Visit Notes'),
+                      decoration: _inputDecoration(
+                        'BHW Observations & Home Visit Notes',
+                      ),
                     ),
                     const SizedBox(height: 14),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Mark Follow-up as Completed', style: TextStyle(color: _lightOffWhite, fontSize: 14)),
-                      subtitle: const Text('Confirms home visit and post-care monitoring has occurred', style: TextStyle(color: _mutedCoolGray, fontSize: 12)),
+                      title: const Text(
+                        'Mark Follow-up as Completed',
+                        style: TextStyle(color: _lightOffWhite, fontSize: 14),
+                      ),
+                      subtitle: const Text(
+                        'Confirms home visit and post-care monitoring has occurred',
+                        style: TextStyle(color: _mutedCoolGray, fontSize: 12),
+                      ),
                       value: markCompleted,
                       activeThumbColor: _primaryAqua,
                       onChanged: (v) => setSheetState(() => markCompleted = v),
@@ -3156,57 +3455,78 @@ class _ReferralsPageState extends State<ReferralsPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _primaryAqua,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        onPressed: isSaving ? null : () async {
-                          setSheetState(() => isSaving = true);
-                          try {
-                            final user = FirebaseAuth.instance.currentUser;
-                            final payload = {
-                              'followUpCompleted': markCompleted,
-                              'followUpCompletedAt': markCompleted ? FieldValue.serverTimestamp() : null,
-                              'followUpCompletedBy': user?.displayName ?? user?.email ?? 'BHW',
-                              'followUpVisitDate': '${followUpDate.year}-${followUpDate.month.toString().padLeft(2, '0')}-${followUpDate.day.toString().padLeft(2, '0')}',
-                              'followUpBp': bpCtrl.text.trim(),
-                              'followUpTemp': tempCtrl.text.trim(),
-                              'followUpPulse': pulseCtrl.text.trim(),
-                              'followUpSpo2': spo2Ctrl.text.trim(),
-                              'followUpRecoveryStatus': recoveryStatus,
-                              'followUpNotes': notesCtrl.text.trim(),
-                              'updatedAt': FieldValue.serverTimestamp(),
-                            };
-                            await doc.reference.update(payload);
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                setSheetState(() => isSaving = true);
+                                try {
+                                  final user =
+                                      FirebaseAuth.instance.currentUser;
+                                  final payload = {
+                                    'followUpCompleted': markCompleted,
+                                    'followUpCompletedAt': markCompleted
+                                        ? FieldValue.serverTimestamp()
+                                        : null,
+                                    'followUpCompletedBy':
+                                        user?.displayName ??
+                                        user?.email ??
+                                        'BHW',
+                                    'followUpVisitDate':
+                                        '${followUpDate.year}-${followUpDate.month.toString().padLeft(2, '0')}-${followUpDate.day.toString().padLeft(2, '0')}',
+                                    'followUpBp': bpCtrl.text.trim(),
+                                    'followUpTemp': tempCtrl.text.trim(),
+                                    'followUpPulse': pulseCtrl.text.trim(),
+                                    'followUpSpo2': spo2Ctrl.text.trim(),
+                                    'followUpRecoveryStatus': recoveryStatus,
+                                    'followUpNotes': notesCtrl.text.trim(),
+                                    'updatedAt': FieldValue.serverTimestamp(),
+                                  };
+                                  await doc.reference.update(payload);
 
-                            final mirrorRef = _barangayReferralMirrorReference(
-                              barangayCode: _scope.barangayCode,
-                              referralId: doc.id,
-                            );
-                            if (mirrorRef != null) {
-                              await mirrorRef.update(payload);
-                            }
+                                  final mirrorRef =
+                                      _barangayReferralMirrorReference(
+                                        barangayCode: _scope.barangayCode,
+                                        referralId: doc.id,
+                                      );
+                                  if (mirrorRef != null) {
+                                    await mirrorRef.update(payload);
+                                  }
 
-                            if (sheetContext.mounted) {
-                              Navigator.of(sheetContext).pop();
-                            }
-                            Get.snackbar(
-                              'Follow-up saved',
-                              'Patient follow-up record successfully updated.',
-                              backgroundColor: Colors.green,
-                              colorText: Colors.white,
-                            );
-                          } catch (e) {
-                            setSheetState(() => isSaving = false);
-                            Get.snackbar(
-                              'Error saving follow-up',
-                              '$e',
-                              backgroundColor: Colors.redAccent,
-                              colorText: Colors.white,
-                            );
-                          }
-                        },
+                                  if (sheetContext.mounted) {
+                                    Navigator.of(sheetContext).pop();
+                                  }
+                                  Get.snackbar(
+                                    'Follow-up saved',
+                                    'Patient follow-up record successfully updated.',
+                                    backgroundColor: Colors.green,
+                                    colorText: Colors.white,
+                                  );
+                                } catch (e) {
+                                  setSheetState(() => isSaving = false);
+                                  Get.snackbar(
+                                    'Error saving follow-up',
+                                    '$e',
+                                    backgroundColor: Colors.redAccent,
+                                    colorText: Colors.white,
+                                  );
+                                }
+                              },
                         child: isSaving
-                            ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                            : const Text('Save Follow-up Record', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              )
+                            : const Text(
+                                'Save Follow-up Record',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -3228,7 +3548,8 @@ class _ReferralsPageState extends State<ReferralsPage> {
     final status = (data['status'] ?? 'submitted').toString();
     final priority = (data['priority'] ?? 'routine').toString();
     final doctorName = (data['assignedDoctorName'] ?? 'Unassigned').toString();
-    final doctorSpecialization = (data['assignedDoctorSpecialization'] ?? 'General Medicine').toString();
+    final doctorSpecialization =
+        (data['assignedDoctorSpecialization'] ?? 'General Medicine').toString();
     final doctorDiagnosis = (data['doctorDiagnosis'] ?? '').toString();
     final doctorTreatment = (data['doctorTreatment'] ?? '').toString();
     final doctorMedication = (data['doctorMedication'] ?? '').toString();
@@ -3246,9 +3567,19 @@ class _ReferralsPageState extends State<ReferralsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(patientName, style: const TextStyle(color: _lightOffWhite, fontWeight: FontWeight.bold, fontSize: 18)),
+                  Text(
+                    patientName,
+                    style: const TextStyle(
+                      color: _lightOffWhite,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text('Referral ID: $referralId', style: const TextStyle(color: _mutedCoolGray, fontSize: 12)),
+                  Text(
+                    'Referral ID: $referralId',
+                    style: const TextStyle(color: _mutedCoolGray, fontSize: 12),
+                  ),
                 ],
               ),
             ),
@@ -3264,31 +3595,82 @@ class _ReferralsPageState extends State<ReferralsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildDetailSection('Demographics & Intake', [
-                  _buildDetailRow('Age / Sex', '${data['patientAge'] ?? 'N/A'} • ${data['patientSex'] ?? 'N/A'}'),
-                  _buildDetailRow('Barangay', (data['barangay'] ?? 'N/A').toString()),
-                  _buildDetailRow('Address', (data['patientAddress'] ?? 'N/A').toString()),
-                  _buildDetailRow('Date & Time', (data['referralDateTime'] ?? 'N/A').toString()),
+                  _buildDetailRow(
+                    'Age / Sex',
+                    '${data['patientAge'] ?? 'N/A'} • ${data['patientSex'] ?? 'N/A'}',
+                  ),
+                  _buildDetailRow(
+                    'Barangay',
+                    (data['barangay'] ?? 'N/A').toString(),
+                  ),
+                  _buildDetailRow(
+                    'Address',
+                    (data['patientAddress'] ?? 'N/A').toString(),
+                  ),
+                  _buildDetailRow(
+                    'Date & Time',
+                    (data['referralDateTime'] ?? 'N/A').toString(),
+                  ),
                 ]),
                 const SizedBox(height: 12),
                 _buildDetailSection('Clinical Findings', [
-                  _buildDetailRow('Chief Complaint', (data['chiefComplaint'] ?? 'None').toString()),
-                  _buildDetailRow('Medical History', (data['medicalHistory'] ?? 'None').toString()),
-                  _buildDetailRow('Vital Signs', (data['completeVitalSigns'] ?? 'N/A').toString()),
-                  _buildDetailRow('Impression', (data['impression'] ?? 'N/A').toString()),
-                  _buildDetailRow('Action Taken', (data['actionTaken'] ?? 'N/A').toString()),
-                  _buildDetailRow('Last Meal', (data['lastMealTime'] ?? 'N/A').toString()),
-                  _buildDetailRow('Surgical History', data['hasSurgicalOperations'] == true ? 'Yes - ${data['surgicalProcedure']}' : 'No'),
-                  _buildDetailRow('Insurance', data['hasHealthInsuranceCoverage'] == true ? 'Yes - ${data['healthInsuranceCoverageType']}' : 'No'),
+                  _buildDetailRow(
+                    'Chief Complaint',
+                    (data['chiefComplaint'] ?? 'None').toString(),
+                  ),
+                  _buildDetailRow(
+                    'Medical History',
+                    (data['medicalHistory'] ?? 'None').toString(),
+                  ),
+                  _buildDetailRow(
+                    'Vital Signs',
+                    (data['completeVitalSigns'] ?? 'N/A').toString(),
+                  ),
+                  _buildDetailRow(
+                    'Impression',
+                    (data['impression'] ?? 'N/A').toString(),
+                  ),
+                  _buildDetailRow(
+                    'Action Taken',
+                    (data['actionTaken'] ?? 'N/A').toString(),
+                  ),
+                  _buildDetailRow(
+                    'Last Meal',
+                    (data['lastMealTime'] ?? 'N/A').toString(),
+                  ),
+                  _buildDetailRow(
+                    'Surgical History',
+                    data['hasSurgicalOperations'] == true
+                        ? 'Yes - ${data['surgicalProcedure']}'
+                        : 'No',
+                  ),
+                  _buildDetailRow(
+                    'Insurance',
+                    data['hasHealthInsuranceCoverage'] == true
+                        ? 'Yes - ${data['healthInsuranceCoverageType']}'
+                        : 'No',
+                  ),
                 ]),
                 const SizedBox(height: 12),
                 _buildDetailSection('Routing & Doctor Care', [
-                  _buildDetailRow('Assigned Doctor', '$doctorName ($doctorSpecialization)'),
-                  if (doctorDiagnosis.isNotEmpty) _buildDetailRow('Doctor Diagnosis', doctorDiagnosis),
-                  if (doctorTreatment.isNotEmpty) _buildDetailRow('Doctor Treatment', doctorTreatment),
-                  if (doctorMedication.isNotEmpty) _buildDetailRow('Prescribed Meds', doctorMedication),
-                  if (doctorNotes.isNotEmpty) _buildDetailRow('Doctor Notes', doctorNotes),
-                  if (choNotes.isNotEmpty) _buildDetailRow('CHO Review Notes', choNotes),
-                  _buildDetailRow('Submitted By', '${data['createdByName'] ?? data['createdByEmail'] ?? 'BHW'} (${_formatTimestamp(data['createdAt'])})'),
+                  _buildDetailRow(
+                    'Assigned Doctor',
+                    '$doctorName ($doctorSpecialization)',
+                  ),
+                  if (doctorDiagnosis.isNotEmpty)
+                    _buildDetailRow('Doctor Diagnosis', doctorDiagnosis),
+                  if (doctorTreatment.isNotEmpty)
+                    _buildDetailRow('Doctor Treatment', doctorTreatment),
+                  if (doctorMedication.isNotEmpty)
+                    _buildDetailRow('Prescribed Meds', doctorMedication),
+                  if (doctorNotes.isNotEmpty)
+                    _buildDetailRow('Doctor Notes', doctorNotes),
+                  if (choNotes.isNotEmpty)
+                    _buildDetailRow('CHO Review Notes', choNotes),
+                  _buildDetailRow(
+                    'Submitted By',
+                    '${data['createdByName'] ?? data['createdByEmail'] ?? 'BHW'} (${_formatTimestamp(data['createdAt'])})',
+                  ),
                 ]),
               ],
             ),
@@ -3299,12 +3681,13 @@ class _ReferralsPageState extends State<ReferralsPage> {
             onPressed: () => ClinicalFormPdfService.showExportDialog(
               context,
               formType: ClinicalFormType.referral,
-              record: {
-                ...data,
-                'id': doc.id,
-              },
+              record: {...data, 'id': doc.id},
             ),
-            icon: const Icon(Icons.picture_as_pdf_outlined, color: _primaryAqua, size: 18),
+            icon: const Icon(
+              Icons.picture_as_pdf_outlined,
+              color: _primaryAqua,
+              size: 18,
+            ),
             label: const Text('Export PDF'),
           ),
           ElevatedButton(
@@ -3546,9 +3929,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                 label: const Text('View Details'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _lightOffWhite,
-                  side: BorderSide(
-                    color: _primaryAqua.withValues(alpha: 0.32),
-                  ),
+                  side: BorderSide(color: _primaryAqua.withValues(alpha: 0.32)),
                 ),
               ),
               OutlinedButton.icon(
@@ -3557,9 +3938,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                 label: const Text('Follow-up'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.amberAccent,
-                  side: BorderSide(
-                    color: Colors.amber.withValues(alpha: 0.4),
-                  ),
+                  side: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
                 ),
               ),
               if (_isChoOperator)
@@ -3588,18 +3967,17 @@ class _ReferralsPageState extends State<ReferralsPage> {
                 onPressed: () => ClinicalFormPdfService.showExportDialog(
                   context,
                   formType: ClinicalFormType.referral,
-                  record: {
-                    ...data,
-                    'id': doc.id,
-                  },
+                  record: {...data, 'id': doc.id},
                 ),
-                icon: const Icon(Icons.picture_as_pdf_outlined, color: _primaryAqua, size: 16),
+                icon: const Icon(
+                  Icons.picture_as_pdf_outlined,
+                  color: _primaryAqua,
+                  size: 16,
+                ),
                 label: const Text('Export PDF'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _lightOffWhite,
-                  side: BorderSide(
-                    color: _primaryAqua.withValues(alpha: 0.32),
-                  ),
+                  side: BorderSide(color: _primaryAqua.withValues(alpha: 0.32)),
                 ),
               ),
             ],
