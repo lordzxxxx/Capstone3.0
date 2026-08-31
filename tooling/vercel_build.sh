@@ -37,6 +37,13 @@ if [[ "${system_flutter_version}" != "${flutter_version}" ]]; then
   export PATH="${sdk_dir}/bin:${PATH}"
 fi
 
+# Vercel's build container runs as root while the downloaded SDK checkout can
+# have a different owner. Flutter invokes Git internally, so register only
+# this exact SDK directory as trusted instead of disabling Git's check broadly.
+flutter_bin="$(command -v flutter)"
+flutter_root="$(cd "$(dirname "$(dirname "${flutter_bin}")")" && pwd)"
+git config --global --add safe.directory "${flutter_root}" 2>/dev/null || true
+
 if [[ -n "${VERCEL_GIT_COMMIT_SHA:-}" ]]; then
   export APP_VERSION="${VERCEL_GIT_COMMIT_SHA:0:7}"
 fi
