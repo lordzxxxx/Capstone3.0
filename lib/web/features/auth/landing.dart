@@ -793,17 +793,9 @@ class _LandingPageState extends State<LandingPage>
                 Get.toNamed(WebRoutes.choLogin);
               },
             ),
-            SizedBox(height: compact ? 10 : 16),
-            _buildActionButton(
-              context: context,
-              label: 'Submit BHW Registration',
-              icon: Icons.person_add_alt_1_rounded,
-              isPrimary: false,
-              onPressed: () async {
-                Get.toNamed(WebRoutes.bhwSignup);
-              },
-            ),
-            SizedBox(height: compact ? 16 : 24),
+            SizedBox(height: compact ? 12 : 16),
+            _buildBhwRegistrationLink(),
+            SizedBox(height: compact ? 12 : 20),
             Text(
               '(c) 2026 AI-DSUHIS. All rights reserved.',
               style: _body(
@@ -815,6 +807,48 @@ class _LandingPageState extends State<LandingPage>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildBhwRegistrationLink() {
+    return Center(
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            'Need a BHW account?',
+            style: _body(
+              size: 13,
+              weight: FontWeight.w500,
+              color: _mutedCoolGray,
+            ),
+          ),
+          TextButton(
+            onPressed: () => Get.toNamed(WebRoutes.bhwSignup),
+            style: TextButton.styleFrom(
+              foregroundColor: _darkBlue,
+              minimumSize: const Size(44, 44),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+              tapTargetSize: MaterialTapTargetSize.padded,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              'Submit a registration request',
+              style: _body(
+                size: 13,
+                weight: FontWeight.w700,
+                color: _darkBlue,
+              ).copyWith(
+                decoration: TextDecoration.underline,
+                decorationThickness: 1.2,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
