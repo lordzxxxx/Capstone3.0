@@ -151,6 +151,7 @@ test.describe('public, deep-link, and responsive shell', () => {
       ['/bhw/login', /BHW Portal Login/i],
       ['/cho/login', /CHO Portal Login/i],
       ['/signup', /Create|Register/i],
+      ['/cho/signup', /AI-DSUHIS/i],
       ['/forgot-password', /Forgot|Reset/i],
       ['/not-found', /Page not found|not found/i],
     ]) {
