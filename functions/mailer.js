@@ -51,6 +51,9 @@ function getSystemMailer() {
       host: config.host,
       port: config.port,
       secure: config.secure,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
       auth: {user: SYSTEM_MAILER_EMAIL, pass: config.pass},
     });
     return {transporter, reason: null};

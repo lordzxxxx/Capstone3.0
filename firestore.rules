@@ -381,7 +381,8 @@ service cloud.firestore {
           'returned_for_correction',
           'return_for_correction'
         ] &&
-        newData.status == 'pending_review' &&
+        (newData.status == 'pending_review' ||
+          newData.status == 'submitted') &&
         newData.submissionStatus == 'submitted' &&
         changed.hasOnly([
           'patientId', 'patientRecordId', 'linkedPatientId', 'patientName',

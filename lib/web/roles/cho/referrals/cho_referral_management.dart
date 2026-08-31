@@ -2,11 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
-import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
@@ -21,20 +19,12 @@ import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 import 'package:mycapstone_project/web/shared/utils/clinical_record_mapping.dart';
 
-/// CHO referral review/approval workspace — reached from the sidebar
+/// CHO referral monitoring workspace — reached from the sidebar
 /// "Referrals" destination (`cho_navigation.dart`). Owns the referral
-/// state machine (`_ReferralRecord`, statuses: pending_review /
+/// display state (`_ReferralRecord`, including submitted /
 /// hospital_assigned / doctor_assigned / waiting_consultation / consulted
-/// / completed), which matches what `firestore.rules`' `canUpdateReferral`
-/// checks (see `pending_review` / `returned_for_correction` there) — this
-/// is the authoritative referral status vocabulary.
-///
-/// `lib/web/roles/cho/referrals/referral.dart` defines a *different*
-/// class, `CHOReferralWorkspacePage` (reached from CHO dashboard quick
-/// actions), which uses its own incompatible status vocabulary and adds
-/// doctor-registry management, filters, and PDF printing this page
-/// doesn't have. See that file's doc comment for the full explanation —
-/// this is a known, documented divergence, not an oversight.
+/// / completed). Normal referrals are routed by the backend; CHO Admin can
+/// inspect details and reassign only when an exception requires it.
 class _DoctorDirectoryEntry {
   _DoctorDirectoryEntry({required this.data, required this.references});
 
@@ -67,8 +57,8 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
 
   static const _tabs = <String>[
     'Insights',
-    'Pending Review',
-    'Active Referrals',
+    'Submitted / Awaiting Assignment',
+    'Assigned / In Progress',
     'Completed Referrals',
   ];
 
@@ -150,7 +140,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        'Coordinate, review, and track clinical referrals across all health facilities.',
+                        'Monitor automatic referral routing and track clinical referrals across all health facilities.',
                         style: TextStyle(
                           fontFamily: 'Manrope',
                           fontSize: 12,
@@ -262,7 +252,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           ChoPageHeader(
             title: 'Referral Management',
             description:
-                'Validate BHW referrals, coordinate receiving facilities and doctors, and monitor referral progress. CHO review does not diagnose or prescribe.',
+                'Monitor validated BHW referrals, automatic doctor assignments, and referral progress. CHO intervention is limited to exceptions and reassignment.',
             icon: Icons.assignment_turned_in_outlined,
             actions: [
               FilledButton.icon(
@@ -288,13 +278,13 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
             0 => _insights(records),
             1 => _queue(
               pending,
-              title: 'Pending Review Queue',
-              emptyMessage: 'No referrals currently require CHO review.',
+              title: 'Submitted / Awaiting Assignment',
+              emptyMessage: 'No referrals are currently awaiting doctor assignment.',
               mode: _QueueMode.pending,
             ),
             2 => _queue(
               active,
-              title: 'Active Referrals',
+              title: 'Assigned / In Progress',
               emptyMessage: 'No referrals are currently active.',
               mode: _QueueMode.active,
             ),
@@ -992,7 +982,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           children: [
             _kpi('Total Referrals', records.length, Icons.swap_horiz_rounded),
             _kpi(
-              'Pending Review',
+              'Awaiting Assignment',
               count((r) => r.isPending),
               Icons.rate_review_outlined,
             ),
@@ -1119,10 +1109,9 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                   (record) => _ReferralCard(
                     record: record,
                     mode: mode,
-                    onReview: () => _review(record),
-                    onAdvance: () => _advance(record),
                     onDetails: () => _details(record),
-                    onReassign: _isChoAdmin && record.doctorUid.isNotEmpty
+                    onReassign: _isChoAdmin &&
+                        (record.isPending || record.isActive)
                         ? () => _reassign(record)
                         : null,
                   ),
@@ -1132,193 +1121,6 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
         ),
       ],
     );
-  }
-
-  Future<void> _review(_ReferralRecord record) async {
-    final notes = TextEditingController(text: record.reviewNotes);
-    String priority = record.priority;
-    String hospital = record.hospital;
-    String doctor = record.doctor;
-    String doctorUid = record.doctorUid;
-    DateTime? consultationDate = record.consultationDate;
-    var action = 'approved';
-    var saving = false;
-    final doctors = await _doctorOptions();
-    final hospitals = await _hospitalOptions();
-    if (!mounted) return;
-    final saved = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: ChoColors.surface,
-          title: const Text(
-            'CHO Referral Review',
-            style: TextStyle(color: ChoColors.text),
-          ),
-          content: SizedBox(
-            width: 700,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _permissionNotice(),
-                  const SizedBox(height: 16),
-                  _lightDropdown(
-                    label: 'Review action',
-                    value: action,
-                    values: const {
-                      'approved': 'Approve',
-                      'returned': 'Return for Correction',
-                      'rejected': 'Reject',
-                      'additional_information_requested':
-                          'Request Additional Information',
-                    },
-                    onChanged: (value) => setDialogState(() => action = value),
-                  ),
-                  const SizedBox(height: 12),
-                  _lightDropdown(
-                    label: 'Referral priority',
-                    value: priority,
-                    values: const {
-                      'routine': 'Routine',
-                      'priority': 'Priority',
-                      'urgent': 'Urgent',
-                    },
-                    onChanged: (value) =>
-                        setDialogState(() => priority = value),
-                  ),
-                  if (action == 'approved') ...[
-                    const SizedBox(height: 12),
-                    _lightDropdown(
-                      label: 'Receiving hospital',
-                      value: hospitals.contains(hospital)
-                          ? hospital
-                          : hospitals.first,
-                      values: {for (final value in hospitals) value: value},
-                      onChanged: (value) =>
-                          setDialogState(() => hospital = value),
-                    ),
-                    const SizedBox(height: 12),
-                    _lightDropdown(
-                      label: 'Available doctor',
-                      value: doctors.isEmpty
-                          ? 'unassigned'
-                          : doctors.any((item) => item.id == doctorUid)
-                          ? doctorUid
-                          : doctors.first.id,
-                      values: doctors.isEmpty
-                          ? const {'unassigned': 'No eligible doctor available'}
-                          : {for (final item in doctors) item.id: item.label},
-                      onChanged: (value) => setDialogState(() {
-                        doctorUid = value;
-                        doctor = doctors
-                            .firstWhere((item) => item.id == value)
-                            .name;
-                      }),
-                    ),
-                    if (doctors.isEmpty) ...[
-                      const SizedBox(height: 6),
-                      const Text(
-                        'No eligible doctor is currently available. The referral will remain pending assignment until CHO updates availability.',
-                        style: TextStyle(color: ChoColors.muted, fontSize: 12),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate:
-                              consultationDate ??
-                              DateTime.now().add(const Duration(days: 1)),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(
-                            const Duration(days: 365),
-                          ),
-                        );
-                        if (picked != null) {
-                          setDialogState(() => consultationDate = picked);
-                        }
-                      },
-                      icon: const Icon(Icons.event_outlined),
-                      label: Text(
-                        consultationDate == null
-                            ? 'Set expected consultation date'
-                            : _date(consultationDate!),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: notes,
-                    minLines: 3,
-                    maxLines: 5,
-                    style: const TextStyle(color: Color(0xFF12252B)),
-                    decoration: _lightDecoration('CHO review notes'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: saving
-                  ? null
-                  : () async {
-                      if (notes.text.trim().isEmpty) {
-                        _snack('Review notes are required.');
-                        return;
-                      }
-                      if (action == 'approved' && consultationDate == null) {
-                        _snack(
-                          'Set the expected consultation date before approval.',
-                        );
-                        return;
-                      }
-                      setDialogState(() => saving = true);
-                      try {
-                        await _saveReview(
-                          record,
-                          action: action,
-                          priority: priority,
-                          hospital: hospital.isEmpty
-                              ? hospitals.first
-                              : hospital,
-                          doctor: doctor.isEmpty || doctors.isEmpty
-                              ? 'To be assigned'
-                              : doctor,
-                          doctorUid: doctorUid.isEmpty || doctors.isEmpty
-                              ? ''
-                              : doctorUid,
-                          consultationDate: consultationDate,
-                          notes: notes.text.trim(),
-                        );
-                        if (dialogContext.mounted) {
-                          Navigator.pop(dialogContext, true);
-                        }
-                      } catch (error) {
-                        if (dialogContext.mounted) {
-                          setDialogState(() => saving = false);
-                        }
-                        _snack('Could not save the referral review: $error');
-                      }
-                    },
-              style: AppButtonStyles.primary(),
-              child: Text(saving ? 'Saving...' : 'Save review'),
-            ),
-          ],
-        ),
-      ),
-    );
-    notes.dispose();
-    if (saved == true && mounted) {
-      _snack('Referral review saved and notification generated.');
-    }
   }
 
   Future<void> _reassign(_ReferralRecord record) async {
@@ -1377,160 +1179,6 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
     }
   }
 
-  Future<void> _saveReview(
-    _ReferralRecord record, {
-    required String action,
-    required String priority,
-    required String hospital,
-    required String doctor,
-    required String doctorUid,
-    required DateTime? consultationDate,
-    required String notes,
-  }) async {
-    final user = FirebaseAuth.instance.currentUser;
-    final payload = <String, dynamic>{
-      'status': action,
-      'priority': priority,
-      'choReviewNotes': notes,
-      'reviewedByUid': user?.uid,
-      'reviewedByEmail': user?.email,
-      'reviewedAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-      if (action == 'approved') ...{
-        'assignedHospital': hospital,
-        'receivingHospital': hospital,
-        'expectedConsultationDate': Timestamp.fromDate(consultationDate!),
-        'approvedAt': FieldValue.serverTimestamp(),
-      },
-      'statusHistory': FieldValue.arrayUnion([
-        {
-          'status': action,
-          'at': Timestamp.now(),
-          'by': user?.uid,
-          'notes': notes,
-        },
-      ]),
-    };
-    await record.reference.set(payload, SetOptions(merge: true));
-    await _syncMirror(record, {...record.data, ...payload});
-    if (action == 'approved' && doctorUid.trim().isNotEmpty) {
-      try {
-        await _accountPolicyService.assignDoctorToReferral(
-          referralId: record.id,
-          preferredDoctorUid: doctorUid,
-        );
-      } catch (error) {
-        // Approval remains recorded, but the referral is deliberately left
-        // without a doctor when the selected doctor is no longer eligible.
-        await record.reference.set({
-          'assignedDoctorUid': FieldValue.delete(),
-          'assignedDoctorName': FieldValue.delete(),
-          'assignedDoctorEmail': FieldValue.delete(),
-          'assignedDoctorSpecialization': FieldValue.delete(),
-          'assignedDoctorAvailability': FieldValue.delete(),
-          'referredTo': FieldValue.delete(),
-          'status': 'approved',
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-        await _syncMirror(record, {
-          ...record.data,
-          'assignedDoctorUid': FieldValue.delete(),
-          'assignedDoctorName': FieldValue.delete(),
-          'assignedDoctorEmail': FieldValue.delete(),
-          'assignedDoctorSpecialization': FieldValue.delete(),
-          'assignedDoctorAvailability': FieldValue.delete(),
-          'referredTo': FieldValue.delete(),
-          'status': 'approved',
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        if (mounted) {
-          _snack(
-            'Referral approved, but no eligible doctor could be assigned yet.',
-          );
-        }
-      }
-    }
-    await _firestore.collection('notifications').add({
-      'type': 'referral_review',
-      'referralId': record.id,
-      'recipientUid': record.createdByUid,
-      'title': 'Referral ${_title(action)}',
-      'message': notes,
-      'status': 'unread',
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-  Future<void> _advance(_ReferralRecord record) async {
-    const next = {
-      'approved': 'hospital_assigned',
-      'hospital_assigned': 'doctor_assigned',
-      'doctor_assigned': 'waiting_consultation',
-      'assigned': 'waiting_consultation',
-      'waiting_consultation': 'consulted',
-      'consulted': 'completed',
-    };
-    final nextStatus = next[record.status];
-    if (nextStatus == null) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: ChoColors.surface,
-        title: const Text(
-          'Update referral progress',
-          style: TextStyle(color: ChoColors.text),
-        ),
-        content: Text(
-          'Move ${record.patientName} from ${record.statusLabel} to ${_title(nextStatus)}? This updates coordination status only.',
-          style: const TextStyle(color: ChoColors.muted),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: AppButtonStyles.primary(),
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    final payload = {
-      'status': nextStatus,
-      'updatedAt': FieldValue.serverTimestamp(),
-      'statusHistory': FieldValue.arrayUnion([
-        {
-          'status': nextStatus,
-          'at': Timestamp.now(),
-          'by': FirebaseAuth.instance.currentUser?.uid,
-        },
-      ]),
-    };
-    await record.reference.set(payload, SetOptions(merge: true));
-    await _syncMirror(record, {...record.data, ...payload});
-    if (mounted) _snack('Referral moved to ${_title(nextStatus)}.');
-  }
-
-  Future<void> _syncMirror(
-    _ReferralRecord record,
-    Map<String, dynamic> payload,
-  ) async {
-    final code = record.barangayCode.trim().toUpperCase();
-    if (code.isEmpty) return;
-    await _firestore
-        .collection(BarangayFirestorePaths.barangaysCollection)
-        .doc(code)
-        .collection('referrals')
-        .doc(record.id)
-        .set({
-          ...payload,
-          'rootReferralPath': 'referrals/${record.id}',
-        }, SetOptions(merge: true));
-  }
-
   Future<List<_Option>> _doctorOptions() async {
     try {
       final snapshot = await _firestore.collection('users').get();
@@ -1581,24 +1229,6 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       if (values.isNotEmpty) return values;
     } catch (_) {}
     return const <_Option>[];
-  }
-
-  Future<List<String>> _hospitalOptions() async {
-    try {
-      final snapshot = await _firestore.collection('hospitals').get();
-      final values =
-          snapshot.docs
-              .map(
-                (doc) =>
-                    _s(doc.data(), ['name', 'hospitalName', 'facilityName']),
-              )
-              .where((value) => value.isNotEmpty)
-              .toSet()
-              .toList()
-            ..sort();
-      if (values.isNotEmpty) return values;
-    } catch (_) {}
-    return const ['City Health Office / Receiving Facility'];
   }
 
   void _details(_ReferralRecord record) {
@@ -1675,27 +1305,6 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       );
     }
   }
-
-  Widget _permissionNotice() => Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: ChoColors.aqua.withValues(alpha: 0.1),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: ChoColors.aqua.withValues(alpha: 0.25)),
-    ),
-    child: const Row(
-      children: [
-        Icon(Icons.shield_outlined, color: ChoColors.aqua),
-        SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            'Coordination review only. CHO cannot diagnose, prescribe, or finalize medical treatment.',
-            style: TextStyle(color: ChoColors.text),
-          ),
-        ),
-      ],
-    ),
-  );
 
   InputDecoration _lightDecoration(String hint) => InputDecoration(
     hintText: hint,
@@ -1788,15 +1397,11 @@ class _ReferralCard extends StatelessWidget {
   const _ReferralCard({
     required this.record,
     required this.mode,
-    required this.onReview,
-    required this.onAdvance,
     required this.onDetails,
     this.onReassign,
   });
   final _ReferralRecord record;
   final _QueueMode mode;
-  final VoidCallback onReview;
-  final VoidCallback onAdvance;
   final VoidCallback onDetails;
   final VoidCallback? onReassign;
 
@@ -1855,19 +1460,7 @@ class _ReferralCard extends StatelessWidget {
                 icon: const Icon(Icons.visibility_outlined),
                 label: const Text('View details'),
               ),
-              if (mode == _QueueMode.pending)
-                FilledButton.icon(
-                  onPressed: onReview,
-                  icon: const Icon(Icons.rate_review_outlined),
-                  label: const Text('Review referral'),
-                ),
-              if (mode == _QueueMode.active)
-                FilledButton.icon(
-                  onPressed: onAdvance,
-                  icon: const Icon(Icons.trending_flat_rounded),
-                  label: const Text('Update progress'),
-                ),
-              if (mode == _QueueMode.active && onReassign != null)
+              if (onReassign != null)
                 OutlinedButton.icon(
                   onPressed: onReassign,
                   icon: const Icon(Icons.swap_horiz_rounded),
@@ -2206,7 +1799,7 @@ class _ReferralRecord {
   String get id => document.id;
   DocumentReference<Map<String, dynamic>> get reference => document.reference;
   String get status =>
-      _normalizeStatus(_s(data, ['status'], fallback: 'pending_review'));
+      _normalizeStatus(_s(data, ['status'], fallback: 'submitted'));
   String get statusLabel => _title(status);
   String get priority => _s(data, [
     'priority',
@@ -2215,9 +1808,10 @@ class _ReferralRecord {
   String get priorityLabel => _title(priority);
   bool get isUrgent => priority.contains('urgent') || _bool(data['urgent']);
   bool get isPending => const {
+    'submitted',
+    'awaiting_doctor_assignment',
     'pending_review',
     'under_review',
-    'submitted',
     'additional_information_requested',
   }.contains(status);
   bool get isActive => const {
@@ -2227,6 +1821,8 @@ class _ReferralRecord {
     'assigned',
     'waiting_consultation',
     'consulted',
+    'doctor_reviewing',
+    'in_treatment',
   }.contains(status);
   bool get isClosed =>
       const {'completed', 'returned', 'rejected'}.contains(status);
@@ -2449,7 +2045,8 @@ DateTime? _asDate(dynamic value) {
 String _normalizeStatus(String status) {
   final value = status.trim().toLowerCase().replaceAll(RegExp(r'[\s-]+'), '_');
   return switch (value) {
-    'pending' || 'submitted' || 'new' => 'pending_review',
+    'pending' || 'submitted' || 'new' => 'submitted',
+    'under_review' => 'pending_review',
     'return_for_correction' => 'returned',
     'waiting' => 'waiting_consultation',
     'in_treatment' => 'consulted',

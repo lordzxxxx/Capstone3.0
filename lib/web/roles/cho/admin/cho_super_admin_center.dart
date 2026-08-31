@@ -1473,8 +1473,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     return Scaffold(
       backgroundColor: ChoColors.background,
       body: WebResponsiveBody(
-        sidebar: const ChoNavigationDrawer(current: ChoDestination.dashboard),
-        title: 'User Administration',
+        sidebar: const ChoNavigationDrawer(current: ChoDestination.manageChoAccess),
+        title: 'Manage CHO Access',
         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: _firestore.collection('users').snapshots(),
           builder: (context, snapshot) {

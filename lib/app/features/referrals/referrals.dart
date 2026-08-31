@@ -852,30 +852,13 @@ class _ReferralsPageState extends State<ReferralsPage> {
 
       await batch.commit();
 
-      DoctorAssignmentExecutionResult? assignmentResult;
-      if ((_selectedPreferredDoctorUid?.isNotEmpty ?? false) ||
-          _autoAssignDoctor) {
-        try {
-          assignmentResult = await _accountPolicyService.assignDoctorToReferral(
-            referralId: referralRef.id,
-            preferredDoctorUid: _isBhw ? null : _selectedPreferredDoctorUid,
-          );
-        } catch (_) {}
-      }
-
       if (mounted) {
         _resetReferralForm();
       }
 
-      final assignedDoctorName =
-          assignmentResult?.recommendation?.doctorName ?? '';
-      final assignedDoctorNotice = assignedDoctorName.isNotEmpty
-          ? ' Assigned to $assignedDoctorName.'
-          : '';
-
       Get.snackbar(
         'Referral submitted',
-        'The referral was sent to CHO for real-time review.$assignedDoctorNotice',
+        'The system will automatically assign an eligible doctor after submission.',
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
@@ -1016,7 +999,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                                               null) {
                                             Get.snackbar(
                                               'No recommendation available',
-                                              'No eligible doctor could be suggested yet. You can still assign manually.',
+                                              'No eligible doctor could be suggested yet. CHO Admin can reassign when an eligible doctor is available.',
                                               backgroundColor: Colors.orange,
                                               colorText: Colors.white,
                                             );
@@ -1060,7 +1043,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                           const SizedBox(height: 8),
                           Text(
                             smartSuggestion == null
-                                ? 'Use workload, specialization, and availability signals to preselect the strongest doctor candidate, then save or override manually.'
+                                ? 'The backend assigns the eligible doctor with the lowest active referral workload after submission.'
                                 : 'Recommended: ${smartSuggestion!.doctorName} • ${smartSuggestion!.specialization} • workload ${smartSuggestion!.workload}',
                             style: TextStyle(
                               color: _lightOffWhite.withValues(alpha: 0.76),
@@ -1130,7 +1113,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                       controller: reviewNotesController,
                       maxLines: 4,
                       style: const TextStyle(color: _lightOffWhite),
-                      decoration: _inputDecoration('CHO review notes'),
+                      decoration: _inputDecoration('Coordination notes'),
                     ),
                   ],
                 ),
@@ -2165,7 +2148,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
           const SizedBox(height: 6),
           Text(
             _doctorDocs.isEmpty
-                ? 'No registered doctor accounts yet. Referrals will still be sent to CHO for centralized review.'
+                ? 'No registered doctor accounts yet. The referral will remain awaiting doctor assignment.'
                 : _isBhw
                 ? 'The system automatically assigns each referral to an approved, active, available doctor using the lowest active referral workload. CHO Admin can reassign later.'
                 : 'Select an available doctor or let the system route automatically after review.',
@@ -2212,7 +2195,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
               subtitle: Text(
                 _selectedPreferredDoctorUid == null
                     ? 'The system will match this referral to the strongest doctor after submission.'
-                    : 'Keep this on to let the server validate and finalize your preferred doctor.',
+                    : 'The server validates the referral and applies its automatic assignment rules.',
                 style: TextStyle(color: _lightOffWhite.withValues(alpha: 0.68)),
               ),
               onChanged: (value) {
@@ -2420,7 +2403,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
         icon: Icons.swap_horiz_rounded,
       ),
       (
-        label: 'Pending CHO Review',
+        label: 'Awaiting Assignment',
         value: '$submitted',
         icon: Icons.rate_review_outlined,
       ),

@@ -155,43 +155,6 @@ class DoctorAssignmentSuggestionResult {
   }
 }
 
-class DoctorRegistrationResult {
-  final bool success;
-  final bool created;
-  final String uid;
-  final String doctorName;
-  final String email;
-  final String specialization;
-  final String availability;
-  final String? resetLink;
-
-  const DoctorRegistrationResult({
-    required this.success,
-    required this.created,
-    required this.uid,
-    required this.doctorName,
-    required this.email,
-    required this.specialization,
-    required this.availability,
-    required this.resetLink,
-  });
-
-  factory DoctorRegistrationResult.fromMap(Map<Object?, Object?> map) {
-    return DoctorRegistrationResult(
-      success: map['success'] == true,
-      created: map['created'] == true,
-      uid: (map['uid'] ?? '').toString(),
-      doctorName: (map['doctorName'] ?? '').toString(),
-      email: (map['email'] ?? '').toString(),
-      specialization: (map['specialization'] ?? 'General Medicine').toString(),
-      availability: (map['availability'] ?? 'available').toString(),
-      resetLink: (map['resetLink'] ?? '').toString().trim().isEmpty
-          ? null
-          : (map['resetLink'] ?? '').toString(),
-    );
-  }
-}
-
 class ManagedAccountResult {
   final bool success;
   final String uid;
@@ -255,36 +218,6 @@ class DoctorAssignmentExecutionResult {
                 .map(DoctorAssignmentSuggestion.fromMap)
                 .toList()
           : const <DoctorAssignmentSuggestion>[],
-    );
-  }
-}
-
-class DoctorAssignmentEmailResult {
-  final bool success;
-  final bool sent;
-  final String message;
-  final String? reason;
-
-  const DoctorAssignmentEmailResult({
-    required this.success,
-    required this.sent,
-    required this.message,
-    required this.reason,
-  });
-
-  factory DoctorAssignmentEmailResult.fromMap(Map<Object?, Object?> map) {
-    final reasonText = (map['reason'] ?? '').toString().trim();
-    final messageText = (map['message'] ?? '').toString().trim();
-    final sent = map['sent'] == true;
-    return DoctorAssignmentEmailResult(
-      success: map['success'] == true,
-      sent: sent,
-      message: messageText.isEmpty
-          ? (sent
-                ? 'Assignment email sent successfully.'
-                : 'Assignment email was not sent.')
-          : messageText,
-      reason: reasonText.isEmpty ? null : reasonText,
     );
   }
 }
@@ -452,24 +385,6 @@ class AccountPolicyService {
     );
   }
 
-  Future<DoctorRegistrationResult> registerDoctorAccount({
-    required String fullName,
-    required String email,
-    required String specialization,
-    required String availability,
-  }) async {
-    final callable = _functions.httpsCallable('registerDoctorAccount');
-    final response = await callable.call(<String, dynamic>{
-      'fullName': fullName.trim(),
-      'email': email.trim(),
-      'specialization': specialization.trim(),
-      'availability': availability.trim(),
-    });
-    return DoctorRegistrationResult.fromMap(
-      Map<Object?, Object?>.from(response.data as Map),
-    );
-  }
-
   Future<ManagedAccountResult> createChoAccount({
     required String fullName,
     required String email,
@@ -543,21 +458,4 @@ class AccountPolicyService {
     );
   }
 
-  Future<DoctorAssignmentEmailResult> sendDoctorReferralAssignmentEmail({
-    required String referralId,
-    String? doctorEmail,
-    String? doctorName,
-  }) async {
-    final callable = _functions.httpsCallable(
-      'sendDoctorReferralAssignmentEmail',
-    );
-    final response = await callable.call(<String, dynamic>{
-      'referralId': referralId.trim(),
-      'doctorEmail': doctorEmail?.trim(),
-      'doctorName': doctorName?.trim(),
-    });
-    return DoctorAssignmentEmailResult.fromMap(
-      Map<Object?, Object?>.from(response.data as Map),
-    );
-  }
 }

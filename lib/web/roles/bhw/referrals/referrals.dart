@@ -723,33 +723,13 @@ class _ReferralsPageState extends State<ReferralsPage> {
 
       await batch.commit();
 
-      DoctorAssignmentExecutionResult? assignmentResult;
-      Object? assignmentError;
-      if ((_selectedPreferredDoctorUid?.isNotEmpty ?? false) ||
-          _autoAssignDoctor) {
-        try {
-          assignmentResult = await _accountPolicyService.assignDoctorToReferral(
-            referralId: referralRef.id,
-            preferredDoctorUid: _isBhw ? null : _selectedPreferredDoctorUid,
-          );
-        } catch (error) {
-          assignmentError = error;
-        }
-      }
-
       if (mounted) {
         _resetReferralForm();
       }
 
       Get.snackbar(
-        assignmentResult?.recommendation != null
-            ? 'Referral submitted and assigned'
-            : 'Referral submitted',
-        assignmentResult?.recommendation != null
-            ? 'The referral is now routed to ${assignmentResult!.recommendation!.doctorName} (${assignmentResult.recommendation!.specialization}) for follow-through care.'
-            : assignmentError != null
-            ? 'The referral was submitted, but doctor assignment is still pending. CHO can assign a doctor from the referral queue.'
-            : 'The referral was sent to CHO for real-time review and doctor assignment.',
+        'Referral submitted',
+        'The system will automatically assign an eligible doctor after submission.',
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
@@ -963,7 +943,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                                               null) {
                                             Get.snackbar(
                                               'No recommendation available',
-                                              'No eligible doctor could be suggested yet. You can still assign manually.',
+                                              'No eligible doctor could be suggested yet. CHO Admin can reassign when an eligible doctor is available.',
                                               backgroundColor: Colors.orange,
                                               colorText: Colors.white,
                                             );
@@ -1007,7 +987,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                           const SizedBox(height: 8),
                           Text(
                             smartSuggestion == null
-                                ? 'Use the eligible doctor with the lowest active referral workload, then save or override manually.'
+                                ? 'The backend assigns the eligible doctor with the lowest active referral workload after submission.'
                                 : 'Recommended: ${smartSuggestion!.doctorName} • ${smartSuggestion!.specialization} • workload ${smartSuggestion!.workload}',
                             style: TextStyle(
                               color: _lightOffWhite.withValues(alpha: 0.76),
@@ -1077,7 +1057,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                       controller: reviewNotesController,
                       maxLines: 4,
                       style: const TextStyle(color: _lightOffWhite),
-                      decoration: _inputDecoration('CHO review notes'),
+                      decoration: _inputDecoration('Coordination notes'),
                     ),
                   ],
                 ),
@@ -2864,7 +2844,7 @@ class _ReferralsPageState extends State<ReferralsPage> {
                             const SizedBox(height: 8),
                             Text(
                               _isChoOperator
-                                  ? 'CHO can review all referred patients and route them to doctors in real time.'
+                                  ? 'CHO can monitor all referrals and reassign doctors when necessary.'
                                   : _isDoctor
                                   ? 'Only referrals assigned to you appear here.'
                                   : 'Your submitted referrals remain visible here as CHO and doctors update patient care.',

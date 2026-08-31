@@ -10,6 +10,7 @@ enum ChoDestination {
   mortality,
   referrals,
   bhwManagement,
+  manageChoAccess,
   reports,
   announcements,
   dataQuality,

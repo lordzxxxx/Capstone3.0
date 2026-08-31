@@ -354,7 +354,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
                   ),
                   const SizedBox(height: 5),
                   const Text(
-                    'Create patient-linked requests for CHO review and monitor higher-level care. BHWs cannot approve, assign providers, diagnose, or prescribe.',
+                    'Create patient-linked requests for automatic doctor routing and monitor higher-level care. BHWs cannot approve, assign providers, diagnose, or prescribe.',
                     style: TextStyle(color: Colors.white, height: 1.45),
                   ),
                 ],
@@ -415,7 +415,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
         _kpiGrid([
           _kpi('Total Referrals', records.length, Icons.swap_horiz_rounded),
           _kpi(
-            'Pending CHO Review',
+            'Awaiting Assignment',
             count((r) => r.isPending),
             Icons.rate_review_outlined,
           ),
@@ -971,7 +971,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
         'supportingNotes': _notesController.text.trim(),
         'destinationFacility': _destinationController.text.trim(),
         'attachments': _attachments,
-        'status': 'pending_review',
+        'status': 'submitted',
         'submissionStatus': 'submitted',
         'barangay': _scope.barangay,
         'barangayCode': _scope.barangayCode,
@@ -984,7 +984,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
         'submittedAt': FieldValue.serverTimestamp(),
         'statusHistory': FieldValue.arrayUnion([
           {
-            'status': 'pending_review',
+            'status': 'submitted',
             'at': Timestamp.now(),
             'by': user.uid,
             'role': 'bhw',
@@ -1035,7 +1035,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
         }
       }
       if (!mounted) return;
-      _snack('Referral submitted to CHO for review.');
+      _snack('Referral submitted. The system will assign an eligible doctor automatically.');
       _clearDraft();
       if (widget.embedded) {
         widget.onClose?.call();
@@ -1127,7 +1127,7 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
 
   Widget _recordFilters() => _panel(
     title: 'Referral Records',
-    subtitle: 'Your submitted referrals and CHO review results',
+    subtitle: 'Your submitted referrals and automatic routing results',
     child: WebFilterSurface(
       padding: EdgeInsets.zero,
       children: [
@@ -1146,7 +1146,8 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
           value: _statusFilter,
           values: const {
             'all': 'All Statuses',
-            'pending_review': 'Pending CHO Review',
+            'submitted': 'Submitted / Awaiting Assignment',
+            'awaiting_doctor_assignment': 'Awaiting Doctor Assignment',
             'approved': 'Approved',
             'waiting_consultation': 'Waiting Consultation',
             'returned': 'Returned for Correction',
@@ -1837,10 +1838,10 @@ class _BhwReferralRecord {
   String get shortId => id.length <= 10 ? id : id.substring(0, 10);
   DocumentReference<Map<String, dynamic>> get reference => document.reference;
   String get status =>
-      _normalizeStatus(_textOf(data, ['status'], fallback: 'pending_review'));
+      _normalizeStatus(_textOf(data, ['status'], fallback: 'submitted'));
   String get statusLabel => status == 'returned'
       ? 'Returned for Correction'
-      : _title(status == 'pending_review' ? 'pending_cho_review' : status);
+      : _title(status == 'pending_review' ? 'legacy_pending_review' : status);
   String get priority => _textOf(data, [
     'priority',
     'referralPriority',
@@ -1971,7 +1972,11 @@ class _BhwReferralRecord {
         .toList();
   }
 
-  bool get isPending => status == 'pending_review';
+  bool get isPending => const {
+    'submitted',
+    'awaiting_doctor_assignment',
+    'pending_review',
+  }.contains(status);
   bool get isApproved => const {
     'approved',
     'hospital_assigned',
@@ -2040,7 +2045,8 @@ String _normalizeStatus(String status) {
   final value = status.trim().toLowerCase().replaceAll(RegExp(r'[\s-]+'), '_');
   return switch (value) {
     'draft' => 'draft',
-    'submitted' || 'pending' || 'under_review' => 'pending_review',
+    'submitted' || 'pending' => 'submitted',
+    'under_review' => 'pending_review',
     'return_for_correction' || 'returned_for_correction' => 'returned',
     'waiting' => 'waiting_consultation',
     'in_treatment' => 'consulted',

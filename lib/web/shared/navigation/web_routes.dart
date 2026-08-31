@@ -62,6 +62,7 @@ abstract final class WebRoutes {
       ChoDestination.mortality => choMortality,
       ChoDestination.referrals => choReferrals,
       ChoDestination.bhwManagement => choBhwManagement,
+      ChoDestination.manageChoAccess => choSuperAdmin,
       ChoDestination.reports => choReports,
       ChoDestination.announcements => choAnnouncements,
       ChoDestination.dataQuality => choDataQuality,

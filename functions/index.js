@@ -17,12 +17,11 @@ const {
   getBarangayAvailability,
   createRegistrationAccount,
   completeRegistration,
-	registerDoctorAccount,
 	createChoAccount,
 	reviewBhwRegistration,
 	updateChoAccount,
 	assignDoctorToReferral,
-	sendDoctorReferralAssignmentEmail,
+	autoAssignReferralOnWrite,
 	syncAccountGovernanceLocksV2,
 	suggestDoctorAssignment,
 } = require('./account_policy');
@@ -37,12 +36,11 @@ exports.validateRegistrationPolicy = validateRegistrationPolicy;
 exports.getBarangayAvailability = getBarangayAvailability;
 exports.createRegistrationAccount = createRegistrationAccount;
 exports.completeRegistration = completeRegistration;
-exports.registerDoctorAccount = registerDoctorAccount;
 exports.createChoAccount = createChoAccount;
 exports.reviewBhwRegistration = reviewBhwRegistration;
 exports.updateChoAccount = updateChoAccount;
 exports.assignDoctorToReferral = assignDoctorToReferral;
-exports.sendDoctorReferralAssignmentEmail = sendDoctorReferralAssignmentEmail;
+exports.autoAssignReferralOnWrite = autoAssignReferralOnWrite;
 exports.syncAccountGovernanceLocksV2 = syncAccountGovernanceLocksV2;
 exports.suggestDoctorAssignment = suggestDoctorAssignment;
 

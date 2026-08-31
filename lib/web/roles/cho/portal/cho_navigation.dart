@@ -186,6 +186,12 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
                                       isCollapsed: effectiveCollapsed,
                                     ),
                                     _buildSidebarItem(
+                                      destination: ChoDestination.manageChoAccess,
+                                      label: 'Manage CHO Access',
+                                      icon: Icons.admin_panel_settings_outlined,
+                                      isCollapsed: effectiveCollapsed,
+                                    ),
+                                    _buildSidebarItem(
                                       destination: ChoDestination.reports,
                                       label: 'Reports',
                                       icon: Icons.summarize_outlined,

@@ -1,7 +1,7 @@
 const functions = require('firebase-functions');
 const { onDocumentWritten } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
-const { getFirestore } = require('firebase-admin/firestore');
+const {getFirestore, FieldValue} = require('firebase-admin/firestore');
 const crypto = require('crypto');
 const {sendSystemEmail} = require('./mailer');
 const {
@@ -384,31 +384,40 @@ async function sendDoctorAssignmentEmail({
       'Not provided',
   );
   const referralDate = timestampText(
-      referral?.referralDate || referral?.createdAt || new Date(),
+      referral?.referralDateTime || referral?.referralDate ||
+      referral?.createdAt || new Date(),
   );
-  const assignmentTime = timestampText(
-      referral?.assignedAt || referral?.updatedAt || new Date(),
+  const referralReason = safeText(
+      referral?.referralReason || referral?.reason ||
+      referral?.chiefComplaint,
+      'Not provided',
   );
+  const priority = safeText(referral?.priority || referral?.referralPriority,
+      'Routine');
+  const status = safeText(referral?.status, 'assigned');
   const appUrl = String(
       process.env.APP_URL || 'https://www.ai-dsuhis.com',
   ).replace(/\/$/, '');
-  const portalLink = `${appUrl}/doctor/referrals`;
+  const portalLink = `${appUrl}/doctor/referrals?referralId=${encodeURIComponent(referralId)}`;
 
   const subject = 'New Patient Referral Assigned – AI-DSUHIS';
   const text = [
     `Hello Dr. ${safeDoctorName},`,
     '',
-    'A patient referral has been assigned to you in AI-DSUHIS.',
+    'A new patient referral has been automatically assigned to you in AI-DSUHIS.',
     '',
     `Doctor: ${safeDoctorName}`,
     `Patient: ${patientName}`,
-    `Referral date: ${referralDate}`,
+    `Referral Reference: ${referralId}`,
+    `Referral Date and Time: ${referralDate}`,
+    `Referred From: ${barangay}`,
     `Referring BHW: ${bhwName}`,
-    `Barangay: ${barangay}`,
-    `Reference: ${referralId}`,
-    `Assigned at: ${assignmentTime}`,
+    `Referral Reason: ${referralReason}`,
+    `Priority: ${priority}`,
+    `Assigned Doctor: ${safeDoctorName}`,
+    `Status: ${status}`,
     '',
-    `Open the secure doctor portal: ${portalLink}`,
+    `View Referral: ${portalLink}`,
     '',
     'For privacy, clinical diagnosis, history, and AI analysis are available only after secure sign-in.',
   ].join('\n');
@@ -417,14 +426,18 @@ async function sendDoctorAssignmentEmail({
     <div style="font-family: Arial, sans-serif; color: #0A1F24; line-height: 1.5;">
       <h2 style="margin-bottom: 8px;">New Referral Assignment</h2>
       <p>Hello Dr. ${htmlEscape(safeDoctorName)},</p>
-      <p>A patient referral has been assigned to you in AI-DSUHIS.</p>
+      <p>A new patient referral has been automatically assigned to you in AI-DSUHIS.</p>
       <table style="border-collapse: collapse; width: 100%; max-width: 640px;">
         <tr><td style="padding: 6px 8px; font-weight: 600;">Doctor</td><td style="padding: 6px 8px;">${htmlEscape(safeDoctorName)}</td></tr>
         <tr><td style="padding: 6px 8px; font-weight: 600;">Patient</td><td style="padding: 6px 8px;">${htmlEscape(patientName)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Referral date</td><td style="padding: 6px 8px;">${htmlEscape(referralDate)}</td></tr>
+        <tr><td style="padding: 6px 8px; font-weight: 600;">Referral reference</td><td style="padding: 6px 8px;">${htmlEscape(referralId)}</td></tr>
+        <tr><td style="padding: 6px 8px; font-weight: 600;">Referral date and time</td><td style="padding: 6px 8px;">${htmlEscape(referralDate)}</td></tr>
+        <tr><td style="padding: 6px 8px; font-weight: 600;">Referred from</td><td style="padding: 6px 8px;">${htmlEscape(barangay)}</td></tr>
         <tr><td style="padding: 6px 8px; font-weight: 600;">Referring BHW</td><td style="padding: 6px 8px;">${htmlEscape(bhwName)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Barangay</td><td style="padding: 6px 8px;">${htmlEscape(barangay)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Reference</td><td style="padding: 6px 8px;">${htmlEscape(referralId)}</td></tr>
+        <tr><td style="padding: 6px 8px; font-weight: 600;">Referral reason</td><td style="padding: 6px 8px;">${htmlEscape(referralReason)}</td></tr>
+        <tr><td style="padding: 6px 8px; font-weight: 600;">Priority</td><td style="padding: 6px 8px;">${htmlEscape(priority)}</td></tr>
+        <tr><td style="padding: 6px 8px; font-weight: 600;">Assigned doctor</td><td style="padding: 6px 8px;">${htmlEscape(safeDoctorName)}</td></tr>
+        <tr><td style="padding: 6px 8px; font-weight: 600;">Status</td><td style="padding: 6px 8px;">${htmlEscape(status)}</td></tr>
       </table>
       <p style="margin-top: 12px;"><a href="${htmlEscape(portalLink)}">Open the secure doctor portal</a></p>
       <p style="font-size: 12px; color: #4B6075;">Clinical diagnosis, history, and AI analysis are available only after secure sign-in.</p>
@@ -687,7 +700,7 @@ async function syncReferralMirror(referralId, payload) {
     ...payload,
     rootReferralPath: `referrals/${normalizedReferralId}`,
     storedUnderBarangay: true,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   }, { merge: true });
 }
 
@@ -1007,7 +1020,7 @@ async function syncBarangayLock(uid, beforeData, afterData) {
       email: (afterData.email || '').toString(),
       accountStatus: (afterData.accountStatus || 'active').toString(),
       approvalStatus: (afterData.approvalStatus || 'pending').toString(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       source: 'users-sync',
     }, { merge: true });
   }
@@ -1457,13 +1470,13 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
       uid,
       email,
       emailLower: normalizeText(email),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
     transaction.set(usernameLockRef, {
       uid,
       username,
       usernameLower: normalizeText(username),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
 
     if (barangayLockRef && isBarangayScopedRole(role)) {
@@ -1476,7 +1489,7 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
         email,
         accountStatus: payload.accountStatus,
         approvalStatus: payload.approvalStatus,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         source: 'registration-complete',
       }, { merge: true });
     }
@@ -1606,7 +1619,7 @@ exports.syncAccountGovernanceLocksV2 = onDocumentWritten({
       uid,
       email,
       emailLower: normalizeText(email),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       source: 'users-sync',
     }, { merge: true });
   }
@@ -1616,7 +1629,7 @@ exports.syncAccountGovernanceLocksV2 = onDocumentWritten({
       uid,
       username,
       usernameLower: normalizeText(username),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       source: 'users-sync',
     }, { merge: true });
   }
@@ -1815,13 +1828,25 @@ async function provisionManagedAccount(data, context) {
       text: [
         `Hello ${fullName},`,
         '',
-        `A CHO Admin created your AI-DSUHIS ${role === 'DOCTOR' ? 'doctor' : 'CHO'} account.`,
-        'Use this secure link to set your password and activate access:',
-        resetLink,
+        'An AI-DSUHIS account has been created for you by the City Health Office Administrator.',
         '',
-        'Never share your password or activation link.',
+        'Account Details',
+        `Email: ${email}`,
+        `Role: ${role}`,
+        '',
+        'Please use the secure link below to activate your account and create your password.',
+        `ACTIVATE ACCOUNT / SET PASSWORD: ${resetLink}`,
+        '',
+        'After setting your password, you can sign in to AI-DSUHIS using your registered email.',
+        'For security, do not share your account credentials.',
+        '',
+        'Thank you,',
+        'AI-DSUHIS',
+        'City Health Office',
+        '',
+        'This is an automated system notification.',
       ].join('\n'),
-      html: `<p>Hello ${htmlEscape(fullName)},</p><p>A CHO Admin created your AI-DSUHIS ${role === 'DOCTOR' ? 'doctor' : 'CHO'} account.</p><p><a href="${htmlEscape(resetLink)}">Set your password and activate access</a></p><p>Never share your password or activation link.</p>`,
+      html: `<p>Hello ${htmlEscape(fullName)},</p><p>An AI-DSUHIS account has been created for you by the City Health Office Administrator.</p><h3>Account Details</h3><p>Email: ${htmlEscape(email)}<br>Role: ${htmlEscape(role)}</p><p>Please use the secure link below to activate your account and create your password.</p><p><a href="${htmlEscape(resetLink)}">ACTIVATE ACCOUNT / SET PASSWORD</a></p><p>After setting your password, you can sign in to AI-DSUHIS using your registered email.</p><p>For security, do not share your account credentials.</p><p>Thank you,<br>AI-DSUHIS<br>City Health Office</p><p>This is an automated system notification.</p>`,
     })
     : {sent: false, reason: 'activation_link_unavailable'};
 
@@ -1855,280 +1880,6 @@ exports.createChoAccount = functions.https.onCall(async (data, context) => {
     return await provisionManagedAccount(data || {}, context);
   } catch (error) {
     throw doctorRegistrationError(error, 'Managed account creation failed.');
-  }
-});
-
-exports.registerDoctorAccount = functions.https.onCall(async (data, context) => {
-  const fullName = String(data?.fullName || '').trim();
-  const email = String(data?.email || '').trim().toLowerCase();
-  const specialization = doctorSpecializationValue(data || {});
-  const availability = doctorAvailabilityValue(data || {});
-
-  console.log('registerDoctorAccount started', {
-    callerUid: context.auth?.uid || null,
-    email,
-    specialization,
-    availability,
-  });
-
-  let userRecord = null;
-  let created = false;
-
-  try {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
-          'unauthenticated',
-          'You must be signed in to register a doctor.',
-      );
-    }
-
-    const callerDoc = await db.collection('users').doc(context.auth.uid).get();
-    ensureChoAdmin(context, callerDoc.data() || {});
-
-    if (!fullName || !email || !specialization) {
-      throw new functions.https.HttpsError(
-          'invalid-argument',
-          'Doctor name, email, and specialization are required.',
-      );
-    }
-
-    if (!isValidEmail(email)) {
-      throw new functions.https.HttpsError(
-          'invalid-argument',
-          'A valid doctor email is required.',
-      );
-    }
-
-    if (!['available', 'busy', 'limited', 'unavailable'].includes(availability)) {
-      throw new functions.https.HttpsError(
-          'invalid-argument',
-          'Availability must be available, busy, limited, or unavailable.',
-      );
-    }
-
-    try {
-      userRecord = await admin.auth().getUserByEmail(email);
-      console.log('registerDoctorAccount found existing auth user', {
-        email,
-        doctorUid: userRecord.uid,
-      });
-    } catch (error) {
-      if (error.code !== 'auth/user-not-found') {
-        throw doctorRegistrationError(error, 'Failed to check whether the doctor account already exists.');
-      }
-
-      const tempPassword = generateTemporaryPassword();
-      try {
-        userRecord = await admin.auth().createUser({
-          email,
-          password: tempPassword,
-          displayName: fullName,
-        });
-        created = true;
-        console.log('registerDoctorAccount created auth user', {
-          email,
-          doctorUid: userRecord.uid,
-        });
-      } catch (error) {
-        throw doctorRegistrationError(error, 'Failed to create the doctor account in Firebase Authentication.');
-      }
-    }
-
-    const userRef = db.collection('users').doc(userRecord.uid);
-    const emailLockRef = db.collection('registration_email_locks').doc(normalizeText(email));
-    const usernameLockRef = db.collection('registration_username_locks').doc(normalizeText(fullName));
-    const existingSnap = await userRef.get();
-    const existingData = existingSnap.data() || {};
-    const existingRole = normalizeRole(existingData.role || '');
-
-    if (existingSnap.exists && existingRole && existingRole !== 'DOCTOR') {
-      throw new functions.https.HttpsError(
-          'already-exists',
-          'This email is already linked to a non-doctor account.',
-      );
-    }
-
-    const conflictingEmailLock = await emailLockRef.get();
-    if (conflictingEmailLock.exists) {
-      const lockUid = String(conflictingEmailLock.data()?.uid || '').trim();
-      if (lockUid && lockUid !== userRecord.uid) {
-        throw new functions.https.HttpsError(
-            'already-exists',
-            'This email is already linked to another account.',
-        );
-      }
-    }
-
-    const conflictingUsernameLock = await usernameLockRef.get();
-    if (conflictingUsernameLock.exists) {
-      const lockUid = String(conflictingUsernameLock.data()?.uid || '').trim();
-      if (lockUid && lockUid !== userRecord.uid) {
-        throw new functions.https.HttpsError(
-            'already-exists',
-            'This doctor name is already linked to another account.',
-        );
-      }
-    }
-
-    try {
-      await db.runTransaction(async (transaction) => {
-        const latestUserSnap = await transaction.get(userRef);
-        const latestData = latestUserSnap.exists ? latestUserSnap.data() : existingData;
-        const payload = buildDoctorUserPayload({
-          uid: userRecord.uid,
-          fullName,
-          email,
-          specialization,
-          availability,
-          previousData: latestData,
-          registeredByUid: context.auth.uid,
-        });
-
-        transaction.set(userRef, payload, { merge: true });
-        transaction.set(emailLockRef, {
-          uid: userRecord.uid,
-          email,
-          emailLower: normalizeText(email),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          source: 'doctor-registration',
-        }, { merge: true });
-        transaction.set(usernameLockRef, {
-          uid: userRecord.uid,
-          username: fullName,
-          usernameLower: normalizeText(fullName),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          source: 'doctor-registration',
-        }, { merge: true });
-      });
-      console.log('registerDoctorAccount wrote Firestore documents', {
-        email,
-        doctorUid: userRecord.uid,
-        userPath: `users/${userRecord.uid}`,
-      });
-    } catch (error) {
-      console.error('registerDoctorAccount Firestore transaction failed', {
-        doctorUid: userRecord.uid,
-        email,
-        error: serializeError(error),
-      });
-
-      if (created) {
-        try {
-          await admin.auth().deleteUser(userRecord.uid);
-        } catch (rollbackError) {
-          console.error('registerDoctorAccount auth rollback failed', {
-            doctorUid: userRecord.uid,
-            email,
-            rollbackError: serializeError(rollbackError),
-          });
-        }
-      }
-
-      throw doctorRegistrationError(
-          error,
-          'Doctor account creation reached Auth but failed to persist in Firestore.',
-      );
-    }
-
-    let claimsSynced = true;
-    try {
-      const refreshedUserRecord = await admin.auth().getUser(userRecord.uid);
-      const existingClaims = refreshedUserRecord.customClaims || {};
-      await admin.auth().setCustomUserClaims(userRecord.uid, {
-        ...existingClaims,
-        role: 'DOCTOR',
-        approvalStatus: 'approved',
-        accountStatus: 'active',
-      });
-    } catch (error) {
-      claimsSynced = false;
-      console.error('registerDoctorAccount custom claims sync failed', {
-        doctorUid: userRecord.uid,
-        email,
-        error: serializeError(error),
-      });
-    }
-
-    try {
-      await admin.database().ref(`users/${userRecord.uid}`).update({
-        uid: userRecord.uid,
-        username: fullName,
-        email,
-        role: 'DOCTOR',
-        specialization,
-        doctorSpecialization: specialization,
-        availability,
-        doctorAvailability: availability,
-        accessScope: 'citywide',
-        updatedAt: admin.database.ServerValue.TIMESTAMP,
-      });
-    } catch (error) {
-      console.error('RTDB mirror update failed after registerDoctorAccount', {
-        doctorUid: userRecord.uid,
-        email,
-        error: serializeError(error),
-      });
-    }
-
-    let resetLink = null;
-    try {
-      resetLink = await admin.auth().generatePasswordResetLink(email);
-    } catch (error) {
-      console.error('Password reset link generation failed for doctor account', {
-        doctorUid: userRecord.uid,
-        email,
-        error: serializeError(error),
-      });
-    }
-
-    const activationEmail = resetLink
-      ? await sendSystemEmail({
-        to: email,
-        subject: 'Your AI-DSUHIS Account Is Ready',
-        text: [
-          `Hello ${fullName},`,
-          '',
-          'A CHO Admin created your AI-DSUHIS doctor account.',
-          'Use this secure link to set your password and activate access:',
-          resetLink,
-          '',
-          'For your security, the link is time-limited. Never share your password.',
-        ].join('\n'),
-        html: `<p>Hello ${htmlEscape(fullName)},</p><p>A CHO Admin created your AI-DSUHIS doctor account.</p><p><a href="${htmlEscape(resetLink)}">Set your password and activate access</a></p><p>This secure link is time-limited. Never share your password.</p>`,
-      })
-      : {sent: false, reason: 'activation_link_unavailable'};
-
-    console.log('registerDoctorAccount completed', {
-      email,
-      doctorUid: userRecord.uid,
-      created,
-      claimsSynced,
-    });
-
-    return {
-      success: true,
-      created,
-      uid: userRecord.uid,
-      doctorName: fullName,
-      email,
-      specialization,
-      availability,
-      claimsSynced,
-      activationEmailSent: activationEmail.sent,
-      activationEmailReason: activationEmail.reason,
-    };
-  } catch (error) {
-    console.error('registerDoctorAccount failed', {
-      callerUid: context.auth?.uid || null,
-      email,
-      fullName,
-      specialization,
-      availability,
-      created,
-      doctorUid: userRecord?.uid || null,
-      error: serializeError(error),
-    });
-    throw doctorRegistrationError(error, 'Doctor registration failed.');
   }
 });
 
@@ -2358,268 +2109,6 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
   return {success: true, uid, role: nextRole, accountStatus: nextAccountStatus};
 });
 
-exports.assignDoctorToReferral = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-        'unauthenticated',
-        'You must be signed in to assign a doctor.',
-    );
-  }
-
-  const referralId = String(data?.referralId || '').trim();
-  let preferredDoctorUid = String(data?.preferredDoctorUid || '').trim();
-  if (!referralId) {
-    throw new functions.https.HttpsError(
-        'invalid-argument',
-        'Referral ID is required.',
-    );
-  }
-
-  const [callerDoc, referralDoc] = await Promise.all([
-    db.collection('users').doc(context.auth.uid).get(),
-    db.collection('referrals').doc(referralId).get(),
-  ]);
-
-  if (!referralDoc.exists) {
-    throw new functions.https.HttpsError('not-found', 'Referral was not found.');
-  }
-
-  const callerData = callerDoc.data() || {};
-  const callerRole = normalizeRole(callerData.role || '');
-  const callerIsApprovedActive = isApprovedActiveProfile(callerData);
-  const isBhwCaller = callerRole === 'BHW' && callerIsApprovedActive;
-  const isChoOperator = ['CHO', 'CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'].includes(callerRole) &&
-    callerIsApprovedActive;
-  const isChoAdmin = ['CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'].includes(callerRole) &&
-    callerIsApprovedActive;
-  // BHW submissions may include a UI preference, but only the CHO Admin may
-  // override the deterministic workload-based assignment rule.
-  if (!isChoAdmin) preferredDoctorUid = '';
-  const referral = referralDoc.data() || {};
-  const createdByUid = String(referral.createdByUid || '').trim();
-
-  if (!isChoOperator && (!isBhwCaller || createdByUid !== context.auth.uid)) {
-    throw new functions.https.HttpsError(
-        'permission-denied',
-        'Only the referring BHW or a CHO operator can assign this referral.',
-    );
-  }
-
-  if (referral.assignedDoctorUid && !isChoAdmin &&
-      String(referral.assignedDoctorUid) !== preferredDoctorUid) {
-    throw new functions.https.HttpsError(
-        'permission-denied',
-        'Only the CHO Admin can reassign an existing referral.',
-    );
-  }
-
-  const rankedDoctors = await rankDoctorsForReferral(referral);
-  if (!rankedDoctors.length) {
-    throw new functions.https.HttpsError(
-        'failed-precondition',
-        'No eligible doctor is currently available for assignment.',
-    );
-  }
-
-  let assignedDoctor = rankedDoctors[0];
-  let assignmentMode = 'smart';
-  let assignmentSource = isChoOperator ? 'cho_auto' : 'bhw_auto';
-
-  if (preferredDoctorUid) {
-    const preferredDoctor = rankedDoctors.find((doctor) => doctor.doctorUid === preferredDoctorUid);
-    if (!preferredDoctor) {
-      throw new functions.https.HttpsError(
-          'failed-precondition',
-          'The selected doctor is not eligible for assignment right now.',
-      );
-    }
-    assignedDoctor = preferredDoctor;
-    assignmentMode = 'manual';
-    assignmentSource = isChoOperator ? 'cho_selected' : 'bhw_selected';
-  }
-
-  const assignmentRationale = assignedDoctor.rationale.join(' | ');
-  // Keep the event key stable across callable retries so a transient client
-  // retry cannot send a second email for the same referral/doctor assignment.
-  const assignmentEventId = `${referralId}:${assignedDoctor.doctorUid}`;
-  const updatePayload = {
-    assignedDoctorUid: assignedDoctor.doctorUid,
-    assignedDoctorName: assignedDoctor.doctorName,
-    assignedDoctorEmail: assignedDoctor.doctorEmail,
-    assignedDoctorSpecialization: assignedDoctor.specialization,
-    assignedDoctorAvailability: assignedDoctor.availability,
-    referredTo: assignedDoctor.doctorName,
-    assignmentMode,
-    assignmentSource,
-    assignmentRationale: assignmentRationale || (assignmentMode === 'smart' ?
-      'Automatically assigned to the eligible doctor with the lowest active referral workload.' :
-      'Requested explicitly by the referring user.'),
-    assignmentScore: assignedDoctor.score,
-    assignmentEventId,
-    assignedByUid: context.auth.uid,
-    assignedAt: admin.firestore.FieldValue.serverTimestamp(),
-    status: 'assigned',
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-  };
-
-  let shouldNotify = false;
-  let alreadyHandled = false;
-  await db.runTransaction(async (transaction) => {
-    const latestSnap = await transaction.get(referralDoc.ref);
-    const latest = latestSnap.data() || {};
-    const sameAssignment = String(latest.assignmentEventId || '') === assignmentEventId &&
-      String(latest.assignedDoctorUid || '') === assignedDoctor.doctorUid;
-    if (sameAssignment && latest.assignmentNotificationSentFor === assignmentEventId) {
-      alreadyHandled = true;
-      return;
-    }
-    if (sameAssignment && latest.assignmentNotificationClaimedFor === assignmentEventId) {
-      alreadyHandled = true;
-      return;
-    }
-
-    const payload = sameAssignment
-      ? {
-          assignmentNotificationClaimedFor: assignmentEventId,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }
-      : {
-          ...updatePayload,
-          assignmentNotificationClaimedFor: assignmentEventId,
-        };
-    transaction.set(referralDoc.ref, payload, {merge: true});
-    shouldNotify = true;
-  });
-
-  if (alreadyHandled) {
-    return {
-      success: true,
-      recommendation: assignedDoctor,
-      rankedDoctors: rankedDoctors.slice(0, 5),
-      assignmentMode,
-      assignmentSource,
-      assignmentEmailSent: true,
-      assignmentEmailReason: 'already_handled',
-      assignmentEmailMessage: 'This referral assignment was already persisted and notified.',
-    };
-  }
-
-  const persistedReferral = {
-    ...referral,
-    ...updatePayload,
-    barangayCode: referral.barangayCode || '',
-  };
-  await syncReferralMirror(referralId, persistedReferral);
-
-  const assignmentEmail = shouldNotify ? await sendDoctorAssignmentEmail({
-    doctorEmail: assignedDoctor.doctorEmail,
-    doctorName: assignedDoctor.doctorName,
-    referralId,
-    referral: {
-      ...persistedReferral,
-    },
-  }) : {sent: false, reason: 'already_handled', message: 'Already handled.'};
-  if (assignmentEmail.sent) {
-    await referralDoc.ref.update({
-      assignmentNotificationSentFor: assignmentEventId,
-      assignmentNotificationSentAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-  }
-
-  return {
-    success: true,
-    recommendation: assignedDoctor,
-    rankedDoctors: rankedDoctors.slice(0, 5),
-    assignmentMode,
-    assignmentSource,
-    assignmentEmailSent: assignmentEmail.sent,
-    assignmentEmailReason: assignmentEmail.reason,
-    assignmentEmailMessage: assignmentEmail.message,
-  };
-});
-
-exports.sendDoctorReferralAssignmentEmail = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-        'unauthenticated',
-        'You must be signed in to send assignment notifications.',
-    );
-  }
-
-  const referralId = String(data?.referralId || '').trim();
-  if (!referralId) {
-    throw new functions.https.HttpsError(
-        'invalid-argument',
-        'Referral ID is required.',
-    );
-  }
-
-  const [callerDoc, referralDoc] = await Promise.all([
-    db.collection('users').doc(context.auth.uid).get(),
-    db.collection('referrals').doc(referralId).get(),
-  ]);
-
-  ensureChoAdmin(context, callerDoc.data() || {});
-
-  if (!referralDoc.exists) {
-    throw new functions.https.HttpsError(
-        'not-found',
-        'Referral was not found.',
-    );
-  }
-
-  const referral = referralDoc.data() || {};
-  const assignedDoctorUid = String(referral.assignedDoctorUid || '').trim();
-  if (!assignedDoctorUid) {
-    throw new functions.https.HttpsError(
-        'failed-precondition',
-        'Only referrals with a persisted doctor assignment can be notified.',
-    );
-  }
-  const assignedDoctorDoc = await db.collection('users').doc(assignedDoctorUid).get();
-  const assignedDoctorData = assignedDoctorDoc.data() || {};
-  if (!assignedDoctorDoc.exists || normalizeRole(assignedDoctorData.role || '') !== 'DOCTOR') {
-    throw new functions.https.HttpsError(
-        'failed-precondition',
-        'The persisted referral assignment does not point to a doctor account.',
-    );
-  }
-  const assignmentEventId = String(
-      referral.assignmentEventId ||
-      `legacy:${referralId}:${assignedDoctorUid}`,
-  );
-  if (referral.assignmentNotificationSentFor === assignmentEventId) {
-    return {
-      success: true,
-      sent: true,
-      reason: 'already_sent',
-      message: 'The assignment notification was already sent for this assignment.',
-    };
-  }
-  const doctorEmail = normalizeText(assignedDoctorData.email || '');
-  const doctorName = doctorDisplayName(assignedDoctorData);
-
-  const assignmentEmail = await sendDoctorAssignmentEmail({
-    doctorEmail,
-    doctorName,
-    referralId,
-    referral,
-  });
-  if (assignmentEmail.sent) {
-    await referralDoc.ref.update({
-      assignmentNotificationSentFor: assignmentEventId,
-      assignmentNotificationSentAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-  }
-
-  return {
-    success: assignmentEmail.sent,
-    sent: assignmentEmail.sent,
-    reason: assignmentEmail.reason,
-    message: assignmentEmail.message,
-  };
-});
-
 exports.suggestDoctorAssignment = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -2655,4 +2144,264 @@ exports.suggestDoctorAssignment = functions.https.onCall(async (data, context) =
     recommendation,
     rankedDoctors: rankedDoctors.slice(0, 5),
   };
+});
+
+// Assignment is performed by the backend after a referral write. Keeping the
+// persistence and notification claim in one transaction makes retries and
+// browser refreshes idempotent while allowing email failure to remain
+// non-blocking for the clinical workflow.
+async function performReferralAssignment({
+  referralId,
+  preferredDoctorUid = '',
+  assignmentSource = 'bhw_auto',
+  assignedByUid = 'system',
+  allowReassignment = false,
+}) {
+  const normalizedReferralId = String(referralId || '').trim();
+  const referralRef = db.collection('referrals').doc(normalizedReferralId);
+  const referralDoc = await referralRef.get();
+  if (!referralDoc.exists) {
+    return {success: false, assigned: false, reason: 'not_found'};
+  }
+
+  const referral = referralDoc.data() || {};
+  const existingDoctorUid = String(referral.assignedDoctorUid || '').trim();
+  if (existingDoctorUid && !allowReassignment) {
+    return {
+      success: true,
+      assigned: true,
+      alreadyAssigned: true,
+      assignmentEmailSent: referral.assignmentNotificationSentFor ===
+        referral.assignmentEventId,
+      assignmentEmailReason: 'already_assigned',
+      recommendation: {
+        doctorUid: existingDoctorUid,
+        doctorName: String(referral.assignedDoctorName || referral.referredTo || 'Doctor'),
+        doctorEmail: String(referral.assignedDoctorEmail || ''),
+        specialization: String(referral.assignedDoctorSpecialization || 'General Medicine'),
+        availability: String(referral.assignedDoctorAvailability || 'available'),
+        workload: 0,
+        score: 0,
+        rationale: ['Existing persisted assignment'],
+      },
+      rankedDoctors: [],
+    };
+  }
+
+  const rankedDoctors = await rankDoctorsForReferral(referral);
+  if (!rankedDoctors.length) {
+    if (!existingDoctorUid) {
+      const waitingPayload = {
+        status: 'awaiting_doctor_assignment',
+        assignmentStatus: 'awaiting_doctor_assignment',
+        assignmentFailureReason: 'No approved, active, available doctor is currently eligible.',
+        assignmentAttemptedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      };
+      await referralRef.set(waitingPayload, {merge: true});
+      await syncReferralMirror(normalizedReferralId, {...referral, ...waitingPayload});
+    }
+    return {
+      success: false,
+      assigned: false,
+      reason: 'no_eligible_doctor',
+      rankedDoctors: [],
+    };
+  }
+
+  const normalizedPreferredUid = String(preferredDoctorUid || '').trim();
+  let assignedDoctor = rankedDoctors[0];
+  let assignmentMode = 'smart';
+  if (normalizedPreferredUid) {
+    const preferredDoctor = rankedDoctors.find((doctor) =>
+      doctor.doctorUid === normalizedPreferredUid);
+    if (!preferredDoctor) {
+      throw new functions.https.HttpsError(
+          'failed-precondition',
+          'The selected doctor is not eligible for assignment right now.',
+      );
+    }
+    assignedDoctor = preferredDoctor;
+    assignmentMode = 'manual';
+  }
+
+  const assignmentEventId = `${normalizedReferralId}:${assignedDoctor.doctorUid}`;
+  const assignmentRationale = assignedDoctor.rationale.join(' | ');
+  const updatePayload = {
+    assignedDoctorUid: assignedDoctor.doctorUid,
+    assignedDoctorName: assignedDoctor.doctorName,
+    assignedDoctorEmail: assignedDoctor.doctorEmail,
+    assignedDoctorSpecialization: assignedDoctor.specialization,
+    assignedDoctorAvailability: assignedDoctor.availability,
+    referredTo: assignedDoctor.doctorName,
+    assignmentMode,
+    assignmentSource,
+    assignmentRationale: assignmentRationale || (assignmentMode === 'smart'
+      ? 'Automatically assigned to the eligible doctor with the lowest active referral workload.'
+      : 'Reassigned by CHO Admin.'),
+    assignmentScore: assignedDoctor.score,
+    assignmentEventId,
+    assignedByUid,
+    assignedAt: FieldValue.serverTimestamp(),
+    assignmentStatus: 'assigned',
+    status: 'assigned',
+    assignmentNotificationStatus: 'pending',
+    assignmentNotificationSentFor: FieldValue.delete(),
+    assignmentNotificationSentAt: FieldValue.delete(),
+    assignmentNotificationFailureReason: FieldValue.delete(),
+    assignmentNotificationFailedAt: FieldValue.delete(),
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+
+  let shouldNotify = false;
+  let alreadyHandled = false;
+  let latestReferral = referral;
+  await db.runTransaction(async (transaction) => {
+    const latestSnap = await transaction.get(referralRef);
+    latestReferral = latestSnap.data() || {};
+    const latestDoctorUid = String(latestReferral.assignedDoctorUid || '').trim();
+    const sameAssignment = String(latestReferral.assignmentEventId || '') ===
+      assignmentEventId && latestDoctorUid === assignedDoctor.doctorUid;
+
+    if (!allowReassignment && latestDoctorUid) {
+      alreadyHandled = true;
+      return;
+    }
+    if (sameAssignment && (
+      latestReferral.assignmentNotificationSentFor === assignmentEventId ||
+      latestReferral.assignmentNotificationClaimedFor === assignmentEventId)) {
+      alreadyHandled = true;
+      return;
+    }
+
+    transaction.set(referralRef, {
+      ...updatePayload,
+      assignmentNotificationClaimedFor: assignmentEventId,
+    }, {merge: true});
+    shouldNotify = true;
+  });
+
+  if (alreadyHandled) {
+    return {
+      success: true,
+      assigned: true,
+      alreadyHandled: true,
+      recommendation: assignedDoctor,
+      rankedDoctors: rankedDoctors.slice(0, 5),
+      assignmentMode,
+      assignmentSource,
+      assignmentEmailSent: true,
+      assignmentEmailReason: 'already_handled',
+    };
+  }
+
+  const persistedReferral = {
+    ...latestReferral,
+    ...updatePayload,
+    barangayCode: latestReferral.barangayCode || '',
+  };
+  await syncReferralMirror(normalizedReferralId, persistedReferral);
+
+  const assignmentEmail = shouldNotify
+    ? await sendDoctorAssignmentEmail({
+      doctorEmail: assignedDoctor.doctorEmail,
+      doctorName: assignedDoctor.doctorName,
+      referralId: normalizedReferralId,
+      referral: persistedReferral,
+    })
+    : {sent: false, reason: 'already_handled'};
+  if (assignmentEmail.sent) {
+    await referralRef.update({
+      assignmentNotificationStatus: 'sent',
+      assignmentNotificationSentFor: assignmentEventId,
+      assignmentNotificationSentAt: FieldValue.serverTimestamp(),
+    });
+  } else {
+    await referralRef.update({
+      assignmentNotificationStatus: 'failed',
+      assignmentNotificationFailureReason: assignmentEmail.reason || 'send_failed',
+      assignmentNotificationFailedAt: FieldValue.serverTimestamp(),
+    });
+  }
+
+  return {
+    success: true,
+    assigned: true,
+    recommendation: assignedDoctor,
+    rankedDoctors: rankedDoctors.slice(0, 5),
+    assignmentMode,
+    assignmentSource,
+    assignmentEmailSent: assignmentEmail.sent,
+    assignmentEmailReason: assignmentEmail.reason,
+    assignmentEmailMessage: assignmentEmail.message,
+  };
+}
+
+// The callable is intentionally limited to CHO Admin reassignment. Normal
+// BHW referral routing is handled by autoAssignReferralOnWrite below.
+exports.assignDoctorToReferral = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        'unauthenticated',
+        'You must be signed in to reassign a doctor.',
+    );
+  }
+  const callerDoc = await db.collection('users').doc(context.auth.uid).get();
+  ensureChoAdmin(context, callerDoc.data() || {});
+
+  const referralId = String(data?.referralId || '').trim();
+  const preferredDoctorUid = String(data?.preferredDoctorUid || '').trim();
+  if (!referralId || !preferredDoctorUid) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Referral ID and an eligible doctor are required.',
+    );
+  }
+
+  const result = await performReferralAssignment({
+    referralId,
+    preferredDoctorUid,
+    assignmentSource: 'cho_reassign',
+    assignedByUid: context.auth.uid,
+    allowReassignment: true,
+  });
+  if (result.reason === 'not_found') {
+    throw new functions.https.HttpsError('not-found', 'Referral was not found.');
+  }
+  return result;
+});
+
+exports.autoAssignReferralOnWrite = onDocumentWritten({
+  document: 'referrals/{referralId}',
+  database: FIRESTORE_DATABASE_ID,
+  region: 'us-central1',
+}, async (event) => {
+  const change = event.data;
+  if (!change.after.exists) return null;
+
+  const after = change.after.data() || {};
+  const status = normalizeText(after.status || 'submitted');
+  const submissionStatus = normalizeText(after.submissionStatus || 'submitted');
+  const eligible = submissionStatus === 'submitted' &&
+    ['submitted', 'pending_review'].includes(status) &&
+    !String(after.assignedDoctorUid || '').trim();
+  if (!eligible) return null;
+
+  const before = change.before.exists ? change.before.data() || {} : null;
+  if (before) {
+    const beforeStatus = normalizeText(before.status || 'submitted');
+    const beforeSubmissionStatus = normalizeText(
+        before.submissionStatus || 'submitted');
+    const wasEligible = beforeSubmissionStatus === 'submitted' &&
+      ['submitted', 'pending_review'].includes(beforeStatus) &&
+      !String(before.assignedDoctorUid || '').trim();
+    if (wasEligible) return null;
+  }
+
+  await performReferralAssignment({
+    referralId: event.params.referralId,
+    assignmentSource: 'bhw_auto',
+    assignedByUid: 'system',
+  });
+  return null;
 });
