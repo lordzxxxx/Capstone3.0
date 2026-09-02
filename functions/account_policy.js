@@ -2196,6 +2196,15 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
     const savedPurok = assignedPurok ?? String(
         current.assignedPurok || requestBhw.assignedSitio || '',
     ).trim();
+    const currentApprovalStatus = normalizeText(
+        current.approvalStatus || 'pending',
+    );
+    const queueReviewStatus = nextAccountStatus === 'rejected' ||
+        currentApprovalStatus === 'rejected'
+      ? 'rejected'
+      : currentApprovalStatus === 'approved'
+        ? 'approved'
+        : 'pending';
     await requestRef.set({
       ...payload,
       ...(fullName !== null ? {fullName, displayName: fullName} : {}),
@@ -2207,6 +2216,9 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
       assignedBarangay: barangay,
       assignedBarangayCode: barangayCode,
       assignedPurok: savedPurok,
+      approvalStatus: currentApprovalStatus,
+      isApproved: currentApprovalStatus === 'approved',
+      reviewStatus: queueReviewStatus,
       address: {
         ...requestAddress,
         barangay,

@@ -264,12 +264,76 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
   }
 
   bool _isPendingBhw(Map<String, dynamic> row) {
+    if (_isActiveBhw(row) || _isRejectedBhw(row)) return false;
     final status = _value(row, const ['status', 'accountStatus']).toLowerCase();
     final approval = _value(row, const ['approvalStatus']).toLowerCase();
-    if (approval.contains('reject') || status.contains('reject')) return false;
+    final review = _value(row, const ['reviewStatus']).toLowerCase();
+    if (approval == 'approved' || row['isApproved'] == true) return false;
     return row['isApproved'] == false ||
         approval.contains('pending') ||
-        (approval != 'approved' && status.contains('pending'));
+        review.contains('pending') ||
+        status.contains('pending');
+  }
+
+  bool _isRejectedBhw(Map<String, dynamic> row) {
+    final status = _value(row, const ['status', 'accountStatus']).toLowerCase();
+    final approval = _value(row, const ['approvalStatus']).toLowerCase();
+    final review = _value(row, const ['reviewStatus']).toLowerCase();
+    return approval.contains('reject') ||
+        review.contains('reject') ||
+        status.contains('reject');
+  }
+
+  bool _isActiveBhw(Map<String, dynamic> row) {
+    if (_isRejectedBhw(row)) return false;
+    final accountStatus = _value(row, const ['accountStatus']).toLowerCase();
+    final status = _value(row, const ['status']).toLowerCase();
+    final approval = _value(row, const ['approvalStatus']).toLowerCase();
+    final approved = approval == 'approved' || row['isApproved'] == true;
+    final active = accountStatus == 'active' || status == 'active';
+    return approved && active;
+  }
+
+  DateTime? _bhwDate(Map<String, dynamic> row, List<String> keys) {
+    for (final key in keys) {
+      final raw = row[key];
+      if (raw is Timestamp) return raw.toDate();
+      if (raw is DateTime) return raw;
+      if (raw is num) {
+        final milliseconds = raw.abs() < 100000000000 ? raw * 1000 : raw;
+        final parsed = DateTime.fromMillisecondsSinceEpoch(
+          milliseconds.toInt(),
+          isUtc: true,
+        );
+        return parsed;
+      }
+      final value = raw?.toString().trim() ?? '';
+      if (value.isEmpty || value.toLowerCase() == 'null') continue;
+      final parsed = DateTime.tryParse(value);
+      if (parsed != null) return parsed;
+    }
+    return null;
+  }
+
+  List<FirestoreRestDocument> _orderedBhwDocs(
+    Iterable<FirestoreRestDocument> source, {
+    required List<String> dateKeys,
+  }) {
+    final docs = source.toList(growable: true);
+    docs.sort((a, b) {
+      final aDate = _bhwDate(a.data(), dateKeys);
+      final bDate = _bhwDate(b.data(), dateKeys);
+      if (aDate != null && bDate != null) {
+        final byDate = bDate.compareTo(aDate);
+        if (byDate != 0) return byDate;
+      } else if (aDate != null) {
+        return -1;
+      } else if (bDate != null) {
+        return 1;
+      }
+      return b.id.compareTo(a.id);
+    });
+    return docs;
   }
 
   bool _matches(Map<String, dynamic> row) {
@@ -355,24 +419,28 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
         final allDocs = snapshot.data!
             .where((doc) => _matches(doc.data()))
             .toList();
-        final pending = allDocs.where((doc) {
-          return _isPendingBhw(doc.data());
-        }).length;
-        final docs = allDocs
-            .where((doc) {
-              final row = doc.data();
-              final status = _value(row, const [
-                'status',
-                'accountStatus',
-              ]).toLowerCase();
-              final isPending = _isPendingBhw(row);
-              if (_bhwTab == 0) {
-                return !isPending && !status.contains('reject');
-              }
-              if (_bhwTab == 1) return isPending;
-              return true;
-            })
-            .toList(growable: false);
+        final activeDocs = allDocs.where((doc) => _isActiveBhw(doc.data()));
+        final pendingDocs = allDocs.where((doc) => _isPendingBhw(doc.data()));
+        final pending = pendingDocs.length;
+        final docs = switch (_bhwTab) {
+          0 => _orderedBhwDocs(
+            activeDocs,
+            dateKeys: const ['approvedAt', 'updatedAt', 'createdAt'],
+          ),
+          1 => _orderedBhwDocs(
+            pendingDocs,
+            dateKeys: const [
+              'submittedAt',
+              'createdAt',
+              'registrationDate',
+              'updatedAt',
+            ],
+          ),
+          _ => _orderedBhwDocs(
+            allDocs,
+            dateKeys: const ['updatedAt', 'createdAt', 'submittedAt'],
+          ),
+        };
         return Column(
           children: [
             ChoKpiGrid(
@@ -390,7 +458,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                 ),
                 ChoKpiCard(
                   label: 'Active Accounts',
-                  value: '${allDocs.length - pending}',
+                  value: '${activeDocs.length}',
                   icon: Icons.verified_user_outlined,
                   color: ChoColors.aqua,
                 ),
@@ -419,6 +487,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                       'accountStatus',
                     ]);
                     final pendingAccount = _isPendingBhw(row);
+                    final activeAccount = _isActiveBhw(row);
                     return ListTile(
                       leading: const CircleAvatar(
                         backgroundColor: ChoColors.surfaceAlt,
@@ -439,7 +508,13 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                         spacing: 6,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          ChoStatusBadge(status),
+                          ChoStatusBadge(
+                            activeAccount
+                                ? 'Active'
+                                : pendingAccount
+                                ? 'Pending'
+                                : status,
+                          ),
                           IconButton(
                             tooltip: 'Review BHW application',
                             onPressed: () => _showBhwApplication(doc),
@@ -520,7 +595,10 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
           ? document
           : FirestoreRestDocument(
               id: document.id,
-              fields: {...existing.fields, ...document.fields},
+              // The user profile is authoritative for authorization state.
+              // Keep request-only application details, but never let a stale
+              // queue copy make an active account look pending after refresh.
+              fields: {...document.fields, ...existing.fields},
             );
     }
     return byUid.values
@@ -825,6 +903,9 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
         approved: approved,
         rejectionReason: approved ? null : reason.text.trim(),
       );
+      if (approved && mounted) {
+        setState(() => _bhwTab = 0);
+      }
       _refreshBhwAccounts();
     } catch (error) {
       if (mounted) {
@@ -973,6 +1054,9 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
           contactNumber: contactNumber.text.trim(),
           assignedPurok: sitio.text.trim(),
         );
+        if (_isActiveBhw(current) && mounted) {
+          setState(() => _bhwTab = 0);
+        }
         _refreshBhwAccounts();
         _snack('BHW details saved.');
       } catch (error) {

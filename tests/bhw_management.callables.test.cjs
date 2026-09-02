@@ -137,6 +137,10 @@ async function main() {
     assert.equal(target.accountStatus, 'active');
     assert.equal(target.accessRoleKey, 'BHW');
     assert.equal((await auth.getUser(targetUid)).disabled, false);
+    let request = (await db.collection('bhw_registration_requests')
+        .doc(targetUid).get()).data();
+    assert.equal(request.approvalStatus, 'approved');
+    assert.equal(request.reviewStatus, 'approved');
 
     const edited = await call('updateChoAccount', adminToken, {
       uid: targetUid,
@@ -152,12 +156,14 @@ async function main() {
     });
     assert.equal(edited.response.status, 200, JSON.stringify(edited.body));
     target = (await db.collection('users').doc(targetUid).get()).data();
-    const request = (await db.collection('bhw_registration_requests')
+    request = (await db.collection('bhw_registration_requests')
         .doc(targetUid).get()).data();
     assert.equal(target.fullName, 'Edited BHW');
     assert.equal(target.barangay, 'Barangay 11');
     assert.equal(target.assignedPurok, 'Purok 2');
     assert.equal(request.fullName, 'Edited BHW');
+    assert.equal(request.approvalStatus, 'approved');
+    assert.equal(request.reviewStatus, 'approved');
     assert.equal(request.address.sitio, 'Purok 2');
     assert.equal(request.bhw.assignedBarangay, 'Barangay 11');
 
