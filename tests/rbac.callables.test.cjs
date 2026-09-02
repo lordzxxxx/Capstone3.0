@@ -7,7 +7,6 @@ if (!admin.apps.length) admin.initializeApp({projectId});
 const db = new admin.firestore.Firestore({projectId, databaseId: 'capstone-c98f9'});
 const adminUid = 'rbac-callable-test-admin';
 const targetUid = 'rbac-callable-test-user';
-const roleKey = 'CUSTOM_RBAC_CALLABLE_TEST';
 const email = 'rbac-callable-test-admin@example.test';
 const targetEmail = 'rbac-target@example.test';
 
@@ -67,7 +66,25 @@ async function main() {
       permissions: ['dashboard.view', 'referrals.view', 'referrals.create', 'rbac.manage'],
     });
     assert.equal(saved.response.status, 200, JSON.stringify(saved.body));
-    assert.equal(saved.body.result.roleKey, roleKey.replace('RBAC_CALLABLE_TEST', 'REFERRAL_INTAKE_HELPER'));
+    assert.equal(saved.body.result.roleKey, 'CUSTOM_REFERRAL_INTAKE_HELPER');
+
+    const edited = await call('saveAccessRole', signInBody.idToken, {
+      roleKey: 'CUSTOM_REFERRAL_INTAKE_HELPER',
+      name: 'Referral Intake Coordinator',
+      description: 'Updated referral access for the test role.',
+      baseRole: 'BHW',
+      permissions: ['dashboard.view', 'referrals.view'],
+    });
+    assert.equal(edited.response.status, 200, JSON.stringify(edited.body));
+    assert.deepEqual(edited.body.result.permissions, ['dashboard.view', 'referrals.view']);
+    const editedRole = await db.collection('roles').doc('CUSTOM_REFERRAL_INTAKE_HELPER').get();
+    assert.equal(editedRole.data().name, 'Referral Intake Coordinator');
+    const listedAfterEdit = await call('listAccessRoles', signInBody.idToken);
+    assert.equal(listedAfterEdit.response.status, 200);
+    assert.equal(
+      listedAfterEdit.body.result.roles.find((role) => role.roleKey === 'CUSTOM_REFERRAL_INTAKE_HELPER').name,
+      'Referral Intake Coordinator',
+    );
 
     await db.collection('users').doc(targetUid).set({
       uid: targetUid,
@@ -93,13 +110,26 @@ async function main() {
     assert.equal(assigned.response.status, 200, JSON.stringify(assigned.body));
     const target = (await db.collection('users').doc(targetUid).get()).data();
     assert.equal(target.accessRoleKey, 'CUSTOM_REFERRAL_INTAKE_HELPER');
-    assert.deepEqual(target.permissions, ['dashboard.view', 'referrals.view', 'referrals.create']);
+    assert.deepEqual(target.permissions, ['dashboard.view', 'referrals.view']);
 
     const blockedDelete = await call('deleteAccessRole', signInBody.idToken, {
       roleKey: 'CUSTOM_REFERRAL_INTAKE_HELPER',
     });
     assert.equal(blockedDelete.response.status, 400);
     assert.equal(blockedDelete.body.error?.status, 'FAILED_PRECONDITION');
+
+    const unassigned = await call('updateChoAccount', signInBody.idToken, {
+      uid: targetUid,
+      accessRoleKey: 'BHW',
+      role: 'BHW',
+      accountStatus: 'disabled',
+    });
+    assert.equal(unassigned.response.status, 200, JSON.stringify(unassigned.body));
+    const deleted = await call('deleteAccessRole', signInBody.idToken, {
+      roleKey: 'CUSTOM_REFERRAL_INTAKE_HELPER',
+    });
+    assert.equal(deleted.response.status, 200, JSON.stringify(deleted.body));
+    assert.equal((await db.collection('roles').doc('CUSTOM_REFERRAL_INTAKE_HELPER').get()).exists, false);
     console.log('RBAC callable test passed.');
   } finally {
     await db.collection('users').doc(targetUid).delete().catch(() => {});

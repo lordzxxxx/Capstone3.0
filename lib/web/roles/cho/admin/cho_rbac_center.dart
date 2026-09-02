@@ -42,6 +42,11 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
     return _choAccountRoles.contains(value.toString().trim().toUpperCase());
   }
 
+  bool _isManagedAccountRole(Object? value) {
+    final role = value.toString().trim().toUpperCase();
+    return _isChoAccountRole(role) || role == 'DOCTOR' || role == 'BHW';
+  }
+
   bool _isProtectedAdminRole(String role) {
     return RbacCatalog.adminRoles.contains(role.trim().toLowerCase());
   }
@@ -644,7 +649,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
         if (!snapshot.hasData) return const ChoLoadingSkeleton();
         final docs =
             snapshot.data!.docs
-                .where((doc) => _isChoAccountRole(doc.data()['role']))
+                .where((doc) => _isManagedAccountRole(doc.data()['role']))
                 .toList()
               ..sort(
                 (a, b) => (a.data()['email'] ?? '').toString().compareTo(
@@ -658,7 +663,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
               children: [
                 const Expanded(
                   child: Text(
-                    'Users and access',
+                    'Managed accounts',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                   ),
                 ),
@@ -671,14 +676,15 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
             ),
             const SizedBox(height: AppSpacing.xs),
             const Text(
-              'Manage CHO accounts and their permissions here. BHW approvals and doctor administration remain in their dedicated workflows.',
+              'CHO roles and permissions are managed here. Existing doctor and BHW accounts remain visible for continuity; their operational workflows stay in Referrals and BHW Management.',
               style: TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.md),
             if (docs.isEmpty)
               const ChoEmptyState(
-                title: 'No CHO accounts found',
-                message: 'Create a CHO account to assign portal access.',
+                title: 'No managed accounts found',
+                message:
+                    'Create a CHO account or open the dedicated BHW/doctor workflow.',
               )
             else
               Container(
@@ -739,11 +745,14 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
       name: (data['fullName'] ?? data['username'] ?? 'Unnamed user').toString(),
       email: (data['email'] ?? 'No email').toString(),
     );
+    final canEditAccess =
+        baseRole == 'CHO' && !isProtected && options.isNotEmpty;
     final accessField = SizedBox(
       width: wide ? null : double.infinity,
       child: isProtected
           ? const _AccessLabel(label: 'Access role', value: 'Protected admin')
-          : DropdownButtonFormField<String>(
+          : canEditAccess
+          ? DropdownButtonFormField<String>(
               initialValue: selected,
               isExpanded: true,
               decoration: const InputDecoration(labelText: 'Access role'),
@@ -762,7 +771,8 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                 );
                 _assignRole(user, role);
               },
-            ),
+            )
+          : _AccessLabel(label: 'Access role', value: role?.name ?? currentKey),
     );
 
     return Container(
@@ -804,22 +814,24 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                     value: (data['accountStatus'] ?? 'active').toString(),
                   ),
                 ),
-                IconButton(
-                  tooltip: isProtected
-                      ? 'Protected account'
-                      : (data['accountStatus'] ?? 'active').toString() ==
-                            'disabled'
-                      ? 'Enable CHO account'
-                      : 'Disable CHO account',
-                  onPressed: isProtected
-                      ? null
-                      : () => _toggleChoAccountStatus(user),
-                  icon: Icon(
-                    (data['accountStatus'] ?? 'active').toString() == 'disabled'
-                        ? Icons.lock_open_outlined
-                        : Icons.block_outlined,
+                if (baseRole == 'CHO')
+                  IconButton(
+                    tooltip: isProtected
+                        ? 'Protected account'
+                        : (data['accountStatus'] ?? 'active').toString() ==
+                              'disabled'
+                        ? 'Enable CHO account'
+                        : 'Disable CHO account',
+                    onPressed: isProtected
+                        ? null
+                        : () => _toggleChoAccountStatus(user),
+                    icon: Icon(
+                      (data['accountStatus'] ?? 'active').toString() ==
+                              'disabled'
+                          ? Icons.lock_open_outlined
+                          : Icons.block_outlined,
+                    ),
                   ),
-                ),
               ],
             )
           : Column(
@@ -858,23 +870,24 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                       label: Text('View access ($permissionCount)'),
                     ),
                     const Spacer(),
-                    IconButton(
-                      tooltip: isProtected
-                          ? 'Protected account'
-                          : (data['accountStatus'] ?? 'active').toString() ==
-                                'disabled'
-                          ? 'Enable CHO account'
-                          : 'Disable CHO account',
-                      onPressed: isProtected
-                          ? null
-                          : () => _toggleChoAccountStatus(user),
-                      icon: Icon(
-                        (data['accountStatus'] ?? 'active').toString() ==
-                                'disabled'
-                            ? Icons.lock_open_outlined
-                            : Icons.block_outlined,
+                    if (baseRole == 'CHO')
+                      IconButton(
+                        tooltip: isProtected
+                            ? 'Protected account'
+                            : (data['accountStatus'] ?? 'active').toString() ==
+                                  'disabled'
+                            ? 'Enable CHO account'
+                            : 'Disable CHO account',
+                        onPressed: isProtected
+                            ? null
+                            : () => _toggleChoAccountStatus(user),
+                        icon: Icon(
+                          (data['accountStatus'] ?? 'active').toString() ==
+                                  'disabled'
+                              ? Icons.lock_open_outlined
+                              : Icons.block_outlined,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ],

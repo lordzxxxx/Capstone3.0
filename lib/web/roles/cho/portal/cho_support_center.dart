@@ -45,6 +45,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
   bool _checkingAccess = true;
   bool _authorized = false;
   Future<List<FirestoreRestDocument>>? _bhwAccountsRequest;
+  final Set<String> _busyBhwAccounts = <String>{};
 
   @override
   void initState() {
@@ -449,24 +450,25 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                               color: ChoColors.aqua,
                             ),
                           ),
-                          if (_bhwTab == 2)
-                            OutlinedButton.icon(
-                              onPressed: () => _editAssignment(doc),
-                              icon: const Icon(
-                                Icons.edit_location_alt_outlined,
-                              ),
-                              label: const Text('Edit Assignment'),
-                            ),
+                          OutlinedButton.icon(
+                            onPressed: _busyBhwAccounts.contains(doc.id)
+                                ? null
+                                : () => _editAssignment(doc),
+                            icon: const Icon(Icons.edit_outlined),
+                            label: const Text('Edit details'),
+                          ),
                           if (pendingAccount && _bhwTab != 2)
                             FilledButton(
-                              onPressed: () =>
-                                  _setBhwStatus(doc, approved: true),
+                              onPressed: _busyBhwAccounts.contains(doc.id)
+                                  ? null
+                                  : () => _setBhwStatus(doc, approved: true),
                               child: const Text('Approve'),
                             ),
                           if (pendingAccount && _bhwTab != 2)
                             OutlinedButton(
-                              onPressed: () =>
-                                  _setBhwStatus(doc, approved: false),
+                              onPressed: _busyBhwAccounts.contains(doc.id)
+                                  ? null
+                                  : () => _setBhwStatus(doc, approved: false),
                               child: const Text('Reject'),
                             ),
                         ],
@@ -510,10 +512,19 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
         );
       }
     }
-    final byUid = <String, FirestoreRestDocument>{
-      for (final document in users) document.id: document,
-      for (final document in requests) document.id: document,
-    };
+    final byUid = <String, FirestoreRestDocument>{};
+    for (final document in users) {
+      byUid[document.id] = document;
+    }
+    for (final document in requests) {
+      final existing = byUid[document.id];
+      byUid[document.id] = existing == null
+          ? document
+          : FirestoreRestDocument(
+              id: document.id,
+              fields: {...existing.fields, ...document.fields},
+            );
+    }
     return byUid.values
         .where((document) {
           final role = (document.data()['role'] ?? '').toString().toLowerCase();
@@ -808,6 +819,9 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
       return;
     }
     try {
+      if (mounted) {
+        setState(() => _busyBhwAccounts.add(doc.id));
+      }
       await _accountPolicyService.reviewBhwRegistration(
         uid: doc.id,
         approved: approved,
@@ -824,6 +838,9 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
         );
       }
     } finally {
+      if (mounted) {
+        setState(() => _busyBhwAccounts.remove(doc.id));
+      }
       reason.dispose();
     }
   }
@@ -835,6 +852,15 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
       return value.startsWith('—') ? '' : value;
     }
 
+    final fullName = TextEditingController(
+      text: initialValue(const ['fullName', 'name', 'displayName']),
+    );
+    final username = TextEditingController(
+      text: initialValue(const ['username', 'displayName', 'fullName']),
+    );
+    final contactNumber = TextEditingController(
+      text: initialValue(const ['contactNumber', 'phoneNumber', 'phone']),
+    );
     final barangay = TextEditingController(
       text: initialValue(const ['barangay', 'assignedBarangay']),
     );
@@ -844,28 +870,55 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
     final save = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Edit BHW Assignment'),
+        title: const Text('Edit BHW details'),
         content: SizedBox(
-          width: 500,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: barangay,
-                decoration: const InputDecoration(
-                  labelText: 'Assigned Barangay',
-                  border: OutlineInputBorder(),
+          width: 520,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: fullName,
+                  decoration: const InputDecoration(
+                    labelText: 'Full name',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: sitio,
-                decoration: const InputDecoration(
-                  labelText: 'Assigned Sitio / Purok',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: username,
+                  decoration: const InputDecoration(
+                    labelText: 'Username',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                TextField(
+                  controller: contactNumber,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Contact number (optional)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: barangay,
+                  decoration: const InputDecoration(
+                    labelText: 'Assigned Barangay',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: sitio,
+                  decoration: const InputDecoration(
+                    labelText: 'Assigned Sitio / Purok',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         actions: [
@@ -875,45 +928,73 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
           ),
           FilledButton(
             onPressed: () {
-              if (barangay.text.trim().isNotEmpty) {
+              if (fullName.text.trim().isNotEmpty &&
+                  username.text.trim().isNotEmpty &&
+                  barangay.text.trim().isNotEmpty) {
                 Navigator.pop(dialogContext, true);
               }
             },
-            child: const Text('Save Assignment'),
+            child: const Text('Save changes'),
           ),
         ],
       ),
     );
     if (save == true) {
       try {
-        final updates = <String, dynamic>{
-          'barangay': barangay.text.trim(),
-          'assignedBarangay': barangay.text.trim(),
-          'sitio': sitio.text.trim(),
-          'assignedPurok': sitio.text.trim(),
-          'assignmentUpdatedBy': FirebaseAuth.instance.currentUser?.uid,
-          'assignmentUpdatedAt': FieldValue.serverTimestamp(),
-        };
-        final batch = _firestore.batch();
-        batch.update(_firestore.collection('users').doc(doc.id), updates);
-        batch.set(
-          _firestore.collection('bhw_registration_requests').doc(doc.id),
-          updates,
-          SetOptions(merge: true),
+        if (mounted) {
+          setState(() => _busyBhwAccounts.add(doc.id));
+        }
+        final rawAccountStatus =
+            (current['accountStatus'] ??
+                    (current['approvalStatus']?.toString().toLowerCase() ==
+                            'pending'
+                        ? 'pending_approval'
+                        : 'active'))
+                .toString()
+                .trim()
+                .toLowerCase()
+                .replaceAll(RegExp(r'[\s-]+'), '_');
+        final accountStatus =
+            const {
+              'active',
+              'disabled',
+              'rejected',
+              'pending_approval',
+            }.contains(rawAccountStatus)
+            ? rawAccountStatus
+            : 'active';
+        await _accountPolicyService.updateChoAccount(
+          uid: doc.id,
+          role: 'BHW',
+          accountStatus: accountStatus,
+          barangay: barangay.text.trim(),
+          barangayCode: current['barangayCode']?.toString(),
+          barangayDistrict: current['barangayDistrict']?.toString(),
+          fullName: fullName.text.trim(),
+          username: username.text.trim(),
+          contactNumber: contactNumber.text.trim(),
+          assignedPurok: sitio.text.trim(),
         );
-        await batch.commit();
         _refreshBhwAccounts();
+        _snack('BHW details saved.');
       } catch (error) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Assignment could not be updated: $error'),
+              content: Text('BHW details could not be saved: $error'),
               backgroundColor: ChoColors.aqua,
             ),
           );
         }
+      } finally {
+        if (mounted) {
+          setState(() => _busyBhwAccounts.remove(doc.id));
+        }
       }
     }
+    fullName.dispose();
+    username.dispose();
+    contactNumber.dispose();
     barangay.dispose();
     sitio.dispose();
   }

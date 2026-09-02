@@ -57,9 +57,15 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
       future: _scopeFuture,
       builder: (context, scopeSnapshot) {
         final scope = scopeSnapshot.data;
+        // Admin roles are the authoritative gate for the two management
+        // workspaces. Keep the explicit permission checks for ordinary CHO
+        // roles, but never hide admin navigation because a legacy profile has
+        // an incomplete permission array.
+        final isChoAdmin = scope?.isChoAdmin == true;
         final canViewBhwManagement =
-            scope?.hasPermission('bhw.requests.view') == true;
-        final canManageChoAccess = scope?.hasPermission('rbac.view') == true;
+            isChoAdmin || scope?.hasPermission('bhw.requests.view') == true;
+        final canManageChoAccess =
+            isChoAdmin || scope?.hasPermission('rbac.view') == true;
         final canViewDataQuality =
             scope?.hasPermission('data_quality.view') == true;
         final canViewAuditLogs = scope?.hasPermission('audit.view') == true;

@@ -1987,20 +1987,30 @@ exports.reviewBhwRegistration = functions.runWith({
   }
   await admin.auth().setCustomUserClaims(uid, claims);
   await admin.auth().updateUser(uid, {disabled: !approved});
-  await admin.database().ref(`users/${uid}`).update({
-    role: 'BHW',
-    accessRoleKey: 'BHW',
-    permissions: defaultPermissionsForRole('BHW'),
-    status: nextStatus,
-    approvalStatus: nextApproval,
-    accountStatus: nextAccount,
-    isApproved: approved,
-    ...(approved ? {approvedBy: context.auth.uid} : {
-      reviewedBy: context.auth.uid,
-      rejectionReason,
-    }),
-    updatedAt: ServerValue.TIMESTAMP,
-  });
+  try {
+    await admin.database().ref(`users/${uid}`).update({
+      role: 'BHW',
+      accessRoleKey: 'BHW',
+      permissions: defaultPermissionsForRole('BHW'),
+      status: nextStatus,
+      approvalStatus: nextApproval,
+      accountStatus: nextAccount,
+      isApproved: approved,
+      ...(approved ? {approvedBy: context.auth.uid} : {
+        reviewedBy: context.auth.uid,
+        rejectionReason,
+      }),
+      updatedAt: ServerValue.TIMESTAMP,
+    });
+  } catch (error) {
+    // Firestore/Auth are authoritative for approval. A compatibility RTDB
+    // mirror must not turn a completed review into a misleading failure.
+    console.error('RTDB BHW review mirror update failed.', {
+      uid,
+      approved,
+      message: error?.message || String(error),
+    });
+  }
 
   const applicantEmail = String(userData.email || '').trim().toLowerCase();
   if (approved && isValidEmail(applicantEmail)) {
@@ -2069,6 +2079,46 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
   const barangayDistrict = data?.barangayDistrict === null
     ? ''
     : String(data?.barangayDistrict === undefined ? current.barangayDistrict || '' : data.barangayDistrict).trim();
+  const fullName = data?.fullName === undefined
+    ? null
+    : profileText(data.fullName, 'Full name', {maxLength: 120, required: true});
+  const username = data?.username === undefined
+    ? null
+    : profileText(data.username, 'Username', {maxLength: 80, required: true});
+  const contactNumber = data?.contactNumber === undefined
+    ? null
+    : profileText(data.contactNumber, 'Contact number', {maxLength: 20});
+  const assignedPurok = data?.assignedPurok === undefined
+    ? null
+    : profileText(data.assignedPurok, 'Assigned sitio/purok', {maxLength: 120});
+  if (username !== null && username.length < 3) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Username must be at least 3 characters.',
+    );
+  }
+  if (contactNumber && !/^(?:\+63|0)\d{10}$/.test(contactNumber)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Contact number is invalid. Use a Philippine mobile number.',
+    );
+  }
+  if (username !== null) {
+    const usernameLower = normalizeText(username);
+    const [lowerMatches, exactMatches] = await Promise.all([
+      db.collection('users').where('usernameLower', '==', usernameLower)
+          .limit(5).get(),
+      db.collection('users').where('username', '==', username).limit(5).get(),
+    ]);
+    const conflictingUser = [...lowerMatches.docs, ...exactMatches.docs]
+        .find((doc) => doc.id !== uid);
+    if (conflictingUser) {
+      throw new functions.https.HttpsError(
+          'already-exists',
+          'That username is already in use.',
+      );
+    }
+  }
   if (nextRole === 'BHW' && nextAccountStatus === 'active' && !barangayCode) {
     throw new functions.https.HttpsError('failed-precondition', 'An active BHW must have an assigned barangay.');
   }
@@ -2092,6 +2142,21 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
     barangayCode: nextRole === 'BHW' ? barangayCode : FieldValue.delete(),
     barangayDistrict: nextRole === 'BHW' ? barangayDistrict : FieldValue.delete(),
     barangayVerified: nextRole === 'BHW' && !!barangayCode,
+    ...(nextRole === 'BHW' && assignedPurok !== null
+      ? {assignedPurok}
+      : {}),
+    ...(fullName !== null ? {
+      fullName,
+      displayName: fullName,
+    } : {}),
+    ...(username !== null ? {
+      username,
+      usernameLower: normalizeText(username),
+    } : {}),
+    ...(contactNumber !== null ? {
+      contactNumber,
+      phoneNumber: contactNumber,
+    } : {}),
     ...(nextRole === 'DOCTOR' ? {
       specialization,
       doctorSpecialization: specialization,
@@ -2103,6 +2168,52 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
     updatedAt: FieldValue.serverTimestamp(),
   };
   await targetRef.set(payload, {merge: true});
+
+  // Keep the CHO review queue in sync when an administrator edits a BHW.
+  // The queue is the source used by BHW Management, while users/{uid} is the
+  // authorization profile. Updating both prevents a successful Save from
+  // appearing to revert after the page is refreshed.
+  if (nextRole === 'BHW') {
+    const requestRef = db.collection('bhw_registration_requests').doc(uid);
+    const requestSnap = await requestRef.get();
+    const requestData = requestSnap.data() || {};
+    const requestAddress = requestData.address &&
+      typeof requestData.address === 'object' && !Array.isArray(requestData.address)
+      ? requestData.address
+      : {};
+    const requestBhw = requestData.bhw &&
+      typeof requestData.bhw === 'object' && !Array.isArray(requestData.bhw)
+      ? requestData.bhw
+      : {};
+    const savedPurok = assignedPurok ?? String(
+        current.assignedPurok || requestBhw.assignedSitio || '',
+    ).trim();
+    await requestRef.set({
+      ...payload,
+      ...(fullName !== null ? {fullName, displayName: fullName} : {}),
+      ...(username !== null ? {username, usernameLower: normalizeText(username)} : {}),
+      ...(contactNumber !== null ? {contactNumber, phoneNumber: contactNumber} : {}),
+      barangay,
+      barangayCode,
+      barangayDistrict,
+      assignedBarangay: barangay,
+      assignedBarangayCode: barangayCode,
+      assignedPurok: savedPurok,
+      address: {
+        ...requestAddress,
+        barangay,
+        barangayCode,
+        sitio: savedPurok,
+      },
+      bhw: {
+        ...requestBhw,
+        assignedBarangay: barangay,
+        assignedBarangayCode: barangayCode,
+        assignedSitio: savedPurok,
+      },
+      updatedAt: FieldValue.serverTimestamp(),
+    }, {merge: true});
+  }
 
   const targetAuth = await admin.auth().getUser(uid);
   const claims = {...(targetAuth.customClaims || {})};
@@ -2130,6 +2241,10 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
       barangayDistrict: null,
     }),
     ...(nextRole === 'DOCTOR' ? {specialization, availability} : {}),
+    ...(fullName !== null ? {fullName, displayName: fullName} : {}),
+    ...(username !== null ? {username, usernameLower: normalizeText(username)} : {}),
+    ...(contactNumber !== null ? {contactNumber, phoneNumber: contactNumber} : {}),
+    ...(nextRole === 'BHW' && assignedPurok !== null ? {assignedPurok} : {}),
     updatedAt: ServerValue.TIMESTAMP,
   });
   await db.collection('audit_logs').add({
