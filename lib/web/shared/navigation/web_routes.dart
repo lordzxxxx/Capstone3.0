@@ -48,8 +48,9 @@ abstract final class WebRoutes {
   static const choNotifications = '/cho/notifications';
   static const choProfile = '/cho/profile';
   static const choSuperAdmin = '/cho/super-admin';
+  static const choManageAccess = '/cho/manage-access';
+  // Legacy name retained for existing bookmarks and integrations.
   static const choRoleManager = '/cho/role-manager';
-  static const choBhwAccess = '/cho/bhw-access';
   static const doctorReferrals = '/doctor/referrals';
 
   static String choDestination(ChoDestination destination) {
@@ -63,8 +64,7 @@ abstract final class WebRoutes {
       ChoDestination.mortality => choMortality,
       ChoDestination.referrals => choReferrals,
       ChoDestination.bhwManagement => choBhwManagement,
-      ChoDestination.manageChoAccess => choRoleManager,
-      ChoDestination.bhwAccess => choBhwAccess,
+      ChoDestination.manageChoAccess => choManageAccess,
       ChoDestination.reports => choReports,
       ChoDestination.announcements => choAnnouncements,
       ChoDestination.dataQuality => choDataQuality,
@@ -84,6 +84,8 @@ abstract final class WebRoutes {
   static const legacyMortality = '/mortality';
   static const legacyBhwProfile = '/bhw-profile';
   static const legacyChoBhwManagement = '/cho/bhwManagement';
+  // Legacy BHW access links redirect to the consolidated BHW Management page.
+  static const legacyChoBhwAccess = '/cho/bhw-access';
   static const legacyChoDataQuality = '/cho/dataQuality';
   static const legacyChoAuditLogs = '/cho/auditLogs';
 
@@ -126,8 +128,8 @@ abstract final class WebRoutes {
     choNotifications,
     choProfile,
     choSuperAdmin,
+    choManageAccess,
     choRoleManager,
-    choBhwAccess,
     doctorReferrals,
     legacyCommunicable,
     legacyNonCommunicable,
@@ -138,6 +140,7 @@ abstract final class WebRoutes {
     legacyMortality,
     legacyBhwProfile,
     legacyChoBhwManagement,
+    legacyChoBhwAccess,
     legacyChoDataQuality,
     legacyChoAuditLogs,
   };

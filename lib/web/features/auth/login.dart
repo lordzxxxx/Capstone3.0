@@ -220,12 +220,14 @@ class _LoginState extends State<Login> {
     }
   }
 
-  bool _isChoRole(String role) => _normalizeRole(role) == 'cho';
+  bool _isChoRole(String role) {
+    final normalized = _normalizeRole(role);
+    return normalized == 'cho' || normalized == 'cho_admin';
+  }
 
   bool _isChoSuperAdminRole(String role) {
     final normalized = _normalizeRole(role);
-    return normalized == 'cho_admin' ||
-        normalized == 'cho_super_admin' ||
+    return normalized == 'cho_super_admin' ||
         normalized == 'super_admin' ||
         normalized == 'admin';
   }
@@ -243,8 +245,9 @@ class _LoginState extends State<Login> {
   };
 
   /// Whether the verified role belongs to the portal the user entered
-  /// through. CHO Super Admin accounts count as CHO. Always true when this
-  /// page has no expected role (the generic /login route).
+  /// through. All CHO-tier accounts count as CHO, including CHO Admin and
+  /// Super Admin accounts. Always true when this page has no expected role
+  /// (the generic /login route).
   bool _matchesExpectedPortal(String role) {
     return switch (widget.expectedRole) {
       'bhw' => _isBhwRole(role),
@@ -261,21 +264,21 @@ class _LoginState extends State<Login> {
   }
 
   Future<void> _navigateByRole(User user, String role) async {
-    if (_isChoSuperAdminRole(role)) {
-      _clearRoleValidationForDashboard();
-      await _safeOffAll(
-        const ChoSuperAdminCenter(),
-        routeName: WebRoutes.choSuperAdmin,
-      );
-      return;
-    }
-
     if (_isChoRole(role)) {
       _cacheRoleValidationForDashboard(user);
       await _safeOffAll(
         const cho.ChoDashboard(),
         arguments: {'roleValidated': true, 'uid': user.uid, 'role': 'cho'},
         routeName: WebRoutes.choDashboard,
+      );
+      return;
+    }
+
+    if (_isChoSuperAdminRole(role)) {
+      _clearRoleValidationForDashboard();
+      await _safeOffAll(
+        const ChoSuperAdminCenter(),
+        routeName: WebRoutes.choSuperAdmin,
       );
       return;
     }

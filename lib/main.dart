@@ -705,14 +705,11 @@ class MyApp extends StatelessWidget {
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
-                name: WebRoutes.choBhwAccess,
+                name: WebRoutes.choManageAccess,
                 page: () => _guardWebPage(
                   allowedRoles: _choAdminWebRoles,
                   requiredPermission: 'rbac.view',
-                  child: const web_cho_role_manager.RoleManager(
-                    initialTab: 1,
-                    focusBaseRole: 'BHW',
-                  ),
+                  child: const web_cho_role_manager.RoleManager(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
               ),
@@ -792,6 +789,16 @@ class MyApp extends StatelessWidget {
               ),
               GetPage(
                 name: WebRoutes.legacyChoBhwManagement,
+                page: () => const web_cho_support.ChoSupportCenter(
+                  section: web_cho_support.ChoSupportSection.bhwManagement,
+                ),
+                middlewares: [
+                  LegacyWebRouteMiddleware(WebRoutes.choBhwManagement),
+                  AuthGuardMiddleware(),
+                ],
+              ),
+              GetPage(
+                name: WebRoutes.legacyChoBhwAccess,
                 page: () => const web_cho_support.ChoSupportCenter(
                   section: web_cho_support.ChoSupportSection.bhwManagement,
                 ),

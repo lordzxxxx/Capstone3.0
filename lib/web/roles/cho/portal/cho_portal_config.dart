@@ -11,7 +11,6 @@ enum ChoDestination {
   referrals,
   bhwManagement,
   manageChoAccess,
-  bhwAccess,
   reports,
   announcements,
   dataQuality,

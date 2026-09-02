@@ -11,13 +11,10 @@ import 'package:mycapstone_project/web/shared/services/rbac_policy.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
 /// CHO Access is deliberately separate from BHW Management. The latter owns
-/// registration approval; this page owns the reusable user/role/permission
-/// model used by managed CHO, doctor, and BHW access.
+/// BHW registration and approval; this page owns the reusable user, role, and
+/// permission model for managed CHO and doctor accounts.
 class ChoRbacCenter extends StatefulWidget {
-  const ChoRbacCenter({super.key, this.initialTab = 0, this.focusBaseRole});
-
-  final int initialTab;
-  final String? focusBaseRole;
+  const ChoRbacCenter({super.key});
 
   @override
   State<ChoRbacCenter> createState() => _ChoRbacCenterState();
@@ -33,15 +30,9 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
   bool _loadingRoles = true;
   int _tabIndex = 0;
 
-  String? get _focusedBaseRole {
-    final value = widget.focusBaseRole?.trim().toUpperCase();
-    return value == null || value.isEmpty ? null : value;
-  }
-
   @override
   void initState() {
     super.initState();
-    _tabIndex = widget.initialTab.clamp(0, 1).toInt();
     _loadRoles();
   }
 
@@ -522,17 +513,6 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
               (b.data()['email'] ?? '').toString(),
             ),
           );
-        final visibleDocs = _focusedBaseRole == null
-            ? docs
-            : docs
-                  .where((doc) {
-                    return (doc.data()['role'] ?? '')
-                            .toString()
-                            .trim()
-                            .toUpperCase() ==
-                        _focusedBaseRole;
-                  })
-                  .toList(growable: false);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -571,11 +551,11 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                   return Column(
                     children: [
                       if (wide) const _AccessTableHeader(),
-                      for (var index = 0; index < visibleDocs.length; index++)
+                      for (var index = 0; index < docs.length; index++)
                         _buildUserRow(
-                          visibleDocs[index],
+                          docs[index],
                           wide: wide,
-                          showDivider: index < visibleDocs.length - 1,
+                          showDivider: index < docs.length - 1,
                         ),
                     ],
                   );
@@ -701,16 +681,8 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
 
   Widget _buildRoles() {
     if (_loadingRoles) return const ChoLoadingSkeleton();
-    final roles =
-        _catalog.roles
-            .where(
-              (role) =>
-                  _focusedBaseRole == null || role.baseRole == _focusedBaseRole,
-            )
-            .toList()
-          ..sort(
-            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-          );
+    final roles = [..._catalog.roles]
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -718,9 +690,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
           children: [
             Expanded(
               child: Text(
-                _focusedBaseRole == 'BHW'
-                    ? 'BHW access and permissions'
-                    : 'Roles and permissions',
+                'Roles and permissions',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
               ),
             ),
@@ -732,36 +702,10 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
-        Text(
-          _focusedBaseRole == 'BHW'
-              ? 'BHW access is limited to approved, active accounts and their assigned barangay records. Only CHO Admin can change this access model.'
-              : 'Permissions come from the actual portal modules and actions. Core roles cannot be edited or deleted, and custom roles cannot grant administrator capabilities.',
-          style: const TextStyle(color: AppColors.textSecondary),
+        const Text(
+          'Permissions come from the actual portal modules and actions. Core roles cannot be edited or deleted, and custom roles cannot grant administrator capabilities.',
+          style: TextStyle(color: AppColors.textSecondary),
         ),
-        if (_focusedBaseRole == 'BHW') ...[
-          const SizedBox(height: AppSpacing.sm),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: AppColors.backgroundLight,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: const Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.lock_outline, color: AppColors.primary, size: 18),
-                SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    'BHW users cannot approve registrations, manage roles, or grant CHO access. Those capabilities remain in CHO Admin-only workflows.',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
         const SizedBox(height: AppSpacing.md),
         ...roles.map(
           (role) => Container(
@@ -835,23 +779,17 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
     return Scaffold(
       backgroundColor: ChoColors.background,
       body: WebResponsiveBody(
-        sidebar: ChoNavigationDrawer(
-          current: _focusedBaseRole == 'BHW'
-              ? ChoDestination.bhwAccess
-              : ChoDestination.manageChoAccess,
+        sidebar: const ChoNavigationDrawer(
+          current: ChoDestination.manageChoAccess,
         ),
-        title: _focusedBaseRole == 'BHW'
-            ? 'BHW Access & Permissions'
-            : 'Manage CHO Access',
+        title: 'Manage CHO Access',
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _focusedBaseRole == 'BHW'
-                    ? 'BHW Access & Permissions'
-                    : 'Manage CHO Access',
+                'Manage CHO Access',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
