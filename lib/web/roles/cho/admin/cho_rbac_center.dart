@@ -34,8 +34,6 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
     'CHO',
     'CHO_ADMIN',
     'CHO_SUPER_ADMIN',
-    'SUPER_ADMIN',
-    'ADMIN',
   };
 
   bool _isChoAccountRole(Object? value) {

@@ -38,8 +38,8 @@ const profiles = [
   {
     key: 'superAdmin',
     email: 'browser-super-admin@example.test',
-    role: 'super_admin',
-    fullName: 'Browser QA Super Admin',
+    role: 'cho_super_admin',
+    fullName: 'Browser QA CHO Super Admin',
     barangay: '',
     barangayCode: '',
     accessScope: 'citywide',

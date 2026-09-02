@@ -49,8 +49,6 @@ function isApprovedActiveCho(profile) {
     'cho',
     'cho_admin',
     'cho_super_admin',
-    'super_admin',
-    'admin',
   ].includes(normalizeText(profile?.role)) &&
     approved &&
     ['active', 'approved'].includes(

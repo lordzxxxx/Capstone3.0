@@ -377,12 +377,7 @@ class RbacCatalog {
     'profile.view',
   ];
 
-  static const Set<String> adminRoles = {
-    'cho_admin',
-    'cho_super_admin',
-    'super_admin',
-    'admin',
-  };
+  static const Set<String> adminRoles = {'cho_admin', 'cho_super_admin'};
 
   static List<String> defaultPermissionsForRole(String role) {
     switch (role.trim().toLowerCase()) {
@@ -393,7 +388,7 @@ class RbacCatalog {
       case 'doctor':
         return doctorPermissions;
       default:
-        return permissions.map((permission) => permission.key).toList();
+        return const <String>[];
     }
   }
 

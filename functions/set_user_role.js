@@ -18,7 +18,9 @@ if (!admin.apps.length) {
 // Keep this aligned with lib/firebase_helper.dart and account_policy.js.
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 const db = getFirestore(admin.app(), FIRESTORE_DATABASE_ID);
-const CHO_OPERATOR_ROLES = ['CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'];
+const CHO_OPERATOR_ROLES = ['CHO_ADMIN', 'CHO_SUPER_ADMIN'];
+const MAIN_CHO_ADMIN_UID = 'q1Osb263nZcvlo64ws5drFDoIXf1';
+const MAIN_CHO_ADMIN_EMAIL = 'theo@gmail.com';
 
 /**
  * Verifies the CALLER already holds a CHO-tier role before they are allowed
@@ -104,6 +106,13 @@ exports.setUserRole = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError('not-found', 'The target account does not exist.');
     }
     const target = targetSnapshot.data() || {};
+    if (uid === MAIN_CHO_ADMIN_UID ||
+        String(target.email || '').trim().toLowerCase() === MAIN_CHO_ADMIN_EMAIL) {
+      throw new functions.https.HttpsError(
+          'permission-denied',
+          'The main CHO Admin account is protected from role changes.',
+      );
+    }
     if (normalizedRole === 'BHW' &&
         String(target.approvalStatus || '').toLowerCase() !== 'approved') {
       throw new functions.https.HttpsError(

@@ -339,10 +339,6 @@ class UserAccessScopeService {
           role = 'CHO_ADMIN';
         } else if (roles.contains('cho_super_admin')) {
           role = 'CHO_SUPER_ADMIN';
-        } else if (roles.contains('super_admin')) {
-          role = 'SUPER_ADMIN';
-        } else if (roles.contains('admin')) {
-          role = 'ADMIN';
         } else if (roles.contains('cho')) {
           role = 'CHO';
         } else if (roles.contains('doctor')) {

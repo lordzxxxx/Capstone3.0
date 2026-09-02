@@ -60,6 +60,9 @@ function initAdmin() {
 
 async function setChoRoleByEmail(email) {
   if (!email) throw new Error('Email required. Usage: node set_cho_role.js <email> [--key path]');
+  if (email.trim().toLowerCase() === 'theo@gmail.com') {
+    throw new Error('The main CHO Admin account is protected and cannot be changed by this utility.');
+  }
 
   const user = await admin.auth().getUserByEmail(email);
   console.log('Found user:', user.uid, user.email);

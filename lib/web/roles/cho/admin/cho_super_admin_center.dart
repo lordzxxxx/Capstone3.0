@@ -81,10 +81,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
 
   bool _isSuperAdminRole(String role) {
     final normalized = role.trim().toLowerCase();
-    return normalized == 'cho_admin' ||
-        normalized == 'cho_super_admin' ||
-        normalized == 'super_admin' ||
-        normalized == 'admin';
+    return normalized == 'cho_admin' || normalized == 'cho_super_admin';
   }
 
   Future<void> _verifyAccess() async {

@@ -61,8 +61,6 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
       final isChoAdmin = const {
         'cho_admin',
         'cho_super_admin',
-        'super_admin',
-        'admin',
       }.contains(scope.role);
       final allowed = widget.section == ChoSupportSection.bhwManagement
           ? isChoAdmin

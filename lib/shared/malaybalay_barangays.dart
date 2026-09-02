@@ -264,8 +264,6 @@ class MalaybalayBarangays {
     'CHO',
     'DOCTOR',
     'CHO_SUPER_ADMIN',
-    // Preserve the legacy elevated role used by existing user documents.
-    'SUPER_ADMIN',
   ];
 
   static BarangayReference? byName(String? name) {

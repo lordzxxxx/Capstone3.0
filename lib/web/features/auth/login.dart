@@ -227,9 +227,7 @@ class _LoginState extends State<Login> {
 
   bool _isChoSuperAdminRole(String role) {
     final normalized = _normalizeRole(role);
-    return normalized == 'cho_super_admin' ||
-        normalized == 'super_admin' ||
-        normalized == 'admin';
+    return normalized == 'cho_super_admin';
   }
 
   bool _isBhwRole(String role) => _normalizeRole(role) == 'bhw';

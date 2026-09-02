@@ -114,15 +114,8 @@ const Set<String> _choWebRoles = <String>{
   'cho',
   'cho_admin',
   'cho_super_admin',
-  'super_admin',
-  'admin',
 };
-const Set<String> _choAdminWebRoles = <String>{
-  'cho_admin',
-  'cho_super_admin',
-  'super_admin',
-  'admin',
-};
+const Set<String> _choAdminWebRoles = <String>{'cho_admin', 'cho_super_admin'};
 const Set<String> _doctorWebRoles = <String>{'doctor'};
 
 // Local QA/dev only: --dart-define=USE_FIREBASE_EMULATOR=true redirects

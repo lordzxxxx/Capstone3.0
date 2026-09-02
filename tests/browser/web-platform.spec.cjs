@@ -276,6 +276,7 @@ test.describe('role routes and permissions', () => {
     for (const route of [
       '/cho/dashboard',
       '/cho/role-manager',
+      '/cho/manage-access',
       '/cho/super-admin',
       '/cho/bhw-management',
     ]) {

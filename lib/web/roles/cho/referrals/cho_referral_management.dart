@@ -89,8 +89,6 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
         'cho',
         'cho_admin',
         'cho_super_admin',
-        'super_admin',
-        'admin',
       }.contains(scope.role);
       if (!scope.isAuthenticated || !allowed) {
         throw StateError('A verified CHO account is required.');

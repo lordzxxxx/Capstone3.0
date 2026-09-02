@@ -122,7 +122,7 @@ describe('user profile privilege boundaries', () => {
     await assertFails(
       attackerDb.doc('users/attacker').set(
         activeProfile('attacker', 'attacker@example.test', {
-          role: 'SUPER_ADMIN',
+          role: 'CHO_ADMIN',
         }),
       ),
     );
@@ -139,7 +139,7 @@ describe('user profile privilege boundaries', () => {
       .doc('users/bhw-1');
 
     await assertSucceeds(ref.update({displayName: 'Updated'}));
-    await assertFails(ref.update({role: 'SUPER_ADMIN'}));
+    await assertFails(ref.update({role: 'CHO_ADMIN'}));
     await assertFails(ref.update({approvalStatus: 'pending'}));
     await assertFails(ref.update({barangayCode: 'barangay_11'}));
   });

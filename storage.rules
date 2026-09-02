@@ -28,12 +28,10 @@ service firebase.storage {
         tokenHasAnyRole([
           'CHO',
           'cho',
+          'CHO_ADMIN',
+          'cho_admin',
           'CHO_SUPER_ADMIN',
-          'cho_super_admin',
-          'SUPER_ADMIN',
-          'super_admin',
-          'ADMIN',
-          'admin'
+          'cho_super_admin'
         ]) ||
         tokenHasAnyRole(['DOCTOR', 'doctor'])
       );

@@ -191,9 +191,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     final roleVal = role.trim().toLowerCase();
     return roleVal == 'cho' ||
         roleVal == 'cho_admin' ||
-        roleVal == 'cho_super_admin' ||
-        roleVal == 'super_admin' ||
-        roleVal == 'admin';
+        roleVal == 'cho_super_admin';
   }
 
   void _authorizeAndStart() {

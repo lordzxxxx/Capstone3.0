@@ -22,6 +22,9 @@ if (!admin.apps.length) {
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 const db = getFirestore(admin.app(), FIRESTORE_DATABASE_ID);
 const REGISTRATION_INTENT_TTL_MS = 30 * 60 * 1000;
+const CHO_ADMIN_ROLES = new Set(['CHO_ADMIN', 'CHO_SUPER_ADMIN']);
+const MAIN_CHO_ADMIN_UID = 'q1Osb263nZcvlo64ws5drFDoIXf1';
+const MAIN_CHO_ADMIN_EMAIL = 'theo@gmail.com';
 
 function normalizeText(value) {
   return String(value || '').trim().toLowerCase();
@@ -29,6 +32,11 @@ function normalizeText(value) {
 
 function normalizeRole(value) {
   return String(value || '').trim().toUpperCase();
+}
+
+function isMainChoAdminAccount(uid, data = {}) {
+  return String(uid || '').trim() === MAIN_CHO_ADMIN_UID ||
+    normalizeText(data.email || '') === MAIN_CHO_ADMIN_EMAIL;
 }
 
 function normalizeBarangayCode(value) {
@@ -658,7 +666,7 @@ async function findBarangayOwnerInTransaction(transaction, barangayCode, current
 function ensureChoOperator(context, userData) {
   const role = normalizeRole(userData.role || '');
   if (!context.auth || !isApprovedActiveProfile(userData) ||
-      !['CHO', 'CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'].includes(role)) {
+      !['CHO', ...CHO_ADMIN_ROLES].includes(role)) {
     throw new functions.https.HttpsError(
         'permission-denied',
         'Only CHO operators can use this action.',
@@ -669,7 +677,7 @@ function ensureChoOperator(context, userData) {
 function ensureChoAdmin(context, userData) {
   const role = normalizeRole(userData.role || '');
   if (!context.auth || !isApprovedActiveProfile(userData) ||
-      !['CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'].includes(role)) {
+      !CHO_ADMIN_ROLES.has(role)) {
     throw new functions.https.HttpsError(
         'permission-denied',
         'Only the CHO Admin can manage accounts, approvals, or assignments.',
@@ -2047,7 +2055,7 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
   if (!targetSnap.exists) throw new functions.https.HttpsError('not-found', 'The target account was not found.');
   const current = targetSnap.data() || {};
   const currentRole = normalizeRole(current.role || '');
-  if (['CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'].includes(currentRole)) {
+  if (isMainChoAdminAccount(uid, current) || CHO_ADMIN_ROLES.has(currentRole)) {
     throw new functions.https.HttpsError('permission-denied', 'Privileged CHO Admin accounts are managed through deployment controls.');
   }
 

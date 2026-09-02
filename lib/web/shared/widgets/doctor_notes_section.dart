@@ -63,9 +63,7 @@ class _DoctorNotesSectionState extends State<DoctorNotesSection> {
     final normalized = role.trim().toLowerCase();
     return normalized == 'doctor' ||
         normalized == 'cho' ||
-        normalized == 'cho_super_admin' ||
-        normalized == 'super_admin' ||
-        normalized == 'admin';
+        normalized == 'cho_super_admin';
   }
 
   Future<void> _submitNote() async {

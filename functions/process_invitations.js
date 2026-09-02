@@ -8,6 +8,7 @@ const { sendSystemEmail } = require('./mailer');
 const { defaultPermissionsForRole } = require('./rbac_policy');
 
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
+const CHO_ADMIN_ROLES = new Set(['CHO_ADMIN', 'CHO_SUPER_ADMIN']);
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -50,7 +51,7 @@ exports.processInvitation = onDocumentCreated({
   const inviterRole = String(inviterData.role || '').trim().toUpperCase();
   const inviterApproval = String(inviterData.approvalStatus || '').trim().toLowerCase();
   const inviterStatus = String(inviterData.accountStatus || inviterData.status || '').trim().toLowerCase();
-  const authorizedInviter = ['CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN'].includes(inviterRole) &&
+  const authorizedInviter = CHO_ADMIN_ROLES.has(inviterRole) &&
     inviterApproval === 'approved' && ['active', 'approved'].includes(inviterStatus);
   if (!authorizedInviter || !['CHO', 'DOCTOR'].includes(requestedRole.toUpperCase())) {
     await snap.ref.update({

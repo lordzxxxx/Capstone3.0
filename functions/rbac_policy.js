@@ -57,7 +57,7 @@ const PERMISSION_DEFINITIONS = [
 ];
 
 const PERMISSION_KEYS = new Set(PERMISSION_DEFINITIONS.map((item) => item.key));
-const ADMIN_ROLES = new Set(['CHO_ADMIN', 'CHO_SUPER_ADMIN', 'SUPER_ADMIN', 'ADMIN']);
+const ADMIN_ROLES = new Set(['CHO_ADMIN', 'CHO_SUPER_ADMIN']);
 const BASE_ROLES = new Set(['BHW', 'CHO', 'DOCTOR']);
 
 const BHW_PERMISSIONS = [

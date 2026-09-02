@@ -24,20 +24,12 @@ class UserAccessScope {
   bool get isAuthenticated => userId.isNotEmpty;
 
   bool get canViewAllBarangays {
-    return role == 'cho' ||
-        role == 'cho_admin' ||
-        role == 'cho_super_admin' ||
-        role == 'super_admin' ||
-        role == 'admin';
+    return role == 'cho' || role == 'cho_admin' || role == 'cho_super_admin';
   }
 
   bool get isBhw => role == 'bhw';
 
-  bool get isChoAdmin =>
-      role == 'cho_admin' ||
-      role == 'cho_super_admin' ||
-      role == 'super_admin' ||
-      role == 'admin';
+  bool get isChoAdmin => role == 'cho_admin' || role == 'cho_super_admin';
 
   bool get hasVisibilityBoundary => dataVisibleFrom != null;
 

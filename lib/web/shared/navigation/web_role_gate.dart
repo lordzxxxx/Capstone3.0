@@ -43,8 +43,6 @@ class WebRoleGate extends StatefulWidget {
       case 'cho':
       case 'cho_admin':
       case 'cho_super_admin':
-      case 'super_admin':
-      case 'admin':
         return WebRoutes.choDashboard;
       default:
         return defaultRoute;
