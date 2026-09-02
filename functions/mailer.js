@@ -100,6 +100,7 @@ async function sendSystemEmail({to, subject, text, html}) {
         headers: {
           'Authorization': `Bearer ${mailer.resend.apiKey}`,
           'Content-Type': 'application/json',
+          'User-Agent': 'AI-DSUHIS-mailer/1.0',
         },
         body: JSON.stringify({
           from: String(mailer.resend.from),
