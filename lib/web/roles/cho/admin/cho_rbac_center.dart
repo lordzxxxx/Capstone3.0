@@ -343,7 +343,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
             accessRoleKey = baseRole;
           }
           return AlertDialog(
-            title: const Text('Create managed account'),
+            title: const Text('Create CHO or doctor account'),
             content: SizedBox(
               width: 480,
               child: Column(
@@ -414,10 +414,41 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                         () => availability = value ?? availability,
                       ),
                     ),
+                    const SizedBox(height: AppSpacing.md),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(AppSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceSubtle,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: const Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.medical_services_outlined,
+                            color: AppColors.primary,
+                            size: 18,
+                          ),
+                          SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              'Doctor access: the account receives a secure activation email automatically. After setting a password, the doctor signs in through AI-DSUHIS and sees only referrals assigned to that account.',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                   const SizedBox(height: AppSpacing.md),
                   const Text(
-                    'The account receives a secure onboarding email. No permanent password is shown here.',
+                    'The onboarding email is sent automatically after the account is saved. No permanent password or manual email step is required.',
                     style: TextStyle(color: AppColors.textSecondary),
                   ),
                 ],

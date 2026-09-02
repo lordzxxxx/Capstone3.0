@@ -251,7 +251,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           ChoPageHeader(
             title: 'Referral Management',
             description:
-                'Monitor validated BHW referrals, automatic doctor assignments, and referral progress. CHO intervention is limited to exceptions and reassignment.',
+                'Validated BHW referrals are assigned automatically to an eligible doctor and notified once. Use Send/Resend email only when CHO needs to retry the notification.',
             icon: Icons.assignment_turned_in_outlined,
             actions: [
               FilledButton.icon(
