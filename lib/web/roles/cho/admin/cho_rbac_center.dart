@@ -5,7 +5,6 @@ import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
-import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/services/rbac_policy.dart';
@@ -527,118 +526,145 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
               style: TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.md),
-            WebTableSurface(
-              minWidth: 900,
-              child: Column(
-                children: visibleDocs.map((doc) {
-                  final data = doc.data();
-                  final baseRole = (data['role'] ?? '')
-                      .toString()
-                      .trim()
-                      .toUpperCase();
-                  final currentKey = (data['accessRoleKey'] ?? baseRole)
-                      .toString()
-                      .toUpperCase();
-                  final isProtected = [
-                    'CHO_ADMIN',
-                    'CHO_SUPER_ADMIN',
-                    'SUPER_ADMIN',
-                    'ADMIN',
-                  ].contains(baseRole);
-                  final options = _rolesForBase(baseRole);
-                  final selected =
-                      options.any((role) => role.roleKey == currentKey)
-                      ? currentKey
-                      : (options.any((role) => role.roleKey == baseRole)
-                            ? baseRole
-                            : null);
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.sm,
-                    ),
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: AppColors.border),
-                      ),
-                    ),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) => Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: AppSpacing.lg,
-                        runSpacing: AppSpacing.sm,
-                        children: [
-                          SizedBox(
-                            width: constraints.maxWidth > 720
-                                ? 260
-                                : constraints.maxWidth,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  (data['fullName'] ??
-                                          data['username'] ??
-                                          'Unnamed user')
-                                      .toString(),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                Text(
-                                  (data['email'] ?? 'No email').toString(),
-                                  style: const TextStyle(
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          _AccessLabel(label: 'Base role', value: baseRole),
-                          SizedBox(
-                            width: 240,
-                            child: isProtected
-                                ? const _AccessLabel(
-                                    label: 'Access',
-                                    value: 'Protected admin',
-                                  )
-                                : DropdownButtonFormField<String>(
-                                    initialValue: selected,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Access role',
-                                    ),
-                                    items: options
-                                        .map(
-                                          (role) => DropdownMenuItem(
-                                            value: role.roleKey,
-                                            child: Text(role.name),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onChanged: (value) {
-                                      if (value == null) return;
-                                      final role = options.firstWhere(
-                                        (item) => item.roleKey == value,
-                                      );
-                                      _assignRole(doc, role);
-                                    },
-                                  ),
-                          ),
-                          _AccessLabel(
-                            label: 'Status',
-                            value: (data['accountStatus'] ?? 'active')
-                                .toString(),
-                          ),
-                        ],
-                      ),
-                    ),
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.border),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final wide = constraints.maxWidth >= 900;
+                  return Column(
+                    children: [
+                      if (wide) const _AccessTableHeader(),
+                      for (var index = 0; index < visibleDocs.length; index++)
+                        _buildUserRow(
+                          visibleDocs[index],
+                          wide: wide,
+                          showDivider: index < visibleDocs.length - 1,
+                        ),
+                    ],
                   );
-                }).toList(),
+                },
               ),
             ),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildUserRow(
+    QueryDocumentSnapshot<Map<String, dynamic>> user, {
+    required bool wide,
+    required bool showDivider,
+  }) {
+    final data = user.data();
+    final baseRole = (data['role'] ?? '').toString().trim().toUpperCase();
+    final currentKey = (data['accessRoleKey'] ?? baseRole)
+        .toString()
+        .toUpperCase();
+    final isProtected = [
+      'CHO_ADMIN',
+      'CHO_SUPER_ADMIN',
+      'SUPER_ADMIN',
+      'ADMIN',
+    ].contains(baseRole);
+    final options = _rolesForBase(baseRole);
+    final selected = options.any((role) => role.roleKey == currentKey)
+        ? currentKey
+        : (options.any((role) => role.roleKey == baseRole) ? baseRole : null);
+    final identity = _AccessIdentity(
+      name: (data['fullName'] ?? data['username'] ?? 'Unnamed user').toString(),
+      email: (data['email'] ?? 'No email').toString(),
+    );
+    final accessField = SizedBox(
+      width: wide ? null : double.infinity,
+      child: isProtected
+          ? const _AccessLabel(label: 'Access role', value: 'Protected admin')
+          : DropdownButtonFormField<String>(
+              initialValue: selected,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Access role'),
+              items: options
+                  .map(
+                    (role) => DropdownMenuItem(
+                      value: role.roleKey,
+                      child: Text(role.name, overflow: TextOverflow.ellipsis),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value == null) return;
+                final role = options.firstWhere(
+                  (item) => item.roleKey == value,
+                );
+                _assignRole(user, role);
+              },
+            ),
+    );
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: wide ? AppSpacing.sm : AppSpacing.md,
+      ),
+      decoration: BoxDecoration(
+        border: showDivider
+            ? const Border(bottom: BorderSide(color: AppColors.border))
+            : null,
+      ),
+      child: wide
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(flex: 5, child: identity),
+                const SizedBox(width: AppSpacing.md),
+                const SizedBox(
+                  width: 110,
+                  child: _AccessHeaderLabel('Base role'),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                SizedBox(width: 260, child: accessField),
+                const SizedBox(width: AppSpacing.lg),
+                SizedBox(
+                  width: 110,
+                  child: _AccessLabel(
+                    label: 'Status',
+                    value: (data['accountStatus'] ?? 'active').toString(),
+                  ),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: identity),
+                    const SizedBox(width: AppSpacing.md),
+                    _AccessLabel(
+                      label: 'Status',
+                      value: (data['accountStatus'] ?? 'active').toString(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _AccessLabel(label: 'Base role', value: baseRole),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(flex: 2, child: accessField),
+                  ],
+                ),
+              ],
+            ),
     );
   }
 
@@ -784,7 +810,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
               : ChoDestination.manageChoAccess,
         ),
         title: _focusedBaseRole == 'BHW'
-            ? 'BHW Access & RBAC'
+            ? 'BHW Access & Permissions'
             : 'Manage CHO Access',
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -793,7 +819,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
             children: [
               Text(
                 _focusedBaseRole == 'BHW'
-                    ? 'BHW Access & RBAC'
+                    ? 'BHW Access & Permissions'
                     : 'Manage CHO Access',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
@@ -852,6 +878,81 @@ class _AccessLabel extends StatelessWidget {
         const SizedBox(height: 2),
         Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
       ],
+    );
+  }
+}
+
+class _AccessIdentity extends StatelessWidget {
+  const _AccessIdentity({required this.name, required this.email});
+
+  final String name;
+  final String email;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          email,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+      ],
+    );
+  }
+}
+
+class _AccessTableHeader extends StatelessWidget {
+  const _AccessTableHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      color: AppColors.surfaceSubtle,
+      child: const Row(
+        children: [
+          Expanded(flex: 5, child: _AccessHeaderLabel('User')),
+          SizedBox(width: AppSpacing.md),
+          SizedBox(width: 110, child: _AccessHeaderLabel('Base role')),
+          SizedBox(width: AppSpacing.md),
+          SizedBox(width: 260, child: _AccessHeaderLabel('Access role')),
+          SizedBox(width: AppSpacing.lg),
+          SizedBox(width: 110, child: _AccessHeaderLabel('Status')),
+        ],
+      ),
+    );
+  }
+}
+
+class _AccessHeaderLabel extends StatelessWidget {
+  const _AccessHeaderLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        color: AppColors.textSecondary,
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+      ),
     );
   }
 }

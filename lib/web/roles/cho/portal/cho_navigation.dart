@@ -228,7 +228,7 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
                                           _buildSidebarItem(
                                             destination:
                                                 ChoDestination.bhwAccess,
-                                            label: 'BHW Access & RBAC',
+                                            label: 'BHW Access & Permissions',
                                             icon: Icons.security_outlined,
                                             isCollapsed: effectiveCollapsed,
                                           ),
