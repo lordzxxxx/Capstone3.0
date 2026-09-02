@@ -141,8 +141,13 @@ String? _webInitialRoute;
 Widget _guardWebPage({
   required Set<String> allowedRoles,
   required Widget child,
+  String? requiredPermission,
 }) {
-  return WebRoleGate(allowedRoles: allowedRoles, child: child);
+  return WebRoleGate(
+    allowedRoles: allowedRoles,
+    requiredPermission: requiredPermission,
+    child: child,
+  );
 }
 
 void main() async {
@@ -389,6 +394,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.bhwDashboard,
                 page: () => _guardWebPage(
                   allowedRoles: _bhwWebRoles,
+                  requiredPermission: 'dashboard.view',
                   child: const web_bhw_dashboard.HomePage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -402,6 +408,7 @@ class MyApp extends StatelessWidget {
                       arguments['openRegistrationOnLoad'] == true;
                   return _guardWebPage(
                     allowedRoles: _bhwWebRoles,
+                    requiredPermission: 'patients.view',
                     child: web_bhw_patients.PatientRecordPage(
                       openRegistrationOnLoad: openRegistration,
                     ),
@@ -413,6 +420,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.bhwCheckups,
                 page: () => _guardWebPage(
                   allowedRoles: _bhwWebRoles,
+                  requiredPermission: 'checkups.view',
                   child: const web_checkup.CheckUpPage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -421,6 +429,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.bhwPrenatal,
                 page: () => _guardWebPage(
                   allowedRoles: _bhwWebRoles,
+                  requiredPermission: 'prenatal.view',
                   child: const web_prenatal.PrenatalPage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -429,6 +438,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.bhwImmunization,
                 page: () => _guardWebPage(
                   allowedRoles: _bhwWebRoles,
+                  requiredPermission: 'immunization.view',
                   child: const web_bhw_immunization.ImmunizationPage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -437,6 +447,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.bhwCommunicable,
                 page: () => _guardWebPage(
                   allowedRoles: _bhwWebRoles,
+                  requiredPermission: 'surveillance.view',
                   child: const web_communicable.CommunicablePage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -445,6 +456,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.bhwNonCommunicable,
                 page: () => _guardWebPage(
                   allowedRoles: _bhwWebRoles,
+                  requiredPermission: 'surveillance.view',
                   child: const web_noncommunicable.NonCommunicablePage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -453,6 +465,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.bhwMorbidity,
                 page: () => _guardWebPage(
                   allowedRoles: _bhwWebRoles,
+                  requiredPermission: 'surveillance.view',
                   child: const web_morbidity.MorbidityPage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -461,6 +474,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.bhwMortality,
                 page: () => _guardWebPage(
                   allowedRoles: _bhwWebRoles,
+                  requiredPermission: 'surveillance.view',
                   child: const web_mortality.MortalityPage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -477,6 +491,7 @@ class MyApp extends StatelessWidget {
                       : null;
                   return _guardWebPage(
                     allowedRoles: _bhwWebRoles,
+                    requiredPermission: 'referrals.create',
                     child: web_referrals.BhwReferralPage(
                       initialPatient: initialPatient,
                       initialObservations: initialObservations,
@@ -489,6 +504,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.bhwSummary,
                 page: () => _guardWebPage(
                   allowedRoles: _bhwWebRoles,
+                  requiredPermission: 'reports.view',
                   child: const web_bhw_summary.HealthMetricsPage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -497,6 +513,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.bhwAnalytics,
                 page: () => _guardWebPage(
                   allowedRoles: _bhwWebRoles,
+                  requiredPermission: 'reports.view',
                   child: const web_bhw_analytics.BHWAnalyticsPage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -505,6 +522,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.bhwProfile,
                 page: () => _guardWebPage(
                   allowedRoles: _bhwWebRoles,
+                  requiredPermission: 'profile.view',
                   child: const web_bhw_profile.BHWProfilePage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -513,6 +531,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choDashboard,
                 page: () => _guardWebPage(
                   allowedRoles: _choWebRoles,
+                  requiredPermission: 'dashboard.view',
                   child: const web_cho_dashboard.ChoDashboard(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -521,6 +540,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choPatients,
                 page: () => _guardWebPage(
                   allowedRoles: _choWebRoles,
+                  requiredPermission: 'patients.view',
                   child: web_cho_module.ChoModuleWorkspace(
                     config: web_cho_config.ChoModuleConfig.patients,
                   ),
@@ -531,6 +551,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choCheckups,
                 page: () => _guardWebPage(
                   allowedRoles: _choWebRoles,
+                  requiredPermission: 'checkups.view',
                   child: web_cho_module.ChoModuleWorkspace(
                     config: web_cho_config.ChoModuleConfig.checkups,
                   ),
@@ -541,6 +562,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choPrenatal,
                 page: () => _guardWebPage(
                   allowedRoles: _choWebRoles,
+                  requiredPermission: 'prenatal.view',
                   child: web_cho_module.ChoModuleWorkspace(
                     config: web_cho_config.ChoModuleConfig.prenatal,
                   ),
@@ -551,6 +573,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choImmunization,
                 page: () => _guardWebPage(
                   allowedRoles: _choWebRoles,
+                  requiredPermission: 'immunization.view',
                   child: web_cho_module.ChoModuleWorkspace(
                     config: web_cho_config.ChoModuleConfig.immunization,
                   ),
@@ -561,6 +584,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choMorbidity,
                 page: () => _guardWebPage(
                   allowedRoles: _choWebRoles,
+                  requiredPermission: 'surveillance.view',
                   child: web_cho_module.ChoModuleWorkspace(
                     config: web_cho_config.ChoModuleConfig.morbidity,
                   ),
@@ -571,6 +595,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choMortality,
                 page: () => _guardWebPage(
                   allowedRoles: _choWebRoles,
+                  requiredPermission: 'surveillance.view',
                   child: web_cho_module.ChoModuleWorkspace(
                     config: web_cho_config.ChoModuleConfig.mortality,
                   ),
@@ -581,6 +606,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choReferrals,
                 page: () => _guardWebPage(
                   allowedRoles: _choWebRoles,
+                  requiredPermission: 'referrals.view',
                   child: const web_cho_referrals.CHOPreferralPage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -589,6 +615,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choBhwManagement,
                 page: () => _guardWebPage(
                   allowedRoles: _choAdminWebRoles,
+                  requiredPermission: 'bhw.requests.view',
                   child: const web_cho_support.ChoSupportCenter(
                     section: web_cho_support.ChoSupportSection.bhwManagement,
                   ),
@@ -599,6 +626,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choReports,
                 page: () => _guardWebPage(
                   allowedRoles: _choWebRoles,
+                  requiredPermission: 'reports.view',
                   child: const web_cho_analytics.AnalyticsPage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -607,6 +635,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choAnnouncements,
                 page: () => _guardWebPage(
                   allowedRoles: _choWebRoles,
+                  requiredPermission: 'notifications.view',
                   child: const web_cho_support.ChoSupportCenter(
                     section: web_cho_support.ChoSupportSection.announcements,
                   ),
@@ -617,6 +646,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choDataQuality,
                 page: () => _guardWebPage(
                   allowedRoles: _choWebRoles,
+                  requiredPermission: 'data_quality.view',
                   child: const web_cho_support.ChoSupportCenter(
                     section: web_cho_support.ChoSupportSection.dataQuality,
                   ),
@@ -627,6 +657,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choAuditLogs,
                 page: () => _guardWebPage(
                   allowedRoles: _choWebRoles,
+                  requiredPermission: 'audit.view',
                   child: const web_cho_support.ChoSupportCenter(
                     section: web_cho_support.ChoSupportSection.auditLogs,
                   ),
@@ -637,6 +668,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choNotifications,
                 page: () => _guardWebPage(
                   allowedRoles: _choWebRoles,
+                  requiredPermission: 'notifications.view',
                   child: const web_cho_support.ChoSupportCenter(
                     section: web_cho_support.ChoSupportSection.notifications,
                   ),
@@ -647,6 +679,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choProfile,
                 page: () => _guardWebPage(
                   allowedRoles: _choWebRoles,
+                  requiredPermission: 'profile.view',
                   child: const web_cho_support.ChoSupportCenter(
                     section: web_cho_support.ChoSupportSection.profile,
                   ),
@@ -657,6 +690,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choSuperAdmin,
                 page: () => _guardWebPage(
                   allowedRoles: _choAdminWebRoles,
+                  requiredPermission: 'cho.users.view',
                   child: const web_cho_super_admin.ChoSuperAdminCenter(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -665,6 +699,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.choRoleManager,
                 page: () => _guardWebPage(
                   allowedRoles: _choAdminWebRoles,
+                  requiredPermission: 'rbac.view',
                   child: const web_cho_role_manager.RoleManager(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
@@ -673,6 +708,7 @@ class MyApp extends StatelessWidget {
                 name: WebRoutes.doctorReferrals,
                 page: () => _guardWebPage(
                   allowedRoles: _doctorWebRoles,
+                  requiredPermission: 'referrals.assigned.view',
                   child: const web_doctor_referrals.ReferralsPage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],

@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
+import 'package:mycapstone_project/web/shared/services/rbac_policy.dart';
 
 class RegistrationValidationResult {
   final bool emailExists;
@@ -163,6 +164,7 @@ class ManagedAccountResult {
   final String fullName;
   final bool activationEmailSent;
   final String activationEmailReason;
+  final String accessRoleKey;
 
   const ManagedAccountResult({
     required this.success,
@@ -172,6 +174,7 @@ class ManagedAccountResult {
     required this.fullName,
     required this.activationEmailSent,
     required this.activationEmailReason,
+    this.accessRoleKey = '',
   });
 
   factory ManagedAccountResult.fromMap(Map<Object?, Object?> map) {
@@ -183,6 +186,7 @@ class ManagedAccountResult {
       fullName: (map['fullName'] ?? '').toString(),
       activationEmailSent: map['activationEmailSent'] == true,
       activationEmailReason: (map['activationEmailReason'] ?? '').toString(),
+      accessRoleKey: (map['accessRoleKey'] ?? '').toString(),
     );
   }
 }
@@ -392,6 +396,7 @@ class AccountPolicyService {
     String specialization = '',
     String availability = 'available',
     String accountStatus = 'active',
+    String? accessRoleKey,
   }) async {
     final callable = _functions.httpsCallable('createChoAccount');
     final response = await callable.call(<String, dynamic>{
@@ -401,6 +406,8 @@ class AccountPolicyService {
       'specialization': specialization.trim(),
       'availability': availability.trim().toLowerCase(),
       'accountStatus': accountStatus.trim().toLowerCase(),
+      if (accessRoleKey != null && accessRoleKey.trim().isNotEmpty)
+        'accessRoleKey': accessRoleKey.trim().toUpperCase(),
     });
     return ManagedAccountResult.fromMap(
       Map<Object?, Object?>.from(response.data as Map),
@@ -416,6 +423,7 @@ class AccountPolicyService {
     String? barangayDistrict,
     String? specialization,
     String? availability,
+    String? accessRoleKey,
   }) async {
     final callable = _functions.httpsCallable('updateChoAccount');
     await callable.call(<String, dynamic>{
@@ -428,6 +436,8 @@ class AccountPolicyService {
       if (barangayDistrict != null) 'barangayDistrict': barangayDistrict,
       if (specialization != null) 'specialization': specialization,
       if (availability != null) 'availability': availability,
+      if (accessRoleKey != null && accessRoleKey.trim().isNotEmpty)
+        'accessRoleKey': accessRoleKey.trim().toUpperCase(),
     });
   }
 
@@ -444,6 +454,54 @@ class AccountPolicyService {
     });
   }
 
+  Future<RbacRoleCatalog> listAccessRoles() async {
+    final callable = _functions.httpsCallable('listAccessRoles');
+    final response = await callable.call();
+    return RbacRoleCatalog.fromMap(
+      Map<Object?, Object?>.from(response.data as Map),
+    );
+  }
+
+  Future<RbacRoleDefinition> saveAccessRole({
+    String? roleKey,
+    required String name,
+    required String description,
+    required String baseRole,
+    required List<String> permissions,
+  }) async {
+    final callable = _functions.httpsCallable('saveAccessRole');
+    final response = await callable.call(<String, dynamic>{
+      if (roleKey != null && roleKey.trim().isNotEmpty)
+        'roleKey': roleKey.trim().toUpperCase(),
+      'name': name.trim(),
+      'description': description.trim(),
+      'baseRole': baseRole.trim().toUpperCase(),
+      'permissions': permissions,
+    });
+    final result = Map<Object?, Object?>.from(response.data as Map);
+    return RbacRoleDefinition(
+      roleKey: (result['roleKey'] ?? roleKey ?? '').toString(),
+      name: name.trim(),
+      description: description.trim(),
+      baseRole: (result['baseRole'] ?? baseRole).toString(),
+      permissions: result['permissions'] is List
+          ? (result['permissions'] as List)
+                .map((value) => value.toString())
+                .toList()
+          : permissions,
+      isSystem: false,
+      isProtected: false,
+      active: true,
+    );
+  }
+
+  Future<void> deleteAccessRole(String roleKey) async {
+    final callable = _functions.httpsCallable('deleteAccessRole');
+    await callable.call(<String, dynamic>{
+      'roleKey': roleKey.trim().toUpperCase(),
+    });
+  }
+
   Future<DoctorAssignmentExecutionResult> assignDoctorToReferral({
     required String referralId,
     String? preferredDoctorUid,
@@ -457,5 +515,4 @@ class AccountPolicyService {
       Map<Object?, Object?>.from(response.data as Map),
     );
   }
-
 }

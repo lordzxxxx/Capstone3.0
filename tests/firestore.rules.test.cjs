@@ -271,6 +271,72 @@ describe('user profile privilege boundaries', () => {
   });
 });
 
+describe('explicit access-role permissions', () => {
+  it('enforces a custom BHW role at the record boundary', async () => {
+    await seed('users/custom-bhw', activeProfile('custom-bhw', 'custom-bhw@example.test', {
+      accessRoleKey: 'CUSTOM_READ_ONLY_BHW',
+      permissions: ['dashboard.view', 'patients.view'],
+    }));
+    await seed('patient_records/patient-1', {
+      barangay: 'Barangay 10',
+      barangayCode: 'barangay_10',
+      name: 'Scoped patient',
+    });
+    await seed('checkup_records/checkup-1', {
+      barangay: 'Barangay 10',
+      barangayCode: 'barangay_10',
+      patientName: 'Scoped patient',
+    });
+
+    const db = testEnv
+      .authenticatedContext('custom-bhw', {email: 'custom-bhw@example.test'})
+      .firestore();
+    await assertSucceeds(db.doc('patient_records/patient-1').get());
+    await assertFails(db.doc('checkup_records/checkup-1').get());
+    await assertFails(db.doc('checkup_records/checkup-2').set({
+      barangay: 'Barangay 10',
+      barangayCode: 'barangay_10',
+      patientName: 'Injected',
+    }));
+  });
+
+  it('does not let a normal CHO read the user-governance list without its permission', async () => {
+    await seed('users/cho-1', activeProfile('cho-1', 'cho@example.test', {
+      role: 'CHO',
+      accessScope: 'citywide',
+      barangay: '',
+      barangayCode: '',
+      accessRoleKey: 'CUSTOM_CLINICAL_CHO',
+      permissions: ['dashboard.view', 'patients.view'],
+    }));
+    const db = testEnv
+      .authenticatedContext('cho-1', {email: 'cho@example.test'})
+      .firestore();
+    await assertFails(db.collection('users').get());
+    await assertFails(db.collection('roles').get());
+  });
+
+  it('allows an approved CHO Admin to read the protected role catalog', async () => {
+    await seed('users/admin-1', activeProfile('admin-1', 'admin@example.test', {
+      role: 'CHO_ADMIN',
+      accessScope: 'citywide',
+      barangay: '',
+      barangayCode: '',
+    }));
+    await seed('roles/CUSTOM_BHW_HELPER', {
+      roleKey: 'CUSTOM_BHW_HELPER',
+      name: 'BHW Helper',
+      baseRole: 'BHW',
+      permissions: ['dashboard.view'],
+      active: true,
+    });
+    const db = testEnv
+      .authenticatedContext('admin-1', {email: 'admin@example.test'})
+      .firestore();
+    await assertSucceeds(db.collection('roles').get());
+  });
+});
+
 describe('immunization record validation boundaries', () => {
   beforeEach(async () => {
     await seed(

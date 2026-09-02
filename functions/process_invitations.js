@@ -1,9 +1,11 @@
 const functions = require('firebase-functions');
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { ServerValue } = require('firebase-admin/database');
 const { generateTemporaryPassword } = require('./password_policy');
 const { sendSystemEmail } = require('./mailer');
+const { defaultPermissionsForRole } = require('./rbac_policy');
 
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 
@@ -38,7 +40,7 @@ exports.processInvitation = onDocumentCreated({
   const availability = (data.availability || data.doctorAvailability || 'available').toString().trim().toLowerCase() || 'available';
 
   if (!email) {
-    await snap.ref.update({ status: 'error', error: 'missing email', processedAt: admin.firestore.FieldValue.serverTimestamp() });
+    await snap.ref.update({ status: 'error', error: 'missing email', processedAt: FieldValue.serverTimestamp() });
     return;
   }
 
@@ -53,7 +55,7 @@ exports.processInvitation = onDocumentCreated({
     await snap.ref.update({
       status: 'rejected',
       error: 'Only the CHO Admin may create CHO or doctor accounts.',
-      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      processedAt: FieldValue.serverTimestamp(),
     });
     return;
   }
@@ -106,9 +108,11 @@ exports.processInvitation = onDocumentCreated({
       email,
       emailLower: email,
       role: requestedRole.toUpperCase(),
+      accessRoleKey: requestedRole.toUpperCase(),
+      permissions: defaultPermissionsForRole(requestedRole),
       accessScope: 'citywide',
       organizationLevel: 'citywide',
-      dataVisibilityStartAt: existingUserData.dataVisibilityStartAt || admin.firestore.FieldValue.serverTimestamp(),
+      dataVisibilityStartAt: existingUserData.dataVisibilityStartAt || FieldValue.serverTimestamp(),
       specialization,
       doctorSpecialization: specialization,
       specialty: specialization,
@@ -118,15 +122,15 @@ exports.processInvitation = onDocumentCreated({
       accountStatus: existingUserData.accountStatus || 'active',
       doctorRegistrySource: 'invitation_trigger',
       doctorRegisteredByUid: createdBy,
-      createdAt: existingUserData.createdAt || admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: existingUserData.createdAt || FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
 
     await db.collection('registration_email_locks').doc(email).set({
       uid: userRecord.uid,
       email,
       emailLower: email,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       source: 'invitation-trigger',
     }, { merge: true });
 
@@ -135,7 +139,7 @@ exports.processInvitation = onDocumentCreated({
         uid: userRecord.uid,
         username: fullName,
         usernameLower: fullName.toLowerCase(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         source: 'invitation-trigger',
       }, { merge: true });
     }
@@ -166,12 +170,12 @@ exports.processInvitation = onDocumentCreated({
       uid: userRecord.uid,
       emailSent: emailSent,
       emailError: emailError,
-      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      processedAt: FieldValue.serverTimestamp(),
     });
 
     console.log('Processed invitation for', email);
   } catch (err) {
     console.error('processInvitation error:', err);
-    await snap.ref.update({ status: 'error', error: err.message || String(err), processedAt: admin.firestore.FieldValue.serverTimestamp() });
+    await snap.ref.update({ status: 'error', error: err.message || String(err), processedAt: FieldValue.serverTimestamp() });
   }
 });

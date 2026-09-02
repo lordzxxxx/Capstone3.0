@@ -1,6 +1,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const crypto = require('crypto');
 const {sendSystemEmail} = require('./mailer');
 const {
@@ -82,7 +82,7 @@ async function writeSecurityEvent(event, details = {}) {
       event,
       source: 'password-reset',
       ...details,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
   } catch (error) {
     // Audit logging must never turn a valid recovery request into a failure,
@@ -244,7 +244,7 @@ exports.sendPasswordResetEmail = functions.https.onRequest((req, res) => {
           email,
           hashedCode: hash,
           salt,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
           expiryAt: admin.firestore.Timestamp.fromDate(expiryTime),
           attempts: 0,
           verified: false,
@@ -377,7 +377,7 @@ exports.verifyResetCode = functions.https.onRequest((req, res) => {
         .update({
           verified: true,
           sessionToken,
-          verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+          verifiedAt: FieldValue.serverTimestamp(),
         });
 
       return res.status(200).json({

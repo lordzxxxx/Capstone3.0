@@ -25,6 +25,11 @@ const {
 	syncAccountGovernanceLocksV2,
 	suggestDoctorAssignment,
 } = require('./account_policy');
+const {
+  listAccessRoles,
+  saveAccessRole,
+  deleteAccessRole,
+} = require('./rbac_policy');
 
 // Export functions
 exports.setUserRole = setUserRole;
@@ -43,5 +48,8 @@ exports.assignDoctorToReferral = assignDoctorToReferral;
 exports.autoAssignReferralOnWrite = autoAssignReferralOnWrite;
 exports.syncAccountGovernanceLocksV2 = syncAccountGovernanceLocksV2;
 exports.suggestDoctorAssignment = suggestDoctorAssignment;
+exports.listAccessRoles = listAccessRoles;
+exports.saveAccessRole = saveAccessRole;
+exports.deleteAccessRole = deleteAccessRole;
 
 // Additional utility functions can be added here as needed

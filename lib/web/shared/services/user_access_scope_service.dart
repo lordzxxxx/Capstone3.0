@@ -6,6 +6,7 @@ import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/services/barangay_workspace_service.dart';
 import 'package:mycapstone_project/web/shared/services/firestore_rest_reader.dart';
+import 'package:mycapstone_project/web/shared/services/rbac_policy.dart';
 
 class UserAccessScopeService {
   UserAccessScopeService._();
@@ -41,6 +42,20 @@ class UserAccessScopeService {
       dataVisibleFrom: _coerceDate(
         data['dataVisibilityStartAt'] ?? data['createdAt'],
       ),
+      accessRoleKey: (data['accessRoleKey'] ?? data['role'] ?? '')
+          .toString()
+          .trim()
+          .toUpperCase(),
+      permissions: data['permissions'] is List
+          ? (data['permissions'] as List)
+                .map((permission) => permission.toString())
+                .where(
+                  (permission) => RbacCatalog.permissions.any(
+                    (definition) => definition.key == permission,
+                  ),
+                )
+                .toList()
+          : const <String>[],
     );
   }
 
@@ -120,6 +135,12 @@ class UserAccessScopeService {
         'fullName': data['fullName'],
         'displayName': data['displayName'],
         'role': data['role'],
+        'accessRoleKey': data['accessRoleKey'] ?? data['role'],
+        'permissions':
+            data['permissions'] ??
+            RbacCatalog.defaultPermissionsForRole(
+              (data['role'] ?? '').toString(),
+            ),
         'accessScope':
             data['accessScope'] ??
             _defaultAccessScopeForRole((data['role'] ?? '').toString()),
@@ -277,6 +298,10 @@ class UserAccessScopeService {
         'fullName': fullName,
         'displayName': (data['displayName'] ?? fullName).toString().trim(),
         'role': role,
+        'accessRoleKey': data['accessRoleKey'] ?? role,
+        'permissions': data['permissions'] is List
+            ? data['permissions']
+            : RbacCatalog.defaultPermissionsForRole(role),
         'accessScope': (data['accessScope'] ?? _defaultAccessScopeForRole(role))
             .toString(),
         'organizationLevel': _normalizedRoleValue(role) == 'bhw'
@@ -337,6 +362,10 @@ class UserAccessScopeService {
         'email': email,
         'emailLower': email.toLowerCase(),
         'role': role,
+        'accessRoleKey': claims['accessRoleKey'] ?? role,
+        'permissions': claims['permissions'] is List
+            ? claims['permissions']
+            : RbacCatalog.defaultPermissionsForRole(role),
         'accessScope': _defaultAccessScopeForRole(role),
         'organizationLevel': _normalizedRoleValue(role) == 'bhw'
             ? 'barangay'

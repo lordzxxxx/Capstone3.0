@@ -10,6 +10,23 @@ const SYSTEM_MAILER_FROM = `AI-DSUHIS <${SYSTEM_MAILER_EMAIL}>`;
 let transporter = null;
 let transporterReason = null;
 
+function runtimeResendConfig() {
+  let configured = {};
+  try {
+    configured = (functions.config && functions.config().resend) || {};
+  } catch (error) {
+    configured = {};
+  }
+
+  return {
+    apiKey: process.env.RESEND_API_KEY || configured.api_key,
+    // Resend requires a verified sender. Keep this explicit instead of
+    // silently pretending that a Gmail address is valid for the domain.
+    from: process.env.RESEND_FROM || configured.from,
+    replyTo: process.env.RESEND_REPLY_TO || configured.reply_to || SYSTEM_MAILER_EMAIL,
+  };
+}
+
 function runtimeSmtpConfig() {
   let configured = {};
   try {
@@ -34,9 +51,16 @@ function getSystemMailer() {
     return {transporter, reason: transporterReason};
   }
 
+  const resend = runtimeResendConfig();
+  if (resend.apiKey && resend.from) {
+    return {transporter: null, resend, reason: null};
+  }
+
   const config = runtimeSmtpConfig();
   if (!config.host || !config.user || !config.pass) {
-    transporterReason = 'smtp_not_configured';
+    transporterReason = resend.apiKey && !resend.from
+      ? 'resend_from_not_configured'
+      : 'smtp_not_configured';
     return {transporter: null, reason: transporterReason};
   }
 
@@ -69,6 +93,37 @@ async function sendSystemEmail({to, subject, text, html}) {
   if (!recipient) return {sent: false, reason: 'missing_recipient'};
 
   const mailer = getSystemMailer();
+  if (mailer.resend) {
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${mailer.resend.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: String(mailer.resend.from),
+          to: [recipient],
+          reply_to: String(mailer.resend.replyTo),
+          subject: String(subject || 'AI-DSUHIS notification'),
+          text: String(text || ''),
+          ...(html ? {html: String(html)} : {}),
+        }),
+      });
+      if (!response.ok) {
+        console.error('AI-DSUHIS Resend email failed.', {status: response.status});
+        return {sent: false, reason: 'send_failed'};
+      }
+      const payload = await response.json().catch(() => ({}));
+      return {sent: true, reason: 'sent', messageId: payload.id || null};
+    } catch (error) {
+      console.error('AI-DSUHIS Resend email failed.', {
+        code: error?.code || 'unknown',
+        message: error?.message || String(error),
+      });
+      return {sent: false, reason: 'send_failed'};
+    }
+  }
   if (!mailer.transporter) {
     return {sent: false, reason: mailer.reason || 'smtp_unavailable'};
   }

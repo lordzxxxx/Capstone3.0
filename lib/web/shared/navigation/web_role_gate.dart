@@ -16,11 +16,13 @@ class WebRoleGate extends StatefulWidget {
     super.key,
     required this.allowedRoles,
     required this.child,
+    this.requiredPermission,
     this.fallbackRoute = WebRoutes.landing,
   });
 
   final Set<String> allowedRoles;
   final Widget child;
+  final String? requiredPermission;
   final String fallbackRoute;
 
   static String normalizeRole(Object? role) =>
@@ -83,9 +85,13 @@ class _WebRoleGateState extends State<WebRoleGate> {
 
         final scope = snapshot.data;
         final role = scope?.role ?? '';
+        final permissionAllowed =
+            widget.requiredPermission == null ||
+            scope?.hasPermission(widget.requiredPermission!) == true;
         if (snapshot.hasError ||
             scope == null ||
-            !WebRoleGate.isAllowed(role, widget.allowedRoles)) {
+            !WebRoleGate.isAllowed(role, widget.allowedRoles) ||
+            !permissionAllowed) {
           return _WebRoleState(
             icon: Icons.lock_outline,
             title: 'Workspace unavailable',

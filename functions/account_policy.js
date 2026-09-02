@@ -2,12 +2,17 @@ const functions = require('firebase-functions');
 const { onDocumentWritten } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 const {getFirestore, FieldValue} = require('firebase-admin/firestore');
+const {ServerValue} = require('firebase-admin/database');
 const crypto = require('crypto');
 const {sendSystemEmail} = require('./mailer');
 const {
   assertStrongPassword,
   generateTemporaryPassword,
 } = require('./password_policy');
+const {
+  defaultPermissionsForRole,
+  resolveRoleAssignment,
+} = require('./rbac_policy');
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -290,7 +295,7 @@ function assertBhwRegistrationProfile(profile, {
       choReviewAcknowledged: true,
       privacyPolicyAccepted: true,
       dataPrivacyActAccepted: true,
-      acceptedAt: admin.firestore.FieldValue.serverTimestamp(),
+      acceptedAt: FieldValue.serverTimestamp(),
     },
     approvedBy: null,
     approvedAt: null,
@@ -805,6 +810,7 @@ function buildRootUserPayload({
   const accountStatus = isBarangayScoped
     ? (previousData?.accountStatus || 'pending_approval')
     : (previousData?.accountStatus || 'active');
+  const accessRoleKey = previousData?.accessRoleKey || normalizedRole;
 
   return {
     username,
@@ -813,29 +819,31 @@ function buildRootUserPayload({
     emailLower: normalizeText(email),
     uid,
     role: normalizedRole,
+    accessRoleKey,
+    permissions: previousData?.permissions || defaultPermissionsForRole(normalizedRole),
     accessScope: accessScopeForRole(normalizedRole),
     organizationLevel: isBarangayScoped ? 'barangay' : 'citywide',
     dataVisibilityStartAt:
       previousData?.dataVisibilityStartAt ||
-      admin.firestore.FieldValue.serverTimestamp(),
+      FieldValue.serverTimestamp(),
     barangay: isBarangayScoped ?
       barangay :
-      admin.firestore.FieldValue.delete(),
+      FieldValue.delete(),
     barangayCode: isBarangayScoped ?
       normalizedBarangayCode :
-      admin.firestore.FieldValue.delete(),
+      FieldValue.delete(),
     barangayDistrict: isBarangayScoped ?
       barangayDistrict :
-      admin.firestore.FieldValue.delete(),
+      FieldValue.delete(),
     barangayVerified: isBarangayScoped,
-    barangayPath: barangayPath || admin.firestore.FieldValue.delete(),
-    barangayUserPath: barangayUserPath || admin.firestore.FieldValue.delete(),
+    barangayPath: barangayPath || FieldValue.delete(),
+    barangayUserPath: barangayUserPath || FieldValue.delete(),
     approvalStatus,
     accountStatus,
     isApproved: approvalStatus.toLowerCase() === 'approved',
     createdAt:
-      previousData?.createdAt || admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      previousData?.createdAt || FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   };
 }
 
@@ -861,7 +869,7 @@ function buildDoctorUserPayload({
     organizationLevel: 'citywide',
     dataVisibilityStartAt:
       previousData?.dataVisibilityStartAt ||
-      admin.firestore.FieldValue.serverTimestamp(),
+      FieldValue.serverTimestamp(),
     specialization,
     doctorSpecialization: specialization,
     specialty: specialization,
@@ -871,15 +879,15 @@ function buildDoctorUserPayload({
     accountStatus: previousData?.accountStatus || 'active',
     doctorRegistrySource: 'cho_registry',
     doctorRegisteredByUid: registeredByUid,
-    barangay: admin.firestore.FieldValue.delete(),
-    barangayCode: admin.firestore.FieldValue.delete(),
-    barangayDistrict: admin.firestore.FieldValue.delete(),
+    barangay: FieldValue.delete(),
+    barangayCode: FieldValue.delete(),
+    barangayDistrict: FieldValue.delete(),
     barangayVerified: false,
-    barangayPath: admin.firestore.FieldValue.delete(),
-    barangayUserPath: admin.firestore.FieldValue.delete(),
+    barangayPath: FieldValue.delete(),
+    barangayUserPath: FieldValue.delete(),
     createdAt:
-      previousData?.createdAt || admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      previousData?.createdAt || FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   };
 }
 
@@ -888,8 +896,8 @@ function buildBarangayDirectoryPayload(data) {
     barangay: String(data?.barangay || '').trim(),
     barangayCode: normalizeBarangayCode(data?.barangayCode || ''),
     barangayDistrict: String(data?.barangayDistrict || '').trim(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    lastUserSyncAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+    lastUserSyncAt: FieldValue.serverTimestamp(),
   };
 }
 
@@ -922,7 +930,7 @@ function buildBarangayUserPayload(uid, data) {
     dataVisibilityStartAt:
       data?.dataVisibilityStartAt ||
       data?.createdAt ||
-      admin.firestore.FieldValue.serverTimestamp(),
+      FieldValue.serverTimestamp(),
     barangay: String(data?.barangay || '').trim(),
     barangayCode: normalizedBarangayCode,
     barangayDistrict: String(data?.barangayDistrict || '').trim(),
@@ -934,8 +942,8 @@ function buildBarangayUserPayload(uid, data) {
     approvalStatus: String(data?.approvalStatus || 'pending').trim(),
     accountStatus: String(data?.accountStatus || 'active').trim(),
     createdAt:
-      data?.createdAt || admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      data?.createdAt || FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     ...mirroredProfile,
   };
 }
@@ -949,7 +957,7 @@ function buildBarangayRegistrationStatusPayload(data) {
     accountStatus: String(data?.accountStatus || 'active').trim(),
     approvalStatus: String(data?.approvalStatus || 'pending').trim(),
     isAvailable: false,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   };
 }
 
@@ -1208,7 +1216,7 @@ exports.createRegistrationAccount = functions.https.onCall(async (data, context)
       role,
       barangayCode,
       registrationNonce,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       expiresAt: admin.firestore.Timestamp.fromMillis(
           Date.now() + REGISTRATION_INTENT_TTL_MS,
       ),
@@ -1535,7 +1543,7 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
             applicantUid: uid,
             requestType: 'BHW_ACCOUNT_REGISTRATION',
             submissionStatus: 'submitted',
-            submittedAt: admin.firestore.FieldValue.serverTimestamp(),
+            submittedAt: FieldValue.serverTimestamp(),
             profilePath: userRef.path,
             barangayProfilePath: barangayUserDocRef(barangayCode, uid).path,
             source: 'public-bhw-registration',
@@ -1576,7 +1584,7 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
       barangayDistrict: isBarangayScopedRole(role) ? barangayDistrict : null,
       approvalStatus: completedPayload.approvalStatus,
       accountStatus: completedPayload.accountStatus,
-      updatedAt: admin.database.ServerValue.TIMESTAMP,
+      updatedAt: ServerValue.TIMESTAMP,
     });
   } catch (error) {
     console.error('RTDB mirror update failed after completeRegistration', error);
@@ -1666,6 +1674,10 @@ async function provisionManagedAccount(data, context) {
         'Managed accounts can only be CHO or DOCTOR accounts. The main CHO Admin is not self-created.',
     );
   }
+  const accessRole = await resolveRoleAssignment({
+    role,
+    accessRoleKey: data?.accessRoleKey || role,
+  });
 
   const specialization = role === 'DOCTOR'
     ? doctorSpecializationValue(data || {})
@@ -1737,13 +1749,15 @@ async function provisionManagedAccount(data, context) {
     email,
     emailLower: normalizeText(email),
     role,
+    accessRoleKey: accessRole.roleKey,
+    permissions: accessRole.permissions,
     accessScope: 'citywide',
     organizationLevel: 'citywide',
     approvalStatus: 'approved',
     accountStatus,
     status: accountStatus === 'active' ? 'Active' : 'Disabled',
     isApproved: true,
-    dataVisibilityStartAt: existingData.dataVisibilityStartAt || admin.firestore.FieldValue.serverTimestamp(),
+    dataVisibilityStartAt: existingData.dataVisibilityStartAt || FieldValue.serverTimestamp(),
     ...(role === 'DOCTOR' ? {
       specialization,
       doctorSpecialization: specialization,
@@ -1753,8 +1767,8 @@ async function provisionManagedAccount(data, context) {
       doctorRegistrySource: 'cho_admin',
     } : {}),
     createdByUid: existingData.createdByUid || context.auth.uid,
-    createdAt: existingData.createdAt || admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: existingData.createdAt || FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   };
 
   try {
@@ -1764,14 +1778,14 @@ async function provisionManagedAccount(data, context) {
         uid: userRecord.uid,
         email,
         emailLower: normalizeText(email),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         source: 'cho-admin',
       }, {merge: true});
       transaction.set(usernameLockRef, {
         uid: userRecord.uid,
         username: fullName,
         usernameLower: normalizeText(fullName),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         source: 'cho-admin',
       }, {merge: true});
     });
@@ -1793,6 +1807,8 @@ async function provisionManagedAccount(data, context) {
       fullName,
       email,
       role,
+      accessRoleKey: accessRole.roleKey,
+      permissions: accessRole.permissions,
       accessScope: 'citywide',
       approvalStatus: 'approved',
       accountStatus,
@@ -1802,7 +1818,7 @@ async function provisionManagedAccount(data, context) {
         availability,
         doctorAvailability: availability,
       } : {}),
-      updatedAt: admin.database.ServerValue.TIMESTAMP,
+      updatedAt: ServerValue.TIMESTAMP,
     });
   } catch (error) {
     if (created) {
@@ -1855,8 +1871,9 @@ async function provisionManagedAccount(data, context) {
     actorUid: context.auth.uid,
     targetUid: userRecord.uid,
     role,
+    accessRoleKey: accessRole.roleKey,
     accountStatus,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   return {
@@ -1866,6 +1883,7 @@ async function provisionManagedAccount(data, context) {
     fullName,
     email,
     role,
+    accessRoleKey: accessRole.roleKey,
     specialization,
     availability,
     accountStatus,
@@ -1911,20 +1929,22 @@ exports.reviewBhwRegistration = functions.https.onCall(async (data, context) => 
   const nextAccount = approved ? 'active' : 'rejected';
   const nextStatus = approved ? 'Active' : 'Rejected';
   const updatePayload = {
+    accessRoleKey: 'BHW',
+    permissions: defaultPermissionsForRole('BHW'),
     approvalStatus: nextApproval,
     accountStatus: nextAccount,
     status: nextStatus,
     isApproved: approved,
     ...(approved ? {
       approvedBy: context.auth.uid,
-      approvedAt: admin.firestore.FieldValue.serverTimestamp(),
+      approvedAt: FieldValue.serverTimestamp(),
     } : {
       reviewedBy: context.auth.uid,
-      reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
+      reviewedAt: FieldValue.serverTimestamp(),
       rejectionReason,
     }),
     updatedBy: context.auth.uid,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   };
 
   const batch = db.batch();
@@ -1932,7 +1952,7 @@ exports.reviewBhwRegistration = functions.https.onCall(async (data, context) => 
   batch.set(requestRef, {
     ...updatePayload,
     reviewStatus: nextApproval,
-    reviewCompletedAt: admin.firestore.FieldValue.serverTimestamp(),
+    reviewCompletedAt: FieldValue.serverTimestamp(),
   }, {merge: true});
   const barangayCode = normalizeBarangayCode(userData.barangayCode || '');
   if (barangayCode) {
@@ -1941,7 +1961,7 @@ exports.reviewBhwRegistration = functions.https.onCall(async (data, context) => 
       approvalStatus: nextApproval,
       accountStatus: nextAccount,
       barangayCode,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     }, {merge: true});
   }
   await batch.commit();
@@ -1965,6 +1985,8 @@ exports.reviewBhwRegistration = functions.https.onCall(async (data, context) => 
   await admin.auth().updateUser(uid, {disabled: !approved});
   await admin.database().ref(`users/${uid}`).update({
     role: 'BHW',
+    accessRoleKey: 'BHW',
+    permissions: defaultPermissionsForRole('BHW'),
     status: nextStatus,
     approvalStatus: nextApproval,
     accountStatus: nextAccount,
@@ -1973,7 +1995,7 @@ exports.reviewBhwRegistration = functions.https.onCall(async (data, context) => 
       reviewedBy: context.auth.uid,
       rejectionReason,
     }),
-    updatedAt: admin.database.ServerValue.TIMESTAMP,
+    updatedAt: ServerValue.TIMESTAMP,
   });
 
   const applicantEmail = String(userData.email || '').trim().toLowerCase();
@@ -1991,7 +2013,7 @@ exports.reviewBhwRegistration = functions.https.onCall(async (data, context) => 
     actorUid: context.auth.uid,
     targetUid: uid,
     reason: approved ? null : rejectionReason,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
   return {success: true, uid, approvalStatus: nextApproval, accountStatus: nextAccount};
 });
@@ -2019,6 +2041,10 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
   if (!['BHW', 'CHO', 'DOCTOR'].includes(nextRole)) {
     throw new functions.https.HttpsError('invalid-argument', 'Role must be BHW, CHO, or DOCTOR.');
   }
+  const accessRole = await resolveRoleAssignment({
+    role: nextRole,
+    accessRoleKey: data?.accessRoleKey || current.accessRoleKey || nextRole,
+  });
   const nextAccountStatus = data?.accountStatus === undefined
     ? normalizeText(current.accountStatus || 'active')
     : normalizeText(data.accountStatus);
@@ -2051,14 +2077,16 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
 
   const payload = {
     role: nextRole,
+    accessRoleKey: accessRole.roleKey,
+    permissions: accessRole.permissions,
     accessScope: nextRole === 'BHW' ? 'barangay' : 'citywide',
     organizationLevel: nextRole === 'BHW' ? 'barangay' : 'citywide',
     accountStatus: nextAccountStatus,
     status: nextAccountStatus === 'active' ? 'Active' : nextAccountStatus,
     isApproved: normalizeText(current.approvalStatus || '') === 'approved',
-    barangay: nextRole === 'BHW' ? barangay : admin.firestore.FieldValue.delete(),
-    barangayCode: nextRole === 'BHW' ? barangayCode : admin.firestore.FieldValue.delete(),
-    barangayDistrict: nextRole === 'BHW' ? barangayDistrict : admin.firestore.FieldValue.delete(),
+    barangay: nextRole === 'BHW' ? barangay : FieldValue.delete(),
+    barangayCode: nextRole === 'BHW' ? barangayCode : FieldValue.delete(),
+    barangayDistrict: nextRole === 'BHW' ? barangayDistrict : FieldValue.delete(),
     barangayVerified: nextRole === 'BHW' && !!barangayCode,
     ...(nextRole === 'DOCTOR' ? {
       specialization,
@@ -2068,7 +2096,7 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
       doctorAvailability: availability,
     } : {}),
     updatedBy: context.auth.uid,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   };
   await targetRef.set(payload, {merge: true});
 
@@ -2087,6 +2115,8 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
   await admin.auth().updateUser(uid, {disabled: nextAccountStatus !== 'active'});
   await admin.database().ref(`users/${uid}`).update({
     role: nextRole,
+    accessRoleKey: accessRole.roleKey,
+    permissions: accessRole.permissions,
     accessScope: nextRole === 'BHW' ? 'barangay' : 'citywide',
     accountStatus: nextAccountStatus,
     approvalStatus: current.approvalStatus || 'approved',
@@ -2096,7 +2126,7 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
       barangayDistrict: null,
     }),
     ...(nextRole === 'DOCTOR' ? {specialization, availability} : {}),
-    updatedAt: admin.database.ServerValue.TIMESTAMP,
+    updatedAt: ServerValue.TIMESTAMP,
   });
   await db.collection('audit_logs').add({
     action: 'managed_account_updated',
@@ -2104,9 +2134,15 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
     targetUid: uid,
     role: nextRole,
     accountStatus: nextAccountStatus,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
-  return {success: true, uid, role: nextRole, accountStatus: nextAccountStatus};
+  return {
+    success: true,
+    uid,
+    role: nextRole,
+    accessRoleKey: accessRole.roleKey,
+    accountStatus: nextAccountStatus,
+  };
 });
 
 exports.suggestDoctorAssignment = functions.https.onCall(async (data, context) => {

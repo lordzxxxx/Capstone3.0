@@ -1,3 +1,5 @@
+import 'package:mycapstone_project/web/shared/services/rbac_policy.dart';
+
 class UserAccessScope {
   final String userId;
   final String role;
@@ -5,6 +7,8 @@ class UserAccessScope {
   final String barangayCode;
   final String barangayDistrict;
   final DateTime? dataVisibleFrom;
+  final String accessRoleKey;
+  final List<String> permissions;
 
   const UserAccessScope({
     required this.userId,
@@ -13,6 +17,8 @@ class UserAccessScope {
     required this.barangayCode,
     required this.barangayDistrict,
     required this.dataVisibleFrom,
+    this.accessRoleKey = '',
+    this.permissions = const <String>[],
   });
 
   bool get isAuthenticated => userId.isNotEmpty;
@@ -35,6 +41,15 @@ class UserAccessScope {
 
   bool get hasVisibilityBoundary => dataVisibleFrom != null;
 
+  bool hasPermission(String permission) {
+    return RbacCatalog.hasPermission(
+      role: role,
+      accessRoleKey: accessRoleKey,
+      assignedPermissions: permissions,
+      permission: permission,
+    );
+  }
+
   static const UserAccessScope unauthenticated = UserAccessScope(
     userId: '',
     role: '',
@@ -42,5 +57,7 @@ class UserAccessScope {
     barangayCode: '',
     barangayDistrict: '',
     dataVisibleFrom: null,
+    accessRoleKey: '',
+    permissions: <String>[],
   );
 }

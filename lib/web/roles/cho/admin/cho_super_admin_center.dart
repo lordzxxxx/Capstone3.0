@@ -119,7 +119,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
       Get.snackbar(
         'Access denied',
         'You need a CHO Super Admin account to open this module.',
-        backgroundColor: Colors.redAccent,
+        backgroundColor: AppColors.error,
         colorText: Colors.white,
       );
       await Future.delayed(const Duration(milliseconds: 400));
@@ -133,7 +133,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
       Get.snackbar(
         'Error',
         'Could not verify CHO Super Admin access.',
-        backgroundColor: Colors.redAccent,
+        backgroundColor: AppColors.error,
         colorText: Colors.white,
       );
       if (mounted) {
@@ -182,7 +182,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     Get.snackbar(
       'Saved',
       'User role updated to $role.',
-      backgroundColor: Colors.green,
+      backgroundColor: AppColors.success,
       colorText: Colors.white,
     );
   }
@@ -194,7 +194,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     Get.snackbar(
       'Saved',
       'Account status updated to $status.',
-      backgroundColor: Colors.green,
+      backgroundColor: AppColors.success,
       colorText: Colors.white,
     );
   }
@@ -213,7 +213,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     Get.snackbar(
       'Saved',
       'Approval status updated to $status.',
-      backgroundColor: Colors.green,
+      backgroundColor: AppColors.success,
       colorText: Colors.white,
     );
   }
@@ -228,7 +228,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     Get.snackbar(
       'Saved',
       'Assigned ${barangay.name} to the user profile.',
-      backgroundColor: Colors.green,
+      backgroundColor: AppColors.success,
       colorText: Colors.white,
     );
   }
@@ -244,7 +244,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     Get.snackbar(
       'Saved',
       'Barangay assignment released from the user profile.',
-      backgroundColor: Colors.green,
+      backgroundColor: AppColors.success,
       colorText: Colors.white,
     );
   }
@@ -523,7 +523,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                       Get.snackbar(
                         'Incomplete',
                         'Full name and email are required.',
-                        backgroundColor: Colors.orange,
+                        backgroundColor: AppColors.warning,
                         colorText: Colors.white,
                       );
                       return;
@@ -579,7 +579,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
       Get.snackbar(
         'Unsupported',
         'Direct file uploads are currently available on the web admin portal only.',
-        backgroundColor: Colors.orange,
+        backgroundColor: AppColors.warning,
         colorText: Colors.white,
       );
       return null;
@@ -660,7 +660,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                 Get.snackbar(
                   'Upload failed',
                   'Could not upload the selected image: $e',
-                  backgroundColor: Colors.redAccent,
+                  backgroundColor: AppColors.error,
                   colorText: Colors.white,
                 );
               } finally {
@@ -885,7 +885,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                             Get.snackbar(
                               'Invalid date',
                               'Use YYYY-MM-DD for the effective date.',
-                              backgroundColor: Colors.orange,
+                              backgroundColor: AppColors.warning,
                               colorText: Colors.white,
                             );
                             return;
@@ -910,14 +910,14 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                             Get.snackbar(
                               'Branding saved',
                               '${barangay.name} logo mapping and metadata were updated.',
-                              backgroundColor: Colors.green,
+                              backgroundColor: AppColors.success,
                               colorText: Colors.white,
                             );
                           } catch (e) {
                             Get.snackbar(
                               'Save failed',
                               'Could not save barangay branding details: $e',
-                              backgroundColor: Colors.redAccent,
+                              backgroundColor: AppColors.error,
                               colorText: Colors.white,
                             );
                           } finally {
@@ -1473,7 +1473,9 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     return Scaffold(
       backgroundColor: ChoColors.background,
       body: WebResponsiveBody(
-        sidebar: const ChoNavigationDrawer(current: ChoDestination.manageChoAccess),
+        sidebar: const ChoNavigationDrawer(
+          current: ChoDestination.manageChoAccess,
+        ),
         title: 'Manage CHO Access',
         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: _firestore.collection('users').snapshots(),

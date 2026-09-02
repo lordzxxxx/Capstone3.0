@@ -11,7 +11,8 @@
  */
 
 const admin = require('firebase-admin');
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { ServerValue } = require('firebase-admin/database');
 
 const MAIN_CHO_ADMIN_EMAIL = 'theo@gmail.com';
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
@@ -65,7 +66,7 @@ async function fixCHORole(email) {
       accountStatus: 'active',
       status: 'Active',
       isApproved: true,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
     console.log('✓ Firestore profile updated as approved CHO Admin');
 
@@ -75,7 +76,7 @@ async function fixCHORole(email) {
       role: 'CHO_ADMIN',
       approvalStatus: 'approved',
       accountStatus: 'active',
-      updatedAt: admin.database.ServerValue.TIMESTAMP,
+      updatedAt: ServerValue.TIMESTAMP,
     });
     console.log('✓ RTDB role updated: users/' + user.uid + '/role = CHO_ADMIN');
     

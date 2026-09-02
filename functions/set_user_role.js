@@ -7,7 +7,9 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { ServerValue } = require('firebase-admin/database');
+const { defaultPermissionsForRole } = require('./rbac_policy');
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -111,9 +113,11 @@ exports.setUserRole = functions.https.onCall(async (data, context) => {
     }
     await targetRef.set({
       role: normalizedRole,
+      accessRoleKey: normalizedRole,
+      permissions: defaultPermissionsForRole(normalizedRole),
       accessScope: normalizedRole === 'BHW' ? 'barangay' : 'citywide',
       updatedBy: context.auth.uid,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     }, {merge: true});
 
     const targetAuth = await admin.auth().getUser(uid);
@@ -125,7 +129,9 @@ exports.setUserRole = functions.https.onCall(async (data, context) => {
     // Update Realtime Database
     await admin.database().ref(`users/${uid}`).update({
       role: normalizedRole,
-      claimsSetAt: admin.database.ServerValue.TIMESTAMP,
+      accessRoleKey: normalizedRole,
+      permissions: defaultPermissionsForRole(normalizedRole),
+      claimsSetAt: ServerValue.TIMESTAMP,
     });
 
     return {

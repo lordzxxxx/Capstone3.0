@@ -176,7 +176,9 @@ service cloud.firestore {
         'barangayVerified',
         'barangayPath',
         'barangayUserPath',
-        'createdAt'
+        'createdAt',
+        'accessRoleKey',
+        'permissions'
       ]);
     }
 
@@ -206,6 +208,110 @@ service cloud.firestore {
       ];
       return isSignedIn() && hasApprovedActiveProfile() &&
         ('role' in currentUser()) && roleEqualsAny(currentUser().role, adminRoles);
+    }
+
+    // Built-in permissions keep legacy profiles working until their next
+    // managed-account update writes the explicit permission list. Custom
+    // roles always carry a list, so removing a permission is enforced here,
+    // not only by the Flutter sidebar.
+    function builtInPermissionForRole(role, permission) {
+      return (role in ['BHW', 'bhw'] && permission in [
+        'dashboard.view', 'patients.view', 'patients.create', 'patients.edit',
+        'checkups.view', 'checkups.create', 'checkups.edit',
+        'prenatal.view', 'prenatal.create', 'prenatal.edit',
+        'immunization.view', 'immunization.create', 'immunization.edit',
+        'immunization.vaccine_master.view', 'surveillance.view',
+        'surveillance.create', 'surveillance.edit', 'referrals.view',
+        'referrals.create', 'referrals.status.update', 'reports.view',
+        'reports.export', 'notifications.view', 'profile.view'
+      ]) ||
+      (role in ['CHO', 'cho'] && permission in [
+        'dashboard.view', 'patients.view', 'patients.create', 'patients.edit',
+        'checkups.view', 'checkups.create', 'checkups.edit',
+        'prenatal.view', 'prenatal.create', 'prenatal.edit',
+        'immunization.view', 'immunization.create', 'immunization.edit',
+        'immunization.vaccine_master.view', 'surveillance.view',
+        'surveillance.create', 'surveillance.edit', 'referrals.view',
+        'referrals.status.update', 'reports.view', 'reports.export',
+        'data_quality.view', 'audit.view', 'notifications.view', 'profile.view'
+      ]) ||
+      (role in ['DOCTOR', 'doctor'] && permission in [
+        'dashboard.view', 'patients.view', 'checkups.view', 'prenatal.view',
+        'immunization.view', 'surveillance.view', 'referrals.view',
+        'referrals.assigned.view', 'notifications.view', 'profile.view'
+      ]);
+    }
+
+    function hasPermission(permission) {
+      let profile = currentUser();
+      return isSignedIn() && profile != null && profileHasPermission(profile, permission);
+    }
+
+    function profileHasPermission(profile, permission) {
+      return profile != null &&
+        (
+          profile.role in [
+            'CHO_ADMIN', 'cho_admin', 'CHO_SUPER_ADMIN', 'cho_super_admin',
+            'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
+          ] ||
+          (('permissions' in profile) && profile.permissions is list &&
+            profile.permissions.hasAny([permission])) ||
+          (!('permissions' in profile) &&
+            builtInPermissionForRole(profile.role, permission))
+        );
+    }
+
+    function activeProfileHasRole(profile, allowedRoles) {
+      return isSignedIn() && profile != null &&
+        ('role' in profile) && allowedRoles.hasAny([profile.role]) &&
+        (
+          (('approvalStatus' in profile) &&
+            profile.approvalStatus in ['approved', 'Approved']) ||
+          (('isApproved' in profile) && profile.isApproved == true)
+        ) &&
+        (
+          (('accountStatus' in profile) &&
+            profile.accountStatus in ['active', 'Active', 'approved', 'Approved']) ||
+          (('status' in profile) &&
+            profile.status in ['active', 'Active', 'approved', 'Approved'])
+        );
+    }
+
+    function profileSameBarangay(profile, data) {
+      return profile != null && data != null &&
+        (
+          (('barangayCode' in data) && ('barangayCode' in profile) &&
+            data.barangayCode.lower() == profile.barangayCode.lower()) ||
+          (('barangay' in data) && ('barangay' in profile) &&
+            data.barangay == profile.barangay)
+        );
+    }
+
+    function canReadScopedRecordWithPermission(data, permission) {
+      let profile = currentUser();
+      return (activeProfileHasRole(profile, [
+        'CHO', 'cho', 'CHO_ADMIN', 'cho_admin', 'CHO_SUPER_ADMIN',
+        'cho_super_admin', 'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
+      ]) && profileHasPermission(profile, permission)) ||
+        (activeProfileHasRole(profile, ['BHW', 'bhw']) &&
+          profileHasPermission(profile, permission) &&
+          profileSameBarangay(profile, data));
+    }
+
+    function canWriteScopedRecordWithPermission(data, permission) {
+      return canReadScopedRecordWithPermission(data, permission);
+    }
+
+    function canReadBarangayScopedRecordWithPermission(barangayCode, data, permission) {
+      let profile = currentUser();
+      return (activeProfileHasRole(profile, [
+        'CHO', 'cho', 'CHO_ADMIN', 'cho_admin', 'CHO_SUPER_ADMIN',
+        'cho_super_admin', 'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
+      ]) && profileHasPermission(profile, permission)) ||
+        (activeProfileHasRole(profile, ['BHW', 'bhw']) &&
+          profileHasPermission(profile, permission) &&
+          (('barangayCode' in profile) && profile.barangayCode.lower() == barangayCode.lower() ||
+            profileSameBarangay(profile, data)));
     }
 
     function isBhwRole() {
@@ -263,10 +369,8 @@ service cloud.firestore {
     }
 
     function canUpdateImmunizationRecord(existingData, newData) {
-      return isChoRole() ||
-        (isBhwRole() &&
-          sameBarangay(existingData) &&
-          sameBarangay(newData));
+      return canReadScopedRecordWithPermission(existingData, 'immunization.edit') &&
+        canReadScopedRecordWithPermission(newData, 'immunization.edit');
     }
 
     // Immunization records are intentionally validated at the write boundary.
@@ -342,14 +446,17 @@ service cloud.firestore {
     }
 
     function canReadReferral(data) {
-      return isChoRole() ||
-        (isDoctorRole() && data.assignedDoctorUid == request.auth.uid) ||
-        (isBhwRole() && data.createdByUid == request.auth.uid);
+      return (isChoRole() && hasPermission('referrals.view')) ||
+        (isDoctorRole() && hasPermission('referrals.assigned.view') &&
+          data.assignedDoctorUid == request.auth.uid) ||
+        (isBhwRole() && hasPermission('referrals.view') &&
+          data.createdByUid == request.auth.uid);
     }
 
     function canCreateReferral(data) {
-      return isChoRole() ||
-        (isBhwRole() && data.createdByUid == request.auth.uid && sameBarangay(data) &&
+      return (isChoRole() && hasPermission('referrals.create')) ||
+        (isBhwRole() && hasPermission('referrals.create') &&
+          data.createdByUid == request.auth.uid && sameBarangay(data) &&
           !('assignedDoctorUid' in data) &&
           !('assignedDoctorName' in data) &&
           !('assignmentEventId' in data) &&
@@ -430,16 +537,18 @@ service cloud.firestore {
         'assignedHospital', 'receivingHospital',
         'expectedConsultationDate', 'approvedAt', 'statusHistory'
       ]);
-      return role in [
+      return (role in [
           'CHO_ADMIN', 'cho_admin', 'CHO_SUPER_ADMIN', 'cho_super_admin',
           'SUPER_ADMIN', 'super_admin', 'ADMIN', 'admin'
-        ] ||
-        (role in ['CHO', 'cho'] && choReview) ||
+        ] && hasPermission('referrals.reassign')) ||
+        (role in ['CHO', 'cho'] && hasPermission('referrals.status.update') && choReview) ||
         (role in ['DOCTOR', 'doctor'] &&
+          hasPermission('referrals.assigned.view') &&
           existingData.assignedDoctorUid == request.auth.uid &&
           newData.assignedDoctorUid == request.auth.uid &&
           recordsConsultation) ||
         (role in ['BHW', 'bhw'] &&
+          hasPermission('referrals.status.update') &&
           bhwOwnsRecord &&
           (correctsReturned || recordsFollowUp));
     }
@@ -462,8 +571,9 @@ service cloud.firestore {
     // User profile/role docs - Allow authenticated users to create and update their own profile
     // This is used during signup and user profile management
     match /users/{userId} {
-      allow get: if canReadOwnUserDoc(userId, resource.data) || isChoRole();
-      allow list: if isChoRole();
+      allow get: if canReadOwnUserDoc(userId, resource.data) ||
+        (isChoRole() && hasPermission('cho.users.view'));
+      allow list: if isChoRole() && hasPermission('cho.users.view');
       allow create: if canCreateOwnUserProfile(userId, request.resource.data) || isChoAdmin();
       allow update: if (
         isSignedIn() &&
@@ -476,21 +586,31 @@ service cloud.firestore {
     // Dedicated CHO review queue. A BHW creates exactly one pending request
     // using their own UID during the same transaction as account registration.
     match /bhw_registration_requests/{userId} {
-      allow get: if canReadOwnUserDoc(userId, resource.data) || isChoAdmin();
-      allow list: if isChoAdmin();
+      allow get: if canReadOwnUserDoc(userId, resource.data) ||
+        (isChoAdmin() && hasPermission('bhw.requests.view'));
+      allow list: if isChoAdmin() && hasPermission('bhw.requests.view');
       allow create: if canCreateOwnUserProfile(userId, request.resource.data) &&
         request.resource.data.requestId == userId &&
         request.resource.data.applicantUid == request.auth.uid &&
         request.resource.data.requestType == 'BHW_ACCOUNT_REGISTRATION' &&
         request.resource.data.submissionStatus == 'submitted';
-      allow update: if isChoAdmin();
-      allow delete: if isChoAdmin();
+      allow update: if isChoAdmin() &&
+        (hasPermission('bhw.approve') || hasPermission('bhw.reject'));
+      allow delete: if isChoAdmin() && hasPermission('bhw.reject');
+    }
+
+    // Role documents are read-only to clients. Role CRUD is performed by the
+    // callable functions, which validate the caller, protect core roles, and
+    // prevent deleting roles that are still assigned to users.
+    match /roles/{roleId} {
+      allow read: if isChoAdmin() && hasPermission('rbac.view');
+      allow write: if false;
     }
 
     // CHO-managed doctor registry for referral assignment workflows
     match /doctor_registry/{doctorId} {
-      allow read: if isChoRole() || isSuperAdmin();
-      allow create, update, delete: if isChoAdmin();
+      allow read: if isChoRole() && hasPermission('doctors.view');
+      allow create, update, delete: if isChoAdmin() && hasPermission('doctors.manage');
     }
 
     match /barangays/{barangayCode}/users/{userId} {
@@ -633,141 +753,166 @@ service cloud.firestore {
     // Keep these static collection-id matches so Firestore can safely evaluate
     // collectionGroup access across every possible parent path.
     match /{documentPath=**}/checkup_records/{recordId} {
-      allow read: if isChoRole();
+      allow read: if isChoRole() && hasPermission('checkups.view');
     }
     match /{documentPath=**}/prenatal_records/{recordId} {
-      allow read: if isChoRole();
+      allow read: if isChoRole() && hasPermission('prenatal.view');
     }
     match /{documentPath=**}/immunization_records/{recordId} {
-      allow read: if isChoRole();
+      allow read: if isChoRole() && hasPermission('immunization.view');
     }
     match /{documentPath=**}/patient_records/{recordId} {
-      allow read: if isChoRole();
+      allow read: if isChoRole() && hasPermission('patients.view');
     }
     match /{documentPath=**}/barangay_records/{recordId} {
-      allow read: if isChoRole();
+      allow read: if isChoRole() && hasPermission('surveillance.view');
     }
     match /{documentPath=**}/morbidity_records/{recordId} {
-      allow read: if isChoRole();
+      allow read: if isChoRole() && hasPermission('surveillance.view');
     }
     match /{documentPath=**}/mortality_records/{recordId} {
-      allow read: if isChoRole();
+      allow read: if isChoRole() && hasPermission('surveillance.view');
     }
     match /{documentPath=**}/summary_records/{recordId} {
-      allow read: if isChoRole();
+      allow read: if isChoRole() && hasPermission('reports.view');
     }
     
     // Health records - all by authenticated users
     match /checkup_records/{recordId} {
-      allow read: if canReadScopedRecord(resource.data);
-      allow create: if canWriteScopedRecord(request.resource.data);
-      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
-      allow delete: if canWriteScopedRecord(resource.data);
+      allow read: if canReadScopedRecordWithPermission(resource.data, 'checkups.view');
+      allow create: if canWriteScopedRecordWithPermission(request.resource.data, 'checkups.create');
+      allow update: if canWriteScopedRecordWithPermission(resource.data, 'checkups.edit') &&
+        canWriteScopedRecordWithPermission(request.resource.data, 'checkups.edit');
+      allow delete: if canWriteScopedRecordWithPermission(resource.data, 'checkups.edit');
     }
     match /barangays/{barangayCode}/checkup_records/{recordId} {
-      allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow read: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'checkups.view');
       allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        hasPermission('checkups.create') &&
         request.resource.data.barangayCode == barangayCode;
       allow update: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
         canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        hasPermission('checkups.edit') &&
         resource.data.barangayCode == barangayCode &&
         request.resource.data.barangayCode == barangayCode;
-      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data);
+      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
+        hasPermission('checkups.edit');
     }
     match /prenatal_records/{recordId} {
-      allow read: if canReadScopedRecord(resource.data);
-      allow create: if canWriteScopedRecord(request.resource.data);
-      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
-      allow delete: if canWriteScopedRecord(resource.data);
+      allow read: if canReadScopedRecordWithPermission(resource.data, 'prenatal.view');
+      allow create: if canWriteScopedRecordWithPermission(request.resource.data, 'prenatal.create');
+      allow update: if canWriteScopedRecordWithPermission(resource.data, 'prenatal.edit') &&
+        canWriteScopedRecordWithPermission(request.resource.data, 'prenatal.edit');
+      allow delete: if canWriteScopedRecordWithPermission(resource.data, 'prenatal.edit');
     }
     match /barangays/{barangayCode}/prenatal_records/{recordId} {
-      allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow read: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'prenatal.view');
       allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        hasPermission('prenatal.create') &&
         request.resource.data.barangayCode == barangayCode;
       allow update: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
         canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        hasPermission('prenatal.edit') &&
         resource.data.barangayCode == barangayCode &&
         request.resource.data.barangayCode == barangayCode;
-      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data);
+      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
+        hasPermission('prenatal.edit');
     }
     match /immunization_records/{recordId} {
-      allow read: if canReadScopedRecord(resource.data);
-      allow create: if canWriteScopedRecord(request.resource.data) &&
+      allow read: if canReadScopedRecordWithPermission(resource.data, 'immunization.view');
+      allow create: if canWriteScopedRecordWithPermission(request.resource.data, 'immunization.create') &&
         validImmunizationRecord(request.resource.data, true);
       allow update: if canUpdateImmunizationRecord(resource.data, request.resource.data) &&
+        hasPermission('immunization.edit') &&
         validImmunizationUpdate(request.resource.data);
-      allow delete: if canWriteScopedRecord(resource.data);
+      allow delete: if canWriteScopedRecordWithPermission(resource.data, 'immunization.edit');
     }
     match /barangays/{barangayCode}/immunization_records/{recordId} {
-      allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow read: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'immunization.view');
       allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        hasPermission('immunization.create') &&
         request.resource.data.barangayCode == barangayCode &&
         validImmunizationRecord(request.resource.data, true);
       allow update: if canUpdateImmunizationRecord(resource.data, request.resource.data) &&
         resource.data.barangayCode == barangayCode &&
         request.resource.data.barangayCode == barangayCode &&
         validImmunizationUpdate(request.resource.data);
-      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data);
+      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
+        hasPermission('immunization.edit');
     }
     match /patient_records/{recordId} {
-      allow read: if canReadScopedRecord(resource.data);
-      allow create: if canWriteScopedRecord(request.resource.data);
-      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
-      allow delete: if canWriteScopedRecord(resource.data);
+      allow read: if canReadScopedRecordWithPermission(resource.data, 'patients.view');
+      allow create: if canWriteScopedRecordWithPermission(request.resource.data, 'patients.create');
+      allow update: if canWriteScopedRecordWithPermission(resource.data, 'patients.edit') &&
+        canWriteScopedRecordWithPermission(request.resource.data, 'patients.edit');
+      allow delete: if canWriteScopedRecordWithPermission(resource.data, 'patients.edit');
     }
     match /barangays/{barangayCode}/patient_records/{recordId} {
-      allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow read: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'patients.view');
       allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        hasPermission('patients.create') &&
         request.resource.data.barangayCode == barangayCode;
       allow update: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
         canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        hasPermission('patients.edit') &&
         resource.data.barangayCode == barangayCode &&
         request.resource.data.barangayCode == barangayCode;
-      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data);
+      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
+        hasPermission('patients.edit');
     }
     match /barangay_records/{recordId} {
-      allow read: if canReadScopedRecord(resource.data);
-      allow create: if canWriteScopedRecord(request.resource.data);
-      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
-      allow delete: if canWriteScopedRecord(resource.data);
+      allow read: if canReadScopedRecordWithPermission(resource.data, 'surveillance.view');
+      allow create: if canWriteScopedRecordWithPermission(request.resource.data, 'surveillance.create');
+      allow update: if canWriteScopedRecordWithPermission(resource.data, 'surveillance.edit') &&
+        canWriteScopedRecordWithPermission(request.resource.data, 'surveillance.edit');
+      allow delete: if canWriteScopedRecordWithPermission(resource.data, 'surveillance.edit');
     }
     match /morbidity_records/{recordId} {
-      allow read: if canReadScopedRecord(resource.data);
-      allow create: if canWriteScopedRecord(request.resource.data);
-      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
-      allow delete: if canWriteScopedRecord(resource.data);
+      allow read: if canReadScopedRecordWithPermission(resource.data, 'surveillance.view');
+      allow create: if canWriteScopedRecordWithPermission(request.resource.data, 'surveillance.create');
+      allow update: if canWriteScopedRecordWithPermission(resource.data, 'surveillance.edit') &&
+        canWriteScopedRecordWithPermission(request.resource.data, 'surveillance.edit');
+      allow delete: if canWriteScopedRecordWithPermission(resource.data, 'surveillance.edit');
     }
     match /barangays/{barangayCode}/morbidity_records/{recordId} {
-      allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow read: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'surveillance.view');
       allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        hasPermission('surveillance.create') &&
         request.resource.data.barangayCode == barangayCode;
       allow update: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
         canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        hasPermission('surveillance.edit') &&
         resource.data.barangayCode == barangayCode &&
         request.resource.data.barangayCode == barangayCode;
-      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data);
+      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
+        hasPermission('surveillance.edit');
     }
     match /mortality_records/{recordId} {
-      allow read: if canReadScopedRecord(resource.data);
-      allow create: if canWriteScopedRecord(request.resource.data);
-      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
-      allow delete: if canWriteScopedRecord(resource.data);
+      allow read: if canReadScopedRecordWithPermission(resource.data, 'surveillance.view');
+      allow create: if canWriteScopedRecordWithPermission(request.resource.data, 'surveillance.create');
+      allow update: if canWriteScopedRecordWithPermission(resource.data, 'surveillance.edit') &&
+        canWriteScopedRecordWithPermission(request.resource.data, 'surveillance.edit');
+      allow delete: if canWriteScopedRecordWithPermission(resource.data, 'surveillance.edit');
     }
     match /barangays/{barangayCode}/mortality_records/{recordId} {
-      allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow read: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'surveillance.view');
       allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        hasPermission('surveillance.create') &&
         request.resource.data.barangayCode == barangayCode;
       allow update: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
         canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
+        hasPermission('surveillance.edit') &&
         resource.data.barangayCode == barangayCode &&
         request.resource.data.barangayCode == barangayCode;
-      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data);
+      allow delete: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&
+        hasPermission('surveillance.edit');
     }
     match /summary_records/{recordId} {
-      allow read: if canReadScopedRecord(resource.data);
-      allow create: if canWriteScopedRecord(request.resource.data);
-      allow update: if canWriteScopedRecord(resource.data) && canWriteScopedRecord(request.resource.data);
-      allow delete: if canWriteScopedRecord(resource.data);
+      allow read: if canReadScopedRecordWithPermission(resource.data, 'reports.view');
+      allow create: if canWriteScopedRecordWithPermission(request.resource.data, 'reports.view');
+      allow update: if canWriteScopedRecordWithPermission(resource.data, 'reports.view') &&
+        canWriteScopedRecordWithPermission(request.resource.data, 'reports.view');
+      allow delete: if canWriteScopedRecordWithPermission(resource.data, 'reports.view');
     }
     match /barangays/{barangayCode}/summary_records/{recordId} {
       allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
