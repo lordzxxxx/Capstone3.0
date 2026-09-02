@@ -378,21 +378,21 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
               value: '$thisMonth',
               icon: Icons.calendar_month_outlined,
               supportingText: 'Based on saved record dates',
-              color: Colors.lightBlueAccent,
+              color: ChoColors.aqua,
             ),
             ChoKpiCard(
               label: 'Pending Validation',
               value: '$pending',
               icon: Icons.fact_check_outlined,
               supportingText: 'Submitted records awaiting review',
-              color: Colors.orangeAccent,
+              color: ChoColors.aqua,
             ),
             ChoKpiCard(
               label: 'High-Risk Records',
               value: '$highRisk',
               icon: Icons.warning_amber_rounded,
               supportingText: 'Saved high or critical risk labels',
-              color: Colors.redAccent,
+              color: ChoColors.aqua,
             ),
           ],
         ),
@@ -767,7 +767,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
                     onPressed: () => _review(doc, 'Approved'),
                     icon: const Icon(
                       Icons.check_circle_outline,
-                      color: Colors.greenAccent,
+                      color: ChoColors.aqua,
                     ),
                   ),
                 if (_isPending(row))
@@ -780,7 +780,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
                     ),
                     icon: const Icon(
                       Icons.reply_outlined,
-                      color: Colors.orangeAccent,
+                      color: ChoColors.aqua,
                     ),
                   ),
               ],
@@ -861,7 +861,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Review could not be saved: $error'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: ChoColors.aqua,
           ),
         );
       }

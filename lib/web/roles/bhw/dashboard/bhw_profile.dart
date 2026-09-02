@@ -5,6 +5,7 @@ import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
+import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
 const Color _profileAqua = Color(0xFF2F80ED);
@@ -25,6 +26,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
   String? _error;
   Map<String, dynamic> _profile = <String, dynamic>{};
   UserAccessScope _scope = UserAccessScope.unauthenticated;
+  final AccountPolicyService _accountPolicy = AccountPolicyService.instance;
 
   @override
   void initState() {
@@ -167,6 +169,22 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
                               final identity = _buildInformationCard(
                                 title: 'User Details',
                                 icon: Icons.badge_outlined,
+                                action: OutlinedButton.icon(
+                                  onPressed: _showEditDialog,
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    size: 16,
+                                  ),
+                                  label: const Text('Edit details'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: _profileAqua,
+                                    side: const BorderSide(color: _profileAqua),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 11,
+                                      vertical: 8,
+                                    ),
+                                  ),
+                                ),
                                 rows: [
                                   _ProfileRow(
                                     'Full name',
@@ -337,7 +355,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
                     _buildHeroChip(
                       Icons.verified_user_outlined,
                       accountStatus,
-                      const Color(0xFF55D69E),
+                      _profileAqua,
                     ),
                   ],
                 ),
@@ -378,6 +396,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
   Widget _buildInformationCard({
     required String title,
     required IconData icon,
+    Widget? action,
     required List<_ProfileRow> rows,
   }) {
     return Container(
@@ -394,14 +413,17 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
             children: [
               Icon(icon, color: _profileAqua, size: 21),
               const SizedBox(width: 9),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: _profileInk,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: _profileInk,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
+              if (action != null) action,
             ],
           ),
           const SizedBox(height: 17),
@@ -449,6 +471,139 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
     );
   }
 
+  Future<void> _showEditDialog() async {
+    final fullNameController = TextEditingController(text: _displayName);
+    final usernameController = TextEditingController(
+      text: _firstValue([_profile['username']]),
+    );
+    final contactController = TextEditingController(
+      text: _firstValue([
+        _profile['contactNumber'],
+        _profile['phoneNumber'],
+        _profile['phone'],
+      ]),
+    );
+    var saving = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: _profileSurface,
+          title: const Text(
+            'Edit profile details',
+            style: TextStyle(color: _profileInk),
+          ),
+          content: SizedBox(
+            width: 480,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: fullNameController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(labelText: 'Full name'),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: usernameController,
+                    decoration: const InputDecoration(labelText: 'Username'),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: contactController,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Contact number',
+                      hintText: '09XXXXXXXXX or +63XXXXXXXXXX',
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Email, role, barangay assignment, and access status are managed by the CHO Admin.',
+                      style: TextStyle(color: _profileMuted, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: saving
+                  ? null
+                  : () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      final fullName = fullNameController.text.trim();
+                      final username = usernameController.text.trim();
+                      if (fullName.isEmpty || username.length < 3) {
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Enter a full name and a username with at least 3 characters.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+                      setDialogState(() => saving = true);
+                      try {
+                        await _accountPolicy.updateOwnBhwProfile(
+                          fullName: fullName,
+                          username: username,
+                          contactNumber: contactController.text,
+                        );
+                        if (dialogContext.mounted) {
+                          Navigator.of(dialogContext).pop();
+                        }
+                        if (!mounted) return;
+                        await _loadProfile();
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Profile details updated.'),
+                            backgroundColor: _profileAqua,
+                          ),
+                        );
+                      } catch (error) {
+                        if (dialogContext.mounted) {
+                          setDialogState(() => saving = false);
+                        }
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Could not update profile: ${error.toString()}',
+                            ),
+                          ),
+                        );
+                      }
+                    },
+              child: saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Save changes'),
+            ),
+          ],
+        ),
+      ),
+    );
+    fullNameController.dispose();
+    usernameController.dispose();
+    contactController.dispose();
+  }
+
   Widget _buildErrorState() {
     return Center(
       child: Padding(
@@ -456,11 +611,7 @@ class _BHWProfilePageState extends State<BHWProfilePage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.cloud_off_outlined,
-              color: Colors.orange,
-              size: 52,
-            ),
+            const Icon(Icons.cloud_off_outlined, color: _profileAqua, size: 52),
             const SizedBox(height: 14),
             const Text(
               'Profile could not be loaded',

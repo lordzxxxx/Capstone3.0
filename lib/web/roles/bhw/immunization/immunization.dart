@@ -819,71 +819,102 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     final vaccines = kImmunizationVaccineMaster
         .where((vaccine) => vaccine.active)
         .toList();
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _historySurface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _historyBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 680.0;
+        final tableWidth = math.max(availableWidth, 620.0);
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          decoration: BoxDecoration(
+            color: _historySurface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _historyBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.vaccines_outlined, color: _primaryAqua),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Vaccine List / Master Table',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: _darkDeepTeal,
-                    fontWeight: FontWeight.w800,
+              Row(
+                children: [
+                  const Icon(
+                    Icons.vaccines_outlined,
+                    color: _primaryAqua,
+                    size: 21,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Vaccine List / Master Table',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: _darkDeepTeal,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  Chip(
+                    label: Text('${vaccines.length} active'),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    backgroundColor: _primaryAqua.withValues(alpha: 0.10),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Authoritative vaccine reference used by immunization entry and patient records. Select the vaccine name exactly as listed.',
+                style: TextStyle(color: _mutedCoolGray, height: 1.25),
+              ),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: tableWidth,
+                  child: DataTable(
+                    headingRowHeight: 36,
+                    dataRowMinHeight: 38,
+                    dataRowMaxHeight: 44,
+                    horizontalMargin: 10,
+                    columnSpacing: availableWidth < 680 ? 18 : 28,
+                    dividerThickness: 0.5,
+                    headingRowColor: WidgetStatePropertyAll(
+                      _primaryAqua.withValues(alpha: 0.08),
+                    ),
+                    headingTextStyle: Theme.of(context).textTheme.labelMedium
+                        ?.copyWith(
+                          color: _darkDeepTeal,
+                          fontWeight: FontWeight.w800,
+                        ),
+                    dataTextStyle: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: _darkDeepTeal),
+                    columns: const [
+                      DataColumn(label: Text('Vaccine')),
+                      DataColumn(label: Text('Code')),
+                      DataColumn(label: Text('Dose reference')),
+                      DataColumn(label: Text('Status')),
+                    ],
+                    rows: vaccines
+                        .map(
+                          (vaccine) => DataRow(
+                            cells: [
+                              DataCell(Text(vaccine.name)),
+                              DataCell(Text(vaccine.code)),
+                              DataCell(Text(vaccine.doseSequence)),
+                              const DataCell(Text('Active')),
+                            ],
+                          ),
+                        )
+                        .toList(),
                   ),
                 ),
               ),
-              Chip(
-                label: Text('${vaccines.length} active'),
-                visualDensity: VisualDensity.compact,
-                backgroundColor: _primaryAqua.withValues(alpha: 0.10),
-              ),
             ],
           ),
-          const SizedBox(height: 6),
-          const Text(
-            'Authoritative vaccine reference used by immunization entry and patient records. Select the vaccine name exactly as listed.',
-            style: TextStyle(color: _mutedCoolGray, height: 1.4),
-          ),
-          const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: WidgetStatePropertyAll(
-                _primaryAqua.withValues(alpha: 0.08),
-              ),
-              columns: const [
-                DataColumn(label: Text('Vaccine')),
-                DataColumn(label: Text('Code')),
-                DataColumn(label: Text('Dose reference')),
-                DataColumn(label: Text('Status')),
-              ],
-              rows: vaccines
-                  .map(
-                    (vaccine) => DataRow(
-                      cells: [
-                        DataCell(Text(vaccine.name)),
-                        DataCell(Text(vaccine.code)),
-                        DataCell(Text(vaccine.doseSequence)),
-                        const DataCell(Text('Active')),
-                      ],
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

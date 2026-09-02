@@ -224,6 +224,14 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
                                                 .admin_panel_settings_outlined,
                                             isCollapsed: effectiveCollapsed,
                                           ),
+                                        if (canManageChoAccess)
+                                          _buildSidebarItem(
+                                            destination:
+                                                ChoDestination.bhwAccess,
+                                            label: 'BHW Access & RBAC',
+                                            icon: Icons.security_outlined,
+                                            isCollapsed: effectiveCollapsed,
+                                          ),
                                         _buildSidebarItem(
                                           destination: ChoDestination.reports,
                                           label: 'Reports',

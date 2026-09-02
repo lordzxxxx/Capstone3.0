@@ -15,7 +15,6 @@ import 'package:mycapstone_project/web/shared/services/user_access_scope_service
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
-import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/utils/csv_download.dart';
 import 'package:mycapstone_project/web/shared/utils/clinical_record_mapping.dart';
 
@@ -279,7 +278,8 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
             1 => _queue(
               pending,
               title: 'Submitted / Awaiting Assignment',
-              emptyMessage: 'No referrals are currently awaiting doctor assignment.',
+              emptyMessage:
+                  'No referrals are currently awaiting doctor assignment.',
               mode: _QueueMode.pending,
             ),
             2 => _queue(
@@ -578,8 +578,8 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
               OutlinedButton.icon(
                 onPressed: () => _deactivateDoctor(doctor),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.error,
-                  side: const BorderSide(color: AppColors.error),
+                  foregroundColor: ChoColors.aqua,
+                  side: const BorderSide(color: ChoColors.aqua),
                   minimumSize: const Size(48, 44),
                 ),
                 icon: const Icon(Icons.person_off_outlined, size: 17),
@@ -949,7 +949,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
+              backgroundColor: ChoColors.aqua,
               foregroundColor: Colors.white,
               minimumSize: const Size(48, 44),
             ),
@@ -1015,7 +1015,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
               'Urgent Referrals',
               count((r) => r.isUrgent),
               Icons.emergency_outlined,
-              color: Colors.redAccent,
+              color: ChoColors.aqua,
             ),
           ],
         ),
@@ -1110,9 +1110,12 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                     record: record,
                     mode: mode,
                     onDetails: () => _details(record),
-                    onReassign: _isChoAdmin &&
-                        (record.isPending || record.isActive)
+                    onReassign:
+                        _isChoAdmin && (record.isPending || record.isActive)
                         ? () => _reassign(record)
+                        : null,
+                    onSendEmail: _isChoAdmin && record.doctorUid.isNotEmpty
+                        ? () => _sendAssignmentEmail(record)
                         : null,
                   ),
                 )
@@ -1176,6 +1179,60 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       }
     } catch (error) {
       if (mounted) _snack('Could not reassign referral: $error');
+    }
+  }
+
+  Future<void> _sendAssignmentEmail(_ReferralRecord record) async {
+    if (!_isChoAdmin || record.doctorUid.isEmpty) return;
+    final alreadySent =
+        _s(record.data, ['assignmentNotificationStatus']).toLowerCase() ==
+        'sent';
+    if (alreadySent) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          backgroundColor: ChoColors.surface,
+          title: const Text(
+            'Resend referral email?',
+            style: TextStyle(color: ChoColors.text),
+          ),
+          content: const Text(
+            'The assignment email was already sent. Resend it only if the doctor needs another copy.',
+            style: TextStyle(color: ChoColors.muted),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Resend email'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+    try {
+      final result = await _accountPolicyService.sendReferralAssignmentEmail(
+        referralId: record.id,
+        forceResend: alreadySent,
+      );
+      if (!mounted) return;
+      _snack(
+        result.sent
+            ? (alreadySent
+                  ? 'Referral email resent to the assigned doctor.'
+                  : 'Referral email sent to the assigned doctor.')
+            : result.reason == 'already_sent'
+            ? 'The referral email was already sent.'
+            : (result.message.isEmpty
+                  ? 'The referral email could not be sent.'
+                  : result.message),
+      );
+    } catch (error) {
+      if (mounted) _snack('Could not send referral email: $error');
     }
   }
 
@@ -1399,11 +1456,13 @@ class _ReferralCard extends StatelessWidget {
     required this.mode,
     required this.onDetails,
     this.onReassign,
+    this.onSendEmail,
   });
   final _ReferralRecord record;
   final _QueueMode mode;
   final VoidCallback onDetails;
   final VoidCallback? onReassign;
+  final VoidCallback? onSendEmail;
 
   @override
   Widget build(BuildContext context) {
@@ -1414,11 +1473,7 @@ class _ReferralCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: ChoColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: record.isUrgent
-              ? Colors.redAccent.withValues(alpha: 0.5)
-              : ChoColors.aqua.withValues(alpha: 0.16),
-        ),
+        border: Border.all(color: ChoColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1465,6 +1520,20 @@ class _ReferralCard extends StatelessWidget {
                   onPressed: onReassign,
                   icon: const Icon(Icons.swap_horiz_rounded),
                   label: const Text('Reassign doctor'),
+                ),
+              if (onSendEmail != null)
+                OutlinedButton.icon(
+                  onPressed: onSendEmail,
+                  style: AppButtonStyles.outline(),
+                  icon: const Icon(Icons.email_outlined),
+                  label: Text(
+                    record.data['assignmentNotificationStatus']
+                                ?.toString()
+                                .toLowerCase() ==
+                            'sent'
+                        ? 'Resend email'
+                        : 'Send email',
+                  ),
                 ),
             ],
           ),

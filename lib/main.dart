@@ -705,6 +705,18 @@ class MyApp extends StatelessWidget {
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
+                name: WebRoutes.choBhwAccess,
+                page: () => _guardWebPage(
+                  allowedRoles: _choAdminWebRoles,
+                  requiredPermission: 'rbac.view',
+                  child: const web_cho_role_manager.RoleManager(
+                    initialTab: 1,
+                    focusBaseRole: 'BHW',
+                  ),
+                ),
+                middlewares: [AuthGuardMiddleware()],
+              ),
+              GetPage(
                 name: WebRoutes.doctorReferrals,
                 page: () => _guardWebPage(
                   allowedRoles: _doctorWebRoles,

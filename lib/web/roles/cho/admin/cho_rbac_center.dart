@@ -15,7 +15,10 @@ import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 /// registration approval; this page owns the reusable user/role/permission
 /// model used by managed CHO, doctor, and BHW access.
 class ChoRbacCenter extends StatefulWidget {
-  const ChoRbacCenter({super.key});
+  const ChoRbacCenter({super.key, this.initialTab = 0, this.focusBaseRole});
+
+  final int initialTab;
+  final String? focusBaseRole;
 
   @override
   State<ChoRbacCenter> createState() => _ChoRbacCenterState();
@@ -31,9 +34,15 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
   bool _loadingRoles = true;
   int _tabIndex = 0;
 
+  String? get _focusedBaseRole {
+    final value = widget.focusBaseRole?.trim().toUpperCase();
+    return value == null || value.isEmpty ? null : value;
+  }
+
   @override
   void initState() {
     super.initState();
+    _tabIndex = widget.initialTab.clamp(0, 1).toInt();
     _loadRoles();
   }
 
@@ -51,7 +60,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
       Get.snackbar(
         'Access roles unavailable',
         'The role catalog could not be loaded. Please try again.',
-        backgroundColor: AppColors.error,
+        backgroundColor: ChoColors.aqua,
         colorText: Colors.white,
       );
     }
@@ -238,14 +247,14 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                     Get.snackbar(
                       'Saved',
                       'The access role and its permissions were saved.',
-                      backgroundColor: AppColors.success,
+                      backgroundColor: ChoColors.aqua,
                       colorText: Colors.white,
                     );
                   } catch (error) {
                     Get.snackbar(
                       'Could not save role',
                       error.toString(),
-                      backgroundColor: AppColors.error,
+                      backgroundColor: ChoColors.aqua,
                       colorText: Colors.white,
                     );
                   }
@@ -312,7 +321,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
       Get.snackbar(
         'Access updated',
         '${data['email'] ?? 'User'} now uses ${role.name}.',
-        backgroundColor: AppColors.success,
+        backgroundColor: ChoColors.aqua,
         colorText: Colors.white,
       );
     } catch (error) {
@@ -448,9 +457,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                       result.activationEmailSent
                           ? 'The secure onboarding email was sent automatically.'
                           : 'The account was saved, but the system mailer needs configuration.',
-                      backgroundColor: result.activationEmailSent
-                          ? AppColors.success
-                          : AppColors.warning,
+                      backgroundColor: ChoColors.aqua,
                       colorText: Colors.white,
                     );
                   } catch (error) {
@@ -485,6 +492,17 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
               (b.data()['email'] ?? '').toString(),
             ),
           );
+        final visibleDocs = _focusedBaseRole == null
+            ? docs
+            : docs
+                  .where((doc) {
+                    return (doc.data()['role'] ?? '')
+                            .toString()
+                            .trim()
+                            .toUpperCase() ==
+                        _focusedBaseRole;
+                  })
+                  .toList(growable: false);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -512,7 +530,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
             WebTableSurface(
               minWidth: 900,
               child: Column(
-                children: docs.map((doc) {
+                children: visibleDocs.map((doc) {
                   final data = doc.data();
                   final baseRole = (data['role'] ?? '')
                       .toString()
@@ -626,16 +644,26 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
 
   Widget _buildRoles() {
     if (_loadingRoles) return const ChoLoadingSkeleton();
-    final roles = [..._catalog.roles]
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    final roles =
+        _catalog.roles
+            .where(
+              (role) =>
+                  _focusedBaseRole == null || role.baseRole == _focusedBaseRole,
+            )
+            .toList()
+          ..sort(
+            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+          );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'Roles and permissions',
+                _focusedBaseRole == 'BHW'
+                    ? 'BHW access and permissions'
+                    : 'Roles and permissions',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
               ),
             ),
@@ -647,10 +675,36 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
-        const Text(
-          'Permissions come from the actual portal modules and actions. Core roles cannot be edited or deleted, and custom roles cannot grant administrator capabilities.',
-          style: TextStyle(color: AppColors.textSecondary),
+        Text(
+          _focusedBaseRole == 'BHW'
+              ? 'BHW access is limited to approved, active accounts and their assigned barangay records. Only CHO Admin can change this access model.'
+              : 'Permissions come from the actual portal modules and actions. Core roles cannot be edited or deleted, and custom roles cannot grant administrator capabilities.',
+          style: const TextStyle(color: AppColors.textSecondary),
         ),
+        if (_focusedBaseRole == 'BHW') ...[
+          const SizedBox(height: AppSpacing.sm),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundLight,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.lock_outline, color: AppColors.primary, size: 18),
+                SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    'BHW users cannot approve registrations, manage roles, or grant CHO access. Those capabilities remain in CHO Admin-only workflows.',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: AppSpacing.md),
         ...roles.map(
           (role) => Container(
@@ -724,17 +778,23 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
     return Scaffold(
       backgroundColor: ChoColors.background,
       body: WebResponsiveBody(
-        sidebar: const ChoNavigationDrawer(
-          current: ChoDestination.manageChoAccess,
+        sidebar: ChoNavigationDrawer(
+          current: _focusedBaseRole == 'BHW'
+              ? ChoDestination.bhwAccess
+              : ChoDestination.manageChoAccess,
         ),
-        title: 'Manage CHO Access',
+        title: _focusedBaseRole == 'BHW'
+            ? 'BHW Access & RBAC'
+            : 'Manage CHO Access',
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Manage CHO Access',
+                _focusedBaseRole == 'BHW'
+                    ? 'BHW Access & RBAC'
+                    : 'Manage CHO Access',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,

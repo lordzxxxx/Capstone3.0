@@ -32,6 +32,12 @@ class BhwNotificationsDialog extends StatelessWidget {
         horizontal: width < 600 ? 12 : 32,
         vertical: width < 600 ? 18 : 32,
       ),
+      backgroundColor: AppColors.surfaceLight,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: AppColors.border, width: 1),
+      ),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 620, maxHeight: height * 0.82),
         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -283,13 +289,18 @@ class _NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAnnouncement = item.source == _BhwNotificationSource.announcement;
-    final color = isAnnouncement ? AppColors.primary : AppColors.referral;
+    // Keep the notification surface inside the shared AI-DSUHIS blue system.
+    // Notification type is communicated by its title/source, not by a
+    // competing border color.
+    final color = AppColors.primary;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.canvasLight,
+        color: AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: const Border.fromBorderSide(
+          BorderSide(color: AppColors.border, width: 1),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,7 +361,7 @@ class _ErrorNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       'Some updates could not be loaded. Check the connection and retry. ($error)',
-      style: const TextStyle(color: AppColors.error, fontSize: 12),
+      style: const TextStyle(color: AppColors.primary, fontSize: 12),
     );
   }
 }

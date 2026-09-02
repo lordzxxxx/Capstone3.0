@@ -57,12 +57,15 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
       final scope = await UserAccessScopeService.instance
           .loadCurrentScope(forceRefresh: true)
           .timeout(const Duration(seconds: 12));
-      final allowed = const {
+      final isChoAdmin = const {
         'cho_admin',
         'cho_super_admin',
         'super_admin',
         'admin',
       }.contains(scope.role);
+      final allowed = widget.section == ChoSupportSection.bhwManagement
+          ? isChoAdmin
+          : isChoAdmin || scope.role == 'cho';
       if (!mounted) return;
       setState(() {
         _authorized = scope.isAuthenticated && allowed;
@@ -127,6 +130,13 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
     _debounce?.cancel();
     _search.dispose();
     super.dispose();
+  }
+
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: ChoColors.aqua),
+    );
   }
 
   @override
@@ -254,6 +264,15 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
     return '—';
   }
 
+  bool _isPendingBhw(Map<String, dynamic> row) {
+    final status = _value(row, const ['status', 'accountStatus']).toLowerCase();
+    final approval = _value(row, const ['approvalStatus']).toLowerCase();
+    if (approval.contains('reject') || status.contains('reject')) return false;
+    return row['isApproved'] == false ||
+        approval.contains('pending') ||
+        (approval != 'approved' && status.contains('pending'));
+  }
+
   bool _matches(Map<String, dynamic> row) {
     if (_query.isEmpty) return true;
     return row.values
@@ -338,12 +357,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
             .where((doc) => _matches(doc.data()))
             .toList();
         final pending = allDocs.where((doc) {
-          final status = _value(doc.data(), const [
-            'status',
-            'accountStatus',
-          ]).toLowerCase();
-          return status.contains('pending') ||
-              doc.data()['isApproved'] == false;
+          return _isPendingBhw(doc.data());
         }).length;
         final docs = allDocs
             .where((doc) {
@@ -352,8 +366,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                 'status',
                 'accountStatus',
               ]).toLowerCase();
-              final isPending =
-                  status.contains('pending') || row['isApproved'] == false;
+              final isPending = _isPendingBhw(row);
               if (_bhwTab == 0) {
                 return !isPending && !status.contains('reject');
               }
@@ -374,13 +387,13 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                   label: 'Pending Registrations',
                   value: '$pending',
                   icon: Icons.person_search_outlined,
-                  color: Colors.orangeAccent,
+                  color: ChoColors.aqua,
                 ),
                 ChoKpiCard(
                   label: 'Active Accounts',
                   value: '${allDocs.length - pending}',
                   icon: Icons.verified_user_outlined,
-                  color: Colors.greenAccent,
+                  color: ChoColors.aqua,
                 ),
                 ChoKpiCard(
                   label: 'Assigned Barangays',
@@ -406,9 +419,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                       'status',
                       'accountStatus',
                     ]);
-                    final pendingAccount =
-                        status.toLowerCase().contains('pending') ||
-                        row['isApproved'] == false;
+                    final pendingAccount = _isPendingBhw(row);
                     return ListTile(
                       leading: const CircleAvatar(
                         backgroundColor: ChoColors.surfaceAlt,
@@ -675,7 +686,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                       onPressed: () => Navigator.pop(dialogContext),
                       child: const Text('Close'),
                     ),
-                    if (row['isApproved'] == false) ...[
+                    if (_isPendingBhw(row)) ...[
                       const SizedBox(width: 8),
                       OutlinedButton(
                         onPressed: () {
@@ -808,7 +819,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Account review failed: $error'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: ChoColors.aqua,
           ),
         );
       }
@@ -897,7 +908,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Assignment could not be updated: $error'),
-              backgroundColor: Colors.redAccent,
+              backgroundColor: ChoColors.aqua,
             ),
           );
         }
@@ -1017,7 +1028,7 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Announcement could not be published: $error'),
-              backgroundColor: Colors.redAccent,
+              backgroundColor: ChoColors.aqua,
             ),
           );
         }
@@ -1074,25 +1085,25 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
               label: 'Missing Barangay',
               value: '$missingBarangay',
               icon: Icons.location_off_outlined,
-              color: Colors.orangeAccent,
+              color: ChoColors.aqua,
             ),
             ChoKpiCard(
               label: 'Unmatched Patient Reference',
               value: '$missingPatient',
               icon: Icons.person_off_outlined,
-              color: Colors.redAccent,
+              color: ChoColors.aqua,
             ),
             ChoKpiCard(
               label: 'Missing Validation Status',
               value: '$missingValidation',
               icon: Icons.pending_actions_outlined,
-              color: Colors.orangeAccent,
+              color: ChoColors.aqua,
             ),
             ChoKpiCard(
               label: 'Invalid Date Values',
               value: '$invalidDates',
               icon: Icons.event_busy_outlined,
-              color: Colors.redAccent,
+              color: ChoColors.aqua,
             ),
           ],
         );
@@ -1115,6 +1126,116 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
       collections.map(
         (name) =>
             buildScopedRecordQuery(_firestore, name, scope).limit(100).get(),
+      ),
+    );
+  }
+
+  Future<void> _showChoProfileEditor(Map<String, dynamic> current) async {
+    final name = TextEditingController(
+      text: _value(current, const ['fullName', 'name', 'displayName']),
+    );
+    final username = TextEditingController(
+      text: _value(current, const ['username', 'displayName', 'fullName']),
+    );
+    final contact = TextEditingController(
+      text: _value(current, const ['contactNumber', 'phone']),
+    );
+    var saving = false;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: ChoColors.surface,
+          title: const Text(
+            'Edit CHO profile',
+            style: TextStyle(color: ChoColors.text),
+          ),
+          content: SizedBox(
+            width: 480,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: name,
+                  decoration: _profileDecoration('Full name'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: username,
+                  decoration: _profileDecoration('Username'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: contact,
+                  keyboardType: TextInputType.phone,
+                  decoration: _profileDecoration('Contact number'),
+                ),
+                const SizedBox(height: 12),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Email, role, and CHO permissions remain protected by the access system.',
+                    style: TextStyle(color: ChoColors.muted, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: saving ? null : () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      if (name.text.trim().isEmpty ||
+                          username.text.trim().length < 3) {
+                        _snack(
+                          'Enter a full name and a username with at least 3 characters.',
+                        );
+                        return;
+                      }
+                      setDialogState(() => saving = true);
+                      try {
+                        await _accountPolicyService.updateOwnChoProfile(
+                          fullName: name.text,
+                          username: username.text,
+                          contactNumber: contact.text,
+                        );
+                        if (dialogContext.mounted) Navigator.pop(dialogContext);
+                        if (mounted) {
+                          setState(() {});
+                          _snack('CHO profile details updated.');
+                        }
+                      } catch (error) {
+                        if (dialogContext.mounted) {
+                          setDialogState(() => saving = false);
+                        }
+                        _snack('Could not update CHO profile: $error');
+                      }
+                    },
+              child: Text(saving ? 'Saving...' : 'Save changes'),
+            ),
+          ],
+        ),
+      ),
+    );
+    name.dispose();
+    username.dispose();
+    contact.dispose();
+  }
+
+  InputDecoration _profileDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: ChoColors.muted),
+      enabledBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: ChoColors.border),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: ChoColors.aqua, width: 2),
       ),
     );
   }
@@ -1172,14 +1293,47 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
           decoration: BoxDecoration(
             color: ChoColors.surface,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: ChoColors.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const CircleAvatar(
-                radius: 26,
-                backgroundColor: ChoColors.surfaceAlt,
-                child: Icon(Icons.person, color: ChoColors.aqua, size: 28),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 26,
+                          backgroundColor: ChoColors.surfaceAlt,
+                          child: Icon(
+                            Icons.person,
+                            color: ChoColors.aqua,
+                            size: 28,
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          'Account details',
+                          style: TextStyle(
+                            color: ChoColors.text,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => _showChoProfileEditor(row),
+                    icon: const Icon(Icons.edit_outlined, size: 16),
+                    label: const Text('Edit profile'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: ChoColors.aqua,
+                      side: const BorderSide(color: ChoColors.aqua),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               ...fields.map(

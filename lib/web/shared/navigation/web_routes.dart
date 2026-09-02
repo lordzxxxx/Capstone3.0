@@ -49,6 +49,7 @@ abstract final class WebRoutes {
   static const choProfile = '/cho/profile';
   static const choSuperAdmin = '/cho/super-admin';
   static const choRoleManager = '/cho/role-manager';
+  static const choBhwAccess = '/cho/bhw-access';
   static const doctorReferrals = '/doctor/referrals';
 
   static String choDestination(ChoDestination destination) {
@@ -63,6 +64,7 @@ abstract final class WebRoutes {
       ChoDestination.referrals => choReferrals,
       ChoDestination.bhwManagement => choBhwManagement,
       ChoDestination.manageChoAccess => choRoleManager,
+      ChoDestination.bhwAccess => choBhwAccess,
       ChoDestination.reports => choReports,
       ChoDestination.announcements => choAnnouncements,
       ChoDestination.dataQuality => choDataQuality,
@@ -125,6 +127,7 @@ abstract final class WebRoutes {
     choProfile,
     choSuperAdmin,
     choRoleManager,
+    choBhwAccess,
     doctorReferrals,
     legacyCommunicable,
     legacyNonCommunicable,

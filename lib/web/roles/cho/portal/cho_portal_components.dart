@@ -252,25 +252,21 @@ class ChoStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final displayStatus = status.trim().isEmpty ? 'Unspecified' : status.trim();
     final normalized = status.toLowerCase();
-    final Color color;
+    const color = ChoColors.aqua;
     final IconData icon;
     if (normalized.contains('approv') ||
         normalized.contains('complete') ||
         normalized.contains('active')) {
-      color = Colors.green.shade700;
       icon = Icons.check_circle_outline;
     } else if (normalized.contains('reject') ||
         normalized.contains('critical') ||
         normalized.contains('urgent')) {
-      color = Colors.red.shade700;
       icon = Icons.error_outline;
     } else if (normalized.contains('pending') ||
         normalized.contains('return') ||
         normalized.contains('high')) {
-      color = Colors.orange.shade800;
       icon = Icons.schedule_outlined;
     } else {
-      color = Colors.blue.shade700;
       icon = Icons.info_outline;
     }
     return Semantics(
@@ -381,11 +377,7 @@ class ChoErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.cloud_off_outlined,
-              color: Colors.orange.shade800,
-              size: 48,
-            ),
+            Icon(Icons.cloud_off_outlined, color: ChoColors.aqua, size: 48),
             const SizedBox(height: 14),
             const Text(
               'Data could not be loaded',

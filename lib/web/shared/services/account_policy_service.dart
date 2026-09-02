@@ -226,6 +226,29 @@ class DoctorAssignmentExecutionResult {
   }
 }
 
+class ReferralEmailResult {
+  final bool success;
+  final bool sent;
+  final String reason;
+  final String message;
+
+  const ReferralEmailResult({
+    required this.success,
+    required this.sent,
+    required this.reason,
+    required this.message,
+  });
+
+  factory ReferralEmailResult.fromMap(Map<Object?, Object?> map) {
+    return ReferralEmailResult(
+      success: map['success'] == true,
+      sent: map['sent'] == true,
+      reason: (map['reason'] ?? '').toString(),
+      message: (map['message'] ?? '').toString(),
+    );
+  }
+}
+
 class AccountPolicyService {
   AccountPolicyService._();
 
@@ -441,6 +464,32 @@ class AccountPolicyService {
     });
   }
 
+  Future<void> updateOwnBhwProfile({
+    required String fullName,
+    required String username,
+    required String contactNumber,
+  }) async {
+    final callable = _functions.httpsCallable('updateOwnBhwProfile');
+    await callable.call(<String, dynamic>{
+      'fullName': fullName.trim(),
+      'username': username.trim(),
+      'contactNumber': contactNumber.trim(),
+    });
+  }
+
+  Future<void> updateOwnChoProfile({
+    required String fullName,
+    required String username,
+    required String contactNumber,
+  }) async {
+    final callable = _functions.httpsCallable('updateOwnChoProfile');
+    await callable.call(<String, dynamic>{
+      'fullName': fullName.trim(),
+      'username': username.trim(),
+      'contactNumber': contactNumber.trim(),
+    });
+  }
+
   Future<void> reviewBhwRegistration({
     required String uid,
     required bool approved,
@@ -512,6 +561,20 @@ class AccountPolicyService {
       'preferredDoctorUid': preferredDoctorUid?.trim(),
     });
     return DoctorAssignmentExecutionResult.fromMap(
+      Map<Object?, Object?>.from(response.data as Map),
+    );
+  }
+
+  Future<ReferralEmailResult> sendReferralAssignmentEmail({
+    required String referralId,
+    bool forceResend = false,
+  }) async {
+    final callable = _functions.httpsCallable('sendReferralAssignmentEmail');
+    final response = await callable.call(<String, dynamic>{
+      'referralId': referralId.trim(),
+      'forceResend': forceResend,
+    });
+    return ReferralEmailResult.fromMap(
       Map<Object?, Object?>.from(response.data as Map),
     );
   }

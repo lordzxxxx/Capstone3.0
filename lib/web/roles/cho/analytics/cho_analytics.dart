@@ -173,7 +173,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       Get.snackbar(
         'Analytics unavailable',
         'Failed to load analytics data: $e',
-        backgroundColor: Colors.redAccent,
+        backgroundColor: ChoColors.aqua,
         colorText: Colors.white,
       );
     }

@@ -119,7 +119,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
       Get.snackbar(
         'Access denied',
         'You need a CHO Super Admin account to open this module.',
-        backgroundColor: AppColors.error,
+        backgroundColor: _primaryAqua,
         colorText: Colors.white,
       );
       await Future.delayed(const Duration(milliseconds: 400));
@@ -133,7 +133,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
       Get.snackbar(
         'Error',
         'Could not verify CHO Super Admin access.',
-        backgroundColor: AppColors.error,
+        backgroundColor: _primaryAqua,
         colorText: Colors.white,
       );
       if (mounted) {
@@ -182,7 +182,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     Get.snackbar(
       'Saved',
       'User role updated to $role.',
-      backgroundColor: AppColors.success,
+      backgroundColor: _primaryAqua,
       colorText: Colors.white,
     );
   }
@@ -194,7 +194,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     Get.snackbar(
       'Saved',
       'Account status updated to $status.',
-      backgroundColor: AppColors.success,
+      backgroundColor: _primaryAqua,
       colorText: Colors.white,
     );
   }
@@ -204,18 +204,31 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
       Get.snackbar(
         'Approval is retained',
         'Use account status to disable access. BHW approvals are not silently revoked from the user list.',
-        backgroundColor: AppColors.warning,
+        backgroundColor: _primaryAqua,
         colorText: Colors.white,
       );
       return;
     }
-    await _accountPolicyService.reviewBhwRegistration(uid: uid, approved: true);
-    Get.snackbar(
-      'Saved',
-      'Approval status updated to $status.',
-      backgroundColor: AppColors.success,
-      colorText: Colors.white,
-    );
+    try {
+      await _accountPolicyService.reviewBhwRegistration(
+        uid: uid,
+        approved: true,
+      );
+      Get.snackbar(
+        'Saved',
+        'Approval status updated to $status.',
+        backgroundColor: _primaryAqua,
+        colorText: Colors.white,
+      );
+    } catch (error) {
+      Get.snackbar(
+        'Approval failed',
+        'The BHW account was not approved. Check the account state and try again.',
+        backgroundColor: _primaryAqua,
+        colorText: Colors.white,
+      );
+      if (kDebugMode) debugPrint('BHW approval failed: $error');
+    }
   }
 
   Future<void> _assignBarangay(String uid, BarangayReference barangay) async {
@@ -228,7 +241,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     Get.snackbar(
       'Saved',
       'Assigned ${barangay.name} to the user profile.',
-      backgroundColor: AppColors.success,
+      backgroundColor: _primaryAqua,
       colorText: Colors.white,
     );
   }
@@ -244,7 +257,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
     Get.snackbar(
       'Saved',
       'Barangay assignment released from the user profile.',
-      backgroundColor: AppColors.success,
+      backgroundColor: _primaryAqua,
       colorText: Colors.white,
     );
   }
@@ -523,7 +536,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                       Get.snackbar(
                         'Incomplete',
                         'Full name and email are required.',
-                        backgroundColor: AppColors.warning,
+                        backgroundColor: _primaryAqua,
                         colorText: Colors.white,
                       );
                       return;
@@ -547,16 +560,14 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                         result.activationEmailSent
                             ? 'A secure activation email was sent from AI-DSUHIS.'
                             : 'The account exists, but the system mailer could not send the activation email.',
-                        backgroundColor: result.activationEmailSent
-                            ? AppColors.success
-                            : AppColors.warning,
+                        backgroundColor: _primaryAqua,
                         colorText: Colors.white,
                       );
                     } catch (error) {
                       Get.snackbar(
                         'Account creation failed',
                         error.toString(),
-                        backgroundColor: AppColors.error,
+                        backgroundColor: _primaryAqua,
                         colorText: Colors.white,
                       );
                     }
@@ -579,7 +590,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
       Get.snackbar(
         'Unsupported',
         'Direct file uploads are currently available on the web admin portal only.',
-        backgroundColor: AppColors.warning,
+        backgroundColor: _primaryAqua,
         colorText: Colors.white,
       );
       return null;
@@ -660,7 +671,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                 Get.snackbar(
                   'Upload failed',
                   'Could not upload the selected image: $e',
-                  backgroundColor: AppColors.error,
+                  backgroundColor: _primaryAqua,
                   colorText: Colors.white,
                 );
               } finally {
@@ -885,7 +896,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                             Get.snackbar(
                               'Invalid date',
                               'Use YYYY-MM-DD for the effective date.',
-                              backgroundColor: AppColors.warning,
+                              backgroundColor: _primaryAqua,
                               colorText: Colors.white,
                             );
                             return;
@@ -910,14 +921,14 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                             Get.snackbar(
                               'Branding saved',
                               '${barangay.name} logo mapping and metadata were updated.',
-                              backgroundColor: AppColors.success,
+                              backgroundColor: _primaryAqua,
                               colorText: Colors.white,
                             );
                           } catch (e) {
                             Get.snackbar(
                               'Save failed',
                               'Could not save barangay branding details: $e',
-                              backgroundColor: AppColors.error,
+                              backgroundColor: _primaryAqua,
                               colorText: Colors.white,
                             );
                           } finally {
@@ -1011,6 +1022,7 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
   }
 
   Widget _buildChip(String label, Color color) {
+    color = _primaryAqua;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -1030,25 +1042,11 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
   }
 
   Color _statusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'disabled':
-        return AppColors.error;
-      case 'pending':
-        return AppColors.warning;
-      default:
-        return AppColors.success;
-    }
+    return _primaryAqua;
   }
 
   Color _approvalColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'approved':
-        return AppColors.success;
-      case 'rejected':
-        return AppColors.error;
-      default:
-        return AppColors.warning;
-    }
+    return _primaryAqua;
   }
 
   Widget _buildUserCard(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
@@ -1201,8 +1199,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                   icon: const Icon(Icons.lock_open_rounded),
                   label: const Text('Release barangay'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFFFB74D),
-                    side: const BorderSide(color: Color(0xFFFFB74D)),
+                    foregroundColor: _primaryAqua,
+                    side: const BorderSide(color: _primaryAqua),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 16,
@@ -1218,8 +1216,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                   icon: const Icon(Icons.verified_user_outlined),
                   label: const Text('Approve BHW'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.success,
-                    side: const BorderSide(color: AppColors.success),
+                    foregroundColor: _primaryAqua,
+                    side: const BorderSide(color: _primaryAqua),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 16,
@@ -1377,8 +1375,8 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                                                 : 'Placeholder active',
                                             style: TextStyle(
                                               color: profile.hasCustomLogo
-                                                  ? AppColors.success
-                                                  : AppColors.warning,
+                                                  ? _primaryAqua
+                                                  : _primaryAqua,
                                               fontSize: 12,
                                               fontWeight: FontWeight.w700,
                                             ),

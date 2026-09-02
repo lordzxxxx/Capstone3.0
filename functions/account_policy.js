@@ -2377,8 +2377,110 @@ async function performReferralAssignment({
   };
 }
 
-// The callable is intentionally limited to CHO Admin reassignment. Normal
-// BHW referral routing is handled by autoAssignReferralOnWrite below.
+// Manual notification is an explicit CHO Admin exception. Normal BHW referral
+// routing and its first notification are handled by autoAssignReferralOnWrite.
+exports.sendReferralAssignmentEmail = functions.runWith({
+  secrets: ['RESEND_API_KEY'],
+}).https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        'unauthenticated',
+        'You must be signed in to send a referral notification.',
+    );
+  }
+  const callerDoc = await db.collection('users').doc(context.auth.uid).get();
+  ensureChoAdmin(context, callerDoc.data() || {});
+
+  const referralId = String(data?.referralId || '').trim();
+  const forceResend = data?.forceResend === true;
+  if (!referralId) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Referral ID is required.',
+    );
+  }
+
+  const referralRef = db.collection('referrals').doc(referralId);
+  const referralSnapshot = await referralRef.get();
+  if (!referralSnapshot.exists) {
+    throw new functions.https.HttpsError('not-found', 'Referral was not found.');
+  }
+  const referral = referralSnapshot.data() || {};
+  const assignmentEventId = String(
+      referral.assignmentEventId ||
+      `${referralId}:${String(referral.assignedDoctorUid || '').trim()}`,
+  ).trim();
+  const alreadySent = referral.assignmentNotificationStatus === 'sent' &&
+    String(referral.assignmentNotificationSentFor || '').trim() === assignmentEventId;
+  if (alreadySent && !forceResend) {
+    return {
+      success: true,
+      sent: false,
+      reason: 'already_sent',
+      message: 'The assignment notification was already sent. Use resend for an explicit retry.',
+    };
+  }
+
+  const doctorUid = String(referral.assignedDoctorUid || '').trim();
+  if (!doctorUid) {
+    throw new functions.https.HttpsError(
+        'failed-precondition',
+        'Assign a doctor before sending a referral notification.',
+    );
+  }
+  const doctorSnapshot = await db.collection('users').doc(doctorUid).get();
+  const doctor = doctorSnapshot.data() || {};
+  const doctorEmail = String(
+      doctor.email || referral.assignedDoctorEmail || '',
+  ).trim();
+  if (!isValidEmail(doctorEmail)) {
+    throw new functions.https.HttpsError(
+        'failed-precondition',
+        'The assigned doctor does not have a valid registered email.',
+    );
+  }
+
+  const result = await sendDoctorAssignmentEmail({
+    doctorEmail,
+    doctorName: doctorDisplayName({
+      ...referral,
+      ...doctor,
+      username: doctor.username || referral.assignedDoctorName,
+    }),
+    referralId,
+    referral,
+  });
+  if (result.sent) {
+    await referralRef.update({
+      assignmentNotificationStatus: 'sent',
+      assignmentNotificationSentFor: assignmentEventId,
+      assignmentNotificationSentAt: FieldValue.serverTimestamp(),
+      assignmentNotificationLastAction: forceResend ? 'manual_resend' : 'manual_send',
+    });
+  } else {
+    await referralRef.update({
+      assignmentNotificationStatus: 'failed',
+      assignmentNotificationFailureReason: result.reason || 'send_failed',
+      assignmentNotificationFailedAt: FieldValue.serverTimestamp(),
+    });
+  }
+  await db.collection('audit_logs').add({
+    action: result.sent
+      ? (forceResend ? 'referral_assignment_email_resent' : 'referral_assignment_email_sent')
+      : 'referral_assignment_email_failed',
+    actorUid: context.auth.uid,
+    referralId,
+    assignedDoctorUid: doctorUid,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+  return {
+    success: result.sent,
+    sent: result.sent,
+    reason: result.reason,
+    message: result.message,
+  };
+});
+
 exports.assignDoctorToReferral = functions.runWith({
   secrets: ['RESEND_API_KEY'],
 }).https.onCall(async (data, context) => {

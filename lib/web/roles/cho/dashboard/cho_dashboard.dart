@@ -3927,7 +3927,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
             else
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final cardWidth = constraints.maxWidth > 1000
+                  final cardWidth = constraints.maxWidth > 1300
+                      ? (constraints.maxWidth - 30) / 4
+                      : constraints.maxWidth > 900
                       ? (constraints.maxWidth - 20) / 3
                       : constraints.maxWidth > 620
                       ? (constraints.maxWidth - 10) / 2
@@ -4019,10 +4021,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
     final statusIcon = available ? Icons.check_circle : Icons.cancel;
     final statusLabel = available ? 'AVAILABLE' : 'NOT AVAILABLE';
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: ChoColors.border),
       ),
       child: Column(
@@ -4031,16 +4033,16 @@ class _ChoDashboardState extends State<ChoDashboard> {
           Row(
             children: <Widget>[
               Container(
-                width: 40,
-                height: 40,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(13),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: ChoColors.border),
                 ),
-                child: Icon(statusIcon, color: ChoColors.text, size: 20),
+                child: Icon(statusIcon, color: ChoColors.text, size: 18),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -4055,7 +4057,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         fontSize: 13,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
                       _doctorSpecialty(doctor),
                       maxLines: 1,
@@ -4069,7 +4071,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(999),
@@ -4078,8 +4080,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Icon(statusIcon, color: ChoColors.text, size: 14),
-                    const SizedBox(width: 5),
+                    Icon(statusIcon, color: ChoColors.text, size: 12),
+                    const SizedBox(width: 4),
                     Text(
                       statusLabel,
                       style: const TextStyle(
@@ -4094,7 +4096,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             reason,
             style: TextStyle(
@@ -4103,7 +4105,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               height: 1.35,
             ),
           ),
-          const SizedBox(height: 7),
+          const SizedBox(height: 5),
           Text(
             confidence,
             style: TextStyle(
@@ -4112,7 +4114,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
