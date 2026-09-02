@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -88,147 +90,272 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
         .toList();
   }
 
-  Future<void> _showRoleEditor({RbacRoleDefinition? existing}) async {
-    final nameController = TextEditingController(text: existing?.name ?? '');
-    final descriptionController = TextEditingController(
-      text: existing?.description ?? '',
+  Future<void> _showRoleEditor({
+    RbacRoleDefinition? existing,
+    RbacRoleDefinition? template,
+  }) async {
+    final source = existing ?? template;
+    final nameController = TextEditingController(
+      text: existing?.name ?? (template == null ? '' : '${template.name} copy'),
     );
+    final descriptionController = TextEditingController(
+      text: source?.description ?? '',
+    );
+    // This center intentionally manages editable CHO roles only.
     var baseRole = 'CHO';
     var selected = <String>{
-      ...(existing?.permissions ??
+      ...(source?.permissions ??
           RbacCatalog.defaultPermissionsForRole(baseRole)),
     };
+    final isCopy = existing == null && template != null;
 
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) {
+          final screenSize = MediaQuery.sizeOf(context);
+          final dialogWidth = math.min(
+            760.0,
+            math.max(240.0, screenSize.width - 64),
+          );
+          final dialogHeight = math.min(
+            640.0,
+            math.max(180.0, screenSize.height - 220),
+          );
           final grouped = <String, List<RbacPermissionDefinition>>{};
-          for (final permission in _catalog.permissions) {
-            grouped.putIfAbsent(permission.group, () => []).add(permission);
-          }
           final allowed = RbacCatalog.defaultPermissionsForRole(
             baseRole,
           ).toSet();
+          for (final permission in _catalog.permissions) {
+            if (allowed.contains(permission.key)) {
+              grouped.putIfAbsent(permission.group, () => []).add(permission);
+            }
+          }
+          final selectedCount = selected.intersection(allowed).length;
           return AlertDialog(
             backgroundColor: AppColors.surfaceLight,
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 24,
+            ),
+            titlePadding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.sm,
+            ),
             title: Text(
-              existing == null ? 'Create access role' : 'Edit access role',
+              existing == null
+                  ? (isCopy ? 'Create editable role' : 'Create access role')
+                  : 'Edit access role',
             ),
             content: SizedBox(
-              width: 720,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextField(
-                      controller: nameController,
-                      decoration: const InputDecoration(labelText: 'Role name'),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    TextField(
-                      controller: descriptionController,
-                      maxLines: 2,
-                      decoration: const InputDecoration(
-                        labelText: 'Description',
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    DropdownButtonFormField<String>(
-                      initialValue: baseRole,
-                      decoration: const InputDecoration(labelText: 'Base role'),
-                      items: const ['CHO']
-                          .map(
-                            (role) => DropdownMenuItem(
-                              value: role,
-                              child: Text(role),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: existing != null
-                          ? null
-                          : (value) {
-                              if (value == null) return;
-                              setDialogState(() {
-                                baseRole = value;
-                                selected = selected.intersection(
-                                  RbacCatalog.defaultPermissionsForRole(
-                                    value,
-                                  ).toSet(),
-                                );
-                              });
-                            },
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Text(
-                      'Permissions',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    const Text(
-                      'Only capabilities supported by the selected base role can be assigned.',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    ...grouped.entries.map(
-                      (entry) => Container(
-                        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        padding: const EdgeInsets.all(AppSpacing.sm),
-                        decoration: BoxDecoration(
-                          color: AppColors.backgroundLight,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.border),
+              width: dialogWidth,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: dialogHeight),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Role name',
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              entry.key,
-                              style: const TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w800,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      TextField(
+                        controller: descriptionController,
+                        maxLines: 2,
+                        decoration: const InputDecoration(
+                          labelText: 'Description',
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      DropdownButtonFormField<String>(
+                        initialValue: baseRole,
+                        decoration: const InputDecoration(
+                          labelText: 'Base role',
+                        ),
+                        items: const ['CHO']
+                            .map(
+                              (role) => DropdownMenuItem(
+                                value: role,
+                                child: Text(role),
                               ),
-                            ),
-                            Wrap(
-                              spacing: AppSpacing.sm,
-                              runSpacing: 0,
-                              children: entry.value.map((permission) {
-                                final enabled = allowed.contains(
-                                  permission.key,
-                                );
-                                return SizedBox(
-                                  width: 300,
-                                  child: CheckboxListTile(
-                                    dense: true,
-                                    value:
-                                        enabled &&
-                                        selected.contains(permission.key),
-                                    onChanged: enabled
-                                        ? (value) {
-                                            setDialogState(() {
-                                              if (value == true) {
-                                                selected.add(permission.key);
-                                              } else {
-                                                selected.remove(permission.key);
-                                              }
-                                            });
-                                          }
-                                        : null,
-                                    title: Text(permission.label),
-                                    subtitle: Text(permission.key),
-                                    contentPadding: EdgeInsets.zero,
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ),
+                            )
+                            .toList(),
+                        onChanged: existing != null
+                            ? null
+                            : (value) {
+                                if (value == null) return;
+                                setDialogState(() {
+                                  baseRole = value;
+                                  selected = selected.intersection(
+                                    RbacCatalog.defaultPermissionsForRole(
+                                      value,
+                                    ).toSet(),
+                                  );
+                                });
+                              },
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: AppSpacing.md),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Permissions',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textPrimary,
+                                  ),
+                            ),
+                          ),
+                          Text(
+                            '$selectedCount of ${allowed.length} selected',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      const Text(
+                        'Select the CHO capabilities included in this role.',
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      ...grouped.entries.map((entry) {
+                        final enabledPermissions = entry.value
+                            .where(
+                              (permission) => allowed.contains(permission.key),
+                            )
+                            .toList();
+                        final groupSelected = enabledPermissions
+                            .where(
+                              (permission) => selected.contains(permission.key),
+                            )
+                            .length;
+                        final allSelected =
+                            groupSelected == enabledPermissions.length;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.sm,
+                            AppSpacing.xs,
+                            AppSpacing.sm,
+                            AppSpacing.sm,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.backgroundLight,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      entry.key,
+                                      style: const TextStyle(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    '$groupSelected/${enabledPermissions.length}',
+                                    style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.xs),
+                                  TextButton(
+                                    onPressed: () {
+                                      setDialogState(() {
+                                        if (allSelected) {
+                                          selected.removeAll(
+                                            enabledPermissions.map(
+                                              (permission) => permission.key,
+                                            ),
+                                          );
+                                        } else {
+                                          selected.addAll(
+                                            enabledPermissions.map(
+                                              (permission) => permission.key,
+                                            ),
+                                          );
+                                        }
+                                      });
+                                    },
+                                    child: Text(allSelected ? 'Clear' : 'All'),
+                                  ),
+                                ],
+                              ),
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final twoColumns =
+                                      constraints.maxWidth >= 560;
+                                  final itemWidth = twoColumns
+                                      ? (constraints.maxWidth - AppSpacing.sm) /
+                                            2
+                                      : constraints.maxWidth;
+                                  return Wrap(
+                                    spacing: AppSpacing.sm,
+                                    runSpacing: 0,
+                                    children: enabledPermissions.map((
+                                      permission,
+                                    ) {
+                                      return SizedBox(
+                                        width: itemWidth,
+                                        child: Tooltip(
+                                          message: permission.key,
+                                          child: CheckboxListTile(
+                                            dense: true,
+                                            visualDensity: const VisualDensity(
+                                              horizontal: -1,
+                                              vertical: -1,
+                                            ),
+                                            value: selected.contains(
+                                              permission.key,
+                                            ),
+                                            onChanged: (value) {
+                                              setDialogState(() {
+                                                if (value == true) {
+                                                  selected.add(permission.key);
+                                                } else {
+                                                  selected.remove(
+                                                    permission.key,
+                                                  );
+                                                }
+                                              });
+                                            },
+                                            title: Text(
+                                              permission.label,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            contentPadding: EdgeInsets.zero,
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -253,7 +380,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                       name: name,
                       description: descriptionController.text,
                       baseRole: baseRole,
-                      permissions: selected.toList(),
+                      permissions: selected.intersection(allowed).toList(),
                     );
                     if (dialogContext.mounted) {
                       Navigator.of(dialogContext).pop();
@@ -283,6 +410,97 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
     );
     nameController.dispose();
     descriptionController.dispose();
+  }
+
+  Future<void> _showRolePermissionsDialog(RbacRoleDefinition role) async {
+    final grouped = <String, List<RbacPermissionDefinition>>{};
+    for (final permission in _permissionsForUser(
+      baseRole: role.baseRole,
+      role: role,
+    )) {
+      grouped.putIfAbsent(permission.group, () => []).add(permission);
+    }
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final screenSize = MediaQuery.sizeOf(dialogContext);
+        return AlertDialog(
+          backgroundColor: AppColors.surfaceLight,
+          title: Text(role.name),
+          content: SizedBox(
+            width: math.min(
+              640.0,
+              math.max(240.0, screenSize.width - 64),
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: math.min(520.0, screenSize.height * .65),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      role.description,
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      '${role.permissions.length} permissions assigned',
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    ...grouped.entries.map(
+                      (entry) => Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        padding: const EdgeInsets.all(AppSpacing.sm),
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundLight,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              entry.key,
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            Wrap(
+                              spacing: AppSpacing.xs,
+                              runSpacing: AppSpacing.xs,
+                              children: entry.value
+                                  .map(
+                                    (permission) => Chip(
+                                      label: Text(permission.label),
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _deleteRole(RbacRoleDefinition role) async {
@@ -745,6 +963,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
     );
     final canEditAccess =
         baseRole == 'CHO' && !isProtected && options.isNotEmpty;
+    final canEditRole = baseRole == 'CHO' && role != null && !role.isProtected;
     final accessField = SizedBox(
       width: wide ? null : double.infinity,
       child: isProtected
@@ -797,11 +1016,23 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                 SizedBox(width: 260, child: accessField),
                 const SizedBox(width: AppSpacing.md),
                 SizedBox(
-                  width: 125,
+                  width: 150,
                   child: TextButton.icon(
-                    onPressed: () => _showUserAccessDialog(user),
-                    icon: const Icon(Icons.list_alt_outlined, size: 16),
-                    label: Text('$permissionCount access'),
+                    onPressed: canEditRole
+                        ? () => _showRoleEditor(existing: role)
+                        : () => _showUserAccessDialog(user),
+                    icon: Icon(
+                      canEditRole
+                          ? Icons.edit_outlined
+                          : Icons.list_alt_outlined,
+                      size: 16,
+                    ),
+                    label: Text(
+                      canEditRole
+                          ? 'Edit access ($permissionCount)'
+                          : 'View access ($permissionCount)',
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -863,9 +1094,20 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                 Row(
                   children: [
                     TextButton.icon(
-                      onPressed: () => _showUserAccessDialog(user),
-                      icon: const Icon(Icons.list_alt_outlined, size: 16),
-                      label: Text('View access ($permissionCount)'),
+                      onPressed: canEditRole
+                          ? () => _showRoleEditor(existing: role)
+                          : () => _showUserAccessDialog(user),
+                      icon: Icon(
+                        canEditRole
+                            ? Icons.edit_outlined
+                            : Icons.list_alt_outlined,
+                        size: 16,
+                      ),
+                      label: Text(
+                        canEditRole
+                            ? 'Edit access ($permissionCount)'
+                            : 'View access ($permissionCount)',
+                      ),
                     ),
                     const Spacer(),
                     if (baseRole == 'CHO')
@@ -905,7 +1147,10 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
             Expanded(
               child: Text(
                 'Roles and permissions',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
             FilledButton.icon(
@@ -917,20 +1162,47 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
         ),
         const SizedBox(height: AppSpacing.xs),
         const Text(
-          'Only CHO roles are managed here. Each role is a named set of portal permissions that can be assigned to CHO users; protected administrator roles remain locked.',
+          'Create and edit custom CHO roles, then assign them from Users. Built-in roles remain protected so administrator access cannot be changed accidentally.',
           style: TextStyle(color: AppColors.textSecondary),
         ),
         const SizedBox(height: AppSpacing.md),
-        ...roles.map(
-          (role) => Container(
-            margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
+        if (roles.isEmpty)
+          const ChoEmptyState(
+            title: 'No CHO roles found',
+            message: 'Create a custom role to define editable CHO access.',
+          )
+        else
+          ...roles.map((role) {
+            final actions = <Widget>[
+              OutlinedButton.icon(
+                onPressed: () => _showRolePermissionsDialog(role),
+                icon: const Icon(Icons.visibility_outlined, size: 17),
+                label: const Text('View access'),
+              ),
+              if (!role.isProtected)
+                OutlinedButton.icon(
+                  onPressed: () => _showRoleEditor(existing: role),
+                  icon: const Icon(Icons.edit_outlined, size: 17),
+                  label: const Text('Edit role'),
+                )
+              else if (role.roleKey == 'CHO')
+                OutlinedButton.icon(
+                  onPressed: () => _showRoleEditor(template: role),
+                  icon: const Icon(Icons.content_copy_outlined, size: 17),
+                  label: const Text('Copy to edit'),
+                ),
+              if (!role.isProtected)
+                IconButton(
+                  tooltip: role.assignedUsers > 0
+                      ? 'Reassign users before deleting this role'
+                      : 'Delete role',
+                  onPressed: role.assignedUsers > 0
+                      ? null
+                      : () => _deleteRole(role),
+                  icon: const Icon(Icons.delete_outline),
+                ),
+            ];
+            final summary = Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Icon(
@@ -946,9 +1218,11 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                         role.name,
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 2),
                       Text(
                         role.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: AppSpacing.xs),
@@ -963,27 +1237,46 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                   ),
                 ),
                 if (role.isProtected)
-                  const Chip(label: Text('Protected'))
-                else ...[
-                  IconButton(
-                    tooltip: 'Edit role',
-                    onPressed: () => _showRoleEditor(existing: role),
-                    icon: const Icon(Icons.edit_outlined),
+                  const Padding(
+                    padding: EdgeInsets.only(left: AppSpacing.sm),
+                    child: Chip(label: Text('Protected')),
                   ),
-                  IconButton(
-                    tooltip: role.assignedUsers > 0
-                        ? 'Reassign users first'
-                        : 'Delete role',
-                    onPressed: role.assignedUsers > 0
-                        ? null
-                        : () => _deleteRole(role),
-                    icon: const Icon(Icons.delete_outline),
-                  ),
-                ],
               ],
-            ),
-          ),
-        ),
+            );
+            return Container(
+              margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final narrow = constraints.maxWidth < 760;
+                  final actionRow = Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: AppSpacing.xs,
+                    runSpacing: AppSpacing.xs,
+                    children: actions,
+                  );
+                  return narrow
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [summary, actionRow],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(child: summary),
+                            const SizedBox(width: AppSpacing.md),
+                            actionRow,
+                          ],
+                        );
+                },
+              ),
+            );
+          }),
       ],
     );
   }
@@ -1113,7 +1406,7 @@ class _AccessTableHeader extends StatelessWidget {
           SizedBox(width: AppSpacing.md),
           SizedBox(width: 260, child: _AccessHeaderLabel('Access role')),
           SizedBox(width: AppSpacing.md),
-          SizedBox(width: 125, child: _AccessHeaderLabel('Permissions')),
+          SizedBox(width: 150, child: _AccessHeaderLabel('Permissions')),
           SizedBox(width: AppSpacing.sm),
           SizedBox(width: 90, child: _AccessHeaderLabel('Status')),
           SizedBox(width: 48),
