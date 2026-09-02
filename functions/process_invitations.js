@@ -25,6 +25,7 @@ exports.processInvitation = onDocumentCreated({
   document: 'invitations/{invId}',
   database: FIRESTORE_DATABASE_ID,
   region: 'us-central1',
+  secrets: ['RESEND_API_KEY'],
 }, async (event) => {
   const snap = event.data;
   if (!snap) {

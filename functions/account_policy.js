@@ -1893,7 +1893,9 @@ async function provisionManagedAccount(data, context) {
   };
 }
 
-exports.createChoAccount = functions.https.onCall(async (data, context) => {
+exports.createChoAccount = functions.runWith({
+  secrets: ['RESEND_API_KEY'],
+}).https.onCall(async (data, context) => {
   try {
     return await provisionManagedAccount(data || {}, context);
   } catch (error) {
@@ -1901,7 +1903,9 @@ exports.createChoAccount = functions.https.onCall(async (data, context) => {
   }
 });
 
-exports.reviewBhwRegistration = functions.https.onCall(async (data, context) => {
+exports.reviewBhwRegistration = functions.runWith({
+  secrets: ['RESEND_API_KEY'],
+}).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'You must be signed in to review registrations.');
   }
@@ -2375,7 +2379,9 @@ async function performReferralAssignment({
 
 // The callable is intentionally limited to CHO Admin reassignment. Normal
 // BHW referral routing is handled by autoAssignReferralOnWrite below.
-exports.assignDoctorToReferral = functions.https.onCall(async (data, context) => {
+exports.assignDoctorToReferral = functions.runWith({
+  secrets: ['RESEND_API_KEY'],
+}).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
         'unauthenticated',
@@ -2411,6 +2417,7 @@ exports.autoAssignReferralOnWrite = onDocumentWritten({
   document: 'referrals/{referralId}',
   database: FIRESTORE_DATABASE_ID,
   region: 'us-central1',
+  secrets: ['RESEND_API_KEY'],
 }, async (event) => {
   const change = event.data;
   if (!change.after.exists) return null;

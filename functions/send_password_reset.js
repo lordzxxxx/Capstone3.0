@@ -170,7 +170,9 @@ async function checkAndRecordResetRequestRate(email, clientIp) {
  * POST /sendPasswordResetEmail
  * Body: { email: string }
  */
-exports.sendPasswordResetEmail = functions.https.onRequest((req, res) => {
+exports.sendPasswordResetEmail = functions.runWith({
+  secrets: ['RESEND_API_KEY'],
+}).https.onRequest((req, res) => {
   return cors(req, res, async () => {
     try {
       if (req.method !== 'POST') {
