@@ -15,7 +15,7 @@ import 'package:mycapstone_project/web/features/auth/forgot.dart';
 import 'package:mycapstone_project/web/roles/cho/dashboard/cho_dashboard.dart'
     as cho;
 import 'package:mycapstone_project/web/features/auth/cho_access_session.dart';
-import 'package:mycapstone_project/web/roles/bhw/referrals/referrals.dart';
+import 'package:mycapstone_project/web/roles/doctor/doctor_portal.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 import 'package:mycapstone_project/shared/widgets/auth_error_banner.dart';
 import 'package:mycapstone_project/shared/input_validation.dart';
@@ -284,8 +284,8 @@ class _LoginState extends State<Login> {
     if (_isDoctorRole(role)) {
       _clearRoleValidationForDashboard();
       await _safeOffAll(
-        const ReferralsPage(),
-        routeName: WebRoutes.doctorReferrals,
+        const DoctorPortalPage(),
+        routeName: WebRoutes.doctorDashboard,
       );
       return;
     }
@@ -305,7 +305,7 @@ class _LoginState extends State<Login> {
         : isCho
         ? 'CHO Dashboard'
         : isDoctor
-        ? 'Referral Center'
+        ? 'Doctor Dashboard'
         : 'Dashboard';
 
     var message = isSuperAdmin
@@ -313,7 +313,7 @@ class _LoginState extends State<Login> {
         : isCho
         ? 'Your CHO account is verified. Continue to the CHO dashboard.'
         : isDoctor
-        ? 'Your doctor account is verified. Continue to the referral center.'
+        ? 'Your doctor account is verified. Continue to the Doctor Dashboard.'
         : 'Your account is verified. Continue to the dashboard.';
     if (!_matchesExpectedPortal(normalizedRole)) {
       message =

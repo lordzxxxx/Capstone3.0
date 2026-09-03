@@ -249,6 +249,35 @@ class ReferralEmailResult {
   }
 }
 
+class DoctorReferralActionResult {
+  final bool success;
+  final String action;
+  final String referralId;
+  final String status;
+  final bool alreadyProcessed;
+  final bool notificationSent;
+
+  const DoctorReferralActionResult({
+    required this.success,
+    required this.action,
+    required this.referralId,
+    required this.status,
+    required this.alreadyProcessed,
+    required this.notificationSent,
+  });
+
+  factory DoctorReferralActionResult.fromMap(Map<Object?, Object?> map) {
+    return DoctorReferralActionResult(
+      success: map['success'] == true,
+      action: (map['action'] ?? '').toString(),
+      referralId: (map['referralId'] ?? '').toString(),
+      status: (map['status'] ?? '').toString(),
+      alreadyProcessed: map['alreadyProcessed'] == true,
+      notificationSent: map['notificationSent'] == true,
+    );
+  }
+}
+
 class AccountPolicyService {
   AccountPolicyService._();
 
@@ -500,6 +529,64 @@ class AccountPolicyService {
       'fullName': fullName.trim(),
       'username': username.trim(),
       'contactNumber': contactNumber.trim(),
+    });
+  }
+
+  Future<DoctorReferralActionResult> doctorReferralAction({
+    required String referralId,
+    required String action,
+    String? reason,
+    String? targetDoctorUid,
+    String? operationId,
+    String? status,
+    String? doctorDiagnosis,
+    String? doctorTreatment,
+    String? doctorMedication,
+    String? doctorNotes,
+  }) async {
+    final callable = _functions.httpsCallable('doctorReferralAction');
+    final response = await callable.call(<String, dynamic>{
+      'referralId': referralId.trim(),
+      'action': action.trim(),
+      if (reason != null) 'reason': reason.trim(),
+      if (targetDoctorUid != null) 'targetDoctorUid': targetDoctorUid.trim(),
+      if (operationId != null) 'operationId': operationId.trim(),
+      if (status != null) 'status': status.trim(),
+      if (doctorDiagnosis != null) 'doctorDiagnosis': doctorDiagnosis.trim(),
+      if (doctorTreatment != null) 'doctorTreatment': doctorTreatment.trim(),
+      if (doctorMedication != null) 'doctorMedication': doctorMedication.trim(),
+      if (doctorNotes != null) 'doctorNotes': doctorNotes.trim(),
+    });
+    return DoctorReferralActionResult.fromMap(
+      Map<Object?, Object?>.from(response.data as Map),
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> listDoctorTransferTargets() async {
+    final callable = _functions.httpsCallable('listDoctorTransferTargets');
+    final response = await callable.call();
+    final raw = (response.data as Map)['doctors'];
+    if (raw is! List) return <Map<String, dynamic>>[];
+    return raw
+        .whereType<Map>()
+        .map((doctor) => Map<String, dynamic>.from(doctor))
+        .toList(growable: false);
+  }
+
+  Future<void> updateOwnDoctorProfile({
+    required String fullName,
+    required String username,
+    required String contactNumber,
+    required String professionalTitle,
+    required String specialization,
+  }) async {
+    final callable = _functions.httpsCallable('updateOwnDoctorProfile');
+    await callable.call(<String, dynamic>{
+      'fullName': fullName.trim(),
+      'username': username.trim(),
+      'contactNumber': contactNumber.trim(),
+      'professionalTitle': professionalTitle.trim(),
+      'specialization': specialization.trim(),
     });
   }
 

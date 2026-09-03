@@ -6,6 +6,7 @@ const { ServerValue } = require('firebase-admin/database');
 const { generateTemporaryPassword } = require('./password_policy');
 const { sendSystemEmail } = require('./mailer');
 const { defaultPermissionsForRole } = require('./rbac_policy');
+const { buildAccountOnboardingEmail } = require('./email_templates');
 
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 const CHO_ADMIN_ROLES = new Set(['CHO_ADMIN', 'CHO_SUPER_ADMIN']);
@@ -159,9 +160,12 @@ exports.processInvitation = onDocumentCreated({
     let emailError = null;
     const emailResult = resetLink ? await sendSystemEmail({
       to: email,
-      subject: 'Your AI-DSUHIS Account Is Ready',
-      text: `A CHO Admin created your AI-DSUHIS ${requestedRole.toUpperCase()} account. Set your password securely: ${resetLink}`,
-      html: `<p>A CHO Admin created your AI-DSUHIS ${requestedRole.toUpperCase()} account.</p><p><a href="${resetLink}">Set your password securely</a></p>`,
+      ...buildAccountOnboardingEmail({
+        fullName: fullName || email,
+        email,
+        role: requestedRole.toUpperCase(),
+        activationUrl: resetLink,
+      }),
     }) : {sent: false, reason: 'activation_link_unavailable'};
     emailSent = emailResult.sent;
     emailError = emailResult.sent ? null : emailResult.reason;

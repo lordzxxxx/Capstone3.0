@@ -1,0 +1,43 @@
+const assert = require('node:assert/strict');
+
+const {
+  buildAccountOnboardingEmail,
+  buildReferralAssignmentEmail,
+} = require('../functions/email_templates');
+
+const accountEmail = buildAccountOnboardingEmail({
+  fullName: 'Dr. Ada <Test>',
+  email: 'ada@example.test',
+  role: 'DOCTOR',
+  activationUrl: 'https://www.ai-dsuhis.com/activate?token=controlled-test',
+});
+assert.equal(accountEmail.subject, 'Your AI-DSUHIS Account Is Ready');
+assert.match(accountEmail.html, /AI-DSUHIS/);
+assert.match(accountEmail.html, /Set up your account/);
+assert.match(accountEmail.html, /ada@example.test/);
+assert.match(accountEmail.html, /Dr\. Ada &lt;Test&gt;/);
+assert.doesNotMatch(accountEmail.html, /temporary password/i);
+
+const referralEmail = buildReferralAssignmentEmail({
+  doctorName: 'Ada Test',
+  referralId: 'REF-2026-0001',
+  referral: {
+    patientName: 'Controlled Patient',
+    referralDate: 'September 3, 2026 2:00 PM',
+    barangay: 'Test Barangay',
+    createdByName: 'Test BHW',
+    referralReason: 'Follow-up assessment',
+    priority: 'routine',
+    status: 'assigned',
+  },
+});
+assert.equal(referralEmail.subject, 'New Patient Referral Assigned – AI-DSUHIS');
+assert.match(referralEmail.html, /New referral assigned/);
+assert.match(referralEmail.html, /REF-2026-0001/);
+assert.match(referralEmail.html, /Controlled Patient/);
+assert.match(referralEmail.html, /View referral/);
+assert.match(referralEmail.html, /doctor\/dashboard\?referralId=REF-2026-0001/);
+assert.doesNotMatch(referralEmail.html, /medical history|AI prediction|clinical notes/i);
+assert.match(referralEmail.text, /AI-DSUHIS/);
+
+console.log('Email template tests passed.');

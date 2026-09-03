@@ -105,8 +105,8 @@ import 'package:mycapstone_project/web/roles/cho/admin/role_manager.dart'
     as web_cho_role_manager;
 import 'package:mycapstone_project/web/roles/cho/referrals/cho_referral_management.dart'
     as web_cho_referrals;
-import 'package:mycapstone_project/web/roles/bhw/referrals/referrals.dart'
-    as web_doctor_referrals;
+import 'package:mycapstone_project/web/roles/doctor/doctor_portal.dart'
+    as web_doctor_portal;
 import 'package:mycapstone_project/web/shared/widgets/app_update_notification.dart';
 
 const Set<String> _bhwWebRoles = <String>{'bhw'};
@@ -707,11 +707,42 @@ class MyApp extends StatelessWidget {
                 middlewares: [AuthGuardMiddleware()],
               ),
               GetPage(
+                name: WebRoutes.doctorDashboard,
+                page: () => _guardWebPage(
+                  allowedRoles: _doctorWebRoles,
+                  requiredPermission: 'referrals.assigned.view',
+                  child: const web_doctor_portal.DoctorPortalPage(),
+                ),
+                middlewares: [AuthGuardMiddleware()],
+              ),
+              GetPage(
+                name: WebRoutes.doctorArchive,
+                page: () => _guardWebPage(
+                  allowedRoles: _doctorWebRoles,
+                  requiredPermission: 'referrals.assigned.view',
+                  child: const web_doctor_portal.DoctorPortalPage(
+                    tab: web_doctor_portal.DoctorPortalTab.archive,
+                  ),
+                ),
+                middlewares: [AuthGuardMiddleware()],
+              ),
+              GetPage(
+                name: WebRoutes.doctorProfile,
+                page: () => _guardWebPage(
+                  allowedRoles: _doctorWebRoles,
+                  requiredPermission: 'profile.view',
+                  child: const web_doctor_portal.DoctorPortalPage(
+                    tab: web_doctor_portal.DoctorPortalTab.profile,
+                  ),
+                ),
+                middlewares: [AuthGuardMiddleware()],
+              ),
+              GetPage(
                 name: WebRoutes.doctorReferrals,
                 page: () => _guardWebPage(
                   allowedRoles: _doctorWebRoles,
                   requiredPermission: 'referrals.assigned.view',
-                  child: const web_doctor_referrals.ReferralsPage(),
+                  child: const web_doctor_portal.DoctorPortalPage(),
                 ),
                 middlewares: [AuthGuardMiddleware()],
               ),

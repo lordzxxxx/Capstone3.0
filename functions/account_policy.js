@@ -13,6 +13,10 @@ const {
   defaultPermissionsForRole,
   resolveRoleAssignment,
 } = require('./rbac_policy');
+const {
+  buildAccountOnboardingEmail,
+  buildReferralAssignmentEmail,
+} = require('./email_templates');
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -373,6 +377,8 @@ async function sendDoctorAssignmentEmail({
   doctorName,
   referralId,
   referral,
+  transferred = false,
+  previousDoctorName = '',
 }) {
   const normalizedEmail = normalizeText(doctorEmail);
   if (!normalizedEmail || !isValidEmail(normalizedEmail)) {
@@ -383,85 +389,19 @@ async function sendDoctorAssignmentEmail({
     };
   }
 
-  const safeDoctorName = safeText(doctorName, 'Doctor');
-  const patientName = safeText(
-      referral?.patientName || referral?.patientInformation?.fullName,
-      'Patient',
-  );
-  const bhwName = safeText(
-      referral?.createdByName || referral?.bhwName || referral?.createdByEmail,
-      'Referring BHW',
-  );
-  const barangay = safeText(
-      referral?.barangay || referral?.barangayName,
-      'Not provided',
-  );
-  const referralDate = timestampText(
-      referral?.referralDateTime || referral?.referralDate ||
-      referral?.createdAt || new Date(),
-  );
-  const referralReason = safeText(
-      referral?.referralReason || referral?.reason ||
-      referral?.chiefComplaint,
-      'Not provided',
-  );
-  const priority = safeText(referral?.priority || referral?.referralPriority,
-      'Routine');
-  const status = safeText(referral?.status, 'assigned');
-  const appUrl = String(
-      process.env.APP_URL || 'https://www.ai-dsuhis.com',
-  ).replace(/\/$/, '');
-  const portalLink = `${appUrl}/doctor/referrals?referralId=${encodeURIComponent(referralId)}`;
-
-  const subject = 'New Patient Referral Assigned – AI-DSUHIS';
-  const text = [
-    `Hello Dr. ${safeDoctorName},`,
-    '',
-    'A new patient referral has been automatically assigned to you in AI-DSUHIS.',
-    '',
-    `Doctor: ${safeDoctorName}`,
-    `Patient: ${patientName}`,
-    `Referral Reference: ${referralId}`,
-    `Referral Date and Time: ${referralDate}`,
-    `Referred From: ${barangay}`,
-    `Referring BHW: ${bhwName}`,
-    `Referral Reason: ${referralReason}`,
-    `Priority: ${priority}`,
-    `Assigned Doctor: ${safeDoctorName}`,
-    `Status: ${status}`,
-    '',
-    `View Referral: ${portalLink}`,
-    '',
-    'For privacy, clinical diagnosis, history, and AI analysis are available only after secure sign-in.',
-  ].join('\n');
-
-  const html = `
-    <div style="font-family: Arial, sans-serif; color: #0A1F24; line-height: 1.5;">
-      <h2 style="margin-bottom: 8px;">New Referral Assignment</h2>
-      <p>Hello Dr. ${htmlEscape(safeDoctorName)},</p>
-      <p>A new patient referral has been automatically assigned to you in AI-DSUHIS.</p>
-      <table style="border-collapse: collapse; width: 100%; max-width: 640px;">
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Doctor</td><td style="padding: 6px 8px;">${htmlEscape(safeDoctorName)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Patient</td><td style="padding: 6px 8px;">${htmlEscape(patientName)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Referral reference</td><td style="padding: 6px 8px;">${htmlEscape(referralId)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Referral date and time</td><td style="padding: 6px 8px;">${htmlEscape(referralDate)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Referred from</td><td style="padding: 6px 8px;">${htmlEscape(barangay)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Referring BHW</td><td style="padding: 6px 8px;">${htmlEscape(bhwName)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Referral reason</td><td style="padding: 6px 8px;">${htmlEscape(referralReason)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Priority</td><td style="padding: 6px 8px;">${htmlEscape(priority)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Assigned doctor</td><td style="padding: 6px 8px;">${htmlEscape(safeDoctorName)}</td></tr>
-        <tr><td style="padding: 6px 8px; font-weight: 600;">Status</td><td style="padding: 6px 8px;">${htmlEscape(status)}</td></tr>
-      </table>
-      <p style="margin-top: 12px;"><a href="${htmlEscape(portalLink)}">Open the secure doctor portal</a></p>
-      <p style="font-size: 12px; color: #4B6075;">Clinical diagnosis, history, and AI analysis are available only after secure sign-in.</p>
-    </div>
-  `;
+  const message = buildReferralAssignmentEmail({
+    doctorName,
+    referralId,
+    referral: {...referral, status: referral?.status || 'assigned'},
+    transferred,
+    previousDoctorName,
+  });
 
   const result = await sendSystemEmail({
     to: normalizedEmail,
-    subject,
-    text,
-    html,
+    subject: message.subject,
+    text: message.text,
+    html: message.html,
   });
   return {
     sent: result.sent,
@@ -709,7 +649,7 @@ function doctorSpecializationValue(data) {
 
 function doctorDisplayName(data) {
   return String(
-      data?.username || data?.fullName || data?.displayName || data?.email || 'Doctor',
+      data?.fullName || data?.displayName || data?.username || data?.email || 'Doctor',
   ).trim() || 'Doctor';
 }
 
@@ -755,7 +695,7 @@ async function rankDoctorsForReferral(referral) {
     const status = normalizeText(row.status || 'submitted');
     const assignedDoctorUid = String(row.assignedDoctorUid || '').trim();
     if (!assignedDoctorUid) continue;
-    if (['completed', 'cancelled', 'closed'].includes(status)) continue;
+    if (['completed', 'cancelled', 'closed', 'declined'].includes(status)) continue;
     openCounts[assignedDoctorUid] = (openCounts[assignedDoctorUid] || 0) + 1;
   }
 
@@ -776,6 +716,7 @@ async function rankDoctorsForReferral(referral) {
           'unavailable', 'on_leave', 'leave', 'off_duty',
         ].includes(normalizedAvailability);
         if (unavailable || approvalStatus !== 'approved' ||
+            !isValidEmail(row.email) ||
             !['active', 'approved'].includes(accountStatus)) return null;
 
         const score = Math.max(0, 100 - workload * 10);
@@ -1820,30 +1761,44 @@ async function provisionManagedAccount(data, context) {
       approvalStatus: 'approved',
       accountStatus,
     });
-    await admin.database().ref(`users/${userRecord.uid}`).update({
-      uid: userRecord.uid,
-      username: fullName,
-      fullName,
-      email,
-      role,
-      accessRoleKey: accessRole.roleKey,
-      permissions: accessRole.permissions,
-      accessScope: 'citywide',
-      approvalStatus: 'approved',
-      accountStatus,
-      ...(role === 'DOCTOR' ? {
-        specialization,
-        doctorSpecialization: specialization,
-        availability,
-        doctorAvailability: availability,
-      } : {}),
-      updatedAt: ServerValue.TIMESTAMP,
-    });
   } catch (error) {
     if (created) {
       try { await admin.auth().deleteUser(userRecord.uid); } catch (_) {}
     }
     throw doctorRegistrationError(error, 'Managed account creation failed.');
+  }
+
+  // Firestore/Auth are authoritative for managed accounts. Keep the legacy
+  // Realtime Database mirror best-effort so its outage cannot roll back a
+  // valid doctor account or leave an orphaned Firestore profile.
+  if (!process.env.FUNCTIONS_EMULATOR ||
+      process.env.FIREBASE_DATABASE_EMULATOR_HOST) {
+    try {
+      await admin.database().ref(`users/${userRecord.uid}`).update({
+        uid: userRecord.uid,
+        username: fullName,
+        fullName,
+        email,
+        role,
+        accessRoleKey: accessRole.roleKey,
+        permissions: accessRole.permissions,
+        accessScope: 'citywide',
+        approvalStatus: 'approved',
+        accountStatus,
+        ...(role === 'DOCTOR' ? {
+          specialization,
+          doctorSpecialization: specialization,
+          availability,
+          doctorAvailability: availability,
+        } : {}),
+        updatedAt: ServerValue.TIMESTAMP,
+      });
+    } catch (error) {
+      console.error('Managed account RTDB mirror failed', {
+        uid: userRecord.uid,
+        code: error?.code || 'unknown',
+      });
+    }
   }
 
   let resetLink = null;
@@ -1859,29 +1814,12 @@ async function provisionManagedAccount(data, context) {
   const activationEmail = resetLink
     ? await sendSystemEmail({
       to: email,
-      subject: 'Your AI-DSUHIS Account Is Ready',
-      text: [
-        `Hello ${fullName},`,
-        '',
-        'An AI-DSUHIS account has been created for you by the City Health Office Administrator.',
-        '',
-        'Account Details',
-        `Email: ${email}`,
-        `Role: ${role}`,
-        '',
-        'Please use the secure link below to activate your account and create your password.',
-        `ACTIVATE ACCOUNT / SET PASSWORD: ${resetLink}`,
-        '',
-        'After setting your password, you can sign in to AI-DSUHIS using your registered email.',
-        'For security, do not share your account credentials.',
-        '',
-        'Thank you,',
-        'AI-DSUHIS',
-        'City Health Office',
-        '',
-        'This is an automated system notification.',
-      ].join('\n'),
-      html: `<p>Hello ${htmlEscape(fullName)},</p><p>An AI-DSUHIS account has been created for you by the City Health Office Administrator.</p><h3>Account Details</h3><p>Email: ${htmlEscape(email)}<br>Role: ${htmlEscape(role)}</p><p>Please use the secure link below to activate your account and create your password.</p><p><a href="${htmlEscape(resetLink)}">ACTIVATE ACCOUNT / SET PASSWORD</a></p><p>After setting your password, you can sign in to AI-DSUHIS using your registered email.</p><p>For security, do not share your account credentials.</p><p>Thank you,<br>AI-DSUHIS<br>City Health Office</p><p>This is an automated system notification.</p>`,
+      ...buildAccountOnboardingEmail({
+        fullName,
+        email,
+        role,
+        activationUrl: resetLink,
+      }),
     })
     : {sent: false, reason: 'activation_link_unavailable'};
 
@@ -2704,6 +2642,339 @@ exports.sendReferralAssignmentEmail = functions.runWith({
     reason: result.reason,
     message: result.message,
   };
+});
+
+function doctorHasReferralPermission(profile) {
+  const assignedPermissions = Array.isArray(profile?.permissions) &&
+    profile.permissions.length
+    ? profile.permissions
+    : defaultPermissionsForRole(profile?.role || 'DOCTOR');
+  return assignedPermissions.includes('referrals.assigned.view');
+}
+
+function doctorActionText(value, field, maxLength = 4000) {
+  if (value === undefined || value === null) return null;
+  return profileText(value, field, {maxLength});
+}
+
+function isDoctorConsultationTransition(currentStatus, nextStatus) {
+  return (
+    ['assigned', 'approved', 'hospital_assigned', 'doctor_assigned'].includes(currentStatus) &&
+      ['doctor_assigned', 'waiting_consultation', 'consulted'].includes(nextStatus)
+  ) || (
+    currentStatus === 'waiting_consultation' &&
+      ['waiting_consultation', 'consulted'].includes(nextStatus)
+  ) || (
+    ['in_treatment', 'consulted'].includes(currentStatus) &&
+      ['consulted', 'completed'].includes(nextStatus)
+  ) || currentStatus === 'completed' && nextStatus === 'completed';
+}
+
+exports.listDoctorTransferTargets = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'You must be signed in to view eligible doctors.');
+  }
+  const callerSnapshot = await db.collection('users').doc(context.auth.uid).get();
+  const caller = callerSnapshot.data() || {};
+  if (normalizeRole(caller.role || '') !== 'DOCTOR' ||
+      !isApprovedActiveProfile(caller) || !doctorHasReferralPermission(caller)) {
+    throw new functions.https.HttpsError('permission-denied', 'Only an approved, active doctor can view transfer targets.');
+  }
+  const doctorsSnapshot = await db.collection('users')
+      .where('role', 'in', ['DOCTOR', 'doctor'])
+      .get();
+  const doctors = doctorsSnapshot.docs
+      .filter((doc) => doc.id !== context.auth.uid)
+      .map((doc) => ({uid: doc.id, ...(doc.data() || {})}))
+      .filter((doctor) => isApprovedActiveProfile(doctor) &&
+        ['unavailable', 'on_leave', 'leave', 'off_duty'].indexOf(doctorAvailabilityValue(doctor)) === -1 &&
+        isValidEmail(doctor.email))
+      .map((doctor) => ({
+        uid: doctor.uid,
+        fullName: doctor.fullName || doctor.displayName || doctor.username || doctor.email,
+        email: String(doctor.email || '').trim().toLowerCase(),
+        specialization: doctorSpecializationValue(doctor),
+        availability: doctorAvailabilityValue(doctor),
+      }))
+      .sort((a, b) => String(a.fullName).localeCompare(String(b.fullName)));
+  return {doctors};
+});
+
+// Doctor actions are callable rather than direct client writes so ownership,
+// status transitions, history, and reassignment notifications are checked in
+// one backend boundary. This leaves the existing CHO/BHW referral paths intact.
+exports.doctorReferralAction = functions.runWith({
+  secrets: ['RESEND_API_KEY'],
+}).https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        'unauthenticated',
+        'You must be signed in to manage an assigned referral.',
+    );
+  }
+  const uid = context.auth.uid;
+  const callerSnapshot = await db.collection('users').doc(uid).get();
+  const caller = callerSnapshot.data() || {};
+  if (normalizeRole(caller.role || '') !== 'DOCTOR' ||
+      !isApprovedActiveProfile(caller) || !doctorHasReferralPermission(caller)) {
+    throw new functions.https.HttpsError(
+        'permission-denied',
+        'Only an approved, active doctor with assigned-referral access can use this action.',
+    );
+  }
+
+  const referralId = String(data?.referralId || '').trim();
+  const action = normalizeText(data?.action || '').replace(/[\s-]+/g, '_');
+  const allowedActions = new Set([
+    'accept', 'decline', 'close', 'update_care', 'transfer',
+  ]);
+  if (!referralId || !allowedActions.has(action)) {
+    throw new functions.https.HttpsError(
+        'invalid-argument',
+        'A valid referral ID and doctor action are required.',
+    );
+  }
+
+  const referralRef = db.collection('referrals').doc(referralId);
+  const referralSnapshot = await referralRef.get();
+  if (!referralSnapshot.exists) {
+    throw new functions.https.HttpsError('not-found', 'Referral was not found.');
+  }
+  const existing = referralSnapshot.data() || {};
+  const operationId = String(data?.operationId || '').trim() || crypto.randomUUID();
+  if (String(existing.lastDoctorActionId || '').trim() === operationId) {
+    return {
+      success: true,
+      action,
+      alreadyProcessed: true,
+      referralId,
+      status: normalizeText(existing.status || 'assigned'),
+    };
+  }
+  if (String(existing.assignedDoctorUid || '').trim() !== uid) {
+    throw new functions.https.HttpsError(
+        'permission-denied',
+        'This referral is not assigned to your doctor account.',
+    );
+  }
+
+  const currentStatus = normalizeText(existing.status || 'assigned');
+  const reason = action === 'decline' || action === 'transfer'
+    ? profileText(data?.reason, 'Reason', {maxLength: 500, required: true})
+    : doctorActionText(data?.reason, 'Reason', 500);
+  let targetDoctor = null;
+  if (action === 'transfer') {
+    const targetUid = String(data?.targetDoctorUid || '').trim();
+    if (!targetUid || targetUid === uid) {
+      throw new functions.https.HttpsError(
+          'invalid-argument',
+          'Select a different doctor for the transfer.',
+      );
+    }
+    const targetSnapshot = await db.collection('users').doc(targetUid).get();
+    targetDoctor = {
+      ...(targetSnapshot.data() || {}),
+      uid: targetUid,
+    };
+    if (!targetSnapshot.exists || normalizeRole(targetDoctor.role || '') !== 'DOCTOR' ||
+        !isApprovedActiveProfile(targetDoctor) ||
+        ['unavailable', 'on_leave', 'leave', 'off_duty'].includes(doctorAvailabilityValue(targetDoctor)) ||
+        !isValidEmail(targetDoctor.email)) {
+      throw new functions.https.HttpsError(
+          'failed-precondition',
+          'The selected doctor is not active and eligible for transfer.',
+      );
+    }
+  }
+
+  const currentAssignmentEventId = String(existing.assignmentEventId || '').trim();
+  const transferEventId = action === 'transfer'
+    ? `${referralId}:${targetDoctor.uid}:${operationId}`
+    : currentAssignmentEventId;
+  let persisted = null;
+  let alreadyProcessed = false;
+  await db.runTransaction(async (transaction) => {
+    const latestSnapshot = await transaction.get(referralRef);
+    const latest = latestSnapshot.data() || {};
+    if (String(latest.lastDoctorActionId || '').trim() === operationId) {
+      persisted = latest;
+      alreadyProcessed = true;
+      return;
+    }
+    if (String(latest.assignedDoctorUid || '').trim() !== uid) {
+      throw new functions.https.HttpsError(
+          'failed-precondition',
+          'The referral assignment changed. Refresh before trying again.',
+      );
+    }
+
+    const currentStatus = normalizeText(latest.status || 'assigned');
+    let nextStatus = currentStatus;
+    const payload = {
+      lastDoctorActionId: operationId,
+      lastDoctorAction: action,
+      lastDoctorActionByUid: uid,
+      lastDoctorActionAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+    if (action === 'accept') {
+      if (!['assigned', 'doctor_assigned', 'approved', 'hospital_assigned'].includes(currentStatus)) {
+        throw new functions.https.HttpsError('failed-precondition', 'This referral is no longer waiting for acceptance.');
+      }
+      nextStatus = 'waiting_consultation';
+    } else if (action === 'decline') {
+      if (!['assigned', 'doctor_assigned', 'waiting_consultation'].includes(currentStatus)) {
+        throw new functions.https.HttpsError('failed-precondition', 'This referral cannot be declined in its current state.');
+      }
+      nextStatus = 'declined';
+      payload.declinedByDoctorUid = uid;
+      payload.declinedAt = FieldValue.serverTimestamp();
+      payload.declineReason = reason;
+    } else if (action === 'close') {
+      if (!['consulted', 'in_treatment'].includes(currentStatus)) {
+        throw new functions.https.HttpsError('failed-precondition', 'Document a consultation before closing this referral.');
+      }
+      nextStatus = 'completed';
+      payload.completionStatus = 'completed';
+      payload.completedAt = FieldValue.serverTimestamp();
+      payload.completedByDoctorUid = uid;
+      payload.completedByDoctorName = doctorDisplayName(caller);
+    } else if (action === 'update_care') {
+      const requestedStatus = normalizeText(data?.status || currentStatus);
+      if (!isDoctorConsultationTransition(currentStatus, requestedStatus)) {
+        throw new functions.https.HttpsError('failed-precondition', 'That clinical status transition is not allowed.');
+      }
+      nextStatus = requestedStatus;
+      for (const [field, label, maxLength] of [
+        ['doctorDiagnosis', 'Diagnosis', 2000],
+        ['doctorTreatment', 'Treatment', 2000],
+        ['doctorMedication', 'Medication', 2000],
+        ['doctorNotes', 'Doctor notes', 4000],
+      ]) {
+        const value = doctorActionText(data?.[field], label, maxLength);
+        if (value !== null) payload[field] = value;
+      }
+      payload.doctorUpdatedAt = FieldValue.serverTimestamp();
+      if (nextStatus === 'completed') {
+        payload.completionStatus = 'completed';
+        payload.completedAt = FieldValue.serverTimestamp();
+        payload.completedByDoctorUid = uid;
+        payload.completedByDoctorName = doctorDisplayName(caller);
+      }
+    } else if (action === 'transfer') {
+      if (['completed', 'closed', 'cancelled', 'declined'].includes(currentStatus)) {
+        throw new functions.https.HttpsError('failed-precondition', 'Historical referrals cannot be transferred.');
+      }
+      nextStatus = 'assigned';
+      payload.previousAssignedDoctorUid = uid;
+      payload.previousAssignedDoctorName = doctorDisplayName(caller);
+      payload.previousAssignedDoctorEmail = String(caller.email || '').trim();
+      payload.transferredByUid = uid;
+      payload.transferredAt = FieldValue.serverTimestamp();
+      payload.transferReason = reason;
+      payload.assignmentSource = 'doctor_transfer';
+      payload.assignmentMode = 'manual';
+      payload.assignmentEventId = transferEventId;
+      payload.assignedDoctorUid = targetDoctor.uid;
+      payload.assignedDoctorName = doctorDisplayName(targetDoctor);
+      payload.assignedDoctorEmail = String(targetDoctor.email || '').trim().toLowerCase();
+      payload.assignedDoctorSpecialization = doctorSpecializationValue(targetDoctor);
+      payload.assignedDoctorAvailability = doctorAvailabilityValue(targetDoctor);
+      payload.referredTo = doctorDisplayName(targetDoctor);
+      payload.assignmentStatus = 'assigned';
+      payload.assignmentNotificationStatus = 'pending';
+      payload.assignmentNotificationClaimedFor = transferEventId;
+      payload.assignmentNotificationSentFor = FieldValue.delete();
+      payload.assignmentNotificationSentAt = FieldValue.delete();
+      payload.assignmentNotificationFailureReason = FieldValue.delete();
+      payload.assignmentNotificationFailedAt = FieldValue.delete();
+      payload.assignedAt = FieldValue.serverTimestamp();
+    }
+
+    payload.status = nextStatus;
+    payload.statusHistory = [
+      ...(Array.isArray(latest.statusHistory) ? latest.statusHistory : []),
+      {
+        status: nextStatus,
+        action,
+        actorUid: uid,
+        reason: reason || null,
+        at: new Date(),
+      },
+    ].slice(-50);
+    if (action === 'transfer') {
+      payload.transferHistory = [
+        ...(Array.isArray(latest.transferHistory) ? latest.transferHistory : []),
+        {
+          previousDoctorUid: uid,
+          previousDoctorName: doctorDisplayName(caller),
+          newDoctorUid: targetDoctor.uid,
+          newDoctorName: doctorDisplayName(targetDoctor),
+          transferredByUid: uid,
+          reason,
+          at: new Date(),
+        },
+      ].slice(-50);
+    }
+    transaction.set(referralRef, payload, {merge: true});
+    persisted = {...latest, ...payload, status: nextStatus};
+  });
+
+  if (alreadyProcessed) {
+    return {success: true, action, alreadyProcessed: true, referralId};
+  }
+
+  if (action === 'transfer') {
+    await syncReferralMirror(referralId, persisted);
+    const emailResult = await sendDoctorAssignmentEmail({
+      doctorEmail: targetDoctor.email,
+      doctorName: doctorDisplayName(targetDoctor),
+      referralId,
+      referral: persisted,
+      transferred: true,
+      previousDoctorName: doctorDisplayName(caller),
+    });
+    const notificationPatch = emailResult.sent
+      ? {
+        assignmentNotificationStatus: 'sent',
+        assignmentNotificationSentFor: transferEventId,
+        assignmentNotificationSentAt: FieldValue.serverTimestamp(),
+      }
+      : {
+        assignmentNotificationStatus: 'failed',
+        assignmentNotificationFailureReason: emailResult.reason || 'send_failed',
+        assignmentNotificationFailedAt: FieldValue.serverTimestamp(),
+      };
+    await referralRef.update(notificationPatch);
+    await db.collection('audit_logs').add({
+      action: 'doctor_referral_transferred',
+      actorUid: uid,
+      targetUid: targetDoctor.uid,
+      referralId,
+      reason,
+      notificationStatus: emailResult.sent ? 'sent' : 'failed',
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    return {
+      success: true,
+      action,
+      referralId,
+      newDoctorUid: targetDoctor.uid,
+      notificationSent: emailResult.sent,
+      notificationReason: emailResult.reason,
+    };
+  }
+
+  await syncReferralMirror(referralId, persisted);
+  await db.collection('audit_logs').add({
+    action: `doctor_referral_${action}`,
+    actorUid: uid,
+    referralId,
+    reason: reason || null,
+    status: persisted.status,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+  return {success: true, action, referralId, status: persisted.status};
 });
 
 exports.assignDoctorToReferral = functions.runWith({

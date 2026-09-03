@@ -23,6 +23,8 @@ const {
   archiveChoAccount,
   assignDoctorToReferral,
   sendReferralAssignmentEmail,
+  listDoctorTransferTargets,
+  doctorReferralAction,
   autoAssignReferralOnWrite,
 	syncAccountGovernanceLocksV2,
 	suggestDoctorAssignment,
@@ -32,7 +34,11 @@ const {
   saveAccessRole,
   deleteAccessRole,
 } = require('./rbac_policy');
-const {updateOwnBhwProfile, updateOwnChoProfile} = require('./bhw_profile');
+const {
+  updateOwnBhwProfile,
+  updateOwnChoProfile,
+  updateOwnDoctorProfile,
+} = require('./bhw_profile');
 
 // Export functions
 exports.setUserRole = setUserRole;
@@ -50,6 +56,8 @@ exports.updateChoAccount = updateChoAccount;
 exports.archiveChoAccount = archiveChoAccount;
 exports.assignDoctorToReferral = assignDoctorToReferral;
 exports.sendReferralAssignmentEmail = sendReferralAssignmentEmail;
+exports.listDoctorTransferTargets = listDoctorTransferTargets;
+exports.doctorReferralAction = doctorReferralAction;
 exports.autoAssignReferralOnWrite = autoAssignReferralOnWrite;
 exports.syncAccountGovernanceLocksV2 = syncAccountGovernanceLocksV2;
 exports.suggestDoctorAssignment = suggestDoctorAssignment;
@@ -58,5 +66,6 @@ exports.saveAccessRole = saveAccessRole;
 exports.deleteAccessRole = deleteAccessRole;
 exports.updateOwnBhwProfile = updateOwnBhwProfile;
 exports.updateOwnChoProfile = updateOwnChoProfile;
+exports.updateOwnDoctorProfile = updateOwnDoctorProfile;
 
 // Additional utility functions can be added here as needed

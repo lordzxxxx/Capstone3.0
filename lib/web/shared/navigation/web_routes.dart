@@ -51,6 +51,10 @@ abstract final class WebRoutes {
   static const choManageAccess = '/cho/manage-access';
   // Legacy name retained for existing bookmarks and integrations.
   static const choRoleManager = '/cho/role-manager';
+  static const doctorDashboard = '/doctor/dashboard';
+  static const doctorArchive = '/doctor/archive';
+  static const doctorProfile = '/doctor/profile';
+  // Legacy path kept for existing email links and bookmarks.
   static const doctorReferrals = '/doctor/referrals';
 
   static String choDestination(ChoDestination destination) {
@@ -130,6 +134,9 @@ abstract final class WebRoutes {
     choSuperAdmin,
     choManageAccess,
     choRoleManager,
+    doctorDashboard,
+    doctorArchive,
+    doctorProfile,
     doctorReferrals,
     legacyCommunicable,
     legacyNonCommunicable,

@@ -171,6 +171,9 @@ test.describe('public, deep-link, and responsive shell', () => {
       '/bhw/patients?view=records',
       '/cho/reports',
       '/doctor/referrals',
+      '/doctor/dashboard',
+      '/doctor/archive',
+      '/doctor/profile',
       '/checkups?view=records',
       '/prenatal',
       '/morbidity',
@@ -258,10 +261,14 @@ test.describe('role routes and permissions', () => {
     await context.close();
   });
 
-  test('doctor is limited to assigned referral workflow', async ({browser}, testInfo) => {
-    const identity = {...identities().doctor, expectedRoute: '**/doctor/referrals'};
+  test('doctor is limited to the Doctor Portal workflow', async ({browser}, testInfo) => {
+    const identity = {...identities().doctor, expectedRoute: '**/doctor/dashboard'};
     const {context, page} = await signOutToIsolatedContext(browser, testInfo.project, identity);
-    await expectFlutterText(page, /Referral/i);
+    await expectFlutterText(page, /Doctor Dashboard|Assigned referrals/i);
+    await openAuthenticatedRoute(page, '/doctor/archive');
+    await expectFlutterText(page, /Referral Archive/i);
+    await openAuthenticatedRoute(page, '/doctor/profile');
+    await expectFlutterText(page, /Doctor Profile/i);
     await openAuthenticatedRoute(page, '/bhw/dashboard');
     await expectFlutterText(page, /Workspace unavailable/i);
     await openAuthenticatedRoute(page, '/cho/dashboard');
