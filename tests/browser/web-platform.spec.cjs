@@ -286,6 +286,57 @@ test.describe('role routes and permissions', () => {
     await doctorContext.close();
   });
 
+  test('doctor sidebar keeps active navigation and supports collapse on every viewport', async ({browser}, testInfo) => {
+    const identity = {...identities().doctor, expectedRoute: '**/doctor/dashboard'};
+    const doctorContext = await browser.newContext({viewport: testInfo.project.use.viewport});
+    const doctorPage = await doctorContext.newPage();
+    await login(doctorPage, identity, '/doctor/login', /Doctor Portal Login/i);
+
+    if ((doctorPage.viewportSize()?.width ?? 0) < 760) {
+      await doctorPage.getByRole('button', {name: /Open navigation menu/i}).click();
+      await enableFlutterSemantics(doctorPage);
+    }
+
+    const expandSidebar = doctorPage.getByRole('button', {name: /Expand sidebar/i});
+    const collapseSidebar = doctorPage.getByRole('button', {name: /Collapse sidebar/i});
+
+    // Desktop-sized shells below the compact breakpoint start as a 72px rail
+    // to preserve usable content width. Mobile drawers intentionally open in
+    // the expanded-label mode.
+    const viewport = doctorPage.viewportSize();
+    const startsCompact =
+      (viewport?.width ?? 0) >= 760 &&
+      ((viewport?.width ?? 0) < 960 || (viewport?.height ?? 0) < 840);
+    if (startsCompact) {
+      await expect(expandSidebar).toBeVisible();
+      await expandSidebar.click();
+    } else {
+      await expect(collapseSidebar).toBeVisible();
+    }
+    await expect(collapseSidebar).toBeVisible();
+    await collapseSidebar.click();
+    await expect(expandSidebar).toBeVisible();
+    await expect(
+      doctorPage.getByRole('button', {name: /Dashboard navigation item/i}),
+    ).toBeVisible();
+
+    await expandSidebar.click();
+    await expect(collapseSidebar).toBeVisible();
+
+    await doctorPage
+      .getByRole('button', {name: /Archive navigation item/i})
+      .click();
+    await doctorPage.waitForURL('**/doctor/archive', {timeout: 30_000});
+    if ((doctorPage.viewportSize()?.width ?? 0) < 760) {
+      await doctorPage.getByRole('button', {name: /Open navigation menu/i}).click();
+      await enableFlutterSemantics(doctorPage);
+    }
+    await expect(
+      doctorPage.getByRole('button', {name: /Archive navigation item/i}),
+    ).toBeVisible();
+    await doctorContext.close();
+  });
+
   test('doctor archive exposes a searchable city-wide barangay picker', async ({browser}, testInfo) => {
     const identity = {...identities().doctor, expectedRoute: '**/doctor/dashboard'};
     const doctorContext = await browser.newContext({viewport: testInfo.project.use.viewport});

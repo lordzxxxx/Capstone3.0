@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
+import 'package:mycapstone_project/web/shared/components/web_navigation_item.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_navigation_coordinator.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
@@ -1926,7 +1927,7 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
   }
 }
 
-class _DoctorSidebar extends StatelessWidget {
+class _DoctorSidebar extends StatefulWidget {
   const _DoctorSidebar({
     required this.userName,
     required this.specialization,
@@ -1937,181 +1938,325 @@ class _DoctorSidebar extends StatelessWidget {
   final String specialization;
   final DoctorPortalTab activeTab;
 
+  static final ValueNotifier<bool> isCollapsedNotifier = ValueNotifier<bool>(
+    false,
+  );
+  static final ValueNotifier<int> _layoutRevision = ValueNotifier<int>(0);
+  static bool? _manualCollapsedOverride;
+
+  @override
+  State<_DoctorSidebar> createState() => _DoctorSidebarState();
+}
+
+class _DoctorSidebarState extends State<_DoctorSidebar> {
+  void _toggleCollapse({required bool currentlyCollapsed}) {
+    final next = !currentlyCollapsed;
+    _DoctorSidebar._manualCollapsedOverride = next;
+    _DoctorSidebar.isCollapsedNotifier.value = next;
+    // A compact viewport can collapse the rail automatically while the
+    // stored preference is still false. The revision guarantees a rebuild
+    // even when the boolean value itself does not change.
+    _DoctorSidebar._layoutRevision.value++;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 268,
-      height: double.infinity,
-      decoration: const BoxDecoration(
-        color: AppColors.backgroundDark,
-        border: Border(right: BorderSide(color: Color(0xFF1C3D66), width: 1)),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x2E163B66),
-            blurRadius: 6,
-            offset: Offset(2, 0),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 8, 6),
-              child: Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: .18),
-                      borderRadius: BorderRadius.circular(11),
-                    ),
-                    padding: const EdgeInsets.all(6),
-                    child: Image.asset(
-                      'assets/newlogo_white.png',
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Center(
-                            child: Text(
-                              'AI',
-                              style: TextStyle(
-                                color: AppColors.textOnDark,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: .5,
+    return AnimatedBuilder(
+      animation: _DoctorSidebar._layoutRevision,
+      builder: (context, _) {
+        final isCollapsed = _DoctorSidebar.isCollapsedNotifier.value;
+        final viewport = MediaQuery.sizeOf(context);
+        final compactViewport = viewport.width < 960 || viewport.height < 840;
+        final autoCollapsed =
+            compactViewport && _DoctorSidebar._manualCollapsedOverride != false;
+        final effectiveCollapsed = isCollapsed || autoCollapsed;
+
+        return HeroMode(
+          enabled: false,
+          child: AnimatedContainer(
+            duration: compactViewport
+                ? Duration.zero
+                : const Duration(milliseconds: 240),
+            curve: Curves.easeInOutCubic,
+            width: effectiveCollapsed ? 72 : 268,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              color: AppColors.backgroundDark,
+              border: Border(
+                right: BorderSide(color: Color(0xFF1C3D66), width: 1),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x2E163B66),
+                  blurRadius: 6,
+                  offset: Offset(2, 0),
+                ),
+              ],
+            ),
+            child: ClipRect(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return OverflowBox(
+                    alignment: Alignment.topLeft,
+                    minWidth: effectiveCollapsed ? 72 : 268,
+                    maxWidth: effectiveCollapsed ? 72 : 268,
+                    minHeight: constraints.maxHeight,
+                    maxHeight: constraints.maxHeight,
+                    child: SafeArea(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildBrandHeader(effectiveCollapsed),
+                          _buildUserSection(effectiveCollapsed),
+                          const SizedBox(height: 4),
+                          Expanded(
+                            child: ListView(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: effectiveCollapsed ? 8 : 10,
+                                vertical: 4,
                               ),
+                              children: [
+                                _buildSectionHeader(effectiveCollapsed),
+                                _item(
+                                  context,
+                                  DoctorPortalTab.dashboard,
+                                  Icons.dashboard_outlined,
+                                  'Dashboard',
+                                  WebRoutes.doctorDashboard,
+                                  effectiveCollapsed,
+                                ),
+                                _item(
+                                  context,
+                                  DoctorPortalTab.archive,
+                                  Icons.archive_outlined,
+                                  'Archive',
+                                  WebRoutes.doctorArchive,
+                                  effectiveCollapsed,
+                                ),
+                                _item(
+                                  context,
+                                  DoctorPortalTab.profile,
+                                  Icons.person_outline,
+                                  'Profile',
+                                  WebRoutes.doctorProfile,
+                                  effectiveCollapsed,
+                                ),
+                              ],
                             ),
                           ),
+                          _buildLogoutButton(context, effectiveCollapsed),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'AI-DSUHIS',
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.textOnDark,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Text(
-                          'Doctor Portal',
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.textOnDarkMuted,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 10),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceDark,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBrandHeader(bool isCollapsed) {
+    final logo = Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: .18),
+        borderRadius: BorderRadius.circular(11),
+      ),
+      padding: const EdgeInsets.all(6),
+      child: Image.asset(
+        'assets/newlogo_white.png',
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => const Center(
+          child: Text(
+            'AI',
+            style: TextStyle(
+              color: AppColors.textOnDark,
+              fontWeight: FontWeight.w900,
+              letterSpacing: .5,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (isCollapsed) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [logo, _collapseButton(isCollapsed: true)],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 6),
+      child: Row(
+        children: [
+          logo,
+          const SizedBox(width: 10),
+          const Expanded(
+            child: ClipRect(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CircleAvatar(
-                    radius: 18,
-                    backgroundColor: AppColors.primary,
-                    child: Icon(
-                      Icons.person_outline,
-                      color: Colors.white,
-                      size: 20,
+                  Text(
+                    'AI-DSUHIS',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: AppColors.textOnDark,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
                     ),
                   ),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          userName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          'Doctor · $specialization',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.textOnDarkMuted,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    'Doctor Portal',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: AppColors.textOnDarkMuted,
+                      fontSize: 10,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 10),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 18),
-              child: Text(
-                'DOCTOR PORTAL',
-                style: TextStyle(
-                  color: AppColors.textOnDarkMuted,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: .7,
+          ),
+          _collapseButton(isCollapsed: false),
+        ],
+      ),
+    );
+  }
+
+  Widget _collapseButton({required bool isCollapsed}) {
+    final label = isCollapsed ? 'Expand sidebar' : 'Collapse sidebar';
+    return Tooltip(
+      message: label,
+      child: IconButton(
+        onPressed: () => _toggleCollapse(currentlyCollapsed: isCollapsed),
+        tooltip: label,
+        icon: Icon(
+          isCollapsed
+              ? Icons.chevron_right_rounded
+              : Icons.chevron_left_rounded,
+        ),
+        color: AppColors.textOnDarkMuted,
+        iconSize: 22,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+      ),
+    );
+  }
+
+  Widget _buildUserSection(bool isCollapsed) {
+    if (isCollapsed) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Tooltip(
+          message: '${widget.userName}\nDoctor · ${widget.specialization}',
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceDark,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Center(
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: AppColors.secondary,
+                child: Icon(
+                  Icons.person_outline,
+                  color: AppColors.primary,
+                  size: 18,
                 ),
               ),
             ),
-            const SizedBox(height: 4),
-            _item(
-              context,
-              DoctorPortalTab.dashboard,
-              Icons.dashboard_outlined,
-              'Dashboard',
-              WebRoutes.doctorDashboard,
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceDark,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            const CircleAvatar(
+              radius: 16,
+              backgroundColor: AppColors.secondary,
+              child: Icon(
+                Icons.person_outline,
+                color: AppColors.primary,
+                size: 20,
+              ),
             ),
-            _item(
-              context,
-              DoctorPortalTab.archive,
-              Icons.archive_outlined,
-              'Archive',
-              WebRoutes.doctorArchive,
-            ),
-            _item(
-              context,
-              DoctorPortalTab.profile,
-              Icons.person_outline,
-              'Profile',
-              WebRoutes.doctorProfile,
-            ),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: FilledButton.icon(
-                onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  if (context.mounted) Get.offAllNamed(WebRoutes.landing);
-                },
-                icon: const Icon(Icons.logout_rounded),
-                label: const Text('Log out'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
+            const SizedBox(width: 8),
+            Expanded(
+              child: ClipRect(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.userName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textOnDark,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      'Doctor · ${widget.specialization}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textOnDarkMuted,
+                        fontSize: 10,
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(bool isCollapsed) {
+    if (isCollapsed) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+        child: Divider(color: Color(0xFF1C3D66), height: 1, thickness: 1),
+      );
+    }
+
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(10, 4, 10, 2),
+      child: Text(
+        'DOCTOR PORTAL',
+        maxLines: 1,
+        overflow: TextOverflow.clip,
+        style: TextStyle(
+          color: AppColors.textOnDarkMuted,
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.1,
         ),
       ),
     );
@@ -2123,30 +2268,66 @@ class _DoctorSidebar extends StatelessWidget {
     IconData icon,
     String label,
     String route,
+    bool isCollapsed,
   ) {
-    final active = tab == activeTab;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-      child: Material(
-        color: active ? AppColors.primary : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: () => WebNavigationCoordinator.goToNamed(context, route),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            child: Row(
-              children: [
-                Icon(icon, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+    final active = tab == widget.activeTab;
+    return WebNavigationItem(
+      icon: icon,
+      label: label,
+      onTap: () => WebNavigationCoordinator.goToNamed(context, route),
+      isCollapsed: isCollapsed,
+      isActive: active,
+      tooltip: label,
+      isDense: true,
+    );
+  }
+
+  Widget _buildLogoutButton(BuildContext context, bool isCollapsed) {
+    if (isCollapsed) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
+        child: Tooltip(
+          message: 'Log out',
+          child: Semantics(
+            button: true,
+            label: 'Log out of Doctor Portal',
+            child: IconButton(
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                if (context.mounted) Get.offAllNamed(WebRoutes.landing);
+              },
+              icon: const Icon(Icons.logout_rounded),
+              color: Colors.white,
+              style: IconButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                minimumSize: const Size(56, 44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ],
+              ),
+              tooltip: 'Log out',
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: SizedBox(
+        height: 44,
+        child: FilledButton.icon(
+          onPressed: () async {
+            await FirebaseAuth.instance.signOut();
+            if (context.mounted) Get.offAllNamed(WebRoutes.landing);
+          },
+          icon: const Icon(Icons.logout_rounded, size: 18),
+          label: const Text('Log out'),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
         ),
