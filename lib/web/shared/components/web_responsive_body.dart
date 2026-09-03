@@ -16,6 +16,7 @@ class WebResponsiveBody extends StatelessWidget {
     required this.child,
     this.backgroundColor = AppColors.backgroundLight,
     this.breakpoint = 760,
+    this.mobileBrandAsset,
   });
 
   final Widget sidebar;
@@ -23,6 +24,7 @@ class WebResponsiveBody extends StatelessWidget {
   final Widget child;
   final Color backgroundColor;
   final double breakpoint;
+  final String? mobileBrandAsset;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +66,7 @@ class WebResponsiveBody extends StatelessWidget {
             bottom: true,
             child: Column(
               children: [
-                WebMobileHeader(title: title),
+                WebMobileHeader(title: title, brandAsset: mobileBrandAsset),
                 Expanded(child: child),
               ],
             ),
@@ -76,9 +78,10 @@ class WebResponsiveBody extends StatelessWidget {
 }
 
 class WebMobileHeader extends StatelessWidget {
-  const WebMobileHeader({super.key, required this.title});
+  const WebMobileHeader({super.key, required this.title, this.brandAsset});
 
   final String title;
+  final String? brandAsset;
 
   @override
   Widget build(BuildContext context) {
@@ -113,13 +116,26 @@ class WebMobileHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.only(right: 8),
-                child: Icon(
-                  Icons.health_and_safety_outlined,
-                  color: AppColors.primary,
-                  size: 24,
-                ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: brandAsset == null
+                    ? const Icon(
+                        Icons.health_and_safety_outlined,
+                        color: AppColors.primary,
+                        size: 24,
+                      )
+                    : Image.asset(
+                        brandAsset!,
+                        width: 28,
+                        height: 28,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                              Icons.health_and_safety_outlined,
+                              color: AppColors.primary,
+                              size: 24,
+                            ),
+                      ),
               ),
             ],
           ),

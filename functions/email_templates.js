@@ -190,6 +190,8 @@ function buildReferralAssignmentEmail({doctorName, referralId, referral, transfe
       ],
       ctaLabel: 'View referral',
       ctaUrl: link,
+      secondaryCtaLabel: 'Open Doctor Login Portal',
+      secondaryCtaUrl: buildPortalLoginUrl('DOCTOR'),
       closing: 'This is an automated system notification. Complete medical information remains inside the secured AI-DSUHIS system.',
     }),
   };

@@ -53,6 +53,9 @@ assert.match(referralEmail.html, /REF-2026-0001/);
 assert.match(referralEmail.html, /Controlled Patient/);
 assert.match(referralEmail.html, /View referral/);
 assert.match(referralEmail.html, /doctor\/dashboard\?referralId=REF-2026-0001/);
+assert.match(referralEmail.html, /Open Doctor Login Portal/);
+assert.match(referralEmail.html, /https:\/\/www\.ai-dsuhis\.com\/doctor\/login/);
+assert.match(referralEmail.text, /https:\/\/www\.ai-dsuhis\.com\/doctor\/login/);
 assert.doesNotMatch(referralEmail.html, /medical history|AI prediction|clinical notes/i);
 assert.match(referralEmail.text, /AI-DSUHIS/);
 

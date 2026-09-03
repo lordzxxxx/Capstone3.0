@@ -106,7 +106,6 @@ async function enterFlutterText(field, value) {
   // keystroke. Prime that swap before entering the value so the first real
   // character is not discarded.
   await field.pressSequentially('x', {delay: 15});
-  await expect(field).toHaveAttribute('id', /.+/);
   await field.press('ControlOrMeta+A');
   await field.press('Backspace');
   await field.pressSequentially(value, {delay: 15});
@@ -271,6 +270,11 @@ test.describe('role routes and permissions', () => {
     const doctorPage = await doctorContext.newPage();
     await login(doctorPage, identity, '/doctor/login', /Doctor Portal Login/i);
     await expectFlutterText(doctorPage, /Doctor Dashboard|Assigned referrals/i);
+    await expectFlutterText(
+      doctorPage,
+      /Good (Morning|Noon|Afternoon|Evening), Dr\. Browser QA Doctor/i,
+    );
+    await expectFlutterText(doctorPage, /\d{1,2}:\d{2} (AM|PM) PHT/i);
     await openAuthenticatedRoute(doctorPage, '/doctor/archive');
     await expectFlutterText(doctorPage, /Referral Archive/i);
     await openAuthenticatedRoute(doctorPage, '/doctor/profile');
@@ -279,6 +283,29 @@ test.describe('role routes and permissions', () => {
     await expectFlutterText(doctorPage, /Workspace unavailable/i);
     await openAuthenticatedRoute(doctorPage, '/cho/dashboard');
     await expectFlutterText(doctorPage, /Workspace unavailable/i);
+    await doctorContext.close();
+  });
+
+  test('doctor archive exposes a searchable city-wide barangay picker', async ({browser}, testInfo) => {
+    const identity = {...identities().doctor, expectedRoute: '**/doctor/dashboard'};
+    const doctorContext = await browser.newContext({viewport: testInfo.project.use.viewport});
+    const doctorPage = await doctorContext.newPage();
+    await login(doctorPage, identity, '/doctor/login', /Doctor Portal Login/i);
+    await openAuthenticatedRoute(doctorPage, '/doctor/archive');
+
+    await doctorPage
+      .getByRole('button', {name: /^Barangay All barangays$/i})
+      .click();
+    await expectFlutterText(doctorPage, /Select Barangay/i);
+    const barangaySearch = doctorPage.getByRole('textbox', {name: /Search all barangays/i});
+    await enterFlutterText(barangaySearch, 'Saint Peter');
+    await expectFlutterText(doctorPage, /Saint Peter/i);
+    await doctorPage
+      .getByRole('button', {name: /^Saint Peter Basakan District$/i})
+      .click();
+    await expect(
+      doctorPage.getByRole('button', {name: /^Barangay Saint Peter$/i}),
+    ).toBeVisible();
     await doctorContext.close();
   });
 

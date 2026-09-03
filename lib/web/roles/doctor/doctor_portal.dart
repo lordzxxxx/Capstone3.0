@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
+import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_navigation_coordinator.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
@@ -25,6 +29,8 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
   final AccountPolicyService _accountPolicy = AccountPolicyService.instance;
   final Set<String> _busyReferralIds = <String>{};
   final TextEditingController _searchController = TextEditingController();
+  Timer? _philippineClock;
+  DateTime _philippineNow = _nowInPhilippines();
   Map<String, dynamic> _profile = <String, dynamic>{};
   bool _loadingProfile = true;
   String? _profileError;
@@ -45,14 +51,22 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
   @override
   void initState() {
     super.initState();
+    _philippineClock = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) return;
+      setState(() => _philippineNow = _nowInPhilippines());
+    });
     _loadProfile();
   }
 
   @override
   void dispose() {
+    _philippineClock?.cancel();
     _searchController.dispose();
     super.dispose();
   }
+
+  static DateTime _nowInPhilippines() =>
+      DateTime.now().toUtc().add(const Duration(hours: 8));
 
   Future<void> _loadProfile() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -110,6 +124,22 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
     'specialty',
   ], fallback: 'General Medicine');
 
+  String get _doctorDisplayName {
+    final name = _displayName.trim();
+    return name.toLowerCase().startsWith('dr.') ||
+            name.toLowerCase().startsWith('dr ')
+        ? name
+        : 'Dr. $name';
+  }
+
+  String get _timeGreeting {
+    final hour = _philippineNow.hour;
+    if (hour < 12) return 'Good Morning';
+    if (hour == 12) return 'Good Noon';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+
   String get _pageTitle => switch (widget.tab) {
     DoctorPortalTab.dashboard => 'Doctor Dashboard',
     DoctorPortalTab.archive => 'Referral Archive',
@@ -127,6 +157,7 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
           activeTab: widget.tab,
         ),
         title: _pageTitle,
+        mobileBrandAsset: 'assets/newlogo_white.png',
         child: _loadingProfile
             ? const Center(child: CircularProgressIndicator())
             : _profileError != null
@@ -211,11 +242,10 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
               }
               if (archive &&
                   _archiveBarangay.isNotEmpty &&
-                  _value(data, const [
-                        'barangay',
-                        'barangayName',
-                      ]).toLowerCase() !=
-                      _archiveBarangay.toLowerCase()) {
+                  !_sameBarangay(
+                    _value(data, const ['barangay', 'barangayName']),
+                    _archiveBarangay,
+                  )) {
                 return false;
               }
               if (archive &&
@@ -328,7 +358,7 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
 
   Widget _pageHeader(bool archive) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(14),
@@ -340,7 +370,7 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                archive ? 'Referral Archive' : 'Assigned referrals',
+                archive ? 'Referral Archive' : 'Assigned Referrals',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -352,6 +382,10 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
                   color: AppColors.textSecondary,
                 ),
               ),
+              if (!archive) ...[
+                const SizedBox(height: AppSpacing.md),
+                _greetingPanel(),
+              ],
             ],
           );
           final action = OutlinedButton.icon(
@@ -381,6 +415,45 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
     );
   }
 
+  Widget _greetingPanel() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSubtle,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.wb_sunny_outlined,
+            color: AppColors.primary,
+            size: 20,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              '$_timeGreeting, $_doctorDisplayName',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            '${DateFormat('h:mm a').format(_philippineNow)} PHT',
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(color: AppColors.primary),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _summaryCards(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
     final active = docs
         .where(
@@ -388,6 +461,9 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
         )
         .length;
     final urgent = docs.where((doc) {
+      if (_historicalStatuses.contains(_normalizedStatus(doc.data()))) {
+        return false;
+      }
       final priority = _value(doc.data(), const [
         'priority',
         'referralPriority',
@@ -434,7 +510,10 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
     return SizedBox(
       width: width,
       child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: AppColors.surfaceLight,
           borderRadius: BorderRadius.circular(12),
@@ -467,15 +546,6 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
   Widget _archiveFilters(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
   ) {
-    final barangays =
-        docs
-            .map(
-              (doc) => _value(doc.data(), const ['barangay', 'barangayName']),
-            )
-            .where((value) => value != 'Not provided')
-            .toSet()
-            .toList()
-          ..sort();
     final sexes =
         docs
             .map((doc) => _value(doc.data(), const ['sex', 'gender']))
@@ -483,9 +553,6 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
             .toSet()
             .toList()
           ..sort();
-    final selectedBarangay = barangays.contains(_archiveBarangay)
-        ? _archiveBarangay
-        : '';
     final selectedSex = sexes.contains(_archiveSex) ? _archiveSex : '';
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -517,23 +584,25 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
               ),
               SizedBox(
                 width: fieldWidth,
-                child: DropdownButtonFormField<String>(
-                  initialValue: selectedBarangay,
-                  decoration: _inputDecoration('Barangay'),
-                  items: [
-                    const DropdownMenuItem(
-                      value: '',
-                      child: Text('All barangays'),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: _showBarangayPicker,
+                  child: InputDecorator(
+                    decoration: _inputDecoration('Barangay'),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _archiveBarangay.isEmpty
+                                ? 'All barangays'
+                                : _displayBarangayName(_archiveBarangay),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const Icon(Icons.search_rounded, size: 20),
+                      ],
                     ),
-                    ...barangays.map(
-                      (barangay) => DropdownMenuItem(
-                        value: barangay,
-                        child: Text(barangay, overflow: TextOverflow.ellipsis),
-                      ),
-                    ),
-                  ],
-                  onChanged: (value) =>
-                      setState(() => _archiveBarangay = value ?? ''),
+                  ),
                 ),
               ),
               SizedBox(
@@ -634,6 +703,87 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
         },
       ),
     );
+  }
+
+  String _displayBarangayName(String value) {
+    final barangay = _barangayReference(value);
+    if (barangay == null) return value;
+    return _barangayLabel(barangay);
+  }
+
+  BarangayReference? _barangayReference(String value) {
+    final normalized = value.trim().toLowerCase();
+    return MalaybalayBarangays.byName(value) ??
+        MalaybalayBarangays.byCode(value) ??
+        MalaybalayBarangays.all
+            .where(
+              (barangay) =>
+                  _barangayLabel(barangay).toLowerCase() == normalized,
+            )
+            .firstOrNull;
+  }
+
+  String _barangayLabel(BarangayReference barangay) {
+    switch (barangay.code) {
+      case 'st-peter':
+        return 'Saint Peter';
+      case 'sto-nino':
+        return 'Santo Niño';
+      case 'silae':
+        return 'Sila-e';
+      default:
+        final numbered = RegExp(
+          r'^Barangay 0*(\d+)$',
+        ).firstMatch(barangay.name);
+        if (numbered != null) {
+          return 'Barangay ${numbered.group(1)} (Poblacion)';
+        }
+        return barangay.name;
+    }
+  }
+
+  List<BarangayReference> _searchBarangays(String query) {
+    final normalized = query
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (normalized.isEmpty) return MalaybalayBarangays.all;
+    final terms = normalized.split(' ');
+    return MalaybalayBarangays.all
+        .where((barangay) {
+          final haystack = [
+            barangay.searchLabel,
+            _barangayLabel(barangay),
+          ].join(' ').toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ');
+          return terms.every((term) => haystack.contains(term));
+        })
+        .toList(growable: false);
+  }
+
+  bool _sameBarangay(String left, String right) {
+    final leftReference = _barangayReference(left);
+    final rightReference = _barangayReference(right);
+    if (leftReference != null && rightReference != null) {
+      return leftReference.code == rightReference.code;
+    }
+    return left.trim().toLowerCase() == right.trim().toLowerCase();
+  }
+
+  Future<void> _showBarangayPicker() async {
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => _BarangayPickerDialog(
+        selectedBarangay: _archiveBarangay,
+        searchBarangays: _searchBarangays,
+        barangayLabel: _barangayLabel,
+        sameBarangay: _sameBarangay,
+      ),
+    );
+    if (selected != null && mounted) {
+      setState(() => _archiveBarangay = selected);
+    }
   }
 
   Widget _archiveDateButton({
@@ -959,7 +1109,7 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
       '${value.month}/${value.day}/${value.year}';
 
   String _shortDate(DateTime value) =>
-      '${value.month}/${value.day}/${value.year} ${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+      DateFormat('M/d/yyyy h:mm a').format(value.toLocal());
 
   Widget _workspaceError(String message) {
     return Center(
@@ -1792,26 +1942,47 @@ class _DoctorSidebar extends StatelessWidget {
     return Container(
       width: 268,
       height: double.infinity,
-      color: AppColors.backgroundDark,
+      decoration: const BoxDecoration(
+        color: AppColors.backgroundDark,
+        border: Border(right: BorderSide(color: Color(0xFF1C3D66), width: 1)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x2E163B66),
+            blurRadius: 6,
+            offset: Offset(2, 0),
+          ),
+        ],
+      ),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+              padding: const EdgeInsets.fromLTRB(12, 10, 8, 6),
               child: Row(
                 children: [
                   Container(
-                    width: 42,
-                    height: 42,
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceDark,
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.primary.withValues(alpha: .18),
+                      borderRadius: BorderRadius.circular(11),
                     ),
-                    child: const Icon(
-                      Icons.health_and_safety_outlined,
-                      color: Colors.white,
-                      size: 25,
+                    padding: const EdgeInsets.all(6),
+                    child: Image.asset(
+                      'assets/newlogo_white.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Center(
+                            child: Text(
+                              'AI',
+                              style: TextStyle(
+                                color: AppColors.textOnDark,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: .5,
+                              ),
+                            ),
+                          ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1821,17 +1992,19 @@ class _DoctorSidebar extends StatelessWidget {
                       children: [
                         Text(
                           'AI-DSUHIS',
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
+                            color: AppColors.textOnDark,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
                           ),
                         ),
                         Text(
                           'Doctor Portal',
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: AppColors.textOnDarkMuted,
-                            fontSize: 11,
+                            fontSize: 10,
                           ),
                         ),
                       ],
@@ -1841,7 +2014,7 @@ class _DoctorSidebar extends StatelessWidget {
               ),
             ),
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 12),
+              margin: const EdgeInsets.symmetric(horizontal: 10),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.surfaceDark,
@@ -1873,7 +2046,7 @@ class _DoctorSidebar extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          specialization,
+                          'Doctor · $specialization',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -1887,9 +2060,9 @@ class _DoctorSidebar extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 10),
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 18),
               child: Text(
                 'DOCTOR PORTAL',
                 style: TextStyle(
@@ -1900,7 +2073,7 @@ class _DoctorSidebar extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             _item(
               context,
               DoctorPortalTab.dashboard,
@@ -1977,6 +2150,123 @@ class _DoctorSidebar extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _BarangayPickerDialog extends StatefulWidget {
+  const _BarangayPickerDialog({
+    required this.selectedBarangay,
+    required this.searchBarangays,
+    required this.barangayLabel,
+    required this.sameBarangay,
+  });
+
+  final String selectedBarangay;
+  final List<BarangayReference> Function(String query) searchBarangays;
+  final String Function(BarangayReference barangay) barangayLabel;
+  final bool Function(String left, String right) sameBarangay;
+
+  @override
+  State<_BarangayPickerDialog> createState() => _BarangayPickerDialogState();
+}
+
+class _BarangayPickerDialogState extends State<_BarangayPickerDialog> {
+  late final TextEditingController _queryController;
+
+  @override
+  void initState() {
+    super.initState();
+    _queryController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final options = widget.searchBarangays(_queryController.text);
+    final pickerHeight = (MediaQuery.sizeOf(context).height * .58)
+        .clamp(280.0, 520.0)
+        .toDouble();
+    return AlertDialog(
+      title: const Text('Select Barangay'),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: pickerHeight,
+        child: Column(
+          children: [
+            TextField(
+              controller: _queryController,
+              autofocus: true,
+              onChanged: (_) => setState(() {}),
+              decoration: _inputDecoration(
+                'Search all barangays',
+                prefixIcon: const Icon(Icons.search_rounded),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Expanded(
+              child: ListView.separated(
+                itemCount: options.length + 1,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return ListTile(
+                      dense: true,
+                      title: const Text('All barangays'),
+                      leading: const Icon(Icons.public_outlined),
+                      onTap: () => Navigator.pop(context, ''),
+                    );
+                  }
+                  final barangay = options[index - 1];
+                  return ListTile(
+                    dense: true,
+                    title: Text(widget.barangayLabel(barangay)),
+                    subtitle: Text(barangay.district),
+                    leading: const Icon(Icons.location_on_outlined),
+                    selected: widget.sameBarangay(
+                      widget.selectedBarangay,
+                      barangay.name,
+                    ),
+                    onTap: () => Navigator.pop(context, barangay.name),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+      ],
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, {Widget? prefixIcon}) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: prefixIcon,
+      filled: true,
+      fillColor: AppColors.surfaceLight,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
       ),
     );
   }

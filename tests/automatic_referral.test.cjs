@@ -12,11 +12,12 @@ const db = new admin.firestore.Firestore({
 });
 const doctorId = 'automatic-referral-test-doctor';
 const referralId = 'automatic-referral-test-referral';
+const secondReferralId = 'automatic-referral-test-referral-2';
 
-async function waitForReferral() {
+async function waitForReferral(id) {
   const deadline = Date.now() + 30000;
   while (Date.now() < deadline) {
-    const snapshot = await db.collection('referrals').doc(referralId).get();
+    const snapshot = await db.collection('referrals').doc(id).get();
     const data = snapshot.data() || {};
     const notificationFinished = ['sent', 'failed'].includes(
         data.assignmentNotificationStatus,
@@ -56,18 +57,42 @@ async function main() {
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    const result = await waitForReferral();
+    const referralPayload = (id, patientName) => ({
+      patientId: `automatic-referral-test-patient-${id}`,
+      patientName,
+      referralReason: 'Controlled routing test',
+      priority: 'routine',
+      barangay: 'Test Barangay',
+      barangayCode: 'TEST',
+      createdByUid: 'automatic-referral-test-bhw',
+      createdByRole: 'bhw',
+      status: 'submitted',
+      submissionStatus: 'submitted',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    await db.collection('referrals').doc(secondReferralId).set(
+        referralPayload(secondReferralId, 'Automatic Referral Test Patient 2'));
+
+    const [result, secondResult] = await Promise.all([
+      waitForReferral(referralId),
+      waitForReferral(secondReferralId),
+    ]);
     assert.equal(result.assignedDoctorUid, doctorId);
     assert.equal(result.status, 'assigned');
     assert.equal(result.assignmentSource, 'bhw_auto');
     assert.ok(result.assignmentEventId);
     assert.ok(['sent', 'failed'].includes(result.assignmentNotificationStatus));
+    assert.equal(secondResult.assignedDoctorUid, doctorId);
+    assert.equal(secondResult.status, 'assigned');
+    assert.notEqual(result.assignmentEventId, secondResult.assignmentEventId);
     console.log('Automatic referral routing test passed:', {
       assignedDoctorUid: result.assignedDoctorUid,
       notificationStatus: result.assignmentNotificationStatus,
     });
   } finally {
     await db.collection('referrals').doc(referralId).delete();
+    await db.collection('referrals').doc(secondReferralId).delete();
     await db.collection('users').doc(doctorId).delete();
   }
 }
