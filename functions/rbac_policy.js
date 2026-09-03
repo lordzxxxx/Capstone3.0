@@ -201,9 +201,23 @@ async function ensureChoAdmin(context) {
   }
   const snapshot = await db.collection('users').doc(context.auth.uid).get();
   const profile = snapshot.data() || {};
-  if (!isAdminRole(profile.role) ||
-      String(profile.approvalStatus || '').toLowerCase() !== 'approved' ||
-      !['active', 'approved'].includes(String(profile.accountStatus || profile.status || '').toLowerCase())) {
+  const claims = context.auth.token || {};
+  const claimRole = normalizeRole(claims.role || '');
+  const claimApproval = String(claims.approvalStatus || '').trim().toLowerCase();
+  const claimStatus = String(claims.accountStatus || '').trim().toLowerCase();
+  const profileApproval = String(profile.approvalStatus || '').trim().toLowerCase();
+  const profileStatus = String(profile.accountStatus || profile.status || '').trim().toLowerCase();
+  const profileExplicitlyBlocked =
+    (profileApproval && profileApproval !== 'approved') ||
+    (profileStatus && !['active', 'approved'].includes(profileStatus));
+  const profileIsAdmin = isAdminRole(profile.role) &&
+    profileApproval === 'approved' &&
+    ['active', 'approved'].includes(profileStatus);
+  const claimsAreAdmin = isAdminRole(claimRole) &&
+    claimApproval === 'approved' &&
+    ['active', 'approved'].includes(claimStatus) &&
+    !profileExplicitlyBlocked;
+  if (!profileIsAdmin && !claimsAreAdmin) {
     throw new functions.https.HttpsError('permission-denied', 'Only an approved CHO Admin can manage access roles.');
   }
   return profile;
@@ -284,8 +298,8 @@ exports.saveAccessRole = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('invalid-argument', 'Role description cannot exceed 240 characters.');
   }
   const baseRole = normalizeRole(data?.baseRole);
-  if (!BASE_ROLES.has(baseRole)) {
-    throw new functions.https.HttpsError('invalid-argument', 'Custom roles must be based on BHW, CHO, or DOCTOR.');
+  if (baseRole !== 'CHO') {
+    throw new functions.https.HttpsError('invalid-argument', 'Custom roles in Manage CHO Access must be based on CHO.');
   }
   if (existingKey && (!existingKey.startsWith('CUSTOM_') || systemRoleDefinition(existingKey))) {
     throw new functions.https.HttpsError('permission-denied', 'Built-in roles are protected and cannot be edited.');

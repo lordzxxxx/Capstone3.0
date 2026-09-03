@@ -428,10 +428,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
           backgroundColor: AppColors.surfaceLight,
           title: Text(role.name),
           content: SizedBox(
-            width: math.min(
-              640.0,
-              math.max(240.0, screenSize.width - 64),
-            ),
+            width: math.min(640.0, math.max(240.0, screenSize.width - 64)),
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 maxHeight: math.min(520.0, screenSize.height * .65),
@@ -586,6 +583,357 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
       );
     } catch (error) {
       Get.snackbar('Could not update account status', error.toString());
+    }
+  }
+
+  Future<void> _showAccountEditor(
+    QueryDocumentSnapshot<Map<String, dynamic>> user,
+  ) async {
+    final data = user.data();
+    final baseRole = (data['role'] ?? '').toString().trim().toUpperCase();
+    if (_isProtectedAdminRole(baseRole)) return;
+
+    final fullName = TextEditingController(
+      text: (data['fullName'] ?? data['displayName'] ?? '').toString(),
+    );
+    final username = TextEditingController(
+      text: (data['username'] ?? data['fullName'] ?? '').toString(),
+    );
+    final contactNumber = TextEditingController(
+      text: (data['contactNumber'] ?? data['phoneNumber'] ?? '').toString(),
+    );
+    final barangay = TextEditingController(
+      text: (data['barangay'] ?? data['assignedBarangay'] ?? '').toString(),
+    );
+    final assignedPurok = TextEditingController(
+      text: (data['assignedPurok'] ?? data['sitio'] ?? '').toString(),
+    );
+    final specialization = TextEditingController(
+      text:
+          (data['specialization'] ??
+                  data['doctorSpecialization'] ??
+                  data['specialty'] ??
+                  'General Medicine')
+              .toString(),
+    );
+    final rawStatus = (data['accountStatus'] ?? 'active')
+        .toString()
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[\s-]+'), '_');
+    final statusOptions = baseRole == 'BHW'
+        ? <String>['pending_approval', 'active', 'disabled', 'rejected']
+        : <String>['active', 'disabled'];
+    var accountStatus = statusOptions.contains(rawStatus)
+        ? rawStatus
+        : 'active';
+    var availability =
+        (data['availability'] ?? data['doctorAvailability'] ?? 'available')
+            .toString()
+            .trim()
+            .toLowerCase();
+    const availabilityOptions = <String>[
+      'available',
+      'busy',
+      'limited',
+      'unavailable',
+    ];
+    if (!availabilityOptions.contains(availability)) {
+      availability = 'available';
+    }
+
+    final options = baseRole == 'CHO'
+        ? _rolesForBase('CHO')
+        : const <RbacRoleDefinition>[];
+    var accessRoleKey = (data['accessRoleKey'] ?? baseRole)
+        .toString()
+        .trim()
+        .toUpperCase();
+    if (baseRole == 'CHO' &&
+        !options.any((role) => role.roleKey == accessRoleKey)) {
+      accessRoleKey = options.any((role) => role.roleKey == 'CHO')
+          ? 'CHO'
+          : (options.isEmpty ? accessRoleKey : options.first.roleKey);
+    }
+
+    bool? save;
+    String savedFullName = '';
+    String savedUsername = '';
+    String savedContactNumber = '';
+    String savedBarangay = '';
+    String savedAssignedPurok = '';
+    String savedSpecialization = '';
+    try {
+      save = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (context, setDialogState) {
+            final screenSize = MediaQuery.sizeOf(dialogContext);
+            final dialogWidth = math.min(
+              560.0,
+              math.max(260.0, screenSize.width - 48),
+            );
+            final dialogHeight = math.min(
+              620.0,
+              math.max(220.0, screenSize.height - 160),
+            );
+            return AlertDialog(
+              backgroundColor: AppColors.surfaceLight,
+              title: const Text('Edit account'),
+              content: SizedBox(
+                width: dialogWidth,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: dialogHeight),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _AccessIdentity(
+                          name:
+                              (data['fullName'] ??
+                                      data['username'] ??
+                                      'Managed account')
+                                  .toString(),
+                          email: (data['email'] ?? 'No email').toString(),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        TextField(
+                          controller: fullName,
+                          decoration: const InputDecoration(
+                            labelText: 'Full name',
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        TextField(
+                          controller: username,
+                          decoration: const InputDecoration(
+                            labelText: 'Username',
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        TextField(
+                          controller: contactNumber,
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(
+                            labelText: 'Contact number (optional)',
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        DropdownButtonFormField<String>(
+                          initialValue: accountStatus,
+                          decoration: const InputDecoration(
+                            labelText: 'Account status',
+                          ),
+                          items: statusOptions
+                              .map(
+                                (status) => DropdownMenuItem(
+                                  value: status,
+                                  child: Text(status.replaceAll('_', ' ')),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setDialogState(() => accountStatus = value);
+                            }
+                          },
+                        ),
+                        if (baseRole == 'CHO' && options.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.sm),
+                          DropdownButtonFormField<String>(
+                            initialValue: accessRoleKey,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Access role',
+                            ),
+                            items: options
+                                .map(
+                                  (role) => DropdownMenuItem(
+                                    value: role.roleKey,
+                                    child: Text(
+                                      role.name,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              if (value != null) {
+                                setDialogState(() => accessRoleKey = value);
+                              }
+                            },
+                          ),
+                        ],
+                        if (baseRole == 'DOCTOR') ...[
+                          const SizedBox(height: AppSpacing.sm),
+                          TextField(
+                            controller: specialization,
+                            decoration: const InputDecoration(
+                              labelText: 'Specialization',
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          DropdownButtonFormField<String>(
+                            initialValue: availability,
+                            decoration: const InputDecoration(
+                              labelText: 'Assignment availability',
+                            ),
+                            items: availabilityOptions
+                                .map(
+                                  (value) => DropdownMenuItem(
+                                    value: value,
+                                    child: Text(value),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              if (value != null) {
+                                setDialogState(() => availability = value);
+                              }
+                            },
+                          ),
+                        ],
+                        if (baseRole == 'BHW') ...[
+                          const SizedBox(height: AppSpacing.sm),
+                          TextField(
+                            controller: barangay,
+                            decoration: const InputDecoration(
+                              labelText: 'Assigned barangay',
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          TextField(
+                            controller: assignedPurok,
+                            decoration: const InputDecoration(
+                              labelText: 'Assigned sitio / purok',
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: AppSpacing.sm),
+                        const Text(
+                          'Changes are saved to the account profile and reflected after refresh. Use BHW Management for approval decisions.',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    if (fullName.text.trim().isEmpty ||
+                        username.text.trim().length < 3) {
+                      Get.snackbar(
+                        'Incomplete account details',
+                        'Full name and a username of at least 3 characters are required.',
+                      );
+                      return;
+                    }
+                    Navigator.of(dialogContext).pop(true);
+                  },
+                  child: const Text('Save changes'),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+      savedFullName = fullName.text.trim();
+      savedUsername = username.text.trim();
+      savedContactNumber = contactNumber.text.trim();
+      savedBarangay = barangay.text.trim();
+      savedAssignedPurok = assignedPurok.text.trim();
+      savedSpecialization = specialization.text.trim();
+    } finally {
+      fullName.dispose();
+      username.dispose();
+      contactNumber.dispose();
+      barangay.dispose();
+      assignedPurok.dispose();
+      specialization.dispose();
+    }
+    if (save != true) return;
+
+    try {
+      await _accountPolicy.updateChoAccount(
+        uid: user.id,
+        role: baseRole,
+        accountStatus: accountStatus,
+        fullName: savedFullName,
+        username: savedUsername,
+        contactNumber: savedContactNumber,
+        accessRoleKey: baseRole == 'CHO' ? accessRoleKey : null,
+        barangay: baseRole == 'BHW' ? savedBarangay : null,
+        barangayCode: baseRole == 'BHW'
+            ? data['barangayCode']?.toString()
+            : null,
+        barangayDistrict: baseRole == 'BHW'
+            ? data['barangayDistrict']?.toString()
+            : null,
+        assignedPurok: baseRole == 'BHW' ? savedAssignedPurok : null,
+        specialization: baseRole == 'DOCTOR' ? savedSpecialization : null,
+        availability: baseRole == 'DOCTOR' ? availability : null,
+      );
+      Get.snackbar(
+        'Account updated',
+        'The managed account changes were saved successfully.',
+        backgroundColor: ChoColors.aqua,
+        colorText: Colors.white,
+      );
+    } catch (error) {
+      Get.snackbar('Could not update account', error.toString());
+    }
+  }
+
+  Future<void> _archiveAccount(
+    QueryDocumentSnapshot<Map<String, dynamic>> user,
+  ) async {
+    final data = user.data();
+    final baseRole = (data['role'] ?? '').toString().trim().toUpperCase();
+    if (_isProtectedAdminRole(baseRole) ||
+        !['CHO', 'DOCTOR'].contains(baseRole)) {
+      return;
+    }
+    final name = (data['fullName'] ?? data['email'] ?? 'this account')
+        .toString();
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Archive account?'),
+        content: Text(
+          'Archive $name? This disables sign-in and removes access while preserving clinical and audit records.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Get.back(result: true),
+            child: const Text('Archive account'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _accountPolicy.archiveChoAccount(uid: user.id);
+      Get.snackbar(
+        'Account archived',
+        'The account remains available in the list for audit history, but can no longer sign in.',
+        backgroundColor: ChoColors.aqua,
+        colorText: Colors.white,
+      );
+    } catch (error) {
+      Get.snackbar('Could not archive account', error.toString());
     }
   }
 
@@ -964,6 +1312,36 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
     final canEditAccess =
         baseRole == 'CHO' && !isProtected && options.isNotEmpty;
     final canEditRole = baseRole == 'CHO' && role != null && !role.isProtected;
+    final canEditAccount = !isProtected;
+    final canArchiveAccount =
+        !isProtected && (baseRole == 'CHO' || baseRole == 'DOCTOR');
+    final accountActions = <Widget>[
+      IconButton(
+        tooltip: 'Edit account details',
+        onPressed: canEditAccount ? () => _showAccountEditor(user) : null,
+        icon: const Icon(Icons.edit_outlined),
+      ),
+      if (canArchiveAccount)
+        IconButton(
+          tooltip: 'Archive account (safe delete)',
+          onPressed: () => _archiveAccount(user),
+          icon: const Icon(Icons.archive_outlined),
+        ),
+      if (baseRole == 'CHO')
+        IconButton(
+          tooltip: isProtected
+              ? 'Protected account'
+              : (data['accountStatus'] ?? 'active').toString() == 'disabled'
+              ? 'Enable CHO account'
+              : 'Disable CHO account',
+          onPressed: isProtected ? null : () => _toggleChoAccountStatus(user),
+          icon: Icon(
+            (data['accountStatus'] ?? 'active').toString() == 'disabled'
+                ? Icons.lock_open_outlined
+                : Icons.block_outlined,
+          ),
+        ),
+    ];
     final accessField = SizedBox(
       width: wide ? null : double.infinity,
       child: isProtected
@@ -1043,24 +1421,14 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                     value: (data['accountStatus'] ?? 'active').toString(),
                   ),
                 ),
-                if (baseRole == 'CHO')
-                  IconButton(
-                    tooltip: isProtected
-                        ? 'Protected account'
-                        : (data['accountStatus'] ?? 'active').toString() ==
-                              'disabled'
-                        ? 'Enable CHO account'
-                        : 'Disable CHO account',
-                    onPressed: isProtected
-                        ? null
-                        : () => _toggleChoAccountStatus(user),
-                    icon: Icon(
-                      (data['accountStatus'] ?? 'active').toString() ==
-                              'disabled'
-                          ? Icons.lock_open_outlined
-                          : Icons.block_outlined,
-                    ),
+                const SizedBox(width: AppSpacing.sm),
+                SizedBox(
+                  width: 144,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: accountActions,
                   ),
+                ),
               ],
             )
           : Column(
@@ -1110,24 +1478,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                       ),
                     ),
                     const Spacer(),
-                    if (baseRole == 'CHO')
-                      IconButton(
-                        tooltip: isProtected
-                            ? 'Protected account'
-                            : (data['accountStatus'] ?? 'active').toString() ==
-                                  'disabled'
-                            ? 'Enable CHO account'
-                            : 'Disable CHO account',
-                        onPressed: isProtected
-                            ? null
-                            : () => _toggleChoAccountStatus(user),
-                        icon: Icon(
-                          (data['accountStatus'] ?? 'active').toString() ==
-                                  'disabled'
-                              ? Icons.lock_open_outlined
-                              : Icons.block_outlined,
-                        ),
-                      ),
+                    ...accountActions,
                   ],
                 ),
               ],
@@ -1409,7 +1760,7 @@ class _AccessTableHeader extends StatelessWidget {
           SizedBox(width: 150, child: _AccessHeaderLabel('Permissions')),
           SizedBox(width: AppSpacing.sm),
           SizedBox(width: 90, child: _AccessHeaderLabel('Status')),
-          SizedBox(width: 48),
+          SizedBox(width: 144, child: _AccessHeaderLabel('Actions')),
         ],
       ),
     );

@@ -39,6 +39,13 @@ async function main() {
     await db.collection('users').doc(adminUid).set({
       uid: adminUid,
       email,
+      // Reproduce the legacy mismatch that previously hid CHO management:
+      // Auth has the authoritative admin claim while the profile is stale.
+      role: 'CHO',
+      approvalStatus: 'approved',
+      accountStatus: 'active',
+    });
+    await admin.auth().setCustomUserClaims(adminUid, {
       role: 'CHO_ADMIN',
       approvalStatus: 'approved',
       accountStatus: 'active',
@@ -62,7 +69,7 @@ async function main() {
     const saved = await call('saveAccessRole', signInBody.idToken, {
       name: 'Referral Intake Helper',
       description: 'Can submit and view referrals.',
-      baseRole: 'BHW',
+      baseRole: 'CHO',
       permissions: ['dashboard.view', 'referrals.view', 'referrals.create', 'rbac.manage'],
     });
     assert.equal(saved.response.status, 200, JSON.stringify(saved.body));
@@ -72,7 +79,7 @@ async function main() {
       roleKey: 'CUSTOM_REFERRAL_INTAKE_HELPER',
       name: 'Referral Intake Coordinator',
       description: 'Updated referral access for the test role.',
-      baseRole: 'BHW',
+      baseRole: 'CHO',
       permissions: ['dashboard.view', 'referrals.view'],
     });
     assert.equal(edited.response.status, 200, JSON.stringify(edited.body));
@@ -89,7 +96,7 @@ async function main() {
     await db.collection('users').doc(targetUid).set({
       uid: targetUid,
       email: targetEmail,
-      role: 'BHW',
+      role: 'CHO',
       approvalStatus: 'approved',
       accountStatus: 'active',
       barangay: 'Barangay 10',
@@ -104,7 +111,7 @@ async function main() {
     const assigned = await call('updateChoAccount', signInBody.idToken, {
       uid: targetUid,
       accessRoleKey: 'CUSTOM_REFERRAL_INTAKE_HELPER',
-      role: 'BHW',
+      role: 'CHO',
       accountStatus: 'disabled',
     });
     assert.equal(assigned.response.status, 200, JSON.stringify(assigned.body));
@@ -120,11 +127,33 @@ async function main() {
 
     const unassigned = await call('updateChoAccount', signInBody.idToken, {
       uid: targetUid,
-      accessRoleKey: 'BHW',
-      role: 'BHW',
+      accessRoleKey: 'CHO',
+      role: 'CHO',
       accountStatus: 'disabled',
     });
     assert.equal(unassigned.response.status, 200, JSON.stringify(unassigned.body));
+
+    const doctorUpdated = await call('updateChoAccount', signInBody.idToken, {
+      uid: targetUid,
+      role: 'DOCTOR',
+      accountStatus: 'active',
+      accessRoleKey: 'DOCTOR',
+      fullName: 'RBAC Test Doctor',
+      username: 'rbac-test-doctor',
+      specialization: 'General Medicine',
+      availability: 'available',
+    });
+    assert.equal(doctorUpdated.response.status, 200, JSON.stringify(doctorUpdated.body));
+    const archived = await call('archiveChoAccount', signInBody.idToken, {
+      uid: targetUid,
+    });
+    assert.equal(archived.response.status, 200, JSON.stringify(archived.body));
+    assert.equal(archived.body.result.accountStatus, 'archived');
+    const archivedTarget = (await db.collection('users').doc(targetUid).get()).data();
+    assert.equal(archivedTarget.accountStatus, 'archived');
+    assert.equal(archivedTarget.status, 'Archived');
+    assert.equal((await admin.auth().getUser(targetUid)).disabled, true);
+
     const deleted = await call('deleteAccessRole', signInBody.idToken, {
       roleKey: 'CUSTOM_REFERRAL_INTAKE_HELPER',
     });

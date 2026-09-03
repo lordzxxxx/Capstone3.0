@@ -20,6 +20,7 @@ const {
 	createChoAccount,
 	reviewBhwRegistration,
   updateChoAccount,
+  archiveChoAccount,
   assignDoctorToReferral,
   sendReferralAssignmentEmail,
   autoAssignReferralOnWrite,
@@ -46,6 +47,7 @@ exports.completeRegistration = completeRegistration;
 exports.createChoAccount = createChoAccount;
 exports.reviewBhwRegistration = reviewBhwRegistration;
 exports.updateChoAccount = updateChoAccount;
+exports.archiveChoAccount = archiveChoAccount;
 exports.assignDoctorToReferral = assignDoctorToReferral;
 exports.sendReferralAssignmentEmail = sendReferralAssignmentEmail;
 exports.autoAssignReferralOnWrite = autoAssignReferralOnWrite;

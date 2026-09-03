@@ -676,8 +676,19 @@ function ensureChoOperator(context, userData) {
 
 function ensureChoAdmin(context, userData) {
   const role = normalizeRole(userData.role || '');
-  if (!context.auth || !isApprovedActiveProfile(userData) ||
-      !CHO_ADMIN_ROLES.has(role)) {
+  const claims = context.auth?.token || {};
+  const claimRole = normalizeRole(claims.role || '');
+  const claimStateIsValid = normalizeText(claims.approvalStatus || '') === 'approved' &&
+    ['active', 'approved'].includes(normalizeText(claims.accountStatus || ''));
+  const profileApproval = normalizeText(userData.approvalStatus || '');
+  const profileStatus = normalizeText(userData.accountStatus || userData.status || '');
+  const profileExplicitlyBlocked =
+    (profileApproval && profileApproval !== 'approved') ||
+    (profileStatus && !['active', 'approved'].includes(profileStatus));
+  const profileIsAdmin = isApprovedActiveProfile(userData) && CHO_ADMIN_ROLES.has(role);
+  const claimsAreAdmin = CHO_ADMIN_ROLES.has(claimRole) &&
+    claimStateIsValid && !profileExplicitlyBlocked;
+  if (!context.auth || (!profileIsAdmin && !claimsAreAdmin)) {
     throw new functions.https.HttpsError(
         'permission-denied',
         'Only the CHO Admin can manage accounts, approvals, or assignments.',
@@ -2282,6 +2293,85 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
     accessRoleKey: accessRole.roleKey,
     accountStatus: nextAccountStatus,
   };
+});
+
+// Managed-account deletion is intentionally implemented as an archive. User
+// documents can be referenced by clinical records and audit history, so a
+// hard delete would make those records incomplete. Archiving removes login
+// access and permissions while preserving the account identity for traceability.
+exports.archiveChoAccount = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        'unauthenticated',
+        'You must be signed in to archive managed accounts.',
+    );
+  }
+  const callerDoc = await db.collection('users').doc(context.auth.uid).get();
+  ensureChoAdmin(context, callerDoc.data() || {});
+
+  const uid = String(data?.uid || '').trim();
+  if (!uid) {
+    throw new functions.https.HttpsError('invalid-argument', 'Target UID is required.');
+  }
+  if (uid === context.auth.uid) {
+    throw new functions.https.HttpsError(
+        'failed-precondition',
+        'You cannot archive the account you are currently using.',
+    );
+  }
+
+  const targetRef = db.collection('users').doc(uid);
+  const targetSnap = await targetRef.get();
+  if (!targetSnap.exists) {
+    throw new functions.https.HttpsError('not-found', 'The target account was not found.');
+  }
+  const current = targetSnap.data() || {};
+  const currentRole = normalizeRole(current.role || '');
+  if (isMainChoAdminAccount(uid, current) || CHO_ADMIN_ROLES.has(currentRole)) {
+    throw new functions.https.HttpsError(
+        'permission-denied',
+        'Privileged CHO Admin accounts cannot be archived.',
+    );
+  }
+  if (!['CHO', 'DOCTOR'].includes(currentRole)) {
+    throw new functions.https.HttpsError(
+        'failed-precondition',
+        'BHW accounts remain managed through BHW Management and cannot be archived here.',
+    );
+  }
+
+  const archivePayload = {
+    accountStatus: 'archived',
+    status: 'Archived',
+    isApproved: false,
+    archivedAt: FieldValue.serverTimestamp(),
+    archivedBy: context.auth.uid,
+    updatedBy: context.auth.uid,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+  await targetRef.set(archivePayload, {merge: true});
+
+  const targetAuth = await admin.auth().getUser(uid);
+  const claims = {...(targetAuth.customClaims || {})};
+  delete claims.role;
+  delete claims.approvalStatus;
+  delete claims.accountStatus;
+  await admin.auth().setCustomUserClaims(uid, claims);
+  await admin.auth().updateUser(uid, {disabled: true});
+  await admin.database().ref(`users/${uid}`).update({
+    accountStatus: 'archived',
+    status: 'Archived',
+    isApproved: false,
+    updatedAt: ServerValue.TIMESTAMP,
+  });
+  await db.collection('audit_logs').add({
+    action: 'managed_account_archived',
+    actorUid: context.auth.uid,
+    targetUid: uid,
+    role: currentRole,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+  return {success: true, uid, role: currentRole, accountStatus: 'archived'};
 });
 
 exports.suggestDoctorAssignment = functions.https.onCall(async (data, context) => {

@@ -101,6 +101,26 @@ class UserAccessScopeService {
     return barangay.isNotEmpty || barangayCode.isNotEmpty;
   }
 
+  bool _hasAuthoritativeChoAdminClaims(Map<String, dynamic>? data) {
+    if (data == null) return false;
+    final role = (data['role'] ?? '').toString().trim().toLowerCase();
+    return RbacCatalog.adminRoles.contains(role) &&
+        (data['approvalStatus'] ?? '').toString().trim().toLowerCase() ==
+            'approved' &&
+        ['active', 'approved'].contains(
+          (data['accountStatus'] ?? '').toString().trim().toLowerCase(),
+        );
+  }
+
+  Map<String, dynamic> _mergeAuthoritativeChoAdminClaims(
+    Map<String, dynamic> profile,
+    Map<String, dynamic> claims,
+  ) {
+    // Keep profile fields such as name and barangay metadata, but let the
+    // server-issued admin claim decide the protected role and permissions.
+    return <String, dynamic>{...profile, ...claims};
+  }
+
   bool _isResolvedScope(UserAccessScope scope) {
     if (!scope.isAuthenticated) {
       return false;
@@ -473,6 +493,11 @@ class UserAccessScopeService {
       } catch (_) {}
     }
 
+    final claimsData = await _readUserDataFromClaims(user);
+    if (_hasAuthoritativeChoAdminClaims(claimsData)) {
+      data = _mergeAuthoritativeChoAdminClaims(data, claimsData!);
+    }
+
     if (!_hasResolvedScope(data)) {
       final fallbackData = await _readUserDataByEmail(user);
       if (fallbackData != null && _hasResolvedScope(fallbackData)) {
@@ -494,7 +519,6 @@ class UserAccessScopeService {
     }
 
     if (!_hasResolvedScope(data)) {
-      final claimsData = await _readUserDataFromClaims(user);
       if (claimsData != null) {
         data = claimsData;
         await _syncRootUserMirror(

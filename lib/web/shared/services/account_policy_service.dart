@@ -472,6 +472,11 @@ class AccountPolicyService {
     });
   }
 
+  Future<void> archiveChoAccount({required String uid}) async {
+    final callable = _functions.httpsCallable('archiveChoAccount');
+    await callable.call(<String, dynamic>{'uid': uid.trim()});
+  }
+
   Future<void> updateOwnBhwProfile({
     required String fullName,
     required String username,
