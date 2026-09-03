@@ -153,6 +153,7 @@ test.describe('public, deep-link, and responsive shell', () => {
       ['/signup', /Create|Register/i],
       ['/cho/signup', /AI-DSUHIS/i],
       ['/forgot-password', /Forgot|Reset/i],
+      ['/auth/reset-password', /Secure link unavailable/i],
       ['/not-found', /Page not found|not found/i],
     ]) {
       await openFlutterRoute(page, route);

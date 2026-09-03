@@ -16,6 +16,7 @@ abstract final class WebRoutes {
   static const signup = '/signup';
   static const bhwSignup = '/bhw/signup';
   static const forgotPassword = '/forgot-password';
+  static const authResetPassword = '/auth/reset-password';
   static const notFound = '/not-found';
 
   static const bhwDashboard = '/bhw/dashboard';
@@ -102,6 +103,7 @@ abstract final class WebRoutes {
     signup,
     bhwSignup,
     forgotPassword,
+    authResetPassword,
     notFound,
     bhwDashboard,
     bhwPatients,

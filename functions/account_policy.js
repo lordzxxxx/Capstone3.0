@@ -15,6 +15,7 @@ const {
 } = require('./rbac_policy');
 const {
   buildAccountOnboardingEmail,
+  buildPasswordResetActionUrl,
   buildReferralAssignmentEmail,
 } = require('./email_templates');
 
@@ -1818,7 +1819,7 @@ async function provisionManagedAccount(data, context) {
         fullName,
         email,
         role,
-        activationUrl: resetLink,
+        activationUrl: buildPasswordResetActionUrl(resetLink),
       }),
     })
     : {sent: false, reason: 'activation_link_unavailable'};

@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 
 const {
   buildAccountOnboardingEmail,
+  buildPasswordResetActionUrl,
   buildReferralAssignmentEmail,
 } = require('../functions/email_templates');
 
@@ -17,6 +18,14 @@ assert.match(accountEmail.html, /Set up your account/);
 assert.match(accountEmail.html, /ada@example.test/);
 assert.match(accountEmail.html, /Dr\. Ada &lt;Test&gt;/);
 assert.doesNotMatch(accountEmail.html, /temporary password/i);
+
+const customResetUrl = buildPasswordResetActionUrl(
+  'https://capstone-c98f9.firebaseapp.com/__/auth/action?mode=resetPassword&oobCode=one-time-code&apiKey=test-api-key&lang=en',
+);
+assert.match(customResetUrl, /^https:\/\/www\.ai-dsuhis\.com\/auth\/reset-password\?/);
+assert.match(customResetUrl, /mode=resetPassword/);
+assert.match(customResetUrl, /oobCode=one-time-code/);
+assert.match(customResetUrl, /apiKey=test-api-key/);
 
 const referralEmail = buildReferralAssignmentEmail({
   doctorName: 'Ada Test',

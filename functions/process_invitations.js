@@ -6,7 +6,10 @@ const { ServerValue } = require('firebase-admin/database');
 const { generateTemporaryPassword } = require('./password_policy');
 const { sendSystemEmail } = require('./mailer');
 const { defaultPermissionsForRole } = require('./rbac_policy');
-const { buildAccountOnboardingEmail } = require('./email_templates');
+const {
+  buildAccountOnboardingEmail,
+  buildPasswordResetActionUrl,
+} = require('./email_templates');
 
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 const CHO_ADMIN_ROLES = new Set(['CHO_ADMIN', 'CHO_SUPER_ADMIN']);
@@ -164,7 +167,7 @@ exports.processInvitation = onDocumentCreated({
         fullName: fullName || email,
         email,
         role: requestedRole.toUpperCase(),
-        activationUrl: resetLink,
+        activationUrl: buildPasswordResetActionUrl(resetLink),
       }),
     }) : {sent: false, reason: 'activation_link_unavailable'};
     emailSent = emailResult.sent;

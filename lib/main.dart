@@ -56,6 +56,8 @@ import 'package:mycapstone_project/web/features/auth/login.dart' as web_login;
 import 'package:mycapstone_project/web/features/auth/bhw_registration.dart'
     as web_bhw_registration;
 import 'package:mycapstone_project/web/features/auth/forgot.dart' as web_forgot;
+import 'package:mycapstone_project/web/features/auth/auth_action.dart'
+    as web_auth_action;
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_page_transition.dart';
@@ -378,6 +380,10 @@ class MyApp extends StatelessWidget {
               GetPage(
                 name: WebRoutes.forgotPassword,
                 page: () => const web_forgot.ForgotPassword(),
+              ),
+              GetPage(
+                name: WebRoutes.authResetPassword,
+                page: () => const web_auth_action.AuthActionPage(),
               ),
               GetPage(
                 name: WebRoutes.notFound,

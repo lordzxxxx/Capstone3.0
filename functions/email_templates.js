@@ -106,6 +106,33 @@ function buildAccountOnboardingEmail({fullName, email, role, activationUrl}) {
   };
 }
 
+/**
+ * Send Firebase action codes to the portal's branded action handler instead
+ * of the generic Firebase Hosting widget. Keep only the action parameters
+ * needed by the client-side Firebase SDK and fall back to the original link
+ * if the generated link is incomplete.
+ */
+function buildPasswordResetActionUrl(resetLink) {
+  try {
+    const source = new URL(String(resetLink));
+    const mode = source.searchParams.get('mode');
+    const oobCode = source.searchParams.get('oobCode');
+    const apiKey = source.searchParams.get('apiKey');
+    if (!mode || !oobCode || !apiKey) return resetLink;
+
+    const portalUrl = String(process.env.APP_URL || 'https://www.ai-dsuhis.com').replace(/\/$/, '');
+    const actionUrl = new URL('/auth/reset-password', `${portalUrl}/`);
+    actionUrl.searchParams.set('mode', mode);
+    actionUrl.searchParams.set('oobCode', oobCode);
+    actionUrl.searchParams.set('apiKey', apiKey);
+    const lang = source.searchParams.get('lang');
+    if (lang) actionUrl.searchParams.set('lang', lang);
+    return actionUrl.toString();
+  } catch (_) {
+    return resetLink;
+  }
+}
+
 function buildReferralAssignmentEmail({doctorName, referralId, referral, transferred = false, previousDoctorName = ''}) {
   const doctor = textValue(doctorName, 'Doctor');
   const patient = textValue(referral?.patientName || referral?.patientInformation?.fullName, 'Patient');
@@ -143,5 +170,6 @@ function buildReferralAssignmentEmail({doctorName, referralId, referral, transfe
 
 module.exports = {
   buildAccountOnboardingEmail,
+  buildPasswordResetActionUrl,
   buildReferralAssignmentEmail,
 };
