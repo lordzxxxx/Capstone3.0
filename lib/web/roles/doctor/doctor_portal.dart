@@ -157,6 +157,7 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
           specialization: _specialization,
           activeTab: widget.tab,
         ),
+        sidebarCollapsedListenable: _DoctorSidebar.isCollapsedNotifier,
         title: _pageTitle,
         mobileBrandAsset: 'assets/newlogo_white.png',
         child: _loadingProfile
@@ -1966,7 +1967,9 @@ class _DoctorSidebarState extends State<_DoctorSidebar> {
       builder: (context, _) {
         final isCollapsed = _DoctorSidebar.isCollapsedNotifier.value;
         final viewport = MediaQuery.sizeOf(context);
-        final compactViewport = viewport.width < 960 || viewport.height < 840;
+        final isMobileDrawer = WebResponsiveDrawerScope.isDrawerOf(context);
+        final compactViewport =
+            !isMobileDrawer && (viewport.width < 960 || viewport.height < 840);
         final autoCollapsed =
             compactViewport && _DoctorSidebar._manualCollapsedOverride != false;
         final effectiveCollapsed = isCollapsed || autoCollapsed;

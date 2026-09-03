@@ -299,6 +299,17 @@ test.describe('role routes and permissions', () => {
 
     const expandSidebar = doctorPage.getByRole('button', {name: /Expand sidebar/i});
     const collapseSidebar = doctorPage.getByRole('button', {name: /Collapse sidebar/i});
+    const isMobile = (doctorPage.viewportSize()?.width ?? 0) < 760;
+
+    if (isMobile) {
+      await expectFlutterText(doctorPage, /Doctor Portal/i);
+      await expectFlutterText(doctorPage, /Archive/i);
+      await expect(collapseSidebar).toBeVisible();
+      await collapseSidebar.click();
+      await expect(expandSidebar).toBeVisible();
+      await expandSidebar.click();
+      await expect(collapseSidebar).toBeVisible();
+    }
 
     // Desktop-sized shells below the compact breakpoint start as a 72px rail
     // to preserve usable content width. Mobile drawers intentionally open in
@@ -327,7 +338,7 @@ test.describe('role routes and permissions', () => {
       .getByRole('button', {name: /Archive navigation item/i})
       .click();
     await doctorPage.waitForURL('**/doctor/archive', {timeout: 30_000});
-    if ((doctorPage.viewportSize()?.width ?? 0) < 760) {
+    if (isMobile) {
       await doctorPage.getByRole('button', {name: /Open navigation menu/i}).click();
       await enableFlutterSemantics(doctorPage);
     }

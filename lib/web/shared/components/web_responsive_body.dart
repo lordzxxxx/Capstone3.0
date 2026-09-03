@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
@@ -17,6 +18,7 @@ class WebResponsiveBody extends StatelessWidget {
     this.backgroundColor = AppColors.backgroundLight,
     this.breakpoint = 760,
     this.mobileBrandAsset,
+    this.sidebarCollapsedListenable,
   });
 
   final Widget sidebar;
@@ -25,6 +27,7 @@ class WebResponsiveBody extends StatelessWidget {
   final Color backgroundColor;
   final double breakpoint;
   final String? mobileBrandAsset;
+  final ValueListenable<bool>? sidebarCollapsedListenable;
 
   @override
   Widget build(BuildContext context) {
@@ -41,40 +44,70 @@ class WebResponsiveBody extends StatelessWidget {
           );
         }
 
-        return Scaffold(
-          backgroundColor: backgroundColor,
-          drawerEdgeDragWidth: math.min(32, constraints.maxWidth * 0.12),
-          drawer: Drawer(
-            width: math.min(320, math.max(280, constraints.maxWidth * 0.86)),
+        final double defaultDrawerWidth = math.min(
+          320.0,
+          math.max(280.0, constraints.maxWidth * 0.86),
+        );
+        final mobileBody = SafeArea(
+          top: true,
+          bottom: true,
+          child: Column(
+            children: [
+              WebMobileHeader(title: title, brandAsset: mobileBrandAsset),
+              Expanded(child: child),
+            ],
+          ),
+        );
+
+        Widget drawerFor(bool isCollapsed) {
+          return Drawer(
+            width: isCollapsed ? 72 : defaultDrawerWidth,
             elevation: 16,
             child: MediaQuery(
-              // The navigation widgets use the ambient width to choose their
-              // collapsed rail mode. A drawer is intentionally a full-label
-              // navigation surface even when the browser viewport is narrow.
+              // Keep the drawer's navigation labels discoverable even when
+              // the phone viewport itself is narrow or short. The sidebar
+              // can still be intentionally collapsed, and the drawer width
+              // follows that state so it never leaves an empty panel.
               data: MediaQuery.of(context).copyWith(
-                // Keep the drawer in expanded-label mode even when the
-                // phone viewport itself is short. The desktop rail may
-                // auto-collapse for short windows, but a mobile drawer must
-                // remain discoverable without requiring icon-only tooltips.
                 size: Size(1200, math.max(1200, constraints.maxHeight)),
               ),
-              child: sidebar,
+              child: WebResponsiveDrawerScope(child: sidebar),
             ),
-          ),
-          body: SafeArea(
-            top: true,
-            bottom: true,
-            child: Column(
-              children: [
-                WebMobileHeader(title: title, brandAsset: mobileBrandAsset),
-                Expanded(child: child),
-              ],
-            ),
-          ),
+          );
+        }
+
+        Widget mobileScaffold(bool isCollapsed) {
+          return Scaffold(
+            backgroundColor: backgroundColor,
+            drawerEdgeDragWidth: math.min(32, constraints.maxWidth * 0.12),
+            drawer: drawerFor(isCollapsed),
+            body: mobileBody,
+          );
+        }
+
+        final collapsedListenable = sidebarCollapsedListenable;
+        if (collapsedListenable == null) return mobileScaffold(false);
+        return ValueListenableBuilder<bool>(
+          valueListenable: collapsedListenable,
+          builder: (context, isCollapsed, _) => mobileScaffold(isCollapsed),
         );
       },
     );
   }
+}
+
+/// Marks a sidebar rendered inside the phone navigation drawer. Role-specific
+/// sidebars can use this to distinguish a mobile drawer from a compact desktop
+/// rail without changing the shared shell's behavior for other portals.
+class WebResponsiveDrawerScope extends InheritedWidget {
+  const WebResponsiveDrawerScope({required super.child, super.key});
+
+  static bool isDrawerOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<WebResponsiveDrawerScope>() !=
+      null;
+
+  @override
+  bool updateShouldNotify(WebResponsiveDrawerScope oldWidget) => false;
 }
 
 class WebMobileHeader extends StatelessWidget {
