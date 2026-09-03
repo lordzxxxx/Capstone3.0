@@ -10,6 +10,7 @@ const {
   buildAccountOnboardingEmail,
   buildPasswordResetActionUrl,
 } = require('./email_templates');
+const {sendDoctorAccountSetupEmail} = require('./doctor_access');
 
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 const CHO_ADMIN_ROLES = new Set(['CHO_ADMIN', 'CHO_SUPER_ADMIN']);
@@ -150,26 +151,44 @@ exports.processInvitation = onDocumentCreated({
       }, { merge: true });
     }
 
-    // Generate password reset link so invitee can set their own password
-    let resetLink = null;
-    try {
-      resetLink = await admin.auth().generatePasswordResetLink(email);
-    } catch (e) {
-      console.warn('Could not generate reset link:', e);
-    }
-
-    // Send through the fixed AI-DSUHIS system mailer.
+    // Doctor setup links are issued by the application so their five-minute
+    // lifetime and one-time use can be enforced by the backend. Keep the
+    // existing Firebase action-code flow for CHO invitations.
     let emailSent = false;
     let emailError = null;
-    const emailResult = resetLink ? await sendSystemEmail({
-      to: email,
-      ...buildAccountOnboardingEmail({
-        fullName: fullName || email,
-        email,
-        role: requestedRole.toUpperCase(),
-        activationUrl: buildPasswordResetActionUrl(resetLink),
-      }),
-    }) : {sent: false, reason: 'activation_link_unavailable'};
+    let emailResult;
+    if (requestedRole.toUpperCase() === 'DOCTOR') {
+      try {
+        emailResult = await sendDoctorAccountSetupEmail({
+          uid: userRecord.uid,
+          email,
+          fullName: fullName || email,
+          source: 'invitation-trigger',
+        });
+      } catch (error) {
+        console.error('Could not issue doctor setup link', {
+          uid: userRecord.uid,
+          code: error?.code || 'unknown',
+        });
+        emailResult = {sent: false, reason: 'activation_link_unavailable'};
+      }
+    } else {
+      let resetLink = null;
+      try {
+        resetLink = await admin.auth().generatePasswordResetLink(email);
+      } catch (e) {
+        console.warn('Could not generate reset link:', e);
+      }
+      emailResult = resetLink ? await sendSystemEmail({
+        to: email,
+        ...buildAccountOnboardingEmail({
+          fullName: fullName || email,
+          email,
+          role: requestedRole.toUpperCase(),
+          activationUrl: buildPasswordResetActionUrl(resetLink),
+        }),
+      }) : {sent: false, reason: 'activation_link_unavailable'};
+    }
     emailSent = emailResult.sent;
     emailError = emailResult.sent ? null : emailResult.reason;
 

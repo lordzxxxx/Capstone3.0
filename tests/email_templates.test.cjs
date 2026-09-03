@@ -12,12 +12,14 @@ const accountEmail = buildAccountOnboardingEmail({
   email: 'ada@example.test',
   role: 'DOCTOR',
   activationUrl: 'https://www.ai-dsuhis.com/activate?token=controlled-test',
+  activationExpiresInMinutes: 5,
 });
 assert.equal(accountEmail.subject, 'Your AI-DSUHIS Account Is Ready');
 assert.match(accountEmail.html, /AI-DSUHIS/);
 assert.match(accountEmail.html, /Set up your account/);
 assert.match(accountEmail.html, /ada@example.test/);
 assert.match(accountEmail.html, /Dr\. Ada &lt;Test&gt;/);
+assert.match(accountEmail.html, /expires in 5 minutes/i);
 assert.match(accountEmail.html, /Open Doctor Login Portal/);
 assert.match(accountEmail.html, /https:\/\/www\.ai-dsuhis\.com\/doctor\/login/);
 assert.match(accountEmail.text, /https:\/\/www\.ai-dsuhis\.com\/doctor\/login/);

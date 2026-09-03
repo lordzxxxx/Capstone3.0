@@ -92,32 +92,48 @@ function buildLayout({title, preheader = '', greeting, intro, rows = [], ctaLabe
   return {text, html};
 }
 
-function buildAccountOnboardingEmail({fullName, email, role, activationUrl}) {
+function buildAccountOnboardingEmail({
+  fullName,
+  email,
+  role,
+  activationUrl,
+  activationExpiresInMinutes,
+}) {
   const name = textValue(fullName, 'Doctor');
   const normalizedRole = String(role || '').trim().toUpperCase();
   const loginUrl = buildPortalLoginUrl(normalizedRole);
+  const expirationMinutes = Number.isFinite(Number(activationExpiresInMinutes))
+    ? Math.max(1, Math.round(Number(activationExpiresInMinutes)))
+    : null;
   const loginLabel = normalizedRole === 'DOCTOR'
     ? 'Open Doctor Login Portal'
     : 'Open portal login';
   const loginInstruction = normalizedRole === 'DOCTOR'
     ? 'After setting your password, use the Doctor Login Portal link below whenever you sign in.'
     : 'After setting your password, use the portal login link below whenever you sign in.';
+  const setupInstruction = expirationMinutes
+    ? `This secure setup link expires in ${expirationMinutes} minutes and can be used only once.`
+    : 'This secure setup link can be used only once.';
   return {
     subject: 'Your AI-DSUHIS Account Is Ready',
     ...buildLayout({
       title: 'Your account is ready',
       preheader: 'Set up your secure AI-DSUHIS account.',
       greeting: `Hello ${name},`,
-      intro: `A City Health Office Administrator created your AI-DSUHIS account. Use the secure link below to set your password. ${loginInstruction}`,
+      intro: `A City Health Office Administrator created your AI-DSUHIS account. Use the secure link below to set your password. ${setupInstruction} ${loginInstruction}`,
       rows: [
         {label: 'Registered email', value: textValue(email)},
         {label: 'Account role', value: textValue(role)},
+        ...(expirationMinutes
+          ? [{label: 'Setup link validity', value: `${expirationMinutes} minutes`}] : []),
       ],
       ctaLabel: 'Set up your account',
       ctaUrl: activationUrl,
       secondaryCtaLabel: loginLabel,
       secondaryCtaUrl: loginUrl,
-      closing: 'Do not share your account credentials or activation link.',
+      closing: expirationMinutes
+        ? `Do not share your account credentials or activation link. The link expires in ${expirationMinutes} minutes.`
+        : 'Do not share your account credentials or activation link.',
     }),
   };
 }

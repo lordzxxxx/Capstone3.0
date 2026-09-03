@@ -390,6 +390,10 @@ class MyApp extends StatelessWidget {
                 page: () => const web_auth_action.AuthActionPage(),
               ),
               GetPage(
+                name: WebRoutes.doctorAccountSetup,
+                page: () => const web_auth_action.AuthActionPage(),
+              ),
+              GetPage(
                 name: WebRoutes.notFound,
                 page: () => const _WebNotFoundPage(),
               ),

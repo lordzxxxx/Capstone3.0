@@ -39,6 +39,11 @@ const {
   updateOwnChoProfile,
   updateOwnDoctorProfile,
 } = require('./bhw_profile');
+const {
+  verifyDoctorSetupLink,
+  completeDoctorAccountSetup,
+  requestDoctorAccountSetupLink,
+} = require('./doctor_access');
 
 // Export functions
 exports.setUserRole = setUserRole;
@@ -67,5 +72,8 @@ exports.deleteAccessRole = deleteAccessRole;
 exports.updateOwnBhwProfile = updateOwnBhwProfile;
 exports.updateOwnChoProfile = updateOwnChoProfile;
 exports.updateOwnDoctorProfile = updateOwnDoctorProfile;
+exports.verifyDoctorSetupLink = verifyDoctorSetupLink;
+exports.completeDoctorAccountSetup = completeDoctorAccountSetup;
+exports.requestDoctorAccountSetupLink = requestDoctorAccountSetupLink;
 
 // Additional utility functions can be added here as needed

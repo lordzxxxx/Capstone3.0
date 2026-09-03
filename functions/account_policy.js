@@ -18,6 +18,7 @@ const {
   buildPasswordResetActionUrl,
   buildReferralAssignmentEmail,
 } = require('./email_templates');
+const {sendDoctorAccountSetupEmail} = require('./doctor_access');
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -1802,27 +1803,50 @@ async function provisionManagedAccount(data, context) {
     }
   }
 
-  let resetLink = null;
-  try {
-    resetLink = await admin.auth().generatePasswordResetLink(email);
-  } catch (error) {
-    console.error('Managed account activation link generation failed', {
-      uid: userRecord.uid,
-      code: error?.code || 'unknown',
-    });
-  }
-
-  const activationEmail = resetLink
-    ? await sendSystemEmail({
-      to: email,
-      ...buildAccountOnboardingEmail({
-        fullName,
+  let activationEmail;
+  if (role === 'DOCTOR') {
+    try {
+      activationEmail = await sendDoctorAccountSetupEmail({
+        uid: userRecord.uid,
         email,
-        role,
-        activationUrl: buildPasswordResetActionUrl(resetLink),
-      }),
-    })
-    : {sent: false, reason: 'activation_link_unavailable'};
+        fullName,
+        source: 'cho-admin-account-creation',
+      });
+    } catch (error) {
+      // The account remains the source of truth. A failed setup-link issue or
+      // mail delivery must not make CHO retry account creation and create a
+      // duplicate doctor account.
+      console.error('Managed doctor setup email failed', {
+        uid: userRecord.uid,
+        code: error?.code || 'unknown',
+      });
+      activationEmail = {
+        sent: false,
+        reason: 'activation_link_unavailable',
+      };
+    }
+  } else {
+    let resetLink = null;
+    try {
+      resetLink = await admin.auth().generatePasswordResetLink(email);
+    } catch (error) {
+      console.error('Managed account activation link generation failed', {
+        uid: userRecord.uid,
+        code: error?.code || 'unknown',
+      });
+    }
+    activationEmail = resetLink
+      ? await sendSystemEmail({
+        to: email,
+        ...buildAccountOnboardingEmail({
+          fullName,
+          email,
+          role,
+          activationUrl: buildPasswordResetActionUrl(resetLink),
+        }),
+      })
+      : {sent: false, reason: 'activation_link_unavailable'};
+  }
 
   await db.collection('audit_logs').add({
     action: 'managed_account_created',

@@ -1,15 +1,20 @@
+import 'dart:async';
+
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mycapstone_project/shared/input_validation.dart';
 import 'package:mycapstone_project/shared/password_policy.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
-/// Branded Firebase email-action handler for account activation/password reset.
+/// Branded email-action handler for account activation/password reset.
 ///
-/// Firebase supplies the one-time `oobCode` in the link. The code is verified
-/// and consumed by FirebaseAuth; this page never stores or displays a
-/// password, reset token, or credential.
+/// Existing Firebase action codes continue to be handled here. Doctor account
+/// setup links use the application-enforced five-minute token flow and are
+/// consumed by the Doctor Access Cloud Functions; this page never displays a
+/// password or stores a token beyond the active action.
 class AuthActionPage extends StatefulWidget {
   const AuthActionPage({super.key});
 
@@ -20,16 +25,24 @@ class AuthActionPage extends StatefulWidget {
 class _AuthActionPageState extends State<AuthActionPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
+  final TextEditingController _requestEmailController = TextEditingController();
 
   String? _mode;
   String? _oobCode;
+  String? _doctorSetupToken;
   String? _email;
   String? _error;
+  String? _requestMessage;
   bool _checkingCode = true;
   bool _submitting = false;
+  bool _requestingNewLink = false;
   bool _completed = false;
+  bool _isDoctorSetup = false;
+  bool _canRequestNewLink = false;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
+  int _requestCooldownSeconds = 0;
+  Timer? _requestCooldownTimer;
 
   @override
   void initState() {
@@ -37,6 +50,11 @@ class _AuthActionPageState extends State<AuthActionPage> {
     final query = Uri.base.queryParameters;
     _mode = query['mode'];
     _oobCode = query['oobCode'];
+    _doctorSetupToken = query['token'];
+    _isDoctorSetup =
+        _mode == 'doctorSetup' ||
+        (_doctorSetupToken != null && _doctorSetupToken!.isNotEmpty) ||
+        Uri.base.path == WebRoutes.doctorAccountSetup;
     _verifyActionCode();
   }
 
@@ -44,10 +62,16 @@ class _AuthActionPageState extends State<AuthActionPage> {
   void dispose() {
     _passwordController.dispose();
     _confirmController.dispose();
+    _requestEmailController.dispose();
+    _requestCooldownTimer?.cancel();
     super.dispose();
   }
 
   Future<void> _verifyActionCode() async {
+    if (_isDoctorSetup) {
+      await _verifyDoctorSetupLink();
+      return;
+    }
     if (_mode != 'resetPassword') {
       _setError('This email action is not supported here.');
       return;
@@ -72,11 +96,57 @@ class _AuthActionPageState extends State<AuthActionPage> {
     }
   }
 
-  void _setError(String message) {
+  Future<void> _verifyDoctorSetupLink() async {
+    final token = _doctorSetupToken;
+    if (token == null || token.isEmpty) {
+      _setError(
+        'This secure account setup link is incomplete. Request a new link.',
+        canRequestNewLink: true,
+      );
+      return;
+    }
+
+    try {
+      final callable = FirebaseFunctions.instanceFor(
+        region: 'us-central1',
+      ).httpsCallable('verifyDoctorSetupLink');
+      final response = await callable.call(<String, dynamic>{'token': token});
+      final result = Map<Object?, Object?>.from(response.data as Map);
+      if (result['valid'] != true) {
+        _setError(
+          (result['message'] ??
+                  'This secure account setup link is invalid or expired. Request a new link.')
+              .toString(),
+          canRequestNewLink: true,
+        );
+        return;
+      }
+      if (!mounted) return;
+      setState(() {
+        _email = (result['email'] ?? '').toString();
+        _checkingCode = false;
+        _error = null;
+      });
+    } on FirebaseFunctionsException catch (error) {
+      _setError(
+        error.message ??
+            'The secure account setup link could not be verified. Request a new link.',
+        canRequestNewLink: true,
+      );
+    } catch (_) {
+      _setError(
+        'The secure account setup link could not be verified. Request a new link.',
+        canRequestNewLink: true,
+      );
+    }
+  }
+
+  void _setError(String message, {bool canRequestNewLink = false}) {
     if (!mounted) return;
     setState(() {
       _checkingCode = false;
       _error = message;
+      _canRequestNewLink = canRequestNewLink;
     });
   }
 
@@ -96,7 +166,11 @@ class _AuthActionPageState extends State<AuthActionPage> {
   }
 
   Future<void> _savePassword() async {
-    if (_submitting || _oobCode == null) return;
+    if (_submitting ||
+        (!_isDoctorSetup && _oobCode == null) ||
+        (_isDoctorSetup && _doctorSetupToken == null)) {
+      return;
+    }
     final password = _passwordController.text;
     final confirmation = _confirmController.text;
     if (!PasswordPolicy.isValid(password)) {
@@ -113,20 +187,44 @@ class _AuthActionPageState extends State<AuthActionPage> {
       _error = null;
     });
     try {
-      await FirebaseAuth.instance.confirmPasswordReset(
-        code: _oobCode!,
-        newPassword: password,
-      );
+      if (_isDoctorSetup) {
+        final callable = FirebaseFunctions.instanceFor(
+          region: 'us-central1',
+        ).httpsCallable('completeDoctorAccountSetup');
+        await callable.call(<String, dynamic>{
+          'token': _doctorSetupToken,
+          'newPassword': password,
+        });
+      } else {
+        await FirebaseAuth.instance.confirmPasswordReset(
+          code: _oobCode!,
+          newPassword: password,
+        );
+      }
       if (!mounted) return;
       setState(() {
         _submitting = false;
         _completed = true;
+      });
+    } on FirebaseFunctionsException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _error =
+            error.message ??
+            'We could not save your password. Please try again.';
+        _canRequestNewLink =
+            error.code == 'deadline-exceeded' ||
+            error.code == 'failed-precondition';
       });
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
       setState(() {
         _submitting = false;
         _error = _friendlyAuthError(error);
+        _canRequestNewLink =
+            error.code == 'expired-action-code' ||
+            error.code == 'invalid-action-code';
       });
     } catch (_) {
       if (!mounted) return;
@@ -143,7 +241,83 @@ class _AuthActionPageState extends State<AuthActionPage> {
   }
 
   void _goToLogin() {
-    Get.offAllNamed(WebRoutes.login);
+    Get.offAllNamed(_isDoctorSetup ? WebRoutes.doctorLogin : WebRoutes.login);
+  }
+
+  String _friendlyDoctorFunctionError(FirebaseFunctionsException error) {
+    if (error.code == 'resource-exhausted') {
+      return error.message ??
+          'Please wait before requesting another secure link.';
+    }
+    return error.message ??
+        'We could not request a new secure link right now. Please try again later.';
+  }
+
+  void _startRequestCooldown([int seconds = 60]) {
+    _requestCooldownTimer?.cancel();
+    if (!mounted || seconds <= 0) return;
+    setState(() => _requestCooldownSeconds = seconds);
+    _requestCooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_requestCooldownSeconds <= 1) {
+        timer.cancel();
+        setState(() => _requestCooldownSeconds = 0);
+      } else {
+        setState(() => _requestCooldownSeconds--);
+      }
+    });
+  }
+
+  Future<void> _requestNewDoctorLink() async {
+    if (_requestingNewLink || _requestCooldownSeconds > 0) return;
+    final email = _requestEmailController.text.trim();
+    if (!InputValidation.isEmail(email)) {
+      _showInlineError('Enter the doctor email address used for this account.');
+      return;
+    }
+
+    setState(() {
+      _requestingNewLink = true;
+      _requestMessage = null;
+      _error = null;
+    });
+    try {
+      final callable = FirebaseFunctions.instanceFor(
+        region: 'us-central1',
+      ).httpsCallable('requestDoctorAccountSetupLink');
+      final response = await callable.call(<String, dynamic>{'email': email});
+      final result = Map<Object?, Object?>.from(response.data as Map);
+      final success = result['success'] == true;
+      final message =
+          (result['message'] ??
+                  'If an eligible doctor account exists, a new secure link has been sent.')
+              .toString();
+      if (!mounted) return;
+      setState(() {
+        _requestMessage = success ? message : null;
+        if (!success) _error = message;
+      });
+      _startRequestCooldown();
+    } on FirebaseFunctionsException catch (error) {
+      if (!mounted) return;
+      final details = error.details;
+      final retryAfter = details is Map
+          ? int.tryParse((details['retryAfterSeconds'] ?? '').toString()) ?? 60
+          : 60;
+      setState(() => _error = _friendlyDoctorFunctionError(error));
+      if (error.code == 'resource-exhausted') _startRequestCooldown(retryAfter);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error =
+            'We could not request a new secure link right now. Please try again later.';
+      });
+    } finally {
+      if (mounted) setState(() => _requestingNewLink = false);
+    }
   }
 
   Widget _brandMark() {
@@ -187,9 +361,9 @@ class _AuthActionPageState extends State<AuthActionPage> {
               const SizedBox(height: AppSpacing.xs),
               Text(
                 'City Health Office Portal',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -240,9 +414,7 @@ class _AuthActionPageState extends State<AuthActionPage> {
             }
           }),
           icon: Icon(
-            obscure
-                ? Icons.visibility_outlined
-                : Icons.visibility_off_outlined,
+            obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
           ),
         ),
       ),
@@ -334,9 +506,101 @@ class _AuthActionPageState extends State<AuthActionPage> {
           Expanded(
             child: Text(
               message,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textPrimary,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _requestNewLinkSection() {
+    if (!_isDoctorSetup || !_canRequestNewLink) {
+      return const SizedBox.shrink();
+    }
+    final buttonDisabled = _requestingNewLink || _requestCooldownSeconds > 0;
+    final buttonLabel = _requestingNewLink
+        ? 'Sending…'
+        : _requestCooldownSeconds > 0
+        ? 'Request again in ${_requestCooldownSeconds}s'
+        : 'Request New Link';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSubtle,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Request a new secure link',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Enter the email registered to your doctor account. A new link will be valid for 5 minutes.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          TextField(
+            controller: _requestEmailController,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _requestNewDoctorLink(),
+            decoration: const InputDecoration(
+              labelText: 'Registered doctor email',
+              hintText: 'doctor@example.com',
+              prefixIcon: Icon(Icons.mail_outline_rounded),
+            ),
+          ),
+          if (_requestMessage != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.success.withValues(alpha: 0.30),
+                ),
               ),
+              child: Text(
+                _requestMessage!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textPrimary,
+                  height: 1.45,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: buttonDisabled ? null : _requestNewDoctorLink,
+              icon: _requestingNewLink
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.mark_email_read_outlined),
+              label: Text(buttonLabel),
             ),
           ),
         ],
@@ -404,13 +668,15 @@ class _AuthActionPageState extends State<AuthActionPage> {
       );
     }
 
-    if (_error != null && _email == null) {
+    if ((_error != null || _requestMessage != null) && _email == null) {
       return Column(
         children: [
           _statusIcon(Icons.link_off_rounded, AppColors.error),
           const SizedBox(height: AppSpacing.lg),
           Text(
-            'Secure link unavailable',
+            _error?.contains('expired') == true
+                ? 'Secure link expired'
+                : 'Secure link unavailable',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: AppColors.textPrimary,
@@ -427,7 +693,9 @@ class _AuthActionPageState extends State<AuthActionPage> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          _errorBanner(),
+          if (_error != null) _errorBanner(),
+          if (_error != null) const SizedBox(height: AppSpacing.md),
+          _requestNewLinkSection(),
           const SizedBox(height: AppSpacing.lg),
           SizedBox(
             width: double.infinity,
@@ -470,7 +738,10 @@ class _AuthActionPageState extends State<AuthActionPage> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.mail_outline_rounded, color: AppColors.secondary),
+              const Icon(
+                Icons.mail_outline_rounded,
+                color: AppColors.secondary,
+              ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(
@@ -536,7 +807,9 @@ class _AuthActionPageState extends State<AuthActionPage> {
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final horizontalPadding = constraints.maxWidth < 520 ? 16.0 : 24.0;
+              final horizontalPadding = constraints.maxWidth < 520
+                  ? 16.0
+                  : 24.0;
               return SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
                   horizontal: horizontalPadding,
