@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const {
   buildAccountOnboardingEmail,
   buildPasswordResetActionUrl,
+  buildPortalLoginUrl,
   buildReferralAssignmentEmail,
 } = require('../functions/email_templates');
 
@@ -17,7 +18,13 @@ assert.match(accountEmail.html, /AI-DSUHIS/);
 assert.match(accountEmail.html, /Set up your account/);
 assert.match(accountEmail.html, /ada@example.test/);
 assert.match(accountEmail.html, /Dr\. Ada &lt;Test&gt;/);
+assert.match(accountEmail.html, /Open Doctor Login Portal/);
+assert.match(accountEmail.html, /https:\/\/www\.ai-dsuhis\.com\/doctor\/login/);
+assert.match(accountEmail.text, /https:\/\/www\.ai-dsuhis\.com\/doctor\/login/);
 assert.doesNotMatch(accountEmail.html, /temporary password/i);
+
+assert.equal(buildPortalLoginUrl('DOCTOR'), 'https://www.ai-dsuhis.com/doctor/login');
+assert.equal(buildPortalLoginUrl('CHO'), 'https://www.ai-dsuhis.com/cho/login');
 
 const customResetUrl = buildPasswordResetActionUrl(
   'https://capstone-c98f9.firebaseapp.com/__/auth/action?mode=resetPassword&oobCode=one-time-code&apiKey=test-api-key&lang=en',

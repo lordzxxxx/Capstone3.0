@@ -113,9 +113,9 @@ async function enterFlutterText(field, value) {
   await expect(field).toHaveValue(value);
 }
 
-async function login(page, identity) {
-  await openFlutterRoute(page, '/login');
-  await expectFlutterText(page, /Welcome back/i);
+async function login(page, identity, loginRoute = '/login', heading = /Welcome back/i) {
+  await openFlutterRoute(page, loginRoute);
+  await expectFlutterText(page, heading);
 
   const emailField = page.getByRole('textbox', {name: /you@example.com|email/i}).first();
   await enterFlutterText(emailField, identity.email);
@@ -150,6 +150,7 @@ test.describe('public, deep-link, and responsive shell', () => {
       ['/login', /Welcome back/i],
       ['/bhw/login', /BHW Portal Login/i],
       ['/cho/login', /CHO Portal Login/i],
+      ['/doctor/login', /Doctor Portal Login/i],
       ['/signup', /Create|Register/i],
       ['/cho/signup', /AI-DSUHIS/i],
       ['/forgot-password', /Forgot|Reset/i],
@@ -196,8 +197,10 @@ test.describe('public, deep-link, and responsive shell', () => {
 
 test.describe('authentication retry recovery', () => {
   for (const [route, heading, identityKey, expectedRoute] of [
+    ['/login', /Welcome back/i, 'doctor', '**/doctor/dashboard'],
     ['/bhw/login', /BHW Portal Login/i, 'bhw', '**/bhw/dashboard'],
     ['/cho/login', /CHO Portal Login/i, 'cho', '**/cho/dashboard'],
+    ['/doctor/login', /Doctor Portal Login/i, 'doctor', '**/doctor/dashboard'],
   ]) {
     test(`${route} remains usable after invalid credentials`, async ({page}) => {
       const identity = identities()[identityKey];
@@ -228,7 +231,7 @@ test.describe('authentication retry recovery', () => {
       await signInButton.click();
       await expectFlutterText(page, /Login successful/i);
       await page
-        .getByRole('button', {name: /Open (Dashboard|CHO Dashboard)/i})
+        .getByRole('button', {name: /Open (Dashboard|CHO Dashboard|Doctor Dashboard)/i})
         .click();
       await page.waitForURL(expectedRoute, {timeout: 30_000});
     });
@@ -264,17 +267,19 @@ test.describe('role routes and permissions', () => {
 
   test('doctor is limited to the Doctor Portal workflow', async ({browser}, testInfo) => {
     const identity = {...identities().doctor, expectedRoute: '**/doctor/dashboard'};
-    const {context, page} = await signOutToIsolatedContext(browser, testInfo.project, identity);
-    await expectFlutterText(page, /Doctor Dashboard|Assigned referrals/i);
-    await openAuthenticatedRoute(page, '/doctor/archive');
-    await expectFlutterText(page, /Referral Archive/i);
-    await openAuthenticatedRoute(page, '/doctor/profile');
-    await expectFlutterText(page, /Doctor Profile/i);
-    await openAuthenticatedRoute(page, '/bhw/dashboard');
-    await expectFlutterText(page, /Workspace unavailable/i);
-    await openAuthenticatedRoute(page, '/cho/dashboard');
-    await expectFlutterText(page, /Workspace unavailable/i);
-    await context.close();
+    const doctorContext = await browser.newContext({viewport: testInfo.project.use.viewport});
+    const doctorPage = await doctorContext.newPage();
+    await login(doctorPage, identity, '/doctor/login', /Doctor Portal Login/i);
+    await expectFlutterText(doctorPage, /Doctor Dashboard|Assigned referrals/i);
+    await openAuthenticatedRoute(doctorPage, '/doctor/archive');
+    await expectFlutterText(doctorPage, /Referral Archive/i);
+    await openAuthenticatedRoute(doctorPage, '/doctor/profile');
+    await expectFlutterText(doctorPage, /Doctor Profile/i);
+    await openAuthenticatedRoute(doctorPage, '/bhw/dashboard');
+    await expectFlutterText(doctorPage, /Workspace unavailable/i);
+    await openAuthenticatedRoute(doctorPage, '/cho/dashboard');
+    await expectFlutterText(doctorPage, /Workspace unavailable/i);
+    await doctorContext.close();
   });
 
   test('super-admin can use CHO and governance routes but not BHW pages', async ({browser}, testInfo) => {

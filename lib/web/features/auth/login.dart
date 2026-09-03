@@ -57,9 +57,9 @@ class _RoleCheckResult {
 class Login extends StatefulWidget {
   const Login({super.key, this.expectedRole});
 
-  /// Which portal this login entry point is for ('bhw' or 'cho'), set when
-  /// arriving via the dedicated /bhw/login or /cho/login routes. Null for
-  /// the generic /login route, which accepts any verified role as before.
+  /// Which portal this login entry point is for ('bhw', 'cho', or 'doctor'), set when
+  /// arriving via the dedicated portal login routes. Null for the generic
+  /// /login route, which accepts any verified role as before.
   final String? expectedRole;
 
   @override
@@ -239,6 +239,7 @@ class _LoginState extends State<Login> {
   String get _portalName => switch (widget.expectedRole) {
     'bhw' => 'BHW',
     'cho' => 'CHO',
+    'doctor' => 'Doctor',
     _ => '',
   };
 
@@ -250,6 +251,7 @@ class _LoginState extends State<Login> {
     return switch (widget.expectedRole) {
       'bhw' => _isBhwRole(role),
       'cho' => _isChoRole(role) || _isChoSuperAdminRole(role),
+      'doctor' => _isDoctorRole(role),
       _ => true,
     };
   }
@@ -1263,7 +1265,7 @@ class _LoginState extends State<Login> {
               ),
             ),
             const SizedBox(height: 22),
-            if (widget.expectedRole != 'cho')
+            if (widget.expectedRole == null || widget.expectedRole == 'bhw')
               Center(
                 child: RichText(
                   text: TextSpan(

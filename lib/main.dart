@@ -370,6 +370,10 @@ class MyApp extends StatelessWidget {
                 page: () => const web_login.Login(expectedRole: 'cho'),
               ),
               GetPage(
+                name: WebRoutes.doctorLogin,
+                page: () => const web_login.Login(expectedRole: 'doctor'),
+              ),
+              GetPage(
                 name: WebRoutes.signup,
                 page: () => const web_bhw_registration.BhwRegistrationPage(),
               ),

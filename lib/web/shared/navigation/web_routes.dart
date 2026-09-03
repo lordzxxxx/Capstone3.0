@@ -13,6 +13,7 @@ abstract final class WebRoutes {
   static const login = '/login';
   static const bhwLogin = '/bhw/login';
   static const choLogin = '/cho/login';
+  static const doctorLogin = '/doctor/login';
   static const signup = '/signup';
   static const bhwSignup = '/bhw/signup';
   static const forgotPassword = '/forgot-password';
@@ -100,6 +101,7 @@ abstract final class WebRoutes {
     login,
     bhwLogin,
     choLogin,
+    doctorLogin,
     signup,
     bhwSignup,
     forgotPassword,

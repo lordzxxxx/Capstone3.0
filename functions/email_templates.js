@@ -36,10 +36,14 @@ function row(label, value) {
   </tr>`;
 }
 
-function buildLayout({title, preheader = '', greeting, intro, rows = [], ctaLabel, ctaUrl, closing = 'This is an automated system notification.'}) {
+function buildLayout({title, preheader = '', greeting, intro, rows = [], ctaLabel, ctaUrl, secondaryCtaLabel = '', secondaryCtaUrl = '', closing = 'This is an automated system notification.'}) {
   const safeUrl = escapeHtml(ctaUrl);
+  const safeSecondaryUrl = escapeHtml(secondaryCtaUrl);
   const tableRows = rows.map((entry) => row(entry.label, entry.value)).join('');
   const textRows = rows.map((entry) => `${entry.label}: ${entry.value}`).join('\n');
+  const secondaryText = secondaryCtaLabel && secondaryCtaUrl
+    ? [`${secondaryCtaLabel}: ${secondaryCtaUrl}`]
+    : [];
   const text = [
     greeting,
     '',
@@ -47,6 +51,7 @@ function buildLayout({title, preheader = '', greeting, intro, rows = [], ctaLabe
     ...(textRows ? ['', textRows] : []),
     '',
     `${ctaLabel}: ${ctaUrl}`,
+    ...secondaryText,
     '',
     'For privacy and security, complete patient and clinical information is available only after secure sign-in.',
     '',
@@ -74,6 +79,7 @@ function buildLayout({title, preheader = '', greeting, intro, rows = [], ctaLabe
           <div style="text-align:center;margin:24px 0 26px;">
             <a href="${safeUrl}" style="display:inline-block;background:#2f80ed;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 22px;border-radius:9px;">${escapeHtml(ctaLabel)}</a>
           </div>
+          ${secondaryCtaLabel && secondaryCtaUrl ? `<div style="text-align:center;margin:-8px 0 24px;"><a href="${safeSecondaryUrl}" style="color:#2f80ed;text-decoration:underline;font-size:14px;font-weight:700;">${escapeHtml(secondaryCtaLabel)}</a></div>` : ''}
           <p style="margin:0;color:#4b6075;font-size:13px;line-height:1.6;">For privacy and security, complete patient and clinical information is available only after secure sign-in.</p>
         </td></tr>
         <tr><td style="background:#edf3fa;border-top:1px solid #d9e5f2;padding:18px 28px;color:#4b6075;font-size:12px;line-height:1.55;">
@@ -88,22 +94,43 @@ function buildLayout({title, preheader = '', greeting, intro, rows = [], ctaLabe
 
 function buildAccountOnboardingEmail({fullName, email, role, activationUrl}) {
   const name = textValue(fullName, 'Doctor');
+  const normalizedRole = String(role || '').trim().toUpperCase();
+  const loginUrl = buildPortalLoginUrl(normalizedRole);
+  const loginLabel = normalizedRole === 'DOCTOR'
+    ? 'Open Doctor Login Portal'
+    : 'Open portal login';
+  const loginInstruction = normalizedRole === 'DOCTOR'
+    ? 'After setting your password, use the Doctor Login Portal link below whenever you sign in.'
+    : 'After setting your password, use the portal login link below whenever you sign in.';
   return {
     subject: 'Your AI-DSUHIS Account Is Ready',
     ...buildLayout({
       title: 'Your account is ready',
       preheader: 'Set up your secure AI-DSUHIS account.',
       greeting: `Hello ${name},`,
-      intro: 'A City Health Office Administrator created your AI-DSUHIS account. Use the secure link below to set your password and access the portal.',
+      intro: `A City Health Office Administrator created your AI-DSUHIS account. Use the secure link below to set your password. ${loginInstruction}`,
       rows: [
         {label: 'Registered email', value: textValue(email)},
         {label: 'Account role', value: textValue(role)},
       ],
       ctaLabel: 'Set up your account',
       ctaUrl: activationUrl,
+      secondaryCtaLabel: loginLabel,
+      secondaryCtaUrl: loginUrl,
       closing: 'Do not share your account credentials or activation link.',
     }),
   };
+}
+
+function buildPortalLoginUrl(role) {
+  const portalUrl = String(process.env.APP_URL || 'https://www.ai-dsuhis.com').replace(/\/$/, '');
+  const normalizedRole = String(role || '').trim().toUpperCase();
+  const path = normalizedRole === 'DOCTOR'
+    ? '/doctor/login'
+    : normalizedRole === 'BHW'
+    ? '/bhw/login'
+    : '/cho/login';
+  return `${portalUrl}${path}`;
 }
 
 /**
@@ -171,5 +198,6 @@ function buildReferralAssignmentEmail({doctorName, referralId, referral, transfe
 module.exports = {
   buildAccountOnboardingEmail,
   buildPasswordResetActionUrl,
+  buildPortalLoginUrl,
   buildReferralAssignmentEmail,
 };
