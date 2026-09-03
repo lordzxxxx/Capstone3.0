@@ -57,6 +57,17 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
             RbacCatalog.adminRoles.contains(role.roleKey.toLowerCase()));
   }
 
+  String _displayRoleName(RbacRoleDefinition role) {
+    switch (role.roleKey) {
+      case 'CHO_ADMIN':
+        return 'CHO Admin';
+      case 'CHO_SUPER_ADMIN':
+        return 'CHO Super Admin';
+      default:
+        return role.name.replaceAll('_', ' ');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -426,7 +437,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
         final screenSize = MediaQuery.sizeOf(dialogContext);
         return AlertDialog(
           backgroundColor: AppColors.surfaceLight,
-          title: Text(role.name),
+          title: Text(_displayRoleName(role)),
           content: SizedBox(
             width: math.min(640.0, math.max(240.0, screenSize.width - 64)),
             child: ConstrainedBox(
@@ -505,7 +516,9 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
         title: const Text('Delete access role?'),
-        content: Text('Delete “${role.name}”? This cannot be undone.'),
+        content: Text(
+          'Delete “${_displayRoleName(role)}”? This cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
@@ -1524,11 +1537,34 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
           )
         else
           ...roles.map((role) {
+            final displayName = _displayRoleName(role);
+            final protectedBadge = role.isProtected
+                ? Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceSubtle,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: const Text(
+                      'Protected',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  )
+                : null;
             final actions = <Widget>[
+              if (protectedBadge != null) protectedBadge,
               OutlinedButton.icon(
                 onPressed: () => _showRolePermissionsDialog(role),
                 icon: const Icon(Icons.visibility_outlined, size: 17),
-                label: const Text('View access'),
+                label: const Text('View permissions'),
               ),
               if (!role.isProtected)
                 OutlinedButton.icon(
@@ -1540,7 +1576,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                 OutlinedButton.icon(
                   onPressed: () => _showRoleEditor(template: role),
                   icon: const Icon(Icons.content_copy_outlined, size: 17),
-                  label: const Text('Copy to edit'),
+                  label: const Text('Create custom copy'),
                 ),
               if (!role.isProtected)
                 IconButton(
@@ -1566,7 +1602,7 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        role.name,
+                        displayName,
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 2),
@@ -1587,11 +1623,6 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                     ],
                   ),
                 ),
-                if (role.isProtected)
-                  const Padding(
-                    padding: EdgeInsets.only(left: AppSpacing.sm),
-                    child: Chip(label: Text('Protected')),
-                  ),
               ],
             );
             return Container(
@@ -1604,9 +1635,9 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
               ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final narrow = constraints.maxWidth < 760;
+                  final narrow = constraints.maxWidth < 980;
                   final actionRow = Wrap(
-                    alignment: WrapAlignment.end,
+                    alignment: narrow ? WrapAlignment.start : WrapAlignment.end,
                     spacing: AppSpacing.xs,
                     runSpacing: AppSpacing.xs,
                     children: actions,
@@ -1614,14 +1645,18 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
                   return narrow
                       ? Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [summary, actionRow],
+                          children: [
+                            summary,
+                            const SizedBox(height: AppSpacing.sm),
+                            actionRow,
+                          ],
                         )
                       : Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Expanded(child: summary),
                             const SizedBox(width: AppSpacing.md),
-                            actionRow,
+                            SizedBox(width: 460, child: actionRow),
                           ],
                         );
                 },
