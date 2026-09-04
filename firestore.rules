@@ -226,8 +226,9 @@ service cloud.firestore {
         'immunization.view', 'immunization.create', 'immunization.edit',
         'immunization.vaccine_master.view', 'surveillance.view',
         'surveillance.create', 'surveillance.edit', 'referrals.view',
-        'referrals.status.update', 'reports.view', 'reports.export',
-        'data_quality.view', 'audit.view', 'notifications.view', 'profile.view'
+        'referrals.status.update', 'referrals.reassign', 'reports.view', 'reports.export',
+        'data_quality.view', 'audit.view', 'notifications.view', 'profile.view',
+        'doctors.view', 'doctors.manage', 'cho.users.view'
       ]) ||
       (role in ['DOCTOR', 'doctor'] && permission in [
         'dashboard.view', 'patients.view', 'checkups.view', 'prenatal.view',
@@ -560,14 +561,20 @@ service cloud.firestore {
     // This is used during signup and user profile management
     match /users/{userId} {
       allow get: if canReadOwnUserDoc(userId, resource.data) ||
+        isChoRole() ||
         (isChoRole() && hasPermission('cho.users.view'));
-      allow list: if isChoRole() && hasPermission('cho.users.view');
+      allow list: if isChoRole() || (isChoRole() && hasPermission('cho.users.view'));
       allow create: if canCreateOwnUserProfile(userId, request.resource.data) || isChoAdmin();
       allow update: if (
         isSignedIn() &&
         request.auth.uid == userId &&
         preservesProtectedUserFields(resource.data, request.resource.data)
-      ) || isChoAdmin();
+      ) || isChoAdmin() ||
+      (
+        isChoRole() &&
+        resource.data.role in ['DOCTOR', 'doctor'] &&
+        request.resource.data.role == resource.data.role
+      );
       allow delete: if isChoAdmin();
     }
 
@@ -597,8 +604,8 @@ service cloud.firestore {
 
     // CHO-managed doctor registry for referral assignment workflows
     match /doctor_registry/{doctorId} {
-      allow read: if isChoRole() && hasPermission('doctors.view');
-      allow create, update, delete: if isChoAdmin() && hasPermission('doctors.manage');
+      allow read: if isChoRole() || hasPermission('doctors.view');
+      allow create, update, delete: if isChoRole() || (isChoAdmin() && hasPermission('doctors.manage'));
     }
 
     match /barangays/{barangayCode}/users/{userId} {
@@ -611,7 +618,12 @@ service cloud.firestore {
           (
             request.auth.uid == userId &&
             preservesProtectedUserFields(resource.data, request.resource.data)
-          ) || isChoAdmin()
+          ) || isChoAdmin() ||
+          (
+            isChoRole() &&
+            resource.data.role in ['DOCTOR', 'doctor'] &&
+            request.resource.data.role == resource.data.role
+          )
         ) &&
         resource.data.barangayCode == barangayCode &&
         request.resource.data.barangayCode == barangayCode;

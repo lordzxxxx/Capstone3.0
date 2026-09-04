@@ -830,8 +830,19 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                           'status': availability,
                           'updatedAt': FieldValue.serverTimestamp(),
                         };
+                        final targets = <DocumentReference<Map<String, dynamic>>>[
+                          ...doctor.references,
+                        ];
+                        final doctorUid = _s(data, ['userUid', 'uid', 'userId']);
+                        if (doctorUid.isNotEmpty &&
+                            !targets.any((r) => r.path == 'users/$doctorUid')) {
+                          targets.add(_firestore.collection('users').doc(doctorUid));
+                        }
+                        if (targets.isEmpty) {
+                          throw StateError('No doctor record reference found to update.');
+                        }
                         await Future.wait(
-                          doctor.references.map(
+                          targets.map(
                             (reference) =>
                                 reference.set(update, SetOptions(merge: true)),
                           ),
@@ -912,12 +923,42 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       ),
     );
     if (saved != true) return;
-    await _accountPolicyService.updateChoAccount(
-      uid: _s(data, ['userUid', 'uid', 'userId']),
-      availability: availability,
-    );
-    await _loadDoctorDirectory();
-    if (mounted) _snack('Doctor availability updated.');
+    final availabilityUpdate = <String, dynamic>{
+      'availability': availability,
+      'doctorAvailability': availability,
+      'status': availability,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    try {
+      final targets = <DocumentReference<Map<String, dynamic>>>[
+        ...doctor.references,
+      ];
+      final doctorUid = _s(data, ['userUid', 'uid', 'userId']);
+      if (doctorUid.isNotEmpty &&
+          !targets.any((r) => r.path == 'users/$doctorUid')) {
+        targets.add(_firestore.collection('users').doc(doctorUid));
+      }
+      if (targets.isNotEmpty) {
+        await Future.wait(
+          targets.map(
+            (reference) =>
+                reference.set(availabilityUpdate, SetOptions(merge: true)),
+          ),
+        );
+      }
+      if (doctorUid.isNotEmpty) {
+        try {
+          await _accountPolicyService.updateChoAccount(
+            uid: doctorUid,
+            availability: availability,
+          );
+        } catch (_) {}
+      }
+      await _loadDoctorDirectory();
+      if (mounted) _snack('Doctor availability updated.');
+    } catch (error) {
+      if (mounted) _snack('Could not update doctor availability: $error');
+    }
   }
 
   Future<void> _deactivateDoctor(_DoctorDirectoryEntry doctor) async {
@@ -957,13 +998,44 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       ),
     );
     if (confirmed != true) return;
-    await _accountPolicyService.updateChoAccount(
-      uid: _s(data, ['userUid', 'uid', 'userId']),
-      accountStatus: 'disabled',
-      availability: 'unavailable',
-    );
-    await _loadDoctorDirectory();
-    if (mounted) _snack('Doctor deactivated and removed from new assignments.');
+    final deactivateUpdate = <String, dynamic>{
+      'accountStatus': 'disabled',
+      'availability': 'unavailable',
+      'doctorAvailability': 'unavailable',
+      'status': 'unavailable',
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    try {
+      final targets = <DocumentReference<Map<String, dynamic>>>[
+        ...doctor.references,
+      ];
+      final doctorUid = _s(data, ['userUid', 'uid', 'userId']);
+      if (doctorUid.isNotEmpty &&
+          !targets.any((r) => r.path == 'users/$doctorUid')) {
+        targets.add(_firestore.collection('users').doc(doctorUid));
+      }
+      if (targets.isNotEmpty) {
+        await Future.wait(
+          targets.map(
+            (reference) =>
+                reference.set(deactivateUpdate, SetOptions(merge: true)),
+          ),
+        );
+      }
+      if (doctorUid.isNotEmpty) {
+        try {
+          await _accountPolicyService.updateChoAccount(
+            uid: doctorUid,
+            accountStatus: 'disabled',
+            availability: 'unavailable',
+          );
+        } catch (_) {}
+      }
+      await _loadDoctorDirectory();
+      if (mounted) _snack('Doctor deactivated and removed from new assignments.');
+    } catch (error) {
+      if (mounted) _snack('Could not deactivate doctor: $error');
+    }
   }
 
   Widget _insights(List<_ReferralRecord> records) {
