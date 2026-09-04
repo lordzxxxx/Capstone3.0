@@ -3,9 +3,6 @@ import 'package:mycapstone_project/app/features/patients/patient_centered_histor
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 
 class PatientHistoryDialogs {
-  static const Color _primaryAqua = AppDesign.blue;
-  static const Color _lightOffWhite = AppDesign.ink;
-
   static List<Map<String, dynamic>> collectHistory({
     required Map<String, dynamic> seedRecord,
     required List<Map<String, dynamic>> records,
@@ -62,17 +59,17 @@ class PatientHistoryDialogs {
     return history;
   }
 
-  // ─── Design tokens for the light-mode Check Up History screen ───────────
-  static const Color _histBg = Color(0xFFF8FAFC); // page background
-  static const Color _histSurface = Color(0xFFFFFFFF); // card surface
-  static const Color _histAccent = Color(0xFF2563EB); // primary blue
-  static const Color _histText = Color(0xFF0F172A); // navy dark
-  static const Color _histMuted = Color(0xFF2563EB); // blue detail text
-  static const Color _histBorder = Color(0xFFE2E8F0); // card border
-  static const Color _histGreenBg = Color(0xFFD1FAE5); // completed badge bg
-  static const Color _histGreenFg = Color(0xFF065F46); // completed badge text
-  static const Color _histBlueBg = Color(0xFFDBEAFE); // scheduled badge bg
-  static const Color _histBlueFg = Color(0xFF1D4ED8); // scheduled badge text
+  // ─── Design tokens for patient history screens ───────────
+  static const Color _histBg = AppDesign.page; // Color(0xFFF5F7FA) page background
+  static const Color _histSurface = AppDesign.surface; // Color(0xFFFFFFFF) card surface
+  static const Color _histAccent = AppDesign.blue; // Color(0xFF2F80ED) primary blue
+  static const Color _histText = AppDesign.ink; // Color(0xFF14212B) navy dark / ink
+  static const Color _histMuted = AppDesign.muted; // Color(0xFF52677D) readable muted text
+  static const Color _histBorder = AppDesign.border; // Color(0xFFE2E8F0) card border
+  static const Color _histGreenBg = AppDesign.successBackground; // Color(0xFFE8F7F0) completed badge bg
+  static const Color _histGreenFg = AppDesign.success; // Color(0xFF219B68) completed badge text
+  static const Color _histBlueBg = AppDesign.blueSoft; // Color(0xFFEAF3FF) scheduled badge bg
+  static const Color _histBlueFg = AppDesign.blue; // Color(0xFF2F80ED) scheduled badge text
 
   static Future<void> showModuleHistoryDialog({
     required BuildContext context,
@@ -95,7 +92,7 @@ class PatientHistoryDialogs {
     String? secondaryActionLabel,
     VoidCallback? onSecondaryAction,
     void Function(Map<String, dynamic> record)? onOpenRecord,
-    bool fullScreen = false,
+    bool fullScreen = true,
   }) async {
     final latestRecord = history.isNotEmpty ? history.first : seedRecord;
     final patientName = _patientName(latestRecord);
@@ -106,64 +103,74 @@ class PatientHistoryDialogs {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
+        final screenSize = MediaQuery.of(dialogContext).size;
+        final isFullScreen = fullScreen || screenSize.width < 600;
+
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: fullScreen
+          insetPadding: isFullScreen
               ? EdgeInsets.zero
               : const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          child: Container(
-            constraints: BoxConstraints(
-              maxWidth: fullScreen ? double.infinity : 480,
-              maxHeight: fullScreen
-                  ? MediaQuery.of(dialogContext).size.height
-                  : MediaQuery.of(dialogContext).size.height * 0.92,
-            ),
-            width: fullScreen ? double.infinity : null,
-            height: fullScreen ? double.infinity : null,
-            decoration: BoxDecoration(
-              color: _histBg,
-              borderRadius: BorderRadius.circular(fullScreen ? 0 : 20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.18),
-                  blurRadius: 32,
-                  offset: const Offset(0, 12),
+          child: SafeArea(
+            top: isFullScreen,
+            bottom: isFullScreen,
+            child: SizedBox(
+              width: isFullScreen ? screenSize.width : null,
+              height: isFullScreen ? screenSize.height : null,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: isFullScreen ? double.infinity : 520,
+                  maxHeight: isFullScreen
+                      ? double.infinity
+                      : screenSize.height * 0.92,
                 ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // ── Zone 1 · Header bar ──────────────────────────────────────
-                Container(
-                  decoration: BoxDecoration(
-                    color: _histSurface,
-                    border: Border(bottom: BorderSide(color: _histBorder)),
-                    borderRadius: fullScreen
-                        ? BorderRadius.zero
-                        : const BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            topRight: Radius.circular(20),
+                width: isFullScreen ? double.infinity : null,
+                height: isFullScreen ? double.infinity : null,
+                decoration: BoxDecoration(
+                  color: _histBg,
+                  borderRadius: BorderRadius.circular(isFullScreen ? 0 : 20),
+                  boxShadow: isFullScreen
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.18),
+                            blurRadius: 32,
+                            offset: const Offset(0, 12),
                           ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Accent top strip
-                      Container(
-                        height: 3,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF2563EB), Color(0xFF60A5FA)],
-                          ),
-                          borderRadius: fullScreen
-                              ? BorderRadius.zero
-                              : const BorderRadius.only(
-                                  topLeft: Radius.circular(20),
-                                  topRight: Radius.circular(20),
-                                ),
-                        ),
+                        ],
+                ),
+                child: Column(
+                  children: [
+                    // ── Zone 1 · Header bar ──────────────────────────────────────
+                    Container(
+                      decoration: BoxDecoration(
+                        color: _histSurface,
+                        border: Border(bottom: BorderSide(color: _histBorder)),
+                        borderRadius: isFullScreen
+                            ? BorderRadius.zero
+                            : const BorderRadius.only(
+                                topLeft: Radius.circular(20),
+                                topRight: Radius.circular(20),
+                              ),
                       ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Accent top strip
+                          Container(
+                            height: 3,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [AppDesign.blue, AppDesign.skyBlue],
+                              ),
+                              borderRadius: isFullScreen
+                                  ? BorderRadius.zero
+                                  : const BorderRadius.only(
+                                      topLeft: Radius.circular(20),
+                                      topRight: Radius.circular(20),
+                                    ),
+                            ),
+                          ),
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 4,
@@ -320,7 +327,7 @@ class PatientHistoryDialogs {
                                         ? 'No date'
                                         : _formatHumanDate(latestDate),
                                     icon: Icons.calendar_today_rounded,
-                                    iconColor: const Color(0xFF7C3AED),
+                                    iconColor: AppDesign.navy,
                                   ),
                                   VerticalDivider(
                                     color: _histBorder,
@@ -331,7 +338,7 @@ class PatientHistoryDialogs {
                                     label: 'Status',
                                     value: 'Active Patient',
                                     icon: Icons.verified_rounded,
-                                    iconColor: const Color(0xFF059669),
+                                    iconColor: AppDesign.success,
                                   ),
                                 ],
                               ),
@@ -629,7 +636,7 @@ class PatientHistoryDialogs {
                   decoration: BoxDecoration(
                     color: _histSurface,
                     border: Border(top: BorderSide(color: _histBorder)),
-                    borderRadius: fullScreen
+                    borderRadius: isFullScreen
                         ? BorderRadius.zero
                         : const BorderRadius.only(
                             bottomLeft: Radius.circular(20),
@@ -705,6 +712,8 @@ class PatientHistoryDialogs {
                 ),
               ],
             ),
+          ),
+          ),
           ),
         );
       },
@@ -820,10 +829,11 @@ class PatientHistoryDialogs {
         return Dialog(
           backgroundColor: Colors.transparent,
           insetPadding: EdgeInsets.zero,
-          child: SizedBox(
-            width: screenSize.width,
-            height: screenSize.height,
-            child: Container(
+          child: SafeArea(
+            child: SizedBox(
+              width: screenSize.width,
+              height: screenSize.height,
+              child: Container(
               decoration: BoxDecoration(
                 color: _histBg,
                 border: Border.all(color: _histBorder),
@@ -861,7 +871,7 @@ class PatientHistoryDialogs {
                               const Text(
                                 'Patient Health History',
                                 style: TextStyle(
-                                  color: _lightOffWhite,
+                                  color: _histText,
                                   fontSize: 20,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -943,7 +953,7 @@ class PatientHistoryDialogs {
                           const Text(
                             'Timeline by Category',
                             style: TextStyle(
-                              color: _lightOffWhite,
+                              color: _histText,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
@@ -1002,6 +1012,7 @@ class PatientHistoryDialogs {
               ),
             ),
           ),
+          ),
         );
       },
     );
@@ -1022,15 +1033,16 @@ class PatientHistoryDialogs {
       context: context,
       builder: (dialogContext) {
         final screenSize = MediaQuery.of(dialogContext).size;
-        final accentColor = _primaryAqua;
+        final accentColor = _timelineModuleColor(event.module);
 
         return Dialog(
           backgroundColor: Colors.transparent,
           insetPadding: EdgeInsets.zero,
-          child: SizedBox(
-            width: screenSize.width,
-            height: screenSize.height,
-            child: Container(
+          child: SafeArea(
+            child: SizedBox(
+              width: screenSize.width,
+              height: screenSize.height,
+              child: Container(
               decoration: BoxDecoration(
                 color: _histBg,
                 border: Border.all(color: _histBorder),
@@ -1068,7 +1080,7 @@ class PatientHistoryDialogs {
                               Text(
                                 '${event.module} Details',
                                 style: const TextStyle(
-                                  color: _lightOffWhite,
+                                  color: _histText,
                                   fontSize: 20,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -1159,6 +1171,7 @@ class PatientHistoryDialogs {
                 ],
               ),
             ),
+          ),
           ),
         );
       },
@@ -1497,7 +1510,7 @@ class PatientHistoryDialogs {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: _primaryAqua, size: 18),
+          Icon(icon, color: _histAccent, size: 18),
           const SizedBox(width: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1616,8 +1629,8 @@ class PatientHistoryDialogs {
                         padding: const EdgeInsets.fromLTRB(0, 14, 16, 14),
                         child: Text(
                           entry.value,
-                          style: TextStyle(
-                            color: _histAccent,
+                          style: const TextStyle(
+                            color: _histText,
                             fontSize: 13,
                             height: 1.45,
                           ),
@@ -1671,7 +1684,7 @@ class PatientHistoryDialogs {
     String module,
     List<PatientTimelineEvent> events,
   ) {
-    final accentColor = _primaryAqua;
+    final accentColor = _timelineModuleColor(module);
     final moduleIcon = _timelineModuleIcon(module);
 
     return Container(
@@ -1706,7 +1719,7 @@ class PatientHistoryDialogs {
                     Text(
                       '$module History',
                       style: const TextStyle(
-                        color: _lightOffWhite,
+                        color: _histText,
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
@@ -1786,7 +1799,7 @@ class PatientHistoryDialogs {
                             child: Text(
                               event.title,
                               style: const TextStyle(
-                                color: _lightOffWhite,
+                                color: _histText,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -1849,21 +1862,21 @@ class PatientHistoryDialogs {
   static Color _timelineModuleColor(String module) {
     switch (module) {
       case 'Check Up':
-        return const Color(0xFF4DD0E1);
+        return AppDesign.blue;
       case 'Prenatal':
-        return const Color(0xFFFFB74D);
+        return AppDesign.prenatal;
       case 'Immunization':
-        return const Color(0xFF81C784);
+        return AppDesign.immunization;
       case 'Communicable':
-        return const Color(0xFFE57373);
+        return AppDesign.communicable;
       case 'Non-Communicable':
-        return const Color(0xFFBA68C8);
+        return AppDesign.nonCommunicable;
       case 'Mortality':
-        return const Color(0xFF90A4AE);
+        return AppDesign.mortality;
       case 'Morbidity':
-        return const Color(0xFF64B5F6);
+        return AppDesign.blue;
       default:
-        return _primaryAqua;
+        return AppDesign.blue;
     }
   }
 
@@ -1991,14 +2004,14 @@ class PatientHistoryDialogs {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFFEFF6FF),
+            color: AppDesign.blueSoft,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: const Color(0xFFBFDBFE)),
+            border: Border.all(color: AppDesign.border),
           ),
           child: Text(
             token,
             style: const TextStyle(
-              color: Color(0xFF1D4ED8),
+              color: AppDesign.blue,
               fontSize: 11,
               fontWeight: FontWeight.w600,
             ),

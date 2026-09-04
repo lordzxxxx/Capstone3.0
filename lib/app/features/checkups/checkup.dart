@@ -2386,46 +2386,104 @@ void _showCheckUpDetailsDialog(
   showDialog(
     context: context,
     builder: (BuildContext context) {
+      final screenSize = MediaQuery.of(context).size;
+      final isCompact = screenSize.width < 600;
+
       return Dialog(
         backgroundColor: _darkDeepTeal,
-        insetPadding: EdgeInsets.zero,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            color: _darkDeepTeal,
-            border: Border.all(color: _lightOffWhite.withValues(alpha: 0.12)),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header with Close Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        insetPadding: isCompact
+            ? EdgeInsets.zero
+            : const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(isCompact ? 0 : 20),
+        ),
+        child: SafeArea(
+          top: isCompact,
+          bottom: isCompact,
+          child: SizedBox(
+            width: isCompact ? screenSize.width : 520,
+            height: isCompact ? screenSize.height : null,
+            child: Container(
+              decoration: BoxDecoration(
+                color: _darkDeepTeal,
+                borderRadius: BorderRadius.circular(isCompact ? 0 : 20),
+                border: isCompact
+                    ? null
+                    : Border.all(color: _lightOffWhite.withValues(alpha: 0.18)),
+              ),
+              child: Column(
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppDesign.blueSoft,
+                      borderRadius: isCompact
+                          ? BorderRadius.zero
+                          : const BorderRadius.only(
+                              topLeft: Radius.circular(20),
+                              topRight: Radius.circular(20),
+                            ),
+                    ),
+                child: Row(
                   children: [
-                    const Text(
-                      'Check-Up Details',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: _lightOffWhite,
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.8),
+                      ),
+                      child: const Icon(
+                        Icons.medical_services_outlined,
+                        color: AppDesign.blue,
+                        size: 24,
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Icon(
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Check-Up Record Details',
+                            style: TextStyle(
+                              color: AppDesign.ink,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            patientName,
+                            style: TextStyle(
+                              color: AppDesign.ink.withValues(alpha: 0.8),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(
                         Icons.close,
-                        color: _lightOffWhite.withValues(alpha: 0.7),
-                        size: 28,
+                        color: AppDesign.ink.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+              ),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
 
                 // Patient Info Section
                 _buildDetailSection('Patient Information', [
@@ -2506,10 +2564,14 @@ void _showCheckUpDetailsDialog(
                 _buildDetailSection('Follow-up Schedule', [
                   _buildDetailRow('Follow-up Date', followup),
                 ]),
-                const SizedBox(height: 24),
-
-                // Action Buttons
-                Row(
+                    ],
+                  ),
+                ),
+              ),
+              // Action Buttons
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                child: Row(
                   children: [
                     // Refer Button
                     Expanded(
@@ -2519,8 +2581,10 @@ void _showCheckUpDetailsDialog(
                           Get.to(() => ReferralsPage(initialRecord: record));
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.teal.shade700,
+                          backgroundColor: AppDesign.blue,
                           foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -2544,8 +2608,10 @@ void _showCheckUpDetailsDialog(
                           pageState?._handleEditRecord(context, record);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _primaryAqua,
+                          backgroundColor: AppDesign.navy,
                           foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -2567,10 +2633,11 @@ void _showCheckUpDetailsDialog(
                         onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: _lightOffWhite,
-                          side: BorderSide(
-                            color: _lightOffWhite.withValues(alpha: 0.35),
-                            width: 2,
+                          side: const BorderSide(
+                            color: AppDesign.border,
+                            width: 1.5,
                           ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -2587,12 +2654,14 @@ void _showCheckUpDetailsDialog(
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-      );
-    },
+      ),
+      ),
+    );
+  },
   );
 }
 
@@ -3911,7 +3980,17 @@ class _NewCheckUpFullScreenModalState
   }
 
   Future<void> _saveAndReferToCho() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please complete all required fields before referring.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
     setState(() => _isSaving = true);
     final newRecord = _buildNewRecordPayload();
     try {
@@ -4193,9 +4272,6 @@ class _NewCheckUpFullScreenModalState
                                     decoration: _buildInputDecoration(
                                       'Blood Pressure (e.g., 120/80)',
                                     ),
-                                    validator: (v) => v == null || v.isEmpty
-                                        ? 'Required'
-                                        : null,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -4210,9 +4286,6 @@ class _NewCheckUpFullScreenModalState
                                         TextInputType.numberWithOptions(
                                           decimal: true,
                                         ),
-                                    validator: (v) => v == null || v.isEmpty
-                                        ? 'Required'
-                                        : null,
                                   ),
                                 ),
                               ],
@@ -4228,9 +4301,6 @@ class _NewCheckUpFullScreenModalState
                                       'Heart Rate (bpm)',
                                     ),
                                     keyboardType: TextInputType.number,
-                                    validator: (v) => v == null || v.isEmpty
-                                        ? 'Required'
-                                        : null,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -4242,9 +4312,6 @@ class _NewCheckUpFullScreenModalState
                                       'Respiratory Rate (brpm)',
                                     ),
                                     keyboardType: TextInputType.number,
-                                    validator: (v) => v == null || v.isEmpty
-                                        ? 'Required'
-                                        : null,
                                   ),
                                 ),
                               ],
@@ -4260,9 +4327,6 @@ class _NewCheckUpFullScreenModalState
                                       'Oxygen Saturation (%)',
                                     ),
                                     keyboardType: TextInputType.number,
-                                    validator: (v) => v == null || v.isEmpty
-                                        ? 'Required'
-                                        : null,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -4329,8 +4393,6 @@ class _NewCheckUpFullScreenModalState
                                 'Treatment Plan',
                               ),
                               maxLines: 3,
-                              validator: (v) =>
-                                  v == null || v.isEmpty ? 'Required' : null,
                             ),
                           ],
                         ),
@@ -4480,10 +4542,22 @@ class _NewCheckUpFullScreenModalState
                             onPressed: _isSaving
                                 ? null
                                 : () async {
-                                    if (_formKey.currentState?.validate() ??
-                                        false) {
-                                      setState(() => _isSaving = true);
-                                      final newRecord = _buildNewRecordPayload();
+                                    if (!(_formKey.currentState?.validate() ??
+                                        false)) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Please complete all required fields before saving.',
+                                            ),
+                                            backgroundColor: Colors.orange,
+                                          ),
+                                        );
+                                      }
+                                      return;
+                                    }
+                                    setState(() => _isSaving = true);
+                                    final newRecord = _buildNewRecordPayload();
 
                                       SymptomGuidanceResult? guidance;
                                       String? guidanceError;
@@ -4558,8 +4632,7 @@ class _NewCheckUpFullScreenModalState
                                       if (context.mounted) {
                                         Navigator.of(context).pop();
                                       }
-                                    }
-                                  },
+                                    },
                           ),
                         ],
                       ),

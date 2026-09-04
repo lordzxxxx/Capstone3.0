@@ -1047,6 +1047,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
           'Facility: ${(entry['healthFacility'] ?? 'N/A').toString()} | Reported by: ${(entry['reportedBy'] ?? 'N/A').toString()}',
       dateKeys: const ['dateReported', 'date', 'time'],
       onOpenRecord: (entry) => _showMorbidityDetails(context, entry),
+      fullScreen: true,
     );
   }
 
@@ -2004,31 +2005,45 @@ void _showMorbidityDetails(BuildContext context, Map<String, dynamic> record) {
 
   showDialog(
     context: context,
-    builder: (context) => Dialog(
-      backgroundColor: _darkDeepTeal,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
-        decoration: BoxDecoration(
-          color: _darkDeepTeal,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _lightOffWhite.withValues(alpha: 0.18)),
+    builder: (context) {
+      final screenSize = MediaQuery.of(context).size;
+      final isCompact = screenSize.width < 600;
+
+      return Dialog(
+        backgroundColor: _darkDeepTeal,
+        insetPadding: isCompact
+            ? EdgeInsets.zero
+            : const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(isCompact ? 0 : 20),
         ),
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.82,
-          maxWidth: 520,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
+        child: SafeArea(
+          top: isCompact,
+          bottom: isCompact,
+          child: SizedBox(
+            width: isCompact ? screenSize.width : 520,
+            height: isCompact ? screenSize.height : null,
+            child: Container(
               decoration: BoxDecoration(
-                color: _secondaryIceBlue,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
+                color: _darkDeepTeal,
+                borderRadius: BorderRadius.circular(isCompact ? 0 : 20),
+                border: isCompact
+                    ? null
+                    : Border.all(color: _lightOffWhite.withValues(alpha: 0.18)),
               ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: _secondaryIceBlue,
+                      borderRadius: isCompact
+                          ? BorderRadius.zero
+                          : const BorderRadius.only(
+                              topLeft: Radius.circular(20),
+                              topRight: Radius.circular(20),
+                            ),
+                    ),
               child: Row(
                 children: [
                   Container(
@@ -2173,10 +2188,13 @@ void _showMorbidityDetails(BuildContext context, Map<String, dynamic> record) {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
+      ),
+    );
+  },
   );
 }
 

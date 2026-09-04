@@ -30,10 +30,38 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
+      onOpen: (db) async => _ensureCanonicalColumns(db),
     );
+  }
+
+  Future<void> _ensureCanonicalColumns(Database db) async {
+    final existingColumns = await _getTableColumns(db, 'checkup_records');
+    const canonicalColumns = <String, String>{
+      'linkedPatientId': "TEXT DEFAULT ''",
+      'patientId': "TEXT DEFAULT ''",
+      'patientCode': "TEXT DEFAULT ''",
+      'ai_screening_status': "TEXT DEFAULT ''",
+      'ai_screening_rule_version': "TEXT DEFAULT ''",
+      'ai_referral_recommendation': "TEXT DEFAULT ''",
+      'barangay': "TEXT DEFAULT ''",
+      'barangayCode': "TEXT DEFAULT ''",
+      'barangayDistrict': "TEXT DEFAULT ''",
+    };
+    for (final entry in canonicalColumns.entries) {
+      if (!existingColumns.contains(entry.key)) {
+        try {
+          await db.execute(
+            'ALTER TABLE checkup_records ADD COLUMN ${entry.key} ${entry.value}',
+          );
+          print('✅ Added missing column ${entry.key} to checkup_records');
+        } catch (e) {
+          print('Error adding column ${entry.key}: $e');
+        }
+      }
+    }
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -204,6 +232,10 @@ class DatabaseHelper {
         '✅ Database upgraded to version 6: Added AI classification columns',
       );
     }
+
+    if (oldVersion < 7) {
+      await _ensureCanonicalColumns(db);
+    }
   }
 
   Future _createDB(Database db, int version) async {
@@ -218,6 +250,9 @@ class DatabaseHelper {
         type $textType,
         diseaseType TEXT DEFAULT 'General',
         patient $textType,
+        linkedPatientId TEXT DEFAULT '',
+        patientId TEXT DEFAULT '',
+        patientCode TEXT DEFAULT '',
         details $textType,
         plan $textType,
         status $textType,
@@ -234,7 +269,13 @@ class DatabaseHelper {
         ai_confidence TEXT,
         ai_method TEXT,
         ai_keywords TEXT,
-        ai_recovery_plan TEXT
+        ai_recovery_plan TEXT,
+        ai_screening_status TEXT DEFAULT '',
+        ai_screening_rule_version TEXT DEFAULT '',
+        ai_referral_recommendation TEXT DEFAULT '',
+        barangay TEXT DEFAULT '',
+        barangayCode TEXT DEFAULT '',
+        barangayDistrict TEXT DEFAULT ''
       )
     ''');
   }
@@ -463,6 +504,8 @@ class DatabaseHelper {
     final hasInternet = !connectivityResult.contains(ConnectivityResult.none);
 
     final db = await database;
+    await _ensureCanonicalColumns(db);
+    final tableColumns = await _getTableColumns(db, 'checkup_records');
 
     // Convert ai_recovery_plan from Map to JSON string for SQLite
     final recordForDb = Map<String, dynamic>.from(record);
@@ -473,11 +516,13 @@ class DatabaseHelper {
     }
 
     final recordWithId = {...recordForDb, 'id': id, 'synced': 0};
+    final sqliteData = _sanitizeRecordForSqlite(recordWithId);
+    final insertData = _filterToKnownColumns(sqliteData, tableColumns);
 
     // Save to local database first
     await db.insert(
       'checkup_records',
-      recordWithId,
+      insertData,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
 
@@ -626,6 +671,9 @@ class DatabaseHelper {
 
     // On mobile, update in SQLite
     final db = await database;
+    await _ensureCanonicalColumns(db);
+    final tableColumns = await _getTableColumns(db, 'checkup_records');
+
     final recordForDb = Map<String, dynamic>.from(record);
     if (recordForDb['ai_recovery_plan'] is Map) {
       recordForDb['ai_recovery_plan'] = jsonEncode(
@@ -638,9 +686,12 @@ class DatabaseHelper {
       'synced': 0, // Mark as unsynced after update
     };
 
+    final sqliteData = _sanitizeRecordForSqlite(updatedRecord);
+    final updateData = _filterToKnownColumns(sqliteData, tableColumns);
+
     final result = await db.update(
       'checkup_records',
-      updatedRecord,
+      updateData,
       where: 'id = ?',
       whereArgs: [id],
     );
