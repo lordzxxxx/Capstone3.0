@@ -12,6 +12,7 @@ import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_first_service_selector.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
@@ -37,6 +38,11 @@ class BhwReferralPage extends StatefulWidget {
     super.key,
     this.initialPatient,
     this.initialObservations,
+    this.initialReason,
+    this.initialPriority,
+    this.initialRecord,
+    this.initialScope,
+    this.firestore,
     this.embedded = false,
     this.onClose,
   });
@@ -46,6 +52,22 @@ class BhwReferralPage extends StatefulWidget {
   /// Pre-fills the Observations field (e.g. vitals/symptoms carried over from
   /// the check-up that triggered this referral). Still fully editable.
   final String? initialObservations;
+
+  /// Pre-fills the Referral Reason field (e.g. diagnosis or primary clinical issue).
+  final String? initialReason;
+
+  /// Pre-fills the referral Priority ('routine', 'urgent', 'emergency').
+  final String? initialPriority;
+
+  /// Pre-fills patient demographics, clinical observations, diagnosis, and
+  /// triage priority directly from a source check-up record.
+  final Map<String, dynamic>? initialRecord;
+
+  /// Optional injected access scope for tests or context preloads.
+  final UserAccessScope? initialScope;
+
+  /// Optional injected Firestore instance for tests or custom environments.
+  final FirebaseFirestore? firestore;
 
   /// When true, renders just the referral-creation transaction (no sidebar,
   /// no Dashboard/Records/Follow-up tabs) so it can be dropped into a dialog
@@ -63,7 +85,24 @@ class BhwReferralPage extends StatefulWidget {
 class _BhwReferralPageState extends State<BhwReferralPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
-  final FirebaseFirestore _firestore = getFirestoreInstance();
+
+  FirebaseFirestore? _firestoreInstance;
+  FirebaseFirestore get _firestore {
+    if (widget.firestore != null) return widget.firestore!;
+    if (_firestoreInstance != null) return _firestoreInstance!;
+    try {
+      _firestoreInstance = getFirestoreInstance();
+      return _firestoreInstance!;
+    } catch (_) {
+      try {
+        _firestoreInstance = FirebaseFirestore.instance;
+        return _firestoreInstance!;
+      } catch (_) {
+        rethrow;
+      }
+    }
+  }
+
   final PatientCenteredHistoryService _historyService =
       PatientCenteredHistoryService();
   final _reasonController = TextEditingController();
@@ -101,7 +140,137 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
   @override
   void initState() {
     super.initState();
+    _applyInitialHandoff();
     _loadScope();
+  }
+
+  void _applyInitialHandoff() {
+    final record = widget.initialRecord;
+    final seedPatient = widget.initialPatient ??
+        (record != null ? _extractPatientFromRecord(record) : null);
+    if (seedPatient != null) {
+      _patient = seedPatient;
+      _view = 1;
+    }
+
+    if (widget.initialObservations?.trim().isNotEmpty == true) {
+      _observationsController.text = widget.initialObservations!.trim();
+    } else if (record != null) {
+      final vitals = (record['vitalsigns'] ?? record['vitalSigns'] ?? '')
+          .toString()
+          .trim();
+      final symptoms =
+          (record['symptoms'] ?? record['details'] ?? '').toString().trim();
+      final obs = <String>[
+        if (symptoms.isNotEmpty) 'Symptoms: $symptoms',
+        if (vitals.isNotEmpty) 'Vitals: $vitals',
+      ];
+      if (obs.isNotEmpty) {
+        _observationsController.text = obs.join('\n');
+      }
+    }
+
+    if (widget.initialReason?.trim().isNotEmpty == true) {
+      _reasonController.text = widget.initialReason!.trim();
+    } else if (record != null) {
+      final diagnosis = (record['diagnosis'] ??
+              record['clinicalImpression'] ??
+              record['disease'] ??
+              record['diseaseType'] ??
+              '')
+          .toString()
+          .trim();
+      if (diagnosis.isNotEmpty && diagnosis != 'General') {
+        _reasonController.text = diagnosis;
+      } else if (_observationsController.text.isNotEmpty) {
+        _reasonController.text = 'Clinical evaluation and management';
+      }
+    }
+
+    if (record != null) {
+      final plan = (record['plan'] ??
+              record['treatmentPlan'] ??
+              record['notes'] ??
+              '')
+          .toString()
+          .trim();
+      if (plan.isNotEmpty) {
+        _notesController.text = plan;
+      } else {
+        _notesController.text =
+            'Referred from check-up evaluation for specialized care.';
+      }
+    }
+
+    if (widget.initialPriority?.trim().isNotEmpty == true) {
+      final p = widget.initialPriority!.trim().toLowerCase();
+      if (['routine', 'urgent', 'emergency'].contains(p)) {
+        _priority = p;
+      }
+    } else if (record != null) {
+      final sev = (record['ai_severity'] ?? record['severity'] ?? '')
+          .toString()
+          .toLowerCase();
+      final cat = (record['ai_category'] ?? '').toString().toLowerCase();
+      final triage = (record['triageLevel'] ?? '').toString().toLowerCase();
+      if (sev == 'critical' ||
+          sev == 'emergency' ||
+          cat == 'emergency' ||
+          triage.contains('triage 1')) {
+        _priority = 'emergency';
+      } else if (sev == 'high' ||
+          triage.contains('triage 2') ||
+          triage.contains('triage 3') ||
+          record['referralRecommended'] == true) {
+        _priority = 'urgent';
+      } else {
+        _priority = 'routine';
+      }
+    }
+  }
+
+  Map<String, dynamic> _extractPatientFromRecord(Map<String, dynamic> record) {
+    final patientId = (record['linkedPatientId'] ??
+            record['patientId'] ??
+            record['id'] ??
+            '')
+        .toString()
+        .trim();
+    final rawName = (record['patientName'] ??
+            record['patient'] ??
+            record['fullName'] ??
+            record['name'] ??
+            '')
+        .toString()
+        .trim();
+    final parts = patientNameParts({
+      'patientName': rawName,
+      'firstName': record['firstName'],
+      'middleName': record['middleName'],
+      'surname': record['surname'] ?? record['lastName'],
+    });
+
+    return {
+      'id': patientId,
+      'patientId': patientId,
+      'linkedPatientId': patientId,
+      'patient': rawName,
+      'patientName': rawName,
+      'firstName': parts.firstName,
+      'middleName': parts.middleName,
+      'surname': parts.surname,
+      'age': (record['age'] ?? '').toString(),
+      'dateOfBirth': (record['dateOfBirth'] ?? record['dob'] ?? '').toString(),
+      'gender': (record['gender'] ?? record['sex'] ?? '').toString(),
+      'sex': (record['sex'] ?? record['gender'] ?? '').toString(),
+      'address': (record['address'] ?? '').toString(),
+      'barangay': (record['barangay'] ?? '').toString(),
+      'contactNumber': (record['contactNumber'] ??
+              record['phone'] ??
+              record['phoneNumber'] ??
+              '')
+          .toString(),
+    };
   }
 
   @override
@@ -115,6 +284,15 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
   }
 
   Future<void> _loadScope() async {
+    if (widget.initialScope != null) {
+      if (mounted) {
+        setState(() {
+          _scope = widget.initialScope!;
+          _loading = false;
+        });
+      }
+      return;
+    }
     if (mounted) {
       setState(() {
         _loading = true;
@@ -137,7 +315,11 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
             .snapshots();
         _loading = false;
       });
-      if (widget.initialPatient != null && _patient == null) {
+      if (_patient != null) {
+        _historyService.loadPatientHistory(_patient!).then((history) {
+          if (mounted) setState(() => _history = history);
+        }).catchError((_) {});
+      } else if (widget.initialPatient != null) {
         await _openPatient(widget.initialPatient!);
         if (!mounted) return;
         if (widget.initialObservations?.trim().isNotEmpty == true) {
@@ -254,9 +436,9 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
               ),
             ),
             Expanded(
-              child: _loading
+              child: _loading && _patient == null
                   ? const Center(child: CircularProgressIndicator(color: _aqua))
-                  : _error != null
+                  : (_error != null && _patient == null)
                   ? _errorState()
                   : SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(24, 20, 24, 38),
@@ -2023,7 +2205,7 @@ String _textOf(
 }
 
 String _patientName(Map<String, dynamic> patient) {
-  final direct = _textOf(patient, ['patientName', 'fullName', 'name']);
+  final direct = _textOf(patient, ['patientName', 'fullName', 'name', 'patient']);
   if (direct.isNotEmpty) return direct;
   final first = _textOf(patient, ['firstName', 'patientFirstName']);
   final middle = _textOf(patient, ['middleName', 'patientMiddleName']);

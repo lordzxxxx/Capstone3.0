@@ -4588,44 +4588,34 @@ class _NewCheckUpFullScreenModalState
                                         newRecord.addAll(
                                           guidance.toRecordFields(),
                                         );
-                                        final screening =
-                                            HealthScreeningEngine.evaluate(
-                                              newRecord,
-                                            );
-                                        newRecord.addAll(
-                                          HealthScreeningEngine.attachToRecord(
-                                            newRecord,
-                                            screening,
-                                          ),
-                                        );
-                                        await widget.onGuidanceSave(newRecord);
-                                        debugPrint(
-                                          'Symptom guidance loaded for: '
-                                          '${[...guidance.recognizedSymptoms, ...guidance.recognizedConditions].join(', ')}',
-                                        );
                                       } catch (e) {
-                                        guidanceError = e.toString();
-                                        debugPrint(
-                                          'Symptom guidance failed: $e',
+                                        final fallback = DiseasePredictionApiService
+                                            .localHealthCategoryFallback(
+                                              _symptomsController.text,
+                                            );
+                                        newRecord.addAll(fallback);
+                                        guidance = SymptomGuidanceResult.fromFallback(
+                                          fallbackMap: fallback,
                                         );
                                       }
+
+                                      final screening =
+                                          HealthScreeningEngine.evaluate(
+                                            newRecord,
+                                          );
+                                      newRecord.addAll(
+                                        HealthScreeningEngine.attachToRecord(
+                                          newRecord,
+                                          screening,
+                                        ),
+                                      );
+                                      await widget.onGuidanceSave(newRecord);
 
                                       if (context.mounted && guidance != null) {
                                         await _showSymptomGuidanceModal(
                                           context,
                                           guidance,
                                           record: newRecord,
-                                        );
-                                      } else if (context.mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Record saved, but ${guidanceError ?? 'symptom guidance is unavailable.'}',
-                                            ),
-                                            backgroundColor: Colors.orange,
-                                          ),
                                         );
                                       }
 

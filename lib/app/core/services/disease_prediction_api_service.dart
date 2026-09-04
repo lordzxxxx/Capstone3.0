@@ -9,23 +9,38 @@ import 'package:http/http.dart' as http;
 typedef AiSecurityHeadersProvider = Future<Map<String, String>> Function();
 
 Future<Map<String, String>> _firebaseSecurityHeaders() async {
+  final headers = <String, String>{
+    'Content-Type': 'application/json',
+  };
   final user = FirebaseAuth.instance.currentUser;
-  if (user == null) {
+  if (user != null) {
+    try {
+      final idToken = await user.getIdToken();
+      if (idToken != null && idToken.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $idToken';
+      }
+    } catch (e) {
+      if (kReleaseMode) {
+        throw StateError('Could not obtain a Firebase sign-in token: $e');
+      }
+    }
+  } else if (kReleaseMode) {
     throw StateError('Sign in before requesting symptom guidance.');
   }
-  final idToken = await user.getIdToken();
-  final appCheckToken = await FirebaseAppCheck.instance.getToken();
-  if (idToken == null || idToken.isEmpty) {
-    throw StateError('Could not obtain a Firebase sign-in token.');
+
+  try {
+    final appCheckToken = await FirebaseAppCheck.instance.getToken();
+    if (appCheckToken != null && appCheckToken.isNotEmpty) {
+      headers['X-Firebase-AppCheck'] = appCheckToken;
+    } else if (kReleaseMode) {
+      throw StateError('Could not verify this application with App Check.');
+    }
+  } catch (e) {
+    if (kReleaseMode) {
+      throw StateError('Could not verify this application with App Check: $e');
+    }
   }
-  if (appCheckToken == null || appCheckToken.isEmpty) {
-    throw StateError('Could not verify this application with App Check.');
-  }
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer $idToken',
-    'X-Firebase-AppCheck': appCheckToken,
-  };
+  return headers;
 }
 
 class DiseasePredictionApiException implements Exception {
@@ -72,6 +87,81 @@ class DiseasePredictionApiService {
       }
     }
     return symptoms;
+  }
+
+  static Map<String, dynamic> localHealthCategoryFallback(String rawInput) {
+    final cleaned = rawInput.toLowerCase();
+    final searchable = ' $cleaned ';
+
+    const communicableKeywords = [
+      'fever',
+      'cough',
+      'colds',
+      'cold',
+      'flu',
+      'sore throat',
+      'chills',
+      'diarrhea',
+      'vomiting',
+      'measles',
+      'dengue',
+      'tb',
+      'tuberculosis',
+      'covid',
+      'covid-19',
+      'chickenpox',
+      'rash',
+      'watery stool',
+    ];
+
+    const nonCommunicableKeywords = [
+      'hypertension',
+      'high blood pressure',
+      'elevated bp',
+      'bp',
+      'diabetes',
+      'asthma',
+      'chest pain',
+      'shortness of breath',
+      'heart disease',
+      'stroke',
+      'arthritis',
+      'joint pain',
+      'kidney disease',
+      'cancer',
+      'migraine',
+      'chronic headache',
+    ];
+
+    final communicableMatches = communicableKeywords
+        .where((keyword) => searchable.contains(' $keyword '))
+        .toList();
+    final nonCommunicableMatches = nonCommunicableKeywords
+        .where((keyword) => searchable.contains(' $keyword '))
+        .toList();
+    final category =
+        communicableMatches.isNotEmpty && nonCommunicableMatches.isNotEmpty
+        ? 'Mixed'
+        : communicableMatches.isNotEmpty
+        ? 'Communicable'
+        : nonCommunicableMatches.isNotEmpty
+        ? 'Non-Communicable'
+        : 'Needs Clinical Review';
+    final matches = <String>[...communicableMatches, ...nonCommunicableMatches];
+
+    return <String, dynamic>{
+      'healthCategory': category,
+      'healthCategoryBasis': matches.isEmpty
+          ? 'unrecognized_local_keyword'
+          : 'local_keyword_fallback',
+      'healthCategoryRequiresReview': true,
+      'healthCategoryRuleVersion': 'condition-category-rules-v2-local',
+      'healthCategoryKeywords': matches,
+      'ai_suggested_health_category': category,
+      'ai_category_requires_review': true,
+      'ai_category_matched_symptoms': matches,
+      'diseaseType': category,
+    };
   }
 
   Future<DiseasePredictionResult> predictFromText(String symptomText) async {
@@ -280,6 +370,71 @@ class SymptomGuidanceResult {
       categoryUnmappedConditions: _strings(json['categoryUnmappedConditions']),
       categoryMatchedSymptoms: _strings(json['categoryMatchedSymptoms']),
       categoryUnmappedSymptoms: _strings(json['categoryUnmappedSymptoms']),
+    );
+  }
+
+  factory SymptomGuidanceResult.fromFallback({
+    required Map<String, dynamic> fallbackMap,
+    List<String> emergencyWarnings = const [],
+  }) {
+    final keywords = List<String>.from(
+      fallbackMap['healthCategoryKeywords'] ??
+          fallbackMap['ai_category_matched_symptoms'] ??
+          [],
+    );
+    final category =
+        (fallbackMap['healthCategory'] ??
+                fallbackMap['ai_suggested_health_category'] ??
+                'Needs Clinical Review')
+            .toString();
+    final isCommunicable = category == 'Communicable';
+    final isNonCommunicable = category == 'Non-Communicable';
+    final isMixed = category == 'Mixed';
+
+    return SymptomGuidanceResult(
+      recognizedSymptoms: keywords,
+      recognizedConditions: const [],
+      ignoredSymptoms: const [],
+      matchedGuidanceSymptoms: keywords,
+      missingGuidanceSymptoms: const [],
+      matchedGuidanceConditions: const [],
+      missingGuidanceConditions: const [],
+      homeCare: [
+        if (isCommunicable)
+          'Encourage proper hydration, bed rest, and infection control / isolation measures if contagious.',
+        if (isNonCommunicable)
+          'Encourage maintenance of prescribed chronic medication, balanced low-sodium diet, and regular vitals monitoring.',
+        if (isMixed)
+          'Ensure supportive hydration, rest, vitals tracking, and simultaneous chronic illness monitoring.',
+        if (!isCommunicable && !isNonCommunicable && !isMixed)
+          'Provide general supportive comfort measures, adequate fluids, and symptom observation.',
+      ],
+      precautions: [
+        'Avoid unverified over-the-counter self-medication without health worker or doctor guidance.',
+        'Record daily body temperature, blood pressure, and any changes in symptoms.',
+      ],
+      whenToSeekCare: [
+        'If symptoms persist for longer than 48–72 hours or progressively worsen.',
+        'If fever exceeds 38.5°C or does not respond to standard antipyretics.',
+        'If dizziness, persistent vomiting, or inability to tolerate oral fluids develops.',
+      ],
+      emergencyWarningSigns: emergencyWarnings,
+      references: const [],
+      contentAvailable: true,
+      disclaimer:
+          'Clinical triage and guidance generated via standardized local health screening engine. Does not replace physician diagnosis.',
+      suggestedHealthCategory: category,
+      categoryBasis:
+          fallbackMap['healthCategoryBasis']?.toString() ??
+          'local_keyword_fallback',
+      categoryRequiresReview: true,
+      categoryRuleVersion:
+          fallbackMap['healthCategoryRuleVersion']?.toString() ??
+          'condition-category-rules-v2-local',
+      categoryMatchedConditions: const [],
+      categoryUnmappedConditions: const [],
+      categoryMatchedSymptoms: keywords,
+      categoryUnmappedSymptoms: const [],
     );
   }
 

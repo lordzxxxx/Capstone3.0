@@ -828,6 +828,7 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                           'availability': availability,
                           'doctorAvailability': availability,
                           'status': availability,
+                          'role': 'DOCTOR',
                           'updatedAt': FieldValue.serverTimestamp(),
                         };
                         final targets = <DocumentReference<Map<String, dynamic>>>[
@@ -841,12 +842,37 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                         if (targets.isEmpty) {
                           throw StateError('No doctor record reference found to update.');
                         }
-                        await Future.wait(
-                          targets.map(
-                            (reference) =>
-                                reference.set(update, SetOptions(merge: true)),
-                          ),
-                        );
+
+                        var updatedCount = 0;
+                        dynamic lastError;
+                        for (final reference in targets) {
+                          try {
+                            await reference.set(update, SetOptions(merge: true));
+                            updatedCount++;
+                          } catch (refError) {
+                            lastError = refError;
+                            debugPrint('Error updating target ${reference.path}: $refError');
+                          }
+                        }
+
+                        if (doctorUid.isNotEmpty) {
+                          try {
+                            await _accountPolicyService.updateChoAccount(
+                              uid: doctorUid,
+                              fullName: name.text.trim(),
+                              specialization: specialization.text.trim(),
+                              availability: availability,
+                            );
+                            updatedCount++;
+                          } catch (apiError) {
+                            debugPrint('AccountPolicyService updateChoAccount: $apiError');
+                          }
+                        }
+
+                        if (updatedCount == 0 && lastError != null) {
+                          throw lastError;
+                        }
+
                         if (dialogContext.mounted) Navigator.pop(dialogContext);
                         await _loadDoctorDirectory();
                         _snack('Doctor details updated.');
@@ -938,13 +964,16 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           !targets.any((r) => r.path == 'users/$doctorUid')) {
         targets.add(_firestore.collection('users').doc(doctorUid));
       }
-      if (targets.isNotEmpty) {
-        await Future.wait(
-          targets.map(
-            (reference) =>
-                reference.set(availabilityUpdate, SetOptions(merge: true)),
-          ),
-        );
+      var updatedCount = 0;
+      dynamic lastError;
+      for (final reference in targets) {
+        try {
+          await reference.set(availabilityUpdate, SetOptions(merge: true));
+          updatedCount++;
+        } catch (refError) {
+          lastError = refError;
+          debugPrint('Error updating availability target ${reference.path}: $refError');
+        }
       }
       if (doctorUid.isNotEmpty) {
         try {
@@ -952,7 +981,11 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
             uid: doctorUid,
             availability: availability,
           );
+          updatedCount++;
         } catch (_) {}
+      }
+      if (updatedCount == 0 && lastError != null) {
+        throw lastError;
       }
       await _loadDoctorDirectory();
       if (mounted) _snack('Doctor availability updated.');
@@ -978,7 +1011,6 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
         ),
         content: Text(
           'Deactivate $name? The account will remain in history but will not receive new referrals.',
-          style: const TextStyle(color: ChoColors.muted),
         ),
         actions: [
           TextButton(
@@ -987,10 +1019,9 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: ChoColors.aqua,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(48, 44),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: ChoColors.aqua,
+              side: const BorderSide(color: ChoColors.aqua),
             ),
             child: const Text('Deactivate'),
           ),
@@ -1014,13 +1045,16 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           !targets.any((r) => r.path == 'users/$doctorUid')) {
         targets.add(_firestore.collection('users').doc(doctorUid));
       }
-      if (targets.isNotEmpty) {
-        await Future.wait(
-          targets.map(
-            (reference) =>
-                reference.set(deactivateUpdate, SetOptions(merge: true)),
-          ),
-        );
+      var updatedCount = 0;
+      dynamic lastError;
+      for (final reference in targets) {
+        try {
+          await reference.set(deactivateUpdate, SetOptions(merge: true));
+          updatedCount++;
+        } catch (refError) {
+          lastError = refError;
+          debugPrint('Error deactivating target ${reference.path}: $refError');
+        }
       }
       if (doctorUid.isNotEmpty) {
         try {
@@ -1029,7 +1063,11 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
             accountStatus: 'disabled',
             availability: 'unavailable',
           );
+          updatedCount++;
         } catch (_) {}
+      }
+      if (updatedCount == 0 && lastError != null) {
+        throw lastError;
       }
       await _loadDoctorDirectory();
       if (mounted) _snack('Doctor deactivated and removed from new assignments.');

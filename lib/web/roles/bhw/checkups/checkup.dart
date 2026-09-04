@@ -506,13 +506,39 @@ class _CheckUpPageState extends State<CheckUpPage> {
     final vitals = _safeCheckUpText(record['vitalsigns'], fallback: '');
     final symptoms = _safeCheckUpText(record['symptoms'], fallback: '');
     final observationsParts = <String>[
-      if (vitals.isNotEmpty) 'Vitals: $vitals',
       if (symptoms.isNotEmpty) 'Symptoms: $symptoms',
+      if (vitals.isNotEmpty) 'Vitals: $vitals',
     ];
 
+    final diagnosis = _safeCheckUpText(
+      record['diagnosis'] ??
+          record['clinicalImpression'] ??
+          record['disease'] ??
+          record['diseaseType'],
+      fallback: '',
+    );
+    final sev = (record['ai_severity'] ?? record['severity'] ?? '')
+        .toString()
+        .toLowerCase();
+    final triage = (record['triageLevel'] ?? '').toString().toLowerCase();
+    final priority = (sev == 'critical' ||
+            sev == 'emergency' ||
+            triage.contains('triage 1'))
+        ? 'emergency'
+        : (sev == 'high' ||
+                triage.contains('triage 2') ||
+                triage.contains('triage 3') ||
+                record['referralRecommended'] == true)
+            ? 'urgent'
+            : 'routine';
+
     _openReferralOverlay(
+      initialRecord: record,
       initialPatient: referralSeed,
-      initialObservations: observationsParts.join('. '),
+      initialObservations: observationsParts.join('\n'),
+      initialReason:
+          diagnosis.isNotEmpty && diagnosis != 'General' ? diagnosis : null,
+      initialPriority: priority,
     );
   }
 
@@ -523,6 +549,9 @@ class _CheckUpPageState extends State<CheckUpPage> {
   void _openReferralOverlay({
     Map<String, dynamic>? initialPatient,
     String? initialObservations,
+    String? initialReason,
+    String? initialPriority,
+    Map<String, dynamic>? initialRecord,
   }) {
     showDialog(
       context: context,
@@ -531,6 +560,9 @@ class _CheckUpPageState extends State<CheckUpPage> {
         embedded: true,
         initialPatient: initialPatient,
         initialObservations: initialObservations,
+        initialReason: initialReason,
+        initialPriority: initialPriority,
+        initialRecord: initialRecord,
         onClose: () => Navigator.of(dialogContext).pop(),
       ),
     );
@@ -566,13 +598,39 @@ class _CheckUpPageState extends State<CheckUpPage> {
     final vitals = (savedRecord['vitalsigns'] ?? '').toString();
     final symptoms = (savedRecord['symptoms'] ?? '').toString();
     final observationsParts = <String>[
-      if (vitals.isNotEmpty) 'Vitals: $vitals',
       if (symptoms.isNotEmpty) 'Symptoms: $symptoms',
+      if (vitals.isNotEmpty) 'Vitals: $vitals',
     ];
 
+    final diagnosis = (savedRecord['diagnosis'] ??
+            savedRecord['clinicalImpression'] ??
+            savedRecord['disease'] ??
+            savedRecord['diseaseType'] ??
+            '')
+        .toString()
+        .trim();
+    final sev = (savedRecord['ai_severity'] ?? savedRecord['severity'] ?? '')
+        .toString()
+        .toLowerCase();
+    final triage = (savedRecord['triageLevel'] ?? '').toString().toLowerCase();
+    final priority = (sev == 'critical' ||
+            sev == 'emergency' ||
+            triage.contains('triage 1'))
+        ? 'emergency'
+        : (sev == 'high' ||
+                triage.contains('triage 2') ||
+                triage.contains('triage 3') ||
+                savedRecord['referralRecommended'] == true)
+            ? 'urgent'
+            : 'routine';
+
     _openReferralOverlay(
+      initialRecord: savedRecord,
       initialPatient: referralSeed,
-      initialObservations: observationsParts.join('. '),
+      initialObservations: observationsParts.join('\n'),
+      initialReason:
+          diagnosis.isNotEmpty && diagnosis != 'General' ? diagnosis : null,
+      initialPriority: priority,
     );
   }
 
@@ -4093,9 +4151,20 @@ class _NewCheckUpFullScreenModalState
   final String _diseaseType = 'General';
   bool _isSaving = false;
 
+  Timer? _analysisDebounce;
+  Map<String, dynamic>? _liveClassification;
+  HealthScreeningResult? _liveScreeningResult;
+
   @override
   void initState() {
     super.initState();
+    _symptomsController.addListener(_triggerLiveAnalysis);
+    _bloodPressureController.addListener(_triggerLiveAnalysis);
+    _temperatureController.addListener(_triggerLiveAnalysis);
+    _heartRateController.addListener(_triggerLiveAnalysis);
+    _respiratoryRateController.addListener(_triggerLiveAnalysis);
+    _oxygenSaturationController.addListener(_triggerLiveAnalysis);
+
     final patientSeed = widget.patientSeed;
     if (patientSeed == null) {
       return;
@@ -4106,6 +4175,380 @@ class _NewCheckUpFullScreenModalState
     _surnameController.text = name.surname;
     _ageController.text = (patientSeed['age'] ?? '').toString();
     _addressController.text = (patientSeed['address'] ?? '').toString();
+  }
+
+  @override
+  void dispose() {
+    _analysisDebounce?.cancel();
+    _symptomsController.removeListener(_triggerLiveAnalysis);
+    _bloodPressureController.removeListener(_triggerLiveAnalysis);
+    _temperatureController.removeListener(_triggerLiveAnalysis);
+    _heartRateController.removeListener(_triggerLiveAnalysis);
+    _respiratoryRateController.removeListener(_triggerLiveAnalysis);
+    _oxygenSaturationController.removeListener(_triggerLiveAnalysis);
+    _firstNameController.dispose();
+    _surnameController.dispose();
+    _ageController.dispose();
+    _addressController.dispose();
+    _bloodPressureController.dispose();
+    _temperatureController.dispose();
+    _heartRateController.dispose();
+    _respiratoryRateController.dispose();
+    _oxygenSaturationController.dispose();
+    _weightController.dispose();
+    _heightController.dispose();
+    _symptomsController.dispose();
+    super.dispose();
+  }
+
+  void _triggerLiveAnalysis() {
+    _analysisDebounce?.cancel();
+    _analysisDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      _updateLiveAnalysis();
+    });
+  }
+
+  void _updateLiveAnalysis() {
+    final text = _symptomsController.text.trim();
+    final temp = _temperatureController.text.trim();
+    final bp = _bloodPressureController.text.trim();
+    final hr = _heartRateController.text.trim();
+    final rr = _respiratoryRateController.text.trim();
+    final o2 = _oxygenSaturationController.text.trim();
+
+    if (text.isEmpty &&
+        bp.isEmpty &&
+        temp.isEmpty &&
+        hr.isEmpty &&
+        rr.isEmpty &&
+        o2.isEmpty) {
+      if (_liveClassification != null || _liveScreeningResult != null) {
+        setState(() {
+          _liveClassification = null;
+          _liveScreeningResult = null;
+        });
+      }
+      return;
+    }
+
+    final localResult = _localHealthCategoryFallback(text);
+    final syntheticRecord = <String, dynamic>{
+      'symptoms': text,
+      'details': text,
+      'bloodPressure': bp,
+      'temperature': temp,
+      'heartRate': hr,
+      'respiratoryRate': rr,
+      'oxygenSaturation': o2,
+      'age': _ageController.text.trim(),
+    };
+    final screening = HealthScreeningEngine.evaluate(syntheticRecord);
+
+    setState(() {
+      _liveClassification = localResult;
+      _liveScreeningResult = screening;
+    });
+  }
+
+  Widget _buildAiClassificationPreviewCard() {
+    final classification = _liveClassification;
+    final screening = _liveScreeningResult;
+    final hasInput = _symptomsController.text.trim().isNotEmpty ||
+        _bloodPressureController.text.trim().isNotEmpty ||
+        _temperatureController.text.trim().isNotEmpty;
+
+    final category = classification?['healthCategory']?.toString() ??
+        classification?['ai_suggested_health_category']?.toString() ??
+        'Needs Clinical Review';
+    final keywords = List<String>.from(
+      classification?['healthCategoryKeywords'] ??
+          classification?['ai_category_matched_symptoms'] ??
+          [],
+    );
+
+    Color categoryBg;
+    Color categoryFg;
+    Color categoryBorder;
+    IconData categoryIcon;
+
+    switch (category) {
+      case 'Communicable':
+        categoryBg = const Color(0xFFE8F5E9);
+        categoryFg = const Color(0xFF2E7D32);
+        categoryBorder = const Color(0xFFA5D6A7);
+        categoryIcon = Icons.coronavirus_outlined;
+        break;
+      case 'Non-Communicable':
+        categoryBg = const Color(0xFFE3F2FD);
+        categoryFg = const Color(0xFF1565C0);
+        categoryBorder = const Color(0xFF90CAF9);
+        categoryIcon = Icons.monitor_heart_outlined;
+        break;
+      case 'Mixed':
+        categoryBg = const Color(0xFFF3E5F5);
+        categoryFg = const Color(0xFF7B1FA2);
+        categoryBorder = const Color(0xFFCE93D8);
+        categoryIcon = Icons.merge_type_rounded;
+        break;
+      default:
+        categoryBg = const Color(0xFFFFF8E1);
+        categoryFg = const Color(0xFFF57F17);
+        categoryBorder = const Color(0xFFFFE082);
+        categoryIcon = Icons.pending_actions_rounded;
+    }
+
+    final screeningIsUrgent = screening != null &&
+        (screening.status == HealthScreeningStatus.urgentAssessment ||
+            screening.status == HealthScreeningStatus.referralReview);
+    final screeningReferralAdvised = screening != null &&
+        (screening.referralRecommendation ==
+                HealthReferralRecommendation.referralRecommended ||
+            screening.referralRecommendation ==
+                HealthReferralRecommendation.urgentProfessionalAssessment);
+    final screeningFlagList = screening == null
+        ? <String>[]
+        : [
+            ...screening.warnings,
+            ...screening.findings
+                .where((f) =>
+                    f.status != HealthScreeningStatus.withinExpectedRange &&
+                    !f.isInformational)
+                .map((f) =>
+                    '${f.measurement}: ${f.recordedValue} (${f.reason})'),
+          ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _primaryAqua.withValues(alpha: 0.22),
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: _primaryAqua.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: _primaryAqua,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'AI / ML Decision Support & Clinical Classification',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _darkDeepTeal,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: hasInput
+                      ? const Color(0xFFE6FCF5)
+                      : const Color(0xFFF1F3F5),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: hasInput
+                            ? const Color(0xFF0CA678)
+                            : const Color(0xFFADB5BD),
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      hasInput ? 'Live Assessment' : 'Awaiting Input',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: hasInput
+                            ? const Color(0xFF0CA678)
+                            : const Color(0xFF868E96),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: categoryBg,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: categoryBorder),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(categoryIcon, size: 16, color: categoryFg),
+                const SizedBox(width: 6),
+                Text(
+                  'Classification: $category',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: categoryFg,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (keywords.isNotEmpty) ...[
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Text(
+                  'Detected Keywords: ',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: _mutedCoolGray,
+                  ),
+                ),
+                ...keywords.map(
+                  (kw) => Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: _mutedCoolGray.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Text(
+                      kw,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: _lightOffWhite,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (screening != null) ...[
+            const Divider(height: 16, thickness: 0.8),
+            Row(
+              children: [
+                Icon(
+                  Icons.monitor_heart_rounded,
+                  size: 14,
+                  color: screeningIsUrgent
+                      ? Colors.orange.shade800
+                      : const Color(0xFF0CA678),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Triage Status: ${screening.status.label}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: screeningIsUrgent
+                          ? Colors.orange.shade900
+                          : const Color(0xFF0CA678),
+                    ),
+                  ),
+                ),
+                if (screeningReferralAdvised)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: const Text(
+                      'Referral Advised',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            if (screeningFlagList.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: screeningFlagList
+                    .map(
+                      (flag) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.orange.shade200),
+                        ),
+                        child: Text(
+                          flag,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.orange.shade900,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+          ] else if (!hasInput) ...[
+            const Text(
+              'Enter symptoms or vitals above for automated classification and triage support.',
+              style: TextStyle(
+                fontSize: 11.5,
+                color: _mutedCoolGray,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   @override
@@ -4605,6 +5048,8 @@ class _NewCheckUpFullScreenModalState
                                   ? 'Symptoms / observations are required'
                                   : null,
                             ),
+                            const SizedBox(height: 14),
+                            _buildAiClassificationPreviewCard(),
                           ],
                         ),
                       );
@@ -4991,15 +5436,18 @@ class _NewCheckUpFullScreenModalState
         newRecord['ai_keywords'] = classification.keywords.join(', ');
         newRecord['ai_recovery_plan'] = classification.recoveryPlan;
       } catch (e) {
-        newRecord.addAll(
-          _localHealthCategoryFallback(_symptomsController.text),
+        final fallback = _localHealthCategoryFallback(_symptomsController.text);
+        newRecord.addAll(fallback);
+        classification = SymptomGuidanceResult.fromFallback(
+          fallbackMap: fallback,
         );
       }
 
+      final screeningResult = HealthScreeningEngine.evaluate(newRecord);
       newRecord.addAll(
         HealthScreeningEngine.attachToRecord(
           newRecord,
-          HealthScreeningEngine.evaluate(newRecord),
+          screeningResult,
         ),
       );
 
@@ -5007,13 +5455,29 @@ class _NewCheckUpFullScreenModalState
       await widget.onSave(newRecord);
       if (!mounted) return null;
 
-      // Show AI Classification modal
+      // Always show AI Classification & Decision Support modal on screen
+      setState(() => _isSaving = false);
       if (classification != null) {
-        setState(() => _isSaving = false);
         await _showSymptomGuidanceModal(
           context,
           classification,
           record: newRecord,
+        );
+      }
+
+      final assignedCategory =
+          newRecord['diseaseType'] ??
+          newRecord['healthCategory'] ??
+          newRecord['ai_suggested_health_category'] ??
+          'General';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Check-up saved! AI Clinical Classification: $assignedCategory',
+            ),
+            backgroundColor: const Color(0xFF087F5B),
+          ),
         );
       }
 
@@ -5441,27 +5905,8 @@ class _NewCheckUpFullScreenModalState
       fillColor: Colors.white,
     );
   }
-
-  @override
-  void dispose() {
-    _firstNameController.dispose();
-    _surnameController.dispose();
-    _ageController.dispose();
-    _addressController.dispose();
-
-    // Dispose all vital sign controllers
-    _bloodPressureController.dispose();
-    _temperatureController.dispose();
-    _heartRateController.dispose();
-    _respiratoryRateController.dispose();
-    _oxygenSaturationController.dispose();
-    _weightController.dispose();
-    _heightController.dispose();
-
-    _symptomsController.dispose();
-    super.dispose();
-  }
 }
+
 
 // Edit Check Up Modal
 class _EditCheckUpFullScreenModal extends StatefulWidget {
