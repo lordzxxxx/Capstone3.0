@@ -34,8 +34,9 @@ Future<List<int>> buildCheckupPdfBytes(Map<String, dynamic> record) async {
     footerText: 'Generated from the Check-Up records module.',
     barangayName: pdfText(record['barangay']),
     summaryFields: [],
-    signatureSectionOnNewPage: true,
-    signatureSectionAtPageBottom: true,
+    singlePage: true,
+    signatureSectionOnNewPage: false,
+    signatureSectionAtPageBottom: false,
     sections: [
       RecordPdfSection(title: 'Patient Information', fields: patientFields),
       RecordPdfSection(title: 'Encounter Details', fields: encounterFields),

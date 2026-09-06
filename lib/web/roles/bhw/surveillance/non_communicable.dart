@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -484,17 +486,11 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
 
     return Column(
       children: [
-        WebTableSurface(
-          minWidth: 1180,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                _buildPatientTableHeader(),
-                ...pagedPatients.map(_buildPatientCard),
-              ],
-            ),
-          ),
+        Column(
+          children: [
+            _buildPatientTableHeader(),
+            ...pagedPatients.map(_buildPatientCard),
+          ],
         ),
         const SizedBox(height: 12),
         _buildTablePagination(
@@ -529,13 +525,18 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
   }
 
   Widget _buildPatientTableHeaderDivider() {
-    return Container(width: 1, height: 18, color: const Color(0xFFD9E5F2));
+    return Container(
+      width: 1,
+      height: 18,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      color: const Color(0xFFD9E5F2),
+    );
   }
 
   Widget _buildPatientTableHeader() {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
@@ -560,21 +561,17 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
             ),
             const SizedBox(width: 10),
           ],
-          _buildPatientTableHeaderCell('Patient', flex: 26),
+          _buildPatientTableHeaderCell('Patient Details', flex: 24),
           _buildPatientTableHeaderDivider(),
-          _buildPatientTableHeaderCell('Condition', flex: 20),
+          _buildPatientTableHeaderCell('Case Summary', flex: 34),
           _buildPatientTableHeaderDivider(),
-          _buildPatientTableHeaderCell('Treatment', flex: 18),
-          _buildPatientTableHeaderDivider(),
-          _buildPatientTableHeaderCell('Last Visit', flex: 12),
-          _buildPatientTableHeaderDivider(),
-          _buildPatientTableHeaderCell('Next Visit', flex: 12),
+          _buildPatientTableHeaderCell('Visit Schedule', flex: 18),
           _buildPatientTableHeaderDivider(),
           _buildPatientTableHeaderCell('Status', flex: 14),
           if (!_isSelectionMode) ...[
             _buildPatientTableHeaderDivider(),
             SizedBox(
-              width: 112,
+              width: 140,
               child: Text(
                 'Actions',
                 textAlign: TextAlign.center,
@@ -592,17 +589,96 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     );
   }
 
+  Widget _buildTableDetailBlock({
+    required String label,
+    required String value,
+    required TextStyle valueStyle,
+    IconData? icon,
+    Color? iconColor,
+  }) {
+    final displayValue = value.trim().isEmpty ? 'N/A' : value.trim();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 12, color: iconColor ?? AppColors.textSecondary),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        _buildHighlightedVitalLabelText(displayValue, baseStyle: valueStyle),
+      ],
+    );
+  }
+
+  Widget _buildVisitScheduleBlock({
+    required String label,
+    required String value,
+    required Color valueColor,
+    IconData? icon,
+    Color? iconColor,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 12, color: iconColor ?? AppColors.textSecondary),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value.trim().isEmpty ? 'N/A' : value.trim(),
+          style: TextStyle(
+            color: valueColor,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+          softWrap: true,
+        ),
+      ],
+    );
+  }
+
   Widget _buildPatientRowDivider() {
-    return Container(width: 1, height: 70, color: const Color(0xFF26476B));
+    return Container(width: 1, margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), color: const Color(0xFF26476B));
   }
 
   Widget _buildTableActionButton({
     required IconData icon,
     required VoidCallback onTap,
+    String? tooltip,
     Color backgroundColor = const Color(0xFF163B66),
     Color iconColor = Colors.white,
   }) {
-    return Container(
+    final button = Container(
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(7),
@@ -627,6 +703,10 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
         ),
       ),
     );
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: button);
+    }
+    return button;
   }
 
   Widget _buildTablePagination({
@@ -841,43 +921,49 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                   ),
                 ),
               Expanded(
-                flex: 26,
+                flex: 24,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       patientName,
                       style: const TextStyle(
                         color: rowText,
-                        fontSize: 13,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w700,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
-                      '$age years, $gender',
+                      '$gender • $age yrs',
                       style: const TextStyle(
                         color: mutedText,
                         fontSize: 11,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
                     ),
                     if (patientId.isNotEmpty) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        'ID: $patientId',
-                        style: const TextStyle(
-                          color: _primaryAqua,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        decoration: BoxDecoration(
+                          color: _primaryAqua.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'ID: $patientId',
+                          style: const TextStyle(
+                            color: _primaryAqua,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          softWrap: true,
+                        ),
                       ),
                     ],
                   ],
@@ -885,63 +971,65 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
               ),
               _buildPatientRowDivider(),
               Expanded(
-                flex: 20,
-                child: _buildHighlightedVitalLabelText(
-                  condition,
-                  baseStyle: const TextStyle(
-                    color: rowText,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                flex: 34,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTableDetailBlock(
+                      label: 'CONDITION',
+                      value: condition.isEmpty ? 'No details' : condition,
+                      icon: Icons.monitor_heart_outlined,
+                      iconColor: _primaryAqua,
+                      valueStyle: const TextStyle(
+                        color: rowText,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildTableDetailBlock(
+                      label: 'TREATMENT PLAN',
+                      value: treatment.isEmpty
+                          ? 'No treatment plan'
+                          : treatment,
+                      icon: Icons.medication_outlined,
+                      iconColor: AppColors.textSecondary,
+                      valueStyle: const TextStyle(
+                        color: mutedText,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               _buildPatientRowDivider(),
               Expanded(
                 flex: 18,
-                child: Text(
-                  treatment,
-                  style: const TextStyle(
-                    color: mutedText,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildVisitScheduleBlock(
+                      label: 'LAST VISIT',
+                      value: lastVisit,
+                      icon: Icons.calendar_today_outlined,
+                      iconColor: _primaryAqua,
+                      valueColor: rowText,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildVisitScheduleBlock(
+                      label: 'NEXT VISIT',
+                      value: nextVisit,
+                      icon: Icons.event_repeat_rounded,
+                      iconColor: const Color(0xFFE67E22),
+                      valueColor: mutedText,
+                    ),
+                  ],
                 ),
               ),
               _buildPatientRowDivider(),
               Expanded(
-                flex: 12,
-                child: Text(
-                  lastVisit,
-                  style: const TextStyle(
-                    color: rowText,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              _buildPatientRowDivider(),
-              Expanded(
-                flex: 12,
-                child: Text(
-                  nextVisit,
-                  style: const TextStyle(
-                    color: mutedText,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              _buildPatientRowDivider(),
-              Expanded(
-                flex: 20,
+                flex: 14,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -965,8 +1053,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -979,26 +1066,31 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                 Padding(
                   padding: const EdgeInsets.only(left: 8, right: 2),
                   child: SizedBox(
-                    width: 112,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        _buildTableActionButton(
-                          icon: Icons.visibility_rounded,
-                          onTap: () => _viewPatientDetails(patient),
-                        ),
-                        const SizedBox(width: 6),
-                        _buildTableActionButton(
-                          icon: Icons.edit_rounded,
-                          onTap: () => _editPatient(patient),
-                        ),
-                        const SizedBox(width: 6),
-                        _buildTableActionButton(
-                          icon: Icons.history_rounded,
-                          onTap: () => _viewHistory(patient),
-                        ),
-                      ],
+                    width: 140,
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          _buildTableActionButton(
+                            icon: Icons.visibility_rounded,
+                            tooltip: 'View Details',
+                            onTap: () => _viewPatientDetails(patient),
+                          ),
+                          const SizedBox(width: 6),
+                          _buildTableActionButton(
+                            icon: Icons.edit_rounded,
+                            tooltip: 'Edit Record',
+                            onTap: () => _editPatient(patient),
+                          ),
+                          const SizedBox(width: 6),
+                          _buildTableActionButton(
+                            icon: Icons.history_rounded,
+                            tooltip: 'View History',
+                            onTap: () => _viewHistory(patient),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -1010,13 +1102,34 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     );
   }
 
-  String _formatDate(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      return '${date.month}/${date.day}/${date.year}';
-    } catch (e) {
-      return dateString;
+  DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is Timestamp) return value.toDate();
+    if (value is num) {
+      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
     }
+    final raw = value.toString().trim();
+    if (raw.isEmpty) return null;
+    final parsed = DateTime.tryParse(raw);
+    if (parsed != null) return parsed;
+    final match = RegExp(r'seconds=(\d+)').firstMatch(raw);
+    if (match != null) {
+      final seconds = int.tryParse(match.group(1)!);
+      if (seconds != null) {
+        return DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+      }
+    }
+    return null;
+  }
+
+  String _formatDate(dynamic dateValue) {
+    final dt = _parseDateTime(dateValue);
+    if (dt == null) {
+      final raw = (dateValue ?? '').toString().trim();
+      return raw.isEmpty ? 'N/A' : raw;
+    }
+    return DateFormat('MMMM d, yyyy').format(dt);
   }
 
   void _showDeleteConfirmationModal() {

@@ -8,8 +8,9 @@ Future<List<int>> buildPrenatalPdfBytes(Map<String, dynamic> record) {
     subtitle: '',
     footerText: 'Generated from the Prenatal records module.',
     summaryFields: [],
-    signatureSectionOnNewPage: true,
-    signatureSectionAtPageBottom: true,
+    singlePage: true,
+    signatureSectionOnNewPage: false,
+    signatureSectionAtPageBottom: false,
     sections: [
       RecordPdfSection(
         title: 'Personal Information',

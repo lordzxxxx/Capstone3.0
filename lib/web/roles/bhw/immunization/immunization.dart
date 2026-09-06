@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/web/roles/bhw/immunization/immunization_database_helper.dart';
 import 'package:mycapstone_project/web/roles/bhw/immunization/immunization_insights.dart';
@@ -1317,90 +1319,87 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                         message: 'Try adjusting your filters or search terms',
                       )
                     else ...[
-                      WebTableSurface(
-                        minWidth: 1180,
-                        child: Column(
-                          children: [
-                            _buildImmunizationCardHeader(),
-                            _immunizationTable(
-                              records: displayRecords,
-                              startIndex: pageStartIndex,
-                              isSelectionMode: _isSelectionMode,
-                              selectedIndices: _selectedIndices,
-                              onSelectionChanged: (index, selected) {
-                                setState(() {
-                                  if (selected) {
-                                    _selectedIndices.add(index);
-                                  } else {
-                                    _selectedIndices.remove(index);
-                                  }
-                                });
-                              },
-                              onEdit: (record) {
-                                _showEditDialog(context, record);
-                              },
-                              onDelete: (record) async {
-                                final confirmed = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    backgroundColor: _sidebarDark,
-                                    title: Text(
-                                      'Delete Immunization',
-                                      style: TextStyle(
-                                        color: _primaryAqua,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    content: Text(
-                                      'Are you sure you want to delete this record?',
-                                      style: TextStyle(color: _lightOffWhite),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(context, false),
-                                        child: const Text('Cancel'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(context, true),
-                                        child: const Text(
-                                          'Delete',
-                                          style: TextStyle(
-                                            color: AppColors.error,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                if (confirmed == true) {
-                                  try {
-                                    await _dbHelper.deleteRecord(record['id']);
-                                    await _loadRecords();
-                                  } catch (e) {
-                                    if (!mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Failed to delete immunization record: $e',
-                                        ),
-                                        backgroundColor: AppColors.error,
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
-                                    );
-                                  }
+                      Column(
+                        children: [
+                          _buildImmunizationCardHeader(),
+                          _immunizationTable(
+                            records: displayRecords,
+                            startIndex: pageStartIndex,
+                            isSelectionMode: _isSelectionMode,
+                            selectedIndices: _selectedIndices,
+                            onSelectionChanged: (index, selected) {
+                              setState(() {
+                                if (selected) {
+                                  _selectedIndices.add(index);
+                                } else {
+                                  _selectedIndices.remove(index);
                                 }
-                              },
-                              onView: (record) {
-                                _showPatientImmunizationHistory(
-                                  context,
-                                  record,
-                                );
-                              },
-                            ),
-                          ],
-                        ),
+                              });
+                            },
+                            onEdit: (record) {
+                              _showEditDialog(context, record);
+                            },
+                            onDelete: (record) async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: _sidebarDark,
+                                  title: Text(
+                                    'Delete Immunization',
+                                    style: TextStyle(
+                                      color: _primaryAqua,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  content: Text(
+                                    'Are you sure you want to delete this record?',
+                                    style: TextStyle(color: _lightOffWhite),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: const Text(
+                                        'Delete',
+                                        style: TextStyle(
+                                          color: AppColors.error,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirmed == true) {
+                                try {
+                                  await _dbHelper.deleteRecord(record['id']);
+                                  await _loadRecords();
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Failed to delete immunization record: $e',
+                                      ),
+                                      backgroundColor: AppColors.error,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            onView: (record) {
+                              _showPatientImmunizationHistory(
+                                context,
+                                record,
+                              );
+                            },
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
                       _buildImmunizationTablePagination(
@@ -1488,6 +1487,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     return Container(
       width: 1,
       height: 18,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
       color: Colors.white.withValues(alpha: 0.2),
     );
   }
@@ -1495,7 +1495,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
   Widget _buildImmunizationCardHeader() {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.secondary,
         borderRadius: BorderRadius.circular(10),
@@ -1530,7 +1530,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
           if (!_isSelectionMode) ...[
             _buildImmunizationHeaderDivider(),
             SizedBox(
-              width: 148,
+              width: 156,
               child: Text(
                 'Actions',
                 textAlign: TextAlign.center,
@@ -4415,20 +4415,38 @@ class _ImmunizationCard extends StatelessWidget {
     return text.isEmpty ? fallback : text;
   }
 
-  String _formatDateLabel(dynamic value) {
-    final raw = _safe(value, '');
-    if (raw.isEmpty) return 'N/A';
-
+  DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is Timestamp) return value.toDate();
+    if (value is num) {
+      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
+    }
+    final raw = value.toString().trim();
+    if (raw.isEmpty) return null;
     final parsed = DateTime.tryParse(raw);
-    if (parsed != null) {
-      return '${parsed.year}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
+    if (parsed != null) return parsed;
+    final match = RegExp(r'seconds=(\d+)').firstMatch(raw);
+    if (match != null) {
+      final seconds = int.tryParse(match.group(1)!);
+      if (seconds != null) {
+        return DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+      }
     }
+    return null;
+  }
 
-    if (raw.contains(' ')) {
-      return raw.split(' ').first;
+  String _formatDate(dynamic value) {
+    final dt = _parseDateTime(value);
+    if (dt == null) {
+      final raw = _safe(value, 'N/A');
+      return raw;
     }
+    return DateFormat('MMMM d, yyyy').format(dt);
+  }
 
-    return raw;
+  String _formatDateLabel(dynamic value) {
+    return _formatDate(value);
   }
 
   Color _statusColor(String status) {
@@ -4458,10 +4476,11 @@ class _ImmunizationCard extends StatelessWidget {
   Widget _buildActionButton({
     required IconData icon,
     required VoidCallback onTap,
+    String? tooltip,
     Color backgroundColor = AppColors.secondary,
     Color iconColor = Colors.white,
   }) {
-    return Container(
+    final button = Container(
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(7),
@@ -4486,40 +4505,12 @@ class _ImmunizationCard extends StatelessWidget {
         ),
       ),
     );
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: button);
+    }
+    return button;
   }
 
-  Widget _buildLabeledDetailLine({
-    required String label,
-    required String value,
-    required Color labelColor,
-    required Color valueColor,
-    FontWeight valueWeight = FontWeight.w700,
-  }) {
-    return RichText(
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: '$label: ',
-            style: TextStyle(
-              color: labelColor,
-              fontSize: 10.5,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          TextSpan(
-            text: value,
-            style: TextStyle(
-              color: valueColor,
-              fontSize: 10.5,
-              fontWeight: valueWeight,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -4597,6 +4588,7 @@ class _ImmunizationCard extends StatelessWidget {
                     ),
                   ),
                 ),
+              // 1. Patient Details (flex: 26)
               Expanded(
                 flex: 26,
                 child: Column(
@@ -4626,137 +4618,189 @@ class _ImmunizationCard extends StatelessWidget {
                     ),
                     if (patientId != '-') ...[
                       const SizedBox(height: 3),
-                      Text(
-                        'ID: $patientId',
-                        style: const TextStyle(
-                          color: _primaryAqua,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        decoration: BoxDecoration(
+                          color: _primaryAqua.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'ID: $patientId',
+                          style: const TextStyle(
+                            color: _primaryAqua,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ],
-                    const SizedBox(height: 3),
-                    Text(
-                      'Admin Date: $adminDate',
-                      style: const TextStyle(
-                        color: mutedText,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 5),
                     WebSyncStatusBadge(record: record),
                   ],
                 ),
               ),
               _buildDivider(),
+
+              // 2. Administration Details (flex: 28)
               Expanded(
                 flex: 28,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RichText(
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      text: TextSpan(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const TextSpan(
-                            text: 'Dose: ',
-                            style: TextStyle(
-                              color: adminLabelText,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 12,
+                            color: _primaryAqua,
                           ),
-                          TextSpan(
-                            text: doseNumber,
-                            style: const TextStyle(
-                              color: rowText,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const TextSpan(
-                            text: '   Route: ',
-                            style: TextStyle(
-                              color: adminLabelText,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          TextSpan(
-                            text: route,
-                            style: const TextStyle(
-                              color: rowText,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              'Date: $adminDate',
+                              style: const TextStyle(
+                                color: rowText,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    RichText(
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      text: TextSpan(
-                        children: [
-                          const TextSpan(
-                            text: 'Brand: ',
-                            style: TextStyle(
-                              color: adminLabelText,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
+                      const SizedBox(height: 3),
+                      RichText(
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        text: TextSpan(
+                          children: [
+                            const TextSpan(
+                              text: 'Dose: ',
+                              style: TextStyle(
+                                color: adminLabelText,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          TextSpan(
-                            text: brand,
-                            style: const TextStyle(
-                              color: rowText,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
+                            TextSpan(
+                              text: doseNumber,
+                              style: const TextStyle(
+                                color: rowText,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          const TextSpan(
-                            text: '   Batch: ',
-                            style: TextStyle(
-                              color: adminLabelText,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
+                            const TextSpan(
+                              text: '   Route: ',
+                              style: TextStyle(
+                                color: adminLabelText,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          TextSpan(
-                            text: batch,
-                            style: const TextStyle(
-                              color: rowText,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
+                            TextSpan(
+                              text: route,
+                              style: const TextStyle(
+                                color: rowText,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    _buildLabeledDetailLine(
-                      label: 'Next Dose',
-                      value: nextDoseDate,
-                      labelColor: adminLabelText,
-                      valueColor: rowText,
-                    ),
-                    const SizedBox(height: 3),
-                    _buildLabeledDetailLine(
-                      label: 'Adverse Events Following Immunization (AEFI)',
-                      value: adverseEvents,
-                      labelColor: adminLabelText,
-                      valueColor: rowText,
-                      valueWeight: FontWeight.w600,
-                    ),
-                  ],
+                      const SizedBox(height: 3),
+                      RichText(
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        text: TextSpan(
+                          children: [
+                            const TextSpan(
+                              text: 'Brand: ',
+                              style: TextStyle(
+                                color: adminLabelText,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            TextSpan(
+                              text: brand,
+                              style: const TextStyle(
+                                color: rowText,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const TextSpan(
+                              text: '   Batch: ',
+                              style: TextStyle(
+                                color: adminLabelText,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            TextSpan(
+                              text: batch,
+                              style: const TextStyle(
+                                color: rowText,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (nextDoseDate.isNotEmpty && nextDoseDate != 'N/A') ...[
+                        const SizedBox(height: 3),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.event_repeat_rounded,
+                              size: 11,
+                              color: _primaryAqua,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                'Next Dose: $nextDoseDate',
+                                style: const TextStyle(
+                                  color: _primaryAqua,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (adverseEvents.isNotEmpty &&
+                          adverseEvents != 'None reported' &&
+                          adverseEvents != 'N/A') ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          'AEFI: $adverseEvents',
+                          style: const TextStyle(
+                            color: Color(0xFFE53935),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
               _buildDivider(),
@@ -4828,13 +4872,14 @@ class _ImmunizationCard extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(left: 8, right: 2),
                   child: SizedBox(
-                    width: 148,
+                    width: 156,
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         _buildActionButton(
                           icon: Icons.history_rounded,
+                          tooltip: 'View Details',
                           onTap: onView != null
                               ? () => onView!(record)
                               : () => onEdit(record),
@@ -4842,17 +4887,20 @@ class _ImmunizationCard extends StatelessWidget {
                         const SizedBox(width: 6),
                         _buildActionButton(
                           icon: Icons.edit_rounded,
+                          tooltip: 'Edit Record',
                           onTap: () => onEdit(record),
                         ),
                         const SizedBox(width: 6),
                         _buildActionButton(
                           icon: Icons.picture_as_pdf_rounded,
+                          tooltip: 'Export PDF',
                           onTap: () =>
                               _downloadImmunizationRecordPdf(context, record),
                         ),
                         const SizedBox(width: 6),
                         _buildActionButton(
                           icon: Icons.delete_rounded,
+                          tooltip: 'Delete Record',
                           onTap: () => onDelete(record),
                         ),
                       ],

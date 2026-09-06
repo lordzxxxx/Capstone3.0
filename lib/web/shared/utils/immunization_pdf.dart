@@ -10,8 +10,9 @@ Future<List<int>> buildImmunizationPdfBytes(Map<String, dynamic> record) {
     subtitle: '',
     footerText: 'Generated from the Immunization records module.',
     summaryFields: [],
-    signatureSectionOnNewPage: true,
-    signatureSectionAtPageBottom: true,
+    singlePage: true,
+    signatureSectionOnNewPage: false,
+    signatureSectionAtPageBottom: false,
     sections: [
       RecordPdfSection(
         title: 'Patient Information',

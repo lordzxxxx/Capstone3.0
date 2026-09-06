@@ -26,10 +26,13 @@ pw.Widget buildOfficialReportHeader({
   pw.MemoryImage? cityLogo,
   pw.MemoryImage? healthOfficeLogo,
   pw.MemoryImage? barangayLogo,
+  bool isCompact = false,
 }) {
   final location = barangayName.trim().isEmpty
       ? ''
       : 'BARANGAY: ${barangayName.trim()}';
+
+  final logoSize = isCompact ? 36.0 : 52.0;
 
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -37,22 +40,22 @@ pw.Widget buildOfficialReportHeader({
       pw.Text(
         'REPUBLIC OF THE PHILIPPINES  •  PROVINCE OF BUKIDNON',
         style: pw.TextStyle(
-          fontSize: 7.2,
+          fontSize: isCompact ? 7.2 : 7.6,
           fontWeight: pw.FontWeight.bold,
           color: PdfColors.black,
           letterSpacing: 0.45,
         ),
       ),
-      pw.SizedBox(height: 4),
+      pw.SizedBox(height: isCompact ? 2 : 4),
       pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
-          _reportLogo(cityLogo, 'CITY'),
-          pw.SizedBox(width: 7),
-          _reportLogo(healthOfficeLogo, 'CHO'),
-          pw.SizedBox(width: 7),
-          _reportLogo(barangayLogo, 'BARANGAY'),
-          pw.SizedBox(width: 12),
+          _reportLogo(cityLogo, 'CITY', size: logoSize),
+          pw.SizedBox(width: isCompact ? 5 : 7),
+          _reportLogo(healthOfficeLogo, 'CHO', size: logoSize),
+          pw.SizedBox(width: isCompact ? 5 : 7),
+          _reportLogo(barangayLogo, 'BARANGAY', size: logoSize),
+          pw.SizedBox(width: isCompact ? 8 : 12),
           pw.Expanded(
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.center,
@@ -61,29 +64,29 @@ pw.Widget buildOfficialReportHeader({
                   'CITY OF MALAYBALAY',
                   textAlign: pw.TextAlign.center,
                   style: pw.TextStyle(
-                    fontSize: 13,
+                    fontSize: isCompact ? 11.5 : 13,
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.black,
-                    letterSpacing: 0.75,
+                    letterSpacing: isCompact ? 0.5 : 0.75,
                   ),
                 ),
-                pw.SizedBox(height: 2),
+                pw.SizedBox(height: 1),
                 pw.Text(
                   'SAKA TA MALAYBALAY',
                   textAlign: pw.TextAlign.center,
                   style: pw.TextStyle(
-                    fontSize: 8.2,
+                    fontSize: isCompact ? 7.6 : 8.2,
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.black,
-                    letterSpacing: 0.9,
+                    letterSpacing: isCompact ? 0.6 : 0.9,
                   ),
                 ),
-                pw.SizedBox(height: 5),
+                pw.SizedBox(height: isCompact ? 2 : 5),
                 pw.Text(
                   systemName.toUpperCase(),
                   textAlign: pw.TextAlign.center,
                   style: pw.TextStyle(
-                    fontSize: 7.1,
+                    fontSize: isCompact ? 7.0 : 7.5,
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.black,
                     letterSpacing: 0.45,
@@ -93,12 +96,12 @@ pw.Widget buildOfficialReportHeader({
             ),
           ),
           if (reportReference.trim().isNotEmpty) ...[
-            pw.SizedBox(width: 12),
+            pw.SizedBox(width: isCompact ? 8 : 12),
             pw.Container(
-              width: 126,
-              padding: const pw.EdgeInsets.symmetric(
-                horizontal: 9,
-                vertical: 7,
+              width: isCompact ? 108 : 126,
+              padding: pw.EdgeInsets.symmetric(
+                horizontal: isCompact ? 6 : 9,
+                vertical: isCompact ? 4 : 7,
               ),
               decoration: pw.BoxDecoration(
                 border: pw.Border.all(color: PdfColors.black),
@@ -109,25 +112,28 @@ pw.Widget buildOfficialReportHeader({
                   pw.Text(
                     'REPORT CONTROL',
                     style: pw.TextStyle(
-                      fontSize: 7.2,
+                      fontSize: isCompact ? 7.0 : 7.6,
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.black,
                       letterSpacing: 0.6,
                     ),
                   ),
-                  pw.SizedBox(height: 3),
+                  pw.SizedBox(height: 2),
                   pw.Text(
                     reportReference,
                     style: pw.TextStyle(
-                      fontSize: 8.2,
+                      fontSize: isCompact ? 7.8 : 8.4,
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.black,
                     ),
                   ),
-                  pw.SizedBox(height: 2),
+                  pw.SizedBox(height: 1),
                   pw.Text(
                     'Generated: ${_formatOfficialDateTime(generatedAt)}',
-                    style: pw.TextStyle(fontSize: 7.3, color: PdfColors.black),
+                    style: pw.TextStyle(
+                      fontSize: isCompact ? 6.8 : 7.3,
+                      color: PdfColors.black,
+                    ),
                   ),
                 ],
               ),
@@ -135,26 +141,29 @@ pw.Widget buildOfficialReportHeader({
           ],
         ],
       ),
-      pw.SizedBox(height: 7),
+      pw.SizedBox(height: isCompact ? 4 : 7),
       pw.Text(
         title,
         style: pw.TextStyle(
-          fontSize: 15,
+          fontSize: isCompact ? 13 : 15,
           fontWeight: pw.FontWeight.bold,
           color: PdfColors.black,
         ),
       ),
       if (location.isNotEmpty || subtitle.trim().isNotEmpty) ...[
-        pw.SizedBox(height: 2),
+        pw.SizedBox(height: 1),
         pw.Text(
           [
             location,
             subtitle.trim(),
           ].where((value) => value.isNotEmpty).join('  |  '),
-          style: pw.TextStyle(fontSize: 8.6, color: PdfColors.black),
+          style: pw.TextStyle(
+            fontSize: isCompact ? 8.2 : 8.6,
+            color: PdfColors.black,
+          ),
         ),
       ],
-      pw.SizedBox(height: 7),
+      pw.SizedBox(height: isCompact ? 4 : 7),
       pw.Divider(color: PdfColors.black),
     ],
   );
@@ -224,10 +233,58 @@ pw.Widget buildOfficialReportSignatureSection(
   String title = 'SIGNATURE SECTION',
   String note =
       'Complete the printed name, signature, and date fields before filing the report.',
+  bool isCompact = false,
 }) {
   final visible = signatures
       .where((signature) => signature.title.trim().isNotEmpty)
       .toList();
+
+  if (isCompact) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.SizedBox(height: 6),
+        pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.end,
+          children: [
+            for (var index = 0; index < visible.length; index++) ...[
+              if (index > 0) pw.SizedBox(width: 10),
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    pw.SizedBox(height: 18),
+                    pw.Container(height: 0.8, color: PdfColors.black),
+                    pw.SizedBox(height: 2.5),
+                    pw.Text(
+                      visible[index].title.toUpperCase(),
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                        fontSize: isCompact ? 7.2 : 8.5,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.black,
+                      ),
+                    ),
+                    if (visible[index].printedName.trim().isNotEmpty) ...[
+                      pw.SizedBox(height: 1),
+                      pw.Text(
+                        visible[index].printedName.trim(),
+                        textAlign: pw.TextAlign.center,
+                        style: pw.TextStyle(
+                          fontSize: isCompact ? 6.8 : 8.0,
+                          color: PdfColors.black,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
 
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -260,19 +317,23 @@ pw.Widget buildOfficialReportSignatureSection(
   );
 }
 
-pw.Widget _reportLogo(pw.MemoryImage? image, String fallbackLabel) {
+pw.Widget _reportLogo(
+  pw.MemoryImage? image,
+  String fallbackLabel, {
+  double size = 52.0,
+}) {
   return pw.Column(
     mainAxisSize: pw.MainAxisSize.min,
     children: [
       pw.SizedBox(
-        width: 52,
-        height: 52,
+        width: size,
+        height: size,
         child: image == null
             ? pw.Center(
                 child: pw.Text(
                   fallbackLabel,
                   style: pw.TextStyle(
-                    fontSize: 6.5,
+                    fontSize: size * 0.125,
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.black,
                   ),
@@ -284,7 +345,7 @@ pw.Widget _reportLogo(pw.MemoryImage? image, String fallbackLabel) {
       pw.Text(
         fallbackLabel,
         style: pw.TextStyle(
-          fontSize: 4.6,
+          fontSize: size * 0.088,
           fontWeight: pw.FontWeight.bold,
           color: PdfColors.black,
         ),

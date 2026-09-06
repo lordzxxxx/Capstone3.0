@@ -1374,7 +1374,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
   Widget _buildCheckUpCardHeader() {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
@@ -1403,18 +1403,18 @@ class _CheckUpPageState extends State<CheckUpPage> {
           _buildHeaderDivider(),
           _buildHeaderCell('Vital Signs', flex: 28),
           _buildHeaderDivider(),
-          _buildHeaderCell('Symptoms', flex: 28),
+          _buildHeaderCell('Symptoms', flex: 26),
           _buildHeaderDivider(),
-          _buildHeaderCell('Date', flex: 18),
+          _buildHeaderCell('Date / Time', flex: 20),
           if (!_isSelectionMode) ...[
             _buildHeaderDivider(),
-            SizedBox(
-              width: 150,
+            const SizedBox(
+              width: 156,
               child: Text(
                 'Actions',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: Colors.white,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.2,
@@ -3794,7 +3794,12 @@ class _CheckUpCard extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 70, color: const Color(0xFFD9E5F2));
+    return Container(
+      width: 1,
+      height: 60,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      color: const Color(0xFFD9E5F2),
+    );
   }
 
   Widget _buildActionButton({
@@ -3842,17 +3847,21 @@ class _CheckUpCard extends StatelessWidget {
       record['patientId'] ?? record['linkedPatientId'] ?? record['id'],
       '-',
     );
-    final dateTime = _safe(
-      record['datetime'] ??
-          record['date'] ??
-          record['consultationDate'] ??
-          record['createdAt'] ??
-          record['timestamp'],
-      'N/A',
-    );
-    final dateLabel = dateTime.contains('T')
-        ? dateTime.split('T').first
-        : dateTime.split(' ').first;
+    final rawDateTime = record['datetime'] ??
+        record['date'] ??
+        record['consultationDate'] ??
+        record['createdAt'] ??
+        record['timestamp'];
+    final parsedDt = _parseCheckUpDateTime(rawDateTime);
+    final dateLabel = parsedDt != null
+        ? DateFormat('MMMM d, yyyy').format(parsedDt.toLocal())
+        : (rawDateTime?.toString().trim().isNotEmpty == true &&
+                !rawDateTime.toString().contains('Timestamp(')
+            ? rawDateTime.toString().split('T').first.split(' ').first
+            : 'N/A');
+    final timeLabel = parsedDt != null
+        ? DateFormat('h:mm a').format(parsedDt.toLocal())
+        : '';
     final symptoms = _safe(
       record['symptoms'] ??
           record['chief_complaint'] ??
@@ -3863,16 +3872,37 @@ class _CheckUpCard extends StatelessWidget {
     );
     final vitals = _safe(
       record['vitalsigns'] ??
-          record['vitalSigns'] ??
           record['vitals'] ??
+          record['vitalSigns'] ??
           record['vital_signs'],
-      'No vitals recorded',
+      'N/A',
     );
     final abnormalVitalFlags = detectAbnormalVitalFlags(vitals);
+    final isSelected = isSelectionMode && this.isSelected;
 
     const rowBg = Colors.white;
     const rowText = Color(0xFF0B1F3A);
     const mutedText = Color(0xFF546E7A);
+
+    final gender = _safe(record['gender'] ?? record['sex'], '');
+    final diseaseCategory = _safe(
+      record['diseaseType'] ??
+          record['healthCategory'] ??
+          record['category'] ??
+          record['diagnosis'],
+      '',
+    );
+    final followUp = _safe(
+      record['followup'] ?? record['followUpDate'] ?? record['nextVisit'],
+      '',
+    );
+    final followUpDt = _parseCheckUpDateTime(followUp);
+    final followUpLabel = followUpDt != null
+        ? DateFormat('MMMM d, yyyy').format(followUpDt.toLocal())
+        : (followUp.isNotEmpty && !followUp.toLowerCase().contains('timestamp')
+            ? followUp
+            : '');
+    final status = _safe(record['status'], 'Completed');
 
     return GestureDetector(
       onTap: isSelectionMode
@@ -3911,6 +3941,7 @@ class _CheckUpCard extends StatelessWidget {
                     ),
                   ),
                 ),
+              // 1. Patient Details (flex: 26)
               Expanded(
                 flex: 26,
                 child: Column(
@@ -3927,14 +3958,48 @@ class _CheckUpCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      gender.isNotEmpty && gender != 'N/A'
+                          ? '$gender • $age yrs'
+                          : '$age years old',
+                      style: const TextStyle(
+                        color: mutedText,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (recordId != '-') ...[
+                      const SizedBox(height: 3),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _primaryAqua.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'ID: $recordId',
+                          style: const TextStyle(
+                            color: _primaryAqua,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                     if (abnormalVitalFlags.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Tooltip(
                         message: abnormalVitalFlags.join(', '),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
+                            horizontal: 7,
+                            vertical: 2,
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.referralTint,
@@ -3948,15 +4013,15 @@ class _CheckUpCard extends StatelessWidget {
                             children: const [
                               Icon(
                                 Icons.warning_amber_rounded,
-                                size: 12,
+                                size: 11,
                                 color: AppColors.referral,
                               ),
-                              SizedBox(width: 4),
+                              SizedBox(width: 3),
                               Text(
                                 'Suggested Referral',
                                 style: TextStyle(
                                   color: AppColors.referralStrong,
-                                  fontSize: 10,
+                                  fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -3965,115 +4030,214 @@ class _CheckUpCard extends StatelessWidget {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 2),
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          const TextSpan(
-                            text: 'Age: ',
-                            style: TextStyle(
-                              color: mutedText,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          TextSpan(
-                            text: '$age years',
-                            style: const TextStyle(
-                              color: rowText,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (recordId != '-') ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        'ID: $recordId',
-                        style: const TextStyle(
-                          color: _primaryAqua,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 5),
                     WebSyncStatusBadge(record: record),
                   ],
                 ),
               ),
               _buildDivider(),
+
+              // 2. Vital Signs (flex: 28)
               Expanded(
                 flex: 28,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [_buildHighlightedVitalSignsWeb(vitals)],
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: _buildHighlightedVitalSignsWeb(vitals),
                 ),
               ),
               _buildDivider(),
+
+              // 3. Symptoms & Clinical Category (flex: 26)
               Expanded(
-                flex: 28,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      symptoms,
-                      style: const TextStyle(
-                        color: rowText,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                flex: 26,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (diseaseCategory.isNotEmpty &&
+                          diseaseCategory != 'N/A') ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF163B66)
+                                .withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: const Color(0xFF163B66)
+                                  .withValues(alpha: 0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            diseaseCategory,
+                            style: const TextStyle(
+                              color: Color(0xFF163B66),
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                      ],
+                      RichText(
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        text: TextSpan(
+                          children: [
+                            const TextSpan(
+                              text: 'Complaints: ',
+                              style: TextStyle(
+                                color: mutedText,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            TextSpan(
+                              text: symptoms,
+                              style: const TextStyle(
+                                color: rowText,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                      if (followUpLabel.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.event_repeat_rounded,
+                              size: 11,
+                              color: _primaryAqua,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                'Follow-up: $followUpLabel',
+                                style: const TextStyle(
+                                  color: _primaryAqua,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
               _buildDivider(),
+
+              // 4. Date / Time & Status (flex: 20)
               Expanded(
-                flex: 18,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      dateLabel,
-                      style: const TextStyle(
-                        color: rowText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                flex: 20,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 13,
+                            color: _primaryAqua,
+                          ),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              dateLabel,
+                              style: const TextStyle(
+                                color: rowText,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                      if (timeLabel.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.access_time_rounded,
+                              size: 13,
+                              color: mutedText,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              timeLabel,
+                              style: const TextStyle(
+                                color: mutedText,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2F80ED).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          status,
+                          style: const TextStyle(
+                            color: Color(0xFF2F80ED),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               if (!isSelectionMode) ...[
                 _buildDivider(),
-                Padding(
-                  padding: const EdgeInsets.only(left: 8, right: 2),
-                  child: SizedBox(
-                    width: 150,
+                SizedBox(
+                  width: 156,
+                  child: Center(
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _buildActionButton(
                           icon: Icons.history_rounded,
-                          tooltip: 'View history',
+                          tooltip: 'View History',
                           onTap: () => onViewHistory(record),
                         ),
                         const SizedBox(width: 6),
                         _buildActionButton(
                           icon: Icons.edit_rounded,
-                          tooltip: 'Edit record',
+                          tooltip: 'Edit Record',
+                          accent: _primaryAqua,
                           onTap: () => onEdit(record),
                         ),
                         const SizedBox(width: 6),
@@ -4086,7 +4250,8 @@ class _CheckUpCard extends StatelessWidget {
                         const SizedBox(width: 6),
                         _buildActionButton(
                           icon: Icons.picture_as_pdf_rounded,
-                          tooltip: 'Download PDF',
+                          tooltip: 'Export PDF',
+                          accent: const Color(0xFFD32F2F),
                           onTap: () => _generateCheckupPdf(context, record),
                         ),
                       ],
@@ -5457,13 +5622,11 @@ class _NewCheckUpFullScreenModalState
 
       // Always show AI Classification & Decision Support modal on screen
       setState(() => _isSaving = false);
-      if (classification != null) {
-        await _showSymptomGuidanceModal(
-          context,
-          classification,
-          record: newRecord,
-        );
-      }
+      await _showSymptomGuidanceModal(
+        context,
+        classification,
+        record: newRecord,
+      );
 
       final assignedCategory =
           newRecord['diseaseType'] ??

@@ -13,8 +13,9 @@ Future<List<int>> buildMortalityPdfBytes(Map<String, dynamic> record) {
     subtitle: '',
     footerText: 'Generated from the Mortality records module.',
     summaryFields: [],
-    signatureSectionOnNewPage: true,
-    signatureSectionAtPageBottom: true,
+    singlePage: true,
+    signatureSectionOnNewPage: false,
+    signatureSectionAtPageBottom: false,
     sections: [
       RecordPdfSection(
         title: 'Basic Details',

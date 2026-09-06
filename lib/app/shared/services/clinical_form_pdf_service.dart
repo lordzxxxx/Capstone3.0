@@ -57,7 +57,7 @@ class ClinicalFormPdfService {
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(24),
+        margin: const pw.EdgeInsets.symmetric(horizontal: 22, vertical: 16),
         build: (pw.Context context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.stretch,
@@ -465,9 +465,8 @@ class ClinicalFormPdfService {
                     pw.Container(
                       margin: const pw.EdgeInsets.only(right: 4),
                       padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                      decoration: pw.BoxDecoration(
+                      decoration: const pw.BoxDecoration(
                         color: PdfColors.grey200,
-                        borderRadius: pw.BorderRadius.circular(3),
                       ),
                       child: pw.Text(
                         'BLANK TEMPLATE',
@@ -478,7 +477,6 @@ class ClinicalFormPdfService {
                     padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                     decoration: pw.BoxDecoration(
                       color: PdfColors.blue50,
-                      borderRadius: pw.BorderRadius.circular(4),
                       border: pw.Border.all(color: PdfColors.blue300),
                     ),
                     child: pw.Text(
@@ -497,12 +495,20 @@ class ClinicalFormPdfService {
 
   static pw.Widget _buildSection(String title) {
     return pw.Container(
-      margin: const pw.EdgeInsets.only(top: 6, bottom: 3),
-      padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      color: PdfColors.grey200,
+      margin: const pw.EdgeInsets.only(top: 5, bottom: 2.5),
+      padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(
+          bottom: pw.BorderSide(color: PdfColors.blue900, width: 0.8),
+        ),
+      ),
       child: pw.Text(
         title,
-        style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900),
+        style: pw.TextStyle(
+          fontSize: 8.6,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.blue900,
+        ),
       ),
     );
   }
@@ -525,12 +531,12 @@ class ClinicalFormPdfService {
                   children: [
                     pw.TextSpan(
                       text: '$label: ',
-                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8, color: PdfColors.black),
+                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8.6, color: PdfColors.black),
                     ),
                     pw.TextSpan(
                       text: value,
                       style: pw.TextStyle(
-                        fontSize: 8,
+                        fontSize: 8.6,
                         color: isBlank ? PdfColors.grey500 : PdfColors.blue900,
                         fontWeight: isBlank ? pw.FontWeight.normal : pw.FontWeight.bold,
                       ),
@@ -553,7 +559,7 @@ class ClinicalFormPdfService {
         children: [
           pw.Text(
             '$label:',
-            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8, color: PdfColors.black),
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8.6, color: PdfColors.black),
           ),
           pw.SizedBox(height: 1.5),
           pw.Container(
@@ -561,13 +567,11 @@ class ClinicalFormPdfService {
             constraints: pw.BoxConstraints(minHeight: minHeight),
             padding: const pw.EdgeInsets.all(4),
             decoration: pw.BoxDecoration(
-              border: pw.Border.all(color: PdfColors.grey400, width: 0.8),
-              borderRadius: pw.BorderRadius.circular(3),
-              color: isBlank ? PdfColors.white : PdfColors.grey50,
+              border: pw.Border.all(color: PdfColors.grey600, width: 0.6),
             ),
             child: pw.Text(
               isBlank ? '' : value,
-              style: const pw.TextStyle(fontSize: 8, color: PdfColors.blue900),
+              style: const pw.TextStyle(fontSize: 8.6, color: PdfColors.blue900),
             ),
           ),
         ],

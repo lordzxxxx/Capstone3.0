@@ -832,7 +832,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     return Expanded(
       flex: flex,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         child: Text(
           label,
           style: TextStyle(
@@ -852,14 +852,24 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     return Container(
       width: 1,
       height: 18,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
       color: Colors.white.withValues(alpha: 0.2),
+    );
+  }
+
+  Widget _buildPatientRowDivider() {
+    return Container(
+      width: 1,
+      height: 24,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      color: const Color(0xFFD9E5F2),
     );
   }
 
   Widget _buildPatientCardHeader() {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
@@ -871,12 +881,13 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       child: Row(
         children: [
           if (_isSelectionMode) ...[
-            SizedBox(
-              width: 30,
+            const SizedBox(
+              width: 32,
               child: Text(
                 'Sel',
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.85),
+                  color: Colors.white,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),
@@ -896,7 +907,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           _buildPatientHeaderDivider(),
           _buildPatientHeaderCell('Household No.', flex: 16),
           _buildPatientHeaderDivider(),
-          _buildPatientHeaderCell('Status', flex: 12),
+          _buildPatientHeaderCell('Status', flex: 14),
           _buildPatientHeaderDivider(),
           _buildPatientHeaderCell('Last Visit', flex: 16),
           _buildPatientHeaderDivider(),
@@ -963,7 +974,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     return Expanded(
       flex: flex,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         child: Text(
           value,
           maxLines: 2,
@@ -1502,88 +1513,94 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (_isSelectionMode)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Checkbox(
-                    value: isSelected,
-                    onChanged: (value) => setState(() {
-                      if (value == true) {
-                        _selectedIndices.add(index);
-                      } else {
-                        _selectedIndices.remove(index);
-                      }
-                    }),
-                    activeColor: _primaryAqua,
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    side: BorderSide(
-                      color: const Color(0xFFB1C4D5).withValues(alpha: 0.8),
-                      width: 1.2,
+              if (_isSelectionMode) ...[
+                SizedBox(
+                  width: 32,
+                  child: Center(
+                    child: Checkbox(
+                      value: isSelected,
+                      onChanged: (value) => setState(() {
+                        if (value == true) {
+                          _selectedIndices.add(index);
+                        } else {
+                          _selectedIndices.remove(index);
+                        }
+                      }),
+                      activeColor: _primaryAqua,
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      side: BorderSide(
+                        color: const Color(0xFFB1C4D5).withValues(alpha: 0.8),
+                        width: 1.2,
+                      ),
                     ),
                   ),
                 ),
+                const SizedBox(width: 8),
+              ],
               _buildRegistryCell(patientId, flex: 16, bold: true),
-              _buildPatientHeaderDivider(),
+              _buildPatientRowDivider(),
               _buildRegistryCell(patientName, flex: 24, bold: true),
-              _buildPatientHeaderDivider(),
+              _buildPatientRowDivider(),
               _buildRegistryCell(age, flex: 8),
-              _buildPatientHeaderDivider(),
+              _buildPatientRowDivider(),
               _buildRegistryCell(sex, flex: 10),
-              _buildPatientHeaderDivider(),
+              _buildPatientRowDivider(),
               _buildRegistryCell(barangay, flex: 18),
-              _buildPatientHeaderDivider(),
+              _buildPatientRowDivider(),
               _buildRegistryCell(householdId, flex: 16),
-              _buildPatientHeaderDivider(),
+              _buildPatientRowDivider(),
               Expanded(
-                flex: 18,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: statusColor.withValues(alpha: 0.35),
-                          width: 1,
+                flex: 14,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: statusColor.withValues(alpha: 0.35),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          status,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      child: Text(
-                        status,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    WebSyncStatusBadge(record: patient),
-                  ],
+                      const SizedBox(height: 6),
+                      WebSyncStatusBadge(record: patient),
+                    ],
+                  ),
                 ),
               ),
-              _buildPatientHeaderDivider(),
+              _buildPatientRowDivider(),
               _buildRegistryCell(lastVisit, flex: 16),
-              _buildPatientHeaderDivider(),
+              _buildPatientRowDivider(),
               _buildRegistryCell(assignedBhw, flex: 18),
               if (!_isSelectionMode) ...[
-                _buildPatientHeaderDivider(),
-                Padding(
-                  padding: const EdgeInsets.only(left: 8, right: 2),
-                  child: SizedBox(
-                    width: 178,
+                _buildPatientRowDivider(),
+                SizedBox(
+                  width: 178,
+                  child: Center(
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,

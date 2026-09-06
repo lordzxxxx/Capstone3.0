@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:mycapstone_project/web/roles/bhw/prenatal/prenatal_database_helper.dart';
 import 'package:mycapstone_project/app/core/services/health_ai_classifier.dart';
@@ -13,7 +14,6 @@ import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
-import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
@@ -5028,6 +5028,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
     return Container(
       width: 1,
       height: 18,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
       color: Colors.white.withValues(alpha: 0.2),
     );
   }
@@ -5087,7 +5088,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
   Widget _buildPrenatalCardHeader() {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: _secondaryIceBlue,
         borderRadius: BorderRadius.circular(10),
@@ -5112,17 +5113,19 @@ class _PrenatalPageState extends State<PrenatalPage> {
             ),
             const SizedBox(width: 8),
           ],
-          _buildPrenatalHeaderCell('Date/Time', flex: 14),
+          _buildPrenatalHeaderCell('Date / Time', flex: 15),
           _buildPrenatalHeaderDivider(),
-          _buildPrenatalHeaderCell('Type', flex: 22),
+          _buildPrenatalHeaderCell('Patient Info', flex: 23),
           _buildPrenatalHeaderDivider(),
-          _buildPrenatalHeaderCell('Patient', flex: 26),
+          _buildPrenatalHeaderCell('Pregnancy & Gestation', flex: 25),
           _buildPrenatalHeaderDivider(),
-          _buildPrenatalHeaderCell('Assessment', flex: 42),
+          _buildPrenatalHeaderCell('Clinical & Vitals', flex: 21),
+          _buildPrenatalHeaderDivider(),
+          _buildPrenatalHeaderCell('Risk & Status', flex: 16),
           if (!_isSelectionMode) ...[
             _buildPrenatalHeaderDivider(),
             const SizedBox(
-              width: 112,
+              width: 140,
               child: Text(
                 'Actions',
                 textAlign: TextAlign.center,
@@ -5309,12 +5312,6 @@ class _PrenatalPageState extends State<PrenatalPage> {
             ),
           ),
 
-          if (records.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-              child: _buildPrenatalCardHeader(),
-            ),
-
           // Records list
           if (records.isEmpty)
             Padding(
@@ -5339,10 +5336,10 @@ class _PrenatalPageState extends State<PrenatalPage> {
           else
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: WebTableSurface(
-                minWidth: 1240,
-                child: Column(
-                  children: List.generate(pagedRecords.length, (index) {
+              child: Column(
+                children: [
+                  _buildPrenatalCardHeader(),
+                  ...List.generate(pagedRecords.length, (index) {
                     final absoluteIndex = pageStartIndex + index;
                     final isSelected = _selectedIndices.contains(absoluteIndex);
                     return _PrenatalCard(
@@ -5364,7 +5361,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
                       onView: (record) => _onViewButtonPressed(context, record),
                     );
                   }),
-                ),
+                ],
               ),
             ),
           if (records.isNotEmpty)
@@ -5665,7 +5662,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
             : constraints.maxWidth < 1100
             ? (constraints.maxWidth - 48) / 4
             : (constraints.maxWidth - 64) / 5;
-        final responsiveWidth = itemWidth.clamp(132.0, 178.0);
+        final responsiveWidth = itemWidth.clamp(140.0, 185.0);
 
         return Container(
           width: double.infinity,
@@ -5807,7 +5804,9 @@ class _PrenatalPageState extends State<PrenatalPage> {
     return SizedBox(
       width: width,
       child: DropdownButtonFormField<String>(
+        key: ValueKey('$label-$value'),
         initialValue: items.contains(value) ? value : items.first,
+        isExpanded: true,
         isDense: true,
         style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
         decoration: InputDecoration(
@@ -5846,6 +5845,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
                 value: item,
                 child: Text(
                   item,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textPrimary,
@@ -5977,73 +5978,151 @@ class _PrenatalCard extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 70, color: const Color(0xFFD9E5F2));
+    return Container(
+      width: 1,
+      height: 60,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      color: const Color(0xFFD9E5F2),
+    );
   }
 
   Widget _buildIconActionButton({
     required IconData icon,
     required VoidCallback onTap,
+    required String tooltip,
+    Color? color,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF163B66),
-        borderRadius: BorderRadius.circular(7),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF163B66).withValues(alpha: 0.28),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        decoration: BoxDecoration(
+          color: color ?? const Color(0xFF163B66),
           borderRadius: BorderRadius.circular(7),
-          child: SizedBox(
-            width: 32,
-            height: 32,
-            child: Icon(icon, color: Colors.white, size: 15),
+          boxShadow: [
+            BoxShadow(
+              color: (color ?? const Color(0xFF163B66)).withValues(alpha: 0.25),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(7),
+            child: SizedBox(
+              width: 32,
+              height: 32,
+              child: Icon(icon, color: Colors.white, size: 15),
+            ),
           ),
         ),
       ),
     );
   }
 
-  String _formatDate(dynamic date) {
-    if (date == null || date.toString().trim().isEmpty) return 'N/A';
-    try {
-      final dateTime = DateTime.parse(date.toString());
-      return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
-    } catch (e) {
-      return date.toString();
+  String _formatWithUnit(dynamic raw, String unit, [String fallback = 'N/A']) {
+    if (raw == null) return fallback;
+    var text = raw.toString().trim();
+    if (text.isEmpty || text.toLowerCase() == 'n/a' || text == '-') {
+      return fallback;
     }
+    final unitPattern = RegExp(
+      '\\s*${RegExp.escape(unit)}\\.?',
+      caseSensitive: false,
+    );
+    text = text.replaceAll(unitPattern, '').trim();
+    if (text.isEmpty) return fallback;
+    return '$text $unit';
+  }
+
+  DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+
+    try {
+      final dynamic converted = (value as dynamic).toDate();
+      if (converted is DateTime) return converted;
+    } catch (_) {}
+
+    if (value is num) {
+      final integer = value.toInt();
+      return integer.abs() > 100000000000
+          ? DateTime.fromMillisecondsSinceEpoch(integer)
+          : DateTime.fromMillisecondsSinceEpoch(integer * 1000);
+    }
+
+    if (value is Map) {
+      final seconds = value['seconds'] ?? value['_seconds'];
+      final nanoseconds = value['nanoseconds'] ?? value['_nanoseconds'] ?? 0;
+      if (seconds is num) {
+        return DateTime.fromMillisecondsSinceEpoch(
+          (seconds * 1000).round() +
+              (nanoseconds is num ? (nanoseconds / 1000000).round() : 0),
+        );
+      }
+    }
+
+    final text = value.toString().trim();
+    if (text.isEmpty) return null;
+    final isoDate = DateTime.tryParse(text);
+    if (isoDate != null) return isoDate;
+
+    final firestoreTimestamp = RegExp(
+      r'seconds\s*[=:]\s*(-?\d+)(?:.*nanoseconds\s*[=:]\s*(\d+))?',
+      caseSensitive: false,
+    ).firstMatch(text);
+    if (firestoreTimestamp == null) return null;
+
+    final seconds = int.tryParse(firestoreTimestamp.group(1) ?? '');
+    final nanoseconds = int.tryParse(firestoreTimestamp.group(2) ?? '') ?? 0;
+    if (seconds == null) return null;
+    return DateTime.fromMillisecondsSinceEpoch(
+      (seconds * 1000) + (nanoseconds ~/ 1000000),
+    );
+  }
+
+  String _formatDate(dynamic value) {
+    final parsed = _parseDateTime(value);
+    if (parsed == null) {
+      final text = value?.toString().trim() ?? '';
+      if (text.isNotEmpty && !text.toLowerCase().contains('timestamp')) {
+        return text;
+      }
+      return 'N/A';
+    }
+    return DateFormat('MMMM d, yyyy').format(parsed.toLocal());
   }
 
   Map<String, String> _formatDateTimeParts(dynamic value) {
-    if (value == null || value.toString().trim().isEmpty) {
+    final parsed = _parseDateTime(value);
+    if (parsed == null) {
+      final text = value?.toString().trim() ?? '';
+      if (text.isNotEmpty && !text.toLowerCase().contains('timestamp')) {
+        return {'date': text, 'time': ''};
+      }
       return {'date': 'N/A', 'time': ''};
     }
-
-    try {
-      final dt = DateTime.parse(value.toString());
-      final date =
-          '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-      final time =
-          '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-      return {'date': date, 'time': time};
-    } catch (e) {
-      return {'date': _formatDate(value), 'time': ''};
-    }
+    final local = parsed.toLocal();
+    return {
+      'date': DateFormat('MMMM d, yyyy').format(local),
+      'time': DateFormat('h:mm a').format(local),
+    };
   }
 
   @override
   Widget build(BuildContext context) {
-    final patientName = _safe(
-      record['patientName'] ?? record['patient'] ?? record['name'],
-      'Unknown Patient',
-    );
+    final rawFirst = record['firstName']?.toString().trim() ?? '';
+    final rawSurname = record['surname']?.toString().trim() ?? '';
+    final combinedName =
+        [rawFirst, rawSurname].where((s) => s.isNotEmpty).join(' ');
+    final patientName = combinedName.isNotEmpty
+        ? combinedName
+        : _safe(
+            record['patientName'] ?? record['patient'] ?? record['name'],
+            'Unknown Patient',
+          );
     final age = _safe(record['age'], 'N/A');
     final patientId = _safe(
       record['patientId'] ?? record['id'] ?? record['linkedPatientId'],
@@ -6062,11 +6141,17 @@ class _PrenatalCard extends StatelessWidget {
     final lmpDate = _formatDate(record['lmpDate'] ?? record['lmp']);
     final gravida = _safe(record['gravida'], '');
     final para = _safe(record['para'], '');
-    final gpInfo = (gravida.isNotEmpty || para.isNotEmpty)
-        ? ' (G$gravida P$para)'
-        : '';
     final bp = _safe(record['bp'] ?? record['bloodPressure'], '');
-    final status = _safe(record['status'] ?? record['riskLevel'], 'Active');
+    final weight = _safe(record['wt'] ?? record['weight'], '');
+    final fh = _safe(record['fh'] ?? record['fundalHeight'], '');
+    final fhb = _safe(
+      record['dhb'] ?? record['fetalHeartBeat'] ?? record['fhb'],
+      '',
+    );
+    final weightStr = _formatWithUnit(weight, 'kg');
+    final fhStr = _formatWithUnit(fh, 'cm');
+    final fhbStr = _formatWithUnit(fhb, 'bpm');
+    final status = _safe(record['riskLevel'] ?? record['status'], 'Active');
     final registration = _formatDateTimeParts(
       record['registrationDate'] ??
           record['createdAt'] ??
@@ -6119,31 +6204,58 @@ class _PrenatalCard extends StatelessWidget {
                     ),
                   ),
                 ),
+              // 1. Date / Time (flex: 15)
               Expanded(
-                flex: 14,
+                flex: 15,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        dateLabel,
-                        style: const TextStyle(
-                          color: rowText,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 13,
+                            color: _primaryAqua,
+                          ),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              dateLabel,
+                              style: const TextStyle(
+                                color: rowText,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                       if (timeLabel.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          timeLabel,
-                          style: const TextStyle(
-                            color: mutedText,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.access_time_rounded,
+                              size: 13,
+                              color: mutedText,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              timeLabel,
+                              style: const TextStyle(
+                                color: mutedText,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ],
@@ -6151,171 +6263,296 @@ class _PrenatalCard extends StatelessWidget {
                 ),
               ),
               _buildDivider(),
+
+              // 2. Patient Info (flex: 23)
               Expanded(
-                flex: 22,
+                flex: 23,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE9D6E0),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Text(
-                        'Prenatal Care',
-                        style: TextStyle(
-                          color: Color(0xFF163B66),
-                          fontSize: 11,
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        patientName,
+                        style: const TextStyle(
+                          color: rowText,
+                          fontSize: 13,
                           fontWeight: FontWeight.w700,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Female • $age yrs',
+                        style: const TextStyle(
+                          color: mutedText,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (patientId != '-') ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _primaryAqua.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'ID: $patientId',
+                                style: const TextStyle(
+                                  color: _primaryAqua,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          if (contactNumber != 'N/A' &&
+                              contactNumber.isNotEmpty)
+                            Flexible(
+                              child: Text(
+                                contactNumber,
+                                style: const TextStyle(
+                                  color: mutedText,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
               _buildDivider(),
+
+              // 3. Pregnancy & Gestation (flex: 25)
               Expanded(
-                flex: 26,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      patientName,
-                      style: const TextStyle(
-                        color: rowText,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
+                flex: 25,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          if (gravida.isNotEmpty || para.isNotEmpty) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF163B66)
+                                    .withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: const Color(0xFF163B66)
+                                      .withValues(alpha: 0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                'G$gravida P$para',
+                                style: const TextStyle(
+                                  color: Color(0xFF163B66),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          Flexible(
+                            child: Text(
+                              gestationalAge != 'N/A'
+                                  ? 'AOG: $gestationalAge'
+                                  : 'AOG: N/A',
+                              style: const TextStyle(
+                                color: rowText,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Female, $age years$gpInfo',
-                      style: const TextStyle(
-                        color: mutedText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    if (patientId != '-') ...[
                       const SizedBox(height: 3),
                       Text(
-                        'ID: $patientId',
+                        'LMP: $lmpDate',
                         style: const TextStyle(
-                          color: _primaryAqua,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
+                          color: mutedText,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'EDD: $dueDate',
+                        style: const TextStyle(
+                          color: Color(0xFF0B1F3A),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                  ],
+                  ),
                 ),
               ),
               _buildDivider(),
+
+              // 4. Clinical & Vitals (flex: 21)
               Expanded(
-                flex: 42,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
+                flex: 21,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.favorite_outline_rounded,
+                            size: 13,
+                            color: Color(0xFFE53935),
                           ),
-                          decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: statusColor.withValues(alpha: 0.5),
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(
-                            status,
-                            style: TextStyle(
-                              color: statusColor,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (bp.isNotEmpty && bp != 'N/A') ...[
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           Text(
-                            'BP: $bp',
+                            'BP: ${bp.isNotEmpty ? bp : 'N/A'}',
                             style: const TextStyle(
                               color: rowText,
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        weightStr != 'N/A'
+                            ? 'Weight: $weightStr'
+                            : 'Weight: N/A',
+                        style: const TextStyle(
+                          color: mutedText,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (fhStr != 'N/A' || fhbStr != 'N/A') ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          [
+                            if (fhStr != 'N/A') 'FH: $fhStr',
+                            if (fhbStr != 'N/A') 'FHB: $fhbStr',
+                          ].join(' • '),
+                          style: const TextStyle(
+                            color: mutedText,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Gestational Age: $gestationalAge',
-                      style: const TextStyle(
-                        color: rowText,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      'Due: $dueDate  |  LMP: $lmpDate  |  Contact: $contactNumber',
-                      style: const TextStyle(
-                        color: mutedText,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Manrope',
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    WebSyncStatusBadge(record: record),
-                  ],
+                    ],
+                  ),
                 ),
               ),
+              _buildDivider(),
+
+              // 5. Risk & Status (flex: 16)
+              Expanded(
+                flex: 16,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: statusColor.withValues(alpha: 0.5),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          status,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      WebSyncStatusBadge(record: record),
+                    ],
+                  ),
+                ),
+              ),
+
+              // 6. Actions (fixed 140)
               if (!isSelectionMode) ...[
                 _buildDivider(),
-                Padding(
-                  padding: const EdgeInsets.only(left: 8, right: 2),
-                  child: SizedBox(
-                    width: 112,
+                SizedBox(
+                  width: 140,
+                  child: Center(
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _buildIconActionButton(
                           icon: Icons.visibility_rounded,
+                          tooltip: 'View Details',
+                          color: const Color(0xFF163B66),
                           onTap: onView != null ? () => onView!(record) : () {},
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         _buildIconActionButton(
                           icon: Icons.edit_rounded,
+                          tooltip: 'Edit Record',
+                          color: _primaryAqua,
                           onTap: () => onEdit(record),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         _buildIconActionButton(
                           icon: Icons.picture_as_pdf_rounded,
+                          tooltip: 'Export PDF',
+                          color: const Color(0xFFD32F2F),
                           onTap: () => _generatePrenatalPdf(context, record),
                         ),
                       ],

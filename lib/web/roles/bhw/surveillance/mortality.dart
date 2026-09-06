@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -2305,7 +2307,7 @@ class _MortalityPageState extends State<MortalityPage> {
             : constraints.maxWidth < 1100
             ? (constraints.maxWidth - 48) / 4
             : (constraints.maxWidth - 64) / 5;
-        final responsiveWidth = itemWidth.clamp(132.0, 178.0);
+        final responsiveWidth = itemWidth.clamp(140.0, 185.0);
 
         return Container(
           width: double.infinity,
@@ -2466,7 +2468,9 @@ class _MortalityPageState extends State<MortalityPage> {
     return SizedBox(
       width: width,
       child: DropdownButtonFormField<String>(
+        key: ValueKey('$label-$value'),
         initialValue: items.contains(value) ? value : items.first,
+        isExpanded: true,
         isDense: true,
         style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
         decoration: InputDecoration(
@@ -2505,6 +2509,8 @@ class _MortalityPageState extends State<MortalityPage> {
                 value: item,
                 child: Text(
                   item,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textPrimary,
@@ -2903,6 +2909,7 @@ class _MortalityPageState extends State<MortalityPage> {
     return Container(
       width: 1,
       height: 18,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
       color: Colors.white.withValues(alpha: 0.2),
     );
   }
@@ -2910,7 +2917,7 @@ class _MortalityPageState extends State<MortalityPage> {
   Widget _buildMortalityTableHeader() {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
@@ -2921,14 +2928,14 @@ class _MortalityPageState extends State<MortalityPage> {
       ),
       child: Row(
         children: [
-          _buildTableHeaderCell('Patient', flex: 30),
+          _buildTableHeaderCell('Patient', flex: 28),
           _buildTableHeaderDivider(),
-          _buildTableHeaderCell('Mortality Details', flex: 40),
+          _buildTableHeaderCell('Mortality Details', flex: 42),
           _buildTableHeaderDivider(),
-          _buildTableHeaderCell('Verification', flex: 18),
+          _buildTableHeaderCell('Verification', flex: 16),
           _buildTableHeaderDivider(),
           const SizedBox(
-            width: 148,
+            width: 156,
             child: Text(
               'Actions',
               textAlign: TextAlign.center,
@@ -2971,14 +2978,19 @@ class _MortalityPageState extends State<MortalityPage> {
   }
 
   Widget _buildRowDivider() {
-    return Container(width: 1, height: 70, color: AppColors.border);
+    return Container(
+      width: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      color: const Color(0xFFD9E5F2),
+    );
   }
 
   Widget _buildRowActionButton({
     required IconData icon,
     required VoidCallback onTap,
+    String? tooltip,
   }) {
-    return Container(
+    final button = Container(
       decoration: BoxDecoration(
         color: _primaryAqua,
         borderRadius: BorderRadius.circular(7),
@@ -3003,6 +3015,10 @@ class _MortalityPageState extends State<MortalityPage> {
         ),
       ),
     );
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: button);
+    }
+    return button;
   }
 
   Widget _buildMortalityTableRow(Map<String, dynamic> record) {
@@ -3041,182 +3057,273 @@ class _MortalityPageState extends State<MortalityPage> {
     const mutedText = AppColors.textSecondary;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 6),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: const Color(0xFFD9E5F2), width: 1),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              flex: 30,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      color: rowText,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Age: $age years | $gender',
-                    style: const TextStyle(
-                      color: mutedText,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Reported: $reportedDate',
-                    style: TextStyle(
-                      color: mutedText,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            _buildRowDivider(),
-            Expanded(
-              flex: 40,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 28,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      cause,
-                      style: const TextStyle(
-                        color: Color(0xFFE53935),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      place,
+                      name,
                       style: const TextStyle(
                         color: rowText,
-                        fontSize: 13,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w700,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Reported by: $reportedBy',
-                      style: TextStyle(
+                      '$gender • $age yrs',
+                      style: const TextStyle(
                         color: mutedText,
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            _buildRowDivider(),
-            Expanded(
-              flex: 18,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _verificationChipBackground(verification),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        verification,
-                        style: const TextStyle(
-                          color: Color(0xFF163B66),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      softWrap: true,
                     ),
                     const SizedBox(height: 6),
-                    WebSyncStatusBadge(record: record),
-                  ],
-                ),
-              ),
-            ),
-            _buildRowDivider(),
-            Padding(
-              padding: const EdgeInsets.only(left: 8, right: 2),
-              child: SizedBox(
-                width: 148,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildRowActionButton(
-                      icon: Icons.history_rounded,
-                      onTap: () => _showMortalityHistory(context, record),
-                    ),
-                    const SizedBox(width: 6),
-                    _buildRowActionButton(
-                      icon: Icons.edit_rounded,
-                      onTap: () => _editRecord(record),
-                    ),
-                    const SizedBox(width: 6),
-                    _buildRowActionButton(
-                      icon: Icons.verified_rounded,
-                      onTap: () => _verifyRecord(record),
-                    ),
-                    const SizedBox(width: 6),
-                    _buildRowActionButton(
-                      icon: Icons.picture_as_pdf_rounded,
-                      onTap: () => _printRecord(record),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.calendar_today_outlined,
+                          size: 11.5,
+                          color: _primaryAqua,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            'Reported: $reportedDate',
+                            style: const TextStyle(
+                              color: mutedText,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            softWrap: true,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              _buildRowDivider(),
+              Expanded(
+                flex: 42,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.only(top: 1.5),
+                            child: Icon(
+                              Icons.error_outline_rounded,
+                              size: 13,
+                              color: Color(0xFFE53935),
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'CAUSE OF DEATH',
+                                  style: TextStyle(
+                                    color: Color(0xFFE53935),
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  cause,
+                                  style: const TextStyle(
+                                    color: rowText,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  softWrap: true,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.place_outlined,
+                            size: 12,
+                            color: _mutedCoolGray,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              place,
+                              style: const TextStyle(
+                                color: mutedText,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              softWrap: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.person_outline_rounded,
+                            size: 12,
+                            color: _mutedCoolGray,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Informant: $reportedBy',
+                              style: const TextStyle(
+                                color: mutedText,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              softWrap: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              _buildRowDivider(),
+              Expanded(
+                flex: 16,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _verificationChipBackground(verification),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: const Color(0xFF163B66).withValues(alpha: 0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          verification,
+                          style: const TextStyle(
+                            color: Color(0xFF163B66),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          softWrap: true,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      WebSyncStatusBadge(record: record),
+                    ],
+                  ),
+                ),
+              ),
+              _buildRowDivider(),
+              Padding(
+                padding: const EdgeInsets.only(left: 8, right: 2),
+                child: SizedBox(
+                  width: 156,
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _buildRowActionButton(
+                          icon: Icons.history_rounded,
+                          tooltip: 'View History',
+                          onTap: () => _showMortalityHistory(context, record),
+                        ),
+                        const SizedBox(width: 6),
+                        _buildRowActionButton(
+                          icon: Icons.edit_rounded,
+                          tooltip: 'Edit Record',
+                          onTap: () => _editRecord(record),
+                        ),
+                        const SizedBox(width: 6),
+                        _buildRowActionButton(
+                          icon: Icons.verified_rounded,
+                          tooltip: 'Verify Record',
+                          onTap: () => _verifyRecord(record),
+                        ),
+                        const SizedBox(width: 6),
+                        _buildRowActionButton(
+                          icon: Icons.picture_as_pdf_rounded,
+                          tooltip: 'Export PDF',
+                          onTap: () => _printRecord(record),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  String _formatDate(dynamic dateValue) {
-    final dateString = (dateValue ?? '').toString().trim();
-    if (dateString.isEmpty) return 'N/A';
-    try {
-      final date = DateTime.parse(dateString);
-      return '${date.month}/${date.day}/${date.year}';
-    } catch (e) {
-      return dateString;
+  DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is Timestamp) return value.toDate();
+    if (value is num) {
+      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
     }
+    final raw = value.toString().trim();
+    if (raw.isEmpty) return null;
+    final parsed = DateTime.tryParse(raw);
+    if (parsed != null) return parsed;
+    final match = RegExp(r'seconds=(\d+)').firstMatch(raw);
+    if (match != null) {
+      final seconds = int.tryParse(match.group(1)!);
+      if (seconds != null) {
+        return DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+      }
+    }
+    return null;
+  }
+
+  String _formatDate(dynamic dateValue) {
+    final dt = _parseDateTime(dateValue);
+    if (dt == null) {
+      final raw = (dateValue ?? '').toString().trim();
+      return raw.isEmpty ? 'N/A' : raw;
+    }
+    return DateFormat('MMMM d, yyyy').format(dt);
   }
 
   List<Map<String, dynamic>> _getMortalityHistory(Map<String, dynamic> record) {

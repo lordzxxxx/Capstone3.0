@@ -10,6 +10,9 @@ Future<List<int>> buildPatientPdfBytes(Map<String, dynamic> patient) {
     footerText: 'Generated from the Patient records module.',
     barangayName: pdfText(patient['barangay']),
     summaryFields: [],
+    singlePage: true,
+    signatureSectionOnNewPage: false,
+    signatureSectionAtPageBottom: false,
     sections: [
       RecordPdfSection(
         title: 'Personal Details',

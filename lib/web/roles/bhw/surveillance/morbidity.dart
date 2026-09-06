@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
@@ -11,7 +12,7 @@ import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/fullscreen_detail_table_dialog.dart';
 import 'package:mycapstone_project/web/shared/components/module_view_components.dart';
-import 'package:mycapstone_project/web/shared/utils/checkup_pdf.dart';
+import 'package:mycapstone_project/web/shared/utils/morbidity_pdf.dart';
 import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_history_dialogs.dart';
@@ -1440,6 +1441,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
     return Container(
       width: 1,
       height: 18,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
       color: Colors.white.withValues(alpha: 0.28),
     );
   }
@@ -1447,7 +1449,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
   Widget _buildMorbidityCardHeader() {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF163B66),
         borderRadius: BorderRadius.circular(10),
@@ -1469,9 +1471,10 @@ class _MorbidityPageState extends State<MorbidityPage> {
           _buildHeaderCell('Date Recorded', flex: 12),
           _buildHeaderDivider(),
           const SizedBox(
-            width: 112,
+            width: 140,
             child: Text(
               'Actions',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 12,
@@ -1510,30 +1513,20 @@ class _MorbidityPageState extends State<MorbidityPage> {
                   'No linked check-up morbidity records match the current filters. Try clearing the search or adjusting the status and severity selections.',
             )
           else ...[
-            LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: math.max(1380, constraints.maxWidth),
-                    child: Column(
-                      children: [
-                        _buildMorbidityCardHeader(),
-                        _MorbidityTable(
-                          records: pagedRecords,
-                          startIndex: pageStartIndex,
-                          onView: (record) =>
-                              _showMorbidityHistory(context, record),
-                          onEdit: (record) =>
-                              _showEditMorbidityDialog(context, record),
-                          onGeneratePdf: (record) =>
-                              _generateMorbidityPdf(context, record),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+            Column(
+              children: [
+                _buildMorbidityCardHeader(),
+                _MorbidityTable(
+                  records: pagedRecords,
+                  startIndex: pageStartIndex,
+                  onView: (record) =>
+                      _showMorbidityHistory(context, record),
+                  onEdit: (record) =>
+                      _showEditMorbidityDialog(context, record),
+                  onGeneratePdf: (record) =>
+                      _generateMorbidityPdf(context, record),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Row(
@@ -1845,7 +1838,7 @@ class _MorbidityPageState extends State<MorbidityPage> {
             : constraints.maxWidth < 1100
             ? (constraints.maxWidth - 48) / 4
             : (constraints.maxWidth - 64) / 5;
-        final responsiveWidth = itemWidth.clamp(132.0, 178.0);
+        final responsiveWidth = itemWidth.clamp(140.0, 185.0);
 
         return Container(
           width: double.infinity,
@@ -2015,7 +2008,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
     return SizedBox(
       width: width,
       child: DropdownButtonFormField<String>(
+        key: ValueKey('$label-$value'),
         initialValue: items.contains(value) ? value : items.first,
+        isExpanded: true,
         isDense: true,
         style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
         decoration: InputDecoration(
@@ -2054,6 +2049,8 @@ class _MorbidityPageState extends State<MorbidityPage> {
                 value: item,
                 child: Text(
                   item,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textPrimary,
@@ -2234,8 +2231,8 @@ class _MorbidityPageState extends State<MorbidityPage> {
     await Future<void>.delayed(const Duration(milliseconds: 16));
 
     try {
-      final pdfBytes = await buildCheckupPdfBytes(pdfRecord);
-      final filename = buildCheckupPdfFilename(pdfRecord);
+      final pdfBytes = await buildMorbidityPdfBytes(pdfRecord);
+      final filename = buildMorbidityPdfFilename(pdfRecord);
       final downloaded = downloadFile(
         bytes: pdfBytes,
         filename: filename,
@@ -3236,23 +3233,45 @@ class _MorbidityRecordCard extends StatelessWidget {
     return const Color(0xFFB0BEC5);
   }
 
+  DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is Timestamp) return value.toDate();
+    if (value is num) {
+      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
+    }
+    final raw = value.toString().trim();
+    if (raw.isEmpty) return null;
+    final parsed = DateTime.tryParse(raw);
+    if (parsed != null) return parsed;
+    final match = RegExp(r'seconds=(\d+)').firstMatch(raw);
+    if (match != null) {
+      final seconds = int.tryParse(match.group(1)!);
+      if (seconds != null) {
+        return DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+      }
+    }
+    return null;
+  }
+
   String _formatReportedDate(dynamic value) {
-    if (value is Timestamp) {
-      final date = value.toDate();
-      return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final dt = _parseDateTime(value);
+    if (dt == null) {
+      final text = _safe(value, '');
+      if (text.isEmpty) {
+        return 'Report date unavailable';
+      }
+      return text.contains('T') ? text.split('T').first : text;
     }
-    if (value is DateTime) {
-      return '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
-    }
-    final text = _safe(value, '');
-    if (text.isEmpty) {
-      return 'Report date unavailable';
-    }
-    return text.contains('T') ? text.split('T').first : text;
+    return DateFormat('MMMM d, yyyy').format(dt);
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 74, color: const Color(0xFFD9E5F2));
+    return Container(
+      width: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      color: const Color(0xFFD9E5F2),
+    );
   }
 
   Widget _buildActionButton({
@@ -3312,7 +3331,7 @@ class _MorbidityRecordCard extends StatelessWidget {
       record['caseClassification'] ??
           record['classification'] ??
           record['type'],
-      'Case classification not set',
+      'Not classified',
     );
     final severity = _safe(record['severity'] ?? record['ai_severity'], 'N/A');
     final status = _safe(record['status'] ?? record['caseStatus'], 'Pending');
@@ -3330,217 +3349,288 @@ class _MorbidityRecordCard extends StatelessWidget {
     const mutedText = Color(0xFF4B6075);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 6),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFD9E5F2), width: 1),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              flex: 22,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    patientName,
-                    style: const TextStyle(
-                      color: rowText,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '#${absoluteIndex + 1}  |  Check-up ID: $linkedCheckupId',
-                    style: const TextStyle(
-                      color: mutedText,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Linked Patient ID: $linkedPatientId',
-                    style: const TextStyle(
-                      color: rowText,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            _buildDivider(),
-            Expanded(
-              flex: 22,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    disease,
-                    style: const TextStyle(
-                      color: Color(0xFFE53935),
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    caseClassification,
-                    style: const TextStyle(
-                      color: rowText,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            _buildDivider(),
-            Expanded(
-              flex: 28,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  remarks,
-                  style: const TextStyle(
-                    color: mutedText,
-                    fontSize: 11,
-                    height: 1.35,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            _buildDivider(),
-            Expanded(
-              flex: 16,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 22,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 5,
+                    Text(
+                      patientName,
+                      style: const TextStyle(
+                        color: rowText,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
                       ),
-                      decoration: BoxDecoration(
-                        color: _severityColor(severity).withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: _severityColor(
-                            severity,
-                          ).withValues(alpha: 0.32),
-                        ),
-                      ),
-                      child: Text(
-                        severity,
-                        style: TextStyle(
-                          color: _severityColor(severity),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      softWrap: true,
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _statusColor(status).withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: _statusColor(status).withValues(alpha: 0.32),
+                    const SizedBox(height: 4),
+                    if (linkedPatientId != 'Not linked') ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _primaryAqua.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'ID: $linkedPatientId',
+                          style: const TextStyle(
+                            color: _primaryAqua,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                      child: Text(
-                        status,
-                        style: TextStyle(
-                          color: _statusColor(status),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 4),
+                    ],
+                    Text(
+                      'Check-up: #$linkedCheckupId',
+                      style: const TextStyle(
+                        color: mutedText,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
                       ),
+                      softWrap: true,
                     ),
-                    WebSyncStatusBadge(record: record),
                   ],
                 ),
               ),
-            ),
-            _buildDivider(),
-            Expanded(
-              flex: 12,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  reportDateText,
-                  style: const TextStyle(
-                    color: mutedText,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            _buildDivider(),
-            Padding(
-              padding: const EdgeInsets.only(left: 8, right: 2),
-              child: SizedBox(
-                width: 112,
+              _buildDivider(),
+              Expanded(
+                flex: 22,
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildActionButton(
-                      icon: Icons.visibility_rounded,
-                      tooltip: 'View',
-                      onTap: onView,
+                    const Padding(
+                      padding: EdgeInsets.only(top: 1.5),
+                      child: Icon(
+                        Icons.coronavirus_outlined,
+                        size: 13,
+                        color: Color(0xFFE53935),
+                      ),
                     ),
-                    const SizedBox(width: 6),
-                    _buildActionButton(
-                      icon: Icons.edit_rounded,
-                      tooltip: 'Edit',
-                      onTap: onEdit,
-                    ),
-                    const SizedBox(width: 6),
-                    _buildActionButton(
-                      icon: Icons.picture_as_pdf_rounded,
-                      tooltip: 'Generate PDF',
-                      onTap: onGeneratePdf,
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            disease,
+                            style: const TextStyle(
+                              color: rowText,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            softWrap: true,
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF163B66).withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              caseClassification,
+                              style: const TextStyle(
+                                color: Color(0xFF163B66),
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              softWrap: true,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              _buildDivider(),
+              Expanded(
+                flex: 28,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.notes_rounded, size: 12, color: mutedText),
+                          SizedBox(width: 4),
+                          Text(
+                            'CLINICAL NOTES',
+                            style: TextStyle(
+                              color: mutedText,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        remarks,
+                        style: const TextStyle(
+                          color: mutedText,
+                          fontSize: 11,
+                          height: 1.35,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              _buildDivider(),
+              Expanded(
+                flex: 16,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _severityColor(severity).withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: _severityColor(
+                                  severity,
+                                ).withValues(alpha: 0.32),
+                              ),
+                            ),
+                            child: Text(
+                              severity,
+                              style: TextStyle(
+                                color: _severityColor(severity),
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              softWrap: true,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _statusColor(status).withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: _statusColor(status).withValues(alpha: 0.32),
+                              ),
+                            ),
+                            child: Text(
+                              status,
+                              style: TextStyle(
+                                color: _statusColor(status),
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              softWrap: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      WebSyncStatusBadge(record: record),
+                    ],
+                  ),
+                ),
+              ),
+              _buildDivider(),
+              Expanded(
+                flex: 12,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.calendar_today_outlined,
+                        size: 11.5,
+                        color: _primaryAqua,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          reportDateText,
+                          style: const TextStyle(
+                            color: mutedText,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          softWrap: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              _buildDivider(),
+              Padding(
+                padding: const EdgeInsets.only(left: 8, right: 2),
+                child: SizedBox(
+                  width: 140,
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _buildActionButton(
+                          icon: Icons.visibility_rounded,
+                          tooltip: 'View History',
+                          onTap: onView,
+                        ),
+                        const SizedBox(width: 6),
+                        _buildActionButton(
+                          icon: Icons.edit_rounded,
+                          tooltip: 'Edit Record',
+                          onTap: onEdit,
+                        ),
+                        const SizedBox(width: 6),
+                        _buildActionButton(
+                          icon: Icons.picture_as_pdf_rounded,
+                          tooltip: 'Export PDF',
+                          onTap: onGeneratePdf,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
