@@ -97,39 +97,56 @@ Future<List<int>> buildRecordPdfBytes({
               barangayLogo: headerLogos.isNotEmpty ? headerLogos[0] : null,
               isCompact: true,
             ),
-            if (visibleSummaryFields.isNotEmpty) ...[
-              pw.SizedBox(height: 3),
-              _buildCompactSummarySection(visibleSummaryFields),
-            ],
-            pw.SizedBox(height: 3),
-            if (visibleSections.isEmpty && trailingWidgets.isEmpty)
-              _buildEmptyState()
-            else ...[
-              ...visibleSections.map(
-                (section) => pw.Padding(
-                  padding: const pw.EdgeInsets.only(bottom: 3.5),
-                  child: _buildCompactFieldSection(
-                    section.title,
-                    section.fields,
+            pw.Expanded(
+              child: pw.FittedBox(
+                fit: pw.BoxFit.scaleDown,
+                alignment: pw.Alignment.topCenter,
+                child: pw.SizedBox(
+                  width: 547,
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                    children: [
+                      if (visibleSummaryFields.isNotEmpty) ...[
+                        pw.SizedBox(height: 3),
+                        _buildCompactSummarySection(visibleSummaryFields),
+                      ],
+                      pw.SizedBox(height: 3),
+                      if (visibleSections.isEmpty && trailingWidgets.isEmpty)
+                        _buildEmptyState()
+                      else ...[
+                        ...visibleSections.map(
+                          (section) => pw.Padding(
+                            padding: const pw.EdgeInsets.only(bottom: 3.5),
+                            child: _buildCompactFieldSection(
+                              section.title,
+                              section.fields,
+                            ),
+                          ),
+                        ),
+                        ...trailingWidgets.map(
+                          (widget) => pw.Padding(
+                            padding: const pw.EdgeInsets.only(bottom: 3.5),
+                            child: widget,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
-              ...trailingWidgets.map(
-                (widget) => pw.Padding(
-                  padding: const pw.EdgeInsets.only(bottom: 3.5),
-                  child: widget,
-                ),
-              ),
-            ],
-            pw.Spacer(),
+            ),
             if (visibleSignatureLines.isNotEmpty) ...[
+              pw.SizedBox(height: 6),
               buildOfficialReportSignatureSection(
                 visibleSignatureLines
-                    .map((line) => OfficialReportSignature(title: line.title))
+                    .map(
+                      (line) =>
+                          OfficialReportSignature(title: line.title),
+                    )
                     .toList(),
                 isCompact: true,
               ),
-              pw.SizedBox(height: 5),
+              pw.SizedBox(height: 6),
             ],
             buildOfficialReportFooter(
               context,
@@ -287,11 +304,11 @@ class _FourColChunk extends _TableChunk {
 pw.Widget _buildTableCellLabel(String text) {
   return pw.Container(
     alignment: pw.Alignment.centerLeft,
-    padding: const pw.EdgeInsets.symmetric(horizontal: 4.5, vertical: 2),
+    padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 3),
     child: pw.Text(
       text,
       style: pw.TextStyle(
-        fontSize: 7.8,
+        fontSize: 12,
         fontWeight: pw.FontWeight.bold,
         color: PdfColors.black,
       ),
@@ -302,11 +319,11 @@ pw.Widget _buildTableCellLabel(String text) {
 pw.Widget _buildTableCellValue(String text) {
   return pw.Container(
     alignment: pw.Alignment.centerLeft,
-    padding: const pw.EdgeInsets.symmetric(horizontal: 4.5, vertical: 2),
+    padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 3),
     child: pw.Text(
       text.isEmpty ? '-' : text,
       style: const pw.TextStyle(
-        fontSize: 8.0,
+        fontSize: 12,
         color: PdfColors.black,
       ),
     ),
@@ -331,7 +348,7 @@ pw.Widget _buildSummarySection(List<MapEntry<String, String>> fields) {
           child: pw.Text(
             'RECORD SUMMARY',
             style: pw.TextStyle(
-              fontSize: 11,
+              fontSize: 14,
               fontWeight: pw.FontWeight.bold,
               color: PdfColors.black,
               letterSpacing: 0.5,
@@ -341,8 +358,8 @@ pw.Widget _buildSummarySection(List<MapEntry<String, String>> fields) {
         pw.Table(
           border: const pw.TableBorder(
             horizontalInside:
-                pw.BorderSide(color: PdfColors.grey400, width: 0.5),
-            verticalInside: pw.BorderSide(color: PdfColors.grey400, width: 0.5),
+                pw.BorderSide(color: PdfColors.black, width: 0.8),
+            verticalInside: pw.BorderSide(color: PdfColors.black, width: 0.8),
           ),
           columnWidths: {
             for (var i = 0; i < fields.length; i++)
@@ -361,7 +378,7 @@ pw.Widget _buildSummarySection(List<MapEntry<String, String>> fields) {
                       child: pw.Text(
                         field.key.toUpperCase(),
                         style: pw.TextStyle(
-                          fontSize: 8.5,
+                          fontSize: 12,
                           fontWeight: pw.FontWeight.bold,
                           color: PdfColors.black,
                           letterSpacing: 0.4,
@@ -383,7 +400,7 @@ pw.Widget _buildSummarySection(List<MapEntry<String, String>> fields) {
                       child: pw.Text(
                         field.value,
                         style: pw.TextStyle(
-                          fontSize: 9.5,
+                          fontSize: 12,
                           fontWeight: pw.FontWeight.bold,
                           color: PdfColors.black,
                         ),
@@ -409,7 +426,7 @@ pw.Widget _buildFieldSection(
       pw.Text(
         title,
         style: pw.TextStyle(
-          fontSize: 12,
+          fontSize: 14,
           fontWeight: pw.FontWeight.bold,
           color: PdfColors.black,
         ),
@@ -422,9 +439,9 @@ pw.Widget _buildFieldSection(
           left: const pw.BorderSide(color: PdfColors.black, width: 0.8),
           right: const pw.BorderSide(color: PdfColors.black, width: 0.8),
           horizontalInside:
-              const pw.BorderSide(color: PdfColors.grey400, width: 0.5),
+              const pw.BorderSide(color: PdfColors.black, width: 0.8),
           verticalInside:
-              const pw.BorderSide(color: PdfColors.grey400, width: 0.5),
+              const pw.BorderSide(color: PdfColors.black, width: 0.8),
         ),
         columnWidths: const {
           0: pw.FlexColumnWidth(1.35),
@@ -443,7 +460,7 @@ pw.Widget _buildFieldSection(
                     child: pw.Text(
                       field.key,
                       style: pw.TextStyle(
-                        fontSize: 9.0,
+                        fontSize: 12,
                         fontWeight: pw.FontWeight.bold,
                         color: PdfColors.black,
                       ),
@@ -458,7 +475,7 @@ pw.Widget _buildFieldSection(
                     child: pw.Text(
                       field.value,
                       style: const pw.TextStyle(
-                        fontSize: 9.0,
+                        fontSize: 12,
                         color: PdfColors.black,
                       ),
                     ),
@@ -526,10 +543,10 @@ pw.Widget _buildCompactFieldSection(
       right: pw.BorderSide.none,
       bottom: isLastBlock
           ? pw.BorderSide.none
-          : const pw.BorderSide(color: PdfColors.grey400, width: 0.5),
+          : const pw.BorderSide(color: PdfColors.black, width: 0.8),
       horizontalInside:
-          const pw.BorderSide(color: PdfColors.grey400, width: 0.5),
-      verticalInside: const pw.BorderSide(color: PdfColors.grey400, width: 0.5),
+          const pw.BorderSide(color: PdfColors.black, width: 0.8),
+      verticalInside: const pw.BorderSide(color: PdfColors.black, width: 0.8),
     );
 
     if (isFourCol) {
@@ -577,22 +594,22 @@ pw.Widget _buildCompactFieldSection(
 
   return pw.Container(
     decoration: pw.BoxDecoration(
-      border: pw.Border.all(color: PdfColors.grey600, width: 0.5),
+      border: pw.Border.all(color: PdfColors.black, width: 0.8),
     ),
     child: pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
         pw.Container(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 2.2),
+          padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 3),
           decoration: const pw.BoxDecoration(
             border: pw.Border(
-              bottom: pw.BorderSide(color: PdfColors.grey600, width: 0.5),
+              bottom: pw.BorderSide(color: PdfColors.black, width: 0.8),
             ),
           ),
           child: pw.Text(
             title.toUpperCase(),
             style: pw.TextStyle(
-              fontSize: 8.2,
+              fontSize: 13,
               fontWeight: pw.FontWeight.bold,
               color: PdfColors.black,
               letterSpacing: 0.35,
@@ -623,12 +640,12 @@ bool _isLongFieldKey(String key) {
 pw.Widget _buildCompactSummarySection(List<MapEntry<String, String>> fields) {
   return pw.Container(
     decoration: pw.BoxDecoration(
-      border: pw.Border.all(color: PdfColors.grey600, width: 0.5),
+      border: pw.Border.all(color: PdfColors.black, width: 0.8),
     ),
     child: pw.Table(
       border: const pw.TableBorder(
-        horizontalInside: pw.BorderSide(color: PdfColors.grey400, width: 0.5),
-        verticalInside: pw.BorderSide(color: PdfColors.grey400, width: 0.5),
+        horizontalInside: pw.BorderSide(color: PdfColors.black, width: 0.8),
+        verticalInside: pw.BorderSide(color: PdfColors.black, width: 0.8),
       ),
       columnWidths: {
         for (var i = 0; i < fields.length; i++) i: const pw.FlexColumnWidth(1),
@@ -639,12 +656,12 @@ pw.Widget _buildCompactSummarySection(List<MapEntry<String, String>> fields) {
               .map(
                 (field) => pw.Container(
                   padding:
-                      const pw.EdgeInsets.symmetric(horizontal: 4.5, vertical: 2),
+                      const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 3),
                   alignment: pw.Alignment.centerLeft,
                   child: pw.Text(
                     field.key.toUpperCase(),
                     style: pw.TextStyle(
-                      fontSize: 7.6,
+                      fontSize: 12,
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.black,
                       letterSpacing: 0.3,
@@ -659,12 +676,12 @@ pw.Widget _buildCompactSummarySection(List<MapEntry<String, String>> fields) {
               .map(
                 (field) => pw.Container(
                   padding:
-                      const pw.EdgeInsets.symmetric(horizontal: 4.5, vertical: 2),
+                      const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 3),
                   alignment: pw.Alignment.centerLeft,
                   child: pw.Text(
                     field.value,
                     style: pw.TextStyle(
-                      fontSize: 8.5,
+                      fontSize: 12,
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.black,
                     ),

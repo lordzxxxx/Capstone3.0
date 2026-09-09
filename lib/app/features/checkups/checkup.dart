@@ -2378,8 +2378,6 @@ void _showCheckUpDetailsDialog(
   final temperature = pageState?._extractVital(vitalParts, 'Temp:') ?? 'N/A';
   final bloodPressure = pageState?._extractVital(vitalParts, 'BP:') ?? 'N/A';
   final heartRate = pageState?._extractVital(vitalParts, 'HR:') ?? 'N/A';
-  final respiratoryRate = pageState?._extractVital(vitalParts, 'RR:') ?? 'N/A';
-  final oxygenSaturation = pageState?._extractVital(vitalParts, 'O2:') ?? 'N/A';
   final weight = pageState?._extractVital(vitalParts, 'Weight:') ?? 'N/A';
   final height = pageState?._extractVital(vitalParts, 'Height:') ?? 'N/A';
 
@@ -2499,8 +2497,6 @@ void _showCheckUpDetailsDialog(
                   _buildDetailRow('Temperature', temperature),
                   _buildDetailRow('Blood Pressure', bloodPressure),
                   _buildDetailRow('Heart Rate', heartRate),
-                  _buildDetailRow('Respiratory Rate', respiratoryRate),
-                  _buildDetailRow('Oxygen Saturation', oxygenSaturation),
                   _buildDetailRow('Weight', weight),
                   _buildDetailRow('Height', height),
                 ]),
@@ -3792,10 +3788,6 @@ class _NewCheckUpFullScreenModalState
       TextEditingController();
   final TextEditingController _temperatureController = TextEditingController();
   final TextEditingController _heartRateController = TextEditingController();
-  final TextEditingController _respiratoryRateController =
-      TextEditingController();
-  final TextEditingController _oxygenSaturationController =
-      TextEditingController();
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
 
@@ -3892,11 +3884,6 @@ class _NewCheckUpFullScreenModalState
                 patientSeed['pulse'] ??
                 '')
             .toString();
-    _respiratoryRateController.text =
-        (patientSeed['respiratoryRate'] ?? patientSeed['rr'] ?? '').toString();
-    _oxygenSaturationController.text =
-        (patientSeed['oxygenSaturation'] ?? patientSeed['spo2'] ?? '')
-            .toString();
     _weightController.text = (patientSeed['weight'] ?? patientSeed['wt'] ?? '')
         .toString();
     _heightController.text = (patientSeed['height'] ?? patientSeed['ht'] ?? '')
@@ -3923,12 +3910,6 @@ class _NewCheckUpFullScreenModalState
     }
     if (_heartRateController.text.isNotEmpty) {
       vitalSignsParts.add('HR: ${_heartRateController.text} bpm');
-    }
-    if (_respiratoryRateController.text.isNotEmpty) {
-      vitalSignsParts.add('RR: ${_respiratoryRateController.text} brpm');
-    }
-    if (_oxygenSaturationController.text.isNotEmpty) {
-      vitalSignsParts.add('O2: ${_oxygenSaturationController.text}%');
     }
     if (_weightController.text.isNotEmpty) {
       vitalSignsParts.add('Weight: ${_weightController.text} kg');
@@ -4299,32 +4280,6 @@ class _NewCheckUpFullScreenModalState
                                     style: const TextStyle(color: _lightOffWhite),
                                     decoration: _buildInputDecoration(
                                       'Heart Rate (bpm)',
-                                    ),
-                                    keyboardType: TextInputType.number,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _respiratoryRateController,
-                                    style: const TextStyle(color: _lightOffWhite),
-                                    decoration: _buildInputDecoration(
-                                      'Respiratory Rate (brpm)',
-                                    ),
-                                    keyboardType: TextInputType.number,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _oxygenSaturationController,
-                                    style: const TextStyle(color: _lightOffWhite),
-                                    decoration: _buildInputDecoration(
-                                      'Oxygen Saturation (%)',
                                     ),
                                     keyboardType: TextInputType.number,
                                   ),
@@ -5545,8 +5500,6 @@ class _NewCheckUpFullScreenModalState
     _bloodPressureController.dispose();
     _temperatureController.dispose();
     _heartRateController.dispose();
-    _respiratoryRateController.dispose();
-    _oxygenSaturationController.dispose();
     _weightController.dispose();
     _heightController.dispose();
 
@@ -5585,8 +5538,6 @@ class _EditCheckUpFullScreenModalState
   late final TextEditingController _bloodPressureController;
   late final TextEditingController _temperatureController;
   late final TextEditingController _heartRateController;
-  late final TextEditingController _respiratoryRateController;
-  late final TextEditingController _oxygenSaturationController;
   late final TextEditingController _weightController;
   late final TextEditingController _heightController;
 
@@ -5627,12 +5578,6 @@ class _EditCheckUpFullScreenModalState
     );
     _heartRateController = TextEditingController(
       text: _extractVital(vitalParts, 'HR:'),
-    );
-    _respiratoryRateController = TextEditingController(
-      text: _extractVital(vitalParts, 'RR:'),
-    );
-    _oxygenSaturationController = TextEditingController(
-      text: _extractVital(vitalParts, 'O2:'),
     );
     _weightController = TextEditingController(
       text: _extractVital(vitalParts, 'Weight:'),
@@ -5938,31 +5883,6 @@ class _EditCheckUpFullScreenModalState
                       const SizedBox(width: 12),
                       Expanded(
                         child: TextFormField(
-                          controller: _respiratoryRateController,
-                          style: const TextStyle(color: _darkDeepTeal),
-                          decoration: _buildInputDecoration('Respiratory Rate'),
-                          keyboardType: TextInputType.number,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _oxygenSaturationController,
-                          style: const TextStyle(color: _darkDeepTeal),
-                          decoration: _buildInputDecoration(
-                            'Oxygen Saturation (%)',
-                          ),
-                          keyboardType: TextInputType.number,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextFormField(
                           controller: _weightController,
                           style: const TextStyle(color: _darkDeepTeal),
                           decoration: _buildInputDecoration('Weight (kg)'),
@@ -6092,16 +6012,6 @@ class _EditCheckUpFullScreenModalState
                           if (_heartRateController.text.isNotEmpty) {
                             vitalsList.add(
                               'HR: ${_heartRateController.text} bpm',
-                            );
-                          }
-                          if (_respiratoryRateController.text.isNotEmpty) {
-                            vitalsList.add(
-                              'RR: ${_respiratoryRateController.text} brpm',
-                            );
-                          }
-                          if (_oxygenSaturationController.text.isNotEmpty) {
-                            vitalsList.add(
-                              'O2: ${_oxygenSaturationController.text}%',
                             );
                           }
                           if (_weightController.text.isNotEmpty) {
@@ -6758,8 +6668,6 @@ class _EditCheckUpFullScreenModalState
     _bloodPressureController.dispose();
     _temperatureController.dispose();
     _heartRateController.dispose();
-    _respiratoryRateController.dispose();
-    _oxygenSaturationController.dispose();
     _weightController.dispose();
     _heightController.dispose();
     _symptomsController.dispose();

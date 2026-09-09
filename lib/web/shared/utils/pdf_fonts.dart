@@ -35,16 +35,18 @@ Future<PdfFontBundle> loadPdfFontBundle() {
 }
 
 Future<PdfFontBundle> _loadPdfFontBundle() async {
-  final regularData = await _loadFontData('Roboto-Regular.ttf');
-  final boldData = await _loadFontData('Roboto-Bold.ttf');
-  final italicData = await _loadFontData('Roboto-Italic.ttf');
-  final boldItalicData = await _loadFontData('Roboto-BoldItalic.ttf');
+  final fontResults = await Future.wait([
+    _loadFontData('Roboto-Regular.ttf'),
+    _loadFontData('Roboto-Bold.ttf'),
+    _loadFontData('Roboto-Italic.ttf'),
+    _loadFontData('Roboto-BoldItalic.ttf'),
+  ]);
 
   return PdfFontBundle(
-    base: pw.Font.ttf(regularData),
-    bold: pw.Font.ttf(boldData),
-    italic: pw.Font.ttf(italicData),
-    boldItalic: pw.Font.ttf(boldItalicData),
+    base: pw.Font.ttf(fontResults[0]),
+    bold: pw.Font.ttf(fontResults[1]),
+    italic: pw.Font.ttf(fontResults[2]),
+    boldItalic: pw.Font.ttf(fontResults[3]),
   );
 }
 

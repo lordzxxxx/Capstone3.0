@@ -1160,8 +1160,6 @@ class DatabaseHelper {
       final temp = 36.5 + (i % 3); // 36.5 to 38.5°C
       final bp = '${120 + (i % 30)}/${80 + (i % 20)}';
       final hr = 60 + (i % 40);
-      final rr = 16 + (i % 8); // Respiratory rate 16-24
-      final o2 = 95 + (i % 5); // Oxygen saturation 95-99%
       final weight = 50 + (i % 35); // Weight 50-85 kg
       final height = 150 + (i % 35); // Height 150-185 cm
 
@@ -1189,7 +1187,7 @@ class DatabaseHelper {
         'status': statuses[i % statuses.length],
         'address': addresses[i % addresses.length],
         'vitalsigns':
-            'Temp: ${temp.toStringAsFixed(1)}°C | BP: $bp | HR: $hr bpm | RR: $rr brpm | O2: $o2% | Weight: $weight kg | Height: $height cm',
+            'Temp: ${temp.toStringAsFixed(1)}°C | BP: $bp | HR: $hr bpm | Weight: $weight kg | Height: $height cm',
         'symptoms': symp,
         'followup': followupDate,
         'age': '${20 + (i * 3) % 60}',

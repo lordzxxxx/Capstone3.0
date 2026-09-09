@@ -4,10 +4,6 @@ import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/web/shared/services/barangay_branding_service.dart';
 
 /// The official marks used by print and spreadsheet reports.
-///
-/// The barangay mark is resolved from the selected barangay at export time.
-/// A locally bundled seal is retained as a safe fallback when a barangay has
-/// no configured custom logo or its remote asset is unavailable.
 class ReportBranding {
   const ReportBranding({
     required this.cityLogo,
@@ -24,11 +20,29 @@ class ReportBranding {
   final bool barangayLogoIsFallback;
 }
 
+// In-memory caches to make PDF generation instantaneous
+final Map<String, ReportBranding> _brandingCache = {};
+Uint8List? _cachedCityLogo;
+Uint8List? _cachedHealthOfficeLogo;
+Uint8List? _cachedDefaultBarangayLogo;
+final Map<String, Uint8List?> _cachedAssetLogos = {};
+
 Future<ReportBranding> loadReportBranding({
   required String barangayName,
 }) async {
-  final cityLogo = await _loadAsset('assets/logo2.png');
-  final healthOfficeLogo = await _loadAsset('assets/logo3.png');
+  final cacheKey = barangayName.trim().toLowerCase();
+  final cached = _brandingCache[cacheKey];
+  if (cached != null) {
+    return cached;
+  }
+
+  // Load static city and health office logos in parallel (cached after first load)
+  final staticLogos = await Future.wait([
+    _cachedCityLogo != null ? Future.value(_cachedCityLogo) : _loadAsset('assets/logo2.png'),
+    _cachedHealthOfficeLogo != null ? Future.value(_cachedHealthOfficeLogo) : _loadAsset('assets/logo3.png'),
+  ]);
+  _cachedCityLogo ??= staticLogos[0];
+  _cachedHealthOfficeLogo ??= staticLogos[1];
 
   Uint8List? barangayLogo;
   var barangayLogoIsFallback = true;
@@ -37,36 +51,49 @@ Future<ReportBranding> loadReportBranding({
       MalaybalayBarangays.byCode(barangayName);
 
   if (barangay != null) {
-    try {
-      final profile = await BarangayBrandingService.instance.getBranding(
-        barangay,
-      );
-      if (profile.hasCustomLogo) {
-        barangayLogo = await _loadRemote(profile.logoUrl);
-        barangayLogoIsFallback = barangayLogo == null;
+    // 1. Check local bundled asset FIRST - zero network delay
+    final localAsset = resolveBarangayLogoAssetPath(
+      barangayCode: barangay.code,
+      barangayName: barangay.name,
+    );
+    if (localAsset != null) {
+      if (_cachedAssetLogos.containsKey(localAsset)) {
+        barangayLogo = _cachedAssetLogos[localAsset];
+      } else {
+        barangayLogo = await _loadAsset(localAsset);
+        _cachedAssetLogos[localAsset] = barangayLogo;
       }
-    } catch (_) {
-      // Local assets remain the reliable path when Firestore or Storage is
-      // unavailable during export.
+      if (barangayLogo != null) {
+        barangayLogoIsFallback = false;
+      }
     }
 
+    // 2. Only if no local asset is available, attempt remote branding with strict timeout
     if (barangayLogo == null) {
-      final localAsset = resolveBarangayLogoAssetPath(
-        barangayCode: barangay.code,
-        barangayName: barangay.name,
-      );
-      if (localAsset != null) {
-        barangayLogo = await _loadAsset(localAsset);
-        barangayLogoIsFallback = false;
+      try {
+        final profile = await BarangayBrandingService.instance
+            .getBranding(barangay)
+            .timeout(const Duration(milliseconds: 500));
+        if (profile.hasCustomLogo) {
+          barangayLogo = await _loadRemote(profile.logoUrl)
+              .timeout(const Duration(milliseconds: 800));
+          barangayLogoIsFallback = barangayLogo == null;
+        }
+      } catch (_) {
+        // Fall back gracefully and instantly on timeout or offline
       }
     }
   }
 
-  barangayLogo ??= await _loadAsset('assets/logo1.png');
+  // Fallback default seal if no specific logo found
+  if (barangayLogo == null) {
+    _cachedDefaultBarangayLogo ??= await _loadAsset('assets/logo1.png');
+    barangayLogo = _cachedDefaultBarangayLogo;
+  }
 
-  return ReportBranding(
-    cityLogo: cityLogo,
-    healthOfficeLogo: healthOfficeLogo,
+  final branding = ReportBranding(
+    cityLogo: _cachedCityLogo,
+    healthOfficeLogo: _cachedHealthOfficeLogo,
     barangayLogo: barangayLogo,
     barangayName:
         barangay?.name ??
@@ -75,6 +102,9 @@ Future<ReportBranding> loadReportBranding({
             : barangayName.trim()),
     barangayLogoIsFallback: barangayLogoIsFallback,
   );
+
+  _brandingCache[cacheKey] = branding;
+  return branding;
 }
 
 Future<Uint8List?> _loadAsset(String assetPath) async {
