@@ -4598,291 +4598,1339 @@ class _NewCheckUpFullScreenModalState
     Map<String, dynamic>? record,
   }) async {
     if (!context.mounted) return;
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => Dialog(
-        backgroundColor: _darkDeepTeal,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 600, maxHeight: 760),
-          decoration: BoxDecoration(
-            color: _darkDeepTeal,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _lightOffWhite.withValues(alpha: 0.14)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppDesign.navy,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
+    final screenSize = MediaQuery.of(context).size;
+
+    // Evaluate health screening from the record if available
+    final screening = record != null
+        ? (HealthScreeningEngine.resultFromRecord(record) ??
+            HealthScreeningEngine.evaluate(record))
+        : null;
+
+    // Filter findings to exclude oxygen saturation and respiratory rate per requirement
+    final actionableFindings = screening?.findings.where((f) {
+          final lower = f.measurement.toLowerCase();
+          return !f.isInformational &&
+              !lower.contains('oxygen') &&
+              !lower.contains('respiratory');
+        }).toList() ??
+        <HealthMeasurementFinding>[];
+
+    // Filter referral reasons to exclude oxygen saturation and respiratory rate
+    final filteredReferralReasons = screening?.referralReasons.where((r) {
+          final lower = r.toLowerCase();
+          return !lower.contains('oxygen') && !lower.contains('respiratory');
+        }).toList() ??
+        <String>[];
+
+    final category = result.suggestedHealthCategory;
+
+    Widget buildUnifiedBadge({
+      required String label,
+      required Color textColor,
+      required Color bgColor,
+      IconData? icon,
+      Color? iconColor,
+    }) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 13, color: iconColor ?? textColor),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+                height: 1.1,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget buildStatusBadge(HealthScreeningStatus status) {
+      switch (status) {
+        case HealthScreeningStatus.urgentAssessment:
+          return buildUnifiedBadge(
+            label: status.label,
+            bgColor: const Color(0xFF0F172A),
+            textColor: Colors.white,
+            icon: Icons.error_outline_rounded,
+          );
+        case HealthScreeningStatus.referralReview:
+          return buildUnifiedBadge(
+            label: status.label,
+            bgColor: const Color(0xFF1D4ED8),
+            textColor: Colors.white,
+            icon: Icons.notification_important_outlined,
+          );
+        case HealthScreeningStatus.needsAttention:
+          return buildUnifiedBadge(
+            label: status.label,
+            bgColor: const Color(0xFFDBEAFE),
+            textColor: const Color(0xFF1E40AF),
+            icon: Icons.warning_amber_rounded,
+          );
+        case HealthScreeningStatus.needsProfessionalReview:
+          return buildUnifiedBadge(
+            label: status.label,
+            bgColor: const Color(0xFFDBEAFE),
+            textColor: const Color(0xFF1E40AF),
+            icon: Icons.health_and_safety_outlined,
+          );
+        case HealthScreeningStatus.withinExpectedRange:
+          return buildUnifiedBadge(
+            label: status.label,
+            bgColor: const Color(0xFFF1F5F9),
+            textColor: const Color(0xFF475569),
+            icon: Icons.check_circle_outline_rounded,
+          );
+      }
+    }
+
+    Widget buildCompactGuidanceCard({
+      required String title,
+      required IconData icon,
+      required List<String> items,
+      String? emptyMessage,
+      bool isHighlighted = false,
+    }) {
+      final hasItems = items.isNotEmpty;
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: isHighlighted
+              ? Border.all(color: const Color(0xFF2563EB), width: 1.5)
+              : Border.all(color: const Color(0xFFE2E8F0), width: 1),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x060F172A),
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: isHighlighted
+                      ? const Color(0xFF2563EB)
+                      : const Color(0xFF1E293B),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Color(0xFF0F172A),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.health_and_safety_outlined,
-                        color: Colors.white,
-                        size: 32,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'AI Symptom Guidance',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Firestore-backed self-care and safety information',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                buildUnifiedBadge(
+                  label: '${items.length}',
+                  textColor: const Color(0xFF1D4ED8),
+                  bgColor: const Color(0xFFEFF6FF),
                 ),
-              ),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (hasItems)
+              ...items.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (record != null &&
-                          HealthScreeningEngine.resultFromRecord(record) !=
-                              null) ...[
-                        HealthScreeningPanel(record: record),
-                        const SizedBox(height: 18),
-                      ],
                       const Text(
-                        'Recognized Symptoms',
+                        '• ',
                         style: TextStyle(
-                          color: _lightOffWhite,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2563EB),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          height: 1.35,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: result.recognizedSymptoms
-                            .map(
-                              (symptom) => Chip(
-                                label: Text(symptom),
-                                backgroundColor: _primaryAqua.withValues(
-                                  alpha: 0.18,
-                                ),
-                                labelStyle: const TextStyle(
-                                  color: _lightOffWhite,
-                                ),
-                                side: BorderSide(
-                                  color: _primaryAqua.withValues(alpha: 0.45),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                      if (result.recognizedConditions.isNotEmpty) ...[
-                        const SizedBox(height: 18),
-                        const Text(
-                          'Entered Conditions (not AI predictions)',
-                          style: TextStyle(
-                            color: _lightOffWhite,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: Text(
+                          item,
+                          style: const TextStyle(
+                            color: Color(0xFF1E293B),
+                            fontSize: 12,
+                            height: 1.35,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: result.recognizedConditions
-                              .map(
-                                (condition) => Chip(
-                                  avatar: const Icon(
-                                    Icons.fact_check_outlined,
-                                    size: 18,
-                                    color: Colors.white,
-                                  ),
-                                  label: Text(condition),
-                                  backgroundColor: Colors.blue.withValues(
-                                    alpha: 0.18,
-                                  ),
-                                  labelStyle: const TextStyle(
-                                    color: _lightOffWhite,
-                                  ),
-                                  side: BorderSide(
-                                    color: Colors.blue.withValues(alpha: 0.45),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ],
-                      if (result.homeCare.isNotEmpty) ...[
-                        const SizedBox(height: 22),
-                        _buildModalRecommendationSection(
-                          icon: Icons.home_outlined,
-                          title: 'Home Care / Self-Care',
-                          color: Colors.green,
-                          items: result.homeCare,
-                        ),
-                      ],
-                      if (result.precautions.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        _buildModalRecommendationSection(
-                          icon: Icons.warning_amber_rounded,
-                          title: 'Important Precautions',
-                          color: Colors.orange,
-                          items: result.precautions,
-                        ),
-                      ],
-                      if (result.whenToSeekCare.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        _buildModalRecommendationSection(
-                          icon: Icons.medical_services_outlined,
-                          title: 'When to Seek Medical Care',
-                          color: Colors.blue,
-                          items: result.whenToSeekCare,
-                        ),
-                      ],
-                      if (result.emergencyWarningSigns.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        _buildModalRecommendationSection(
-                          icon: Icons.emergency_outlined,
-                          title: 'Emergency Warning Signs',
-                          color: Colors.red,
-                          items: result.emergencyWarningSigns,
-                        ),
-                      ],
-                      if (result.ignoredSymptoms.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        _buildPredictionNotice(
-                          'Not recognized: ${result.ignoredSymptoms.join(', ')}',
-                          color: Colors.orange,
-                          icon: Icons.help_outline,
-                        ),
-                      ],
-                      if (result.missingGuidanceSymptoms.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        _buildPredictionNotice(
-                          'General safety guidance was used for: '
-                          '${result.missingGuidanceSymptoms.join(', ')}',
-                          color: Colors.blueGrey,
-                          icon: Icons.info_outline,
-                        ),
-                      ],
-                      if (result.missingGuidanceConditions.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        _buildPredictionNotice(
-                          'No reviewed Firestore guidance is available for: '
-                          '${result.missingGuidanceConditions.join(', ')}',
-                          color: Colors.orange,
-                          icon: Icons.info_outline,
-                        ),
-                      ],
-                      if (!result.contentAvailable) ...[
-                        const SizedBox(height: 16),
-                        _buildPredictionNotice(
-                          'Symptom guidance could not be loaded from Firestore.',
-                          color: Colors.orange,
-                          icon: Icons.cloud_off_outlined,
-                        ),
-                      ],
-                      if (result.disclaimer.isNotEmpty) ...[
-                        const SizedBox(height: 20),
-                        _buildPredictionNotice(
-                          result.disclaimer,
-                          color: Colors.blueGrey,
-                          icon: Icons.info_outline,
-                        ),
-                      ],
+                      ),
                     ],
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Wrap(
-                  alignment: WrapAlignment.end,
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    if (result.emergencyWarningSigns.isNotEmpty ||
-                        result.whenToSeekCare.isNotEmpty)
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.of(dialogContext).pop();
-                          final payload = _buildNewRecordPayload();
-                          Get.to(() => ReferralsPage(
-                                initialRecord: payload,
-                                initialObservations: result.emergencyWarningSigns.isNotEmpty
-                                    ? 'Emergency warning signs: ${result.emergencyWarningSigns.join(', ')}'
-                                    : 'When to seek care: ${result.whenToSeekCare.join(', ')}',
-                              ));
-                        },
-                        icon: const Icon(Icons.assignment_return_outlined, size: 18),
-                        label: const Text('Refer Patient to CHO'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 14,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ElevatedButton.icon(
-                      onPressed: () => Navigator.of(dialogContext).pop(),
-                      icon: const Icon(Icons.check),
-                      label: const Text('Got It'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryAqua,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ],
+              )
+            else
+              Text(
+                emptyMessage ?? 'None recorded',
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
                 ),
               ),
-            ],
-          ),
+          ],
         ),
-      ),
+      );
+    }
+
+    Widget buildMetricTile({
+      required IconData icon,
+      required Color iconColor,
+      required Color iconBg,
+      required String label,
+      required String value,
+      Color? valueColor,
+      Color? tileBg,
+      bool valueIsString = false,
+    }) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: tileBg ?? const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x040F172A),
+              blurRadius: 4,
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: iconColor, size: 17),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF475569),
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: valueIsString ? 12.5 : 17,
+                      fontWeight: FontWeight.w800,
+                      color: valueColor ?? const Color(0xFF0F172A),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget buildCompactFindingCard({
+      required HealthMeasurementFinding finding,
+      required Widget badge,
+    }) {
+      final isNormal =
+          finding.status == HealthScreeningStatus.withinExpectedRange;
+
+      IconData measureIcon = Icons.medical_services_outlined;
+      final lowerMeasure = finding.measurement.toLowerCase();
+      if (lowerMeasure.contains('pressure')) {
+        measureIcon = Icons.speed_rounded;
+      } else if (lowerMeasure.contains('temperature')) {
+        measureIcon = Icons.thermostat_rounded;
+      } else if (lowerMeasure.contains('heart')) {
+        measureIcon = Icons.monitor_heart_outlined;
+      }
+
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isNormal ? const Color(0xFFF8FAFC) : const Color(0xFFEFF6FF),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isNormal ? const Color(0xFFE2E8F0) : const Color(0xFFBFDBFE),
+            width: 1,
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x040F172A),
+              blurRadius: 4,
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(
+                    measureIcon,
+                    size: 16,
+                    color: const Color(0xFF1D4ED8),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  finding.measurement,
+                  style: const TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const Spacer(),
+                badge,
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Text(
+                  'Recorded: ',
+                  style: TextStyle(
+                    color: Color(0xFF334155),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  finding.recordedValue,
+                  style: const TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 3),
+            RichText(
+              text: TextSpan(
+                style: const TextStyle(
+                  color: Color(0xFF1E293B),
+                  fontSize: 11.5,
+                  height: 1.35,
+                ),
+                children: [
+                  const TextSpan(
+                    text: 'Reason: ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  TextSpan(text: finding.reason),
+                ],
+              ),
+            ),
+            const SizedBox(height: 2),
+            RichText(
+              text: TextSpan(
+                style: const TextStyle(
+                  color: Color(0xFF1E293B),
+                  fontSize: 11.5,
+                  height: 1.35,
+                ),
+                children: [
+                  const TextSpan(
+                    text: 'Suggested action: ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  TextSpan(text: finding.suggestedAction),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Determine recommended next step string and theme color (Black & Blue)
+    final hasEmergencyWarnings = result.emergencyWarningSigns.isNotEmpty;
+    final String nextStepText;
+    final Color nextStepColor;
+    if (hasEmergencyWarnings) {
+      nextStepText = 'Immediate escalation';
+      nextStepColor = const Color(0xFF0F172A);
+    } else if (screening != null &&
+        screening.referralRecommendation.index >=
+            HealthReferralRecommendation.considerReferral.index) {
+      nextStepText = 'Referral review';
+      nextStepColor = const Color(0xFF1D4ED8);
+    } else if (result.whenToSeekCare.isNotEmpty) {
+      nextStepText = 'Clinical review';
+      nextStepColor = const Color(0xFF2563EB);
+    } else {
+      nextStepText = 'Standard supportive care';
+      nextStepColor = const Color(0xFF0F172A);
+    }
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final isDesktopLayout = screenSize.width >= 860;
+        final dialogWidth = screenSize.width > 1160
+            ? 1120.0
+            : (screenSize.width > 600
+                ? screenSize.width * 0.92
+                : screenSize.width * 0.96);
+        final dialogHeight =
+            screenSize.height > 860 ? 800.0 : (screenSize.height * 0.92);
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Container(
+            width: dialogWidth,
+            height: dialogHeight,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x1A0F172A),
+                  blurRadius: 20,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                // Top Header Bar
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0F172A),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Color(0x20FFFFFF),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2563EB).withValues(alpha: 0.20),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(0xFF2563EB).withValues(alpha: 0.40),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.health_and_safety_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Patient Decision Support',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.2,
+                                height: 1.2,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              record != null
+                                  ? '${record['name'] ?? record['patient'] ?? record['patientName'] ?? 'Patient'}${record['age'] != null ? ' • ${record['age']} yrs' : ''}${record['gender'] != null || record['sex'] != null ? ' • ${record['gender'] ?? record['sex']}' : ''}'
+                                  : 'Clinical Guidance & Deterministic Screening Engine',
+                              style: const TextStyle(
+                                color: Color(0xFF93C5FD),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                height: 1.2,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (record != null && isDesktopLayout) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.20),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.person_outline_rounded,
+                                color: Color(0xFF93C5FD),
+                                size: 14,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                '${record['name'] ?? record['patient'] ?? record['patientName'] ?? 'Patient'}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(width: 4),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Colors.white70,
+                          size: 20,
+                        ),
+                        hoverColor: Colors.white12,
+                        tooltip: 'Close',
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Main Body: Naturally scrollable layout
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // 1. TOP: AI-Assisted Screening in landscape with 3 rows of cards in 1 column
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFFE2E8F0),
+                              width: 1,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x060F172A),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Top Header Row
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFEFF6FF),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Icon(
+                                          Icons.auto_awesome_rounded,
+                                          color: Color(0xFF2563EB),
+                                          size: 17,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      const Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'AI-Assisted Screening & Clinical Decision Support',
+                                              style: TextStyle(
+                                                fontSize: 14.5,
+                                                fontWeight: FontWeight.w800,
+                                                color: Color(0xFF0F172A),
+                                              ),
+                                            ),
+                                            SizedBox(height: 2),
+                                            Text(
+                                              'Deterministic clinical screening engine and patient guidance.',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Color(0xFF334155),
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (screening != null && isDesktopLayout) ...[
+                                        const SizedBox(width: 8),
+                                        Wrap(
+                                          spacing: 6,
+                                          runSpacing: 4,
+                                          children: [
+                                            buildStatusBadge(screening.status),
+                                            buildUnifiedBadge(
+                                              label:
+                                                  'Data: ${screening.dataQuality.label}',
+                                              textColor: const Color(0xFF1D4ED8),
+                                              bgColor: const Color(0xFFEFF6FF),
+                                              icon: Icons.verified_outlined,
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  if (screening != null && !isDesktopLayout) ...[
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 6,
+                                      children: [
+                                        buildStatusBadge(screening.status),
+                                        buildUnifiedBadge(
+                                          label:
+                                              'Data: ${screening.dataQuality.label}',
+                                          textColor: const Color(0xFF1D4ED8),
+                                          bgColor: const Color(0xFFEFF6FF),
+                                          icon: Icons.verified_outlined,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+
+                              // KPI Metrics
+                              isDesktopLayout
+                                  ? Row(
+                                      children: [
+                                        Expanded(
+                                          child: buildMetricTile(
+                                            icon: Icons.checklist_rounded,
+                                            iconColor: const Color(0xFF2563EB),
+                                            iconBg: const Color(0xFFEFF6FF),
+                                            label: 'Symptoms',
+                                            value:
+                                                '${result.recognizedSymptoms.length}',
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: buildMetricTile(
+                                            icon: Icons.warning_amber_rounded,
+                                            iconColor: hasEmergencyWarnings
+                                                ? const Color(0xFF0F172A)
+                                                : const Color(0xFF64748B),
+                                            iconBg: hasEmergencyWarnings
+                                                ? const Color(0xFFEFF6FF)
+                                                : const Color(0xFFF1F5F9),
+                                            label: 'Warnings',
+                                            value:
+                                                '${result.emergencyWarningSigns.length}',
+                                            valueColor: hasEmergencyWarnings
+                                                ? const Color(0xFF0F172A)
+                                                : null,
+                                            tileBg: hasEmergencyWarnings
+                                                ? const Color(0xFFEFF6FF)
+                                                : null,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: buildMetricTile(
+                                            icon: Icons.transfer_within_a_station_rounded,
+                                            iconColor: nextStepColor,
+                                            iconBg: const Color(0xFFEFF6FF),
+                                            label: 'Recommended',
+                                            value: nextStepText,
+                                            valueColor: nextStepColor,
+                                            tileBg: const Color(0xFFEFF6FF),
+                                            valueIsString: true,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: buildMetricTile(
+                                            icon: Icons.category_rounded,
+                                            iconColor: const Color(0xFF1D4ED8),
+                                            iconBg: const Color(0xFFEFF6FF),
+                                            label: 'Category',
+                                            value: category,
+                                            valueColor: const Color(0xFF1D4ED8),
+                                            valueIsString: true,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Column(
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: buildMetricTile(
+                                                icon: Icons.checklist_rounded,
+                                                iconColor:
+                                                    const Color(0xFF2563EB),
+                                                iconBg: const Color(0xFFEFF6FF),
+                                                label: 'Symptoms',
+                                                value:
+                                                    '${result.recognizedSymptoms.length}',
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: buildMetricTile(
+                                                icon: Icons
+                                                    .warning_amber_rounded,
+                                                iconColor: hasEmergencyWarnings
+                                                    ? const Color(0xFF0F172A)
+                                                    : const Color(0xFF64748B),
+                                                iconBg: hasEmergencyWarnings
+                                                    ? const Color(0xFFEFF6FF)
+                                                    : const Color(0xFFF1F5F9),
+                                                label: 'Warnings',
+                                                value:
+                                                    '${result.emergencyWarningSigns.length}',
+                                                valueColor: hasEmergencyWarnings
+                                                    ? const Color(0xFF0F172A)
+                                                    : null,
+                                                tileBg: hasEmergencyWarnings
+                                                    ? const Color(0xFFEFF6FF)
+                                                    : null,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: buildMetricTile(
+                                                icon: Icons
+                                                    .transfer_within_a_station_rounded,
+                                                iconColor: nextStepColor,
+                                                iconBg: const Color(0xFFEFF6FF),
+                                                label: 'Recommended',
+                                                value: nextStepText,
+                                                valueColor: nextStepColor,
+                                                tileBg: const Color(0xFFEFF6FF),
+                                                valueIsString: true,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: buildMetricTile(
+                                                icon: Icons.category_rounded,
+                                                iconColor:
+                                                    const Color(0xFF1D4ED8),
+                                                iconBg: const Color(0xFFEFF6FF),
+                                                label: 'Category',
+                                                value: category,
+                                                valueColor:
+                                                    const Color(0xFF1D4ED8),
+                                                valueIsString: true,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+
+                              // Recognized Symptoms & Conditions
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  const Text(
+                                    'Recognized symptoms: ',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                  if (result.recognizedSymptoms.isNotEmpty)
+                                    ...result.recognizedSymptoms.map(
+                                      (s) => buildUnifiedBadge(
+                                        label: s,
+                                        textColor: const Color(0xFF1D4ED8),
+                                        bgColor: const Color(0xFFEFF6FF),
+                                      ),
+                                    )
+                                  else
+                                    const Text(
+                                      'None recorded',
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        color: Color(0xFF64748B),
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  if (result.recognizedConditions.isNotEmpty) ...[
+                                    const SizedBox(width: 4),
+                                    const Text(
+                                      'Conditions: ',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF1E293B),
+                                      ),
+                                    ),
+                                    ...result.recognizedConditions.map(
+                                      (c) => buildUnifiedBadge(
+                                        label: c,
+                                        textColor: const Color(0xFF1D4ED8),
+                                        bgColor: const Color(0xFFEFF6FF),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+
+                              // Referral Support banner (if applicable)
+                              if (screening != null &&
+                                  (screening.referralRecommendation.index >=
+                                          HealthReferralRecommendation
+                                              .considerReferral.index ||
+                                      filteredReferralReasons.isNotEmpty)) ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEFF6FF),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: const Color(0xFFBFDBFE),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.notification_important_rounded,
+                                            size: 16,
+                                            color: Color(0xFF1D4ED8),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Referral support: ${screening.referralRecommendation.label}',
+                                            style: const TextStyle(
+                                              color: Color(0xFF1D4ED8),
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (filteredReferralReasons.isNotEmpty) ...[
+                                        const SizedBox(height: 4),
+                                        ...filteredReferralReasons.map(
+                                          (reason) => Padding(
+                                            padding:
+                                                const EdgeInsets.only(bottom: 2),
+                                            child: Text(
+                                              '• $reason',
+                                              style: const TextStyle(
+                                                color: Color(0xFF1E293B),
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w600,
+                                                height: 1.3,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+
+                              // Suggested Action banner (if present)
+                              if (screening != null &&
+                                  screening.suggestedAction.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: const Color(0xFFE2E8F0),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(
+                                        Icons.tips_and_updates_outlined,
+                                        size: 16,
+                                        color: Color(0xFF2563EB),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          screening.suggestedAction,
+                                          style: const TextStyle(
+                                            color: Color(0xFF1E293B),
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w600,
+                                            height: 1.35,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+
+                              const SizedBox(height: 16),
+                              // Section Header for Findings
+                              const Row(
+                                children: [
+                                  Icon(
+                                    Icons.assignment_outlined,
+                                    size: 16,
+                                    color: Color(0xFF2563EB),
+                                  ),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Screening Findings & Explanations',
+                                    style: TextStyle(
+                                      color: Color(0xFF0F172A),
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+
+                              // 3 Row of Cards in 1 Column Arrangement
+                              if (actionableFindings.isNotEmpty)
+                                ...actionableFindings.map(
+                                  (finding) => buildCompactFindingCard(
+                                    finding: finding,
+                                    badge: buildStatusBadge(finding.status),
+                                  ),
+                                )
+                              else
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: const Color(0xFFE2E8F0),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'All recorded vitals are within standard screening ranges.',
+                                    style: TextStyle(
+                                      color: Color(0xFF0F172A),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // 2. BELOW THAT: Emergency Warnings, When to Seek Care, Home Care and Support, Important Precautions
+                        isDesktopLayout
+                            ? Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: buildCompactGuidanceCard(
+                                      title: 'Emergency Warnings',
+                                      icon: Icons.warning_amber_rounded,
+                                      items: result.emergencyWarningSigns,
+                                      emptyMessage:
+                                          'No urgent red-flag warnings detected.',
+                                      isHighlighted: hasEmergencyWarnings,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: buildCompactGuidanceCard(
+                                      title: 'When to Seek Care',
+                                      icon: Icons.local_hospital_outlined,
+                                      items: result.whenToSeekCare,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: buildCompactGuidanceCard(
+                                      title: 'Home Care & Support',
+                                      icon: Icons.health_and_safety_outlined,
+                                      items: result.homeCare,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: buildCompactGuidanceCard(
+                                      title: 'Important Precautions',
+                                      icon: Icons.shield_outlined,
+                                      items: result.precautions,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  buildCompactGuidanceCard(
+                                    title: 'Emergency Warnings',
+                                    icon: Icons.warning_amber_rounded,
+                                    items: result.emergencyWarningSigns,
+                                    emptyMessage:
+                                        'No urgent red-flag warnings detected.',
+                                    isHighlighted: hasEmergencyWarnings,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  buildCompactGuidanceCard(
+                                    title: 'When to Seek Care',
+                                    icon: Icons.local_hospital_outlined,
+                                    items: result.whenToSeekCare,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  buildCompactGuidanceCard(
+                                    title: 'Home Care & Support',
+                                    icon: Icons.health_and_safety_outlined,
+                                    items: result.homeCare,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  buildCompactGuidanceCard(
+                                    title: 'Important Precautions',
+                                    icon: Icons.shield_outlined,
+                                    items: result.precautions,
+                                  ),
+                                ],
+                              ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Bottom Action Bar
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 12,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      top: BorderSide(
+                        color: Color(0xFFE2E8F0),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: isDesktopLayout
+                      ? Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'This is decision support based on recorded information. It does not diagnose, prescribe treatment, or replace authorized healthcare-professional judgment.',
+                                style: TextStyle(
+                                  color: Color(0xFF334155),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            if (result.emergencyWarningSigns.isNotEmpty ||
+                                result.whenToSeekCare.isNotEmpty) ...[
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.of(dialogContext).pop();
+                                  final payload = _buildNewRecordPayload();
+                                  Get.to(() => ReferralsPage(
+                                        initialRecord: payload,
+                                        initialObservations: result
+                                                .emergencyWarningSigns
+                                                .isNotEmpty
+                                            ? 'Emergency warning signs: ${result.emergencyWarningSigns.join(', ')}'
+                                            : 'When to seek care: ${result.whenToSeekCare.join(', ')}',
+                                      ));
+                                },
+                                icon: const Icon(
+                                  Icons.assignment_return_outlined,
+                                  size: 16,
+                                ),
+                                label: const Text(
+                                  'Refer to CHO',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF0F172A),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2563EB),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: () =>
+                                  Navigator.of(dialogContext).pop(),
+                              icon: const Icon(
+                                Icons.check_circle_rounded,
+                                size: 16,
+                              ),
+                              label: const Text(
+                                'Close guidance',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Text(
+                              'This is decision support based on recorded information. It does not diagnose, prescribe treatment, or replace authorized healthcare-professional judgment.',
+                              style: TextStyle(
+                                color: Color(0xFF334155),
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w500,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                if (result.emergencyWarningSigns.isNotEmpty ||
+                                    result.whenToSeekCare.isNotEmpty) ...[
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        Navigator.of(dialogContext).pop();
+                                        final payload =
+                                            _buildNewRecordPayload();
+                                        Get.to(() => ReferralsPage(
+                                              initialRecord: payload,
+                                              initialObservations: result
+                                                      .emergencyWarningSigns
+                                                      .isNotEmpty
+                                                  ? 'Emergency warning signs: ${result.emergencyWarningSigns.join(', ')}'
+                                                  : 'When to seek care: ${result.whenToSeekCare.join(', ')}',
+                                            ));
+                                      },
+                                      icon: const Icon(
+                                        Icons.assignment_return_outlined,
+                                        size: 15,
+                                      ),
+                                      label: const Text(
+                                        'Refer to CHO',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 11.5,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xFF0F172A),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 10,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          const Color(0xFF2563EB),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 10,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    onPressed: () =>
+                                        Navigator.of(dialogContext).pop(),
+                                    icon: const Icon(
+                                      Icons.check_circle_rounded,
+                                      size: 15,
+                                    ),
+                                    label: const Text(
+                                      'Close guidance',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 11.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
+
 
   Future<void> _showDiseasePredictionModal(
     BuildContext context,

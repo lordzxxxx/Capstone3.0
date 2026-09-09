@@ -24,9 +24,16 @@ class HealthScreeningPanel extends StatelessWidget {
     if (result == null) return const SizedBox.shrink();
 
     final statusColor = _statusColor(result.status);
-    final actionableFindings = result.findings
-        .where((finding) => !finding.isInformational)
-        .toList(growable: false);
+    final actionableFindings = result.findings.where((finding) {
+      final lower = finding.measurement.toLowerCase();
+      return !finding.isInformational &&
+          !lower.contains('oxygen') &&
+          !lower.contains('respiratory');
+    }).toList(growable: false);
+    final filteredReferralReasons = result.referralReasons.where((r) {
+      final lower = r.toLowerCase();
+      return !lower.contains('oxygen') && !lower.contains('respiratory');
+    }).toList(growable: false);
     final canSuggestReferral =
         result.referralRecommendation.index >=
         HealthReferralRecommendation.considerReferral.index;
@@ -177,9 +184,9 @@ class HealthScreeningPanel extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                if (result.referralReasons.isNotEmpty) ...[
+                if (filteredReferralReasons.isNotEmpty) ...[
                   const SizedBox(height: 6),
-                  ...result.referralReasons.map(
+                  ...filteredReferralReasons.map(
                     (reason) => Padding(
                       padding: const EdgeInsets.only(bottom: 3),
                       child: Text(
