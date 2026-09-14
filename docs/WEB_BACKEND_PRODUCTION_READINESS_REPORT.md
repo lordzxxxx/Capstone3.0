@@ -1,6 +1,6 @@
 # AI-DSUHIS Web and Backend Production-Readiness Report
 
-Date: 2026-09-14
+Date: 2026-09-15
 
 Scope: Flutter web, FastAPI, Firebase Authentication, Firestore, Storage,
 Cloud Functions, APIs, server-side synchronization, and production
@@ -17,6 +17,22 @@ cannot be proven from this local checkout: a provisioned HTTPS AI API host,
 production Firebase/App Check configuration, live rule/index/function
 verification, clinical approval of guidance content, load testing, and backup
 restore evidence.
+
+## Live release status
+
+- Commit `122372c` was pushed to `origin/main`.
+- Vercel production deployment `dpl_CqBXY5wQyvXqn1E7SraJqWak58YF` completed
+  with status **Ready** and is aliased to `ai-dsuhis.com` and
+  `www.ai-dsuhis.com`.
+- The live site serves `app-version.json` as `122372c`, returns HTTP 200 for
+  public/deep-link routes, and redirects anonymous protected routes to login.
+- Firestore rules, `processInvitation`, and `validateRegistrationPolicy` were
+  deployed to Firebase project `capstone-c98f9`.
+- Storage rules were not deployed because Firebase Storage is not provisioned
+  on the production project. No Storage bucket or data was created.
+- The Vercel production `AI_API_BASE_URL` is empty. Remote AI guidance is
+  therefore unavailable in the live web build by design; the client fails
+  closed instead of calling localhost. A real HTTPS API host is still required.
 
 ## 1. Problems identified
 
@@ -134,9 +150,12 @@ streams still aggregate large collections in memory.
 
 - The production HTTPS FastAPI host is not provisioned or live-verified in this
   checkout. `AI_API_BASE_URL` must not be empty or localhost in release.
-- Production Firebase App Check site key, Auth, Storage, Firestore rules,
-  indexes, Functions, hosting origin, and CORS/TrustedHost settings still need
-  live verification.
+- Production Firebase App Check/Auth and hosting origin were reachable, but
+  headless smoke testing received the expected third-party reCAPTCHA/App Check
+  403 and cannot prove a real browser attestation. Firestore rules and the two
+  changed Functions are deployed; Storage is not provisioned, and indexes,
+  API CORS/TrustedHost, and authenticated production workflows still need
+  direct verification.
 - In-process API rate limiting is suitable for one process but is not a
   distributed limit when the API is scaled across multiple workers or hosts.
 - Several CHO dashboard listeners and some archive queries remain unbounded or
@@ -179,6 +198,11 @@ streams still aggregate large collections in memory.
 - Dart formatting: passed for the changed Dart files using the installed Dart
   SDK directly.
 - No mobile build, emulator, or mobile runtime was started.
+- Live web smoke: public routes and deep links returned HTTP 200, anonymous
+  `/bhw/patients` redirected to `/login`, invalid login returned a safe error,
+  and no page exceptions were observed. Headless reCAPTCHA/App Check produced
+  a third-party 403/aborted request, so authenticated App Check flows remain
+  unverified.
 
 ## 11. Production-readiness assessment
 
@@ -203,10 +227,18 @@ tested rules.
    uploads, Cloud Functions, and simultaneous synchronization.
 7. Test backup/restore and define monitoring, alerting, log retention, and
    rollback procedures for the two-month evaluation period.
-8. Obtain clinical/content approval and document the decision-support
+8. Provision Firebase Storage before enabling attachment/branding workflows;
+   deploy and verify `storage.rules` only after the bucket exists.
+9. Obtain clinical/content approval and document the decision-support
    limitations before exposing guidance to evaluators.
-9. Run a final authenticated staging smoke test with real production-like
+10. Upgrade Cloud Functions from Node.js 20 before its 2026-10-30
+    decommissioning date and update the Firebase Functions SDK in a separate
+    tested release.
+11. Run a final authenticated staging smoke test with real production-like
    configuration. Keep mobile verification limited to backend/API/database
    synchronization as required by this task.
 
-No commit, merge, push, or deployment was performed.
+The reviewed code was committed as `122372c` and pushed. Vercel web
+deployment and the reviewed Firebase rules/Functions deployment completed.
+The Storage deployment was intentionally skipped because the production
+bucket is not provisioned.
