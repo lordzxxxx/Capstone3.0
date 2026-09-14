@@ -67,6 +67,42 @@ class SymptomGuidanceService:
             return None
         return dict(data)
 
+    def _get_active_documents(self, keys: Iterable[str]) -> dict[str, dict[str, Any]]:
+        """Read guidance documents in one Firestore batch when supported.
+
+        The small fallback keeps the service compatible with the lightweight
+        database doubles used by tests and with older injected clients. The
+        production Firebase Admin client exposes ``get_all`` and avoids one
+        network round trip per recognized symptom.
+        """
+        unique_keys = list(dict.fromkeys(keys))
+        if not unique_keys:
+            return {}
+
+        collection = self.db.collection("symptom_guidance")
+        get_all = getattr(self.db, "get_all", None)
+        if not callable(get_all):
+            return {
+                key: document
+                for key in unique_keys
+                if (document := self.get_by_key(key)) is not None
+            }
+
+        references = [collection.document(key) for key in unique_keys]
+        snapshots = get_all(
+            references,
+            retry=None,
+            timeout=self._timeout_seconds,
+        )
+        documents: dict[str, dict[str, Any]] = {}
+        for key, snapshot in zip(unique_keys, snapshots):
+            if not snapshot.exists:
+                continue
+            data = snapshot.to_dict() or {}
+            if data.get("isActive") is True:
+                documents[key] = dict(data)
+        return documents
+
     def get_for_symptoms(self, symptoms: Iterable[str]) -> dict[str, Any]:
         """Merge default and symptom-specific guidance without diagnosis logic."""
         canonical = list(dict.fromkeys(str(item).strip() for item in symptoms))
@@ -74,12 +110,14 @@ class SymptomGuidanceService:
         matched: list[str] = []
         missing: list[str] = []
 
-        default = self.get_by_key("_default")
+        symptom_keys = [normalize_symptom_key(symptom) for symptom in canonical]
+        loaded = self._get_active_documents(["_default", *symptom_keys])
+        default = loaded.get("_default")
         if default is not None:
             documents.append(default)
 
-        for symptom in canonical:
-            document = self.get_by_key(normalize_symptom_key(symptom))
+        for symptom, key in zip(canonical, symptom_keys):
+            document = loaded.get(key)
             if document is None:
                 missing.append(symptom)
                 continue

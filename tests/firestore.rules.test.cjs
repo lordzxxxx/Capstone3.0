@@ -271,6 +271,59 @@ describe('user profile privilege boundaries', () => {
   });
 });
 
+describe('authorization source-of-truth boundaries', () => {
+  it('does not grant CHO access from a privileged email or token claim alone', async () => {
+    await seed('patient_records/patient-1', {
+      barangay: 'Barangay 10',
+      barangayCode: 'barangay_10',
+      name: 'Scoped patient',
+    });
+
+    const emailOnlyDb = testEnv
+      .authenticatedContext('email-only', {email: 'theo@gmail.com'})
+      .firestore();
+    await assertFails(emailOnlyDb.doc('patient_records/patient-1').get());
+
+    const claimOnlyDb = testEnv
+      .authenticatedContext('claim-only', {
+        email: 'claim-only@example.test',
+        role: 'CHO',
+        roles: ['CHO'],
+      })
+      .firestore();
+    await assertFails(claimOnlyDb.doc('patient_records/patient-1').get());
+  });
+
+  it('rejects a stale CHO claim when the Firestore profile is inactive', async () => {
+    await seed(
+      'users/stale-cho',
+      activeProfile('stale-cho', 'stale-cho@example.test', {
+        role: 'CHO',
+        approvalStatus: 'pending',
+        accountStatus: 'pending_approval',
+        isApproved: false,
+        accessScope: 'citywide',
+        barangay: '',
+        barangayCode: '',
+      }),
+    );
+    await seed('patient_records/patient-1', {
+      barangay: 'Barangay 10',
+      barangayCode: 'barangay_10',
+      name: 'Scoped patient',
+    });
+
+    const db = testEnv
+      .authenticatedContext('stale-cho', {
+        email: 'stale-cho@example.test',
+        role: 'CHO',
+        roles: ['CHO'],
+      })
+      .firestore();
+    await assertFails(db.doc('patient_records/patient-1').get());
+  });
+});
+
 describe('explicit access-role permissions', () => {
   it('enforces a custom BHW role at the record boundary', async () => {
     await seed('users/custom-bhw', activeProfile('custom-bhw', 'custom-bhw@example.test', {
@@ -544,6 +597,21 @@ describe('nested barangay collection boundaries', () => {
 
     await assertFails(
       db.doc('barangays/POBLACION-11/checkup_records/checkup-2').get(),
+    );
+  });
+
+  it('rejects a matching path when the stored scope claims another barangay', async () => {
+    await seed('barangays/POBLACION-10/checkup_records/checkup-spoofed', {
+      patientName: 'Contradictory scope patient',
+      barangay: 'Barangay 11',
+      barangayCode: 'POBLACION-11',
+    });
+    const db = testEnv
+      .authenticatedContext('bhw-1', {email: 'bhw@example.test'})
+      .firestore();
+
+    await assertFails(
+      db.doc('barangays/POBLACION-10/checkup_records/checkup-spoofed').get(),
     );
   });
 });

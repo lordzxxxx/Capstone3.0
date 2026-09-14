@@ -147,7 +147,15 @@ class FirestoreRestReader {
     String? appCheckToken;
     try {
       appCheckToken = await FirebaseAppCheck.instance.getToken();
-    } catch (_) {}
+    } catch (_) {
+      // Firestore rules may enforce App Check. Continuing without the token
+      // creates a confusing permission failure and weakens the release path.
+      if (kReleaseMode) {
+        throw StateError(
+          'Could not verify this application with App Check.',
+        );
+      }
+    }
     return _FirestoreRestRequestContext(
       projectId: projectId,
       apiKey: apiKey,
@@ -202,6 +210,9 @@ class FirestoreRestReader {
   }
 
   String _responseError(http.Response response) {
+    if (kReleaseMode) {
+      return 'The data request could not be completed. Please try again.';
+    }
     try {
       final payload = jsonDecode(response.body) as Map<String, dynamic>;
       final error = payload['error'];

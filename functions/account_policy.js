@@ -1076,11 +1076,9 @@ exports.validateRegistrationPolicy = functions.https.onCall(async (data) => {
     });
   } catch (error) {
     console.error('validateRegistrationPolicy failed; returning safe fallback', {
-      email,
-      username,
       role,
       barangayCode,
-      error,
+      code: error?.code || 'unknown',
     });
     return buildValidationPolicyResult();
   }

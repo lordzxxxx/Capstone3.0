@@ -4,7 +4,7 @@ import 'package:path/path.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb, kDebugMode;
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/web/shared/services/web_record_sync.dart';
@@ -87,10 +87,9 @@ class DatabaseHelper {
   Future<String> insertRecord(Map<String, dynamic> record) async {
     final id = record['id'] ?? DateTime.now().millisecondsSinceEpoch.toString();
 
-    debugPrint('🔵 [DATABASE_HELPER] insertRecord called');
-    debugPrint('🔵 [DATABASE_HELPER] Platform check - kIsWeb: $kIsWeb');
-    debugPrint('🔵 [DATABASE_HELPER] Record ID: $id');
-    debugPrint('🔵 [DATABASE_HELPER] Record patient: ${record['patient']}');
+    if (kDebugMode) {
+      debugPrint('Checkup record write requested');
+    }
 
     // On web, save directly to Firebase
     if (kIsWeb) {
@@ -99,20 +98,6 @@ class DatabaseHelper {
             .loadCurrentScope();
         // Check authentication status
         final currentUser = FirebaseAuth.instance.currentUser;
-        debugPrint(
-          '🔵 [DATABASE_HELPER] Authentication check - User logged in: ${currentUser != null}',
-        );
-        if (currentUser != null) {
-          debugPrint('🔵 [DATABASE_HELPER] User ID: ${currentUser.uid}');
-          debugPrint('🔵 [DATABASE_HELPER] User email: ${currentUser.email}');
-        } else {
-          debugPrint('⚠️ [DATABASE_HELPER] WARNING: No authenticated user!');
-          debugPrint(
-            '⚠️ [DATABASE_HELPER] If using OPTION 2 Firestore rules, this will fail!',
-          );
-        }
-
-        debugPrint('🔵 [DATABASE_HELPER] Preparing Firestore write...');
         final recordWithId = applyBarangayScopeToRecord(
           WebRecordWriteCoordinator.prepareCreate({
             ...record,
@@ -122,17 +107,7 @@ class DatabaseHelper {
           }, documentId: id),
           accessScope: accessScope,
         );
-        debugPrint(
-          '🔵 [DATABASE_HELPER] Writing to Firestore collection: checkup_records',
-        );
-        debugPrint('🔵 [DATABASE_HELPER] Document ID: $id');
-        debugPrint('🔵 [DATABASE_HELPER] Record data: $recordWithId');
-        debugPrint(
-          '🔵 [DATABASE_HELPER] Starting Firestore .set() operation...',
-        );
-
         final startTime = DateTime.now();
-        debugPrint('🔵 [DATABASE_HELPER] Write started at: $startTime');
 
         final documentRef = await resolveScopedRecordDocumentReference(
           getFirestoreInstance(),
@@ -147,18 +122,12 @@ class DatabaseHelper {
 
         final endTime = DateTime.now();
         final elapsed = endTime.difference(startTime).inMilliseconds;
-        debugPrint(
-          '✅ [DATABASE_HELPER] Firestore write completed in ${elapsed}ms',
-        );
-
-        debugPrint(
-          '✅ [DATABASE_HELPER] Firestore write completed successfully!',
-        );
+        if (kDebugMode) {
+          debugPrint('Checkup record write completed in ${elapsed}ms');
+        }
         return id;
       } on FirebaseException catch (e) {
-        debugPrint(
-          '❌ [DATABASE_HELPER] FirebaseException: ${e.code} - ${e.message}',
-        );
+        if (kDebugMode) debugPrint('Checkup record write failed: ${e.code}');
         if (e.code == 'permission-denied') {
           throw Exception(
             'Permission denied! Update your Firestore rules to allow writes.\n'
@@ -168,9 +137,9 @@ class DatabaseHelper {
         }
         rethrow;
       } catch (e, stackTrace) {
-        debugPrint('❌ [DATABASE_HELPER] Error saving to Firebase on web: $e');
-        debugPrint('❌ [DATABASE_HELPER] Error type: ${e.runtimeType}');
-        debugPrint('❌ [DATABASE_HELPER] Stack trace: $stackTrace');
+        if (kDebugMode) {
+          debugPrint('Checkup record write failed: ${e.runtimeType}');
+        }
         rethrow;
       }
     }

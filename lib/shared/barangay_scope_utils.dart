@@ -121,7 +121,11 @@ Query<Map<String, dynamic>> buildScopedRecordQuery(
     return firestore
         .collection(BarangayFirestorePaths.barangaysCollection)
         .doc(resolvedBarangayCode)
-        .collection(normalizedCollectionName);
+        .collection(normalizedCollectionName)
+        // Keep the query provably inside the same scope as the rules. This
+        // prevents a malformed document with a contradictory barangayCode
+        // from being returned by a BHW collection query.
+        .where('barangayCode', isEqualTo: resolvedBarangayCode);
   }
 
   return firestore

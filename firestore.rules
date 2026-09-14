@@ -13,25 +13,8 @@ service cloud.firestore {
         : null;
     }
 
-    function authRole() {
-      return isSignedIn() && ('role' in request.auth.token)
-        ? request.auth.token.role
-        : '';
-    }
-
-    function tokenRole() {
-      return authRole();
-    }
-
     function roleEqualsAny(role, allowedRoles) {
       return role != null && allowedRoles.hasAny([role]);
-    }
-
-    function tokenRolesHasAny(allowedRoles) {
-      return isSignedIn() &&
-        ('roles' in request.auth.token) &&
-        request.auth.token.roles is list &&
-        request.auth.token.roles.hasAny(allowedRoles);
     }
 
     function authBarangay() {
@@ -191,15 +174,7 @@ service cloud.firestore {
         'CHO_SUPER_ADMIN',
         'cho_super_admin'
       ];
-      return isSignedIn() && (
-        (authEmail() != '' && authEmail().lower() == 'theo@gmail.com') ||
-        (authRole() != '' && roleEqualsAny(authRole(), choRoles)) ||
-        tokenRolesHasAny(choRoles) ||
-        (
-          hasApprovedActiveProfile() &&
-          ('role' in currentUser()) && roleEqualsAny(currentUser().role, choRoles)
-        )
-      );
+      return activeProfileHasRole(currentUser(), choRoles);
     }
 
     function isChoAdmin() {
@@ -207,15 +182,7 @@ service cloud.firestore {
         'CHO_ADMIN', 'cho_admin',
         'CHO_SUPER_ADMIN', 'cho_super_admin'
       ];
-      return isSignedIn() && (
-        (authEmail() != '' && authEmail().lower() == 'theo@gmail.com') ||
-        (authRole() != '' && roleEqualsAny(authRole(), adminRoles)) ||
-        tokenRolesHasAny(adminRoles) ||
-        (
-          hasApprovedActiveProfile() &&
-          ('role' in currentUser()) && roleEqualsAny(currentUser().role, adminRoles)
-        )
-      );
+      return activeProfileHasRole(currentUser(), adminRoles);
     }
 
     // Built-in permissions keep legacy profiles working until their next
@@ -289,8 +256,10 @@ service cloud.firestore {
       return profile != null && data != null &&
         (
           (('barangayCode' in data) && ('barangayCode' in profile) &&
+            data.barangayCode != '' && profile.barangayCode != '' &&
             data.barangayCode.lower() == profile.barangayCode.lower()) ||
-          (('barangay' in data) && ('barangay' in profile) &&
+          (!('barangayCode' in data) && ('barangay' in profile) &&
+            ('barangay' in data) &&
             data.barangay == profile.barangay)
         );
     }
@@ -318,8 +287,8 @@ service cloud.firestore {
       ]) && profileHasPermission(profile, permission)) ||
         (activeProfileHasRole(profile, ['BHW', 'bhw']) &&
           profileHasPermission(profile, permission) &&
-          (('barangayCode' in profile) && profile.barangayCode.lower() == barangayCode.lower() ||
-            profileSameBarangay(profile, data)));
+          sameBarangayPath(barangayCode) &&
+          profileSameBarangay(profile, data));
     }
 
     function isBhwRole() {
@@ -337,8 +306,10 @@ service cloud.firestore {
     function sameBarangay(data) {
       return isSignedIn() && userRole() != '' && data != null && (
         (('barangayCode' in data) &&
+          data.barangayCode != '' && userBarangayCode() != '' &&
           data.barangayCode.lower() == userBarangayCode().lower()) ||
-        (('barangay' in data) && data.barangay == userBarangay())
+        (!('barangayCode' in data) && ('barangay' in data) &&
+          data.barangay == userBarangay())
       );
     }
 
@@ -360,19 +331,15 @@ service cloud.firestore {
 
     function canReadBarangayScopedRecord(barangayCode, data) {
       return isChoRole() ||
-        (isBhwRole() && sameBarangayPath(barangayCode)) ||
-        sameBarangay(data);
+        (isBhwRole() && sameBarangayPath(barangayCode) && sameBarangay(data));
     }
 
     function canWriteBarangayScopedRecord(barangayCode, data) {
       return isChoRole() ||
         (
           isBhwRole() &&
-          sameBarangay(data) &&
-          (
-            sameBarangayPath(barangayCode) ||
-            (('barangay' in data) && data.barangay == userBarangay())
-          )
+          sameBarangayPath(barangayCode) &&
+          sameBarangay(data)
         );
     }
 
@@ -575,9 +542,8 @@ service cloud.firestore {
     // This is used during signup and user profile management
     match /users/{userId} {
       allow get: if canReadOwnUserDoc(userId, resource.data) ||
-        isChoRole() ||
         (isChoRole() && hasPermission('cho.users.view'));
-      allow list: if isChoRole() || (isChoRole() && hasPermission('cho.users.view'));
+      allow list: if isChoRole() && hasPermission('cho.users.view');
       allow create: if canCreateOwnUserProfile(userId, request.resource.data) || isChoAdmin() ||
         (isChoRole() && (
           ('role' in request.resource.data && request.resource.data.role in ['DOCTOR', 'doctor', 'Doctor']) ||
@@ -629,7 +595,8 @@ service cloud.firestore {
     }
 
     match /barangays/{barangayCode}/users/{userId} {
-      allow read: if canReadOwnUserDoc(userId, resource.data) || isChoRole();
+      allow read: if canReadOwnUserDoc(userId, resource.data) ||
+        (isChoRole() && hasPermission('cho.users.view'));
       allow create: if isSignedIn() &&
         (canCreateOwnUserProfile(userId, request.resource.data) || isChoAdmin()) &&
         request.resource.data.barangayCode == barangayCode;

@@ -20,7 +20,8 @@ class FakeSnapshot:
 
 
 class FakeDocument:
-    def __init__(self, data: dict[str, Any] | None) -> None:
+    def __init__(self, data: dict[str, Any] | None, document_id: str = '') -> None:
+        self.id = document_id
         self._data = data
 
     def get(self, **_: object) -> FakeSnapshot:
@@ -32,16 +33,24 @@ class FakeCollection:
         self._documents = documents
 
     def document(self, key: str) -> FakeDocument:
-        return FakeDocument(self._documents.get(key))
+        return FakeDocument(self._documents.get(key), key)
 
 
 class FakeDb:
     def __init__(self, documents: dict[str, dict[str, Any]]) -> None:
         self._documents = documents
+        self.batch_calls = 0
 
     def collection(self, name: str) -> FakeCollection:
         assert name == "symptom_guidance"
         return FakeCollection(self._documents)
+
+    def get_all(self, references: list[FakeDocument], **_: object) -> list[FakeSnapshot]:
+        self.batch_calls += 1
+        return [
+            FakeSnapshot(self._documents.get(reference.id))
+            for reference in references
+        ]
 
 
 class FakeDiseaseService:
@@ -71,26 +80,26 @@ def test_normalize_symptom_key() -> None:
 
 
 def test_guidance_aggregation_merges_and_deduplicates() -> None:
-    service = SymptomGuidanceService(
-        db=FakeDb(
-            {
-                "_default": _document(
-                    homeCare=["Rest"], emergencyWarningSigns=["Trouble breathing"]
-                ),
-                "fever": _document(
-                    homeCare=["Rest", "Drink fluids"],
-                    whenToSeekCare=["Persistent fever"],
-                ),
-                "cough": _document(precautions=["Avoid smoke"]),
-            }
-        )
+    db = FakeDb(
+        {
+            "_default": _document(
+                homeCare=["Rest"], emergencyWarningSigns=["Trouble breathing"]
+            ),
+            "fever": _document(
+                homeCare=["Rest", "Drink fluids"],
+                whenToSeekCare=["Persistent fever"],
+            ),
+            "cough": _document(precautions=["Avoid smoke"]),
+        }
     )
+    service = SymptomGuidanceService(db=db)
     result = service.get_for_symptoms(["fever", "cough", "headache"])
     assert result["homeCare"] == ["Rest", "Drink fluids"]
     assert result["precautions"] == ["Avoid smoke"]
     assert result["matchedGuidanceSymptoms"] == ["fever", "cough"]
     assert result["missingGuidanceSymptoms"] == ["headache"]
     assert result["contentAvailable"] is True
+    assert db.batch_calls == 1
 
 
 def test_guidance_endpoint_returns_no_disease_prediction_fields() -> None:

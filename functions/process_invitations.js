@@ -73,10 +73,13 @@ exports.processInvitation = onDocumentCreated({
     try {
       userRecord = await admin.auth().getUserByEmail(email);
     } catch (e) {
+      if (e?.code !== 'auth/user-not-found') {
+        throw e;
+      }
       // Create user with a random temporary password
       const tempPass = generateTemporaryPassword();
       userRecord = await admin.auth().createUser({ email, password: tempPass });
-      console.log('Created user', userRecord.uid, 'for', email);
+      console.log('Created invited user', userRecord.uid);
     }
 
     await admin.auth().updateUser(userRecord.uid, {
@@ -177,7 +180,9 @@ exports.processInvitation = onDocumentCreated({
       try {
         resetLink = await admin.auth().generatePasswordResetLink(email);
       } catch (e) {
-        console.warn('Could not generate reset link:', e);
+        console.warn('Could not generate reset link', {
+          code: e?.code || 'unknown',
+        });
       }
       emailResult = resetLink ? await sendSystemEmail({
         to: email,
@@ -201,9 +206,16 @@ exports.processInvitation = onDocumentCreated({
       processedAt: FieldValue.serverTimestamp(),
     });
 
-    console.log('Processed invitation for', email);
+    console.log('Processed invitation', userRecord.uid);
   } catch (err) {
-    console.error('processInvitation error:', err);
-    await snap.ref.update({ status: 'error', error: err.message || String(err), processedAt: FieldValue.serverTimestamp() });
+    console.error('processInvitation failed', {
+      invitationId: snap.id,
+      code: err?.code || 'unknown',
+    });
+    await snap.ref.update({
+      status: 'error',
+      error: 'Invitation processing failed. Please retry or contact an administrator.',
+      processedAt: FieldValue.serverTimestamp(),
+    });
   }
 });

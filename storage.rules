@@ -22,6 +22,29 @@ service firebase.storage {
       );
     }
 
+    function isChoAdmin() {
+      return tokenHasAnyRole([
+        'CHO_ADMIN',
+        'cho_admin',
+        'CHO_SUPER_ADMIN',
+        'cho_super_admin'
+      ]);
+    }
+
+    // Branding files are referenced by the public barangay branding profile,
+    // so they must remain readable for registration pages. Only CHO Admin
+    // accounts may create them; they are immutable after upload.
+    match /barangay-branding/{barangayCode}/{fileName} {
+      allow read: if true;
+      allow write: if isChoAdmin() &&
+        resource == null &&
+        barangayCode.matches('[A-Za-z0-9_-]{1,64}') &&
+        fileName.matches('[A-Za-z0-9._-]{1,128}') &&
+        request.resource.size <= 5 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/(png|jpeg|webp)');
+      allow update, delete: if false;
+    }
+
     match /referral_attachments/{ownerUid}/{referralId}/{fileName} {
       allow read: if isSignedIn() && (
         request.auth.uid == ownerUid ||
@@ -36,8 +59,11 @@ service firebase.storage {
         tokenHasAnyRole(['DOCTOR', 'doctor'])
       );
 
-      allow create: if isSignedIn() &&
+      allow write: if isSignedIn() &&
         request.auth.uid == ownerUid &&
+        resource == null &&
+        referralId.matches('[A-Za-z0-9_-]{1,128}') &&
+        fileName.matches('[A-Za-z0-9._-]{1,128}') &&
         request.resource.size <= 10 * 1024 * 1024 &&
         request.resource.contentType.matches(
           'application/pdf|image/jpeg|image/png'

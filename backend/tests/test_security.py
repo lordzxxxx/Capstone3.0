@@ -1,7 +1,9 @@
 """Authentication and rate-limit tests for the private AI endpoint."""
 
+import io
 from fastapi.security import HTTPAuthorizationCredentials
 from fastapi.testclient import TestClient
+from PIL import Image
 import pytest
 
 import api
@@ -86,6 +88,53 @@ def test_ocr_rejects_non_image_upload() -> None:
         files={"file": ("payload.txt", b"not an image", "text/plain")},
     )
     assert response.status_code == 415
+
+
+def _valid_ocr_image() -> bytes:
+    image = Image.new("RGB", (32, 32), "white")
+    output = io.BytesIO()
+    image.save(output, format="PNG")
+    return output.getvalue()
+
+
+def test_ocr_fails_closed_when_model_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        api.TrOCRHandwritingEngine,
+        "get_instance",
+        lambda: type("UnavailableEngine", (), {"is_ready": False})(),
+    )
+    response = TestClient(api.app).post(
+        "/api/v1/ocr/handwriting",
+        data={"field_id": "patient_name"},
+        files={"file": ("form.png", _valid_ocr_image(), "image/png")},
+    )
+    assert response.status_code == 503
+    assert response.json()["detail"] == (
+        "Handwriting recognition is temporarily unavailable."
+    )
+
+
+def test_ocr_hides_model_errors_from_clients(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FailingEngine:
+        is_ready = True
+
+        def recognize_single(self, _content: bytes) -> tuple[str, float]:
+            raise RuntimeError("internal model details")
+
+    monkeypatch.setattr(
+        api.TrOCRHandwritingEngine, "get_instance", lambda: FailingEngine()
+    )
+    response = TestClient(api.app).post(
+        "/api/v1/ocr/handwriting",
+        data={"field_id": "patient_name"},
+        files={"file": ("form.png", _valid_ocr_image(), "image/png")},
+    )
+    assert response.status_code == 503
+    assert "internal model details" not in response.text
 
 
 def test_api_sets_no_store_security_headers() -> None:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import asyncio
 import io
 import logging
 import re
@@ -108,6 +109,7 @@ _MAX_OCR_FILES = 10
 _MAX_OCR_DIMENSION = 4096
 _ALLOWED_OCR_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 _FIELD_ID_PATTERN = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
+_OCR_UNAVAILABLE_DETAIL = "Handwriting recognition is temporarily unavailable."
 
 
 class _RequestTooLarge(Exception):
@@ -122,6 +124,21 @@ def _validate_field_id(value: Any) -> str:
             detail="field_id must contain only letters, numbers, dots, underscores, or hyphens.",
         )
     return field_id
+
+
+def _get_ready_ocr_engine() -> TrOCRHandwritingEngine:
+    """Fail closed when the production OCR artifact is not available."""
+    engine = TrOCRHandwritingEngine.get_instance()
+    if not getattr(engine, "is_ready", False):
+        LOGGER.error(
+            "OCR engine is unavailable",
+            extra={"event": "ocr_engine_unavailable"},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=_OCR_UNAVAILABLE_DETAIL,
+        )
+    return engine
 
 
 async def _read_validated_ocr_upload(file_upload: Any) -> bytes:
@@ -516,7 +533,17 @@ def create_app() -> FastAPI:
         summary="List every valid model symptom",
     )
     def symptoms() -> SymptomCatalogResponse:
-        valid_symptoms = get_valid_symptoms()
+        try:
+            valid_symptoms = get_valid_symptoms()
+        except ArtifactLoadError:
+            LOGGER.error(
+                "Validated symptom catalog could not be loaded",
+                extra={"event": "symptom_catalog_unavailable"},
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Symptom vocabulary is unavailable.",
+            ) from None
         LOGGER.debug(
             "Validated model symptom catalog loaded",
             extra={
@@ -832,12 +859,21 @@ def create_app() -> FastAPI:
             )
 
         content = await _read_validated_ocr_upload(file_upload)
-        engine = TrOCRHandwritingEngine.get_instance()
+        engine = _get_ready_ocr_engine()
         started = time.perf_counter()
-        
-        # Async offload to threadpool
-        import asyncio
-        text, confidence = await asyncio.to_thread(engine.recognize_single, content)
+        try:
+            text, confidence = await asyncio.to_thread(
+                engine.recognize_single, content
+            )
+        except Exception:
+            LOGGER.exception(
+                "OCR single-image recognition failed",
+                extra={"event": "ocr_single_recognition_error"},
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=_OCR_UNAVAILABLE_DETAIL,
+            ) from None
         elapsed_ms = round((time.perf_counter() - started) * 1000.0, 2)
 
         return OCRFieldResult(
@@ -899,11 +935,33 @@ def create_app() -> FastAPI:
         validated_field_ids = [
             _validate_field_id(field_id) for field_id in field_ids
         ]
-        engine = TrOCRHandwritingEngine.get_instance()
+        engine = _get_ready_ocr_engine()
         started = time.perf_counter()
 
-        import asyncio
-        batch_results = await asyncio.to_thread(engine.recognize_batch, contents)
+        try:
+            batch_results = await asyncio.to_thread(engine.recognize_batch, contents)
+        except Exception:
+            LOGGER.exception(
+                "OCR batch recognition failed",
+                extra={"event": "ocr_batch_recognition_error"},
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=_OCR_UNAVAILABLE_DETAIL,
+            ) from None
+        if len(batch_results) != len(contents):
+            LOGGER.error(
+                "OCR batch returned an unexpected result count",
+                extra={
+                    "event": "ocr_batch_result_count_error",
+                    "expectedCount": len(contents),
+                    "actualCount": len(batch_results),
+                },
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=_OCR_UNAVAILABLE_DETAIL,
+            )
         elapsed_ms = round((time.perf_counter() - started) * 1000.0, 2)
 
         results: list[OCRFieldResult] = []

@@ -21,7 +21,7 @@ Future<Map<String, String>> _firebaseSecurityHeaders() async {
       }
     } catch (e) {
       if (kReleaseMode) {
-        throw StateError('Could not obtain a Firebase sign-in token: $e');
+        throw StateError('Could not obtain a Firebase sign-in token.');
       }
     }
   } else if (kReleaseMode) {
@@ -37,7 +37,7 @@ Future<Map<String, String>> _firebaseSecurityHeaders() async {
     }
   } catch (e) {
     if (kReleaseMode) {
-      throw StateError('Could not verify this application with App Check: $e');
+      throw StateError('Could not verify this application with App Check.');
     }
   }
   return headers;
