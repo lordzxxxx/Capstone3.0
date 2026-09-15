@@ -28,6 +28,7 @@ import 'package:mycapstone_project/web/shared/navigation/web_pages.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_page_transition.dart';
 import 'package:mycapstone_project/web/shared/utils/browser_location.dart';
 import 'package:mycapstone_project/web/shared/widgets/app_update_notification.dart';
+import 'package:mycapstone_project/web/shared/widgets/cookie_consent_banner.dart';
 import 'package:mycapstone_project/web/shared/utils/pdf_fonts.dart';
 import 'package:mycapstone_project/web/shared/utils/report_branding.dart';
 
@@ -240,6 +241,7 @@ class MyApp extends StatelessWidget {
               children: [
                 child ?? const SizedBox.shrink(),
                 const AppUpdateNotification(),
+                const CookieConsentBanner(),
               ],
             )
           : null,
