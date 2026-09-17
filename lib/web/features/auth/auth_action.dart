@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:mycapstone_project/shared/input_validation.dart';
 import 'package:mycapstone_project/shared/password_policy.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/features/auth/public_auth_background.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
 /// Branded email-action handler for account activation/password reset.
@@ -804,8 +805,10 @@ class _AuthActionPageState extends State<AuthActionPage> {
       data: AppTheme.light(isWeb: true),
       child: Scaffold(
         backgroundColor: AppColors.backgroundLight,
-        body: SafeArea(
-          child: LayoutBuilder(
+        body: PublicAuthBackdrop(
+          treatment: PublicAuthBackdropTreatment.auth,
+          child: SafeArea(
+            child: LayoutBuilder(
             builder: (context, constraints) {
               final horizontalPadding = constraints.maxWidth < 520
                   ? 16.0
@@ -855,6 +858,7 @@ class _AuthActionPageState extends State<AuthActionPage> {
                 ),
               );
             },
+            ),
           ),
         ),
       ),

@@ -10,6 +10,7 @@ import 'package:mycapstone_project/web/features/auth/landing.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
+import 'package:mycapstone_project/web/features/auth/public_auth_background.dart';
 import 'package:mycapstone_project/shared/password_policy.dart';
 
 const _blue = Color(0xFF2F80ED);
@@ -442,12 +443,10 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
       ),
       child: Scaffold(
         backgroundColor: _page,
-        body: Stack(
-          children: [
-            // Registration is a task-focused workflow. Keep the page white
-            // like the CHO form instead of placing a dark photographic scrim
-            // behind every field and card.
-            const Positioned.fill(child: ColoredBox(color: _page)),
+        body: PublicAuthBackdrop(
+          treatment: PublicAuthBackdropTreatment.auth,
+          child: Stack(
+            children: [
             SafeArea(
               child: Form(
                 key: _formKey,
@@ -723,7 +722,8 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1067,13 +1067,15 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                alignment: WrapAlignment.spaceBetween,
                 children: [
                   const Text(
                     'Password strength',
                     style: TextStyle(fontWeight: FontWeight.w800, color: _ink),
                   ),
-                  const Spacer(),
                   Text(
                     score <= 2
                         ? 'Weak'
@@ -1109,25 +1111,30 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
                 runSpacing: 8,
                 children: checks.entries
                     .map(
-                      (entry) => Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            entry.value
-                                ? Icons.check_circle
-                                : Icons.radio_button_unchecked,
-                            size: 17,
-                            color: entry.value ? Colors.green : _muted,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            entry.key,
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              color: _muted,
+                      (entry) => ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 220),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              entry.value
+                                  ? Icons.check_circle
+                                  : Icons.radio_button_unchecked,
+                              size: 17,
+                              color: entry.value ? Colors.green : _muted,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                entry.key,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  color: _muted,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     )
                     .toList(),
@@ -1212,8 +1219,10 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
 
   Widget _successPage() => Scaffold(
     backgroundColor: _page,
-    body: SafeArea(
-      child: Center(
+    body: PublicAuthBackdrop(
+      treatment: PublicAuthBackdropTreatment.auth,
+      child: SafeArea(
+        child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Container(
@@ -1280,6 +1289,7 @@ class _BhwRegistrationPageState extends State<BhwRegistrationPage> {
               ],
             ),
           ),
+        ),
         ),
       ),
     ),

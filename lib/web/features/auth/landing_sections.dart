@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycapstone_project/web/features/auth/public_auth_background.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
 /// Public, non-authenticated product information that follows the existing
@@ -600,12 +601,8 @@ class _LandingSection extends StatelessWidget {
             child: IgnorePointer(
               child: Opacity(
                 opacity: backdropOpacity,
-                child: Image.asset(
-                  'assets/bg2.2.png',
-                  fit: BoxFit.cover,
+                child: const PublicBackgroundImage(
                   alignment: Alignment.topCenter,
-                  filterQuality: FilterQuality.low,
-                  excludeFromSemantics: true,
                 ),
               ),
             ),

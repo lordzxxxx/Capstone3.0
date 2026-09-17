@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mycapstone_project/app/shell/landing.dart' as mobile;
 import 'package:mycapstone_project/web/features/auth/forgot.dart';
+import 'package:mycapstone_project/web/features/auth/bhw_registration.dart';
 import 'package:mycapstone_project/web/features/auth/landing.dart' as web;
 import 'package:mycapstone_project/web/features/auth/login.dart';
 
@@ -43,7 +44,11 @@ void main() {
   testWidgets('web authentication pages remain scrollable on phone widths', (
     tester,
   ) async {
-    for (final page in <Widget>[const Login(), const ForgotPassword()]) {
+    for (final page in <Widget>[
+      const Login(),
+      const ForgotPassword(),
+      const BhwRegistrationPage(),
+    ]) {
       await _pumpAtSize(
         tester,
         const Size(360, 640),

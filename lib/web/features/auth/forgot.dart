@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
+import 'package:mycapstone_project/web/features/auth/public_auth_background.dart';
 import 'package:mycapstone_project/web/shared/widgets/auth_page_transition.dart';
 import 'package:mycapstone_project/shared/input_validation.dart';
 
@@ -146,22 +147,10 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       ),
       child: Scaffold(
         backgroundColor: _darkDeepTeal,
-        body: Stack(
-          children: [
-            // Same bg2.2.png hero photo as login/signup/BHW registration, with
-            // a deep navy/teal scrim, so this page reads as part of the same
-            // auth flow rather than a separate utility screen.
-            Positioned.fill(
-              child: Image.asset(
-                'assets/bg2.2.png',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const ColoredBox(color: _darkDeepTeal);
-                },
-              ),
-            ),
-            Positioned.fill(child: const ColoredBox(color: Color(0xD9071A33))),
-
+        body: PublicAuthBackdrop(
+          treatment: PublicAuthBackdropTreatment.auth,
+          child: Stack(
+            children: [
             // Main content
             SafeArea(
               child: Center(
@@ -222,7 +211,8 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -114,7 +114,7 @@ void main() {
         (widget) =>
             widget is Image &&
             widget.image is AssetImage &&
-            (widget.image as AssetImage).assetName == 'assets/bg2.2.png',
+            (widget.image as AssetImage).assetName == 'assets/newbg.png',
       ),
       findsAtLeastNWidgets(1),
     );

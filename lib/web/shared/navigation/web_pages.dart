@@ -8,6 +8,7 @@ import 'package:mycapstone_project/web/features/auth/bhw_registration.dart'
 import 'package:mycapstone_project/web/features/auth/forgot.dart' as web_forgot;
 import 'package:mycapstone_project/web/features/auth/auth_action.dart'
     as web_auth_action;
+import 'package:mycapstone_project/web/features/auth/public_auth_background.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_route_middleware.dart';
@@ -621,36 +622,54 @@ class WebNotFoundPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(title: const Text('AI-DSUHIS')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.link_off_outlined,
-                size: 48,
-                color: AppColors.primary,
+      backgroundColor: AppColors.backgroundDark,
+      appBar: AppBar(
+        title: const Text('AI-DSUHIS'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: PublicAuthBackdrop(
+        treatment: PublicAuthBackdropTreatment.auth,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Card(
+              margin: EdgeInsets.zero,
+              color: AppColors.surfaceLight,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: const BorderSide(color: AppColors.border),
               ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'Page not found',
-                style: Theme.of(context).textTheme.headlineSmall,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.link_off_outlined,
+                      size: 48,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      'Page not found',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'The requested page does not exist or is no longer available.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    FilledButton(
+                      onPressed: () => Get.offAllNamed(WebRoutes.landing),
+                      child: const Text('Return to landing page'),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'The requested page does not exist or is no longer available.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              FilledButton(
-                onPressed: () => Get.offAllNamed(WebRoutes.landing),
-                child: const Text('Return to landing page'),
-              ),
-            ],
+            ),
           ),
         ),
       ),

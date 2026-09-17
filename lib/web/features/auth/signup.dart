@@ -10,6 +10,7 @@ import 'package:flutter/gestures.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/features/auth/landing.dart';
+import 'package:mycapstone_project/web/features/auth/public_auth_background.dart';
 import 'package:mycapstone_project/web/features/auth/login.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/services/barangay_branding_service.dart';
@@ -779,21 +780,10 @@ class _SignupState extends State<Signup> {
       ),
       child: Scaffold(
         backgroundColor: _darkDeepTeal,
-        body: Stack(
-          children: [
-            // Static reference background. It is isolated from the form
-            // layout so resizing/zooming cannot move the composition.
-            Positioned.fill(
-              child: Image.asset(
-                'assets/bg2.2.png',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const ColoredBox(color: _darkDeepTeal);
-                },
-              ),
-            ),
-            Positioned.fill(child: ColoredBox(color: Color(0xD9071A33))),
-
+        body: PublicAuthBackdrop(
+          treatment: PublicAuthBackdropTreatment.auth,
+          child: Stack(
+            children: [
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
@@ -855,7 +845,8 @@ class _SignupState extends State<Signup> {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

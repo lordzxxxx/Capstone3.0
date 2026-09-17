@@ -10,6 +10,7 @@ import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/roles/cho/admin/cho_super_admin_center.dart';
 import 'package:mycapstone_project/web/roles/bhw/dashboard/homepage.dart';
 import 'package:mycapstone_project/web/features/auth/landing.dart';
+import 'package:mycapstone_project/web/features/auth/public_auth_background.dart';
 import 'package:flutter/gestures.dart';
 import 'package:mycapstone_project/web/features/auth/forgot.dart';
 import 'package:mycapstone_project/web/roles/cho/dashboard/cho_dashboard.dart'
@@ -1021,21 +1022,10 @@ class _LoginState extends State<Login> {
       ),
       child: Scaffold(
         backgroundColor: _darkDeepTeal,
-        body: Stack(
-          children: [
-            // Static reference background: it never participates in layout
-            // and never moves when the browser is resized or zoomed.
-            Positioned.fill(
-              child: Image.asset(
-                'assets/bg2.2.png',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const ColoredBox(color: _darkDeepTeal);
-                },
-              ),
-            ),
-            Positioned.fill(child: ColoredBox(color: Color(0xD9071A33))),
-
+        body: PublicAuthBackdrop(
+          treatment: PublicAuthBackdropTreatment.auth,
+          child: Stack(
+            children: [
             SafeArea(
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -1112,7 +1102,8 @@ class _LoginState extends State<Login> {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
