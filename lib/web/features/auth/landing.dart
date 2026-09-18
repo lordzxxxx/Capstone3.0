@@ -695,31 +695,6 @@ class _LandingPageState extends State<LandingPage>
                 color: _mutedCoolGray,
               ),
             ),
-            SizedBox(height: compact ? 14 : 18),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: _darkBlue.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _darkBlue.withValues(alpha: 0.12)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.verified_user_outlined, color: _darkBlue, size: 18),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Role-based access for authorized health teams.',
-                      style: _body(
-                        size: 12,
-                        weight: FontWeight.w600,
-                        color: _mutedCoolGray,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
             SizedBox(height: compact ? 18 : 28),
             _buildActionButton(
               context: context,
