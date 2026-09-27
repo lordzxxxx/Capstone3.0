@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:get/get.dart';
 import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
@@ -13,6 +14,9 @@ import 'package:mycapstone_project/web/shared/services/user_access_scope_service
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
+import 'package:mycapstone_project/web/roles/bhw/dashboard/bhw_quick_actions.dart';
+import 'package:mycapstone_project/web/roles/bhw/patients/canonical_patient_registration_modal.dart';
 
 // Use the same centralized palette as the shared BHW/CHO web components.
 // The dashboard uses navy and blue tones for all presentation accents; labels
@@ -61,6 +65,11 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final BhwQuickActionsService _quickActionsService = BhwQuickActionsService();
+
+  List<String> _quickActionIds = defaultBhwQuickActionIds;
+  bool _isLoadingQuickActions = true;
+  String? _quickActionsError;
 
   // Raw scoped datasets loaded from Firestore for fast filtering without redundant network requests
   List<Map<String, dynamic>> _rawPatients = [];
@@ -127,7 +136,135 @@ class _HomePageState extends State<HomePage> {
     _selectedMonthDate ??= DateTime.now();
     _selectedRangeStart = DateTime.now().subtract(const Duration(days: 6));
     _selectedRangeEnd = DateTime.now();
+    _loadQuickActions();
     _loadExecutiveOverview();
+  }
+
+  Future<void> _loadQuickActions() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingQuickActions = true;
+        _quickActionsError = null;
+      });
+    }
+    try {
+      final actionIds = await _quickActionsService.load();
+      if (!mounted) return;
+      setState(() {
+        _quickActionIds = actionIds;
+        _isLoadingQuickActions = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingQuickActions = false;
+        _quickActionsError =
+            'Quick Actions could not be loaded. Check your account connection and try again.';
+      });
+      if (kDebugMode) {
+        debugPrint('BHW Quick Actions load failed: $error');
+      }
+    }
+  }
+
+  Future<void> _editQuickActions() async {
+    if (_isLoadingQuickActions) return;
+    final selected = await showBhwQuickActionsEditor(
+      context: context,
+      selectedIds: _quickActionIds,
+    );
+    if (selected == null || !mounted) return;
+
+    setState(() {
+      _isLoadingQuickActions = true;
+      _quickActionsError = null;
+    });
+    try {
+      await _quickActionsService.save(selected);
+      if (!mounted) return;
+      setState(() {
+        _quickActionIds = selected;
+        _isLoadingQuickActions = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Quick Actions saved to your account.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingQuickActions = false;
+        _quickActionsError =
+            'Your Quick Actions were not saved. Please try again.';
+      });
+      if (kDebugMode) {
+        debugPrint('BHW Quick Actions save failed: $error');
+      }
+    }
+  }
+
+  Future<void> _openQuickAction(BhwQuickActionDefinition action) async {
+    final scope = await UserAccessScopeService.instance.loadCurrentScope();
+    if (!mounted) return;
+    if (!scope.isBhw || !scope.hasPermission(action.requiredPermission)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Your BHW account does not have permission to open ${action.label}.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    switch (action.id) {
+      case 'add_patient':
+        final created = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const CanonicalPatientRegistrationModal(),
+        );
+        if (created == true && mounted) await _loadExecutiveOverview();
+        return;
+      case 'add_checkup':
+        await Get.toNamed(
+          WebRoutes.bhwCheckups,
+          arguments: const {'openCreateOnLoad': true},
+        );
+        return;
+      case 'summary_generation':
+        await Get.toNamed(WebRoutes.bhwSummary);
+        return;
+      case 'analytics':
+        await Get.toNamed(WebRoutes.bhwAnalytics);
+        return;
+      case 'prenatal':
+        await Get.toNamed(
+          WebRoutes.bhwPrenatal,
+          arguments: const {'openCreateOnLoad': true},
+        );
+        return;
+      case 'immunization':
+        await Get.toNamed(
+          WebRoutes.bhwImmunization,
+          arguments: const {'openCreateOnLoad': true},
+        );
+        return;
+      case 'communicable_diseases':
+        await Get.toNamed(WebRoutes.bhwCommunicable);
+        return;
+      case 'non_communicable_diseases':
+        await Get.toNamed(WebRoutes.bhwNonCommunicable);
+        return;
+      case 'morbidity':
+        await Get.toNamed(WebRoutes.bhwMorbidity);
+        return;
+      case 'mortality':
+        await Get.toNamed(WebRoutes.bhwMortality);
+        return;
+      case 'referrals':
+        await Get.toNamed(WebRoutes.bhwReferrals);
+        return;
+    }
   }
 
   Future<List<Map<String, dynamic>>> _loadScopedDashboardRecords(
@@ -1264,6 +1401,15 @@ class _HomePageState extends State<HomePage> {
               children: [
                 // Welcome - Full Width
                 _buildWelcomeCard(userName),
+                const SizedBox(height: 24),
+                BhwQuickActionsSection(
+                  actionIds: _quickActionIds,
+                  onAction: _openQuickAction,
+                  onEdit: _editQuickActions,
+                  isLoading: _isLoadingQuickActions,
+                  errorMessage: _quickActionsError,
+                  onRetry: _loadQuickActions,
+                ),
                 const SizedBox(height: 24),
                 if (_executiveOverviewError != null)
                   _buildExecutiveOverviewError()

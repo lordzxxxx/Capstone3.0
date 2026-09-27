@@ -40,9 +40,14 @@ const Color _historyMuted = AppColors.textSecondary;
 const Color _historyBorder = AppColors.border;
 
 class ImmunizationPage extends StatefulWidget {
-  const ImmunizationPage({super.key, this.initialPatient});
+  const ImmunizationPage({
+    super.key,
+    this.initialPatient,
+    this.openCreateOnLoad = false,
+  });
 
   final Map<String, dynamic>? initialPatient;
+  final bool openCreateOnLoad;
 
   @override
   State<ImmunizationPage> createState() => _ImmunizationPageState();
@@ -91,7 +96,7 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
     );
     Future.microtask(() => _loadRecords());
     _dbHelper.startConnectivityListener();
-    if (widget.initialPatient != null) {
+    if (widget.initialPatient != null || widget.openCreateOnLoad) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _showNewImmunizationModal(

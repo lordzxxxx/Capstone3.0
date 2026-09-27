@@ -165,6 +165,27 @@ service cloud.firestore {
       ]);
     }
 
+    function validBhwQuickActionPreferences(existingData, newData) {
+      let preferenceFields = ['bhwQuickActions', 'bhwQuickActionsUpdatedAt'];
+      let changed = newData.diff(existingData).affectedKeys()
+        .hasAny(preferenceFields);
+      let allowedActionIds = [
+        'add_patient', 'add_checkup', 'summary_generation', 'analytics',
+        'prenatal', 'immunization', 'communicable_diseases',
+        'non_communicable_diseases', 'morbidity', 'mortality', 'referrals'
+      ];
+      return !changed || (
+        activeProfileHasRole(existingData, ['BHW', 'bhw']) &&
+        newData.bhwQuickActions is list &&
+        newData.bhwQuickActions.size() > 0 &&
+        newData.bhwQuickActions.size() <= 6 &&
+        newData.bhwQuickActions.toSet().size() ==
+          newData.bhwQuickActions.size() &&
+        newData.bhwQuickActions.toSet().hasOnly(allowedActionIds) &&
+        newData.bhwQuickActionsUpdatedAt == request.time
+      );
+    }
+
     function isChoRole() {
       let choRoles = [
         'CHO',
@@ -552,7 +573,8 @@ service cloud.firestore {
       allow update: if (
         isSignedIn() &&
         request.auth.uid == userId &&
-        preservesProtectedUserFields(resource.data, request.resource.data)
+        preservesProtectedUserFields(resource.data, request.resource.data) &&
+        validBhwQuickActionPreferences(resource.data, request.resource.data)
       ) || isChoAdmin() ||
       (
         isChoRole() && (
@@ -604,7 +626,8 @@ service cloud.firestore {
         (
           (
             request.auth.uid == userId &&
-            preservesProtectedUserFields(resource.data, request.resource.data)
+            preservesProtectedUserFields(resource.data, request.resource.data) &&
+            validBhwQuickActionPreferences(resource.data, request.resource.data)
           ) || isChoAdmin() ||
           (
             isChoRole() &&

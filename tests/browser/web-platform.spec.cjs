@@ -238,6 +238,69 @@ test.describe('authentication retry recovery', () => {
 });
 
 test.describe('role routes and permissions', () => {
+  test('BHW Quick Actions can be edited and persist across a fresh login', async ({browser}, testInfo) => {
+    if (testInfo.project.name !== 'desktop-chromium') return;
+
+    const identity = {...identities().bhw, expectedRoute: '**/bhw/dashboard'};
+    const firstSession = await signOutToIsolatedContext(
+      browser,
+      testInfo.project,
+      identity,
+    );
+    const page = firstSession.page;
+
+    await expectFlutterText(page, 'Quick Actions');
+    await expect(
+      page.getByRole('button', {name: 'Add Patient. Register a patient'}),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', {name: 'Add Checkup. Record a consultation'}),
+    ).toBeVisible();
+
+    await page.getByRole('button', {name: 'Edit Quick Actions'}).click();
+    await enableFlutterSemantics(page);
+    await expect(page.getByRole('dialog')).toBeVisible();
+
+    const analyticsChoice = page.getByRole('checkbox', {
+      name: /^Analytics Analytics Review barangay insights 4$/,
+    });
+    const referralsChoice = page.getByRole('checkbox', {
+      name: /^Referrals Referrals Create or track referrals$/,
+    });
+    await expect(analyticsChoice).toHaveCount(1);
+    await expect(referralsChoice).toHaveCount(1);
+    await analyticsChoice.click();
+    await referralsChoice.click();
+    await page.getByRole('button', {name: 'Save Quick Actions'}).click();
+
+    await expectFlutterText(page, 'Quick Actions saved to your account.');
+    await expect(
+      page.getByRole('button', {name: 'Referrals. Create or track referrals'}),
+    ).toBeVisible();
+
+    await page.getByRole('button', {name: 'Add Patient. Register a patient'}).click();
+    await enableFlutterSemantics(page);
+    await expectFlutterText(page, 'Register Patient');
+    await firstSession.context.close();
+
+    const secondSession = await signOutToIsolatedContext(
+      browser,
+      testInfo.project,
+      identity,
+    );
+    await expect(
+      secondSession.page.getByRole('button', {
+        name: 'Referrals. Create or track referrals',
+      }),
+    ).toBeVisible();
+    await expect(
+      secondSession.page.getByRole('button', {
+        name: 'Analytics. Review barangay insights',
+      }),
+    ).toHaveCount(0);
+    await secondSession.context.close();
+  });
+
   test('BHW canonical routes stay BHW-scoped', async ({browser}, testInfo) => {
     const identity = {...identities().bhw, expectedRoute: '**/bhw/dashboard'};
     const {context, page} = await signOutToIsolatedContext(browser, testInfo.project, identity);

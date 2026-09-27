@@ -144,6 +144,64 @@ describe('user profile privilege boundaries', () => {
     await assertFails(ref.update({barangayCode: 'barangay_11'}));
   });
 
+  it('stores only valid per-user BHW Quick Action preferences', async () => {
+    await seed(
+      'users/bhw-1',
+      activeProfile('bhw-1', 'bhw@example.test'),
+    );
+    await seed(
+      'users/bhw-2',
+      activeProfile('bhw-2', 'bhw2@example.test'),
+    );
+    const db = testEnv
+      .authenticatedContext('bhw-1', {email: 'bhw@example.test'})
+      .firestore();
+    const ownRef = db.doc('users/bhw-1');
+
+    await assertSucceeds(
+      ownRef.update({
+        bhwQuickActions: [
+          'add_patient',
+          'add_checkup',
+          'prenatal',
+          'immunization',
+          'referrals',
+          'summary_generation',
+        ],
+        bhwQuickActionsUpdatedAt:
+          require('firebase/firestore').serverTimestamp(),
+      }),
+    );
+    await assertFails(
+      ownRef.update({
+        bhwQuickActions: [],
+        bhwQuickActionsUpdatedAt:
+          require('firebase/firestore').serverTimestamp(),
+      }),
+    );
+    await assertFails(
+      ownRef.update({
+        bhwQuickActions: ['add_patient', 'add_patient'],
+        bhwQuickActionsUpdatedAt:
+          require('firebase/firestore').serverTimestamp(),
+      }),
+    );
+    await assertFails(
+      ownRef.update({
+        bhwQuickActions: ['unknown_action'],
+        bhwQuickActionsUpdatedAt:
+          require('firebase/firestore').serverTimestamp(),
+      }),
+    );
+    await assertFails(
+      db.doc('users/bhw-2').update({
+        bhwQuickActions: ['add_patient'],
+        bhwQuickActionsUpdatedAt:
+          require('firebase/firestore').serverTimestamp(),
+      }),
+    );
+  });
+
   it('rejects malformed pending self-registration profiles', async () => {
     const db = testEnv
       .authenticatedContext('bhw-1', {email: 'bhw@example.test'})

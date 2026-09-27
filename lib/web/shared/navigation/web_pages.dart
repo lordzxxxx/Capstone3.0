@@ -165,29 +165,46 @@ class WebPages {
         ),
         GetPage(
           name: WebRoutes.bhwCheckups,
-          page: () => _guardWebPage(
-            allowedRoles: bhwWebRoles,
-            requiredPermission: 'checkups.view',
-            child: const web_checkup.CheckUpPage(),
-          ),
+          page: () {
+            final arguments = Get.arguments;
+            final openCreate =
+                arguments is Map && arguments['openCreateOnLoad'] == true;
+            return _guardWebPage(
+              allowedRoles: bhwWebRoles,
+              requiredPermission: 'checkups.view',
+              child: web_checkup.CheckUpPage(openCreateOnLoad: openCreate),
+            );
+          },
           middlewares: [AuthGuardMiddleware()],
         ),
         GetPage(
           name: WebRoutes.bhwPrenatal,
-          page: () => _guardWebPage(
-            allowedRoles: bhwWebRoles,
-            requiredPermission: 'prenatal.view',
-            child: const web_prenatal.PrenatalPage(),
-          ),
+          page: () {
+            final arguments = Get.arguments;
+            final openCreate =
+                arguments is Map && arguments['openCreateOnLoad'] == true;
+            return _guardWebPage(
+              allowedRoles: bhwWebRoles,
+              requiredPermission: 'prenatal.view',
+              child: web_prenatal.PrenatalPage(openCreateOnLoad: openCreate),
+            );
+          },
           middlewares: [AuthGuardMiddleware()],
         ),
         GetPage(
           name: WebRoutes.bhwImmunization,
-          page: () => _guardWebPage(
-            allowedRoles: bhwWebRoles,
-            requiredPermission: 'immunization.view',
-            child: const web_bhw_immunization.ImmunizationPage(),
-          ),
+          page: () {
+            final arguments = Get.arguments;
+            final openCreate =
+                arguments is Map && arguments['openCreateOnLoad'] == true;
+            return _guardWebPage(
+              allowedRoles: bhwWebRoles,
+              requiredPermission: 'immunization.view',
+              child: web_bhw_immunization.ImmunizationPage(
+                openCreateOnLoad: openCreate,
+              ),
+            );
+          },
           middlewares: [AuthGuardMiddleware()],
         ),
         GetPage(

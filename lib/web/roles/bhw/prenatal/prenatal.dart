@@ -35,9 +35,14 @@ const Color _lightOffWhite = Color(0xFF0B1F3A);
 const Color _sidebarDark = Colors.white;
 
 class PrenatalPage extends StatefulWidget {
-  const PrenatalPage({super.key, this.initialPatient});
+  const PrenatalPage({
+    super.key,
+    this.initialPatient,
+    this.openCreateOnLoad = false,
+  });
 
   final Map<String, dynamic>? initialPatient;
+  final bool openCreateOnLoad;
 
   @override
   State<PrenatalPage> createState() => _PrenatalPageState();
@@ -115,7 +120,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
     _loadRecords();
     _dbHelper.startConnectivityListener();
     _initializeAI();
-    if (widget.initialPatient != null) {
+    if (widget.initialPatient != null || widget.openCreateOnLoad) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _showNewPrenatalModal(context, patientSeed: widget.initialPatient);
