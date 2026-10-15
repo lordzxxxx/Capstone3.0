@@ -472,7 +472,7 @@ test.describe('critical controls and connection feedback', () => {
     await expectFlutterText(page, /Patient Records/i);
     await page.getByRole('button', {name: /^Records$/i}).click();
     await expectFlutterText(page, /Search by name/i);
-    await expect(page.getByRole('button', {name: /Add Patient/i})).toBeVisible();
+    await expect(page.getByRole('button', {name: /Add Patient/i}).first()).toBeVisible();
 
     await context.setOffline(true);
     await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(false);

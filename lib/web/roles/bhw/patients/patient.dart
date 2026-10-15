@@ -22,6 +22,7 @@ import 'package:mycapstone_project/web/shared/utils/file_download.dart';
 import 'package:mycapstone_project/web/shared/utils/patient_pdf.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/components/app_buttons.dart';
+import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/web/shared/widgets/web_sync_status_badge.dart';
 import 'dart:async';
@@ -81,6 +82,17 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
   @override
   void initState() {
     super.initState();
+    _selectedPatientTab = healthModuleViewFromUrl() == HealthModuleView.records
+        ? 1
+        : 0;
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => persistHealthModuleView(
+        WebRoutes.bhwPatients,
+        _selectedPatientTab == 0
+            ? HealthModuleView.insights
+            : HealthModuleView.records,
+      ),
+    );
     _startPatientRecordsSync();
     _dbHelper.startConnectivityListener();
     if (widget.openRegistrationOnLoad) {
@@ -255,6 +267,19 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
 
   // Calculate statistics
 
+  void _setPatientView(HealthModuleView view) {
+    final nextTab = view == HealthModuleView.insights ? 0 : 1;
+    if (_selectedPatientTab == nextTab) return;
+    setState(() {
+      _selectedPatientTab = nextTab;
+      if (_selectedPatientTab == 0) {
+        _isSelectionMode = false;
+        _selectedIndices.clear();
+      }
+    });
+    persistHealthModuleView(WebRoutes.bhwPatients, view);
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -286,22 +311,16 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                           HealthModuleViewHeader(
                             title: 'Patient Records',
                             description:
-                                'Review assigned-patient activity and demographics, or manage individual patient records.',
+                                'Register each patient once, then keep their care history connected across every service.',
                             activeView: _selectedPatientTab == 0
                                 ? HealthModuleView.insights
                                 : HealthModuleView.records,
                             onViewChanged: (view) {
-                              setState(() {
-                                _selectedPatientTab =
-                                    view == HealthModuleView.insights ? 0 : 1;
-                                if (_selectedPatientTab == 0) {
-                                  _isSelectionMode = false;
-                                  _selectedIndices.clear();
-                                }
-                              });
+                              _setPatientView(view);
                             },
                             primaryColor: _primaryAqua,
                             insightsLabel: 'Summary',
+                            actions: [_buildHeaderAddPatientButton()],
                           ),
                           const SizedBox(height: 16),
                           if (_selectedPatientTab == 0)
@@ -309,7 +328,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                               patients: _patients,
                               onViewPatient: _showPatientDetails,
                               onViewAll: () =>
-                                  setState(() => _selectedPatientTab = 1),
+                                  _setPatientView(HealthModuleView.records),
                             )
                           else ...[
                             _buildPatientTable(),
@@ -712,6 +731,19 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     );
   }
 
+  Widget _buildHeaderAddPatientButton() {
+    return Semantics(
+      button: true,
+      label: 'Add Patient. Register a new patient record',
+      child: FilledButton.icon(
+        onPressed: _showAddPatientModal,
+        style: AppButtonStyles.primary(),
+        icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+        label: const Text('Add Patient'),
+      ),
+    );
+  }
+
   Widget _buildTableSelectPatientsButton() {
     return Material(
       color: Colors.transparent,
@@ -1059,150 +1091,160 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                     const SizedBox(height: 16),
 
                     // Filters Row
-                    Row(
-                      children: [
-                        // Status Dropdown
-                        Expanded(
-                          flex: 2,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEDF3FA),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: _primaryAqua.withValues(alpha: 0.3),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.filter_list,
-                                  color: _primaryAqua,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      value: _selectedStatus,
-                                      isExpanded: true,
-                                      dropdownColor: Colors.white,
-                                      isDense: true,
-                                      iconSize: 18,
-                                      icon: Icon(
-                                        Icons.arrow_drop_down,
-                                        color: _primaryAqua,
-                                        size: 18,
-                                      ),
-                                      style: const TextStyle(
-                                        color: _darkDeepTeal,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      borderRadius: BorderRadius.circular(8),
-                                      items:
-                                          [
-                                            'All',
-                                            'Active',
-                                            'Follow-up',
-                                            'Inactive',
-                                          ].map((String option) {
-                                            return DropdownMenuItem<String>(
-                                              value: option,
-                                              child: Text(option),
-                                            );
-                                          }).toList(),
-                                      onChanged: (String? newValue) {
-                                        if (newValue != null) {
-                                          setState(() {
-                                            _selectedStatus = newValue;
-                                            _currentPage = 1;
-                                          });
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ],
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final compact = constraints.maxWidth < 620;
+                        final statusFilter = Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEDF3FA),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: _primaryAqua.withValues(alpha: 0.3),
+                              width: 1.5,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-
-                        // Date Range
-                        Expanded(
-                          flex: 2,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _primaryAqua.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: _primaryAqua.withValues(alpha: 0.3),
-                                width: 1.5,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.filter_list,
+                                color: _primaryAqua,
+                                size: 16,
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.date_range,
-                                  color: _primaryAqua,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: _buildDatePickerButton(
-                                          context: context,
-                                          label: 'From',
-                                          date: _fromDate,
-                                          isFromDate: true,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: _buildDatePickerButton(
-                                          context: context,
-                                          label: 'To',
-                                          date: _toDate,
-                                          isFromDate: false,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                if (_fromDate != null || _toDate != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 10),
-                                    child: InkWell(
-                                      onTap: () {
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: _selectedStatus,
+                                    isExpanded: true,
+                                    dropdownColor: Colors.white,
+                                    isDense: true,
+                                    iconSize: 18,
+                                    icon: Icon(
+                                      Icons.arrow_drop_down,
+                                      color: _primaryAqua,
+                                      size: 18,
+                                    ),
+                                    style: const TextStyle(
+                                      color: _darkDeepTeal,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    items:
+                                        [
+                                          'All',
+                                          'Active',
+                                          'Follow-up',
+                                          'Inactive',
+                                        ].map((String option) {
+                                          return DropdownMenuItem<String>(
+                                            value: option,
+                                            child: Text(option),
+                                          );
+                                        }).toList(),
+                                    onChanged: (String? newValue) {
+                                      if (newValue != null) {
                                         setState(() {
-                                          _fromDate = null;
-                                          _toDate = null;
+                                          _selectedStatus = newValue;
                                           _currentPage = 1;
                                         });
-                                      },
-                                      child: Icon(
-                                        Icons.clear,
-                                        size: 18,
-                                        color: Colors.red,
-                                      ),
-                                    ),
+                                      }
+                                    },
                                   ),
-                              ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                        final dateFilter = Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _primaryAqua.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: _primaryAqua.withValues(alpha: 0.3),
+                              width: 1.5,
                             ),
                           ),
-                        ),
-                      ],
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.date_range,
+                                color: _primaryAqua,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildDatePickerButton(
+                                        context: context,
+                                        label: 'From',
+                                        date: _fromDate,
+                                        isFromDate: true,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: _buildDatePickerButton(
+                                        context: context,
+                                        label: 'To',
+                                        date: _toDate,
+                                        isFromDate: false,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (_fromDate != null || _toDate != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 10),
+                                  child: InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        _fromDate = null;
+                                        _toDate = null;
+                                        _currentPage = 1;
+                                      });
+                                    },
+                                    child: Icon(
+                                      Icons.clear,
+                                      size: 18,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+
+                        if (compact) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              statusFilter,
+                              const SizedBox(height: 10),
+                              dateFilter,
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            Expanded(flex: 2, child: statusFilter),
+                            const SizedBox(width: 16),
+                            Expanded(flex: 2, child: dateFilter),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                     _buildRegistryAdvancedFilters(),
