@@ -319,6 +319,11 @@ def create_app() -> FastAPI:
     application = FastAPI(
         title="AI-DSUHIS Symptom Guidance API",
         version=settings.model_version,
+        docs_url=None if settings.environment == "production" else "/docs",
+        redoc_url=None if settings.environment == "production" else "/redoc",
+        openapi_url=None
+        if settings.environment == "production"
+        else "/openapi.json",
         description=(
             "Keyword-based self-care and emergency guidance retrieved from "
             "reviewed Firestore content. This API does not provide a diagnosis."

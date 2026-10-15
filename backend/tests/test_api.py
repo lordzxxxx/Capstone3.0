@@ -40,5 +40,22 @@ def test_legacy_prediction_endpoint_is_not_registered() -> None:
     assert "/predict" not in api.app.openapi()["paths"]
 
 
+def test_production_api_does_not_expose_interactive_docs(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("WEB_ALLOWED_ORIGINS", "https://www.ai-dsuhis.com")
+    monkeypatch.setenv("API_ALLOWED_HOSTS", "api.ai-dsuhis.com")
+    api.get_settings.cache_clear()
+    try:
+        production_app = api.create_app()
+        paths = {route.path for route in production_app.routes}
+        assert "/docs" not in paths
+        assert "/redoc" not in paths
+        assert "/openapi.json" not in paths
+    finally:
+        api.get_settings.cache_clear()
+
+
 def teardown_module() -> None:
     api.app.dependency_overrides.clear()
