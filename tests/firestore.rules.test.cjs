@@ -646,6 +646,15 @@ describe('nested barangay collection boundaries', () => {
     await assertSucceeds(
       db.doc('barangays/POBLACION-10/checkup_records/checkup-1').get(),
     );
+    await assertSucceeds(
+      db.collection('barangays/POBLACION-10/checkup_records').get(),
+    );
+    await assertSucceeds(
+      db
+        .collection('barangays/POBLACION-10/checkup_records')
+        .where('barangayCode', '==', 'POBLACION-10')
+        .get(),
+    );
   });
 
   it('still rejects a different barangay path', async () => {
@@ -655,6 +664,9 @@ describe('nested barangay collection boundaries', () => {
 
     await assertFails(
       db.doc('barangays/POBLACION-11/checkup_records/checkup-2').get(),
+    );
+    await assertFails(
+      db.collection('barangays/POBLACION-11/checkup_records').get(),
     );
   });
 

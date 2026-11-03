@@ -210,26 +210,29 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
       }
 
       final snapshots = await Future.wait(
-        _baseCollections.map((collection) {
-          Query<Map<String, dynamic>> query = buildScopedRecordQuery(
-            _firestore,
-            collection,
-            scope,
-          );
-
-          // Referral rules only allow BHW users to read their own referrals.
-          if (collection == 'referrals' && scope.isBhw) {
-            query = query.where('createdByUid', isEqualTo: scope.userId);
+        _baseCollections.map((collection) async {
+          try {
+            return await getScopedRecordQuerySnapshot(
+              _firestore,
+              collection,
+              scope,
+            );
+          } on FirebaseException catch (error) {
+            if (error.code == 'permission-denied') {
+              return null;
+            }
+            rethrow;
           }
-
-          return query.get();
         }),
       );
 
       final rawByCollection = <String, List<Map<String, dynamic>>>{};
       for (int index = 0; index < _baseCollections.length; index++) {
         final collection = _baseCollections[index];
-        final docs = snapshots[index].docs;
+        final snapshot = snapshots[index];
+        final docs =
+            snapshot?.docs ??
+            const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
         final scopedRecords = docs
             .map(materializeFirestoreRecord)
             .map(
@@ -1383,7 +1386,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: 18,
             mainAxisSpacing: 18,
-            childAspectRatio: crossAxisCount == 1 ? 1.55 : 1.18,
+            childAspectRatio: crossAxisCount == 1 ? 1.45 : 1.08,
           ),
           itemBuilder: (context, index) {
             return _buildProgramCard(_modules[index]);
@@ -2629,7 +2632,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -2655,7 +2658,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 14),
                     Expanded(
                       child: activeRecords.isEmpty
                           ? _buildNoDataState(module)
@@ -2721,32 +2724,35 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
         border: Border.all(color: const Color(0xFFD9E5F2)),
       ),
       child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 module.icon,
                 color: module.accent.withValues(alpha: 0.72),
-                size: 30,
+                size: 24,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
               Text(
                 'No encoded records yet',
                 style: TextStyle(
                   color: _lightOffWhite.withValues(alpha: 0.88),
                   fontWeight: FontWeight.w700,
+                  fontSize: 13.5,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 'This graph will populate as soon as visible ${moduleLabels[module.id] ?? 'program'} records are encoded.',
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: _lightOffWhite.withValues(alpha: 0.66),
-                  fontSize: 12.5,
-                  height: 1.4,
+                  fontSize: 12,
+                  height: 1.3,
                 ),
               ),
             ],

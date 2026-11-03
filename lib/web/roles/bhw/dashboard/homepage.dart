@@ -273,24 +273,28 @@ class _HomePageState extends State<HomePage> {
   }) async {
     final scope =
         accessScope ?? await UserAccessScopeService.instance.loadCurrentScope();
-    Query<Map<String, dynamic>> query = buildScopedRecordQuery(
-      getFirestoreInstance(),
-      collectionName,
-      scope,
-    );
-    if (collectionName == 'referrals' && scope.isBhw) {
-      // Firestore referral rules permit a BHW to read only referrals they
-      // created. Including this constraint lets Firestore prove the query is
-      // authorized instead of rejecting the entire barangay collection read.
-      query = query.where('createdByUid', isEqualTo: scope.userId);
-    }
     QuerySnapshot<Map<String, dynamic>> snapshot;
     try {
       // Let Firestore choose the freshest available source. On web this is
       // cache-first when the browser is offline and server-backed when it is
       // online; forcing Source.server made a short outage look like an empty
       // dashboard even after records had already been loaded.
-      snapshot = await query.get();
+      snapshot = await getScopedRecordQuerySnapshot(
+        getFirestoreInstance(),
+        collectionName,
+        scope,
+      );
+    } on FirebaseException catch (error) {
+      if (kDebugMode) {
+        debugPrint(
+          'BHW dashboard query failed: collection=$collectionName '
+          'barangay=${scope.barangayCode} error=$error',
+        );
+      }
+      if (error.code == 'permission-denied') {
+        return const <Map<String, dynamic>>[];
+      }
+      rethrow;
     } catch (error) {
       if (kDebugMode) {
         debugPrint(
@@ -305,11 +309,14 @@ class _HomePageState extends State<HomePage> {
     // Stable document IDs prevent those mirrors from inflating dashboard totals.
     final unique = <String, Map<String, dynamic>>{};
     for (final doc in snapshot.docs) {
-      unique[doc.id] = <String, dynamic>{
+      final record = <String, dynamic>{
         ...doc.data(),
         'id': doc.id,
         '_firestorePath': doc.reference.path,
       };
+      if (recordMatchesAccessScope(record, scope)) {
+        unique[doc.id] = record;
+      }
     }
     return unique.values.toList(growable: false);
   }

@@ -67,16 +67,28 @@ service cloud.firestore {
           : '';
     }
 
-    function userBarangay() {
-      return currentUser() != null && ('barangay' in currentUser()) && currentUser().barangay != ''
-        ? currentUser().barangay
+    function profileBarangay(profile) {
+      return profile != null && ('barangay' in profile) && profile.barangay != ''
+        ? profile.barangay
         : authBarangay();
     }
 
+    function profileBarangayCode(profile) {
+      return profile != null && ('barangayCode' in profile) && profile.barangayCode != ''
+        ? profile.barangayCode
+        : (
+          authBarangayCode() != ''
+            ? authBarangayCode()
+            : profileBarangay(profile)
+        );
+    }
+
+    function userBarangay() {
+      return profileBarangay(currentUser());
+    }
+
     function userBarangayCode() {
-      return currentUser() != null && ('barangayCode' in currentUser()) && currentUser().barangayCode != ''
-        ? currentUser().barangayCode
-        : authBarangayCode();
+      return profileBarangayCode(currentUser());
     }
 
     function authEmail() {
@@ -252,8 +264,15 @@ service cloud.firestore {
           ] ||
           (('permissions' in profile) && profile.permissions is list &&
             profile.permissions.hasAny([permission])) ||
-          (!('permissions' in profile) &&
-            builtInPermissionForRole(profile.role, permission))
+          (
+            (!('accessRoleKey' in profile) ||
+              !(profile.accessRoleKey is string) ||
+              !profile.accessRoleKey.matches('^CUSTOM_.*')) &&
+            (!('permissions' in profile) ||
+              !(profile.permissions is list) ||
+              profile.permissions.size() == 0) &&
+            builtInPermissionForRole(profile.role, permission)
+          )
         );
     }
 
@@ -274,15 +293,23 @@ service cloud.firestore {
     }
 
     function profileSameBarangay(profile, data) {
+      let pCode = profileBarangayCode(profile);
+      let pName = profileBarangay(profile);
       return profile != null && data != null &&
         (
-          (('barangayCode' in data) && ('barangayCode' in profile) &&
-            data.barangayCode != '' && profile.barangayCode != '' &&
-            data.barangayCode.lower() == profile.barangayCode.lower()) ||
-          (!('barangayCode' in data) && ('barangay' in profile) &&
-            ('barangay' in data) &&
-            data.barangay == profile.barangay)
+          (('barangayCode' in data) &&
+            data.barangayCode != '' && pCode != '' &&
+            (data.barangayCode == pCode || data.barangayCode.lower() == pCode.lower())) ||
+          (!('barangayCode' in data) && ('barangay' in data) &&
+            data.barangay != '' && pName != '' &&
+            (data.barangay == pName || data.barangay.lower() == pName.lower()))
         );
+    }
+
+    function profileSameBarangayPath(profile, barangayCode) {
+      let pCode = profileBarangayCode(profile);
+      return isSignedIn() && pCode != '' &&
+        (pCode == barangayCode || pCode.lower() == barangayCode.lower());
     }
 
     function canReadScopedRecordWithPermission(data, permission) {
@@ -308,30 +335,35 @@ service cloud.firestore {
       ]) && profileHasPermission(profile, permission)) ||
         (activeProfileHasRole(profile, ['BHW', 'bhw']) &&
           profileHasPermission(profile, permission) &&
-          sameBarangayPath(barangayCode) &&
+          profileSameBarangayPath(profile, barangayCode) &&
           profileSameBarangay(profile, data));
     }
 
+    function canListBarangayScopedRecordsWithPermission(barangayCode, permission) {
+      let profile = currentUser();
+      return (activeProfileHasRole(profile, [
+        'CHO', 'cho', 'CHO_ADMIN', 'cho_admin', 'CHO_SUPER_ADMIN',
+        'cho_super_admin'
+      ]) && profileHasPermission(profile, permission)) ||
+        (activeProfileHasRole(profile, ['BHW', 'bhw']) &&
+          profileHasPermission(profile, permission) &&
+          profileSameBarangayPath(profile, barangayCode));
+    }
+
     function isBhwRole() {
-      let bhwRoles = ['BHW', 'bhw'];
-      return isSignedIn() && hasApprovedActiveProfile() &&
-        roleEqualsAny(userRole(), bhwRoles);
+      return activeProfileHasRole(currentUser(), ['BHW', 'bhw']);
     }
 
     function isDoctorRole() {
-      let doctorRoles = ['DOCTOR', 'doctor'];
-      return isSignedIn() && hasApprovedActiveProfile() &&
-        roleEqualsAny(userRole(), doctorRoles);
+      return activeProfileHasRole(currentUser(), ['DOCTOR', 'doctor']);
     }
 
     function sameBarangay(data) {
-      return isSignedIn() && userRole() != '' && data != null && (
-        (('barangayCode' in data) &&
-          data.barangayCode != '' && userBarangayCode() != '' &&
-          data.barangayCode.lower() == userBarangayCode().lower()) ||
-        (!('barangayCode' in data) && ('barangay' in data) &&
-          data.barangay == userBarangay())
-      );
+      let profile = currentUser();
+      return activeProfileHasRole(profile, [
+        'BHW', 'bhw', 'CHO', 'cho', 'CHO_ADMIN', 'cho_admin',
+        'CHO_SUPER_ADMIN', 'cho_super_admin', 'DOCTOR', 'doctor'
+      ]) && profileSameBarangay(profile, data);
     }
 
     function canReadScopedRecord(data) {
@@ -343,25 +375,32 @@ service cloud.firestore {
     }
 
     function sameBarangayPath(barangayCode) {
-      // Web collection paths use an uppercase normalized code while user
-      // profiles retain the canonical lowercase barangay code. Compare the
-      // normalized values so both existing path formats remain accessible.
-      return isSignedIn() &&
-        userBarangayCode().lower() == barangayCode.lower();
+      return profileSameBarangayPath(currentUser(), barangayCode);
     }
 
     function canReadBarangayScopedRecord(barangayCode, data) {
-      return isChoRole() ||
-        (isBhwRole() && sameBarangayPath(barangayCode) && sameBarangay(data));
+      let profile = currentUser();
+      return activeProfileHasRole(profile, [
+        'CHO', 'cho', 'CHO_ADMIN', 'cho_admin', 'CHO_SUPER_ADMIN',
+        'cho_super_admin'
+      ]) ||
+        (activeProfileHasRole(profile, ['BHW', 'bhw']) &&
+          profileSameBarangayPath(profile, barangayCode) &&
+          profileSameBarangay(profile, data));
+    }
+
+    function canListBarangayScopedRecords(barangayCode) {
+      let profile = currentUser();
+      return activeProfileHasRole(profile, [
+        'CHO', 'cho', 'CHO_ADMIN', 'cho_admin', 'CHO_SUPER_ADMIN',
+        'cho_super_admin'
+      ]) ||
+        (activeProfileHasRole(profile, ['BHW', 'bhw']) &&
+          profileSameBarangayPath(profile, barangayCode));
     }
 
     function canWriteBarangayScopedRecord(barangayCode, data) {
-      return isChoRole() ||
-        (
-          isBhwRole() &&
-          sameBarangayPath(barangayCode) &&
-          sameBarangay(data)
-        );
+      return canReadBarangayScopedRecord(barangayCode, data);
     }
 
     function canUpdateImmunizationRecord(existingData, newData) {
@@ -796,7 +835,8 @@ service cloud.firestore {
       allow delete: if canWriteScopedRecordWithPermission(resource.data, 'checkups.edit');
     }
     match /barangays/{barangayCode}/checkup_records/{recordId} {
-      allow read: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'checkups.view');
+      allow get: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'checkups.view');
+      allow list: if canListBarangayScopedRecordsWithPermission(barangayCode, 'checkups.view');
       allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
         hasPermission('checkups.create') &&
         request.resource.data.barangayCode == barangayCode;
@@ -816,7 +856,8 @@ service cloud.firestore {
       allow delete: if canWriteScopedRecordWithPermission(resource.data, 'prenatal.edit');
     }
     match /barangays/{barangayCode}/prenatal_records/{recordId} {
-      allow read: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'prenatal.view');
+      allow get: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'prenatal.view');
+      allow list: if canListBarangayScopedRecordsWithPermission(barangayCode, 'prenatal.view');
       allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
         hasPermission('prenatal.create') &&
         request.resource.data.barangayCode == barangayCode;
@@ -838,7 +879,8 @@ service cloud.firestore {
       allow delete: if canWriteScopedRecordWithPermission(resource.data, 'immunization.edit');
     }
     match /barangays/{barangayCode}/immunization_records/{recordId} {
-      allow read: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'immunization.view');
+      allow get: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'immunization.view');
+      allow list: if canListBarangayScopedRecordsWithPermission(barangayCode, 'immunization.view');
       allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
         hasPermission('immunization.create') &&
         request.resource.data.barangayCode == barangayCode &&
@@ -858,7 +900,8 @@ service cloud.firestore {
       allow delete: if canWriteScopedRecordWithPermission(resource.data, 'patients.edit');
     }
     match /barangays/{barangayCode}/patient_records/{recordId} {
-      allow read: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'patients.view');
+      allow get: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'patients.view');
+      allow list: if canListBarangayScopedRecordsWithPermission(barangayCode, 'patients.view');
       allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
         hasPermission('patients.create') &&
         request.resource.data.barangayCode == barangayCode;
@@ -885,7 +928,8 @@ service cloud.firestore {
       allow delete: if canWriteScopedRecordWithPermission(resource.data, 'surveillance.edit');
     }
     match /barangays/{barangayCode}/morbidity_records/{recordId} {
-      allow read: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'surveillance.view');
+      allow get: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'surveillance.view');
+      allow list: if canListBarangayScopedRecordsWithPermission(barangayCode, 'surveillance.view');
       allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
         hasPermission('surveillance.create') &&
         request.resource.data.barangayCode == barangayCode;
@@ -905,7 +949,8 @@ service cloud.firestore {
       allow delete: if canWriteScopedRecordWithPermission(resource.data, 'surveillance.edit');
     }
     match /barangays/{barangayCode}/mortality_records/{recordId} {
-      allow read: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'surveillance.view');
+      allow get: if canReadBarangayScopedRecordWithPermission(barangayCode, resource.data, 'surveillance.view');
+      allow list: if canListBarangayScopedRecordsWithPermission(barangayCode, 'surveillance.view');
       allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
         hasPermission('surveillance.create') &&
         request.resource.data.barangayCode == barangayCode;
@@ -925,7 +970,8 @@ service cloud.firestore {
       allow delete: if canWriteScopedRecordWithPermission(resource.data, 'reports.view');
     }
     match /barangays/{barangayCode}/summary_records/{recordId} {
-      allow read: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow get: if canReadBarangayScopedRecord(barangayCode, resource.data);
+      allow list: if canListBarangayScopedRecords(barangayCode);
       allow create: if canWriteBarangayScopedRecord(barangayCode, request.resource.data) &&
         request.resource.data.barangayCode == barangayCode;
       allow update: if canWriteBarangayScopedRecord(barangayCode, resource.data) &&

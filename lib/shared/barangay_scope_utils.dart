@@ -121,16 +121,72 @@ Query<Map<String, dynamic>> buildScopedRecordQuery(
     return firestore
         .collection(BarangayFirestorePaths.barangaysCollection)
         .doc(resolvedBarangayCode)
-        .collection(normalizedCollectionName)
-        // Keep the query provably inside the same scope as the rules. This
-        // prevents a malformed document with a contradictory barangayCode
-        // from being returned by a BHW collection query.
-        .where('barangayCode', isEqualTo: resolvedBarangayCode);
+        .collection(normalizedCollectionName);
   }
 
   return firestore
       .collectionGroup(normalizedCollectionName)
       .where('barangayCode', isEqualTo: '__NO_ACCESS_SCOPE__');
+}
+
+Future<QuerySnapshot<Map<String, dynamic>>> getScopedRecordQuerySnapshot(
+  FirebaseFirestore firestore,
+  String collectionName,
+  UserAccessScope accessScope,
+) async {
+  final normalizedCollectionName = collectionName.trim();
+  final baseQuery = buildScopedRecordQuery(
+    firestore,
+    normalizedCollectionName,
+    accessScope,
+  );
+  if (accessScope.canViewAllBarangays) {
+    return baseQuery.get();
+  }
+
+  final resolvedBarangayCode = resolveScopedBarangayCode(
+    accessScope: accessScope,
+  );
+  Query<Map<String, dynamic>> primaryQuery = baseQuery;
+  if (normalizedCollectionName == 'referrals' && accessScope.isBhw) {
+    primaryQuery = primaryQuery.where(
+      'createdByUid',
+      isEqualTo: accessScope.userId,
+    );
+  }
+
+  try {
+    return await primaryQuery.get();
+  } on FirebaseException catch (error) {
+    if (error.code != 'permission-denied' ||
+        resolvedBarangayCode == null ||
+        resolvedBarangayCode.isEmpty) {
+      rethrow;
+    }
+
+    Query<Map<String, dynamic>> filteredQuery = primaryQuery.where(
+      'barangayCode',
+      isEqualTo: resolvedBarangayCode,
+    );
+    try {
+      return await filteredQuery.get();
+    } on FirebaseException catch (filteredError) {
+      if (filteredError.code != 'permission-denied') {
+        rethrow;
+      }
+      try {
+        return await primaryQuery.get(const GetOptions(source: Source.cache));
+      } catch (_) {
+        try {
+          return await filteredQuery.get(
+            const GetOptions(source: Source.cache),
+          );
+        } catch (_) {
+          throw error;
+        }
+      }
+    }
+  }
 }
 
 Future<DocumentReference<Map<String, dynamic>>>

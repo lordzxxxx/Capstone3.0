@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
+import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/services/barangay_workspace_service.dart';
 import 'package:mycapstone_project/web/shared/services/firestore_rest_reader.dart';
@@ -30,15 +31,71 @@ class UserAccessScopeService {
     return null;
   }
 
+  String _extractBarangayName(Map<String, dynamic> data) {
+    final direct = (data['barangay'] ?? data['assignedBarangay'] ?? '')
+        .toString()
+        .trim();
+    if (direct.isNotEmpty) return direct;
+    final bhw = data['bhw'];
+    if (bhw is Map) {
+      final nested = (bhw['assignedBarangay'] ?? bhw['barangay'] ?? '')
+          .toString()
+          .trim();
+      if (nested.isNotEmpty) return nested;
+    }
+    final address = data['address'];
+    if (address is Map) {
+      final nested = (address['barangay'] ?? '').toString().trim();
+      if (nested.isNotEmpty) return nested;
+    }
+    return '';
+  }
+
+  String _extractBarangayCode(Map<String, dynamic> data, String barangayName) {
+    String rawCode =
+        (data['barangayCode'] ?? data['assignedBarangayCode'] ?? '')
+            .toString()
+            .trim();
+    if (rawCode.isEmpty) {
+      final bhw = data['bhw'];
+      if (bhw is Map) {
+        rawCode = (bhw['assignedBarangayCode'] ?? bhw['barangayCode'] ?? '')
+            .toString()
+            .trim();
+      }
+    }
+    if (rawCode.isEmpty) {
+      final address = data['address'];
+      if (address is Map) {
+        rawCode = (address['barangayCode'] ?? '').toString().trim();
+      }
+    }
+    if (rawCode.isEmpty && barangayName.isNotEmpty) {
+      rawCode = MalaybalayBarangays.byName(barangayName)?.code ?? barangayName;
+    }
+    return BarangayFirestorePaths.normalizeBarangayCode(rawCode);
+  }
+
   UserAccessScope _buildScope(String userId, Map<String, dynamic> data) {
+    final rawBarangay = _extractBarangayName(data);
+    final resolvedCode = _extractBarangayCode(data, rawBarangay);
+    final canonicalEntry =
+        MalaybalayBarangays.byName(rawBarangay) ??
+        MalaybalayBarangays.byCode(resolvedCode);
+    final resolvedBarangay = rawBarangay.isNotEmpty
+        ? rawBarangay
+        : (canonicalEntry?.name ?? '');
+    final rawDistrict = (data['barangayDistrict'] ?? '').toString().trim();
+    final resolvedDistrict = rawDistrict.isNotEmpty
+        ? rawDistrict
+        : (canonicalEntry?.district ?? '');
+
     return UserAccessScope(
       userId: userId,
       role: (data['role'] ?? '').toString().trim().toLowerCase(),
-      barangay: (data['barangay'] ?? '').toString().trim(),
-      barangayCode: BarangayFirestorePaths.normalizeBarangayCode(
-        (data['barangayCode'] ?? '').toString().trim(),
-      ),
-      barangayDistrict: (data['barangayDistrict'] ?? '').toString().trim(),
+      barangay: resolvedBarangay,
+      barangayCode: resolvedCode,
+      barangayDistrict: resolvedDistrict,
       dataVisibleFrom: _coerceDate(
         data['dataVisibilityStartAt'] ?? data['createdAt'],
       ),
@@ -96,8 +153,8 @@ class UserAccessScopeService {
       return true;
     }
 
-    final barangay = (data['barangay'] ?? '').toString().trim();
-    final barangayCode = (data['barangayCode'] ?? '').toString().trim();
+    final barangay = _extractBarangayName(data);
+    final barangayCode = _extractBarangayCode(data, barangay);
     return barangay.isNotEmpty || barangayCode.isNotEmpty;
   }
 

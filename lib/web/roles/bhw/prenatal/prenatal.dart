@@ -151,6 +151,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
   }
 
   Future<void> _loadRecords() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
 
     // Load from local database
@@ -160,6 +161,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
     // Reload after sync
     final updatedRecords = await _dbHelper.getAllRecords();
 
+    if (!mounted) return;
     setState(() {
       _prenatalRecords = updatedRecords;
       _isLoading = false;

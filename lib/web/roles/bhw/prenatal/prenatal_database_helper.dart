@@ -258,12 +258,11 @@ class PrenatalDatabaseHelper {
       try {
         final accessScope = await UserAccessScopeService.instance
             .loadCurrentScope();
-        final query = buildScopedRecordQuery(
+        final snapshot = await getScopedRecordQuerySnapshot(
           getFirestoreInstance(),
           _collectionName,
           accessScope,
         );
-        final snapshot = await query.get();
         final scopedDocs = snapshot.docs
             .map(
               (document) => attachWebSyncMetadata(

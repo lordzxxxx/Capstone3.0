@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
+import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_components.dart';
@@ -1042,13 +1043,21 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
             }.contains(rawAccountStatus)
             ? rawAccountStatus
             : 'active';
+        final enteredBarangay = barangay.text.trim();
+        final resolvedBarangayEntry = MalaybalayBarangays.byName(
+          enteredBarangay,
+        );
         await _accountPolicyService.updateChoAccount(
           uid: doc.id,
           role: 'BHW',
           accountStatus: accountStatus,
-          barangay: barangay.text.trim(),
-          barangayCode: current['barangayCode']?.toString(),
-          barangayDistrict: current['barangayDistrict']?.toString(),
+          barangay: resolvedBarangayEntry?.name ?? enteredBarangay,
+          barangayCode:
+              resolvedBarangayEntry?.code ??
+              current['barangayCode']?.toString(),
+          barangayDistrict:
+              resolvedBarangayEntry?.district ??
+              current['barangayDistrict']?.toString(),
           fullName: fullName.text.trim(),
           username: username.text.trim(),
           contactNumber: contactNumber.text.trim(),
