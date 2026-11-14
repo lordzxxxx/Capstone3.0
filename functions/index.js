@@ -44,6 +44,9 @@ const {
   completeDoctorAccountSetup,
   requestDoctorAccountSetupLink,
 } = require('./doctor_access');
+const {
+  getReferralAttachmentDownloadUrl,
+} = require('./referral_attachment_access');
 
 // Export functions
 exports.setUserRole = setUserRole;
@@ -75,5 +78,6 @@ exports.updateOwnDoctorProfile = updateOwnDoctorProfile;
 exports.verifyDoctorSetupLink = verifyDoctorSetupLink;
 exports.completeDoctorAccountSetup = completeDoctorAccountSetup;
 exports.requestDoctorAccountSetupLink = requestDoctorAccountSetupLink;
+exports.getReferralAttachmentDownloadUrl = getReferralAttachmentDownloadUrl;
 
 // Additional utility functions can be added here as needed

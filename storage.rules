@@ -31,6 +31,17 @@ service firebase.storage {
       ]);
     }
 
+    function isChoRole() {
+      return tokenHasAnyRole([
+        'CHO',
+        'cho',
+        'CHO_ADMIN',
+        'cho_admin',
+        'CHO_SUPER_ADMIN',
+        'cho_super_admin'
+      ]);
+    }
+
     // Branding files are referenced by the public barangay branding profile,
     // so they must remain readable for registration pages. Only CHO Admin
     // accounts may create them; they are immutable after upload.
@@ -46,18 +57,13 @@ service firebase.storage {
     }
 
     match /referral_attachments/{ownerUid}/{referralId}/{fileName} {
-      allow read: if isSignedIn() && (
-        request.auth.uid == ownerUid ||
-        tokenHasAnyRole([
-          'CHO',
-          'cho',
-          'CHO_ADMIN',
-          'cho_admin',
-          'CHO_SUPER_ADMIN',
-          'cho_super_admin'
-        ]) ||
-        tokenHasAnyRole(['DOCTOR', 'doctor'])
-      );
+      // Referral documents are assignment-scoped in the named Firestore
+      // database. Storage Rules cannot safely perform that lookup here, so a
+      // doctor role alone must not grant access to every owner's files. A
+      // future server-mediated download endpoint may authorize the assigned
+      // doctor against the referral document and return a short-lived URL.
+      allow read: if isSignedIn() &&
+        (request.auth.uid == ownerUid || isChoRole());
 
       allow write: if isSignedIn() &&
         request.auth.uid == ownerUid &&
@@ -69,7 +75,9 @@ service firebase.storage {
           'application/pdf|image/jpeg|image/png'
         );
 
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if isSignedIn() &&
+        (request.auth.uid == ownerUid || isChoRole());
     }
 
     match /{allPaths=**} {

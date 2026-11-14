@@ -562,6 +562,25 @@ class AccountPolicyService {
     );
   }
 
+  Future<String> getReferralAttachmentDownloadUrl({
+    required String referralId,
+    required String storagePath,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'getReferralAttachmentDownloadUrl',
+    );
+    final response = await callable.call(<String, dynamic>{
+      'referralId': referralId.trim(),
+      'storagePath': storagePath.trim(),
+    });
+    final result = Map<Object?, Object?>.from(response.data as Map);
+    final url = (result['url'] ?? '').toString().trim();
+    if (url.isEmpty) {
+      throw StateError('The referral attachment URL was empty.');
+    }
+    return url;
+  }
+
   Future<List<Map<String, dynamic>>> listDoctorTransferTargets() async {
     final callable = _functions.httpsCallable('listDoctorTransferTargets');
     final response = await callable.call();
