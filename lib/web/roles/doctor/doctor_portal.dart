@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,11 +9,13 @@ import 'package:intl/intl.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/components/web_navigation_item.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_navigation_coordinator.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/shared/services/account_policy_service.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
+import 'package:mycapstone_project/web/shared/utils/referral_attachment_download.dart';
 
 enum DoctorPortalTab { dashboard, archive, profile }
 
@@ -161,7 +164,12 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
         title: _pageTitle,
         mobileBrandAsset: 'assets/newlogo_white.png',
         child: _loadingProfile
-            ? const Center(child: CircularProgressIndicator())
+            ? const Padding(
+                padding: EdgeInsets.all(20),
+                child: WebContentLoadingSkeleton(
+                  label: 'Loading doctor workspace',
+                ),
+              )
             : _profileError != null
             ? _errorState()
             : switch (widget.tab) {
@@ -228,7 +236,12 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
           return _workspaceError('Referrals could not be loaded.');
         }
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const Padding(
+            padding: EdgeInsets.all(20),
+            child: WebContentLoadingSkeleton(
+              label: 'Loading assigned referrals',
+            ),
+          );
         }
         final allRecords = snapshot.data!.docs.toList(growable: false);
         final records = allRecords
@@ -913,13 +926,11 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
       'referralPriority',
     ], fallback: 'Routine');
     final busy = _busyReferralIds.contains(doc.id);
-    return Container(
+    return WebRecordCard(
+      label:
+          'Referral for $patient. $priority priority. ${status.replaceAll('_', ' ')}.',
       padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
+      margin: EdgeInsets.zero,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final actions = Wrap(
@@ -1264,6 +1275,7 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
   ) async {
     final data = doc.data();
+    final attachments = _attachmentData(data);
     final fields = <MapEntry<String, String>>[
       MapEntry('Patient', _value(data, const ['patientName'])),
       MapEntry(
@@ -1342,9 +1354,13 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: fields
-                  .map((field) => _detailRow(field.key, field.value))
-                  .toList(),
+              children: [
+                ...fields.map((field) => _detailRow(field.key, field.value)),
+                if (attachments.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  _attachmentSection(doc.id, attachments),
+                ],
+              ],
             ),
           ),
         ),
@@ -1386,6 +1402,82 @@ class _DoctorPortalPageState extends State<DoctorPortalPage> {
         ),
       ),
     );
+  }
+
+  List<Map<String, dynamic>> _attachmentData(Map<String, dynamic> data) {
+    final raw = data['attachments'];
+    if (raw is! Iterable) return <Map<String, dynamic>>[];
+    return raw
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .where(
+          (item) => (item['storagePath'] ?? '').toString().trim().isNotEmpty,
+        )
+        .toList(growable: false);
+  }
+
+  Widget _attachmentSection(
+    String referralId,
+    List<Map<String, dynamic>> attachments,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSubtle,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Attachments', style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: AppSpacing.xs),
+          ...attachments.map(
+            (attachment) => ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.attach_file_outlined),
+              title: Text(
+                (attachment['name'] ?? 'Referral attachment').toString(),
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: IconButton(
+                tooltip: 'Open attachment',
+                icon: const Icon(Icons.open_in_new_outlined),
+                onPressed: () =>
+                    _openReferralAttachment(referralId, attachment),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openReferralAttachment(
+    String referralId,
+    Map<String, dynamic> attachment,
+  ) async {
+    final storagePath = (attachment['storagePath'] ?? '').toString().trim();
+    if (storagePath.isEmpty) {
+      _snack('This attachment is missing its secure storage path.');
+      return;
+    }
+    try {
+      final url = await _accountPolicy.getReferralAttachmentDownloadUrl(
+        referralId: referralId,
+        storagePath: storagePath,
+      );
+      if (!openReferralAttachmentUrl(url) && mounted) {
+        _snack('The attachment could not be opened in a new tab.');
+      }
+    } on FirebaseFunctionsException catch (error) {
+      if (mounted) {
+        _snack(error.message ?? 'The attachment could not be opened.');
+      }
+    } catch (_) {
+      if (mounted) _snack('The attachment could not be opened. Try again.');
+    }
   }
 
   Future<void> _showUpdateCare(
@@ -2152,7 +2244,7 @@ class _DoctorSidebarState extends State<_DoctorSidebar> {
         color: AppColors.textOnDarkMuted,
         iconSize: 22,
         padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
       ),
     );
   }
@@ -2303,7 +2395,7 @@ class _DoctorSidebarState extends State<_DoctorSidebar> {
               color: Colors.white,
               style: IconButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                minimumSize: const Size(56, 44),
+                minimumSize: const Size(56, 48),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -2318,7 +2410,7 @@ class _DoctorSidebarState extends State<_DoctorSidebar> {
     return Padding(
       padding: const EdgeInsets.all(12),
       child: SizedBox(
-        height: 44,
+        height: 48,
         child: FilledButton.icon(
           onPressed: () async {
             await FirebaseAuth.instance.signOut();

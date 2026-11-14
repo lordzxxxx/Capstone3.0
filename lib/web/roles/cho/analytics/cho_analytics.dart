@@ -126,6 +126,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       );
 
       final normalized = <_NormalizedHealthRecord>[];
+      final seenRecordKeys = <String>{};
       for (int i = 0; i < snapshots.length; i++) {
         final collection = _collectionLabels.keys.elementAt(i);
         for (final doc in snapshots[i].docs) {
@@ -146,7 +147,11 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           }
 
           final normalizedRecord = _normalizeRecord(collection, scopedRaw);
-          if (normalizedRecord != null) {
+          // A document belongs to one source collection. Guarding that stable
+          // pair prevents retries or duplicate query snapshots from inflating
+          // city totals, trend bars, heatmap values, and exports.
+          final recordKey = '$collection/${doc.id}';
+          if (normalizedRecord != null && seenRecordKeys.add(recordKey)) {
             normalized.add(normalizedRecord);
           }
         }
@@ -770,8 +775,11 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
         title: 'CHO Reports and Analytics',
         backgroundColor: _darkDeepTeal,
         child: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: _primaryAqua),
+            ? const Padding(
+                padding: EdgeInsets.all(20),
+                child: WebContentLoadingSkeleton(
+                  label: 'Loading reports and analytics',
+                ),
               )
             : SingleChildScrollView(
                 padding: const EdgeInsets.all(20),

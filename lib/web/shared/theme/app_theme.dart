@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 
 /// Centralized color palette for the AI-DSUHIS web and mobile surfaces.
@@ -47,8 +49,11 @@ class AppColors {
   // Status — formalized from the hex values already used consistently for
   // snackbars/validation across auth screens (forgot.dart, signup.dart,
   // main.dart's error color).
-  static const Color success = Color(0xFF388E3C);
+  // Kept dark enough for normal-sized status text on white and pale status
+  // surfaces (AA contrast), unlike the older Material green used here.
+  static const Color success = Color(0xFF237A4B);
   static const Color warning = Color(0xFFF57C00);
+  static const Color warningStrong = Color(0xFF9A4B00);
   static const Color error = Color(0xFFD32F2F);
 
   // Referral / clinical escalation — a distinct terracotta reserved for
@@ -71,6 +76,71 @@ class AppSpacing {
   static const double md = 16;
   static const double lg = 24;
   static const double xl = 32;
+}
+
+/// A restrained material layer for web chrome and elevated workspace panels.
+///
+/// Clinical records, form fields, and table cells remain near-opaque for
+/// contrast; blur is reserved for structural layers so it never obscures a
+/// measurement, warning, or editable value.
+class WebGlassSurface extends StatelessWidget {
+  const WebGlassSurface({
+    required this.child,
+    this.borderRadius = const BorderRadius.all(Radius.circular(14)),
+    this.tint = AppColors.surfaceLight,
+    this.tintOpacity = 0.94,
+    this.borderColor = AppColors.border,
+    this.blurSigma = 18,
+    super.key,
+  });
+
+  final Widget child;
+  final BorderRadius borderRadius;
+  final Color tint;
+  final double tintOpacity;
+  final Color borderColor;
+  final double blurSigma;
+
+  @override
+  Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.maybeOf(context);
+    // A blur is decorative, never essential. Make the material effectively
+    // opaque for users who request simplified navigation or high contrast.
+    final reduceTransparency =
+        (mediaQuery?.accessibleNavigation ?? false) ||
+        (mediaQuery?.highContrast ?? false);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.backgroundDark.withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: reduceTransparency ? 0 : blurSigma,
+            sigmaY: reduceTransparency ? 0 : blurSigma,
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: tint.withValues(
+                alpha: reduceTransparency ? 1 : tintOpacity,
+              ),
+              border: Border.all(color: borderColor),
+              borderRadius: borderRadius,
+            ),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Builds the app's [ThemeData] from [AppColors]/[AppSpacing] so the visual
@@ -236,7 +306,7 @@ class AppTheme {
           disabledBackgroundColor: AppColors.surfaceSubtle,
           disabledForegroundColor: AppColors.textSecondary,
           elevation: 0,
-          minimumSize: const Size(48, 44),
+          minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(
             vertical: AppSpacing.md,
             horizontal: AppSpacing.lg,
@@ -253,7 +323,7 @@ class AppTheme {
           foregroundColor: Colors.white,
           disabledBackgroundColor: AppColors.surfaceSubtle,
           disabledForegroundColor: AppColors.textSecondary,
-          minimumSize: const Size(48, 44),
+          minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(
             vertical: AppSpacing.sm + AppSpacing.xs,
             horizontal: AppSpacing.lg,
@@ -269,7 +339,7 @@ class AppTheme {
           foregroundColor: AppColors.primary,
           backgroundColor: AppColors.surfaceLight,
           disabledForegroundColor: AppColors.textSecondary,
-          minimumSize: const Size(48, 44),
+          minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(
             vertical: AppSpacing.sm + AppSpacing.xs,
             horizontal: AppSpacing.lg,
@@ -284,7 +354,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          minimumSize: const Size(48, 44),
+          minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
         ),
@@ -292,7 +362,7 @@ class AppTheme {
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           foregroundColor: AppColors.textSecondary,
-          minimumSize: const Size(44, 44),
+          minimumSize: const Size(48, 48),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),

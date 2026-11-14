@@ -160,6 +160,148 @@ class WebTableSurface extends StatefulWidget {
   State<WebTableSurface> createState() => _WebTableSurfaceState();
 }
 
+/// Provides a no-horizontal-scroll alternative for record-heavy web pages.
+///
+/// The desktop representation can remain a dense table, while narrow screens
+/// present each record as a labelled card. This keeps patient and clinical
+/// values visible without requiring a sideways gesture to understand a row.
+class WebAdaptiveRecords extends StatelessWidget {
+  const WebAdaptiveRecords({
+    required this.table,
+    required this.cards,
+    this.breakpoint = 860,
+    super.key,
+  });
+
+  final Widget table;
+  final List<Widget> cards;
+  final double breakpoint;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= breakpoint) return table;
+        return Semantics(
+          container: true,
+          label: '${cards.length} record${cards.length == 1 ? '' : 's'}',
+          child: Column(
+            children: [
+              for (var index = 0; index < cards.length; index++) ...[
+                cards[index],
+                if (index < cards.length - 1) const SizedBox(height: 8),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// The shared compact surface for one operational record.
+///
+/// Keep record pages visually consistent across BHW, CHO, and doctor work
+/// areas without making clinical information feel like a large dashboard tile.
+/// The constrained padding and quiet border preserve scan density while the
+/// semantic label gives screen-reader users the same row-level context.
+class WebRecordCard extends StatelessWidget {
+  const WebRecordCard({
+    required this.child,
+    this.label,
+    this.padding = const EdgeInsets.all(14),
+    this.margin = const EdgeInsets.only(bottom: 8),
+    super.key,
+  });
+
+  final Widget child;
+  final String? label;
+  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry margin;
+
+  @override
+  Widget build(BuildContext context) {
+    final surface = WebGlassSurface(
+      borderRadius: BorderRadius.circular(12),
+      tintOpacity: 0.98,
+      child: Padding(padding: padding, child: child),
+    );
+    return Padding(
+      padding: margin,
+      child: label == null
+          ? surface
+          : Semantics(container: true, label: label, child: surface),
+    );
+  }
+}
+
+/// Stable page placeholder for data-heavy routes.
+///
+/// It reserves the space of a compact header, filters, and record rows while
+/// data loads. The skeleton is announced once as busy rather than exposing a
+/// sequence of meaningless progress indicators to screen readers.
+class WebContentLoadingSkeleton extends StatelessWidget {
+  const WebContentLoadingSkeleton({
+    this.rows = 4,
+    this.label = 'Loading records',
+    super.key,
+  });
+
+  final int rows;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final count = rows.clamp(1, 8);
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: label,
+      child: ExcludeSemantics(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const _WebSkeletonBlock(height: 76, widthFactor: 1),
+            const SizedBox(height: 12),
+            const _WebSkeletonBlock(height: 74, widthFactor: 1),
+            const SizedBox(height: 12),
+            ...List<Widget>.generate(
+              count,
+              (_) => const Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: _WebSkeletonBlock(height: 82, widthFactor: 1),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WebSkeletonBlock extends StatelessWidget {
+  const _WebSkeletonBlock({required this.height, required this.widthFactor});
+
+  final double height;
+  final double widthFactor;
+
+  @override
+  Widget build(BuildContext context) {
+    return FractionallySizedBox(
+      widthFactor: widthFactor,
+      alignment: Alignment.centerLeft,
+      child: Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceSubtle,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+      ),
+    );
+  }
+}
+
 class _WebTableSurfaceState extends State<WebTableSurface> {
   final ScrollController _horizontalController = ScrollController();
 
@@ -179,13 +321,9 @@ class _WebTableSurfaceState extends State<WebTableSurface> {
             : widget.minWidth;
         final tableWidth = math.max(widget.minWidth, availableWidth);
 
-        return Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceLight,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
-          ),
+        return WebGlassSurface(
+          borderRadius: BorderRadius.circular(12),
+          tintOpacity: 0.97,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Scrollbar(

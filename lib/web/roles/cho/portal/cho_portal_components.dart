@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/web/shared/components/app_metric_card.dart';
+import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
 abstract final class ChoColors {
@@ -11,6 +12,7 @@ abstract final class ChoColors {
   static const borderStrong = AppColors.borderStrong;
   static const aqua = AppColors.primary;
   static const ice = AppColors.secondary;
+  static const warning = AppColors.warning;
   static const text = AppColors.textPrimary;
   static const muted = AppColors.textSecondary;
   static const navBackground = AppColors.backgroundDark;
@@ -42,81 +44,81 @@ class ChoPageHeader extends StatelessWidget {
       container: true,
       header: true,
       label: '$title page',
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: ChoColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: ChoColors.border),
-          boxShadow: const [],
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxWidth < 760;
-            final heading = Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
+      child: WebGlassSurface(
+        borderRadius: BorderRadius.circular(12),
+        tintOpacity: 0.97,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SizedBox(
+            width: double.infinity,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 760;
+                final heading = Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$breadcrumb / $title',
+                            style: const TextStyle(
+                              color: ChoColors.aqua,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontFamily: AppTheme.displayFontFamily,
+                              color: ChoColors.text,
+                              fontSize: compact ? 22 : 26,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            description,
+                            style: const TextStyle(
+                              color: ChoColors.muted,
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+                final actionBar = Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: actions,
+                );
+                if (compact || actions.isEmpty) {
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        '$breadcrumb / $title',
-                        style: const TextStyle(
-                          color: ChoColors.aqua,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontFamily: AppTheme.displayFontFamily,
-                          color: ChoColors.text,
-                          fontSize: compact ? 22 : 26,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        description,
-                        style: const TextStyle(
-                          color: ChoColors.muted,
-                          height: 1.45,
-                        ),
-                      ),
+                      heading,
+                      if (actions.isNotEmpty) ...[
+                        const SizedBox(height: 14),
+                        actionBar,
+                      ],
                     ],
-                  ),
-                ),
-              ],
-            );
-            final actionBar = Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: actions,
-            );
-            if (compact || actions.isEmpty) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  heading,
-                  if (actions.isNotEmpty) ...[
-                    const SizedBox(height: 14),
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: heading),
+                    const SizedBox(width: 16),
                     actionBar,
                   ],
-                ],
-              );
-            }
-            return Row(
-              children: [
-                Expanded(child: heading),
-                const SizedBox(width: 16),
-                actionBar,
-              ],
-            );
-          },
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
@@ -163,7 +165,7 @@ class ChoViewTabs extends StatelessWidget {
                     backgroundColor: selected
                         ? ChoColors.aqua
                         : Colors.transparent,
-                    minimumSize: const Size(48, 44),
+                    minimumSize: const Size(48, 48),
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -252,22 +254,26 @@ class ChoStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final displayStatus = status.trim().isEmpty ? 'Unspecified' : status.trim();
     final normalized = status.toLowerCase();
-    const color = ChoColors.aqua;
+    final Color color;
     final IconData icon;
     if (normalized.contains('approv') ||
         normalized.contains('complete') ||
         normalized.contains('active')) {
       icon = Icons.check_circle_outline;
+      color = AppColors.success;
     } else if (normalized.contains('reject') ||
         normalized.contains('critical') ||
         normalized.contains('urgent')) {
       icon = Icons.error_outline;
+      color = AppColors.error;
     } else if (normalized.contains('pending') ||
         normalized.contains('return') ||
         normalized.contains('high')) {
       icon = Icons.schedule_outlined;
+      color = AppColors.warningStrong;
     } else {
       icon = Icons.info_outline;
+      color = ChoColors.aqua;
     }
     return Semantics(
       label: 'Status: $displayStatus',
@@ -416,8 +422,10 @@ class ChoLoadingSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.all(48),
-      child: Center(child: CircularProgressIndicator(color: ChoColors.aqua)),
+      padding: EdgeInsets.all(16),
+      child: WebContentLoadingSkeleton(
+        label: 'Loading City Health Office data',
+      ),
     );
   }
 }

@@ -18,6 +18,7 @@ import 'package:mycapstone_project/web/shared/components/app_sidebar.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/shared/components/web_data_components.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
+import 'package:mycapstone_project/web/shared/services/storage_upload_policy.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/utils/web_file_picker.dart';
 import 'package:mycapstone_project/web/shared/utils/referral_pdf.dart';
@@ -146,7 +147,8 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
 
   void _applyInitialHandoff() {
     final record = widget.initialRecord;
-    final seedPatient = widget.initialPatient ??
+    final seedPatient =
+        widget.initialPatient ??
         (record != null ? _extractPatientFromRecord(record) : null);
     if (seedPatient != null) {
       _patient = seedPatient;
@@ -159,8 +161,9 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
       final vitals = (record['vitalsigns'] ?? record['vitalSigns'] ?? '')
           .toString()
           .trim();
-      final symptoms =
-          (record['symptoms'] ?? record['details'] ?? '').toString().trim();
+      final symptoms = (record['symptoms'] ?? record['details'] ?? '')
+          .toString()
+          .trim();
       final obs = <String>[
         if (symptoms.isNotEmpty) 'Symptoms: $symptoms',
         if (vitals.isNotEmpty) 'Vitals: $vitals',
@@ -173,13 +176,14 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     if (widget.initialReason?.trim().isNotEmpty == true) {
       _reasonController.text = widget.initialReason!.trim();
     } else if (record != null) {
-      final diagnosis = (record['diagnosis'] ??
-              record['clinicalImpression'] ??
-              record['disease'] ??
-              record['diseaseType'] ??
-              '')
-          .toString()
-          .trim();
+      final diagnosis =
+          (record['diagnosis'] ??
+                  record['clinicalImpression'] ??
+                  record['disease'] ??
+                  record['diseaseType'] ??
+                  '')
+              .toString()
+              .trim();
       if (diagnosis.isNotEmpty && diagnosis != 'General') {
         _reasonController.text = diagnosis;
       } else if (_observationsController.text.isNotEmpty) {
@@ -188,12 +192,10 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     }
 
     if (record != null) {
-      final plan = (record['plan'] ??
-              record['treatmentPlan'] ??
-              record['notes'] ??
-              '')
-          .toString()
-          .trim();
+      final plan =
+          (record['plan'] ?? record['treatmentPlan'] ?? record['notes'] ?? '')
+              .toString()
+              .trim();
       if (plan.isNotEmpty) {
         _notesController.text = plan;
       } else {
@@ -230,19 +232,18 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
   }
 
   Map<String, dynamic> _extractPatientFromRecord(Map<String, dynamic> record) {
-    final patientId = (record['linkedPatientId'] ??
-            record['patientId'] ??
-            record['id'] ??
-            '')
-        .toString()
-        .trim();
-    final rawName = (record['patientName'] ??
-            record['patient'] ??
-            record['fullName'] ??
-            record['name'] ??
-            '')
-        .toString()
-        .trim();
+    final patientId =
+        (record['linkedPatientId'] ?? record['patientId'] ?? record['id'] ?? '')
+            .toString()
+            .trim();
+    final rawName =
+        (record['patientName'] ??
+                record['patient'] ??
+                record['fullName'] ??
+                record['name'] ??
+                '')
+            .toString()
+            .trim();
     final parts = patientNameParts({
       'patientName': rawName,
       'firstName': record['firstName'],
@@ -265,11 +266,12 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
       'sex': (record['sex'] ?? record['gender'] ?? '').toString(),
       'address': (record['address'] ?? '').toString(),
       'barangay': (record['barangay'] ?? '').toString(),
-      'contactNumber': (record['contactNumber'] ??
-              record['phone'] ??
-              record['phoneNumber'] ??
-              '')
-          .toString(),
+      'contactNumber':
+          (record['contactNumber'] ??
+                  record['phone'] ??
+                  record['phoneNumber'] ??
+                  '')
+              .toString(),
     };
   }
 
@@ -316,9 +318,12 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
         _loading = false;
       });
       if (_patient != null) {
-        _historyService.loadPatientHistory(_patient!).then((history) {
-          if (mounted) setState(() => _history = history);
-        }).catchError((_) {});
+        _historyService
+            .loadPatientHistory(_patient!)
+            .then((history) {
+              if (mounted) setState(() => _history = history);
+            })
+            .catchError((_) {});
       } else if (widget.initialPatient != null) {
         await _openPatient(widget.initialPatient!);
         if (!mounted) return;
@@ -1078,8 +1083,9 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
               ),
               trailing: IconButton(
                 tooltip: 'Remove attachment',
-                onPressed: () =>
-                    setState(() => _attachments.removeAt(entry.key)),
+                onPressed: _uploading
+                    ? null
+                    : () => _removeAttachment(entry.key),
                 icon: const Icon(Icons.close_rounded, color: Colors.redAccent),
               ),
             ),
@@ -1091,8 +1097,14 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
   Future<void> _pickAttachment() async {
     final file = await pickWebFile(accept: '.pdf,.jpg,.jpeg,.png');
     if (file == null) return;
-    if (file.size > 10 * 1024 * 1024) {
-      _snack('Attachment must be 10 MB or smaller.');
+    try {
+      StorageUploadPolicy.validateReferralAttachment(
+        size: file.size,
+        fileName: file.name,
+        contentType: file.mimeType,
+      );
+    } on FormatException catch (error) {
+      _snack(error.message);
       return;
     }
     setState(() => _uploading = true);
@@ -1117,8 +1129,36 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
           'size': file.size,
         }),
       );
-    } catch (error) {
-      _snack('Attachment upload failed: $error');
+    } catch (_) {
+      _snack('Attachment upload failed. Check the connection and try again.');
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  Future<void> _removeAttachment(int index) async {
+    if (index < 0 || index >= _attachments.length) return;
+    final attachment = _attachments[index];
+    final path = _textOf(attachment, ['storagePath']);
+    if (path.trim().isEmpty || !path.startsWith('referral_attachments/')) {
+      if (mounted) setState(() => _attachments.removeAt(index));
+      return;
+    }
+
+    setState(() => _uploading = true);
+    try {
+      await FirebaseStorage.instance.ref(path).delete();
+      if (mounted) setState(() => _attachments.removeAt(index));
+    } on FirebaseException catch (error) {
+      // A missing object is already in the desired state; other failures
+      // leave the metadata visible so a failed delete is not hidden.
+      if (error.code == 'object-not-found') {
+        if (mounted) setState(() => _attachments.removeAt(index));
+      } else {
+        _snack('Attachment could not be removed. Try again.');
+      }
+    } catch (_) {
+      _snack('Attachment could not be removed. Try again.');
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
@@ -1217,7 +1257,9 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
         }
       }
       if (!mounted) return;
-      _snack('Referral submitted. The system will assign an eligible doctor automatically.');
+      _snack(
+        'Referral submitted. The system will assign an eligible doctor automatically.',
+      );
       _clearDraft();
       if (widget.embedded) {
         widget.onClose?.call();
@@ -1430,15 +1472,11 @@ class _BhwReferralPageState extends State<BhwReferralPage> {
     ),
   );
 
-  Widget _mobileRecord(_BhwReferralRecord record) => Container(
-    width: double.infinity,
-    margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: _surface,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.border),
-    ),
+  Widget _mobileRecord(_BhwReferralRecord record) => WebRecordCard(
+    label:
+        'Referral ${record.shortId} for ${record.patientName}. ${record.statusLabel}.',
+    padding: const EdgeInsets.all(14),
+    margin: const EdgeInsets.only(bottom: 8),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2205,7 +2243,12 @@ String _textOf(
 }
 
 String _patientName(Map<String, dynamic> patient) {
-  final direct = _textOf(patient, ['patientName', 'fullName', 'name', 'patient']);
+  final direct = _textOf(patient, [
+    'patientName',
+    'fullName',
+    'name',
+    'patient',
+  ]);
   if (direct.isNotEmpty) return direct;
   final first = _textOf(patient, ['firstName', 'patientFirstName']);
   final middle = _textOf(patient, ['middleName', 'patientMiddleName']);

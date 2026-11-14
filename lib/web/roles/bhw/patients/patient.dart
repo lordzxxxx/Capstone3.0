@@ -1278,79 +1278,93 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    WebTableSurface(
-                      minWidth: 1380,
-                      child: Column(
-                        children: [
-                          _buildPatientCardHeader(),
-                          if (pagedPatients.isEmpty)
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 20,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceSubtle,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: _primaryAqua.withValues(alpha: 0.18),
-                                  width: 1,
+                    WebAdaptiveRecords(
+                      table: WebTableSurface(
+                        minWidth: 1380,
+                        child: Column(
+                          children: [
+                            _buildPatientCardHeader(),
+                            if (pagedPatients.isEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 20,
                                 ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.search_off,
-                                        color: _mutedCoolGray,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'No patients found',
-                                        style: TextStyle(
-                                          color: AppColors.textPrimary,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceSubtle,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: _primaryAqua.withValues(alpha: 0.18),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.search_off,
+                                          color: _mutedCoolGray,
+                                          size: 18,
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    _patients.isEmpty
-                                        ? 'Add your first patient record to get started.'
-                                        : 'Try adjusting the search text or filter options.',
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'No patients found',
+                                          style: TextStyle(
+                                            color: AppColors.textPrimary,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      _patients.isEmpty
+                                          ? 'Add your first patient record to get started.'
+                                          : 'Try adjusting the search text or filter options.',
+                                      style: TextStyle(
+                                        color: AppColors.textSecondary,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else
+                              Column(
+                                children: List.generate(pagedPatients.length, (
+                                  index,
+                                ) {
+                                  final absoluteIndex = pageStartIndex + index;
+                                  final isSelected = _selectedIndices.contains(
+                                    absoluteIndex,
+                                  );
+                                  return _buildPatientCard(
+                                    pagedPatients[index],
+                                    absoluteIndex,
+                                    isSelected,
+                                  );
+                                }),
                               ),
-                            )
-                          else
-                            Column(
-                              children: List.generate(pagedPatients.length, (
-                                index,
-                              ) {
-                                final absoluteIndex = pageStartIndex + index;
-                                final isSelected = _selectedIndices.contains(
-                                  absoluteIndex,
-                                );
-                                return _buildPatientCard(
-                                  pagedPatients[index],
-                                  absoluteIndex,
-                                  isSelected,
-                                );
-                              }),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
+                      cards: pagedPatients.isEmpty
+                          ? const <Widget>[]
+                          : List<Widget>.generate(pagedPatients.length, (
+                              index,
+                            ) {
+                              final absoluteIndex = pageStartIndex + index;
+                              return _buildCompactPatientCard(
+                                pagedPatients[index],
+                                absoluteIndex,
+                                _selectedIndices.contains(absoluteIndex),
+                              );
+                            }),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -1682,6 +1696,155 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       ),
     );
   }
+
+  Widget _buildCompactPatientCard(
+    Map<String, dynamic> patient,
+    int index,
+    bool isSelected,
+  ) {
+    final patientName = patientDisplayName(
+      patient,
+      fallback: _safePatientValue(patient['name'], 'Unknown patient'),
+    );
+    final patientId = _safePatientValue(
+      patient['patientId'],
+      _safePatientValue(patient['id'], 'No ID'),
+    );
+    final age = _safePatientValue(patient['age'], 'Not provided');
+    final sex = _safePatientValue(
+      patient['sex'],
+      _safePatientValue(patient['gender'], 'Not provided'),
+    );
+    final barangay = _safePatientValue(
+      patient['barangay'],
+      _safePatientValue(patient['assignedBarangay'], 'Not provided'),
+    );
+    final status = _safePatientValue(patient['status'], 'Active');
+    final statusColor = _getPatientStatusColor(status);
+
+    return WebRecordCard(
+      label: 'Patient $patientName. ID $patientId. Status $status.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_isSelectionMode)
+                Checkbox(
+                  value: isSelected,
+                  onChanged: (value) => setState(() {
+                    if (value == true) {
+                      _selectedIndices.add(index);
+                    } else {
+                      _selectedIndices.remove(index);
+                    }
+                  }),
+                  activeColor: _primaryAqua,
+                ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      patientName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    SelectableText(
+                      patientId,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _buildPatientStatusChip(status, statusColor),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 14,
+            runSpacing: 6,
+            children: [
+              _compactPatientDetail(Icons.cake_outlined, '$age years'),
+              _compactPatientDetail(Icons.person_outline, sex),
+              _compactPatientDetail(Icons.location_on_outlined, barangay),
+            ],
+          ),
+          const SizedBox(height: 10),
+          WebSyncStatusBadge(record: patient),
+          if (!_isSelectionMode) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _showPatientDetails(patient),
+                  icon: const Icon(Icons.visibility_outlined, size: 18),
+                  label: const Text('View'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _editPatient(patient),
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  label: const Text('Edit'),
+                ),
+                IconButton(
+                  tooltip: 'Download patient PDF',
+                  onPressed: () => _downloadPatientRecordPdf(context, patient),
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                ),
+                IconButton(
+                  tooltip: 'More patient actions',
+                  onPressed: () => _showPatientActionMenu(patient),
+                  icon: const Icon(Icons.more_horiz_rounded),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPatientStatusChip(String status, Color color) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: color.withValues(alpha: 0.35)),
+    ),
+    child: Text(
+      status,
+      style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
+    ),
+  );
+
+  Widget _compactPatientDetail(IconData icon, String value) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon, size: 16, color: AppColors.textSecondary),
+      const SizedBox(width: 4),
+      ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 180),
+        child: Text(
+          value,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+        ),
+      ),
+    ],
+  );
 
   Future<void> _showPatientActionMenu(Map<String, dynamic> patient) async {
     final action = await showModalBottomSheet<String>(

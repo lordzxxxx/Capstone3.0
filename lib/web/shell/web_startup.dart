@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 
@@ -16,10 +18,12 @@ class WebStartupGate extends StatefulWidget {
     super.key,
     required this.initialize,
     required this.child,
+    this.timeout = const Duration(seconds: 25),
   });
 
   final Future<void> Function() initialize;
   final Widget child;
+  final Duration timeout;
 
   @override
   State<WebStartupGate> createState() => _WebStartupGateState();
@@ -27,17 +31,61 @@ class WebStartupGate extends StatefulWidget {
 
 class _WebStartupGateState extends State<WebStartupGate> {
   late Future<void> _initialization;
+  Timer? _deadlineTimer;
+  bool _deadlineExceeded = false;
 
   @override
   void initState() {
     super.initState();
-    _initialization = widget.initialize();
+    _initialization = _initializeWithDeadline();
   }
 
   void _retry() {
     setState(() {
-      _initialization = widget.initialize();
+      _deadlineExceeded = false;
+      _initialization = _initializeWithDeadline();
     });
+  }
+
+  Future<void> _initializeWithDeadline() {
+    // Individual providers already have their own timeouts, but a top-level
+    // deadline is essential: a browser interop promise can otherwise remain
+    // pending forever and leave every role behind an inaccessible spinner.
+    _deadlineTimer?.cancel();
+    final result = Completer<void>();
+    _deadlineTimer = Timer(widget.timeout, () {
+      if (!result.isCompleted) {
+        result.completeError(
+          TimeoutException(
+            'Web services did not finish starting within ${widget.timeout.inSeconds} seconds.',
+          ),
+        );
+      }
+      // Do not rely solely on FutureBuilder receiving an error from a
+      // JavaScript interop future. Mark the deadline in widget state too, so
+      // a browser can always leave the loading-only screen.
+      if (mounted) {
+        setState(() => _deadlineExceeded = true);
+      }
+    });
+
+    Future<void>.sync(widget.initialize).then(
+      (_) {
+        _deadlineTimer?.cancel();
+        if (!result.isCompleted) result.complete();
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        _deadlineTimer?.cancel();
+        if (!result.isCompleted) result.completeError(error, stackTrace);
+      },
+    );
+    return result.future;
+  }
+
+  @override
+  void dispose() {
+    _deadlineTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -50,7 +98,7 @@ class _WebStartupGateState extends State<WebStartupGate> {
       child: FutureBuilder<void>(
         future: _initialization,
         builder: (context, snapshot) {
-          if (snapshot.hasError) {
+          if (_deadlineExceeded || snapshot.hasError) {
             return _WebStartupError(onRetry: _retry);
           }
           if (snapshot.connectionState != ConnectionState.done) {

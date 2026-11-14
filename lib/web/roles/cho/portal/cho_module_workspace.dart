@@ -507,11 +507,14 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
               icon: Icons.search_off_rounded,
             )
           else
-            WebTableSurface(
-              minWidth: 1380,
-              child: Column(
-                children: [_tableHeader(), ...pageRows.map(_tableRow)],
+            WebAdaptiveRecords(
+              table: WebTableSurface(
+                minWidth: 1380,
+                child: Column(
+                  children: [_tableHeader(), ...pageRows.map(_tableRow)],
+                ),
               ),
+              cards: pageRows.map(_recordCard).toList(growable: false),
             ),
           const SizedBox(height: 8),
           Row(
@@ -586,7 +589,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
                   width: searchWidth,
                   child: WebSearchField(
                     controller: _searchController,
-                    hintText: 'Name, ID, contact, or household',
+                    hintText: 'Search by name, record ID, or barangay',
                     onChanged: (value) {
                       _searchDebounce?.cancel();
                       _searchDebounce = Timer(
@@ -784,6 +787,84 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _recordCard(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final row = <String, dynamic>{'id': doc.id, ...doc.data()};
+    final primary = widget.config.columns.first;
+    final title = _text(row, primary.keys);
+    return WebRecordCard(
+      label: '$title record',
+      padding: const EdgeInsets.all(14),
+      margin: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: ChoColors.text,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'View full record',
+                onPressed: () => _showDetails(row),
+                icon: const Icon(Icons.visibility_outlined),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...widget.config.columns.skip(1).map((column) {
+            final value = _text(row, column.keys);
+            final isStatus =
+                column.label.toLowerCase().contains('status') ||
+                column.label == 'Validation' ||
+                column.label == 'Risk';
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 112,
+                    child: Text(
+                      column.label,
+                      style: const TextStyle(
+                        color: ChoColors.muted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: isStatus
+                        ? Align(
+                            alignment: Alignment.centerLeft,
+                            child: ChoStatusBadge(value),
+                          )
+                        : SelectableText(
+                            value,
+                            style: const TextStyle(
+                              color: ChoColors.text,
+                              fontSize: 13,
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );

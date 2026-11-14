@@ -77,4 +77,22 @@ void main() {
     expect(childBuilt, isTrue);
     expect(find.text('Application ready'), findsOneWidget);
   });
+
+  testWidgets('does not leave the browser on a permanent loading screen', (
+    tester,
+  ) async {
+    final initialization = Completer<void>();
+
+    await tester.pumpWidget(
+      WebStartupGate(
+        timeout: const Duration(seconds: 1),
+        initialize: () => initialization.future,
+        child: const SizedBox.shrink(),
+      ),
+    );
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.text('Workspace could not be prepared'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+  });
 }

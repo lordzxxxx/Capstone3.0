@@ -50,4 +50,37 @@ void main() {
       );
     }
   });
+
+  test('all protected role workspaces have canonical registered paths', () {
+    const roleWorkspaceRoutes = [
+      WebRoutes.bhwDashboard,
+      WebRoutes.bhwPatients,
+      WebRoutes.bhwCheckups,
+      WebRoutes.bhwPrenatal,
+      WebRoutes.bhwImmunization,
+      WebRoutes.bhwCommunicable,
+      WebRoutes.bhwNonCommunicable,
+      WebRoutes.bhwMorbidity,
+      WebRoutes.bhwMortality,
+      WebRoutes.bhwReferrals,
+      WebRoutes.bhwSummary,
+      WebRoutes.bhwAnalytics,
+      WebRoutes.bhwProfile,
+      WebRoutes.choDashboard,
+      WebRoutes.choReferrals,
+      WebRoutes.choBhwManagement,
+      WebRoutes.choReports,
+      WebRoutes.choDataQuality,
+      WebRoutes.choAuditLogs,
+      WebRoutes.choProfile,
+      WebRoutes.doctorDashboard,
+      WebRoutes.doctorArchive,
+      WebRoutes.doctorProfile,
+    ];
+
+    expect(
+      roleWorkspaceRoutes.every(WebRoutes.registeredPaths.contains),
+      isTrue,
+    );
+  });
 }
