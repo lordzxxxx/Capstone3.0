@@ -1,12 +1,12 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/app/features/immunization/immunization_database_helper.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_clinical_ui.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/shared/widgets/spring_data_motion.dart';
 
 const _aqua = AppDesign.blue;
 const _background = AppDesign.page;
-const _panel = AppDesign.surface;
 const _text = AppDesign.ink;
 const _barPalette = AppDesign.chartPalette;
 
@@ -281,83 +281,85 @@ class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
           ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: _aqua))
-          : RefreshIndicator(
-              onRefresh: _load,
-              color: _aqua,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-                children: [
-                  _linePanel(
-                    'Monthly Immunizations Administered',
-                    'Vaccination performance over the last six months',
-                    _monthly(),
-                  ),
-                  _gap(),
-                  _barPanel(
-                    'Vaccine Coverage Rate',
-                    'Relative coverage percentage by vaccine',
-                    _coverage(),
-                    suffix: '%',
-                  ),
-                  _gap(),
-                  _piePanel(
-                    'Fully vs Partially Immunized',
-                    'Overall child immunization status',
-                    _status(),
-                  ),
-                  _gap(),
-                  _barPanel(
-                    'Missed Vaccinations',
-                    'Vaccines most frequently overdue',
-                    _missedByVaccine(),
-                  ),
-                  _gap(),
-                  _barPanel(
-                    'Immunization by Barangay',
-                    'Vaccination records across communities',
-                    _barangays(),
-                  ),
-                  _gap(),
-                  _barPanel(
-                    'Age Distribution of Vaccinated Children',
-                    'Vaccinated children grouped by age',
-                    _ages(),
-                  ),
-                  _gap(),
-                  _linePanel(
-                    'Upcoming Vaccination Schedule',
-                    'Children due over the coming six months',
-                    _monthly(upcoming: true),
-                  ),
-                  _gap(),
-                  _barPanel(
-                    'Overdue Immunizations',
-                    'Children requiring immediate follow-up',
-                    _overdue(),
-                  ),
-                  _gap(),
-                  _barPanel(
-                    'AI Immunization Risk Prediction',
-                    'Predicted incomplete-immunization risk',
-                    _risk(),
-                  ),
-                  _gap(),
-                  _barPanel(
-                    'Vaccine Stock Monitoring',
-                    'Estimated remaining inventory by vaccine',
-                    _stock(),
-                  ),
-                  _gap(),
-                  _barPanel(
-                    'Adverse Events Following Immunization',
-                    'Reported AEFI cases',
-                    _aefi(),
-                  ),
-                ],
+      body: ClinicalPageBackground(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator(color: _aqua))
+            : RefreshIndicator(
+                onRefresh: _load,
+                color: _aqua,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+                  children: [
+                    _linePanel(
+                      'Monthly Immunizations Administered',
+                      'Vaccination performance over the last six months',
+                      _monthly(),
+                    ),
+                    _gap(),
+                    _barPanel(
+                      'Vaccine Coverage Rate',
+                      'Relative coverage percentage by vaccine',
+                      _coverage(),
+                      suffix: '%',
+                    ),
+                    _gap(),
+                    _piePanel(
+                      'Fully vs Partially Immunized',
+                      'Overall child immunization status',
+                      _status(),
+                    ),
+                    _gap(),
+                    _barPanel(
+                      'Missed Vaccinations',
+                      'Vaccines most frequently overdue',
+                      _missedByVaccine(),
+                    ),
+                    _gap(),
+                    _barPanel(
+                      'Immunization by Barangay',
+                      'Vaccination records across communities',
+                      _barangays(),
+                    ),
+                    _gap(),
+                    _barPanel(
+                      'Age Distribution of Vaccinated Children',
+                      'Vaccinated children grouped by age',
+                      _ages(),
+                    ),
+                    _gap(),
+                    _linePanel(
+                      'Upcoming Vaccination Schedule',
+                      'Children due over the coming six months',
+                      _monthly(upcoming: true),
+                    ),
+                    _gap(),
+                    _barPanel(
+                      'Overdue Immunizations',
+                      'Children requiring immediate follow-up',
+                      _overdue(),
+                    ),
+                    _gap(),
+                    _barPanel(
+                      'AI Immunization Risk Prediction',
+                      'Predicted incomplete-immunization risk',
+                      _risk(),
+                    ),
+                    _gap(),
+                    _barPanel(
+                      'Vaccine Stock Monitoring',
+                      'Estimated remaining inventory by vaccine',
+                      _stock(),
+                    ),
+                    _gap(),
+                    _barPanel(
+                      'Adverse Events Following Immunization',
+                      'Reported AEFI cases',
+                      _aefi(),
+                    ),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 
@@ -368,34 +370,33 @@ class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
     return values.take(7).toList();
   }
 
-  Widget _card(String title, String subtitle, Widget chart) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: _panel,
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: _aqua.withValues(alpha: 0.20)),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            color: _text,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+  Widget _card(String title, String subtitle, Widget chart) =>
+      ClinicalGlassSurface(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: _text,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: _text.withValues(alpha: 0.58),
+                fontSize: 11,
+              ),
+            ),
+            const SizedBox(height: 18),
+            SpringDataMotion(dataKey: chart, child: chart),
+          ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: TextStyle(color: _text.withValues(alpha: 0.58), fontSize: 11),
-        ),
-        const SizedBox(height: 18),
-        SpringDataMotion(dataKey: chart, child: chart),
-      ],
-    ),
-  );
+      );
 
   Widget _barPanel(
     String title,

@@ -21,6 +21,7 @@ import 'dart:async';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_clinical_ui.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/shared/patient_age_categories.dart';
 
@@ -99,8 +100,10 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   void initState() {
     super.initState();
     _loadAllData();
-    // Refresh data every 5 seconds for real-time Blood Pressure updates
-    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    // Local reads are cheap, but a five-second rebuild makes charts feel busy
+    // and needlessly drains a field device. Firestore change events still
+    // refresh immediately; this is only a quiet offline-safe fallback.
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       _loadAllData(syncFirebase: false);
     });
   }
@@ -331,17 +334,16 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'HUB',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: _darkDeepTeal,
-            fontWeight: FontWeight.bold,
+        ClinicalInsightHero(
+          title: 'Health insights',
+          subtitle:
+              'Choose a focused view. Charts stay local and available offline.',
+          icon: Icons.query_stats_rounded,
+          trailing: IconButton(
+            tooltip: 'Refresh local insights',
+            onPressed: _isLoading ? null : _loadAllData,
+            icon: const Icon(Icons.refresh_rounded),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Tap a category to open the related modules.',
-          style: TextStyle(color: AppDesign.muted, fontSize: 14),
         ),
         const SizedBox(height: 16),
         ListView.separated(
@@ -352,48 +354,61 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           itemBuilder: (context, index) {
             final category = hubCategories[index];
             final buttons = category['buttons'] as List<Map<String, dynamic>>;
-            return Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppDesign.surface,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppDesign.border),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppDesign.navy.withValues(alpha: 0.05),
-                    blurRadius: 14,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
+            return ClinicalGlassSurface(
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    category['title'] as String,
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: (category['color'] as Color).withValues(
+                            alpha: .12,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          category['icon'] as IconData,
+                          color: category['color'] as Color,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              category['title'] as String,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              category['subtitle'] as String,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  GridView.builder(
+                  const SizedBox(height: 10),
+                  ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 18,
-                          mainAxisSpacing: 18,
-                          childAspectRatio: 1.15,
-                        ),
                     itemCount: buttons.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (context, buttonIndex) {
                       final button = buttons[buttonIndex];
-                      return _buildHubIconButton(
+                      return _AnalyticsDestinationTile(
                         icon: button['icon'] as IconData,
                         label: button['label'] as String,
+                        color: category['color'] as Color,
                         onTap: button['onTap'] as void Function(),
                       );
                     },
@@ -404,64 +419,6 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           },
         ),
       ],
-    );
-  }
-
-  Widget _buildHubIconButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          child: Column(
-            children: [
-              Expanded(
-                child: Center(
-                  child: Container(
-                    width: 88,
-                    height: 88,
-                    decoration: BoxDecoration(
-                      color: _primaryAqua.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: _primaryAqua.withValues(alpha: 0.45),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _primaryAqua.withValues(alpha: 0.12),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(icon, color: _primaryAqua, size: 48),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: _darkDeepTeal,
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w800,
-                  height: 1.18,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -530,21 +487,23 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   Widget build(BuildContext context) {
     if (widget.embedded) {
       if (_isLoading) {
-        return const Center(
-          child: CircularProgressIndicator(color: _primaryAqua),
+        return const ClinicalPageBackground(
+          child: Center(child: CircularProgressIndicator(color: _primaryAqua)),
         );
       }
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: _buildAnalyticsHubSection(context),
+      return ClinicalPageBackground(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: MobilePageInsets(child: _buildAnalyticsHubSection(context)),
+        ),
       );
     }
 
     if (_isLoading) {
       return Scaffold(
         backgroundColor: AppDesign.page,
-        body: const Center(
-          child: CircularProgressIndicator(color: _primaryAqua),
+        body: const ClinicalPageBackground(
+          child: Center(child: CircularProgressIndicator(color: _primaryAqua)),
         ),
         bottomNavigationBar: _buildBottomNavBar(),
       );
@@ -552,13 +511,79 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
     return Scaffold(
       backgroundColor: AppDesign.page,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: _buildAnalyticsHubSection(context),
+      body: ClinicalPageBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: MobilePageInsets(child: _buildAnalyticsHubSection(context)),
+          ),
         ),
       ),
       bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
+}
+
+class _AnalyticsDestinationTile extends StatelessWidget {
+  const _AnalyticsDestinationTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color.withValues(alpha: .055),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Semantics(
+          button: true,
+          label: 'Open $label analytics',
+          child: SizedBox(
+            height: 58,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: .12),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Icon(icon, color: color, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        color: AppDesign.ink,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppDesign.subtle,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1917,9 +1942,7 @@ class _StatisticsGridState extends State<_StatisticsGrid> {
     for (var record in allRecords) {
       String? bmiStr = record['bmi']?.toString();
       if (bmiStr != null) {
-        final bmi = double.tryParse(
-          bmiStr.replaceAll(RegExp(r'[^0-9.]'), ''),
-        );
+        final bmi = double.tryParse(bmiStr.replaceAll(RegExp(r'[^0-9.]'), ''));
         if (bmi != null && bmi > 0) {
           bmiSum += bmi;
           bmiCount++;

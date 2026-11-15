@@ -3,13 +3,12 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_clinical_ui.dart';
 
 const Color _primaryAqua = AppDesign.blue;
 const Color _darkDeepTeal = AppDesign.page;
 const Color _lightOffWhite = AppDesign.ink;
-const Color _panelTop = AppDesign.surface;
 const Color _panelBottom = AppDesign.surface;
-const Color _panelStroke = AppDesign.border;
 
 enum _VolumeTrendRange { last7Days, last30Days, last12Months }
 
@@ -371,145 +370,107 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     if (_isLoading) {
       return Scaffold(
         backgroundColor: _darkDeepTeal,
         appBar: AppBar(
-          title: const Text('Check-up Analytics'),
+          title: const Text(
+            'Check-up insights',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+          ),
           backgroundColor: AppDesign.navy,
           foregroundColor: Colors.white,
           elevation: 0,
           iconTheme: const IconThemeData(color: Colors.white),
         ),
-        body: const Center(
-          child: CircularProgressIndicator(color: _primaryAqua),
+        body: const ClinicalPageBackground(
+          child: Center(child: CircularProgressIndicator(color: _primaryAqua)),
         ),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Check-up Analytics'),
+        title: const Text(
+          'Check-up insights',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+        ),
         backgroundColor: AppDesign.navy,
         foregroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       backgroundColor: _darkDeepTeal,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: AppDesign.navy,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  width: 1.1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppDesign.navy.withValues(alpha: 0.28),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Check-up Performance Dashboard',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Executive summary of totals, trends, demographics, and vital sign activity.',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.85),
-                            fontSize: 13,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(
-                      Icons.insights_rounded,
-                      color: Colors.white,
-                      size: 22,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
+      body: ClinicalPageBackground(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: MobilePageInsets(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _StatCard(
-                  title: 'Total Check-ups',
-                  value: '$_totalCheckups',
-                  icon: Icons.fact_check_rounded,
-                  color: AppDesign.teal,
-                  subtitle: 'All records',
+                const ClinicalInsightHero(
+                  title: 'Check-up activity',
+                  subtitle:
+                      'Review volume, symptoms and vital-sign capture. Pull down to refresh local data.',
+                  icon: Icons.monitor_heart_outlined,
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _StatCard(
+                      title: 'Total Check-ups',
+                      value: '$_totalCheckups',
+                      icon: Icons.fact_check_rounded,
+                      color: AppDesign.teal,
+                      subtitle: 'All records',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                _AnalyticsCard(
+                  title: 'Check-up Volume Trend',
+                  subtitle: 'Track check-up activity over time',
+                  icon: Icons.show_chart_rounded,
+                  badge: 'Interactive',
+                  child: SizedBox(
+                    height: _volumeTrendData.any((entry) => entry.value > 0)
+                        ? 340
+                        : 210,
+                    child: _buildVolumeLineChart(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _AnalyticsCard(
+                  title: 'Symptoms Trends',
+                  subtitle: 'Top symptoms over time',
+                  icon: Icons.sick_rounded,
+                  badge: 'Interactive',
+                  child: SizedBox(
+                    height: 380,
+                    child: _buildSymptomsLineChart(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _AnalyticsCard(
+                  title: 'Age Range',
+                  subtitle: 'Patient distribution by age group',
+                  icon: Icons.groups_rounded,
+                  badge: 'Interactive',
+                  child: SizedBox(height: 340, child: _buildAgeBarChart()),
+                ),
+                const SizedBox(height: 16),
+                _AnalyticsCard(
+                  title: 'Vital Signs',
+                  subtitle: 'Recorded vital sign categories',
+                  icon: Icons.monitor_heart_rounded,
+                  badge: 'Summary',
+                  child: _buildListSummary(_vitalSignsCounts),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            _AnalyticsCard(
-              title: 'Check-up Volume Trend',
-              subtitle: 'Track check-up activity over time',
-              icon: Icons.show_chart_rounded,
-              badge: 'Interactive',
-              child: SizedBox(height: 340, child: _buildVolumeLineChart()),
-            ),
-            const SizedBox(height: 16),
-            _AnalyticsCard(
-              title: 'Symptoms Trends',
-              subtitle: 'Top symptoms over time',
-              icon: Icons.sick_rounded,
-              badge: 'Interactive',
-              child: SizedBox(height: 380, child: _buildSymptomsLineChart()),
-            ),
-            const SizedBox(height: 16),
-            _AnalyticsCard(
-              title: 'Age Range',
-              subtitle: 'Patient distribution by age group',
-              icon: Icons.groups_rounded,
-              badge: 'Interactive',
-              child: SizedBox(height: 340, child: _buildAgeBarChart()),
-            ),
-            const SizedBox(height: 16),
-            _AnalyticsCard(
-              title: 'Vital Signs',
-              subtitle: 'Recorded vital sign categories',
-              icon: Icons.monitor_heart_rounded,
-              badge: 'Summary',
-              child: _buildListSummary(_vitalSignsCounts),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -660,7 +621,7 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
               _buildVolumePeriodChip('12M', _VolumeTrendRange.last12Months),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Expanded(
             child: Center(
               child: Column(
@@ -1639,24 +1600,8 @@ class _AnalyticsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    return ClinicalGlassSurface(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _panelTop,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: _panelStroke.withValues(alpha: 0.7),
-          width: 1.1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.16),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

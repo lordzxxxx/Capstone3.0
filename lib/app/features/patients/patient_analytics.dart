@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycapstone_project/app/features/patients/patient_database_helper.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_clinical_ui.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/shared/patient_age_categories.dart';
 
@@ -110,7 +111,7 @@ class _PatientAnalyticsPageState extends State<PatientAnalyticsPage> {
         foregroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
-          'Patient Records Analytics',
+          'Patient insights',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
         ),
         actions: [
@@ -121,66 +122,83 @@ class _PatientAnalyticsPageState extends State<PatientAnalyticsPage> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? _AnalyticsError(message: _error!, onRetry: _loadRecords)
-          : RefreshIndicator(
-              onRefresh: _loadRecords,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-                children: [
-                  const _AnalyticsHeader(
-                    icon: Icons.folder_shared_rounded,
-                    title: 'Patient population overview',
-                    subtitle:
-                        'Registration volume and demographic distribution from patient records.',
-                  ),
-                  const SizedBox(height: 16),
-                  _MetricGrid(
-                    metrics: [
-                      _Metric(
-                        'Total patients',
-                        '${_records.length}',
-                        Icons.people_alt_outlined,
+      body: ClinicalPageBackground(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+            ? _AnalyticsError(message: _error!, onRetry: _loadRecords)
+            : RefreshIndicator(
+                onRefresh: _loadRecords,
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  children: [
+                    const MobilePageInsets(
+                      child: _AnalyticsHeader(
+                        icon: Icons.folder_shared_rounded,
+                        title: 'Patient population',
+                        subtitle:
+                            'Registration and demographic distribution from local patient records.',
                       ),
-                      _Metric(
-                        'Active patients',
-                        '$_activePatients',
-                        Icons.verified_user_outlined,
+                    ),
+                    const SizedBox(height: 16),
+                    MobilePageInsets(
+                      child: _MetricGrid(
+                        metrics: [
+                          _Metric(
+                            'Total patients',
+                            '${_records.length}',
+                            Icons.people_alt_outlined,
+                          ),
+                          _Metric(
+                            'Active patients',
+                            '$_activePatients',
+                            Icons.verified_user_outlined,
+                          ),
+                          _Metric(
+                            'New this month',
+                            '$_registeredThisMonth',
+                            Icons.person_add_alt_1_outlined,
+                          ),
+                          _Metric(
+                            'Average age',
+                            _averageAge,
+                            Icons.cake_outlined,
+                          ),
+                        ],
                       ),
-                      _Metric(
-                        'New this month',
-                        '$_registeredThisMonth',
-                        Icons.person_add_alt_1_outlined,
+                    ),
+                    const SizedBox(height: 16),
+                    MobilePageInsets(
+                      child: _DistributionCard(
+                        title: 'Age distribution',
+                        icon: Icons.bar_chart_rounded,
+                        values: _ageGroups,
+                        total: _records.length,
                       ),
-                      _Metric('Average age', _averageAge, Icons.cake_outlined),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _DistributionCard(
-                    title: 'Age distribution',
-                    icon: Icons.bar_chart_rounded,
-                    values: _ageGroups,
-                    total: _records.length,
-                  ),
-                  const SizedBox(height: 16),
-                  _DistributionCard(
-                    title: 'Gender distribution',
-                    icon: Icons.wc_rounded,
-                    values: _countsFor('gender'),
-                    total: _records.length,
-                  ),
-                  const SizedBox(height: 16),
-                  _DistributionCard(
-                    title: 'Record status',
-                    icon: Icons.fact_check_outlined,
-                    values: _countsFor('status'),
-                    total: _records.length,
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 16),
+                    MobilePageInsets(
+                      child: _DistributionCard(
+                        title: 'Gender distribution',
+                        icon: Icons.wc_rounded,
+                        values: _countsFor('gender'),
+                        total: _records.length,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    MobilePageInsets(
+                      child: _DistributionCard(
+                        title: 'Record status',
+                        icon: Icons.fact_check_outlined,
+                        values: _countsFor('status'),
+                        total: _records.length,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 }
@@ -208,28 +226,25 @@ class _MetricGrid extends StatelessWidget {
               .map((metric) {
                 return SizedBox(
                   width: width,
-                  child: Card(
-                    margin: EdgeInsets.zero,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(metric.icon, color: AppDesign.patientRecords),
-                          const SizedBox(height: 12),
-                          Text(
-                            metric.value,
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            metric.label,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: AppDesign.muted),
-                          ),
-                        ],
-                      ),
+                  child: ClinicalGlassSurface(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(metric.icon, color: AppDesign.patientRecords),
+                        const SizedBox(height: 12),
+                        Text(
+                          metric.value,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          metric.label,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppDesign.muted),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -253,49 +268,7 @@ class _AnalyticsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppDesign.informationBackground,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppDesign.blue.withValues(alpha: .18)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppDesign.surface,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: AppDesign.patientRecords),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  subtitle,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppDesign.muted,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    return ClinicalInsightHero(icon: icon, title: title, subtitle: subtitle);
   }
 }
 
@@ -314,64 +287,61 @@ class _DistributionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final entries = values.entries.where((entry) => entry.value > 0).toList();
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: AppDesign.patientRecords),
-                const SizedBox(width: 10),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            if (entries.isEmpty)
-              const Text(
-                'No data available yet.',
-                style: TextStyle(color: AppDesign.muted),
-              )
-            else
-              ...entries.map((entry) {
-                final ratio = total == 0 ? 0.0 : entry.value / total;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(child: Text(entry.key)),
-                          Text(
-                            '${entry.value}  ${(ratio * 100).round()}%',
-                            style: const TextStyle(
-                              color: AppDesign.muted,
-                              fontWeight: FontWeight.w700,
-                            ),
+    return ClinicalGlassSurface(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: AppDesign.patientRecords),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          if (entries.isEmpty)
+            const Text(
+              'No data available yet.',
+              style: TextStyle(color: AppDesign.muted),
+            )
+          else
+            ...entries.map((entry) {
+              final ratio = total == 0 ? 0.0 : entry.value / total;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Text(entry.key)),
+                        Text(
+                          '${entry.value}  ${(ratio * 100).round()}%',
+                          style: const TextStyle(
+                            color: AppDesign.muted,
+                            fontWeight: FontWeight.w700,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 7),
-                      LinearProgressIndicator(
-                        value: ratio,
-                        minHeight: 8,
-                        borderRadius: BorderRadius.circular(99),
-                        color: AppDesign.patientRecords,
-                        backgroundColor: AppDesign.blueSoft,
-                      ),
-                    ],
-                  ),
-                );
-              }),
-          ],
-        ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 7),
+                    LinearProgressIndicator(
+                      value: ratio,
+                      minHeight: 8,
+                      borderRadius: BorderRadius.circular(99),
+                      color: AppDesign.patientRecords,
+                      backgroundColor: AppDesign.blueSoft,
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
       ),
     );
   }
