@@ -53,18 +53,18 @@ class DashboardBottomNavBar extends StatelessWidget {
           onTap: onTap,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_rounded),
+              icon: Icon(Icons.dashboard_outlined),
               activeIcon: _ActiveNavigationIcon(icon: Icons.dashboard_rounded),
               label: 'Dashboard',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.analytics_rounded),
+              icon: Icon(Icons.query_stats_outlined),
               activeIcon: _ActiveNavigationIcon(icon: Icons.analytics_rounded),
               label: 'Analytics',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.hub_rounded),
-              activeIcon: _ActiveNavigationIcon(icon: Icons.hub_rounded),
+              icon: Icon(Icons.apps_outlined),
+              activeIcon: _ActiveNavigationIcon(icon: Icons.apps_rounded),
               label: 'Hub',
             ),
           ],
@@ -81,10 +81,10 @@ class _ActiveNavigationIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       decoration: const BoxDecoration(
         color: AppDesign.blueSoft,
-        borderRadius: BorderRadius.all(Radius.circular(18)),
+        borderRadius: BorderRadius.all(Radius.circular(14)),
       ),
       child: Icon(icon, color: AppDesign.blue, size: 24),
     );

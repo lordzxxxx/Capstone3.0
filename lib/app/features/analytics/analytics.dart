@@ -488,7 +488,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     if (widget.embedded) {
       if (_isLoading) {
         return const ClinicalPageBackground(
-          child: Center(child: CircularProgressIndicator(color: _primaryAqua)),
+          child: Center(child: ClinicalInsightsSkeleton()),
         );
       }
       return ClinicalPageBackground(
@@ -503,7 +503,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       return Scaffold(
         backgroundColor: AppDesign.page,
         body: const ClinicalPageBackground(
-          child: Center(child: CircularProgressIndicator(color: _primaryAqua)),
+          child: Center(child: ClinicalInsightsSkeleton()),
         ),
         bottomNavigationBar: _buildBottomNavBar(),
       );

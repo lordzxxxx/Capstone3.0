@@ -11,7 +11,12 @@ class DashboardNavigationDrawer extends StatelessWidget {
   final User? user;
   final bool isLoggedIn;
   final bool isOfflineMode;
-  final Widget Function(BuildContext context, {required User? user, required bool isLoggedIn}) buildProfileCard;
+  final Widget Function(
+    BuildContext context, {
+    required User? user,
+    required bool isLoggedIn,
+  })
+  buildProfileCard;
   final VoidCallback onSignOut;
   final VoidCallback onSignIn;
   final VoidCallback onSignUp;
@@ -32,27 +37,26 @@ class DashboardNavigationDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 350,
+      width: 336,
       child: Drawer(
-        backgroundColor: Colors.white,
+        backgroundColor: AppDesign.canvas,
         elevation: 0,
         child: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
             children: [
               buildProfileCard(context, user: user, isLoggedIn: isLoggedIn),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
               _buildDrawerSection(
                 icon: Icons.local_hospital_rounded,
                 title: 'Patient Management',
                 subtitle: 'Daily clinical workflows and care tracking',
                 child: GridView.count(
-                  crossAxisCount: 2,
+                  crossAxisCount: 1,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.12,
+                  mainAxisSpacing: 4,
+                  childAspectRatio: 6.1,
                   children: [
                     _buildSquareButton(
                       icon: Icons.medical_services_rounded,
@@ -97,18 +101,17 @@ class DashboardNavigationDrawer extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               _buildDrawerSection(
                 icon: Icons.folder_copy_rounded,
                 title: 'Records Hub',
                 subtitle: 'Community registries and patient files',
                 child: GridView.count(
-                  crossAxisCount: 2,
+                  crossAxisCount: 1,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.12,
+                  mainAxisSpacing: 4,
+                  childAspectRatio: 6.1,
                   children: [
                     _buildSquareButton(
                       icon: Icons.folder_special_rounded,
@@ -121,18 +124,17 @@ class DashboardNavigationDrawer extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               _buildDrawerSection(
                 icon: Icons.monitor_heart_rounded,
                 title: 'Disease Monitoring',
                 subtitle: 'Population health surveillance and outcomes',
                 child: GridView.count(
-                  crossAxisCount: 2,
+                  crossAxisCount: 1,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.12,
+                  mainAxisSpacing: 4,
+                  childAspectRatio: 6.1,
                   children: [
                     _buildSquareButton(
                       icon: Icons.coronavirus_rounded,
@@ -161,18 +163,17 @@ class DashboardNavigationDrawer extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               _buildDrawerSection(
                 icon: Icons.hub_rounded,
                 title: 'Insights & Coordination',
                 subtitle: 'Open mobile analytics and referral workflows',
                 child: GridView.count(
-                  crossAxisCount: 2,
+                  crossAxisCount: 1,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.12,
+                  mainAxisSpacing: 4,
+                  childAspectRatio: 6.1,
                   children: [
                     _buildSquareButton(
                       icon: Icons.analytics_rounded,
@@ -193,7 +194,7 @@ class DashboardNavigationDrawer extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               _buildDrawerSection(
                 icon: isLoggedIn
                     ? Icons.verified_user_rounded
@@ -276,17 +277,10 @@ class DashboardNavigationDrawer extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppDesign.surface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppDesign.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppDesign.navy.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -327,7 +321,7 @@ class DashboardNavigationDrawer extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           child,
         ],
       ),
@@ -344,48 +338,34 @@ class DashboardNavigationDrawer extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-          child: Column(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
             children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppDesign.blueSoft,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 12),
               Expanded(
-                child: Center(
-                  child: Container(
-                    width: 78,
-                    height: 78,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: color.withValues(alpha: 0.45),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withValues(alpha: 0.12),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(icon, color: color, size: 40),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppDesign.ink,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppDesign.ink,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  height: 1.18,
-                ),
-              ),
+              const Icon(Icons.chevron_right_rounded, color: AppDesign.subtle),
             ],
           ),
         ),

@@ -5,40 +5,41 @@ import 'package:flutter/material.dart';
 /// Legacy aliases such as [navySoft], [page], and [ink] are intentionally kept
 /// so active feature screens can migrate without changing application logic.
 abstract final class AppDesign {
-  static const bodyFontFamily = 'Manrope';
-  static const displayFontFamily = 'SpaceGrotesk';
+  // Use Android's system typeface for fast startup and familiar, readable text.
+  static const bodyFontFamily = 'Roboto';
+  static const displayFontFamily = 'Roboto';
 
   // Brand.
-  static const blue = Color(0xFF2F80ED);
-  static const bluePressed = Color(0xFF256FD1);
-  static const navy = Color(0xFF173F70);
-  static const blueSoft = Color(0xFFEAF3FF);
-  static const teal = Color(0xFF1F5A91);
-  static const green = Color(0xFF219B68);
-  static const orange = Color(0xFFFFA33B);
-  static const red = Color(0xFFFF5151);
-  static const pink = Color(0xFFF63373);
-  static const skyBlue = Color(0xFF5B8CC9);
+  static const blue = Color(0xFF176B87);
+  static const bluePressed = Color(0xFF11566E);
+  static const navy = Color(0xFF123342);
+  static const blueSoft = Color(0xFFE7F2F5);
+  static const teal = Color(0xFF0F766E);
+  static const green = Color(0xFF18794E);
+  static const orange = Color(0xFF9A3412);
+  static const red = Color(0xFFB42318);
+  static const pink = Color(0xFF9D174D);
+  static const skyBlue = Color(0xFF3D8297);
 
   // Surfaces and typography.
-  static const page = Color(0xFFF5F7FA);
-  static const canvas = Color(0xFFF8FAFC);
+  static const page = Color(0xFFF4F7F8);
+  static const canvas = Color(0xFFF8FAFA);
   static const surface = Color(0xFFFFFFFF);
-  static const ink = Color(0xFF14212B);
-  static const muted = Color(0xFF52677D);
-  static const subtle = Color(0xFF7C8C9C);
+  static const ink = Color(0xFF172A32);
+  static const muted = Color(0xFF52656C);
+  static const subtle = Color(0xFF72838A);
   static const disabled = Color(0xFFA8B3BF);
-  static const border = Color(0xFFE2E8F0);
-  static const borderStrong = Color(0xFFCBD5E1);
-  static const chartGrid = Color(0xFFDCE6F2);
+  static const border = Color(0xFFDCE5E7);
+  static const borderStrong = Color(0xFFB9C9CD);
+  static const chartGrid = Color(0xFFD5E2E4);
 
   // Semantic foreground/background pairs.
-  static const success = Color(0xFF219B68);
-  static const successBackground = Color(0xFFE8F7F0);
-  static const warning = Color(0xFFF59E0B);
-  static const warningBackground = Color(0xFFFFF7E6);
-  static const danger = Color(0xFFEF4444);
-  static const dangerBackground = Color(0xFFFEECEC);
+  static const success = Color(0xFF18794E);
+  static const successBackground = Color(0xFFE8F5EE);
+  static const warning = Color(0xFF9A3412);
+  static const warningBackground = Color(0xFFFBEDE6);
+  static const danger = Color(0xFFB42318);
+  static const dangerBackground = Color(0xFFFDECEA);
   static const information = blue;
   static const informationBackground = blueSoft;
   static const neutral = Color(0xFF64748B);
@@ -94,9 +95,7 @@ abstract final class AppDesign {
       'monitoring',
       'partial',
       'pending',
-      'active',
       'urgent',
-      'scheduled',
       'pending certification',
       'follow up due',
       'due soon',
@@ -125,7 +124,9 @@ abstract final class AppDesign {
     if (successTerms.any(value.contains)) {
       return const StatusColors(success, successBackground);
     }
-    if (value.contains('refer') ||
+    if (value.contains('active') ||
+        value.contains('scheduled') ||
+        value.contains('refer') ||
         value.contains('consult') ||
         value.contains('recorded') ||
         value.contains('in progress')) {
@@ -170,25 +171,28 @@ abstract final class AppDesign {
         .copyWith(
           headlineLarge: const TextStyle(
             fontFamily: displayFontFamily,
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
+            fontSize: 27,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.4,
             color: ink,
           ),
           headlineMedium: const TextStyle(
             fontFamily: displayFontFamily,
-            fontSize: 23,
-            fontWeight: FontWeight.w800,
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.25,
             color: ink,
           ),
           headlineSmall: const TextStyle(
             fontFamily: displayFontFamily,
             fontSize: 20,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
             color: ink,
           ),
           titleLarge: const TextStyle(
             fontSize: 18,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             color: ink,
           ),
           titleMedium: const TextStyle(
@@ -196,8 +200,8 @@ abstract final class AppDesign {
             fontWeight: FontWeight.w700,
             color: ink,
           ),
-          bodyLarge: const TextStyle(fontSize: 15, color: muted),
-          bodyMedium: const TextStyle(fontSize: 14, color: muted),
+          bodyLarge: const TextStyle(fontSize: 16, height: 1.45, color: muted),
+          bodyMedium: const TextStyle(fontSize: 14, height: 1.4, color: muted),
           bodySmall: const TextStyle(fontSize: 12, color: subtle),
           labelLarge: const TextStyle(fontWeight: FontWeight.w700),
         );
@@ -222,7 +226,7 @@ abstract final class AppDesign {
           color: ink,
           fontFamily: bodyFontFamily,
           fontSize: 18,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
         ),
         iconTheme: IconThemeData(color: ink),
         actionsIconTheme: IconThemeData(color: ink),
@@ -383,6 +387,11 @@ abstract final class AppDesign {
         contentTextStyle: TextStyle(color: surface, fontFamily: bodyFontFamily),
         actionTextColor: surface,
         behavior: SnackBarBehavior.floating,
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(14)),
+        ),
+        insetPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: blue,

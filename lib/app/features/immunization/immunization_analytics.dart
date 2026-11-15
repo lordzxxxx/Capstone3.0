@@ -283,7 +283,7 @@ class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
       ),
       body: ClinicalPageBackground(
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: _aqua))
+            ? const Center(child: ClinicalInsightsSkeleton())
             : RefreshIndicator(
                 onRefresh: _load,
                 color: _aqua,

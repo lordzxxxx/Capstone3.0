@@ -384,7 +384,7 @@ class _CheckUpAnalyticsPageState extends State<CheckUpAnalyticsPage> {
           iconTheme: const IconThemeData(color: Colors.white),
         ),
         body: const ClinicalPageBackground(
-          child: Center(child: CircularProgressIndicator(color: _primaryAqua)),
+          child: Center(child: ClinicalInsightsSkeleton()),
         ),
       );
     }

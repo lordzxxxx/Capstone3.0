@@ -61,9 +61,9 @@ class HealthRecordCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Record modules share one product identity. Status colors remain semantic
     // in RecordStatusBadge; this accent is reserved for brand/decorative UI.
-    const accentColor = AppDesign.blue;
+    const accentColor = AppDesign.teal;
     final compact = MediaQuery.sizeOf(context).width < 390;
-    final cardPadding = compact ? 12.0 : 16.0;
+    final cardPadding = compact ? 12.0 : 14.0;
     final initials =
         (avatarText?.trim().isNotEmpty == true
                 ? avatarText!.trim()
@@ -76,12 +76,12 @@ class HealthRecordCard extends StatelessWidget {
       label: '${recordLabel ?? 'Health record'} for $patientName',
       child: Card(
         margin: EdgeInsets.only(bottom: compact ? 10 : 12),
-        elevation: isSelected ? 2 : 1,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color: isSelected ? accentColor : AppDesign.border,
-            width: isSelected ? 2 : 1,
+            width: isSelected ? 1.5 : 1,
           ),
         ),
         child: InkWell(
@@ -89,12 +89,10 @@ class HealthRecordCard extends StatelessWidget {
           onLongPress: onLongPress,
           borderRadius: BorderRadius.circular(16),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
+            duration: const Duration(milliseconds: 120),
             padding: EdgeInsets.all(cardPadding),
             decoration: BoxDecoration(
-              color: isSelected
-                  ? accentColor.withValues(alpha: 0.07)
-                  : AppDesign.surface,
+              color: isSelected ? AppDesign.blueSoft : AppDesign.surface,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
@@ -116,7 +114,7 @@ class HealthRecordCard extends StatelessWidget {
                     _PatientAvatar(
                       initials: initials,
                       accentColor: accentColor,
-                      size: compact ? 46 : 52,
+                      size: compact ? 42 : 46,
                     ),
                     SizedBox(width: compact ? 9 : 12),
                     Expanded(
@@ -129,8 +127,8 @@ class HealthRecordCard extends StatelessWidget {
                               style: TextStyle(
                                 color: accentColor,
                                 fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.7,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.6,
                               ),
                             ),
                             const SizedBox(height: 3),
@@ -143,8 +141,8 @@ class HealthRecordCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: AppDesign.ink,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
                               height: 1.2,
                             ),
                           ),
@@ -191,7 +189,7 @@ class HealthRecordCard extends StatelessWidget {
                 ),
                 if (status?.trim().isNotEmpty == true ||
                     secondaryStatus?.trim().isNotEmpty == true) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -204,17 +202,17 @@ class HealthRecordCard extends StatelessWidget {
                   ),
                 ],
                 if (metadata.isNotEmpty) ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   const Divider(),
-                  const SizedBox(height: 13),
+                  const SizedBox(height: 10),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final itemWidth = constraints.maxWidth < 330
                           ? constraints.maxWidth
-                          : (constraints.maxWidth - 12) / 2;
+                          : (constraints.maxWidth - 10) / 2;
                       return Wrap(
-                        spacing: 12,
-                        runSpacing: 14,
+                        spacing: 10,
+                        runSpacing: 10,
                         children: metadata
                             .where((item) => item.value.trim().isNotEmpty)
                             .map(
@@ -269,16 +267,16 @@ class _PatientAvatar extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: accentColor.withValues(alpha: 0.12),
+        color: AppDesign.blueSoft,
         shape: BoxShape.circle,
-        border: Border.all(color: accentColor.withValues(alpha: 0.30)),
+        border: Border.all(color: AppDesign.border),
       ),
       child: Text(
         initials,
         style: TextStyle(
-          color: accentColor,
-          fontSize: 16,
-          fontWeight: FontWeight.w800,
+          color: AppDesign.navy,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -301,10 +299,10 @@ class _MetadataItem extends StatelessWidget {
           height: 30,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: accentColor.withValues(alpha: 0.09),
+            color: AppDesign.blueSoft,
             borderRadius: BorderRadius.circular(9),
           ),
-          child: Icon(item.icon, color: accentColor, size: 16),
+          child: Icon(item.icon, color: AppDesign.teal, size: 16),
         ),
         const SizedBox(width: 9),
         Expanded(
@@ -316,7 +314,7 @@ class _MetadataItem extends StatelessWidget {
                 style: const TextStyle(
                   color: AppDesign.subtle,
                   fontSize: 9.5,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 0.45,
                 ),
               ),

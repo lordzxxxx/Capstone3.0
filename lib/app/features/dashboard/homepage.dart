@@ -1681,7 +1681,7 @@ class _HomePageState extends State<HomePage> {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1815,7 +1815,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
 
               // Greeting Message and User Info Card
               SizedBox(
@@ -1831,7 +1831,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(14),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         // Greeting and Username block, reused in both layouts below.
@@ -1846,12 +1846,12 @@ class _HomePageState extends State<HomePage> {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: _lightOffWhite,
-                                fontSize: kIsWeb ? 24 : 22,
+                                fontSize: kIsWeb ? 24 : 20,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: -0.3,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 4),
                             // Username
                             Text(
                               userName,
@@ -1864,7 +1864,7 @@ class _HomePageState extends State<HomePage> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 6),
                             Row(
                               children: [
                                 Icon(

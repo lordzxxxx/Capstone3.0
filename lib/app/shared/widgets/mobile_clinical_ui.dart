@@ -84,8 +84,8 @@ class ClinicalGlassSurface extends StatelessWidget {
   const ClinicalGlassSurface({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
-    this.radius = 20,
+    this.padding = const EdgeInsets.all(14),
+    this.radius = 16,
     this.tint,
   });
 
@@ -110,8 +110,8 @@ class ClinicalGlassSurface extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 color: AppDesign.navy.withValues(alpha: .10),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -189,20 +189,20 @@ class ClinicalInsightHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClinicalGlassSurface(
       tint: AppDesign.blueSoft,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
               color: AppDesign.navy,
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: Colors.white, size: 23),
+            child: Icon(icon, color: Colors.white, size: 21),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,6 +238,7 @@ class ClinicalLoadingSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       label: 'Loading clinical data',
+      liveRegion: true,
       child: Container(
         height: height,
         margin: margin,
@@ -263,7 +264,7 @@ class ClinicalLoadingSkeleton extends StatelessWidget {
                   child: Container(
                     height: 11,
                     decoration: BoxDecoration(
-                      color: AppDesign.neutralBackground,
+                      color: AppDesign.border.withValues(alpha: .82),
                       borderRadius: BorderRadius.circular(99),
                     ),
                   ),
@@ -272,6 +273,46 @@ class ClinicalLoadingSkeleton extends StatelessWidget {
             );
           }),
         ),
+      ),
+    );
+  }
+}
+
+/// Compact loading state matching the information density of a patient row.
+/// It reserves the final layout so lists do not jump when local data returns.
+class ClinicalRecordListSkeleton extends StatelessWidget {
+  const ClinicalRecordListSkeleton({super.key, this.count = 3});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Loading records',
+      liveRegion: true,
+      child: Column(
+        children: List<Widget>.generate(
+          count,
+          (_) => const ClinicalLoadingSkeleton(height: 132, lines: 4),
+        ),
+      ),
+    );
+  }
+}
+
+/// A dashboard-shaped loading state for analytics and summary pages.
+class ClinicalInsightsSkeleton extends StatelessWidget {
+  const ClinicalInsightsSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MobilePageInsets(
+      child: Column(
+        children: [
+          ClinicalLoadingSkeleton(height: 104, lines: 3),
+          ClinicalLoadingSkeleton(height: 84, lines: 2),
+          ClinicalLoadingSkeleton(height: 224, lines: 4),
+        ],
       ),
     );
   }

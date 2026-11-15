@@ -124,7 +124,7 @@ class _PatientAnalyticsPageState extends State<PatientAnalyticsPage> {
       ),
       body: ClinicalPageBackground(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: ClinicalInsightsSkeleton())
             : _error != null
             ? _AnalyticsError(message: _error!, onRetry: _loadRecords)
             : RefreshIndicator(

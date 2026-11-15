@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_clinical_ui.dart';
 import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 import 'package:mycapstone_project/app/features/patients/patient_database_helper.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
@@ -19,7 +20,8 @@ class DashboardNotificationItem {
   final String id;
   final String title;
   final String message;
-  final String type; // 'alert', 'announcement', 'clinical', 'referral', 'system'
+  final String
+  type; // 'alert', 'announcement', 'clinical', 'referral', 'system'
   final IconData icon;
   final Color color;
   final DateTime timestamp;
@@ -44,7 +46,8 @@ class DashboardNotificationItem {
 class DashboardNotificationsSheet extends StatefulWidget {
   final User? user;
   final ValueChanged<int>? onUnreadCountChanged;
-  final Future<void> Function({required String title, required String body})? onTriggerLocalNotification;
+  final Future<void> Function({required String title, required String body})?
+  onTriggerLocalNotification;
 
   const DashboardNotificationsSheet({
     super.key,
@@ -57,8 +60,12 @@ class DashboardNotificationsSheet extends StatefulWidget {
   static Future<int> fetchUnreadCount(User? user) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final readIds = prefs.getStringList('read_notifications_ids')?.toSet() ?? <String>{};
-      final items = await _aggregateAllNotifications(user: user, readIds: readIds);
+      final readIds =
+          prefs.getStringList('read_notifications_ids')?.toSet() ?? <String>{};
+      final items = await _aggregateAllNotifications(
+        user: user,
+        readIds: readIds,
+      );
       return items.where((i) => !i.isRead).length;
     } catch (_) {
       return 0;
@@ -86,9 +93,15 @@ class DashboardNotificationsSheet extends StatefulWidget {
         final data = doc.data();
         final id = 'ann_${doc.id}';
         final title = (data['title'] ?? 'City Health Announcement').toString();
-        final message = (data['message'] ?? data['content'] ?? data['body'] ?? '').toString();
-        final sender = (data['sender'] ?? data['author'] ?? 'City Health Office (CHO)').toString();
-        final priority = (data['priority'] ?? 'normal').toString().toLowerCase();
+        final message =
+            (data['message'] ?? data['content'] ?? data['body'] ?? '')
+                .toString();
+        final sender =
+            (data['sender'] ?? data['author'] ?? 'City Health Office (CHO)')
+                .toString();
+        final priority = (data['priority'] ?? 'normal')
+            .toString()
+            .toLowerCase();
 
         DateTime date = now;
         if (data['createdAt'] is Timestamp) {
@@ -103,10 +116,14 @@ class DashboardNotificationsSheet extends StatefulWidget {
           DashboardNotificationItem(
             id: id,
             title: title,
-            message: message.isNotEmpty ? message : 'New announcement posted by $sender',
+            message: message.isNotEmpty
+                ? message
+                : 'New announcement posted by $sender',
             type: 'announcement',
-            icon: isUrgent ? Icons.campaign_rounded : Icons.announcement_outlined,
-            color: isUrgent ? Colors.redAccent : AppDesign.blue,
+            icon: isUrgent
+                ? Icons.campaign_rounded
+                : Icons.announcement_outlined,
+            color: isUrgent ? AppDesign.danger : AppDesign.information,
             timestamp: date,
             isRead: readIds.contains(id),
             metadata: {
@@ -168,8 +185,13 @@ class DashboardNotificationsSheet extends StatefulWidget {
       for (final doc in snapshot.docs) {
         final data = doc.data();
         final status = (data['status'] ?? 'Pending').toString();
-        final patientName = (data['patientName'] ?? data['patient'] ?? 'Patient').toString();
-        final receivingFacility = (data['receivingFacility'] ?? data['referralCenter'] ?? 'Health Facility').toString();
+        final patientName =
+            (data['patientName'] ?? data['patient'] ?? 'Patient').toString();
+        final receivingFacility =
+            (data['receivingFacility'] ??
+                    data['referralCenter'] ??
+                    'Health Facility')
+                .toString();
         final id = 'ref_${doc.id}';
 
         DateTime date = now;
@@ -179,17 +201,17 @@ class DashboardNotificationsSheet extends StatefulWidget {
           date = DateTime.tryParse(data['date']) ?? now;
         }
 
-        Color color = Colors.orange;
+        Color color = AppDesign.information;
         IconData icon = Icons.swap_horiz_rounded;
         String title = 'Referral Update: $patientName';
         String message = 'Status: $status -> $receivingFacility';
 
         if (status.toLowerCase() == 'pending') {
-          color = Colors.amber.shade800;
+          color = AppDesign.warning;
           title = 'Pending Referral: $patientName';
           message = 'Awaiting transfer/acknowledgment by $receivingFacility';
         } else if (status.toLowerCase() == 'accepted') {
-          color = Colors.green;
+          color = AppDesign.success;
           title = 'Referral Accepted: $patientName';
           message = 'Accepted by $receivingFacility. Ready for handoff.';
         }
@@ -213,25 +235,36 @@ class DashboardNotificationsSheet extends StatefulWidget {
 
     // 4. Clinical High-Risk Prenatal Cases from SQLite
     try {
-      final prenatalRecords = await PrenatalDatabaseHelper.instance.getAllRecords();
+      final prenatalRecords = await PrenatalDatabaseHelper.instance
+          .getAllRecords();
       for (final record in prenatalRecords) {
-        final riskAssessment = (record['riskAssessment'] ?? '').toString().toLowerCase();
-        final isHighRisk = riskAssessment.contains('high') ||
-            (record['highRiskPregnancy'] == 'Yes' || record['highRiskPregnancy'] == 'true');
+        final riskAssessment = (record['riskAssessment'] ?? '')
+            .toString()
+            .toLowerCase();
+        final isHighRisk =
+            riskAssessment.contains('high') ||
+            (record['highRiskPregnancy'] == 'Yes' ||
+                record['highRiskPregnancy'] == 'true');
 
         if (isHighRisk) {
           final id = 'prenatal_risk_${record['id']}';
-          final name = (record['patientName'] ?? record['name'] ?? 'Mother').toString();
-          final factors = (record['highRiskFactors'] ?? record['riskFactors'] ?? 'High risk indicators detected').toString();
+          final name = (record['patientName'] ?? record['name'] ?? 'Mother')
+              .toString();
+          final factors =
+              (record['highRiskFactors'] ??
+                      record['riskFactors'] ??
+                      'High risk indicators detected')
+                  .toString();
 
           items.add(
             DashboardNotificationItem(
               id: id,
               title: 'High-Risk Prenatal Case: $name',
-              message: 'Conditions: $factors. Requires timely prenatal monitoring.',
+              message:
+                  'Conditions: $factors. Requires timely prenatal monitoring.',
               type: 'clinical',
               icon: Icons.pregnant_woman_rounded,
-              color: Colors.redAccent,
+              color: AppDesign.danger,
               timestamp: now.subtract(const Duration(minutes: 30)),
               route: MobileRoutes.prenatal,
               isRead: readIds.contains(id),
@@ -243,19 +276,23 @@ class DashboardNotificationsSheet extends StatefulWidget {
 
     // 5. Clinical Immunization Schedule Alerts from SQLite
     try {
-      final imzRecords = await ImmunizationDatabaseHelper.instance.getAllRecords();
+      final imzRecords = await ImmunizationDatabaseHelper.instance
+          .getAllRecords();
       if (imzRecords.isNotEmpty) {
         final sample = imzRecords.first;
-        final childName = (sample['childName'] ?? sample['patientName'] ?? 'Child').toString();
+        final childName =
+            (sample['childName'] ?? sample['patientName'] ?? 'Child')
+                .toString();
         final id = 'imz_due_${sample['id']}';
         items.add(
           DashboardNotificationItem(
             id: id,
             title: 'Immunization Schedule Active',
-            message: 'Active routine vaccination tracker for $childName and ${imzRecords.length} registered children.',
+            message:
+                'Active routine vaccination tracker for $childName and ${imzRecords.length} registered children.',
             type: 'clinical',
             icon: Icons.vaccines_rounded,
-            color: const Color(0xFF4CAF50),
+            color: AppDesign.success,
             timestamp: now.subtract(const Duration(hours: 1)),
             route: MobileRoutes.immunization,
             isRead: readIds.contains(id),
@@ -266,14 +303,16 @@ class DashboardNotificationsSheet extends StatefulWidget {
 
     // 6. Clinical Morbidity Surveillance Threshold Alerts
     try {
-      final morbidityRecords = await MorbidityDatabaseHelper.instance.getAllRecords();
+      final morbidityRecords = await MorbidityDatabaseHelper.instance
+          .getAllRecords();
       if (morbidityRecords.isNotEmpty) {
         final id = 'mbd_alert_${morbidityRecords.length}';
         items.add(
           DashboardNotificationItem(
             id: id,
             title: 'Morbidity Surveillance Registry',
-            message: '${morbidityRecords.length} disease cases logged in community health surveillance.',
+            message:
+                '${morbidityRecords.length} disease cases logged in community health surveillance.',
             type: 'alert',
             icon: Icons.healing_rounded,
             color: AppDesign.navySoft,
@@ -294,7 +333,8 @@ class DashboardNotificationsSheet extends StatefulWidget {
           DashboardNotificationItem(
             id: id,
             title: 'Clinical Check-Up Records',
-            message: '${checkupRecords.length} general check-up consultations completed and synchronized.',
+            message:
+                '${checkupRecords.length} general check-up consultations completed and synchronized.',
             type: 'clinical',
             icon: Icons.medical_services_rounded,
             color: AppDesign.blue,
@@ -308,14 +348,16 @@ class DashboardNotificationsSheet extends StatefulWidget {
 
     // 8. Master Patient Registry Update
     try {
-      final patientRecords = await PatientDatabaseHelper.instance.getAllRecords();
+      final patientRecords = await PatientDatabaseHelper.instance
+          .getAllRecords();
       if (patientRecords.isNotEmpty) {
         final id = 'pat_registry_${patientRecords.length}';
         items.add(
           DashboardNotificationItem(
             id: id,
             title: 'Master Patient Registry',
-            message: '${patientRecords.length} registered patients available across all clinical services.',
+            message:
+                '${patientRecords.length} registered patients available across all clinical services.',
             type: 'system',
             icon: Icons.people_alt_rounded,
             color: AppDesign.navy,
@@ -333,10 +375,11 @@ class DashboardNotificationsSheet extends StatefulWidget {
       DashboardNotificationItem(
         id: systemStatusId,
         title: 'System Online & Synchronized',
-        message: 'DSUHIS local database and secure sync services are fully operational.',
+        message:
+            'DSUHIS local database and secure sync services are fully operational.',
         type: 'system',
         icon: Icons.check_circle_outline_rounded,
-        color: Colors.green,
+        color: AppDesign.success,
         timestamp: now.subtract(const Duration(minutes: 5)),
         isRead: readIds.contains(systemStatusId),
       ),
@@ -348,10 +391,12 @@ class DashboardNotificationsSheet extends StatefulWidget {
   }
 
   @override
-  State<DashboardNotificationsSheet> createState() => _DashboardNotificationsSheetState();
+  State<DashboardNotificationsSheet> createState() =>
+      _DashboardNotificationsSheetState();
 }
 
-class _DashboardNotificationsSheetState extends State<DashboardNotificationsSheet> {
+class _DashboardNotificationsSheetState
+    extends State<DashboardNotificationsSheet> {
   static const Color _primaryAqua = AppDesign.blue;
   static const Color _darkDeepTeal = AppDesign.page;
   static const Color _mutedCoolGray = AppDesign.muted;
@@ -381,12 +426,14 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
     setState(() => _isLoading = true);
     try {
       final prefs = await SharedPreferences.getInstance();
-      _readIds = prefs.getStringList('read_notifications_ids')?.toSet() ?? <String>{};
+      _readIds =
+          prefs.getStringList('read_notifications_ids')?.toSet() ?? <String>{};
 
-      final items = await DashboardNotificationsSheet._aggregateAllNotifications(
-        user: widget.user,
-        readIds: _readIds,
-      );
+      final items =
+          await DashboardNotificationsSheet._aggregateAllNotifications(
+            user: widget.user,
+            readIds: _readIds,
+          );
 
       if (!mounted) return;
       setState(() {
@@ -435,7 +482,7 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('All notifications marked as read.'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppDesign.success,
           duration: Duration(seconds: 2),
         ),
       );
@@ -516,13 +563,21 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
               ),
               child: Text(
                 'Priority: ${priority.toString().toUpperCase()}',
-                style: TextStyle(color: item.color, fontWeight: FontWeight.bold, fontSize: 11),
+                style: TextStyle(
+                  color: item.color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                ),
               ),
             ),
             const SizedBox(height: 14),
             Text(
               fullBody,
-              style: const TextStyle(color: _lightOffWhite, height: 1.45, fontSize: 14),
+              style: const TextStyle(
+                color: _lightOffWhite,
+                height: 1.45,
+                fontSize: 14,
+              ),
             ),
             const SizedBox(height: 14),
             Text(
@@ -557,7 +612,11 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
             Expanded(
               child: Text(
                 item.title,
-                style: const TextStyle(color: _lightOffWhite, fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  color: _lightOffWhite,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
           ],
@@ -580,8 +639,11 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
     return _notifications.where((n) {
       if (_selectedFilter != 'All') {
         if (_selectedFilter == 'Alerts' && n.type != 'alert') return false;
-        if (_selectedFilter == 'Announcements' && n.type != 'announcement') return false;
-        if (_selectedFilter == 'Clinical' && (n.type != 'clinical' && n.type != 'referral')) return false;
+        if (_selectedFilter == 'Announcements' && n.type != 'announcement')
+          return false;
+        if (_selectedFilter == 'Clinical' &&
+            (n.type != 'clinical' && n.type != 'referral'))
+          return false;
         if (_selectedFilter == 'System' && n.type != 'system') return false;
       }
       if (_searchQuery.isNotEmpty) {
@@ -654,7 +716,10 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
 
               // Header Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
                 child: Row(
                   children: [
                     Container(
@@ -663,7 +728,11 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
                         color: _primaryAqua.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.notifications_active_rounded, color: _primaryAqua, size: 24),
+                      child: const Icon(
+                        Icons.notifications_active_rounded,
+                        color: _primaryAqua,
+                        size: 24,
+                      ),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -683,14 +752,21 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
                               if (unreadCount > 0) ...[
                                 const SizedBox(width: 8),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.redAccent,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
                                     '$unreadCount new',
-                                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -699,19 +775,28 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
                           const SizedBox(height: 2),
                           Text(
                             'Live clinical alerts and announcements',
-                            style: TextStyle(color: _mutedCoolGray, fontSize: 12),
+                            style: TextStyle(
+                              color: _mutedCoolGray,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
                     ),
                     IconButton(
                       tooltip: 'Mark all as read',
-                      icon: const Icon(Icons.done_all_rounded, color: _primaryAqua),
+                      icon: const Icon(
+                        Icons.done_all_rounded,
+                        color: _primaryAqua,
+                      ),
                       onPressed: unreadCount > 0 ? _markAllAsRead : null,
                     ),
                     IconButton(
                       tooltip: 'Close',
-                      icon: const Icon(Icons.close_rounded, color: _lightOffWhite),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: _lightOffWhite,
+                      ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
@@ -720,39 +805,66 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
 
               // Search Box & Category Filters
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 6,
+                ),
                 child: Column(
                   children: [
                     TextField(
                       controller: _searchController,
-                      style: const TextStyle(color: _lightOffWhite, fontSize: 14),
+                      style: const TextStyle(
+                        color: _lightOffWhite,
+                        fontSize: 14,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Search alerts & announcements...',
-                        hintStyle: TextStyle(color: _mutedCoolGray, fontSize: 13),
-                        prefixIcon: const Icon(Icons.search_rounded, color: _primaryAqua, size: 20),
+                        hintStyle: TextStyle(
+                          color: _mutedCoolGray,
+                          fontSize: 13,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          color: _primaryAqua,
+                          size: 20,
+                        ),
                         suffixIcon: _searchQuery.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.clear, color: _mutedCoolGray, size: 18),
+                                icon: const Icon(
+                                  Icons.clear,
+                                  color: _mutedCoolGray,
+                                  size: 18,
+                                ),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() => _searchQuery = '');
                                 },
                               )
                             : null,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
                         filled: true,
                         fillColor: _lightOffWhite.withValues(alpha: 0.08),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.15)),
+                          borderSide: BorderSide(
+                            color: _lightOffWhite.withValues(alpha: 0.15),
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: _lightOffWhite.withValues(alpha: 0.15)),
+                          borderSide: BorderSide(
+                            color: _lightOffWhite.withValues(alpha: 0.15),
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _primaryAqua, width: 1.5),
+                          borderSide: const BorderSide(
+                            color: _primaryAqua,
+                            width: 1.5,
+                          ),
                         ),
                       ),
                       onChanged: (v) => setState(() => _searchQuery = v.trim()),
@@ -763,28 +875,46 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                        children: ['All', 'Alerts', 'Announcements', 'Clinical', 'System'].map((filter) {
-                          final isSelected = _selectedFilter == filter;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: FilterChip(
-                              label: Text(filter),
-                              selected: isSelected,
-                              onSelected: (_) => setState(() => _selectedFilter = filter),
-                              backgroundColor: Colors.transparent,
-                              selectedColor: _primaryAqua.withValues(alpha: 0.25),
-                              labelStyle: TextStyle(
-                                color: isSelected ? _primaryAqua : _mutedCoolGray,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                fontSize: 12,
-                              ),
-                              side: BorderSide(
-                                color: isSelected ? _primaryAqua : _lightOffWhite.withValues(alpha: 0.2),
-                              ),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          );
-                        }).toList(),
+                        children:
+                            [
+                              'All',
+                              'Alerts',
+                              'Announcements',
+                              'Clinical',
+                              'System',
+                            ].map((filter) {
+                              final isSelected = _selectedFilter == filter;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: FilterChip(
+                                  label: Text(filter),
+                                  selected: isSelected,
+                                  onSelected: (_) =>
+                                      setState(() => _selectedFilter = filter),
+                                  backgroundColor: Colors.transparent,
+                                  selectedColor: _primaryAqua.withValues(
+                                    alpha: 0.25,
+                                  ),
+                                  labelStyle: TextStyle(
+                                    color: isSelected
+                                        ? _primaryAqua
+                                        : _mutedCoolGray,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    fontSize: 12,
+                                  ),
+                                  side: BorderSide(
+                                    color: isSelected
+                                        ? _primaryAqua
+                                        : _lightOffWhite.withValues(alpha: 0.2),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                       ),
                     ),
                   ],
@@ -796,50 +926,75 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
               // Notifications List Body
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator(color: _primaryAqua))
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: ClinicalRecordListSkeleton(count: 3),
+                      )
                     : _filteredNotifications.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.notifications_none_rounded, size: 56, color: _mutedCoolGray),
-                                const SizedBox(height: 12),
-                                const Text(
-                                  'No notifications found',
-                                  style: TextStyle(color: _lightOffWhite, fontWeight: FontWeight.bold, fontSize: 16),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _searchQuery.isNotEmpty
-                                      ? 'Try adjusting your search keywords'
-                                      : 'You are all caught up on alerts and updates',
-                                  style: TextStyle(color: _mutedCoolGray, fontSize: 13),
-                                ),
-                              ],
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.notifications_none_rounded,
+                              size: 56,
+                              color: _mutedCoolGray,
                             ),
-                          )
-                        : RefreshIndicator(
-                            color: _primaryAqua,
-                            onRefresh: _loadNotifications,
-                            child: ListView.separated(
-                              controller: scrollController,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                              itemCount: _filteredNotifications.length,
-                              separatorBuilder: (_, index) => const SizedBox(height: 10),
-                              itemBuilder: (context, index) {
-                                final item = _filteredNotifications[index];
-                                return _buildNotificationCard(item);
-                              },
+                            const SizedBox(height: 12),
+                            const Text(
+                              'No notifications found',
+                              style: TextStyle(
+                                color: _lightOffWhite,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _searchQuery.isNotEmpty
+                                  ? 'Try adjusting your search keywords'
+                                  : 'You are all caught up on alerts and updates',
+                              style: TextStyle(
+                                color: _mutedCoolGray,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : RefreshIndicator(
+                        color: _primaryAqua,
+                        onRefresh: _loadNotifications,
+                        child: ListView.separated(
+                          controller: scrollController,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
                           ),
+                          itemCount: _filteredNotifications.length,
+                          separatorBuilder: (_, index) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            final item = _filteredNotifications[index];
+                            return _buildNotificationCard(item);
+                          },
+                        ),
+                      ),
               ),
 
               // Bottom Action Footer
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.2),
-                  border: Border(top: BorderSide(color: _lightOffWhite.withValues(alpha: 0.1))),
+                  border: Border(
+                    top: BorderSide(
+                      color: _lightOffWhite.withValues(alpha: 0.1),
+                    ),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -849,12 +1004,15 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
                           if (widget.onTriggerLocalNotification != null) {
                             await widget.onTriggerLocalNotification!(
                               title: '[ALERT] DSUHIS Test Alert',
-                              body: 'Device notifications are active and functioning correctly on your mobile device.',
+                              body:
+                                  'Device notifications are active and functioning correctly on your mobile device.',
                             );
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Test notification sent to device! Check your notification bar.'),
+                                  content: Text(
+                                    'Test notification sent to device! Check your notification bar.',
+                                  ),
                                   backgroundColor: Colors.green,
                                 ),
                               );
@@ -862,12 +1020,19 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
                           }
                         },
                         icon: const Icon(Icons.vibration_rounded, size: 18),
-                        label: const Text('Test Alert', style: TextStyle(fontSize: 13)),
+                        label: const Text(
+                          'Test Alert',
+                          style: TextStyle(fontSize: 13),
+                        ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: _lightOffWhite,
-                          side: BorderSide(color: _lightOffWhite.withValues(alpha: 0.25)),
+                          side: BorderSide(
+                            color: _lightOffWhite.withValues(alpha: 0.25),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
                     ),
@@ -876,12 +1041,20 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
                       child: ElevatedButton.icon(
                         onPressed: _loadNotifications,
                         icon: const Icon(Icons.refresh_rounded, size: 18),
-                        label: const Text('Refresh', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                        label: const Text(
+                          'Refresh',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _primaryAqua,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
                     ),
@@ -902,17 +1075,15 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
         onTap: () => _handleNotificationTap(item),
         borderRadius: BorderRadius.circular(14),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: item.isRead
-                ? _lightOffWhite.withValues(alpha: 0.05)
-                : _primaryAqua.withValues(alpha: 0.12),
+            color: item.isRead ? AppDesign.surface : AppDesign.blueSoft,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: item.isRead
                   ? _lightOffWhite.withValues(alpha: 0.12)
                   : item.color.withValues(alpha: 0.4),
-              width: 1.2,
+              width: 1,
             ),
           ),
           child: Row(
@@ -920,7 +1091,7 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
             children: [
               // Icon Badge
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
                   color: item.color.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(10),
@@ -941,7 +1112,9 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
                             item.title,
                             style: TextStyle(
                               color: _lightOffWhite,
-                              fontWeight: item.isRead ? FontWeight.w600 : FontWeight.bold,
+                              fontWeight: item.isRead
+                                  ? FontWeight.w600
+                                  : FontWeight.w700,
                               fontSize: 14,
                             ),
                           ),
@@ -979,11 +1152,21 @@ class _DashboardNotificationsSheetState extends State<DashboardNotificationsShee
                         ),
                         if (item.route != null) ...[
                           const SizedBox(width: 8),
-                          Text('•', style: TextStyle(color: _mutedCoolGray, fontSize: 11)),
+                          Text(
+                            '•',
+                            style: TextStyle(
+                              color: _mutedCoolGray,
+                              fontSize: 11,
+                            ),
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Tap to view module',
-                            style: TextStyle(color: _primaryAqua, fontSize: 11, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              color: _primaryAqua,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ],

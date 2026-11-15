@@ -737,13 +737,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     final filteredPatients = _filteredPatients;
 
     if (_isLoading) {
-      return const Column(
-        children: [
-          ClinicalLoadingSkeleton(),
-          ClinicalLoadingSkeleton(),
-          ClinicalLoadingSkeleton(),
-        ],
-      );
+      return const ClinicalRecordListSkeleton();
     }
 
     if (filteredPatients.isEmpty) {
