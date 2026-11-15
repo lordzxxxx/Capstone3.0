@@ -78,4 +78,12 @@ flutter pub get
 # The existing release command remains the single source of truth for the
 # compiler flags, app-version file, APK artifact, and SPA output.
 cd "${repo_root}"
+if [[ -f "${repo_root}/web/downloads/ai-dsuhis-bhw.apk" ]]; then
+  export BHW_APK_URL="${BHW_APK_URL:-/downloads/ai-dsuhis-bhw.apk}"
+else
+  # Never render a download action for an artifact that was not supplied to
+  # this release. The PWA remains available; native APK distribution is an
+  # independent release channel.
+  export BHW_APK_URL=""
+fi
 npm run build:web:release

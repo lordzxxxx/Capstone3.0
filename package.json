@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build:web:release": "export APP_VERSION=\"${APP_VERSION:-$(git rev-parse --short HEAD 2>/dev/null || echo dev)}\" && flutter build web --release --no-pub --no-wasm-dry-run --dart-define=APP_VERSION=$APP_VERSION --dart-define=AI_API_BASE_URL=$AI_API_BASE_URL --dart-define=FIREBASE_APP_CHECK_WEB_KEY=$FIREBASE_APP_CHECK_WEB_KEY && bash tooling/prepare_web_artifact.sh build/web",
+    "build:web:release": "export APP_VERSION=\"${APP_VERSION:-$(git rev-parse --short HEAD 2>/dev/null || echo dev)}\" && flutter build web --release --no-pub --no-wasm-dry-run --dart-define=APP_VERSION=$APP_VERSION --dart-define=AI_API_BASE_URL=$AI_API_BASE_URL --dart-define=FIREBASE_APP_CHECK_WEB_KEY=$FIREBASE_APP_CHECK_WEB_KEY --dart-define=BHW_APK_URL=$BHW_APK_URL && bash tooling/prepare_web_artifact.sh build/web",
     "vercel-build": "bash tooling/vercel_build.sh",
     "test:firestore-rules": "firebase emulators:exec --only firestore --project demo-capstone-security \"mocha --timeout 60000 tests/firestore.rules.test.cjs\"",
     "test:storage-rules": "firebase emulators:exec --only storage --project demo-capstone-security \"mocha --timeout 60000 tests/storage.rules.test.cjs\"",
