@@ -560,11 +560,19 @@ class _HomePageState extends State<HomePage> {
     });
 
     try {
-      // Load all database records
-      final patients = await _patientHelper.getAllRecords();
-      final checkups = await _checkupHelper.getAllRecords();
-      final prenatal = await _prenatalHelper.getAllRecords();
-      final immunizations = await _immunizationHelper.getAllRecords();
+      // These independent local reads used to run one after another, delaying
+      // the first useful dashboard frame. Run them together, then calculate
+      // the existing metrics from the same complete local datasets.
+      final records = await Future.wait([
+        _patientHelper.getAllRecords(),
+        _checkupHelper.getAllRecords(),
+        _prenatalHelper.getAllRecords(),
+        _immunizationHelper.getAllRecords(),
+      ]);
+      final patients = records[0];
+      final checkups = records[1];
+      final prenatal = records[2];
+      final immunizations = records[3];
 
       // Calculate metrics
       final now = DateTime.now();
@@ -616,6 +624,7 @@ class _HomePageState extends State<HomePage> {
         return riskLevel == 'high' || riskLevel == 'very high';
       }).length;
 
+      if (!mounted) return;
       setState(() {
         _totalPatients = patients.length;
         _checkupsThisMonth = checkupsThisMonth;
@@ -629,7 +638,10 @@ class _HomePageState extends State<HomePage> {
         _isLoadingMetrics = false;
       });
     } catch (e) {
-      print('Error loading metrics: $e');
+      if (kDebugMode) {
+        print('Error loading metrics: $e');
+      }
+      if (!mounted) return;
       setState(() {
         _isLoadingMetrics = false;
       });
@@ -1666,22 +1678,16 @@ class _HomePageState extends State<HomePage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppDesign.navy,
+        color: AppDesign.surface,
         borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(20),
-          bottomRight: Radius.circular(20),
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: const Border(bottom: BorderSide(color: AppDesign.border)),
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1690,24 +1696,23 @@ class _HomePageState extends State<HomePage> {
               Row(
                 children: [
                   Material(
-                    color: _lightOffWhite.withValues(alpha: 0.15),
+                    color: AppDesign.blueSoft,
                     borderRadius: BorderRadius.circular(12),
                     child: InkWell(
                       onTap: () => _scaffoldKey.currentState?.openDrawer(),
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.all(10),
+                        width: 48,
+                        height: 48,
+                        alignment: Alignment.center,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _lightOffWhite.withValues(alpha: 0.2),
-                            width: 1.5,
-                          ),
+                          border: Border.all(color: AppDesign.border),
                         ),
                         child: const Icon(
                           Icons.menu_rounded,
-                          color: _lightOffWhite,
-                          size: 26,
+                          color: AppDesign.blue,
+                          size: 24,
                         ),
                       ),
                     ),
@@ -1718,10 +1723,10 @@ class _HomePageState extends State<HomePage> {
                       'DSUHIS',
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(
-                            color: _lightOffWhite,
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
+                            color: AppDesign.navy,
+                            fontSize: 27,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.2,
                           ),
                     ),
                   ),
@@ -1729,33 +1734,27 @@ class _HomePageState extends State<HomePage> {
                   Container(
                     margin: const EdgeInsets.only(right: 8),
                     decoration: BoxDecoration(
-                      color: _lightOffWhite.withValues(alpha: 0.15),
+                      color: AppDesign.blueSoft,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _lightOffWhite.withValues(alpha: 0.2),
-                        width: 1.5,
-                      ),
+                      border: Border.all(color: AppDesign.border),
                     ),
                     child: IconButton(
                       icon: const Icon(
                         Icons.picture_as_pdf_outlined,
-                        color: _lightOffWhite,
-                        size: 24,
+                        color: AppDesign.blue,
+                        size: 22,
                       ),
                       onPressed: () => _showClinicalFormsHub(context),
                       tooltip: 'Clinical Forms (PDF)',
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(12),
                     ),
                   ),
                   // Notification Icon
                   Container(
                     decoration: BoxDecoration(
-                      color: _lightOffWhite.withValues(alpha: 0.15),
+                      color: AppDesign.blueSoft,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _lightOffWhite.withValues(alpha: 0.2),
-                        width: 1.5,
-                      ),
+                      border: Border.all(color: AppDesign.border),
                     ),
                     child: Stack(
                       clipBehavior: Clip.none,
@@ -1767,12 +1766,12 @@ class _HomePageState extends State<HomePage> {
                                 : Icons.notifications_none_rounded,
                             color: _unreadNotificationsCount > 0
                                 ? _primaryAqua
-                                : _lightOffWhite,
-                            size: 26,
+                                : AppDesign.blue,
+                            size: 22,
                           ),
                           onPressed: () => _showNotificationsPanel(context),
                           tooltip: 'Notifications',
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(12),
                         ),
                         if (_unreadNotificationsCount > 0)
                           Positioned(
@@ -1788,10 +1787,10 @@ class _HomePageState extends State<HomePage> {
                                 minHeight: 16,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFF3D00),
+                                color: AppDesign.blue,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: AppDesign.navy,
+                                  color: AppDesign.surface,
                                   width: 1.5,
                                 ),
                               ),
@@ -1815,23 +1814,19 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Greeting Message and User Info Card
               SizedBox(
                 width: double.infinity,
                 child: Card(
                   elevation: 0,
-                  color: _primaryAqua.withValues(alpha: 0.12),
+                  color: AppDesign.navy,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(
-                      color: _primaryAqua.withValues(alpha: 0.25),
-                      width: 1.5,
-                    ),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(18),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         // Greeting and Username block, reused in both layouts below.
@@ -1846,9 +1841,9 @@ class _HomePageState extends State<HomePage> {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: _lightOffWhite,
-                                fontSize: kIsWeb ? 24 : 20,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.3,
+                                fontSize: kIsWeb ? 25 : 23,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.4,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -1857,7 +1852,7 @@ class _HomePageState extends State<HomePage> {
                               userName,
                               style: TextStyle(
                                 color: _lightOffWhite.withValues(alpha: 0.9),
-                                fontSize: kIsWeb ? 16 : 14,
+                                fontSize: kIsWeb ? 16 : 15,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 0.4,
                               ),
@@ -1869,7 +1864,7 @@ class _HomePageState extends State<HomePage> {
                               children: [
                                 Icon(
                                   Icons.location_on_outlined,
-                                  color: _primaryAqua,
+                                  color: AppDesign.blueSoft,
                                   size: 17,
                                 ),
                                 const SizedBox(width: 6),
@@ -1880,7 +1875,7 @@ class _HomePageState extends State<HomePage> {
                                       color: _lightOffWhite.withValues(
                                         alpha: 0.76,
                                       ),
-                                      fontSize: kIsWeb ? 14 : 12.5,
+                                      fontSize: kIsWeb ? 14 : 13,
                                       fontWeight: FontWeight.w500,
                                     ),
                                     maxLines: 2,
@@ -1895,14 +1890,14 @@ class _HomePageState extends State<HomePage> {
                         // Date pill, reused in both layouts below.
                         final dateChip = Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
+                            horizontal: 10,
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: _lightOffWhite.withValues(alpha: 0.12),
+                            color: Colors.white.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: _lightOffWhite.withValues(alpha: 0.25),
+                              color: Colors.white.withValues(alpha: 0.22),
                               width: 1,
                             ),
                           ),
@@ -1955,31 +1950,31 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               // System Status Card
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  color: _lightOffWhite.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _primaryAqua.withValues(alpha: 0.3),
-                    width: 1.5,
-                  ),
+                  color: AppDesign.blueSoft,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppDesign.border),
                 ),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Color(0xFF4CAF50).withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(8),
+                        color: AppDesign.blue.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         Icons.check_circle,
-                        color: Color(0xFF4CAF50),
-                        size: 18,
+                        color: AppDesign.blue,
+                        size: 20,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -1988,19 +1983,19 @@ class _HomePageState extends State<HomePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'System Status: Online',
-                            style: TextStyle(
-                              color: _lightOffWhite,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                            'System online',
+                            style: const TextStyle(
+                              color: AppDesign.ink,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'All systems operational',
                             style: TextStyle(
-                              color: _lightOffWhite.withValues(alpha: 0.75),
-                              fontSize: 10,
+                              color: AppDesign.muted,
+                              fontSize: 12,
                             ),
                           ),
                         ],
@@ -2154,7 +2149,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildDiseaseTrendSection(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
-    final responsivePadding = isSmallScreen ? 16.0 : 24.0;
+    final responsivePadding = isSmallScreen ? 16.0 : 20.0;
     final chartHeight = isSmallScreen ? 250.0 : 300.0;
 
     return Column(
@@ -2597,7 +2592,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildKeyMetricsSection(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
-    final responsivePadding = isSmallScreen ? 16.0 : 24.0;
+    final responsivePadding = isSmallScreen ? 16.0 : 20.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2611,234 +2606,222 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(20),
               side: const BorderSide(color: AppDesign.border),
             ),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppDesign.navy.withValues(alpha: 0.07),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                    spreadRadius: 0,
-                  ),
-                  BoxShadow(
-                    color: AppDesign.navy.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(responsivePadding),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppDesign.blueSoft,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: AppDesign.border),
-                                ),
-                                child: const Icon(
-                                  Icons.dashboard,
-                                  color: AppDesign.blue,
-                                  size: 24,
-                                ),
+            child: Padding(
+              padding: EdgeInsets.all(responsivePadding),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: AppDesign.blueSoft,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: AppDesign.border),
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Key Performance Metrics',
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: kIsWeb ? 23 : 21,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppDesign.ink,
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Real-time system overview',
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: AppDesign.muted,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              child: const Icon(
+                                Icons.dashboard,
+                                color: AppDesign.blue,
+                                size: 24,
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Performance',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: kIsWeb ? 23 : 20,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppDesign.ink,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Current reporting period',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppDesign.muted,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        if (_isLoadingMetrics)
-                          SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                _primaryAqua,
-                              ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (_isLoadingMetrics)
+                        SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              _primaryAqua,
                             ),
-                          )
-                        else
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: _primaryAqua.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _primaryAqua.withValues(alpha: 0.25),
-                                width: 1.5,
-                              ),
-                            ),
+                          ),
+                        )
+                      else
+                        Semantics(
+                          button: true,
+                          label: 'Refresh performance metrics',
+                          child: SizedBox(
+                            width: 48,
+                            height: 48,
                             child: IconButton(
                               icon: const Icon(
                                 Icons.refresh_rounded,
-                                color: _primaryAqua,
-                                size: 24,
+                                color: AppDesign.blue,
+                                size: 22,
                               ),
                               onPressed: _loadMetrics,
-                              tooltip: 'Refresh metrics',
-                              padding: EdgeInsets.zero,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(child: _buildKeyMetricsMonthPickerButton()),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    if (_isLoadingMetrics)
-                      const Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: ClinicalLoadingSkeleton(
-                                  height: 118,
-                                  lines: 3,
-                                  margin: EdgeInsets.zero,
+                              tooltip: 'Refresh performance metrics',
+                              style: IconButton.styleFrom(
+                                backgroundColor: AppDesign.blueSoft,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  side: const BorderSide(
+                                    color: AppDesign.border,
+                                  ),
                                 ),
                               ),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: ClinicalLoadingSkeleton(
-                                  height: 118,
-                                  lines: 3,
-                                  margin: EdgeInsets.zero,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: ClinicalLoadingSkeleton(
-                                  height: 118,
-                                  lines: 3,
-                                  margin: EdgeInsets.zero,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: ClinicalLoadingSkeleton(
-                                  height: 118,
-                                  lines: 3,
-                                  margin: EdgeInsets.zero,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      )
-                    else ...[
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: _buildMetricCard(
-                              title: 'Total Patients',
-                              value: '$_filteredPatientRegistrations',
-                              unit: _metricFilterScopeLabel(),
-                              icon: Icons.people_rounded,
-                              color: _primaryAqua,
-                              trend: '+12%',
-                              trendLabel: 'vs last month',
-                              isPositiveTrend: true,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildMetricCard(
-                              title: 'Check-ups',
-                              value: '$_filteredCheckupRecords',
-                              unit: _metricFilterScopeLabel(),
-                              icon: Icons.assignment_turned_in_rounded,
-                              color: _darkDeepTeal,
-                              trend: '+8%',
-                              trendLabel: 'from last month',
-                              isPositiveTrend: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: _buildMetricCard(
-                              title: 'Prenatal Care',
-                              value: '$_filteredPrenatalRecords',
-                              unit: _metricFilterScopeLabel(),
-                              icon: Icons.pregnant_woman_rounded,
-                              color: _primaryAqua,
-                              trend: '+15%',
-                              trendLabel: 'new this week',
-                              isPositiveTrend: true,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildMetricCard(
-                              title: 'Immunizations',
-                              value: '$_filteredImmunizationRecords',
-                              unit: _metricFilterScopeLabel(),
-                              icon: Icons.vaccines_rounded,
-                              color: _darkDeepTeal,
-                              trend: '+10%',
-                              trendLabel: 'completion rate',
-                              isPositiveTrend: true,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
                     ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(child: _buildKeyMetricsMonthPickerButton()),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (_isLoadingMetrics)
+                    const Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ClinicalLoadingSkeleton(
+                                height: 118,
+                                lines: 3,
+                                margin: EdgeInsets.zero,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: ClinicalLoadingSkeleton(
+                                height: 118,
+                                lines: 3,
+                                margin: EdgeInsets.zero,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ClinicalLoadingSkeleton(
+                                height: 118,
+                                lines: 3,
+                                margin: EdgeInsets.zero,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: ClinicalLoadingSkeleton(
+                                height: 118,
+                                lines: 3,
+                                margin: EdgeInsets.zero,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                  else ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _buildMetricCard(
+                            title: 'Total Patients',
+                            value: '$_filteredPatientRegistrations',
+                            unit: _metricFilterScopeLabel(),
+                            icon: Icons.people_rounded,
+                            color: _primaryAqua,
+                            trend: '+12%',
+                            trendLabel: 'vs last month',
+                            isPositiveTrend: true,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildMetricCard(
+                            title: 'Check-ups',
+                            value: '$_filteredCheckupRecords',
+                            unit: _metricFilterScopeLabel(),
+                            icon: Icons.assignment_turned_in_rounded,
+                            color: _darkDeepTeal,
+                            trend: '+8%',
+                            trendLabel: 'from last month',
+                            isPositiveTrend: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _buildMetricCard(
+                            title: 'Prenatal Care',
+                            value: '$_filteredPrenatalRecords',
+                            unit: _metricFilterScopeLabel(),
+                            icon: Icons.pregnant_woman_rounded,
+                            color: _primaryAqua,
+                            trend: '+15%',
+                            trendLabel: 'new this week',
+                            isPositiveTrend: true,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildMetricCard(
+                            title: 'Immunizations',
+                            value: '$_filteredImmunizationRecords',
+                            unit: _metricFilterScopeLabel(),
+                            icon: Icons.vaccines_rounded,
+                            color: _darkDeepTeal,
+                            trend: '+10%',
+                            trendLabel: 'completion rate',
+                            isPositiveTrend: true,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
           ),
@@ -2989,9 +2972,9 @@ class _HomePageState extends State<HomePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: AppDesign.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _lightOffWhite.withValues(alpha: 0.08)),
+          border: Border.all(color: AppDesign.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3001,7 +2984,7 @@ class _HomePageState extends State<HomePage> {
             Text(
               value,
               style: const TextStyle(
-                color: _lightOffWhite,
+                color: AppDesign.ink,
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
               ),
@@ -3012,7 +2995,7 @@ class _HomePageState extends State<HomePage> {
             Text(
               label,
               style: TextStyle(
-                color: _lightOffWhite.withValues(alpha: 0.68),
+                color: AppDesign.muted,
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.2,
@@ -3042,18 +3025,11 @@ class _HomePageState extends State<HomePage> {
         : 'Sign in to unlock synced cloud access and account tools.';
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppDesign.navy,
+        color: AppDesign.blueSoft,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppDesign.navySoft),
-        boxShadow: [
-          BoxShadow(
-            color: AppDesign.navy.withValues(alpha: 0.14),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        border: Border.all(color: AppDesign.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3094,7 +3070,7 @@ class _HomePageState extends State<HomePage> {
                               Text(
                                 displayName,
                                 style: const TextStyle(
-                                  color: _lightOffWhite,
+                                  color: AppDesign.ink,
                                   fontSize: 20,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 0.2,
@@ -3106,7 +3082,7 @@ class _HomePageState extends State<HomePage> {
                               Text(
                                 subtitle,
                                 style: TextStyle(
-                                  color: _lightOffWhite.withValues(alpha: 0.76),
+                                  color: AppDesign.muted,
                                   fontSize: 12.5,
                                   height: 1.35,
                                 ),
@@ -3118,7 +3094,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SizedBox(width: 10),
                         Material(
-                          color: Colors.white.withValues(alpha: 0.07),
+                          color: Colors.white,
                           shape: const CircleBorder(),
                           child: InkWell(
                             customBorder: const CircleBorder(),
@@ -3127,7 +3103,7 @@ class _HomePageState extends State<HomePage> {
                               padding: EdgeInsets.all(10),
                               child: Icon(
                                 Icons.close_rounded,
-                                color: _lightOffWhite,
+                                color: AppDesign.ink,
                                 size: 18,
                               ),
                             ),
@@ -3150,16 +3126,14 @@ class _HomePageState extends State<HomePage> {
                     ? Icons.verified_user_rounded
                     : Icons.person_outline_rounded,
                 label: isLoggedIn ? 'Signed In' : 'Guest Session',
-                color: isLoggedIn ? _primaryAqua : const Color(0xFFFFC857),
+                color: AppDesign.blue,
               ),
               _buildDrawerStatusChip(
                 icon: _isOfflineMode
                     ? Icons.cloud_off_rounded
                     : Icons.cloud_done_rounded,
                 label: _isOfflineMode ? 'Offline Mode' : 'Cloud Ready',
-                color: _isOfflineMode
-                    ? const Color(0xFFFFB74D)
-                    : const Color(0xFF7ED957),
+                color: AppDesign.blue,
               ),
             ],
           ),
@@ -3188,11 +3162,9 @@ class _HomePageState extends State<HomePage> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.06),
+                color: AppDesign.surface,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: const Color(0xFFFFB74D).withValues(alpha: 0.22),
-                ),
+                border: Border.all(color: AppDesign.border),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -3200,12 +3172,12 @@ class _HomePageState extends State<HomePage> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFB74D).withValues(alpha: 0.14),
+                      color: AppDesign.blueSoft,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       Icons.wifi_find_rounded,
-                      color: Color(0xFFFFCC80),
+                      color: AppDesign.blue,
                       size: 18,
                     ),
                   ),
@@ -3216,7 +3188,7 @@ class _HomePageState extends State<HomePage> {
                           ? 'You can keep working offline. Any pending local records will sync again when connectivity is available.'
                           : 'Continue recording data offline. When internet returns, log in to upload saved records to Firestore automatically.',
                       style: TextStyle(
-                        color: _lightOffWhite.withValues(alpha: 0.78),
+                        color: AppDesign.muted,
                         fontSize: 12.2,
                         height: 1.4,
                       ),
