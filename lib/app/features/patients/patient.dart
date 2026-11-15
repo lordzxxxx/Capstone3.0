@@ -12,6 +12,7 @@ import 'package:mycapstone_project/app/features/patients/patient_history_dialogs
 import 'package:mycapstone_project/app/shared/widgets/ocr_record_action.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_clinical_ui.dart';
 import 'package:mycapstone_project/app/shared/services/clinical_form_pdf_service.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
@@ -736,20 +737,12 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
     final filteredPatients = _filteredPatients;
 
     if (_isLoading) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            children: [
-              CircularProgressIndicator(color: _primaryAqua),
-              const SizedBox(height: 16),
-              Text(
-                'Loading patients...',
-                style: TextStyle(color: _mutedCoolGray, fontSize: 16),
-              ),
-            ],
-          ),
-        ),
+      return const Column(
+        children: [
+          ClinicalLoadingSkeleton(),
+          ClinicalLoadingSkeleton(),
+          ClinicalLoadingSkeleton(),
+        ],
       );
     }
 
@@ -2062,7 +2055,12 @@ class _AddPatientModalState extends State<AddPatientModal> {
   void initState() {
     super.initState();
     final values = widget.initialValues ?? const <String, dynamic>{};
-    _patientId = (values['patientId'] ?? values['id'] ?? PatientDatabaseHelper.generatePatientId()).toString().trim();
+    _patientId =
+        (values['patientId'] ??
+                values['id'] ??
+                PatientDatabaseHelper.generatePatientId())
+            .toString()
+            .trim();
 
     final directFirst = (values['firstName'] ?? '').toString().trim();
     final directMiddle = (values['middleName'] ?? '').toString().trim();
@@ -2072,47 +2070,98 @@ class _AddPatientModalState extends State<AddPatientModal> {
       _middleNameController.text = directMiddle;
       _surnameController.text = directSurname;
     } else {
-      final name = (values['fullName'] ?? values['patientName'] ?? values['patient'] ?? values['name'] ?? '').toString().trim();
+      final name =
+          (values['fullName'] ??
+                  values['patientName'] ??
+                  values['patient'] ??
+                  values['name'] ??
+                  '')
+              .toString()
+              .trim();
       if (name.contains(',')) {
         final commaParts = name.split(',');
         _surnameController.text = commaParts.first.trim();
         _firstNameController.text = commaParts.sublist(1).join(' ').trim();
       } else {
-        final parts = name.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList(growable: false);
+        final parts = name
+            .split(RegExp(r'\s+'))
+            .where((p) => p.isNotEmpty)
+            .toList(growable: false);
         _firstNameController.text = parts.isNotEmpty ? parts.first : '';
-        _surnameController.text = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+        _surnameController.text = parts.length > 1
+            ? parts.sublist(1).join(' ')
+            : '';
       }
     }
 
-    _dateOfBirthController.text = (values['dateOfBirth'] ?? values['dob'] ?? '').toString().trim();
+    _dateOfBirthController.text = (values['dateOfBirth'] ?? values['dob'] ?? '')
+        .toString()
+        .trim();
     _dateOfBirth = DateTime.tryParse(_dateOfBirthController.text);
-    
+
     final rawAge = (values['age'] ?? '').toString().trim();
     final ageDigits = RegExp(r'\d+').firstMatch(rawAge);
     _ageController.text = ageDigits != null ? ageDigits.group(0)! : rawAge;
 
-    final sexVal = (values['sex'] ?? values['gender'] ?? 'Female').toString().trim();
-    _sex = const ['Female', 'Male', 'Other'].contains(sexVal) ? sexVal : 'Female';
+    final sexVal = (values['sex'] ?? values['gender'] ?? 'Female')
+        .toString()
+        .trim();
+    _sex = const ['Female', 'Male', 'Other'].contains(sexVal)
+        ? sexVal
+        : 'Female';
 
-    _addressController.text = (values['address'] ?? values['street'] ?? '').toString().trim();
-    _householdIdController.text = (values['householdId'] ?? '').toString().trim();
-    _contactNumberController.text = (values['contactNumber'] ?? values['phoneNumber'] ?? values['phone'] ?? '').toString().trim();
-    _guardianController.text = (values['guardian'] ?? values['parentName'] ?? values['parentGuardianName'] ?? '').toString().trim();
-    _emergencyContactController.text = (values['emergencyContact'] ?? values['emergencyContactName'] ?? '').toString().trim();
-    _emergencyRelationshipController.text = (values['emergencyRelationship'] ?? '').toString().trim();
-    _emergencyContactNumberController.text = (values['emergencyContactNumber'] ?? values['emergencyContactPhone'] ?? '').toString().trim();
-    _medicalHistoryController.text = (values['medicalHistory'] ?? values['pastMedicalHistory'] ?? '').toString().trim();
+    _addressController.text = (values['address'] ?? values['street'] ?? '')
+        .toString()
+        .trim();
+    _householdIdController.text = (values['householdId'] ?? '')
+        .toString()
+        .trim();
+    _contactNumberController.text =
+        (values['contactNumber'] ??
+                values['phoneNumber'] ??
+                values['phone'] ??
+                '')
+            .toString()
+            .trim();
+    _guardianController.text =
+        (values['guardian'] ??
+                values['parentName'] ??
+                values['parentGuardianName'] ??
+                '')
+            .toString()
+            .trim();
+    _emergencyContactController.text =
+        (values['emergencyContact'] ?? values['emergencyContactName'] ?? '')
+            .toString()
+            .trim();
+    _emergencyRelationshipController.text =
+        (values['emergencyRelationship'] ?? '').toString().trim();
+    _emergencyContactNumberController.text =
+        (values['emergencyContactNumber'] ??
+                values['emergencyContactPhone'] ??
+                '')
+            .toString()
+            .trim();
+    _medicalHistoryController.text =
+        (values['medicalHistory'] ?? values['pastMedicalHistory'] ?? '')
+            .toString()
+            .trim();
     _allergiesController.text = (values['allergies'] ?? '').toString().trim();
 
     final now = DateTime.now();
-    _registrationDateController.text = (values['registrationDate'] ?? '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}').toString().trim();
+    _registrationDateController.text =
+        (values['registrationDate'] ??
+                '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}')
+            .toString()
+            .trim();
 
     String? currentUserName;
     try {
       final user = FirebaseAuth.instance.currentUser;
       currentUserName = user?.displayName ?? user?.email;
     } catch (_) {}
-    _registeredByController.text = (values['registeredBy'] ?? currentUserName ?? 'BHW').toString().trim();
+    _registeredByController.text =
+        (values['registeredBy'] ?? currentUserName ?? 'BHW').toString().trim();
 
     final initialBarangay = (values['barangay'] ?? '').toString().trim();
     if (initialBarangay.isNotEmpty) {
@@ -2164,14 +2213,16 @@ class _AddPatientModalState extends State<AddPatientModal> {
     final age = _calculateAge(selected, now);
     setState(() {
       _dateOfBirth = selected;
-      _dateOfBirthController.text = '${selected.year}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')}';
+      _dateOfBirthController.text =
+          '${selected.year}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')}';
       _ageController.text = age.toString();
     });
   }
 
   int _calculateAge(DateTime birthDate, DateTime today) {
     var age = today.year - birthDate.year;
-    if (today.month < birthDate.month || (today.month == birthDate.month && today.day < birthDate.day)) {
+    if (today.month < birthDate.month ||
+        (today.month == birthDate.month && today.day < birthDate.day)) {
       age--;
     }
     return age < 0 ? 0 : age;
@@ -2225,7 +2276,11 @@ class _AddPatientModalState extends State<AddPatientModal> {
     );
   }
 
-  InputDecoration _buildInputDecoration(String label, {String? hintText, Widget? suffixIcon}) {
+  InputDecoration _buildInputDecoration(
+    String label, {
+    String? hintText,
+    Widget? suffixIcon,
+  }) {
     return InputDecoration(
       labelText: label,
       hintText: hintText,
@@ -2254,7 +2309,9 @@ class _AddPatientModalState extends State<AddPatientModal> {
     if (!_consentGiven) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please confirm patient consent and data privacy compliance.'),
+          content: Text(
+            'Please confirm patient consent and data privacy compliance.',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -2287,7 +2344,10 @@ class _AddPatientModalState extends State<AddPatientModal> {
             backgroundColor: _darkDeepTeal,
             title: const Text(
               'Patient May Already Be Registered',
-              style: TextStyle(color: _lightOffWhite, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: _lightOffWhite,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             content: const Text(
               'A matching patient record already exists. Are you sure you want to register this patient as a new separate entry?',
@@ -2296,11 +2356,17 @@ class _AddPatientModalState extends State<AddPatientModal> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel', style: TextStyle(color: _mutedCoolGray)),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: _mutedCoolGray),
+                ),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(backgroundColor: _primaryAqua, foregroundColor: Colors.white),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primaryAqua,
+                  foregroundColor: Colors.white,
+                ),
                 child: const Text('Proceed Anyway'),
               ),
             ],
@@ -2312,11 +2378,16 @@ class _AddPatientModalState extends State<AddPatientModal> {
         }
       }
 
-      final fullName = [firstName, middleName, surname].where((s) => s.isNotEmpty).join(' ');
+      final fullName = [
+        firstName,
+        middleName,
+        surname,
+      ].where((s) => s.isNotEmpty).join(' ');
       final address = _addressController.text.trim();
       final contact = _contactNumberController.text.trim();
       final emergencyContact = _emergencyContactController.text.trim();
-      final emergencyContactNumber = _emergencyContactNumberController.text.trim();
+      final emergencyContactNumber = _emergencyContactNumberController.text
+          .trim();
       final medicalHistory = _medicalHistoryController.text.trim();
       String? currentUserName;
       try {
@@ -2419,17 +2490,21 @@ class _AddPatientModalState extends State<AddPatientModal> {
                           children: [
                             Text(
                               'Add New Patient',
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: _lightOffWhite,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    color: _lightOffWhite,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'One-time canonical patient registration used across all health modules',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: _lightOffWhite.withValues(alpha: 0.8),
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: _lightOffWhite.withValues(
+                                      alpha: 0.8,
+                                    ),
+                                  ),
                             ),
                           ],
                         ),
@@ -2455,7 +2530,11 @@ class _AddPatientModalState extends State<AddPatientModal> {
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.close, color: _lightOffWhite, size: 24),
+                          icon: const Icon(
+                            Icons.close,
+                            color: _lightOffWhite,
+                            size: 24,
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                       ),
@@ -2470,7 +2549,9 @@ class _AddPatientModalState extends State<AddPatientModal> {
                     decoration: BoxDecoration(
                       color: _primaryAqua.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _primaryAqua.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: _primaryAqua.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -2480,7 +2561,11 @@ class _AddPatientModalState extends State<AddPatientModal> {
                             color: _primaryAqua.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.badge_outlined, color: _primaryAqua, size: 24),
+                          child: const Icon(
+                            Icons.badge_outlined,
+                            color: _primaryAqua,
+                            size: 24,
+                          ),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -2527,8 +2612,13 @@ class _AddPatientModalState extends State<AddPatientModal> {
                               child: TextFormField(
                                 controller: _firstNameController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('First Name *', hintText: 'Given name'),
-                                validator: (val) => val?.trim().isEmpty == true ? 'First Name is required' : null,
+                                decoration: _buildInputDecoration(
+                                  'First Name *',
+                                  hintText: 'Given name',
+                                ),
+                                validator: (val) => val?.trim().isEmpty == true
+                                    ? 'First Name is required'
+                                    : null,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -2536,8 +2626,13 @@ class _AddPatientModalState extends State<AddPatientModal> {
                               child: TextFormField(
                                 controller: _surnameController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Surname *', hintText: 'Family name'),
-                                validator: (val) => val?.trim().isEmpty == true ? 'Surname is required' : null,
+                                decoration: _buildInputDecoration(
+                                  'Surname *',
+                                  hintText: 'Family name',
+                                ),
+                                validator: (val) => val?.trim().isEmpty == true
+                                    ? 'Surname is required'
+                                    : null,
                               ),
                             ),
                           ],
@@ -2546,7 +2641,10 @@ class _AddPatientModalState extends State<AddPatientModal> {
                         TextFormField(
                           controller: _middleNameController,
                           style: const TextStyle(color: _lightOffWhite),
-                          decoration: _buildInputDecoration('Middle Name (Optional)', hintText: 'Middle name'),
+                          decoration: _buildInputDecoration(
+                            'Middle Name (Optional)',
+                            hintText: 'Middle name',
+                          ),
                         ),
                         const SizedBox(height: 14),
                         Row(
@@ -2561,9 +2659,14 @@ class _AddPatientModalState extends State<AddPatientModal> {
                                 decoration: _buildInputDecoration(
                                   'Date of Birth *',
                                   hintText: 'YYYY-MM-DD',
-                                  suffixIcon: const Icon(Icons.calendar_today_outlined, color: _primaryAqua),
+                                  suffixIcon: const Icon(
+                                    Icons.calendar_today_outlined,
+                                    color: _primaryAqua,
+                                  ),
                                 ),
-                                validator: (val) => val?.trim().isEmpty == true ? 'Date of Birth is required' : null,
+                                validator: (val) => val?.trim().isEmpty == true
+                                    ? 'Date of Birth is required'
+                                    : null,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -2573,7 +2676,10 @@ class _AddPatientModalState extends State<AddPatientModal> {
                                 controller: _ageController,
                                 keyboardType: TextInputType.number,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Age', hintText: 'Auto / manual'),
+                                decoration: _buildInputDecoration(
+                                  'Age',
+                                  hintText: 'Auto / manual',
+                                ),
                               ),
                             ),
                           ],
@@ -2585,7 +2691,17 @@ class _AddPatientModalState extends State<AddPatientModal> {
                           style: const TextStyle(color: _lightOffWhite),
                           decoration: _buildInputDecoration('Sex / Gender *'),
                           items: const ['Female', 'Male', 'Other']
-                              .map((v) => DropdownMenuItem(value: v, child: Text(v, style: const TextStyle(color: _lightOffWhite))))
+                              .map(
+                                (v) => DropdownMenuItem(
+                                  value: v,
+                                  child: Text(
+                                    v,
+                                    style: const TextStyle(
+                                      color: _lightOffWhite,
+                                    ),
+                                  ),
+                                ),
+                              )
                               .toList(growable: false),
                           onChanged: (v) => setState(() => _sex = v ?? _sex),
                         ),
@@ -2606,8 +2722,13 @@ class _AddPatientModalState extends State<AddPatientModal> {
                           controller: _addressController,
                           maxLines: 2,
                           style: const TextStyle(color: _lightOffWhite),
-                          decoration: _buildInputDecoration('Address *', hintText: 'House number, street, or purok'),
-                          validator: (val) => val?.trim().isEmpty == true ? 'Address is required' : null,
+                          decoration: _buildInputDecoration(
+                            'Address *',
+                            hintText: 'House number, street, or purok',
+                          ),
+                          validator: (val) => val?.trim().isEmpty == true
+                              ? 'Address is required'
+                              : null,
                         ),
                         const SizedBox(height: 14),
                         Row(
@@ -2616,8 +2737,13 @@ class _AddPatientModalState extends State<AddPatientModal> {
                               child: TextFormField(
                                 controller: _barangayController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Barangay *', hintText: 'Assigned barangay'),
-                                validator: (val) => val?.trim().isEmpty == true ? 'Barangay is required' : null,
+                                decoration: _buildInputDecoration(
+                                  'Barangay *',
+                                  hintText: 'Assigned barangay',
+                                ),
+                                validator: (val) => val?.trim().isEmpty == true
+                                    ? 'Barangay is required'
+                                    : null,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -2625,7 +2751,10 @@ class _AddPatientModalState extends State<AddPatientModal> {
                               child: TextFormField(
                                 controller: _householdIdController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Household ID (Optional)', hintText: 'Family record #'),
+                                decoration: _buildInputDecoration(
+                                  'Household ID (Optional)',
+                                  hintText: 'Family record #',
+                                ),
                               ),
                             ),
                           ],
@@ -2638,7 +2767,10 @@ class _AddPatientModalState extends State<AddPatientModal> {
                                 controller: _contactNumberController,
                                 keyboardType: TextInputType.phone,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Phone Number', hintText: '09XXXXXXXXX'),
+                                decoration: _buildInputDecoration(
+                                  'Phone Number',
+                                  hintText: '09XXXXXXXXX',
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -2646,7 +2778,10 @@ class _AddPatientModalState extends State<AddPatientModal> {
                               child: TextFormField(
                                 controller: _guardianController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Parent/Guardian (Optional)', hintText: 'For dependents'),
+                                decoration: _buildInputDecoration(
+                                  'Parent/Guardian (Optional)',
+                                  hintText: 'For dependents',
+                                ),
                               ),
                             ),
                           ],
@@ -2670,8 +2805,13 @@ class _AddPatientModalState extends State<AddPatientModal> {
                               child: TextFormField(
                                 controller: _emergencyContactController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Emergency Contact Name *', hintText: 'Full name'),
-                                validator: (val) => val?.trim().isEmpty == true ? 'Emergency Contact Name is required' : null,
+                                decoration: _buildInputDecoration(
+                                  'Emergency Contact Name *',
+                                  hintText: 'Full name',
+                                ),
+                                validator: (val) => val?.trim().isEmpty == true
+                                    ? 'Emergency Contact Name is required'
+                                    : null,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -2679,7 +2819,10 @@ class _AddPatientModalState extends State<AddPatientModal> {
                               child: TextFormField(
                                 controller: _emergencyRelationshipController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Relationship', hintText: 'Parent, spouse, sibling'),
+                                decoration: _buildInputDecoration(
+                                  'Relationship',
+                                  hintText: 'Parent, spouse, sibling',
+                                ),
                               ),
                             ),
                           ],
@@ -2689,8 +2832,13 @@ class _AddPatientModalState extends State<AddPatientModal> {
                           controller: _emergencyContactNumberController,
                           keyboardType: TextInputType.phone,
                           style: const TextStyle(color: _lightOffWhite),
-                          decoration: _buildInputDecoration('Emergency Contact Number *', hintText: '09XXXXXXXXX'),
-                          validator: (val) => val?.trim().isEmpty == true ? 'Emergency Contact Number is required' : null,
+                          decoration: _buildInputDecoration(
+                            'Emergency Contact Number *',
+                            hintText: '09XXXXXXXXX',
+                          ),
+                          validator: (val) => val?.trim().isEmpty == true
+                              ? 'Emergency Contact Number is required'
+                              : null,
                         ),
                       ],
                     ),
@@ -2711,7 +2859,8 @@ class _AddPatientModalState extends State<AddPatientModal> {
                           style: const TextStyle(color: _lightOffWhite),
                           decoration: _buildInputDecoration(
                             'Medical History',
-                            hintText: 'Existing conditions, previous diagnoses, or "None"',
+                            hintText:
+                                'Existing conditions, previous diagnoses, or "None"',
                           ),
                         ),
                         const SizedBox(height: 14),
@@ -2721,7 +2870,8 @@ class _AddPatientModalState extends State<AddPatientModal> {
                           style: const TextStyle(color: _lightOffWhite),
                           decoration: _buildInputDecoration(
                             'Allergies (Optional)',
-                            hintText: 'Food, medicine, environmental allergies, or leave blank',
+                            hintText:
+                                'Food, medicine, environmental allergies, or leave blank',
                           ),
                         ),
                       ],
@@ -2744,7 +2894,9 @@ class _AddPatientModalState extends State<AddPatientModal> {
                                 controller: _registrationDateController,
                                 readOnly: true,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Registration Date'),
+                                decoration: _buildInputDecoration(
+                                  'Registration Date',
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -2752,14 +2904,17 @@ class _AddPatientModalState extends State<AddPatientModal> {
                               child: TextFormField(
                                 controller: _registeredByController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Registered By'),
+                                decoration: _buildInputDecoration(
+                                  'Registered By',
+                                ),
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 14),
                         InkWell(
-                          onTap: () => setState(() => _consentGiven = !_consentGiven),
+                          onTap: () =>
+                              setState(() => _consentGiven = !_consentGiven),
                           borderRadius: BorderRadius.circular(10),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4),
@@ -2768,12 +2923,17 @@ class _AddPatientModalState extends State<AddPatientModal> {
                                 Checkbox(
                                   value: _consentGiven,
                                   activeColor: _primaryAqua,
-                                  onChanged: (val) => setState(() => _consentGiven = val ?? true),
+                                  onChanged: (val) => setState(
+                                    () => _consentGiven = val ?? true,
+                                  ),
                                 ),
                                 const Expanded(
                                   child: Text(
                                     'I confirm patient consent and compliance with data privacy policies.',
-                                    style: TextStyle(color: _lightOffWhite, fontSize: 13),
+                                    style: TextStyle(
+                                      color: _lightOffWhite,
+                                      fontSize: 13,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -2792,17 +2952,27 @@ class _AddPatientModalState extends State<AddPatientModal> {
                     decoration: BoxDecoration(
                       color: _primaryAqua.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: _primaryAqua.withValues(alpha: 0.24)),
+                      border: Border.all(
+                        color: _primaryAqua.withValues(alpha: 0.24),
+                      ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.info_outline_rounded, color: _primaryAqua, size: 22),
+                        const Icon(
+                          Icons.info_outline_rounded,
+                          color: _primaryAqua,
+                          size: 22,
+                        ),
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Text(
                             'After registration, this patient becomes searchable in Check-up, Prenatal, Immunization, Morbidity, Mortality, and Referrals.',
-                            style: TextStyle(color: _lightOffWhite, height: 1.45, fontSize: 13),
+                            style: TextStyle(
+                              color: _lightOffWhite,
+                              height: 1.45,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ],
@@ -2815,12 +2985,18 @@ class _AddPatientModalState extends State<AddPatientModal> {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+                          onPressed: _isSaving
+                              ? null
+                              : () => Navigator.of(context).pop(),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: _lightOffWhite,
-                            side: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+                            side: BorderSide(
+                              color: _lightOffWhite.withValues(alpha: 0.3),
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           child: const Text('Cancel'),
                         ),
@@ -2834,18 +3010,29 @@ class _AddPatientModalState extends State<AddPatientModal> {
                             backgroundColor: _primaryAqua,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           icon: _isSaving
                               ? const SizedBox(
                                   width: 18,
                                   height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
                                 )
-                              : const Icon(Icons.person_add_alt_1_rounded, size: 20),
+                              : const Icon(
+                                  Icons.person_add_alt_1_rounded,
+                                  size: 20,
+                                ),
                           label: Text(
                             _isSaving ? 'Registering...' : 'Register Patient',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
                           ),
                         ),
                       ),
@@ -2867,11 +3054,7 @@ class EditPatientModal extends StatefulWidget {
   final Map<String, dynamic> patient;
   final VoidCallback? onSaved;
 
-  const EditPatientModal({
-    super.key,
-    required this.patient,
-    this.onSaved,
-  });
+  const EditPatientModal({super.key, required this.patient, this.onSaved});
 
   @override
   State<EditPatientModal> createState() => _EditPatientModalState();
@@ -2910,7 +3093,9 @@ class _EditPatientModalState extends State<EditPatientModal> {
   void initState() {
     super.initState();
     final patient = widget.patient;
-    _patientId = (patient['patientId'] ?? patient['id'] ?? '').toString().trim();
+    _patientId = (patient['patientId'] ?? patient['id'] ?? '')
+        .toString()
+        .trim();
 
     final directFirst = (patient['firstName'] ?? '').toString().trim();
     final directMiddle = (patient['middleName'] ?? '').toString().trim();
@@ -2920,37 +3105,82 @@ class _EditPatientModalState extends State<EditPatientModal> {
       _middleNameController.text = directMiddle;
       _surnameController.text = directSurname;
     } else {
-      final name = (patient['fullName'] ?? patient['patientName'] ?? patient['patient'] ?? patient['name'] ?? '').toString().trim();
+      final name =
+          (patient['fullName'] ??
+                  patient['patientName'] ??
+                  patient['patient'] ??
+                  patient['name'] ??
+                  '')
+              .toString()
+              .trim();
       if (name.contains(',')) {
         final commaParts = name.split(',');
         _surnameController.text = commaParts.first.trim();
         _firstNameController.text = commaParts.sublist(1).join(' ').trim();
       } else {
-        final parts = name.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList(growable: false);
+        final parts = name
+            .split(RegExp(r'\s+'))
+            .where((p) => p.isNotEmpty)
+            .toList(growable: false);
         _firstNameController.text = parts.isNotEmpty ? parts.first : '';
-        _surnameController.text = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+        _surnameController.text = parts.length > 1
+            ? parts.sublist(1).join(' ')
+            : '';
       }
     }
 
-    _dateOfBirthController.text = (patient['dateOfBirth'] ?? patient['dob'] ?? '').toString().trim();
+    _dateOfBirthController.text =
+        (patient['dateOfBirth'] ?? patient['dob'] ?? '').toString().trim();
     _dateOfBirth = DateTime.tryParse(_dateOfBirthController.text);
 
     final rawAge = (patient['age'] ?? '').toString().trim();
     final ageDigits = RegExp(r'\d+').firstMatch(rawAge);
     _ageController.text = ageDigits != null ? ageDigits.group(0)! : rawAge;
 
-    final sexVal = (patient['sex'] ?? patient['gender'] ?? 'Female').toString().trim();
-    _sex = const ['Female', 'Male', 'Other'].contains(sexVal) ? sexVal : 'Female';
+    final sexVal = (patient['sex'] ?? patient['gender'] ?? 'Female')
+        .toString()
+        .trim();
+    _sex = const ['Female', 'Male', 'Other'].contains(sexVal)
+        ? sexVal
+        : 'Female';
 
-    _addressController.text = (patient['address'] ?? patient['street'] ?? '').toString().trim();
+    _addressController.text = (patient['address'] ?? patient['street'] ?? '')
+        .toString()
+        .trim();
     _barangayController.text = (patient['barangay'] ?? '').toString().trim();
-    _householdIdController.text = (patient['householdId'] ?? '').toString().trim();
-    _contactNumberController.text = (patient['contactNumber'] ?? patient['phoneNumber'] ?? patient['phone'] ?? '').toString().trim();
-    _guardianController.text = (patient['guardian'] ?? patient['parentName'] ?? patient['parentGuardianName'] ?? '').toString().trim();
-    _emergencyContactController.text = (patient['emergencyContact'] ?? patient['emergencyContactName'] ?? '').toString().trim();
-    _emergencyRelationshipController.text = (patient['emergencyRelationship'] ?? '').toString().trim();
-    _emergencyContactNumberController.text = (patient['emergencyContactNumber'] ?? patient['emergencyContactPhone'] ?? '').toString().trim();
-    _medicalHistoryController.text = (patient['medicalHistory'] ?? patient['pastMedicalHistory'] ?? '').toString().trim();
+    _householdIdController.text = (patient['householdId'] ?? '')
+        .toString()
+        .trim();
+    _contactNumberController.text =
+        (patient['contactNumber'] ??
+                patient['phoneNumber'] ??
+                patient['phone'] ??
+                '')
+            .toString()
+            .trim();
+    _guardianController.text =
+        (patient['guardian'] ??
+                patient['parentName'] ??
+                patient['parentGuardianName'] ??
+                '')
+            .toString()
+            .trim();
+    _emergencyContactController.text =
+        (patient['emergencyContact'] ?? patient['emergencyContactName'] ?? '')
+            .toString()
+            .trim();
+    _emergencyRelationshipController.text =
+        (patient['emergencyRelationship'] ?? '').toString().trim();
+    _emergencyContactNumberController.text =
+        (patient['emergencyContactNumber'] ??
+                patient['emergencyContactPhone'] ??
+                '')
+            .toString()
+            .trim();
+    _medicalHistoryController.text =
+        (patient['medicalHistory'] ?? patient['pastMedicalHistory'] ?? '')
+            .toString()
+            .trim();
     _allergiesController.text = (patient['allergies'] ?? '').toString().trim();
   }
 
@@ -2986,14 +3216,16 @@ class _EditPatientModalState extends State<EditPatientModal> {
     final age = _calculateAge(selected, now);
     setState(() {
       _dateOfBirth = selected;
-      _dateOfBirthController.text = '${selected.year}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')}';
+      _dateOfBirthController.text =
+          '${selected.year}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')}';
       _ageController.text = age.toString();
     });
   }
 
   int _calculateAge(DateTime birthDate, DateTime today) {
     var age = today.year - birthDate.year;
-    if (today.month < birthDate.month || (today.month == birthDate.month && today.day < birthDate.day)) {
+    if (today.month < birthDate.month ||
+        (today.month == birthDate.month && today.day < birthDate.day)) {
       age--;
     }
     return age < 0 ? 0 : age;
@@ -3047,7 +3279,11 @@ class _EditPatientModalState extends State<EditPatientModal> {
     );
   }
 
-  InputDecoration _buildInputDecoration(String label, {String? hintText, Widget? suffixIcon}) {
+  InputDecoration _buildInputDecoration(
+    String label, {
+    String? hintText,
+    Widget? suffixIcon,
+  }) {
     return InputDecoration(
       labelText: label,
       hintText: hintText,
@@ -3082,11 +3318,16 @@ class _EditPatientModalState extends State<EditPatientModal> {
       final firstName = _firstNameController.text.trim();
       final middleName = _middleNameController.text.trim();
       final surname = _surnameController.text.trim();
-      final fullName = [firstName, middleName, surname].where((s) => s.isNotEmpty).join(' ');
+      final fullName = [
+        firstName,
+        middleName,
+        surname,
+      ].where((s) => s.isNotEmpty).join(' ');
       final address = _addressController.text.trim();
       final contact = _contactNumberController.text.trim();
       final emergencyContact = _emergencyContactController.text.trim();
-      final emergencyContactNumber = _emergencyContactNumberController.text.trim();
+      final emergencyContactNumber = _emergencyContactNumberController.text
+          .trim();
       final medicalHistory = _medicalHistoryController.text.trim();
 
       final existing = widget.patient;
@@ -3179,17 +3420,21 @@ class _EditPatientModalState extends State<EditPatientModal> {
                           children: [
                             Text(
                               'Edit Patient Record',
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: _lightOffWhite,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    color: _lightOffWhite,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Update patient identity, contact, and medical information',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: _lightOffWhite.withValues(alpha: 0.8),
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: _lightOffWhite.withValues(
+                                      alpha: 0.8,
+                                    ),
+                                  ),
                             ),
                           ],
                         ),
@@ -3215,7 +3460,11 @@ class _EditPatientModalState extends State<EditPatientModal> {
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.close, color: _lightOffWhite, size: 24),
+                          icon: const Icon(
+                            Icons.close,
+                            color: _lightOffWhite,
+                            size: 24,
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                       ),
@@ -3230,7 +3479,9 @@ class _EditPatientModalState extends State<EditPatientModal> {
                     decoration: BoxDecoration(
                       color: _primaryAqua.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _primaryAqua.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: _primaryAqua.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -3240,7 +3491,11 @@ class _EditPatientModalState extends State<EditPatientModal> {
                             color: _primaryAqua.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.badge_outlined, color: _primaryAqua, size: 24),
+                          child: const Icon(
+                            Icons.badge_outlined,
+                            color: _primaryAqua,
+                            size: 24,
+                          ),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -3287,8 +3542,13 @@ class _EditPatientModalState extends State<EditPatientModal> {
                               child: TextFormField(
                                 controller: _firstNameController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('First Name *', hintText: 'Given name'),
-                                validator: (val) => val?.trim().isEmpty == true ? 'First Name is required' : null,
+                                decoration: _buildInputDecoration(
+                                  'First Name *',
+                                  hintText: 'Given name',
+                                ),
+                                validator: (val) => val?.trim().isEmpty == true
+                                    ? 'First Name is required'
+                                    : null,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -3296,8 +3556,13 @@ class _EditPatientModalState extends State<EditPatientModal> {
                               child: TextFormField(
                                 controller: _surnameController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Surname *', hintText: 'Family name'),
-                                validator: (val) => val?.trim().isEmpty == true ? 'Surname is required' : null,
+                                decoration: _buildInputDecoration(
+                                  'Surname *',
+                                  hintText: 'Family name',
+                                ),
+                                validator: (val) => val?.trim().isEmpty == true
+                                    ? 'Surname is required'
+                                    : null,
                               ),
                             ),
                           ],
@@ -3306,7 +3571,10 @@ class _EditPatientModalState extends State<EditPatientModal> {
                         TextFormField(
                           controller: _middleNameController,
                           style: const TextStyle(color: _lightOffWhite),
-                          decoration: _buildInputDecoration('Middle Name (Optional)', hintText: 'Middle name'),
+                          decoration: _buildInputDecoration(
+                            'Middle Name (Optional)',
+                            hintText: 'Middle name',
+                          ),
                         ),
                         const SizedBox(height: 14),
                         Row(
@@ -3321,9 +3589,14 @@ class _EditPatientModalState extends State<EditPatientModal> {
                                 decoration: _buildInputDecoration(
                                   'Date of Birth *',
                                   hintText: 'YYYY-MM-DD',
-                                  suffixIcon: const Icon(Icons.calendar_today_outlined, color: _primaryAqua),
+                                  suffixIcon: const Icon(
+                                    Icons.calendar_today_outlined,
+                                    color: _primaryAqua,
+                                  ),
                                 ),
-                                validator: (val) => val?.trim().isEmpty == true ? 'Date of Birth is required' : null,
+                                validator: (val) => val?.trim().isEmpty == true
+                                    ? 'Date of Birth is required'
+                                    : null,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -3333,7 +3606,10 @@ class _EditPatientModalState extends State<EditPatientModal> {
                                 controller: _ageController,
                                 keyboardType: TextInputType.number,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Age', hintText: 'Auto / manual'),
+                                decoration: _buildInputDecoration(
+                                  'Age',
+                                  hintText: 'Auto / manual',
+                                ),
                               ),
                             ),
                           ],
@@ -3345,7 +3621,17 @@ class _EditPatientModalState extends State<EditPatientModal> {
                           style: const TextStyle(color: _lightOffWhite),
                           decoration: _buildInputDecoration('Sex / Gender *'),
                           items: const ['Female', 'Male', 'Other']
-                              .map((v) => DropdownMenuItem(value: v, child: Text(v, style: const TextStyle(color: _lightOffWhite))))
+                              .map(
+                                (v) => DropdownMenuItem(
+                                  value: v,
+                                  child: Text(
+                                    v,
+                                    style: const TextStyle(
+                                      color: _lightOffWhite,
+                                    ),
+                                  ),
+                                ),
+                              )
                               .toList(growable: false),
                           onChanged: (v) => setState(() => _sex = v ?? _sex),
                         ),
@@ -3366,8 +3652,13 @@ class _EditPatientModalState extends State<EditPatientModal> {
                           controller: _addressController,
                           maxLines: 2,
                           style: const TextStyle(color: _lightOffWhite),
-                          decoration: _buildInputDecoration('Address *', hintText: 'House number, street, or purok'),
-                          validator: (val) => val?.trim().isEmpty == true ? 'Address is required' : null,
+                          decoration: _buildInputDecoration(
+                            'Address *',
+                            hintText: 'House number, street, or purok',
+                          ),
+                          validator: (val) => val?.trim().isEmpty == true
+                              ? 'Address is required'
+                              : null,
                         ),
                         const SizedBox(height: 14),
                         Row(
@@ -3376,8 +3667,13 @@ class _EditPatientModalState extends State<EditPatientModal> {
                               child: TextFormField(
                                 controller: _barangayController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Barangay *', hintText: 'Assigned barangay'),
-                                validator: (val) => val?.trim().isEmpty == true ? 'Barangay is required' : null,
+                                decoration: _buildInputDecoration(
+                                  'Barangay *',
+                                  hintText: 'Assigned barangay',
+                                ),
+                                validator: (val) => val?.trim().isEmpty == true
+                                    ? 'Barangay is required'
+                                    : null,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -3385,7 +3681,10 @@ class _EditPatientModalState extends State<EditPatientModal> {
                               child: TextFormField(
                                 controller: _householdIdController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Household ID (Optional)', hintText: 'Family record #'),
+                                decoration: _buildInputDecoration(
+                                  'Household ID (Optional)',
+                                  hintText: 'Family record #',
+                                ),
                               ),
                             ),
                           ],
@@ -3398,7 +3697,10 @@ class _EditPatientModalState extends State<EditPatientModal> {
                                 controller: _contactNumberController,
                                 keyboardType: TextInputType.phone,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Phone Number', hintText: '09XXXXXXXXX'),
+                                decoration: _buildInputDecoration(
+                                  'Phone Number',
+                                  hintText: '09XXXXXXXXX',
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -3406,7 +3708,10 @@ class _EditPatientModalState extends State<EditPatientModal> {
                               child: TextFormField(
                                 controller: _guardianController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Parent/Guardian (Optional)', hintText: 'For dependents'),
+                                decoration: _buildInputDecoration(
+                                  'Parent/Guardian (Optional)',
+                                  hintText: 'For dependents',
+                                ),
                               ),
                             ),
                           ],
@@ -3430,8 +3735,13 @@ class _EditPatientModalState extends State<EditPatientModal> {
                               child: TextFormField(
                                 controller: _emergencyContactController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Emergency Contact Name *', hintText: 'Full name'),
-                                validator: (val) => val?.trim().isEmpty == true ? 'Emergency Contact Name is required' : null,
+                                decoration: _buildInputDecoration(
+                                  'Emergency Contact Name *',
+                                  hintText: 'Full name',
+                                ),
+                                validator: (val) => val?.trim().isEmpty == true
+                                    ? 'Emergency Contact Name is required'
+                                    : null,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -3439,7 +3749,10 @@ class _EditPatientModalState extends State<EditPatientModal> {
                               child: TextFormField(
                                 controller: _emergencyRelationshipController,
                                 style: const TextStyle(color: _lightOffWhite),
-                                decoration: _buildInputDecoration('Relationship', hintText: 'Parent, spouse, sibling'),
+                                decoration: _buildInputDecoration(
+                                  'Relationship',
+                                  hintText: 'Parent, spouse, sibling',
+                                ),
                               ),
                             ),
                           ],
@@ -3449,8 +3762,13 @@ class _EditPatientModalState extends State<EditPatientModal> {
                           controller: _emergencyContactNumberController,
                           keyboardType: TextInputType.phone,
                           style: const TextStyle(color: _lightOffWhite),
-                          decoration: _buildInputDecoration('Emergency Contact Number *', hintText: '09XXXXXXXXX'),
-                          validator: (val) => val?.trim().isEmpty == true ? 'Emergency Contact Number is required' : null,
+                          decoration: _buildInputDecoration(
+                            'Emergency Contact Number *',
+                            hintText: '09XXXXXXXXX',
+                          ),
+                          validator: (val) => val?.trim().isEmpty == true
+                              ? 'Emergency Contact Number is required'
+                              : null,
                         ),
                       ],
                     ),
@@ -3471,7 +3789,8 @@ class _EditPatientModalState extends State<EditPatientModal> {
                           style: const TextStyle(color: _lightOffWhite),
                           decoration: _buildInputDecoration(
                             'Medical History',
-                            hintText: 'Existing conditions, previous diagnoses, or "None"',
+                            hintText:
+                                'Existing conditions, previous diagnoses, or "None"',
                           ),
                         ),
                         const SizedBox(height: 14),
@@ -3481,7 +3800,8 @@ class _EditPatientModalState extends State<EditPatientModal> {
                           style: const TextStyle(color: _lightOffWhite),
                           decoration: _buildInputDecoration(
                             'Allergies (Optional)',
-                            hintText: 'Food, medicine, environmental allergies, or leave blank',
+                            hintText:
+                                'Food, medicine, environmental allergies, or leave blank',
                           ),
                         ),
                       ],
@@ -3494,12 +3814,18 @@ class _EditPatientModalState extends State<EditPatientModal> {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+                          onPressed: _isSaving
+                              ? null
+                              : () => Navigator.of(context).pop(),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: _lightOffWhite,
-                            side: BorderSide(color: _lightOffWhite.withValues(alpha: 0.3)),
+                            side: BorderSide(
+                              color: _lightOffWhite.withValues(alpha: 0.3),
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           child: const Text('Cancel'),
                         ),
@@ -3513,18 +3839,26 @@ class _EditPatientModalState extends State<EditPatientModal> {
                             backgroundColor: _primaryAqua,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           icon: _isSaving
                               ? const SizedBox(
                                   width: 18,
                                   height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
                                 )
                               : const Icon(Icons.save_rounded, size: 20),
                           label: Text(
                             _isSaving ? 'Saving...' : 'Save Changes',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
                           ),
                         ),
                       ),

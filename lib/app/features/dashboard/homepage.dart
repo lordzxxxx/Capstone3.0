@@ -14,6 +14,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:mycapstone_project/app/features/analytics/analytics.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_clinical_ui.dart';
 import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helper.dart';
 import 'package:mycapstone_project/app/features/immunization/immunization_database_helper.dart';
 import 'package:mycapstone_project/app/features/patients/patient_database_helper.dart';
@@ -82,9 +83,12 @@ class _HomePageState extends State<HomePage> {
   int _highRiskCases = 0;
   bool _isLoadingMetrics = true;
   DateTime? _keyMetricsSelectedDate;
-  DashboardDateFilterMode _keyMetricsFilterMode = DashboardDateFilterMode.thisMonth;
+  DashboardDateFilterMode _keyMetricsFilterMode =
+      DashboardDateFilterMode.thisMonth;
   DateTime? _keyMetricsSpecificDate;
-  DateTime _keyMetricsRangeStart = DateTime.now().subtract(const Duration(days: 6));
+  DateTime _keyMetricsRangeStart = DateTime.now().subtract(
+    const Duration(days: 6),
+  );
   DateTime _keyMetricsRangeEnd = DateTime.now();
   int _filteredPatientRegistrations = 0;
   int _filteredCheckupRecords = 0;
@@ -439,7 +443,8 @@ class _HomePageState extends State<HomePage> {
       try {
         await _notificationsPlugin
             .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin>()
+              AndroidFlutterLocalNotificationsPlugin
+            >()
             ?.requestNotificationsPermission();
       } catch (_) {}
     }
@@ -472,22 +477,23 @@ class _HomePageState extends State<HomePage> {
       if (!kIsWeb) {
         await _notificationsPlugin
             .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin>()
+              AndroidFlutterLocalNotificationsPlugin
+            >()
             ?.requestNotificationsPermission();
       }
 
       const AndroidNotificationDetails androidDetails =
           AndroidNotificationDetails(
-        'dsuhis_health_alerts',
-        'DSUHIS Health Alerts',
-        channelDescription:
-            'Critical clinical alerts, referrals, and health announcements',
-        importance: Importance.max,
-        priority: Priority.high,
-        enableVibration: true,
-        playSound: true,
-        icon: '@mipmap/ic_launcher',
-      );
+            'dsuhis_health_alerts',
+            'DSUHIS Health Alerts',
+            channelDescription:
+                'Critical clinical alerts, referrals, and health announcements',
+            importance: Importance.max,
+            priority: Priority.high,
+            enableVibration: true,
+            playSound: true,
+            icon: '@mipmap/ic_launcher',
+          );
 
       const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
         presentAlert: true,
@@ -541,8 +547,9 @@ class _HomePageState extends State<HomePage> {
             setState(() => _unreadNotificationsCount = count);
           }
         },
-        onTriggerLocalNotification: ({required String title, required String body}) =>
-            _showSystemLocalNotification(title: title, body: body),
+        onTriggerLocalNotification:
+            ({required String title, required String body}) =>
+                _showSystemLocalNotification(title: title, body: body),
       ),
     );
   }
@@ -697,7 +704,8 @@ class _HomePageState extends State<HomePage> {
         return !date.isBefore(start) && !date.isAfter(todayEnd);
       case DashboardDateFilterMode.thisMonth:
         final selectedDate = _effectiveKeyMetricsSelectedDate;
-        return date.year == selectedDate.year && date.month == selectedDate.month;
+        return date.year == selectedDate.year &&
+            date.month == selectedDate.month;
       case DashboardDateFilterMode.last6Months:
         final start = DateTime(now.year, now.month - 5, 1);
         return !date.isBefore(start) && !date.isAfter(todayEnd);
@@ -974,12 +982,17 @@ class _HomePageState extends State<HomePage> {
       builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: const Row(
             children: [
               Icon(Icons.date_range_rounded, color: _primaryAqua),
               SizedBox(width: 8),
-              Text('Filter Metrics Date', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                'Filter Metrics Date',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ],
           ),
           content: Column(
@@ -990,30 +1003,47 @@ class _HomePageState extends State<HomePage> {
                 title: const Text('Today'),
                 onTap: () {
                   Navigator.pop(dialogContext);
-                  setState(() => _keyMetricsFilterMode = DashboardDateFilterMode.today);
+                  setState(
+                    () => _keyMetricsFilterMode = DashboardDateFilterMode.today,
+                  );
                   _loadMetrics();
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.calendar_view_week_rounded, color: _primaryAqua),
+                leading: const Icon(
+                  Icons.calendar_view_week_rounded,
+                  color: _primaryAqua,
+                ),
                 title: const Text('Last 7 Days'),
                 onTap: () {
                   Navigator.pop(dialogContext);
-                  setState(() => _keyMetricsFilterMode = DashboardDateFilterMode.last7Days);
+                  setState(
+                    () => _keyMetricsFilterMode =
+                        DashboardDateFilterMode.last7Days,
+                  );
                   _loadMetrics();
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.date_range_rounded, color: _primaryAqua),
+                leading: const Icon(
+                  Icons.date_range_rounded,
+                  color: _primaryAqua,
+                ),
                 title: const Text('Last 30 Days'),
                 onTap: () {
                   Navigator.pop(dialogContext);
-                  setState(() => _keyMetricsFilterMode = DashboardDateFilterMode.last30Days);
+                  setState(
+                    () => _keyMetricsFilterMode =
+                        DashboardDateFilterMode.last30Days,
+                  );
                   _loadMetrics();
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.calendar_month_rounded, color: _primaryAqua),
+                leading: const Icon(
+                  Icons.calendar_month_rounded,
+                  color: _primaryAqua,
+                ),
                 title: const Text('Specific Month & Year'),
                 onTap: () async {
                   Navigator.pop(dialogContext);
@@ -1031,7 +1061,10 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.event_available_rounded, color: _primaryAqua),
+                leading: const Icon(
+                  Icons.event_available_rounded,
+                  color: _primaryAqua,
+                ),
                 title: const Text('Specific Calendar Day'),
                 onTap: () async {
                   Navigator.pop(dialogContext);
@@ -1074,11 +1107,17 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.all_inclusive_rounded, color: _primaryAqua),
+                leading: const Icon(
+                  Icons.all_inclusive_rounded,
+                  color: _primaryAqua,
+                ),
                 title: const Text('All Time History'),
                 onTap: () {
                   Navigator.pop(dialogContext);
-                  setState(() => _keyMetricsFilterMode = DashboardDateFilterMode.allTime);
+                  setState(
+                    () =>
+                        _keyMetricsFilterMode = DashboardDateFilterMode.allTime,
+                  );
                   _loadMetrics();
                 },
               ),
@@ -1646,14 +1685,15 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Row: left-aligned title and notification icon
+              // The drawer owns the complete clinical navigation, so make it
+              // a persistent first action rather than leaving it unreachable.
               Row(
                 children: [
                   Material(
                     color: _lightOffWhite.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                     child: InkWell(
-                      onTap: _showDashboardProfileDialog,
+                      onTap: () => _scaffoldKey.currentState?.openDrawer(),
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
                         padding: const EdgeInsets.all(10),
@@ -1665,9 +1705,9 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         child: const Icon(
-                          Icons.account_circle_rounded,
+                          Icons.menu_rounded,
                           color: _lightOffWhite,
-                          size: 28,
+                          size: 26,
                         ),
                       ),
                     ),
@@ -1739,16 +1779,27 @@ class _HomePageState extends State<HomePage> {
                             right: 4,
                             top: 4,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 2,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFF3D00),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: AppDesign.navy, width: 1.5),
+                                border: Border.all(
+                                  color: AppDesign.navy,
+                                  width: 1.5,
+                                ),
                               ),
                               child: Center(
                                 child: Text(
-                                  _unreadNotificationsCount > 9 ? '9+' : '$_unreadNotificationsCount',
+                                  _unreadNotificationsCount > 9
+                                      ? '9+'
+                                      : '$_unreadNotificationsCount',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 9,
@@ -2679,75 +2730,113 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _buildMetricCard(
-                            title: 'Total Patients',
-                            value: _isLoadingMetrics
-                                ? '...'
-                                : '$_filteredPatientRegistrations',
-                            unit: _metricFilterScopeLabel(),
-                            icon: Icons.people_rounded,
-                            color: _primaryAqua,
-                            trend: '+12%',
-                            trendLabel: 'vs last month',
-                            isPositiveTrend: true,
+                    if (_isLoadingMetrics)
+                      const Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ClinicalLoadingSkeleton(
+                                  height: 118,
+                                  lines: 3,
+                                  margin: EdgeInsets.zero,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: ClinicalLoadingSkeleton(
+                                  height: 118,
+                                  lines: 3,
+                                  margin: EdgeInsets.zero,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildMetricCard(
-                            title: 'Check-ups',
-                            value: _isLoadingMetrics
-                                ? '...'
-                                : '$_filteredCheckupRecords',
-                            unit: _metricFilterScopeLabel(),
-                            icon: Icons.assignment_turned_in_rounded,
-                            color: _darkDeepTeal,
-                            trend: '+8%',
-                            trendLabel: 'from last month',
-                            isPositiveTrend: true,
+                          SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ClinicalLoadingSkeleton(
+                                  height: 118,
+                                  lines: 3,
+                                  margin: EdgeInsets.zero,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: ClinicalLoadingSkeleton(
+                                  height: 118,
+                                  lines: 3,
+                                  margin: EdgeInsets.zero,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _buildMetricCard(
-                            title: 'Prenatal Care',
-                            value: _isLoadingMetrics
-                                ? '...'
-                                : '$_filteredPrenatalRecords',
-                            unit: _metricFilterScopeLabel(),
-                            icon: Icons.pregnant_woman_rounded,
-                            color: _primaryAqua,
-                            trend: '+15%',
-                            trendLabel: 'new this week',
-                            isPositiveTrend: true,
+                        ],
+                      )
+                    else ...[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _buildMetricCard(
+                              title: 'Total Patients',
+                              value: '$_filteredPatientRegistrations',
+                              unit: _metricFilterScopeLabel(),
+                              icon: Icons.people_rounded,
+                              color: _primaryAqua,
+                              trend: '+12%',
+                              trendLabel: 'vs last month',
+                              isPositiveTrend: true,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildMetricCard(
-                            title: 'Immunizations',
-                            value: _isLoadingMetrics
-                                ? '...'
-                                : '$_filteredImmunizationRecords',
-                            unit: _metricFilterScopeLabel(),
-                            icon: Icons.vaccines_rounded,
-                            color: _darkDeepTeal,
-                            trend: '+10%',
-                            trendLabel: 'completion rate',
-                            isPositiveTrend: true,
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildMetricCard(
+                              title: 'Check-ups',
+                              value: '$_filteredCheckupRecords',
+                              unit: _metricFilterScopeLabel(),
+                              icon: Icons.assignment_turned_in_rounded,
+                              color: _darkDeepTeal,
+                              trend: '+8%',
+                              trendLabel: 'from last month',
+                              isPositiveTrend: true,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _buildMetricCard(
+                              title: 'Prenatal Care',
+                              value: '$_filteredPrenatalRecords',
+                              unit: _metricFilterScopeLabel(),
+                              icon: Icons.pregnant_woman_rounded,
+                              color: _primaryAqua,
+                              trend: '+15%',
+                              trendLabel: 'new this week',
+                              isPositiveTrend: true,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildMetricCard(
+                              title: 'Immunizations',
+                              value: '$_filteredImmunizationRecords',
+                              unit: _metricFilterScopeLabel(),
+                              icon: Icons.vaccines_rounded,
+                              color: _darkDeepTeal,
+                              trend: '+10%',
+                              trendLabel: 'completion rate',
+                              isPositiveTrend: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -3142,8 +3231,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
-
   // Helper method for user detail rows in drawer
   Widget _buildUserDetailRow({
     required IconData icon,
@@ -3307,7 +3394,9 @@ class _HomePageState extends State<HomePage> {
           clipBehavior: Clip.antiAlias,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
               border: Border.all(color: AppDesign.border),
             ),
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
@@ -3368,13 +3457,48 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 20),
                 ...[
-                  (ClinicalFormType.checkup, 'General Check-Up Form', 'CHK-2026', Icons.healing_rounded),
-                  (ClinicalFormType.prenatal, 'Prenatal Care Record', 'PNC-2026', Icons.pregnant_woman_rounded),
-                  (ClinicalFormType.immunization, 'EPI Immunization Card', 'IMZ-2026', Icons.vaccines_rounded),
-                  (ClinicalFormType.referral, 'Standard Patient Referral Form', 'REF-2026', Icons.assignment_return_rounded),
-                  (ClinicalFormType.morbidity, 'Morbidity Surveillance Form', 'MBD-2026', Icons.monitor_heart_rounded),
-                  (ClinicalFormType.mortality, 'Mortality Notification Form', 'MOR-2026', Icons.event_busy_rounded),
-                  (ClinicalFormType.patientRegistration, 'Patient Registration Card', 'PAT-2026', Icons.badge_rounded),
+                  (
+                    ClinicalFormType.checkup,
+                    'General Check-Up Form',
+                    'CHK-2026',
+                    Icons.healing_rounded,
+                  ),
+                  (
+                    ClinicalFormType.prenatal,
+                    'Prenatal Care Record',
+                    'PNC-2026',
+                    Icons.pregnant_woman_rounded,
+                  ),
+                  (
+                    ClinicalFormType.immunization,
+                    'EPI Immunization Card',
+                    'IMZ-2026',
+                    Icons.vaccines_rounded,
+                  ),
+                  (
+                    ClinicalFormType.referral,
+                    'Standard Patient Referral Form',
+                    'REF-2026',
+                    Icons.assignment_return_rounded,
+                  ),
+                  (
+                    ClinicalFormType.morbidity,
+                    'Morbidity Surveillance Form',
+                    'MBD-2026',
+                    Icons.monitor_heart_rounded,
+                  ),
+                  (
+                    ClinicalFormType.mortality,
+                    'Mortality Notification Form',
+                    'MOR-2026',
+                    Icons.event_busy_rounded,
+                  ),
+                  (
+                    ClinicalFormType.patientRegistration,
+                    'Patient Registration Card',
+                    'PAT-2026',
+                    Icons.badge_rounded,
+                  ),
                 ].map((item) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -3386,27 +3510,53 @@ class _HomePageState extends State<HomePage> {
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 4,
+                        ),
                         leading: Icon(item.$4, color: AppDesign.blue, size: 22),
-                        title: Text(item.$2, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
+                        title: Text(
+                          item.$2,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13.5,
+                          ),
+                        ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppDesign.blue.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              child: Text(item.$3, style: const TextStyle(color: AppDesign.blue, fontSize: 11, fontWeight: FontWeight.bold)),
+                              child: Text(
+                                item.$3,
+                                style: const TextStyle(
+                                  color: AppDesign.blue,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 4),
-                            const Icon(Icons.chevron_right_rounded, color: AppDesign.muted, size: 18),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppDesign.muted,
+                              size: 18,
+                            ),
                           ],
                         ),
                         onTap: () {
                           Navigator.pop(bottomSheetContext);
-                          ClinicalFormPdfService.showExportDialog(context, formType: item.$1);
+                          ClinicalFormPdfService.showExportDialog(
+                            context,
+                            formType: item.$1,
+                          );
                         },
                       ),
                     ),

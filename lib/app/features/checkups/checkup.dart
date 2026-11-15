@@ -13,6 +13,7 @@ import 'package:mycapstone_project/app/shared/widgets/health_record_card.dart';
 import 'package:mycapstone_project/shared/widgets/health_screening_panel.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_compact_controls.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_record_action_sheet.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_clinical_ui.dart';
 import 'package:mycapstone_project/app/features/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
@@ -1046,7 +1047,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _primaryAqua))
+          ? const _ModuleLoadingState(label: 'Loading check-up records')
           : Stack(
               children: [
                 SingleChildScrollView(
@@ -1964,6 +1965,26 @@ class _CheckUpPageState extends State<CheckUpPage> {
           ),
         );
       },
+    );
+  }
+}
+
+class _ModuleLoadingState extends StatelessWidget {
+  const _ModuleLoadingState({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Text(label, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 12),
+        const ClinicalLoadingSkeleton(),
+        const ClinicalLoadingSkeleton(),
+        const ClinicalLoadingSkeleton(),
+      ],
     );
   }
 }

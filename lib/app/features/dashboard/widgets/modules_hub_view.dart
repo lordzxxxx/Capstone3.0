@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
+import 'package:mycapstone_project/app/shared/widgets/mobile_clinical_ui.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 
 /// Standalone Hub Tab View presenting all healthcare categories and modules
@@ -9,10 +10,7 @@ import 'package:mycapstone_project/app/theme/app_theme.dart';
 class ModulesHubView extends StatelessWidget {
   final VoidCallback? onSelectAnalytics;
 
-  const ModulesHubView({
-    super.key,
-    this.onSelectAnalytics,
-  });
+  const ModulesHubView({super.key, this.onSelectAnalytics});
 
   @override
   Widget build(BuildContext context) {
@@ -93,96 +91,116 @@ class ModulesHubView extends StatelessWidget {
     ];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'HUB',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: AppDesign.ink,
-              fontWeight: FontWeight.bold,
+      padding: const EdgeInsets.only(top: 20, bottom: 28),
+      child: MobilePageInsets(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClinicalSectionHeader(
+              title: 'Care workspace',
+              subtitle: 'Open a workflow with one focused tap.',
+              icon: Icons.grid_view_rounded,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Tap a category to open the related modules.',
-            style: TextStyle(color: AppDesign.muted, fontSize: 14),
-          ),
-          const SizedBox(height: 16),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: hubCategories.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final category = hubCategories[index];
-              final buttons = category['buttons'] as List<Map<String, dynamic>>;
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppDesign.surface,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppDesign.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppDesign.navy.withValues(alpha: 0.05),
-                      blurRadius: 14,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      category['title'] as String,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
+            const SizedBox(height: 20),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: hubCategories.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final category = hubCategories[index];
+                final buttons =
+                    category['buttons'] as List<Map<String, dynamic>>;
+                return Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppDesign.surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppDesign.border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppDesign.navy.withValues(alpha: 0.05),
+                        blurRadius: 14,
+                        offset: const Offset(0, 5),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 18,
-                            mainAxisSpacing: 18,
-                            childAspectRatio: 1.15,
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: AppDesign.blueSoft,
+                              borderRadius: BorderRadius.circular(11),
+                            ),
+                            child: Icon(
+                              category['icon'] as IconData,
+                              color: AppDesign.navy,
+                              size: 19,
+                            ),
                           ),
-                      itemCount: buttons.length,
-                      itemBuilder: (context, buttonIndex) {
-                        final button = buttons[buttonIndex];
-                        return _HubIconButton(
-                          icon: button['icon'] as IconData,
-                          label: button['label'] as String,
-                          color: AppDesign.blue,
-                          onTap: button['onTap'] as VoidCallback,
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  category['title'] as String,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  category['subtitle'] as String,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: buttons.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, buttonIndex) {
+                          final button = buttons[buttonIndex];
+                          return _HubWorkflowTile(
+                            icon: button['icon'] as IconData,
+                            label: button['label'] as String,
+                            color: AppDesign.blue,
+                            onTap: button['onTap'] as VoidCallback,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _HubIconButton extends StatelessWidget {
+class _HubWorkflowTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
 
-  const _HubIconButton({
+  const _HubWorkflowTile({
     required this.icon,
     required this.label,
     required this.onTap,
@@ -192,52 +210,51 @@ class _HubIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: AppDesign.canvas,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          child: Column(
-            children: [
-              Expanded(
-                child: Center(
-                  child: Container(
-                    width: 88,
-                    height: 88,
+        child: Semantics(
+          button: true,
+          label: 'Open $label',
+          child: SizedBox(
+            height: 60,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: color.withValues(alpha: 0.45),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withValues(alpha: 0.12),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      color: color.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(11),
                     ),
-                    child: Icon(icon, color: color, size: 48),
+                    child: Icon(icon, color: color, size: 20),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppDesign.ink,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppDesign.subtle,
+                    size: 22,
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppDesign.ink,
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w800,
-                  height: 1.18,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

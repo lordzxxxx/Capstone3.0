@@ -420,11 +420,41 @@ class OcrExtraction {
         r'\b(\d{2,3}\s*[\/\\]\s*\d{2,3})\s+(3[5-9]\.\d|4[0-2]\.\d)\s+(\d{2,3})\s+(\d{1,2})\s+([89]\d|100)\s+(\d{2,3}(?:\.\d)?)\s+(\d{2,3}(?:\.\d)?)\b',
       ).firstMatch(line);
       if (tableRowMatch != null) {
-        addField('bloodPressure', tableRowMatch.group(1)!, 0.95, 'vital table', true);
-        addField('temperature', tableRowMatch.group(2)!, 0.95, 'vital table', true);
-        addField('heartRate', tableRowMatch.group(3)!, 0.95, 'vital table', true);
-        addField('respiratoryRate', tableRowMatch.group(4)!, 0.95, 'vital table', true);
-        addField('oxygenSaturation', tableRowMatch.group(5)!, 0.95, 'vital table', true);
+        addField(
+          'bloodPressure',
+          tableRowMatch.group(1)!,
+          0.95,
+          'vital table',
+          true,
+        );
+        addField(
+          'temperature',
+          tableRowMatch.group(2)!,
+          0.95,
+          'vital table',
+          true,
+        );
+        addField(
+          'heartRate',
+          tableRowMatch.group(3)!,
+          0.95,
+          'vital table',
+          true,
+        );
+        addField(
+          'respiratoryRate',
+          tableRowMatch.group(4)!,
+          0.95,
+          'vital table',
+          true,
+        );
+        addField(
+          'oxygenSaturation',
+          tableRowMatch.group(5)!,
+          0.95,
+          'vital table',
+          true,
+        );
         addField('weight', tableRowMatch.group(6)!, 0.95, 'vital table', true);
         addField('height', tableRowMatch.group(7)!, 0.95, 'vital table', true);
         break;
@@ -442,20 +472,42 @@ class OcrExtraction {
       addField('fullTerm', obMatch.group(3)!, 0.95, 'obstetric score', true);
       addField('premature', obMatch.group(4)!, 0.95, 'obstetric score', true);
       addField('abortion', obMatch.group(5)!, 0.95, 'obstetric score', true);
-      addField('livingChildren', obMatch.group(6)!, 0.95, 'obstetric score', true);
+      addField(
+        'livingChildren',
+        obMatch.group(6)!,
+        0.95,
+        'obstetric score',
+        true,
+      );
     }
 
     // Fallback individual vital sign extractors
     if (!values.containsKey('bloodPressure')) {
-      final bpMatch = RegExp(r'\b(\d{2,3}\s*[\/\\]\s*\d{2,3})\b').firstMatch(allText);
+      final bpMatch = RegExp(
+        r'\b(\d{2,3}\s*[\/\\]\s*\d{2,3})\b',
+      ).firstMatch(allText);
       if (bpMatch != null) {
-        addField('bloodPressure', bpMatch.group(1)!, 0.85, 'vital pattern', false);
+        addField(
+          'bloodPressure',
+          bpMatch.group(1)!,
+          0.85,
+          'vital pattern',
+          false,
+        );
       }
     }
     if (!values.containsKey('temperature')) {
-      final tempMatch = RegExp(r'\b(3[5-9]\.\d|4[0-2]\.\d)\b').firstMatch(allText);
+      final tempMatch = RegExp(
+        r'\b(3[5-9]\.\d|4[0-2]\.\d)\b',
+      ).firstMatch(allText);
       if (tempMatch != null) {
-        addField('temperature', tempMatch.group(1)!, 0.85, 'vital pattern', false);
+        addField(
+          'temperature',
+          tempMatch.group(1)!,
+          0.85,
+          'vital pattern',
+          false,
+        );
       }
     }
     if (!values.containsKey('heartRate')) {
@@ -473,7 +525,13 @@ class OcrExtraction {
         caseSensitive: false,
       ).firstMatch(allText);
       if (rrMatch != null) {
-        addField('respiratoryRate', rrMatch.group(1)!, 0.75, 'vital pattern', false);
+        addField(
+          'respiratoryRate',
+          rrMatch.group(1)!,
+          0.75,
+          'vital pattern',
+          false,
+        );
       }
     }
     if (!values.containsKey('oxygenSaturation')) {
@@ -482,7 +540,13 @@ class OcrExtraction {
         caseSensitive: false,
       ).firstMatch(allText);
       if (spo2Match != null) {
-        addField('oxygenSaturation', spo2Match.group(1)!, 0.75, 'vital pattern', false);
+        addField(
+          'oxygenSaturation',
+          spo2Match.group(1)!,
+          0.75,
+          'vital pattern',
+          false,
+        );
       }
     }
     if (!values.containsKey('weight')) {
@@ -588,10 +652,8 @@ class OcrExtraction {
           r'(?:patient\s*(?:id|no|number|#)|record\s*(?:id|no|number|#)|patient\s*/\s*record\s*id|identification|id\s*(?:no|number|#)?)',
       'dateOfBirth':
           r'(?:date\s*of\s*birth|birth\s*date|dob|b-?day|birthday|kapanganakan)',
-      'firstName':
-          r'(?:first\s*name|given\s*name|fn|f\.name|unang\s*pangalan)',
-      'surname':
-          r'(?:surname|last\s*name|family\s*name|ln|l\.name|apelyido)',
+      'firstName': r'(?:first\s*name|given\s*name|fn|f\.name|unang\s*pangalan)',
+      'surname': r'(?:surname|last\s*name|family\s*name|ln|l\.name|apelyido)',
       'fullName':
           r'(?:maternal\s*full\s*name|maternal\s*name|full\s*name\s*of\s*deceased|name\s*of\s*deceased|patient\s*/\s*child\s*full\s*name|child\s*full\s*name|patient\s*full\s*name|full\s*name|patient\s*name|name\s*of\s*patient|pt\.?\s*name|p\.?\s*name|client\s*name|pangalan|patient(?![\s_]*(?:id|no|number|#))|name|pt(?![\s_]*(?:id|no|number|#)))',
       'dateOfOnset':
@@ -615,20 +677,17 @@ class OcrExtraction {
           r'(?:emergency\s*(?:contact\s*)?(?:number|no\.?|phone|tel)|emergency\s*phone|emergency\s*no\.?)',
       'emergencyRelationship':
           r'(?:emergency\s*relationship|relationship|relasyon)',
-      'email':
-          r'(?:email(?:\s*address)?|e-mail(?:\s*address)?|email\s*add)',
+      'email': r'(?:email(?:\s*address)?|e-mail(?:\s*address)?|email\s*add)',
       'age': r'(?:age\s*at\s*death|age|edad|y/?o|yrs?\.?\s*old)',
       'gender': r'(?:sex|gender|kasarian|m/?f|f/?m)',
-      'civilStatus':
-          r'(?:civil\s*status|marital\s*status|status|cs)',
+      'civilStatus': r'(?:civil\s*status|marital\s*status|status|cs)',
       'religion': r'(?:religion|relihiyon)',
       'occupation': r'(?:occupation|trabaho|work|hanapbuhay)',
       'symptoms':
           r'(?:chief\s*complaint(?:\s*/\s*reason\s*for\s*visit\s*/\s*symptoms)?|symptoms\s*/\s*chief\s*complaints\s*/\s*diagnostic\s*lab\s*findings|symptoms\s*/\s*chief\s*complaints|chief\s*complaint|reason\s*for\s*visit|symptoms?|c/?c|complaint|reklamo)',
       'disease':
           r'(?:clinical\s*diagnosis(?:\s*/\s*disease\s*condition\s*\(dx\))?|clinical\s*diagnosis\s*/\s*disease\s*condition|disease\s*/\s*diagnosis\s*\(dx\)|disease\s*/\s*diagnosis|disease|diagnosis|dx\.?|condition|impression|imp\.?|findings|karamdaman)',
-      'bloodPressure':
-          r'(?:blood\s*pressure(?:\s*\(bp\))?|b\.?p\.?|presyon)',
+      'bloodPressure': r'(?:blood\s*pressure(?:\s*\(bp\))?|b\.?p\.?|presyon)',
       'temperature':
           r'(?:body\s*temp(?:erature)?(?:\s*\(t\))?|temp\.?|t\.?|temperature|init)',
       'heartRate':
@@ -657,8 +716,7 @@ class OcrExtraction {
           r'(?:living\s*children\s*\(lc\)|living\s*children|\blc\b)',
       'lmp': r'(?:last\s*menstrual\s*period|lmp)',
       'edd': r'(?:expected\s*delivery\s*date|edd|due\s*date)',
-      'aog':
-          r'(?:gestation\s*wks|age\s*of\s*gestation|gestational\s*age|aog)',
+      'aog': r'(?:gestation\s*wks|age\s*of\s*gestation|gestational\s*age|aog)',
       'bloodType': r'(?:blood\s*type|blood\s*group|abo|rh|blood)',
       'allergies': r'(?:known\s*allergies|allergies|allergy|mga\s*alerhiya)',
       'chronicConditions':
@@ -669,8 +727,7 @@ class OcrExtraction {
           r'(?:mother(?:\x27s)?\s*maiden\s*name|mother\s*maiden\s*name|maiden\s*name)',
       'riskLevel':
           r'(?:pregnancy\s*risk\s*assessment\s*level|pregnancy\s*risk\s*level|risk\s*level|risk\s*assessment|risk)',
-      'fundalHeight':
-          r'(?:fundal\s*height\s*\(fh\)|fundal\s*height|fh)',
+      'fundalHeight': r'(?:fundal\s*height\s*\(fh\)|fundal\s*height|fh)',
       'fetalHeartBeat':
           r'(?:fetal\s*heart\s*beat\s*\(fhb\)|fetal\s*heart\s*beat|fhb|dhb)',
       'tetanusToxoid':
@@ -695,13 +752,7 @@ class OcrExtraction {
       if (match != null) {
         final rawValue = match.group(1)!.trim();
         final value = _valueBeforeNextLabel(rawValue);
-        addField(
-          entry.key,
-          value,
-          confidence,
-          'label: ${entry.key}',
-          true,
-        );
+        addField(entry.key, value, confidence, 'label: ${entry.key}', true);
         final remainder = rawValue.substring(value.length).trim();
         if (remainder.isNotEmpty) {
           _extractLabelValue(remainder, confidence, addField);
@@ -720,13 +771,7 @@ class OcrExtraction {
       if (match != null) {
         final rawValue = match.group(1)!.trim();
         final value = _valueBeforeNextLabel(rawValue);
-        addField(
-          entry.key,
-          value,
-          confidence,
-          'label: ${entry.key}',
-          false,
-        );
+        addField(entry.key, value, confidence, 'label: ${entry.key}', false);
         final remainder = rawValue.substring(value.length).trim();
         if (remainder.isNotEmpty) {
           _extractLabelValue(remainder, confidence, addField);
@@ -778,8 +823,14 @@ class OcrExtraction {
 
   static String _normalizeOcrLine(String line) {
     var normalized = line
-        .replaceAll(RegExp(r'\[\s*[\u2022\u25CF\u2713\u2714\*\-vVxX\/]\s*\]'), '[X]')
-        .replaceAll(RegExp(r'\(\s*[\u2022\u25CF\u2713\u2714\*\-vVxX\/]\s*\)'), '[X]')
+        .replaceAll(
+          RegExp(r'\[\s*[\u2022\u25CF\u2713\u2714\*\-vVxX\/]\s*\]'),
+          '[X]',
+        )
+        .replaceAll(
+          RegExp(r'\(\s*[\u2022\u25CF\u2713\u2714\*\-vVxX\/]\s*\)'),
+          '[X]',
+        )
         .replaceAll('\uFF1A', ':')
         .replaceAll(RegExp(r'[\u2010-\u2015]'), '-')
         .replaceAll(RegExp(r'[\u2022\u25E6\u2023\u25AA]'), ' ')
@@ -810,7 +861,10 @@ class OcrExtraction {
           'Civil Status',
         )
         .replaceFirst(
-          RegExp(r'^(?:philhealthid|philhealthno|philhealthnumber)\b', caseSensitive: false),
+          RegExp(
+            r'^(?:philhealthid|philhealthno|philhealthnumber)\b',
+            caseSensitive: false,
+          ),
           'PhilHealth ID / No.',
         )
         .replaceFirst(
@@ -838,27 +892,45 @@ class OcrExtraction {
           'Oxygen Saturation',
         )
         .replaceFirst(
-          RegExp(r'^(?:chiefcomplaint|reasonsforvisit)\b', caseSensitive: false),
+          RegExp(
+            r'^(?:chiefcomplaint|reasonsforvisit)\b',
+            caseSensitive: false,
+          ),
           'Chief Complaint',
         )
         .replaceFirst(
-          RegExp(r'^(?:clinicaldiagnosis|diseasecondition)\b', caseSensitive: false),
+          RegExp(
+            r'^(?:clinicaldiagnosis|diseasecondition)\b',
+            caseSensitive: false,
+          ),
           'Clinical Diagnosis',
         )
         .replaceFirst(
-          RegExp(r'^(?:treatmentplan|prescribedmedication)\b', caseSensitive: false),
+          RegExp(
+            r'^(?:treatmentplan|prescribedmedication)\b',
+            caseSensitive: false,
+          ),
           'Treatment Plan',
         )
         .replaceFirst(
-          RegExp(r'^(?:emergencycontact|emergencycontactperson)\b', caseSensitive: false),
+          RegExp(
+            r'^(?:emergencycontact|emergencycontactperson)\b',
+            caseSensitive: false,
+          ),
           'Emergency Contact Person',
         )
         .replaceFirst(
-          RegExp(r'^(?:emergencyphone|emergencycontactnumber|emergencycontactno)\b', caseSensitive: false),
+          RegExp(
+            r'^(?:emergencyphone|emergencycontactnumber|emergencycontactno)\b',
+            caseSensitive: false,
+          ),
           'Emergency Phone',
         )
         .replaceFirst(
-          RegExp(r'^(?:mothersmaidenname|mothermaidenname)\b', caseSensitive: false),
+          RegExp(
+            r'^(?:mothersmaidenname|mothermaidenname)\b',
+            caseSensitive: false,
+          ),
           "Mother's Maiden Name",
         )
         .replaceFirst(
@@ -866,7 +938,10 @@ class OcrExtraction {
           'Place of Birth',
         )
         .replaceFirst(
-          RegExp(r'^(?:registrationdate|dateofregistration)\b', caseSensitive: false),
+          RegExp(
+            r'^(?:registrationdate|dateofregistration)\b',
+            caseSensitive: false,
+          ),
           'Registration Date',
         )
         .replaceFirst(
@@ -1052,7 +1127,9 @@ class OcrExtraction {
       normalized = _normalizeBarangay(normalized);
     } else if (key == 'bloodType') {
       normalized = _normalizeBloodType(normalized);
-    } else if (key == 'allergies' || key == 'chronicConditions' || key == 'placeOfBirth') {
+    } else if (key == 'allergies' ||
+        key == 'chronicConditions' ||
+        key == 'placeOfBirth') {
       normalized = _stripFormHints(normalized);
     }
 
@@ -1061,14 +1138,30 @@ class OcrExtraction {
 
   static String _normalizeBloodType(String value) {
     final lower = value.toLowerCase().trim();
-    if (lower.contains('ab') && (lower.contains('+') || lower.contains('pos'))) return 'AB+';
-    if (lower.contains('ab') && (lower.contains('-') || lower.contains('neg'))) return 'AB-';
-    if (lower.contains('a') && !lower.contains('b') && (lower.contains('+') || lower.contains('pos'))) return 'A+';
-    if (lower.contains('a') && !lower.contains('b') && (lower.contains('-') || lower.contains('neg'))) return 'A-';
-    if (lower.contains('b') && !lower.contains('a') && (lower.contains('+') || lower.contains('pos'))) return 'B+';
-    if (lower.contains('b') && !lower.contains('a') && (lower.contains('-') || lower.contains('neg'))) return 'B-';
-    if (lower.contains('o') && (lower.contains('+') || lower.contains('pos'))) return 'O+';
-    if (lower.contains('o') && (lower.contains('-') || lower.contains('neg'))) return 'O-';
+    if (lower.contains('ab') && (lower.contains('+') || lower.contains('pos')))
+      return 'AB+';
+    if (lower.contains('ab') && (lower.contains('-') || lower.contains('neg')))
+      return 'AB-';
+    if (lower.contains('a') &&
+        !lower.contains('b') &&
+        (lower.contains('+') || lower.contains('pos')))
+      return 'A+';
+    if (lower.contains('a') &&
+        !lower.contains('b') &&
+        (lower.contains('-') || lower.contains('neg')))
+      return 'A-';
+    if (lower.contains('b') &&
+        !lower.contains('a') &&
+        (lower.contains('+') || lower.contains('pos')))
+      return 'B+';
+    if (lower.contains('b') &&
+        !lower.contains('a') &&
+        (lower.contains('-') || lower.contains('neg')))
+      return 'B-';
+    if (lower.contains('o') && (lower.contains('+') || lower.contains('pos')))
+      return 'O+';
+    if (lower.contains('o') && (lower.contains('-') || lower.contains('neg')))
+      return 'O-';
     final upper = value.toUpperCase().trim();
     if (['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].contains(upper)) {
       return upper;
@@ -1088,37 +1181,39 @@ class OcrExtraction {
     }
     if (cleaned.isEmpty) return value;
     final parts = cleaned.split(' ');
-    final titleCased = parts.map((part) {
-      if (part.isEmpty) return '';
-      final lower = part.toLowerCase();
-      final acronyms = {'bhw', 'rn', 'md', 'cho', 'pt', 'rmt', 'rm', 'fp'};
-      if (acronyms.contains(lower)) {
-        return part.toUpperCase();
-      }
-      if (lower == 'de' ||
-          lower == 'del' ||
-          lower == 'dela' ||
-          lower == 'delos' ||
-          lower == 'ng' ||
-          lower == 'y') {
-        return lower.length > 2
-            ? '${lower[0].toUpperCase()}${lower.substring(1)}'
-            : lower;
-      }
-      if (lower == 'jr.' ||
-          lower == 'jr' ||
-          lower == 'sr.' ||
-          lower == 'sr' ||
-          lower == 'ii' ||
-          lower == 'iii' ||
-          lower == 'iv') {
-        return part.toUpperCase();
-      }
-      if (lower.startsWith('ma.') && lower.length > 3) {
-        return 'Ma. ${part.substring(3, 4).toUpperCase()}${part.substring(4).toLowerCase()}';
-      }
-      return '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}';
-    }).join(' ');
+    final titleCased = parts
+        .map((part) {
+          if (part.isEmpty) return '';
+          final lower = part.toLowerCase();
+          final acronyms = {'bhw', 'rn', 'md', 'cho', 'pt', 'rmt', 'rm', 'fp'};
+          if (acronyms.contains(lower)) {
+            return part.toUpperCase();
+          }
+          if (lower == 'de' ||
+              lower == 'del' ||
+              lower == 'dela' ||
+              lower == 'delos' ||
+              lower == 'ng' ||
+              lower == 'y') {
+            return lower.length > 2
+                ? '${lower[0].toUpperCase()}${lower.substring(1)}'
+                : lower;
+          }
+          if (lower == 'jr.' ||
+              lower == 'jr' ||
+              lower == 'sr.' ||
+              lower == 'sr' ||
+              lower == 'ii' ||
+              lower == 'iii' ||
+              lower == 'iv') {
+            return part.toUpperCase();
+          }
+          if (lower.startsWith('ma.') && lower.length > 3) {
+            return 'Ma. ${part.substring(3, 4).toUpperCase()}${part.substring(4).toLowerCase()}';
+          }
+          return '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}';
+        })
+        .join(' ');
     return titleCased;
   }
 
@@ -1190,7 +1285,8 @@ class OcrExtraction {
       if (opt == 'single') return 'Single';
       if (opt == 'married') return 'Married';
       if (opt.startsWith('widow')) return 'Widowed';
-      if (opt.startsWith('separat') || opt.startsWith('divorc')) return 'Separated';
+      if (opt.startsWith('separat') || opt.startsWith('divorc'))
+        return 'Separated';
     }
     final reverseCheckedMatch = RegExp(
       r'(single|married|widowed|separated|divorced)\s*(?:\[[xXvV✓✔\*\-\/•●]\]|\([xXvV✓✔\*\-\/•●]\))',
@@ -1201,7 +1297,8 @@ class OcrExtraction {
       if (opt == 'single') return 'Single';
       if (opt == 'married') return 'Married';
       if (opt.startsWith('widow')) return 'Widowed';
-      if (opt.startsWith('separat') || opt.startsWith('divorc')) return 'Separated';
+      if (opt.startsWith('separat') || opt.startsWith('divorc'))
+        return 'Separated';
     }
 
     if (lower == 'single' ||
@@ -1256,15 +1353,19 @@ class OcrExtraction {
       if (opt.contains('health')) return 'Health Center';
       return 'Other';
     }
-    if (lower.contains('home') && lower.contains('residence')) return 'Home / Residence';
+    if (lower.contains('home') && lower.contains('residence'))
+      return 'Home / Residence';
     if (lower == 'hospital') return 'Hospital';
-    if (lower == 'residence' || lower == 'home' || lower == 'bahay') return 'Residence';
+    if (lower == 'residence' || lower == 'home' || lower == 'bahay')
+      return 'Residence';
     if (lower == 'health center') return 'Health Center';
     return value.trim();
   }
 
   static String _normalizePhilHealth(String value) {
-    var cleaned = _cleanHandwrittenDigits(value).replaceAll(RegExp(r'[^\d]'), '');
+    var cleaned = _cleanHandwrittenDigits(
+      value,
+    ).replaceAll(RegExp(r'[^\d]'), '');
     if (cleaned.length == 12) {
       return '${cleaned.substring(0, 2)}-${cleaned.substring(2, 11)}-${cleaned.substring(11)}';
     }
@@ -1278,11 +1379,18 @@ class OcrExtraction {
         .replaceAll(RegExp(r'\s*\|\s*'), '/')
         .replaceAll(RegExp(r'\s+over\s+', caseSensitive: false), '/')
         .replaceAll(RegExp(r'over', caseSensitive: false), '/');
-    final match = RegExp(r'(\d{2,3})\s*[\/\- ]\s*(\d{2,3})').firstMatch(cleaned);
+    final match = RegExp(
+      r'(\d{2,3})\s*[\/\- ]\s*(\d{2,3})',
+    ).firstMatch(cleaned);
     if (match != null) {
       final sys = int.tryParse(match.group(1)!);
       final dia = int.tryParse(match.group(2)!);
-      if (sys != null && dia != null && sys >= 50 && sys <= 260 && dia >= 30 && dia <= 160) {
+      if (sys != null &&
+          dia != null &&
+          sys >= 50 &&
+          sys <= 260 &&
+          dia >= 30 &&
+          dia <= 160) {
         return '$sys/$dia';
       }
     }
@@ -1315,13 +1423,7 @@ class OcrExtraction {
   static String _normalizeMeasurement(String value) {
     var cleaned = _cleanHandwrittenDigits(value);
     cleaned = cleaned
-        .replaceAll(
-          RegExp(
-            r'[a-zA-Z%]+$',
-            caseSensitive: false,
-          ),
-          '',
-        )
+        .replaceAll(RegExp(r'[a-zA-Z%]+$', caseSensitive: false), '')
         .replaceAll(',', '.')
         .trim();
     final match = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(cleaned);
@@ -1391,7 +1493,9 @@ class OcrExtraction {
       final month = monthNames[monthName];
       final day = int.tryParse(firstPart ?? secondPart ?? '');
       if (month != null && day != null && yearPart != null) {
-        final year = yearPart < 100 ? (yearPart > 50 ? 1900 + yearPart : 2000 + yearPart) : yearPart;
+        final year = yearPart < 100
+            ? (yearPart > 50 ? 1900 + yearPart : 2000 + yearPart)
+            : yearPart;
         final date = DateTime.tryParse(
           '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}',
         );
@@ -1711,7 +1815,11 @@ class OcrRecordCapture {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.edit_note, color: AppDesign.blue, size: 20),
+                    const Icon(
+                      Icons.edit_note,
+                      color: AppDesign.blue,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -1780,14 +1888,14 @@ class OcrRecordCapture {
 
     var loadingDialogVisible = false;
     try {
-      final image = await OcrDocumentScannerService.scanDocument(source: source);
+      final image = await OcrDocumentScannerService.scanDocument(
+        source: source,
+      );
       if (image == null || !context.mounted) return;
       showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (_) => const Center(
-          child: CircularProgressIndicator(color: AppDesign.blue),
-        ),
+        builder: (_) => const _OcrProcessingDialog(),
       );
       loadingDialogVisible = true;
 
@@ -1807,7 +1915,8 @@ class OcrRecordCapture {
       if (extraction.rawText.isEmpty) {
         _message(
           context,
-          'No readable text was detected. Retake the photo in better lighting.',
+          'No readable text was detected. Retake the document flat, in bright '
+          'light, and keep all handwriting inside the frame.',
         );
         return;
       }
@@ -1828,7 +1937,11 @@ class OcrRecordCapture {
       if (loadingDialogVisible) {
         Navigator.of(context, rootNavigator: true).pop();
       }
-      _message(context, 'OCR could not read this image. Please try again.');
+      _message(
+        context,
+        'OCR could not read this image. Try a sharper, well-lit photo or use '
+        'manual entry. Handwritten fields always need review.',
+      );
     }
   }
 
@@ -2021,6 +2134,41 @@ class OcrRecordCapture {
   static void _message(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: AppDesign.navy),
+    );
+  }
+}
+
+class _OcrProcessingDialog extends StatelessWidget {
+  const _OcrProcessingDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(strokeWidth: 3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Reviewing document',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'We will ask you to confirm every uncertain value.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
