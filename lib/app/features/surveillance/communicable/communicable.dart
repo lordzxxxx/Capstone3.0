@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:get/get.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
-import 'package:mycapstone_project/app/features/patients/patient.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
@@ -345,6 +344,8 @@ class _CommunicablePageState extends State<CommunicablePage> {
     try {
       await _dbHelper.seedSampleCommunicableData();
 
+      if (!mounted) return;
+
       // Close loading dialog
       Navigator.of(context).pop();
 
@@ -365,6 +366,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       // Close loading dialog
       Navigator.of(context).pop();
 
@@ -1178,10 +1180,7 @@ class _CommunicablePageState extends State<CommunicablePage> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: AppDesign.muted,
-                  ),
+                  style: TextStyle(fontSize: 10, color: AppDesign.muted),
                 ),
                 const SizedBox(height: 2),
                 Text(

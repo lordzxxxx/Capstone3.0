@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import logging
+import os
 import time
 from typing import List, Optional, Tuple
 
@@ -67,14 +68,21 @@ class TrOCRHandwritingEngine:
             self.model.config.vocab_size = self.model.config.decoder.vocab_size
             self.is_ready = True
             logger.info("TrOCR Engine successfully loaded.")
-        except Exception as e:
-            logger.error("Failed to load TrOCR model '%s': %s", model_name, e)
+        except Exception:
+            # Do not send dependency paths, credentials, or model internals to
+            # a client-facing log stream. The API translates this into 503.
+            logger.error("Failed to load the configured TrOCR model")
             self.is_ready = False
 
     @classmethod
     def get_instance(cls) -> TrOCRHandwritingEngine:
         if cls._instance is None:
-            cls._instance = cls()
+            model_name = (
+                os.getenv("OCR_MODEL_NAME", "microsoft/trocr-base-handwritten")
+                .strip()
+                or "microsoft/trocr-base-handwritten"
+            )
+            cls._instance = cls(model_name=model_name)
         return cls._instance
 
     def preprocess_image(self, pil_img: Image.Image) -> Image.Image:
@@ -92,8 +100,8 @@ class TrOCRHandwritingEngine:
                 contrast_enhanced, d=9, sigmaColor=75, sigmaSpace=75
             )
             return Image.fromarray(cv2.cvtColor(denoised, cv2.COLOR_GRAY2RGB))
-        except Exception as e:
-            logger.warning("OpenCV image preprocessing error: %s", e)
+        except Exception:
+            logger.warning("OpenCV image preprocessing failed")
             return img_rgb
 
     def recognize_single(self, image_bytes: bytes) -> Tuple[str, float]:

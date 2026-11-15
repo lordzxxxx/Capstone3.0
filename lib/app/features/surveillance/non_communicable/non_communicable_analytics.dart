@@ -102,8 +102,9 @@ class _NonCommunicableAnalyticsPageState
       'ai_category',
     ]) {
       final value = _v(row, key);
-      if (value.isNotEmpty && !value.toLowerCase().contains('communicable'))
+      if (value.isNotEmpty && !value.toLowerCase().contains('communicable')) {
         return value;
+      }
     }
     return 'Not specified';
   }
@@ -440,8 +441,9 @@ class _NonCommunicableAnalyticsPageState
                   reservedSize: 54,
                   getTitlesWidget: (value, meta) {
                     final index = value.toInt();
-                    if (index < 0 || index >= entries.length)
+                    if (index < 0 || index >= entries.length) {
                       return const SizedBox();
+                    }
                     return SideTitleWidget(
                       meta: meta,
                       space: 8,
@@ -550,8 +552,9 @@ class _NonCommunicableAnalyticsPageState
                     final index = value.toInt();
                     if (index < 0 ||
                         index >= entries.length ||
-                        value != index.toDouble())
+                        value != index.toDouble()) {
                       return const SizedBox();
+                    }
                     return SideTitleWidget(
                       meta: meta,
                       child: Text(

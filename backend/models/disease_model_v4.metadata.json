@@ -14,6 +14,7 @@
   },
   "training": {
     "trained_at_utc": "2026-08-25T05:11:24.247918+00:00",
+    "scikit_learn_version": "1.9.0",
     "hyperparameters": {
       "bootstrap": true,
       "ccp_alpha": 0.0,

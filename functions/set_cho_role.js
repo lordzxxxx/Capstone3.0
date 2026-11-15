@@ -13,6 +13,9 @@
  */
 
 const admin = require('firebase-admin');
+const {cert} = require('firebase-admin/app');
+const {getAuth} = require('firebase-admin/auth');
+const {getDatabase} = require('firebase-admin/database');
 const fs = require('fs');
 const path = require('path');
 
@@ -39,7 +42,7 @@ function initAdmin() {
     }
     const key = require(full);
     admin.initializeApp({
-      credential: admin.credential.cert(key),
+      credential: cert(key),
       projectId: key.project_id,
       databaseURL: process.env.FIREBASE_DATABASE_URL || key.databaseURL || `https://${key.project_id}-default-rtdb.firebaseio.com`,
     });
@@ -64,19 +67,21 @@ async function setChoRoleByEmail(email) {
     throw new Error('The main CHO Admin account is protected and cannot be changed by this utility.');
   }
 
-  const user = await admin.auth().getUserByEmail(email);
+  const user = await auth.getUserByEmail(email);
   console.log('Found user:', user.uid, user.email);
 
   // Set custom claim
-  await admin.auth().setCustomUserClaims(user.uid, { role: 'CHO' });
+  await auth.setCustomUserClaims(user.uid, { role: 'CHO' });
   console.log('Set custom claim role:CHO for', user.uid);
 
   // Also set Realtime Database users node
-  await admin.database().ref(`users/${user.uid}`).update({ role: 'CHO' });
+  await rtdb.ref(`users/${user.uid}`).update({ role: 'CHO' });
   console.log('Wrote users/{uid}/role = CHO in Realtime Database');
 }
 
 initAdmin();
+const auth = getAuth(admin.getApp());
+const rtdb = getDatabase(admin.getApp());
 const email = emailArg;
 setChoRoleByEmail(email).then(() => {
   console.log('Done');

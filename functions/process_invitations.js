@@ -1,8 +1,9 @@
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v1');
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
+const {getAuth} = require('firebase-admin/auth');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
-const { ServerValue } = require('firebase-admin/database');
+const {getDatabase, ServerValue} = require('firebase-admin/database');
 const { generateTemporaryPassword } = require('./password_policy');
 const { sendSystemEmail } = require('./mailer');
 const { defaultPermissionsForRole } = require('./rbac_policy');
@@ -15,11 +16,13 @@ const {sendDoctorAccountSetupEmail} = require('./doctor_access');
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 const CHO_ADMIN_ROLES = new Set(['CHO_ADMIN', 'CHO_SUPER_ADMIN']);
 
-if (!admin.apps.length) {
+if (!(typeof admin.getApps === 'function' ? admin.getApps() : admin.apps).length) {
   admin.initializeApp();
 }
 
-const db = getFirestore(admin.app(), FIRESTORE_DATABASE_ID);
+const db = getFirestore(admin.getApp(), FIRESTORE_DATABASE_ID);
+const auth = getAuth(admin.getApp());
+const rtdb = {ref: (...args) => getDatabase(admin.getApp()).ref(...args)};
 
 /**
  * Firestore trigger: when an admin writes an `invitations` document, this function
@@ -71,28 +74,28 @@ exports.processInvitation = onDocumentCreated({
     // Try to find existing user
     let userRecord;
     try {
-      userRecord = await admin.auth().getUserByEmail(email);
+      userRecord = await auth.getUserByEmail(email);
     } catch (e) {
       if (e?.code !== 'auth/user-not-found') {
         throw e;
       }
       // Create user with a random temporary password
       const tempPass = generateTemporaryPassword();
-      userRecord = await admin.auth().createUser({ email, password: tempPass });
+      userRecord = await auth.createUser({ email, password: tempPass });
       console.log('Created invited user', userRecord.uid);
     }
 
-    await admin.auth().updateUser(userRecord.uid, {
+    await auth.updateUser(userRecord.uid, {
       displayName: fullName || userRecord.displayName || email,
       disabled: false,
     });
 
     // Set custom claims
     const roleClaim = requestedRole.toLowerCase();
-    await admin.auth().setCustomUserClaims(userRecord.uid, { role: roleClaim });
+    await auth.setCustomUserClaims(userRecord.uid, { role: roleClaim });
 
     // Write users node in Realtime Database
-    await admin.database().ref(`users/${userRecord.uid}`).update({
+    await rtdb.ref(`users/${userRecord.uid}`).update({
       email,
       role: requestedRole,
       username: fullName || email,
@@ -178,7 +181,7 @@ exports.processInvitation = onDocumentCreated({
     } else {
       let resetLink = null;
       try {
-        resetLink = await admin.auth().generatePasswordResetLink(email);
+        resetLink = await auth.generatePasswordResetLink(email);
       } catch (e) {
         console.warn('Could not generate reset link', {
           code: e?.code || 'unknown',

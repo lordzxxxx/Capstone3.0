@@ -1,22 +1,16 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:community_charts_flutter/community_charts_flutter.dart'
     as charts;
 import 'package:mycapstone_project/app/features/checkups/checkup_analytics.dart';
 import 'package:mycapstone_project/app/dev/barangay_test_data_seeder.dart';
-import 'package:mycapstone_project/app/features/surveillance/communicable/communicable.dart';
 import 'package:mycapstone_project/app/features/surveillance/communicable/communicable_analytics.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
-import 'package:mycapstone_project/app/features/immunization/immunization.dart';
 import 'package:mycapstone_project/app/features/immunization/immunization_analytics.dart';
 import 'package:mycapstone_project/app/features/surveillance/morbidity/morbidity.dart';
-import 'package:mycapstone_project/app/features/surveillance/mortality/mortality.dart';
 import 'package:mycapstone_project/app/features/surveillance/mortality/mortality_analytics.dart';
-import 'package:mycapstone_project/app/features/surveillance/non_communicable/non_communicable.dart';
 import 'package:mycapstone_project/app/features/surveillance/non_communicable/non_communicable_analytics.dart';
 import 'package:mycapstone_project/app/features/patients/patient_analytics.dart';
 import 'package:mycapstone_project/app/features/patients/patient_database_helper.dart';
-import 'package:mycapstone_project/app/features/prenatal/prenatal.dart';
 import 'package:mycapstone_project/app/features/prenatal/prenatal_analytics.dart';
 import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helper.dart';
 import 'package:mycapstone_project/app/features/immunization/immunization_database_helper.dart';
@@ -1888,68 +1882,60 @@ class _StatisticsGridState extends State<_StatisticsGrid> {
     int bpCount = 0;
 
     for (var record in allRecords) {
-      try {
-        String? bpStr =
-            record['bp']?.toString() ??
-            record['bloodPressure']?.toString() ??
-            record['bpReading']?.toString();
-        if (bpStr != null && bpStr.contains('/')) {
-          final parts = bpStr.split('/');
-          final systolic = double.tryParse(parts[0].trim());
-          final diastolic = double.tryParse(parts[1].trim());
-          if (systolic != null && diastolic != null) {
-            bpSystolicSum += systolic;
-            bpDiastolicSum += diastolic;
-            bpCount++;
-          }
+      String? bpStr =
+          record['bp']?.toString() ??
+          record['bloodPressure']?.toString() ??
+          record['bpReading']?.toString();
+      if (bpStr != null && bpStr.contains('/')) {
+        final parts = bpStr.split('/');
+        final systolic = double.tryParse(parts[0].trim());
+        final diastolic = double.tryParse(parts[1].trim());
+        if (systolic != null && diastolic != null) {
+          bpSystolicSum += systolic;
+          bpDiastolicSum += diastolic;
+          bpCount++;
         }
-      } catch (e) {}
+      }
     }
 
     // Calculate Heart Rate average
     double hrSum = 0;
     int hrCount = 0;
     for (var record in allRecords) {
-      try {
-        final hr = double.tryParse(
-          (record['heartRate'] ?? record['pulse'] ?? '').toString(),
-        );
-        if (hr != null && hr > 0) {
-          hrSum += hr;
-          hrCount++;
-        }
-      } catch (e) {}
+      final hr = double.tryParse(
+        (record['heartRate'] ?? record['pulse'] ?? '').toString(),
+      );
+      if (hr != null && hr > 0) {
+        hrSum += hr;
+        hrCount++;
+      }
     }
 
     // Calculate BMI average
     double bmiSum = 0;
     int bmiCount = 0;
     for (var record in allRecords) {
-      try {
-        String? bmiStr = record['bmi']?.toString();
-        if (bmiStr != null) {
-          final bmi = double.tryParse(
-            bmiStr.replaceAll(RegExp(r'[^0-9.]'), ''),
-          );
-          if (bmi != null && bmi > 0) {
-            bmiSum += bmi;
-            bmiCount++;
-          }
+      String? bmiStr = record['bmi']?.toString();
+      if (bmiStr != null) {
+        final bmi = double.tryParse(
+          bmiStr.replaceAll(RegExp(r'[^0-9.]'), ''),
+        );
+        if (bmi != null && bmi > 0) {
+          bmiSum += bmi;
+          bmiCount++;
         }
-      } catch (e) {}
+      }
     }
 
     // Calculate Temperature average
     double tempSum = 0;
     int tempCount = 0;
     for (var record in allRecords) {
-      try {
-        final temp = double.tryParse(record['temperature']?.toString() ?? '');
-        if (temp != null && temp > 0) {
-          tempSum += temp;
-          tempCount++;
-        }
-      } catch (e) {}
+      final temp = double.tryParse(record['temperature']?.toString() ?? '');
+      if (temp != null && temp > 0) {
+        tempSum += temp;
+        tempCount++;
+      }
     }
 
     setState(() {
@@ -2029,10 +2015,9 @@ class _StatisticCard extends StatelessWidget {
     required this.title,
     required this.value,
     required this.unit,
-    this.trend,
     required this.icon,
     required this.color,
-  });
+  }) : trend = null;
 
   @override
   Widget build(BuildContext context) {

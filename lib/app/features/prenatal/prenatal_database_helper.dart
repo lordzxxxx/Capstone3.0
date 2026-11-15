@@ -15,6 +15,7 @@ class PrenatalDatabaseHelper {
   static Database? _database;
   bool _connectivityListenerStarted = false;
   bool _isConnectivitySyncRunning = false;
+  final MobileSyncQueue _outboundSyncQueue = MobileSyncQueue();
 
   PrenatalDatabaseHelper._init();
 
@@ -235,11 +236,12 @@ class PrenatalDatabaseHelper {
       try {
         final firestoreData = Map<String, dynamic>.from(recordWithId);
         firestoreData.remove('synced'); // Don't save synced flag to Firestore
+        final scopedData = await currentMobileFirestoreData(firestoreData);
 
         await getFirestoreInstance()
             .collection('prenatal_records')
             .doc(id)
-            .set(firestoreData);
+            .set(scopedData);
 
         await db.update(
           'prenatal_records',
@@ -368,7 +370,7 @@ class PrenatalDatabaseHelper {
       whereArgs: [id],
     );
 
-    _syncToFirebase();
+    await _syncToFirebase();
     return result;
   }
 
@@ -440,7 +442,10 @@ class PrenatalDatabaseHelper {
   }
 
   // Sync local data to Firebase
-  Future<void> _syncToFirebase() async {
+  Future<void> _syncToFirebase() =>
+      _outboundSyncQueue.run(_syncToFirebaseUnsafe);
+
+  Future<void> _syncToFirebaseUnsafe() async {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
@@ -461,11 +466,12 @@ class PrenatalDatabaseHelper {
           final id = recordData['id'];
           recordData.remove('synced');
           recordData.remove('id');
+          final scopedData = await currentMobileFirestoreData(recordData);
 
           await getFirestoreInstance()
               .collection('prenatal_records')
               .doc(id)
-              .set(recordData, SetOptions(merge: true));
+              .set(scopedData, SetOptions(merge: true));
 
           // Mark as synced
           await db.update(

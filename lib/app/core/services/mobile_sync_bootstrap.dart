@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
@@ -9,6 +9,7 @@ import 'package:mycapstone_project/app/features/surveillance/morbidity/morbidity
 import 'package:mycapstone_project/app/features/surveillance/mortality/mortality_database_helper.dart';
 import 'package:mycapstone_project/app/features/patients/patient_database_helper.dart';
 import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helper.dart';
+import 'package:mycapstone_project/app/core/services/mobile_sync_utils.dart';
 
 bool _mobileSyncBootstrapInitialized = false;
 const String _mobileSyncCacheOwnerUidKey = 'mobile_sync_cache_owner_uid';
@@ -107,10 +108,17 @@ Future<void> syncMobileOfflineDataAfterLogin() async {
 
   _startAllMobileSyncListeners();
 
-  await DatabaseHelper.instance.syncNow();
-  await PrenatalDatabaseHelper.instance.syncNow();
-  await ImmunizationDatabaseHelper.instance.syncNow();
-  await PatientDatabaseHelper.instance.syncNow();
-  await MortalityDatabaseHelper.instance.syncNow();
-  await MorbidityDatabaseHelper.instance.syncNow();
+  final results = await runMobileSyncOperations({
+    'check-ups': DatabaseHelper.instance.syncNow,
+    'prenatal': PrenatalDatabaseHelper.instance.syncNow,
+    'immunization': ImmunizationDatabaseHelper.instance.syncNow,
+    'patients': PatientDatabaseHelper.instance.syncNow,
+    'mortality': MortalityDatabaseHelper.instance.syncNow,
+    'morbidity': MorbidityDatabaseHelper.instance.syncNow,
+  });
+  for (final result in results.where((result) => !result.succeeded)) {
+    // Do not suppress a partial synchronization. The local cache remains
+    // intact and the connectivity listener will retry this module later.
+    debugPrint('Mobile sync failed for ${result.module}: ${result.error}');
+  }
 }

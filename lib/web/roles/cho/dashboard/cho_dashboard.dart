@@ -81,6 +81,9 @@ class ChoDashboard extends StatefulWidget {
 
 class _ChoDashboardState extends State<ChoDashboard> {
   static const List<int> _forecastWindows = <int>[30, 60, 90];
+  // Dashboard analytics currently aggregate client-side. Keep live listeners
+  // bounded until server-side summaries or cursor pagination are available.
+  static const int _dashboardReadLimit = 500;
 
   final FirebaseFirestore _firestore = getFirestoreInstance();
   final List<Map<String, dynamic>> _rows = [];
@@ -97,6 +100,15 @@ class _ChoDashboardState extends State<ChoDashboard> {
 
   // Sync status tracking
   final Map<String, bool> _syncStatus = {
+    'patient_records': false,
+    'checkup_records': false,
+    'prenatal_records': false,
+    'immunization_records': false,
+    'morbidity_records': false,
+    'mortality_records': false,
+    'referrals': false,
+  };
+  final Map<String, bool> _syncTruncated = {
     'patient_records': false,
     'checkup_records': false,
     'prenatal_records': false,
@@ -1096,6 +1108,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     if (!mounted) return;
     setState(() {
       _syncStatus.updateAll((_, _) => false);
+      _syncTruncated.updateAll((_, _) => false);
       _isLoading = true;
     });
   }
@@ -1236,7 +1249,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     }
 
     _patientsSubscription = patientQuery
-        .limit(500)
+        .limit(_dashboardReadLimit)
         .snapshots()
         .listen(
           (snap) {
@@ -1328,6 +1341,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
               _rows
                 ..clear()
                 ..addAll(rows);
+              _syncTruncated['patient_records'] =
+                  snap.docs.length >= _dashboardReadLimit;
               _overdueFollowUps
                 ..clear()
                 ..addAll(overdueQueue.take(10));
@@ -1396,6 +1411,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     if (kDebugMode) debugPrint('Syncing checkup records...');
     final accessScope = _accessScope ?? await _ensureAccessScopeLoaded();
     _checkupSubscription = _buildModuleQuery('checkup_records', accessScope)
+        .limit(_dashboardReadLimit)
         .snapshots()
         .listen(
           (snap) {
@@ -1448,6 +1464,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
               _checkupRows
                 ..clear()
                 ..addAll(rows);
+              _syncTruncated['checkup_records'] =
+                  snap.docs.length >= _dashboardReadLimit;
               _checkupsThisMonth = total;
               _checkupTrendLabels = monthLabels;
               _checkupTrendValues = monthKeys
@@ -1481,6 +1499,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     if (kDebugMode) debugPrint('Syncing prenatal records...');
     final accessScope = _accessScope ?? await _ensureAccessScopeLoaded();
     _prenatalSubscription = _buildModuleQuery('prenatal_records', accessScope)
+        .limit(_dashboardReadLimit)
         .snapshots()
         .listen(
           (snap) {
@@ -1512,6 +1531,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
               _prenatalRows
                 ..clear()
                 ..addAll(rows);
+              _syncTruncated['prenatal_records'] =
+                  snap.docs.length >= _dashboardReadLimit;
               _activePrenatal = active;
               _prenatalForecast = _countUpcomingByWindow(upcomingPrenatal);
               _syncStatus['prenatal_records'] = true;
@@ -1542,56 +1563,60 @@ class _ChoDashboardState extends State<ChoDashboard> {
     if (kDebugMode) debugPrint('Syncing immunization records...');
     final accessScope = _accessScope ?? await _ensureAccessScopeLoaded();
     _immunizationSubscription =
-        _buildModuleQuery(
-          'immunization_records',
-          accessScope,
-        ).snapshots().listen(
-          (snap) {
-            if (!mounted) return;
-            final rows = snap.docs
-                .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
-                .toList(growable: false);
-            final upcomingImmunizations = <DateTime>[];
-            for (final d in snap.docs) {
-              final data = d.data();
-              final dueDate = _parseDocDate(data, <String>[
-                'nextDoseDueDate',
-                'dueDate',
-                'nextVisit',
-                'followup',
-                'appointmentDate',
-              ]);
-              if (dueDate != null) upcomingImmunizations.add(dueDate);
-            }
-            if (kDebugMode) {
-              debugPrint('✓ Synced ${snap.docs.length} immunization records');
-            }
-            setState(() {
-              _immunizationRows
-                ..clear()
-                ..addAll(rows);
-              _immunizationRecords = snap.docs.length;
-              _immunizationForecast = _countUpcomingByWindow(
-                upcomingImmunizations,
-              );
-              _syncStatus['immunization_records'] = true;
-              _recomputeAnalyticsState();
-            });
-          },
-          onError: (e) {
-            if (kDebugMode) debugPrint('✗ Immunization sync error: $e');
-            if (!mounted) return;
-            if (_activateChoRootFallbackIfNeeded(
-              'immunization_records',
-              e,
-              accessScope,
-            )) {
-              unawaited(_startImmunizationSync());
-              return;
-            }
-            setState(() => _syncStatus['immunization_records'] = false);
-          },
-        );
+        _buildModuleQuery('immunization_records', accessScope)
+            .limit(_dashboardReadLimit)
+            .snapshots()
+            .listen(
+              (snap) {
+                if (!mounted) return;
+                final rows = snap.docs
+                    .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
+                    .toList(growable: false);
+                final upcomingImmunizations = <DateTime>[];
+                for (final d in snap.docs) {
+                  final data = d.data();
+                  final dueDate = _parseDocDate(data, <String>[
+                    'nextDoseDueDate',
+                    'dueDate',
+                    'nextVisit',
+                    'followup',
+                    'appointmentDate',
+                  ]);
+                  if (dueDate != null) upcomingImmunizations.add(dueDate);
+                }
+                if (kDebugMode) {
+                  debugPrint(
+                    '✓ Synced ${snap.docs.length} immunization records',
+                  );
+                }
+                setState(() {
+                  _immunizationRows
+                    ..clear()
+                    ..addAll(rows);
+                  _syncTruncated['immunization_records'] =
+                      snap.docs.length >= _dashboardReadLimit;
+                  _immunizationRecords = snap.docs.length;
+                  _immunizationForecast = _countUpcomingByWindow(
+                    upcomingImmunizations,
+                  );
+                  _syncStatus['immunization_records'] = true;
+                  _recomputeAnalyticsState();
+                });
+              },
+              onError: (e) {
+                if (kDebugMode) debugPrint('✗ Immunization sync error: $e');
+                if (!mounted) return;
+                if (_activateChoRootFallbackIfNeeded(
+                  'immunization_records',
+                  e,
+                  accessScope,
+                )) {
+                  unawaited(_startImmunizationSync());
+                  return;
+                }
+                setState(() => _syncStatus['immunization_records'] = false);
+              },
+            );
   }
 
   Future<void> _startMorbiditySync() async {
@@ -1602,6 +1627,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     if (kDebugMode) debugPrint('Syncing morbidity records...');
     final accessScope = _accessScope ?? await _ensureAccessScopeLoaded();
     _morbiditySubscription = _buildModuleQuery('morbidity_records', accessScope)
+        .limit(_dashboardReadLimit)
         .snapshots()
         .listen(
           (snap) {
@@ -1681,6 +1707,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
               _morbidityRows
                 ..clear()
                 ..addAll(rows);
+              _syncTruncated['morbidity_records'] =
+                  snap.docs.length >= _dashboardReadLimit;
               _morbidityReports = snap.docs.length;
               _diseaseTrendMonthLabels = monthLabels;
               _diseaseTrendSeries = trendSeries;
@@ -1712,6 +1740,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     if (kDebugMode) debugPrint('Syncing mortality records...');
     final accessScope = _accessScope ?? await _ensureAccessScopeLoaded();
     _mortalitySubscription = _buildModuleQuery('mortality_records', accessScope)
+        .limit(_dashboardReadLimit)
         .snapshots()
         .listen(
           (snap) {
@@ -1727,6 +1756,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
                       .toList(growable: false),
                 );
+              _syncTruncated['mortality_records'] =
+                  snap.docs.length >= _dashboardReadLimit;
               _mortalityReports = snap.docs.length;
               _syncStatus['mortality_records'] = true;
               _recomputeAnalyticsState();
@@ -1756,6 +1787,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     if (kDebugMode) debugPrint('Syncing referrals...');
     _referralSubscription = _firestore
         .collection('referrals')
+        .limit(_dashboardReadLimit)
         .snapshots()
         .listen(
           (snap) {
@@ -1770,6 +1802,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
               _referralRows
                 ..clear()
                 ..addAll(rows);
+              _syncTruncated['referrals'] =
+                  snap.docs.length >= _dashboardReadLimit;
               _syncStatus['referrals'] = true;
               _recomputeAnalyticsState();
             });
@@ -6211,6 +6245,30 @@ class _ChoDashboardState extends State<ChoDashboard> {
                               ],
                             ),
                           ),
+                          if (_syncTruncated.values.any((value) => value)) ...[
+                            const SizedBox(height: 8),
+                            const Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.info_outline_rounded,
+                                  color: ChoColors.warning,
+                                  size: 16,
+                                ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Some dashboard totals are limited to up to 500 records for stability. Use module records or reporting filters for a complete historical review.',
+                                    style: TextStyle(
+                                      color: ChoColors.warning,
+                                      fontSize: 12,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),

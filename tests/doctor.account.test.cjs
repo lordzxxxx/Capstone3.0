@@ -1,10 +1,13 @@
 const assert = require('node:assert/strict');
 
 const admin = require('../functions/node_modules/firebase-admin');
+const {getAuth} = require('../functions/node_modules/firebase-admin/lib/auth');
+const {getFirestore} = require('../functions/node_modules/firebase-admin/lib/firestore');
 
 const projectId = process.env.GCLOUD_PROJECT || 'demo-doctor-portal';
-if (!admin.apps.length) admin.initializeApp({projectId});
-const db = new admin.firestore.Firestore({projectId, databaseId: 'capstone-c98f9'});
+if (!admin.getApps().length) admin.initializeApp({projectId});
+const auth = getAuth(admin.getApp());
+const db = getFirestore(admin.getApp(), 'capstone-c98f9');
 
 const adminUid = 'doctor-account-test-admin';
 const doctorEmail = 'doctor-account-test@example.test';
@@ -44,13 +47,13 @@ async function main() {
   const adminEmail = 'doctor-account-test-admin@example.test';
   const adminPassword = 'A-strong-test-password-123!';
   try {
-    adminAuth = await admin.auth().createUser({
+    adminAuth = await auth.createUser({
       uid: adminUid,
       email: adminEmail,
       password: adminPassword,
       displayName: 'Doctor Account Test Admin',
     });
-    await admin.auth().setCustomUserClaims(adminUid, {
+    await auth.setCustomUserClaims(adminUid, {
       role: 'cho_admin',
       approvalStatus: 'approved',
       accountStatus: 'active',
@@ -82,7 +85,7 @@ async function main() {
     assert.equal(result.body.result.activationEmailSent, false);
     assert.ok(result.body.result.activationEmailReason);
 
-    doctorAuth = await admin.auth().getUserByEmail(doctorEmail);
+    doctorAuth = await auth.getUserByEmail(doctorEmail);
     assert.equal(doctorAuth.disabled, false);
     const doctorProfile = (await db.collection('users').doc(doctorAuth.uid).get()).data();
     assert.equal(doctorProfile.role, 'DOCTOR');
@@ -105,12 +108,12 @@ async function main() {
   } finally {
     if (doctorAuth) {
       await db.collection('users').doc(doctorAuth.uid).delete().catch(() => {});
-      await admin.auth().deleteUser(doctorAuth.uid).catch(() => {});
+      await auth.deleteUser(doctorAuth.uid).catch(() => {});
     }
     await db.collection('registration_email_locks').doc(doctorEmail).delete().catch(() => {});
     await db.collection('registration_username_locks').doc(doctorName.toLowerCase()).delete().catch(() => {});
     await db.collection('users').doc(adminUid).delete().catch(() => {});
-    if (adminAuth) await admin.auth().deleteUser(adminAuth.uid).catch(() => {});
+    if (adminAuth) await auth.deleteUser(adminAuth.uid).catch(() => {});
   }
 }
 

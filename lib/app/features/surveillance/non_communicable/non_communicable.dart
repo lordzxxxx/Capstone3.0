@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:get/get.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
-import 'package:mycapstone_project/app/features/patients/patient.dart';
 import 'package:mycapstone_project/app/shared/widgets/mobile_pagination_controls.dart';
 import 'package:mycapstone_project/app/features/patients/patient_history_dialogs.dart';
 import 'package:mycapstone_project/shared/current_table_record_utils.dart';
@@ -344,6 +343,8 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
     try {
       await _dbHelper.seedSampleNonCommunicableData();
 
+      if (!mounted) return;
+
       // Close loading dialog
       Navigator.of(context).pop();
 
@@ -360,6 +361,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
       await _loadMetrics();
       await _loadPatients();
     } catch (e) {
+      if (!mounted) return;
       // Close loading dialog
       Navigator.of(context).pop();
 
@@ -899,10 +901,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
         decoration: BoxDecoration(
           color: AppDesign.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppDesign.border,
-            width: 1,
-          ),
+          border: Border.all(color: AppDesign.border, width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.1),
@@ -1000,20 +999,14 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                     value: patient['condition'],
                     color: AppDesign.ink,
                   ),
-                  Divider(
-                    height: 20,
-                    color: AppDesign.border,
-                  ),
+                  Divider(height: 20, color: AppDesign.border),
                   _buildDetailRow(
                     icon: Icons.medication,
                     label: 'Treatment',
                     value: patient['treatment'],
                     color: AppDesign.ink,
                   ),
-                  Divider(
-                    height: 20,
-                    color: AppDesign.border,
-                  ),
+                  Divider(height: 20, color: AppDesign.border),
                   Row(
                     children: [
                       Expanded(
@@ -1039,10 +1032,7 @@ class _NonCommunicablePageState extends State<NonCommunicablePage> {
                   ),
                   if (patient['notes'] != null &&
                       patient['notes'].toString().isNotEmpty) ...[
-                    Divider(
-                      height: 20,
-                      color: AppDesign.border,
-                    ),
+                    Divider(height: 20, color: AppDesign.border),
                     _buildDetailRow(
                       icon: Icons.note,
                       label: 'Notes',

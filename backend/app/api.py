@@ -9,6 +9,7 @@ import logging
 import re
 import time
 from typing import Any
+from uuid import uuid4
 from urllib.parse import urlencode
 from urllib.request import Request as UrlRequest
 from urllib.request import urlopen
@@ -21,19 +22,26 @@ from PIL import Image, UnidentifiedImageError
 
 try:
     from .config import Settings, get_settings
+    from .firebase_service import (
+        FirebaseConfigurationError,
+        get_firebase_app,
+        get_firestore_client,
+    )
     from .disease_service import DiseaseService
     from .health_category_service import suggest_health_category
     from .predict import (
         ArtifactLoadError,
         NoRecognizedSymptomsError,
+        artifacts_cache_is_warm,
         get_valid_symptoms,
         load_artifacts,
-        normalize_symptom,
         predict_top_diseases,
         recognize_diseases,
         recognize_symptoms,
     )
     from .symptom_guidance_service import SymptomGuidanceService
+    from .ai_orchestration import ExplanationRequest, build_grounded_explanation
+    from .rag_service import build_evidence_sources, rank_evidence
     from .security import (
         AuthenticatedUser,
         enforce_api_rate_limit,
@@ -44,6 +52,7 @@ try:
         DiseaseInformation,
         ErrorResponse,
         HealthResponse,
+        ReadinessResponse,
         OCRBatchResponse,
         OCRFieldResult,
         PredictionRequest,
@@ -55,21 +64,32 @@ try:
         TurnstileVerifyResponse,
     )
     from .ocr_service import TrOCRHandwritingEngine
-except ImportError:  # Supports ``uvicorn app.api:app`` from backend/.
+except ImportError:  # Supports direct execution from backend/app/.
+    # In package mode, preserve the original missing-dependency error instead
+    # of masking it with an unrelated absolute-import failure.
+    if __package__:
+        raise
     from config import Settings, get_settings
+    from firebase_service import (
+        FirebaseConfigurationError,
+        get_firebase_app,
+        get_firestore_client,
+    )
     from disease_service import DiseaseService
     from health_category_service import suggest_health_category
     from predict import (
         ArtifactLoadError,
         NoRecognizedSymptomsError,
+        artifacts_cache_is_warm,
         get_valid_symptoms,
         load_artifacts,
-        normalize_symptom,
         predict_top_diseases,
         recognize_diseases,
         recognize_symptoms,
     )
     from symptom_guidance_service import SymptomGuidanceService
+    from ai_orchestration import ExplanationRequest, build_grounded_explanation
+    from rag_service import build_evidence_sources, rank_evidence
     from security import (
         AuthenticatedUser,
         enforce_api_rate_limit,
@@ -80,6 +100,7 @@ except ImportError:  # Supports ``uvicorn app.api:app`` from backend/.
         DiseaseInformation,
         ErrorResponse,
         HealthResponse,
+        ReadinessResponse,
         OCRBatchResponse,
         OCRFieldResult,
         PredictionRequest,
@@ -209,24 +230,23 @@ class JsonLogFormatter(logging.Formatter):
         }
         for key in (
             "event",
-            "disease",
-            "confidence",
             "latencyMs",
-            "unknownSymptoms",
-            "firestoreLookupMs",
+            "statusCode",
+            "method",
+            "path",
+            "requestId",
             "contentAvailable",
-            "incomingSymptoms",
-            "normalizedSymptoms",
-            "recognizedSymptoms",
-            "ignoredSymptoms",
+            "submittedSymptomCount",
             "recognizedSymptomCount",
             "ignoredSymptomCount",
-            "featureVectorCount",
-            "topPredictions",
-            "firestoreDocumentId",
+            "topPredictionCount",
+            "firestoreLookupMs",
             "firestoreLookupFound",
+            "featureVectorCount",
             "totalFeatures",
-            "firstFeatures",
+            "retrievedEvidenceCount",
+            "explanationProvider",
+            "explanationStatus",
         ):
             if hasattr(record, key):
                 payload[key] = getattr(record, key)
@@ -261,6 +281,8 @@ def get_symptom_guidance_service() -> SymptomGuidanceService:
     settings = get_settings()
     return SymptomGuidanceService(
         timeout_seconds=settings.firestore_timeout_seconds,
+        rag_top_k=settings.rag_top_k,
+        rag_min_score=settings.rag_min_score,
     )
 
 
@@ -348,13 +370,15 @@ def create_app() -> FastAPI:
             "Accept",
             "Authorization",
             "X-Firebase-AppCheck",
+            "X-Request-ID",
         ],
+        expose_headers=["X-Request-ID"],
     )
 
     @application.middleware("http")
     async def _request_size_limit(request: Request, call_next):
         """Reject oversized bodies before parsing or processing them."""
-        if request.method != "OPTIONS" and request.url.path not in {"/", "/health"}:
+        if request.method != "OPTIONS" and request.url.path not in {"/", "/health", "/ready"}:
             client_key = request.client.host if request.client else "unknown"
             try:
                 enforce_api_rate_limit(client_key)
@@ -409,6 +433,50 @@ def create_app() -> FastAPI:
             )
 
     @application.middleware("http")
+    async def _request_observability(request: Request, call_next):
+        """Attach a safe correlation ID and emit latency/status metrics.
+
+        Request bodies, query values, authorization headers, and patient data
+        are intentionally excluded from logs. Cloud Run can use these JSON
+        events for error-rate and latency alerts without collecting clinical
+        payloads.
+        """
+        supplied_id = request.headers.get("X-Request-ID", "").strip()
+        request_id = (
+            supplied_id
+            if re.fullmatch(r"[A-Za-z0-9._-]{1,64}", supplied_id)
+            else uuid4().hex
+        )
+        started = time.perf_counter()
+        try:
+            response = await call_next(request)
+        except Exception:
+            LOGGER.exception(
+                "Unhandled request failure",
+                extra={
+                    "event": "request_error",
+                    "requestId": request_id,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "latencyMs": round((time.perf_counter() - started) * 1000, 2),
+                },
+            )
+            raise
+        response.headers["X-Request-ID"] = request_id
+        LOGGER.info(
+            "Request completed",
+            extra={
+                "event": "request_completed",
+                "requestId": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "statusCode": response.status_code,
+                "latencyMs": round((time.perf_counter() - started) * 1000, 2),
+            },
+        )
+        return response
+
+    @application.middleware("http")
     async def _security_headers(request: Request, call_next):
         """Baseline hardening headers for every response.
 
@@ -450,15 +518,76 @@ def create_app() -> FastAPI:
     @application.get(
         "/health",
         response_model=HealthResponse,
-        summary="Health and dependency readiness",
+        summary="Liveness and cached model status",
     )
     def health() -> HealthResponse:
         settings = get_settings()
-        loaded = model_loaded_successfully()
         return HealthResponse(
-            status="healthy" if loaded else "unhealthy",
-            modelLoaded=loaded,
-            firestoreConfigured=bool(settings.google_application_credentials),
+            status="healthy",
+            modelLoaded=artifacts_cache_is_warm(),
+            # This field is a configuration hint, not a connectivity claim.
+            # ADC-based Cloud Run deployments intentionally have no key path.
+            firestoreConfigured=bool(
+                settings.google_application_credentials
+                or settings.environment != "production"
+            ),
+        )
+
+    @application.get(
+        "/ready",
+        response_model=ReadinessResponse,
+        responses={
+            503: {"model": ErrorResponse, "description": "Dependency unavailable"}
+        },
+        summary="Verify model and Firestore readiness",
+    )
+    def ready() -> ReadinessResponse:
+        """Check dependencies needed for authenticated guidance requests.
+
+        This endpoint is intentionally separate from ``/health``: liveness
+        must remain cheap, while readiness should stop traffic reaching a
+        revision that cannot load its model or read the configured database.
+        """
+        settings = get_settings()
+        if not model_loaded_successfully():
+            LOGGER.error(
+                "Readiness failed: model unavailable",
+                extra={"event": "readiness_failed"},
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The AI service is not ready.",
+            )
+        try:
+            get_firebase_app()
+            client = get_firestore_client()
+            list(
+                client.collection("symptom_guidance")
+                .limit(1)
+                .stream(timeout=settings.firestore_timeout_seconds)
+            )
+        except FirebaseConfigurationError:
+            LOGGER.error(
+                "Readiness failed: Firebase configuration unavailable",
+                extra={"event": "readiness_firebase_failed"},
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The AI service is not ready.",
+            ) from None
+        except Exception:
+            LOGGER.error(
+                "Readiness failed: Firestore unavailable",
+                extra={"event": "readiness_firestore_failed"},
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The AI service is not ready.",
+            ) from None
+        return ReadinessResponse(
+            status="ready",
+            modelLoaded=True,
+            firestoreReachable=True,
         )
 
     @application.post(
@@ -626,6 +755,8 @@ def create_app() -> FastAPI:
                     "emergencyWarningSigns": [],
                     "references": [],
                     "contentAvailable": False,
+                    "retrievedEvidence": [],
+                    "retrievalMethod": "local_tfidf_keyword_metadata_v1",
                 }
         else:
             guidance = {
@@ -637,6 +768,8 @@ def create_app() -> FastAPI:
                 "emergencyWarningSigns": [],
                 "references": [],
                 "contentAvailable": False,
+                "retrievedEvidence": [],
+                "retrievalMethod": "local_tfidf_keyword_metadata_v1",
             }
 
         condition_documents: list[dict[str, Any]] = []
@@ -707,6 +840,37 @@ def create_app() -> FastAPI:
             guidance["contentAvailable"] or condition_documents
         )
 
+        settings = get_settings()
+        condition_evidence = build_evidence_sources(
+            condition_documents,
+            source_prefix="disease_guidance",
+            matched_terms=matched_conditions,
+        )
+        retrieved_evidence = rank_evidence(
+            [*recognized_symptoms, *recognized_conditions],
+            [*guidance.get("retrievedEvidence", []), *condition_evidence],
+            top_k=settings.rag_top_k,
+            minimum_score=settings.rag_min_score,
+        )
+        guidance["retrievedEvidence"] = retrieved_evidence
+        guidance["retrievalMethod"] = "local_tfidf_keyword_metadata_v1"
+
+        category = suggest_health_category(
+            recognized_conditions,
+            recognized_symptoms,
+        )
+        explanation = build_grounded_explanation(
+            ExplanationRequest(
+                recognized_symptoms=tuple(recognized_symptoms),
+                recognized_conditions=tuple(recognized_conditions),
+                suggested_category=category["suggestedHealthCategory"],
+                category_requires_review=category["categoryRequiresReview"],
+                emergency_warning_signs=tuple(guidance["emergencyWarningSigns"]),
+                when_to_seek_care=tuple(guidance["whenToSeekCare"]),
+                evidence=tuple(retrieved_evidence),
+            )
+        )
+
         response = {
             "recognizedSymptoms": recognized_symptoms,
             "recognizedConditions": recognized_conditions,
@@ -714,10 +878,8 @@ def create_app() -> FastAPI:
             "matchedGuidanceConditions": matched_conditions,
             "missingGuidanceConditions": missing_conditions,
             **guidance,
-            **suggest_health_category(
-                recognized_conditions,
-                recognized_symptoms,
-            ),
+            **category,
+            "explanation": explanation.as_dict(),
             "disclaimer": DISCLAIMER,
         }
         LOGGER.info(
@@ -728,6 +890,9 @@ def create_app() -> FastAPI:
                 "recognizedSymptomCount": len(recognized_symptoms),
                 "ignoredSymptomCount": len(ignored_keywords),
                 "contentAvailable": guidance["contentAvailable"],
+                "retrievedEvidenceCount": len(retrieved_evidence),
+                "explanationProvider": explanation.provider,
+                "explanationStatus": explanation.status,
             },
         )
         return response
@@ -744,10 +909,7 @@ def create_app() -> FastAPI:
             "Prediction request received",
             extra={
                 "event": "prediction_request",
-                "incomingSymptoms": request.symptoms,
-                "normalizedSymptoms": [
-                    normalize_symptom(symptom) for symptom in request.symptoms
-                ],
+                "submittedSymptomCount": len(request.symptoms),
             },
         )
         try:
@@ -757,10 +919,9 @@ def create_app() -> FastAPI:
                 "Prediction rejected because no symptoms were recognized",
                 extra={
                     "event": "no_recognized_symptoms",
-                    "incomingSymptoms": request.symptoms,
-                    "normalizedSymptoms": exc.normalized_symptoms,
-                    "recognizedSymptoms": exc.recognized_symptoms,
-                    "ignoredSymptoms": exc.ignored_symptoms,
+                    "submittedSymptomCount": len(request.symptoms),
+                    "recognizedSymptomCount": len(exc.recognized_symptoms),
+                    "ignoredSymptomCount": len(exc.ignored_symptoms),
                     "featureVectorCount": 0,
                 },
             )
@@ -788,9 +949,6 @@ def create_app() -> FastAPI:
             ) from exc
 
         top_prediction = inference["topPredictions"][0]
-        firestore_document_id = DiseaseService.document_id_for_prediction(
-            str(top_prediction["disease"])
-        )
         lookup_started = time.perf_counter()
         disease_content: dict[str, Any] | None = None
         try:
@@ -802,7 +960,6 @@ def create_app() -> FastAPI:
                 "Firestore disease lookup unavailable",
                 extra={
                     "event": "firestore_error",
-                    "disease": top_prediction["disease"],
                 },
             )
         lookup_ms = round((time.perf_counter() - lookup_started) * 1000.0, 2)
@@ -810,8 +967,6 @@ def create_app() -> FastAPI:
             "Firestore disease lookup completed",
             extra={
                 "event": "firestore_lookup",
-                "disease": top_prediction["disease"],
-                "firestoreDocumentId": firestore_document_id,
                 "firestoreLookupFound": disease_content is not None,
                 "firestoreLookupMs": lookup_ms,
             },
@@ -826,16 +981,13 @@ def create_app() -> FastAPI:
             "Prediction completed",
             extra={
                 "event": "prediction",
-                "disease": top_prediction["disease"],
-                "confidence": top_prediction["confidence"],
                 "latencyMs": latency_ms,
-                "unknownSymptoms": inference["ignoredSymptoms"],
+                "submittedSymptomCount": len(request.symptoms),
+                "recognizedSymptomCount": len(inference["recognizedSymptoms"]),
+                "ignoredSymptomCount": len(inference["ignoredSymptoms"]),
+                "topPredictionCount": len(inference["topPredictions"]),
                 "firestoreLookupMs": lookup_ms,
                 "contentAvailable": response["contentAvailable"],
-                "recognizedSymptoms": inference["recognizedSymptoms"],
-                "ignoredSymptoms": inference["ignoredSymptoms"],
-                "topPredictions": inference["topPredictions"],
-                "firestoreDocumentId": firestore_document_id,
                 "firestoreLookupFound": disease_content is not None,
             },
         )

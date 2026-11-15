@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "C:/capstone/mycapstone_project/windows"
+    "cmake.sourceDirectory": "C:/capstone/mycapstone_project/windows",
+    "postman.settings.dotenv-detection-notification-visibility": false
 }

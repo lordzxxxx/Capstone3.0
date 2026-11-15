@@ -62,6 +62,24 @@ void main() {
             'references': <Map<String, dynamic>>[],
             'contentAvailable': true,
             'disclaimer': 'Educational guidance only.',
+            'retrievalMethod': 'bounded_keyword_metadata_v1',
+            'retrievedEvidence': [
+              {
+                'citationId': 'ref-fever',
+                'sourceId': 'symptom_guidance:fever',
+                'title': 'Fever',
+                'reviewStatus': 'needs_review',
+                'relevanceScore': 0.92,
+              },
+            ],
+            'explanation': {
+              'provider': 'deterministic_grounded',
+              'status': 'fallback_local',
+              'summary': 'Review the retrieved warning signs.',
+              'uncertainty': 'Professional review is required.',
+              'citationIds': ['ref-fever'],
+              'promptVersion': 'grounded-guidance-v1',
+            },
           }),
           200,
         );
@@ -81,6 +99,8 @@ void main() {
       expect(result.recognizedSymptoms, ['fever', 'cough']);
       expect(result.homeCare, ['Rest and drink fluids.']);
       expect(result.emergencyWarningSigns, ['Difficulty breathing.']);
+      expect(result.retrievalMethod, 'bounded_keyword_metadata_v1');
+      expect(result.retrievedEvidence.single['citationId'], 'ref-fever');
       expect(result.toRecordFields().containsKey('ai_confidence'), isFalse);
       final recordFields = result.toRecordFields();
       final recoveryPlan = recordFields['ai_recovery_plan'] as Map;
@@ -88,6 +108,10 @@ void main() {
       expect(
         (recoveryPlan['decision_support'] as Map)['requires_human_review'],
         isTrue,
+      );
+      expect(
+        (recoveryPlan['decision_support'] as Map)['explanation'],
+        'Review the retrieved warning signs.',
       );
       service.close();
     },

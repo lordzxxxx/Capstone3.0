@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import logging
 from pathlib import Path
 
 import pytest
@@ -18,6 +19,7 @@ from predict import (
     load_symptom_aliases,
     normalize_symptom,
     predict_top_diseases,
+    recognize_symptoms,
     recognize_diseases,
     validate_symptom_aliases,
 )
@@ -167,3 +169,16 @@ def test_prediction_returns_sorted_top_three_and_unknown_symptoms() -> None:
     assert predictions[0]["confidence"] >= predictions[1]["confidence"]
     assert predictions[1]["confidence"] >= predictions[2]["confidence"]
     assert result["ignoredSymptoms"] == ["unknown symptom"]
+
+
+def test_prediction_logs_do_not_include_submitted_symptom_values(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    sentinel = "private-patient-symptom-9f4e"
+    caplog.set_level(logging.DEBUG, logger="ai_dsuhis.api")
+
+    result = recognize_symptoms(["fever", sentinel], reject_if_empty=False)
+
+    assert result["recognizedSymptoms"] == ["fever"]
+    assert result["ignoredSymptoms"] == [sentinel]
+    assert all(sentinel not in repr(record.__dict__) for record in caplog.records)

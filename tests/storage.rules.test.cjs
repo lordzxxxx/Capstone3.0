@@ -81,4 +81,36 @@ describe('barangay branding storage boundaries', () => {
       ref.put(Buffer.from('replacement'), {contentType: 'image/png'}),
     );
   });
+
+  it('does not grant a doctor access to another owner\'s attachment', async () => {
+    const ownerRef = storageFor('bhw-1')
+      .ref('referral_attachments/bhw-1/referral-unauthorized/attachment.png');
+    await assertSucceeds(
+      ownerRef.put(Buffer.from('test image'), {contentType: 'image/png'}),
+    );
+
+    await assertFails(
+      storageFor('doctor-1', {role: 'DOCTOR'})
+        .ref('referral_attachments/bhw-1/referral-unauthorized/attachment.png')
+        .getDownloadURL(),
+    );
+  });
+
+  it('allows the owner or CHO to delete an attachment, but not a doctor', async () => {
+    const ownerRef = storageFor('bhw-1')
+      .ref('referral_attachments/bhw-1/referral-delete/attachment.png');
+    await assertSucceeds(
+      ownerRef.put(Buffer.from('test image'), {contentType: 'image/png'}),
+    );
+    await assertFails(
+      storageFor('doctor-1', {role: 'DOCTOR'})
+        .ref('referral_attachments/bhw-1/referral-delete/attachment.png')
+        .delete(),
+    );
+    await assertSucceeds(
+      storageFor('bhw-1')
+        .ref('referral_attachments/bhw-1/referral-delete/attachment.png')
+        .delete(),
+    );
+  });
 });

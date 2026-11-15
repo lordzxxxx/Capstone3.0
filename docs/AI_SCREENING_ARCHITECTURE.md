@@ -11,6 +11,18 @@ The BHW verifies the recorded information, reviews the result, and decides
 whether to continue the normal workflow or open the existing referral flow.
 Nothing in the screening engine submits a referral automatically.
 
+The separate symptom-guidance path is orchestrated as:
+
+```text
+validated input -> known-term recognition -> bounded Firestore retrieval
+        -> citation/source validation -> optional structured explanation provider
+        -> deterministic safety checks -> BHW review
+```
+
+The explanation provider is optional and disabled by default. Retrieved
+evidence cannot override deterministic screening warnings, access controls, or
+the human-review requirement.
+
 ## Runtime flow
 
 ```text

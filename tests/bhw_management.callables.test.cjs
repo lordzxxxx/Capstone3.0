@@ -1,15 +1,14 @@
 const assert = require('node:assert/strict');
 
 const admin = require('../functions/node_modules/firebase-admin');
+const {getAuth} = require('../functions/node_modules/firebase-admin/lib/auth');
+const {getFirestore} = require('../functions/node_modules/firebase-admin/lib/firestore');
 
 const projectId = process.env.GCLOUD_PROJECT || 'capstone-c98f9';
-if (!admin.apps.length) admin.initializeApp({projectId});
+if (!admin.getApps().length) admin.initializeApp({projectId});
 
-const db = new admin.firestore.Firestore({
-  projectId,
-  databaseId: 'capstone-c98f9',
-});
-const auth = admin.auth();
+const db = getFirestore(admin.getApp(), 'capstone-c98f9');
+const auth = getAuth(admin.getApp());
 const password = 'A-strong-test-password-123!';
 const adminUid = 'bhw-management-test-admin';
 const targetUid = 'bhw-management-test-target';

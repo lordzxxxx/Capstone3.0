@@ -1,6 +1,7 @@
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v1');
 const admin = require('firebase-admin');
-const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const {getAuth} = require('firebase-admin/auth');
+const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
 const crypto = require('crypto');
 const {sendSystemEmail} = require('./mailer');
 const {
@@ -32,11 +33,12 @@ const cors = require('cors')({
   },
 });
 
-if (!admin.apps.length) {
+if (!(typeof admin.getApps === 'function' ? admin.getApps() : admin.apps).length) {
   admin.initializeApp();
 }
 const FIRESTORE_DATABASE_ID = process.env.FIRESTORE_DATABASE_ID || 'capstone-c98f9';
-const db = getFirestore(admin.app(), FIRESTORE_DATABASE_ID);
+const db = getFirestore(admin.getApp(), FIRESTORE_DATABASE_ID);
+const auth = getAuth(admin.getApp());
 
 // Server-side rate limiting for the password-reset flow. Firestore-backed
 // (not in-memory) so the limit holds across concurrent/cold-started
@@ -205,7 +207,7 @@ exports.sendPasswordResetEmail = functions.runWith({
       // Verify user exists
       let user;
       try {
-        user = await admin.auth().getUserByEmail(email);
+        user = await auth.getUserByEmail(email);
       } catch (err) {
         // Don't leak whether user exists
         console.warn('Password reset requested for an unknown address', {
@@ -247,7 +249,7 @@ exports.sendPasswordResetEmail = functions.runWith({
           hashedCode: hash,
           salt,
           createdAt: FieldValue.serverTimestamp(),
-          expiryAt: admin.firestore.Timestamp.fromDate(expiryTime),
+        expiryAt: Timestamp.fromDate(expiryTime),
           attempts: 0,
           verified: false,
         });
@@ -472,13 +474,13 @@ exports.completePasswordReset = functions.https.onRequest((req, res) => {
 
       // Update password in Firebase Auth
       try {
-        const user = await admin.auth().getUserByEmail(email);
-        await admin.auth().updateUser(user.uid, {
+        const user = await auth.getUserByEmail(email);
+        await auth.updateUser(user.uid, {
           password: newPassword,
         });
         // Invalidate refresh tokens so other devices must authenticate again.
         // The AI API also verifies revoked Firebase ID tokens.
-        await admin.auth().revokeRefreshTokens(user.uid);
+        await auth.revokeRefreshTokens(user.uid);
 
         await writeSecurityEvent('password_reset_completed', {
           emailHash: hashRateLimitKey(email),

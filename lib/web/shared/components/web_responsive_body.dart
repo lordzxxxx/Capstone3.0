@@ -118,9 +118,11 @@ class WebMobileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.backgroundDark,
-      elevation: 4,
+    return WebGlassSurface(
+      borderRadius: BorderRadius.zero,
+      tint: AppColors.backgroundDark,
+      tintOpacity: 0.92,
+      borderColor: Colors.white.withValues(alpha: 0.14),
       child: SizedBox(
         height: 64,
         child: Padding(

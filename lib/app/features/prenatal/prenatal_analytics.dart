@@ -219,8 +219,9 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
         _value(record, 'ai_category'),
       ].join(' ').toLowerCase();
       for (final entry in terms.entries) {
-        if (entry.value.any(text.contains))
+        if (entry.value.any(text.contains)) {
           result[entry.key] = result[entry.key]! + 1;
+        }
       }
     }
     return result;
@@ -665,8 +666,9 @@ class _PrenatalAnalyticsPageState extends State<PrenatalAnalyticsPage> {
                         reservedSize: 52,
                         getTitlesWidget: (value, meta) {
                           final index = value.toInt();
-                          if (index < 0 || index >= entries.length)
+                          if (index < 0 || index >= entries.length) {
                             return const SizedBox.shrink();
+                          }
                           return SideTitleWidget(
                             meta: meta,
                             space: 8,

@@ -1,6 +1,6 @@
 # AI data and safety validation report
 
-Verification date: 2026-08-15.
+Verification date: 2026-10-15.
 
 This report is the canonical summary for Phase 4. It separates offline model
 agreement with a dataset from clinical validation. The system must not present
@@ -58,6 +58,24 @@ The repository verifies:
 Evidence includes `backend/tests/test_symptom_guidance.py`,
 `test/disease_prediction_api_service_test.dart`, and the classifier safety
 tests under `test/app/`.
+
+## Retrieval and explanation validation
+
+The active `/guidance` path now separates retrieval from classification and
+generation. `backend/app/rag_service.py` ranks active Firestore guidance using
+a bounded local TF-IDF vector plus keyword/metadata overlap, emits stable
+citation IDs, and preserves source version and clinical-review status.
+`backend/app/ai_orchestration.py`
+provides a deterministic local provider plus an optional OpenAI-compatible JSON
+provider. The optional provider is disabled by default and is exercised only
+with mocked responses in `backend/tests/test_rag_orchestration.py`.
+
+Measured local checks cover exact-source ranking, citation traceability,
+prompt-injection-as-data handling, structured-output validation, unknown
+citation rejection, medication-wording rejection, and deterministic fallback.
+No live LLM call or embedding-model/vector-database benchmark was performed. These
+are implementation and safety checks, not evidence of clinical quality or
+improved disease-classification accuracy.
 
 ## Small manually labeled local set — VAL-10
 

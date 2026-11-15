@@ -39,6 +39,8 @@ class CHOPreferralPage extends StatefulWidget {
 }
 
 class _CHOPreferralPageState extends State<CHOPreferralPage> {
+  static const int _referralReadLimit = 500;
+
   final FirebaseFirestore _firestore = getFirestoreInstance();
   final PatientCenteredHistoryService _patientHistoryService =
       PatientCenteredHistoryService();
@@ -95,7 +97,10 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
       }
       if (!mounted) return;
       setState(() {
-        _stream = _firestore.collection('referrals').snapshots();
+        _stream = _firestore
+            .collection('referrals')
+            .limit(_referralReadLimit)
+            .snapshots();
         _isChoAdmin = scope.isChoAdmin;
         _loadingScope = false;
       });
@@ -831,27 +836,41 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                           'role': 'DOCTOR',
                           'updatedAt': FieldValue.serverTimestamp(),
                         };
-                        final targets = <DocumentReference<Map<String, dynamic>>>[
-                          ...doctor.references,
-                        ];
-                        final doctorUid = _s(data, ['userUid', 'uid', 'userId']);
+                        final targets =
+                            <DocumentReference<Map<String, dynamic>>>[
+                              ...doctor.references,
+                            ];
+                        final doctorUid = _s(data, [
+                          'userUid',
+                          'uid',
+                          'userId',
+                        ]);
                         if (doctorUid.isNotEmpty &&
                             !targets.any((r) => r.path == 'users/$doctorUid')) {
-                          targets.add(_firestore.collection('users').doc(doctorUid));
+                          targets.add(
+                            _firestore.collection('users').doc(doctorUid),
+                          );
                         }
                         if (targets.isEmpty) {
-                          throw StateError('No doctor record reference found to update.');
+                          throw StateError(
+                            'No doctor record reference found to update.',
+                          );
                         }
 
                         var updatedCount = 0;
                         dynamic lastError;
                         for (final reference in targets) {
                           try {
-                            await reference.set(update, SetOptions(merge: true));
+                            await reference.set(
+                              update,
+                              SetOptions(merge: true),
+                            );
                             updatedCount++;
                           } catch (refError) {
                             lastError = refError;
-                            debugPrint('Error updating target ${reference.path}: $refError');
+                            debugPrint(
+                              'Error updating target ${reference.path}: $refError',
+                            );
                           }
                         }
 
@@ -865,7 +884,9 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
                             );
                             updatedCount++;
                           } catch (apiError) {
-                            debugPrint('AccountPolicyService updateChoAccount: $apiError');
+                            debugPrint(
+                              'AccountPolicyService updateChoAccount: $apiError',
+                            );
                           }
                         }
 
@@ -972,7 +993,9 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           updatedCount++;
         } catch (refError) {
           lastError = refError;
-          debugPrint('Error updating availability target ${reference.path}: $refError');
+          debugPrint(
+            'Error updating availability target ${reference.path}: $refError',
+          );
         }
       }
       if (doctorUid.isNotEmpty) {
@@ -1070,7 +1093,9 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
         throw lastError;
       }
       await _loadDoctorDirectory();
-      if (mounted) _snack('Doctor deactivated and removed from new assignments.');
+      if (mounted) {
+        _snack('Doctor deactivated and removed from new assignments.');
+      }
     } catch (error) {
       if (mounted) _snack('Could not deactivate doctor: $error');
     }
@@ -1086,6 +1111,24 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (records.length >= _referralReadLimit) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: ChoColors.warning.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: ChoColors.warning.withValues(alpha: 0.35),
+              ),
+            ),
+            child: const Text(
+              'This workspace is showing up to 500 referrals for stability. Use reporting filters for a complete historical review.',
+              style: TextStyle(color: ChoColors.warning, fontSize: 12),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         ChoKpiGrid(
           children: [
             _kpi('Total Referrals', records.length, Icons.swap_horiz_rounded),

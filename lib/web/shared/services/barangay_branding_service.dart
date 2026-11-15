@@ -5,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_logo_assets.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
+import 'package:mycapstone_project/web/shared/services/storage_upload_policy.dart';
 
 class BarangayBrandingProfile {
   final BarangayReference barangay;
@@ -177,13 +178,16 @@ class BarangayBrandingService {
     required String contentType,
     required bool isSignature,
   }) async {
+    StorageUploadPolicy.validateBranding(
+      size: bytes.length,
+      fileName: originalFileName,
+      contentType: contentType,
+    );
     final assetType = isSignature ? 'esign' : 'logo';
     final sanitizedName = originalFileName
         .replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_')
         .toLowerCase();
-    final extension = sanitizedName.contains('.')
-        ? sanitizedName.split('.').last
-        : 'png';
+    final extension = sanitizedName.split('.').last;
     final storagePath =
         'barangay-branding/${barangay.code}/$assetType-${DateTime.now().millisecondsSinceEpoch}.$extension';
     final ref = _storage.ref().child(storagePath);

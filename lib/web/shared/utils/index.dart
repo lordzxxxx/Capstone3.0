@@ -31,6 +31,7 @@ export 'browser_reload.dart';
 export 'csv_download.dart';
 export 'file_download.dart';
 export 'report_download.dart';
+export 'referral_attachment_download.dart';
 export 'report_print.dart';
 export 'web_file_picker.dart';
 

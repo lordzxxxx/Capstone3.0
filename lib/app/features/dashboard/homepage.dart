@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
-import 'package:flutter/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
@@ -12,16 +11,7 @@ import 'package:mycapstone_project/app/features/auth/signup.dart';
 import 'package:community_charts_flutter/community_charts_flutter.dart'
     as charts;
 import 'package:fl_chart/fl_chart.dart';
-import 'package:mycapstone_project/app/features/checkups/checkup.dart';
 import 'package:mycapstone_project/app/features/analytics/analytics.dart';
-import 'package:mycapstone_project/app/features/referrals/referrals.dart';
-import 'package:mycapstone_project/app/features/prenatal/prenatal.dart';
-import 'package:mycapstone_project/app/features/immunization/immunization.dart';
-import 'package:mycapstone_project/app/features/patients/patient.dart';
-import 'package:mycapstone_project/app/features/surveillance/communicable/communicable_list.dart';
-import 'package:mycapstone_project/app/features/surveillance/non_communicable/non_communicable.dart';
-import 'package:mycapstone_project/app/features/surveillance/mortality/mortality.dart';
-import 'package:mycapstone_project/app/features/surveillance/morbidity/morbidity_list.dart';
 import 'package:mycapstone_project/app/features/checkups/checkup_database_helper.dart';
 import 'package:mycapstone_project/app/shared/widgets/app_metric_card.dart';
 import 'package:mycapstone_project/app/features/prenatal/prenatal_database_helper.dart';
@@ -2794,7 +2784,6 @@ class _HomePageState extends State<HomePage> {
     required String title,
     required String value,
     required IconData icon,
-    Color? color,
   }) {
     return AppMetricCard(label: title, value: value, icon: icon);
   }

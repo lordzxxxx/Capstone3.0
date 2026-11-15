@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:mycapstone_project/web/roles/bhw/patients/patient_centered_history_service.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/patient_identity_utils.dart';
 
 class PatientSelectionResult {

@@ -328,7 +328,7 @@ void main() {
 
   // No AI guidance text may ever recommend a specific medication, dosage,
   // or prescription. Doctors remain solely responsible for those decisions
-  // (see AI_ALGORITHM_QA.md). This must hold for every guidance list,
+  // (see docs/AI_SAFETY_LIMITATIONS.md). This must hold for every guidance list,
   // regardless of whether the ML model or the rule-based path produced it.
   final forbiddenMedicationWording = RegExp(
     r'\b(medications?|medicines?|dosage|prescription|prescribed|antibiotics?|inhaler)\b',

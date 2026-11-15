@@ -340,6 +340,9 @@ class SymptomGuidanceResult {
     required this.categoryUnmappedConditions,
     required this.categoryMatchedSymptoms,
     required this.categoryUnmappedSymptoms,
+    required this.retrievedEvidence,
+    required this.retrievalMethod,
+    required this.groundedExplanation,
   });
 
   factory SymptomGuidanceResult.fromJson(Map<String, dynamic> json) {
@@ -370,6 +373,11 @@ class SymptomGuidanceResult {
       categoryUnmappedConditions: _strings(json['categoryUnmappedConditions']),
       categoryMatchedSymptoms: _strings(json['categoryMatchedSymptoms']),
       categoryUnmappedSymptoms: _strings(json['categoryUnmappedSymptoms']),
+      retrievedEvidence: _maps(json['retrievedEvidence']),
+      retrievalMethod:
+          _nullableString(json['retrievalMethod']) ??
+          'legacy_guidance_response',
+      groundedExplanation: _map(json['explanation']) ?? const {},
     );
   }
 
@@ -435,6 +443,17 @@ class SymptomGuidanceResult {
       categoryUnmappedConditions: const [],
       categoryMatchedSymptoms: keywords,
       categoryUnmappedSymptoms: const [],
+      retrievedEvidence: const [],
+      retrievalMethod: 'local_fallback',
+      groundedExplanation: const {
+        'provider': 'local_fallback',
+        'status': 'fallback_local',
+        'summary':
+            'This local guidance is decision support and does not confirm a diagnosis.',
+        'uncertainty': 'Professional review is required.',
+        'citationIds': <String>[],
+        'promptVersion': 'local-fallback-v1',
+      },
     );
   }
 
@@ -460,6 +479,9 @@ class SymptomGuidanceResult {
   final List<String> categoryUnmappedConditions;
   final List<String> categoryMatchedSymptoms;
   final List<String> categoryUnmappedSymptoms;
+  final List<Map<String, dynamic>> retrievedEvidence;
+  final String retrievalMethod;
+  final Map<String, dynamic> groundedExplanation;
 
   // Compatibility accessors for existing record persistence code.
   String get category => 'Symptom Guidance';
@@ -514,10 +536,22 @@ class SymptomGuidanceResult {
         'matched_guidance_conditions': matchedGuidanceConditions,
         'missing_guidance_conditions': missingGuidanceConditions,
         'references': references,
+        'retrieved_evidence': retrievedEvidence,
+        'retrieval_method': retrievalMethod,
         'disclaimer': disclaimer,
         'decision_support': {
           'explanation':
+              _nullableString(groundedExplanation['summary']) ??
               'This guidance was based on the symptoms and conditions recognized from the text entered for this request. It is educational decision support, not a final diagnosis or prescription.',
+          'uncertainty':
+              _nullableString(groundedExplanation['uncertainty']) ??
+              'Professional review is required.',
+          'provider': groundedExplanation['provider']?.toString() ?? 'legacy',
+          'status': groundedExplanation['status']?.toString() ?? 'legacy',
+          'citation_ids': _strings(groundedExplanation['citationIds']),
+          'prompt_version':
+              groundedExplanation['promptVersion']?.toString() ?? '',
+          'retrieved_evidence': retrievedEvidence,
           'influencing_information': [
             if (recognizedSymptoms.isNotEmpty)
               'Recognized symptoms: ${recognizedSymptoms.join(', ')}',

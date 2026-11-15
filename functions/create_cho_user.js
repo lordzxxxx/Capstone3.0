@@ -12,6 +12,9 @@
  */
 
 const admin = require('firebase-admin');
+const {cert} = require('firebase-admin/app');
+const {getAuth} = require('firebase-admin/auth');
+const {getDatabase} = require('firebase-admin/database');
 const fs = require('fs');
 const path = require('path');
 
@@ -41,7 +44,7 @@ function initAdmin() {
     }
     const key = require(full);
     admin.initializeApp({
-      credential: admin.credential.cert(key),
+      credential: cert(key),
       projectId: key.project_id,
       databaseURL: process.env.FIREBASE_DATABASE_URL || key.databaseURL || `https://${key.project_id}-default-rtdb.firebaseio.com`,
     });
@@ -67,16 +70,16 @@ async function createOrUpdateCho(email) {
   // Try to find existing user
   let userRecord = null;
   try {
-    userRecord = await admin.auth().getUserByEmail(email);
+    userRecord = await auth.getUserByEmail(email);
     console.log('Existing user found:', userRecord.uid);
   } catch (e) {
     // user not found -> create
     console.log('User not found, creating new user for', email);
-    userRecord = await admin.auth().createUser({ email, disabled: false });
+    userRecord = await auth.createUser({ email, disabled: false });
     console.log('Created user:', userRecord.uid);
   }
 
-  await admin.auth().setCustomUserClaims(userRecord.uid, {
+  await auth.setCustomUserClaims(userRecord.uid, {
     role: 'CHO_ADMIN',
     approvalStatus: 'approved',
     accountStatus: 'active',
@@ -84,7 +87,7 @@ async function createOrUpdateCho(email) {
   console.log('Set custom claim role:CHO_ADMIN for', userRecord.uid);
 
   // Write Realtime Database users node
-  await admin.database().ref(`users/${userRecord.uid}`).update({
+  await rtdb.ref(`users/${userRecord.uid}`).update({
     role: 'CHO_ADMIN',
     email,
     approvalStatus: 'approved',
@@ -96,7 +99,7 @@ async function createOrUpdateCho(email) {
   let resetLink = null;
   if (sendReset) {
     try {
-      resetLink = await admin.auth().generatePasswordResetLink(email);
+      resetLink = await auth.generatePasswordResetLink(email);
       const { sendSystemEmail } = require('./mailer');
       await sendSystemEmail({
         to: email,
@@ -114,6 +117,8 @@ async function createOrUpdateCho(email) {
 }
 
 initAdmin();
+const auth = getAuth(admin.getApp());
+const rtdb = getDatabase(admin.getApp());
 const email = emailArg;
 createOrUpdateCho(email).then((res) => {
   console.log('Done. UID:', res.uid);

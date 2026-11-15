@@ -122,6 +122,8 @@ class _PrenatalPageState extends State<PrenatalPage> {
     try {
       await _dbHelper.seedSamplePrenatalData();
 
+      if (!mounted) return;
+
       // Close loading dialog
       Navigator.of(context).pop();
 
@@ -149,6 +151,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       // Close loading dialog
       Navigator.of(context).pop();
 
@@ -703,6 +706,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
     // Delete from database
     await _dbHelper.deleteRecords(idsToDelete);
 
+    if (!mounted) return;
     setState(() {
       _selectedIndices.clear();
       _isSelectionMode = false;
@@ -711,18 +715,17 @@ class _PrenatalPageState extends State<PrenatalPage> {
     // Reload records
     await _loadRecords();
 
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Successfully deleted $count record(s)',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Successfully deleted $count record(s)',
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-      );
-    }
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   List<Map<String, dynamic>> _getPrenatalHistory(Map<String, dynamic> record) {
@@ -760,7 +763,7 @@ class _PrenatalPageState extends State<PrenatalPage> {
   ) async {
     final patient = _buildPatientHistorySeed(record);
     final snapshot = await _patientHistoryService.loadPatientHistory(patient);
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
 
@@ -1836,11 +1839,12 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
     BuildContext context, {
     Map<String, dynamic>? patientSeed,
   }) async {
+    final hadPatientSeed = patientSeed != null;
     patientSeed = await _patientHistoryService.resolveRegisteredPatient(
       patientSeed,
     );
+    if (!context.mounted) return;
     if (patientSeed == null) {
-      if (!context.mounted) return;
       patientSeed = await PatientFirstServiceSelector.selectRegisteredPatient(
         context,
         serviceLabel: 'Prenatal',
@@ -1914,96 +1918,86 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
       return null;
     }
 
-
-    if (patientSeed != null) {
-      final directFirstName = (patientSeed['firstName'] ?? '')
-          .toString()
-          .trim();
-      final directSurname = (patientSeed['surname'] ?? '').toString().trim();
-      if (directFirstName.isNotEmpty || directSurname.isNotEmpty) {
-        firstNameController.text = directFirstName;
-        surnameController.text = directSurname;
-      } else {
-        final seededName =
-            (patientSeed['patientName'] ??
-                    patientSeed['fullName'] ??
-                    patientSeed['patient'] ??
-                    '')
-                .toString()
-                .trim();
-        final nameParts = seededName
-            .split(RegExp(r'\s+'))
-            .where((part) => part.isNotEmpty)
-            .toList();
-        if (nameParts.isNotEmpty) {
-          firstNameController.text = nameParts.first;
-          if (nameParts.length > 1) {
-            surnameController.text = nameParts.sublist(1).join(' ');
-          }
+    final directFirstName = (patientSeed['firstName'] ?? '').toString().trim();
+    final directSurname = (patientSeed['surname'] ?? '').toString().trim();
+    if (directFirstName.isNotEmpty || directSurname.isNotEmpty) {
+      firstNameController.text = directFirstName;
+      surnameController.text = directSurname;
+    } else {
+      final seededName =
+          (patientSeed['patientName'] ??
+                  patientSeed['fullName'] ??
+                  patientSeed['patient'] ??
+                  '')
+              .toString()
+              .trim();
+      final nameParts = seededName
+          .split(RegExp(r'\s+'))
+          .where((part) => part.isNotEmpty)
+          .toList();
+      if (nameParts.isNotEmpty) {
+        firstNameController.text = nameParts.first;
+        if (nameParts.length > 1) {
+          surnameController.text = nameParts.sublist(1).join(' ');
         }
       }
-      ageController.text = (patientSeed['age'] ?? '').toString();
-      final fullAddress = [
-        (patientSeed['address'] ?? '').toString().trim(),
-        (patientSeed['barangay'] ?? '').toString().trim(),
-      ].where((p) => p.isNotEmpty).join(', ');
-      addressController.text = fullAddress.isNotEmpty
-          ? fullAddress
-          : (patientSeed['address'] ?? '').toString();
-      patientIdController.text = (patientSeed['patientId'] ?? '').toString();
-      contactNumberController.text = (patientSeed['contactNumber'] ?? '')
-          .toString();
-      civilStatusController.text = (patientSeed['civilStatus'] ?? '')
-          .toString();
-      philhealthNumberController.text = (patientSeed['philhealthNumber'] ?? '')
-          .toString();
-      philhealthMemberController.text = (patientSeed['philhealthMember'] ?? '')
-          .toString();
-      religionController.text = (patientSeed['religion'] ?? '').toString();
-      gravidaController.text = (patientSeed['gravida'] ?? '').toString();
-      paraController.text = (patientSeed['para'] ?? '').toString();
-      selectedRiskLevel =
-          (patientSeed['riskLevel'] ?? patientSeed['status'] ?? 'Active')
-              .toString();
-      bloodTypeController.text = (patientSeed['bloodType'] ?? '').toString();
-      allergiesController.text = (patientSeed['allergies'] ?? '').toString();
-      preExistingConditionsController.text =
-          (patientSeed['preExistingConditions'] ?? '').toString();
-      previousComplicationsController.text =
-          (patientSeed['previousComplications'] ?? '').toString();
-      aogController.text =
-          (patientSeed['gestationalAge'] ?? patientSeed['aog'] ?? '')
-              .toString();
-      wtController.text = (patientSeed['weight'] ?? patientSeed['wt'] ?? '')
-          .toString();
-      atController.text =
-          (patientSeed['abdominalTenderness'] ?? patientSeed['at'] ?? '')
-              .toString();
-      tempController.text =
-          (patientSeed['temperature'] ?? patientSeed['temp'] ?? '').toString();
-      bpController.text =
-          (patientSeed['bloodPressure'] ?? patientSeed['bp'] ?? '').toString();
-      bmiController.text = (patientSeed['bmi'] ?? '').toString();
-      fhController.text =
-          (patientSeed['fundalHeight'] ?? patientSeed['fh'] ?? '').toString();
-      dhbController.text =
-          (patientSeed['fetalHeartBeat'] ?? patientSeed['dhb'] ?? '')
-              .toString();
-      tcbController.text = (patientSeed['tcb'] ?? '').toString();
-      registeredByController.text = (patientSeed['registeredBy'] ?? '')
-          .toString();
-      additionalNoteController.text =
-          (patientSeed['additionalNotes'] ??
-                  patientSeed['additionalNote'] ??
-                  '')
-              .toString();
-      lmpDate = _parseDate(patientSeed['lmpDate']);
-      eddDate = _parseDate(patientSeed['eddDate'] ?? patientSeed['dueDate']);
-      lastDeliveryDate = _parseDate(patientSeed['lastDeliveryDate']);
-      registrationDate = DateTime.now();
     }
+    ageController.text = (patientSeed['age'] ?? '').toString();
+    final fullAddress = [
+      (patientSeed['address'] ?? '').toString().trim(),
+      (patientSeed['barangay'] ?? '').toString().trim(),
+    ].where((p) => p.isNotEmpty).join(', ');
+    addressController.text = fullAddress.isNotEmpty
+        ? fullAddress
+        : (patientSeed['address'] ?? '').toString();
+    patientIdController.text = (patientSeed['patientId'] ?? '').toString();
+    contactNumberController.text = (patientSeed['contactNumber'] ?? '')
+        .toString();
+    civilStatusController.text = (patientSeed['civilStatus'] ?? '').toString();
+    philhealthNumberController.text = (patientSeed['philhealthNumber'] ?? '')
+        .toString();
+    philhealthMemberController.text = (patientSeed['philhealthMember'] ?? '')
+        .toString();
+    religionController.text = (patientSeed['religion'] ?? '').toString();
+    gravidaController.text = (patientSeed['gravida'] ?? '').toString();
+    paraController.text = (patientSeed['para'] ?? '').toString();
+    selectedRiskLevel =
+        (patientSeed['riskLevel'] ?? patientSeed['status'] ?? 'Active')
+            .toString();
+    bloodTypeController.text = (patientSeed['bloodType'] ?? '').toString();
+    allergiesController.text = (patientSeed['allergies'] ?? '').toString();
+    preExistingConditionsController.text =
+        (patientSeed['preExistingConditions'] ?? '').toString();
+    previousComplicationsController.text =
+        (patientSeed['previousComplications'] ?? '').toString();
+    aogController.text =
+        (patientSeed['gestationalAge'] ?? patientSeed['aog'] ?? '').toString();
+    wtController.text = (patientSeed['weight'] ?? patientSeed['wt'] ?? '')
+        .toString();
+    atController.text =
+        (patientSeed['abdominalTenderness'] ?? patientSeed['at'] ?? '')
+            .toString();
+    tempController.text =
+        (patientSeed['temperature'] ?? patientSeed['temp'] ?? '').toString();
+    bpController.text =
+        (patientSeed['bloodPressure'] ?? patientSeed['bp'] ?? '').toString();
+    bmiController.text = (patientSeed['bmi'] ?? '').toString();
+    fhController.text = (patientSeed['fundalHeight'] ?? patientSeed['fh'] ?? '')
+        .toString();
+    dhbController.text =
+        (patientSeed['fetalHeartBeat'] ?? patientSeed['dhb'] ?? '').toString();
+    tcbController.text = (patientSeed['tcb'] ?? '').toString();
+    registeredByController.text = (patientSeed['registeredBy'] ?? '')
+        .toString();
+    additionalNoteController.text =
+        (patientSeed['additionalNotes'] ?? patientSeed['additionalNote'] ?? '')
+            .toString();
+    lmpDate = _parseDate(patientSeed['lmpDate']);
+    eddDate = _parseDate(patientSeed['eddDate'] ?? patientSeed['dueDate']);
+    lastDeliveryDate = _parseDate(patientSeed['lastDeliveryDate']);
+    registrationDate = DateTime.now();
 
-    final isFollowUpVisit = patientSeed != null;
+    final isFollowUpVisit = hadPatientSeed;
     final modalTitle = isFollowUpVisit
         ? 'Add Another Prenatal Visit'
         : 'New Prenatal Care Record';
@@ -2011,6 +2005,7 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
         ? 'Record maternal health follow-up for the registered patient.'
         : 'Register and evaluate a prenatal patient record';
 
+    if (!context.mounted) return;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -2025,7 +2020,9 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
             builder: (context, scrollController) => Container(
               decoration: BoxDecoration(
                 color: _darkDeepTeal,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.1),
@@ -2051,17 +2048,23 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                               children: [
                                 Text(
                                   modalTitle,
-                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                    color: _lightOffWhite,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        color: _lightOffWhite,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   modalSubtitle,
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: _lightOffWhite.withValues(alpha: 0.8),
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: _lightOffWhite.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                      ),
                                 ),
                               ],
                             ),
@@ -2103,596 +2106,602 @@ extension _PrenatalPageStateExtension on _PrenatalPageState {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                          // Patient Information Area
-                          _buildSectionHeader(
-                            'Patient Information',
-                            Icons.person,
-                          ),
-                          _buildFormCard([
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: firstNameController,
-                                    label: 'First Name',
-                                    icon: Icons.person_outline,
-                                    hintText: 'Enter first name',
-                                    validator: requiredValidator,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: surnameController,
-                                    label: 'Surname',
-                                    icon: Icons.person_outline,
-                                    hintText: 'Enter surname',
-                                    validator: requiredValidator,
-                                  ),
-                                ),
-                              ],
+                            // Patient Information Area
+                            _buildSectionHeader(
+                              'Patient Information',
+                              Icons.person,
                             ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: ageController,
-                                    label: 'Age',
-                                    icon: Icons.cake,
-                                    hintText: 'Enter age',
-                                    keyboardType: TextInputType.number,
-                                    validator: ageValidator,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: patientIdController,
-                                    label: 'Patient ID',
-                                    icon: Icons.badge,
-                                    hintText: 'e.g., PAT-2026-001',
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: addressController,
-                              label: 'Address',
-                              icon: Icons.home,
-                              hintText: 'Enter complete address',
-                              maxLines: 2,
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: contactNumberController,
-                              label: 'Contact Number',
-                              icon: Icons.phone,
-                              hintText: 'e.g., +63 912 345 6789',
-                              keyboardType: TextInputType.phone,
-                              validator: requiredValidator,
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: civilStatusController,
-                                    label: 'Civil Status',
-                                    icon: Icons.favorite,
-                                    hintText: 'e.g., Single, Married',
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: religionController,
-                                    label: 'Religion',
-                                    icon: Icons.church,
-                                    hintText: 'Enter religion',
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: philhealthNumberController,
-                                    label: 'Philhealth Number',
-                                    icon: Icons.medical_information,
-                                    hintText: 'Enter Philhealth #',
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: philhealthMemberController,
-                                    label: 'Philhealth Member',
-                                    icon: Icons.card_membership,
-                                    hintText: 'Member name',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ]),
-                          const SizedBox(height: 24),
-
-                          // Pregnancy Detail Area
-                          _buildSectionHeader(
-                            'Pregnancy Detail',
-                            Icons.child_care,
-                          ),
-                          _buildFormCard([
-                            _buildDatePickerField(
-                              context: context,
-                              label: 'Last Menstrual Period (LMP)',
-                              date: lmpDate,
-                              icon: Icons.calendar_today,
-                              onTap: () async {
-                                final picked = await _showDatePickerModal(
-                                  context,
-                                );
-                                if (picked != null) {
-                                  setModalState(() => lmpDate = picked);
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            _buildDatePickerField(
-                              context: context,
-                              label: 'Estimated Due Date (EDD)',
-                              date: eddDate,
-                              icon: Icons.event,
-                              onTap: () async {
-                                final picked = await _showDatePickerModal(
-                                  context,
-                                );
-                                if (picked != null) {
-                                  setModalState(() => eddDate = picked);
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            _buildDatePickerField(
-                              context: context,
-                              label: 'Last Date of Delivery',
-                              date: lastDeliveryDate,
-                              icon: Icons.child_friendly,
-                              onTap: () async {
-                                final picked = await _showDatePickerModal(
-                                  context,
-                                );
-                                if (picked != null) {
-                                  setModalState(
-                                    () => lastDeliveryDate = picked,
-                                  );
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: gravidaController,
-                                    label: 'Gravida (Number of Pregnancy)',
-                                    icon: Icons.numbers,
-                                    hintText: 'e.g., 1, 2, 3',
-                                    keyboardType: TextInputType.number,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: paraController,
-                                    label: 'Para (Number of Live Births)',
-                                    icon: Icons.numbers,
-                                    hintText: 'e.g., 0, 1, 2',
-                                    keyboardType: TextInputType.number,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            _buildDropdownField(
-                              label: 'Risk Level',
-                              value: selectedRiskLevel,
-                              icon: Icons.warning_amber,
-                              items: ['Active', 'Follow Up', 'High Risk'],
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setModalState(
-                                    () => selectedRiskLevel = value,
-                                  );
-                                }
-                              },
-                            ),
-                          ]),
-                          const SizedBox(height: 24),
-
-                          // Medical History Area
-                          _buildSectionHeader(
-                            'Medical History',
-                            Icons.medical_services,
-                          ),
-                          _buildFormCard([
-                            _buildTextField(
-                              controller: bloodTypeController,
-                              label: 'Blood Type',
-                              icon: Icons.bloodtype,
-                              hintText: 'e.g., A+, B-, O+, AB+',
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: allergiesController,
-                              label: 'Allergies',
-                              icon: Icons.health_and_safety,
-                              hintText: 'List any known allergies',
-                              maxLines: 2,
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: preExistingConditionsController,
-                              label: 'Pre-existing Medical Conditions',
-                              icon: Icons.local_hospital,
-                              hintText: 'e.g., Diabetes, Hypertension, Asthma',
-                              maxLines: 3,
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: previousComplicationsController,
-                              label: 'Previous Pregnancy Complications',
-                              icon: Icons.warning,
-                              hintText:
-                                  'List any complications from previous pregnancies',
-                              maxLines: 3,
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: aogController,
-                                    label: 'AOG (Age of Gestation)',
-                                    icon: Icons.calendar_view_week,
-                                    hintText: 'e.g., 28 weeks',
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: wtController,
-                                    label: 'WT (Weight)',
-                                    icon: Icons.monitor_weight,
-                                    hintText: 'e.g., 65 kg',
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: tempController,
-                                    label: 'TEMP (Temperature)',
-                                    icon: Icons.thermostat,
-                                    hintText: 'e.g., 36.5°C',
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: bpController,
-                                    label: 'BP (Blood Pressure)',
-                                    icon: Icons.favorite,
-                                    hintText: 'e.g., 120/80',
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: bmiController,
-                                    label: 'BMI (Body Mass Index)',
-                                    icon: Icons.assessment,
-                                    hintText: 'e.g., 22.5',
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: fhController,
-                                    label: 'FH (Fundal Height)',
-                                    icon: Icons.straighten,
-                                    hintText: 'e.g., 28 cm',
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: dhbController,
-                                    label: 'DHB (Fetal Heart Beat)',
-                                    icon: Icons.favorite_border,
-                                    hintText: 'e.g., 140 bpm',
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: atController,
-                                    label: 'AT (Abdominal Tenderness)',
-                                    icon: Icons.touch_app,
-                                    hintText: 'e.g., None, Mild',
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: tcbController,
-                              label: 'TCB (Total Bilirubin)',
-                              icon: Icons.science,
-                              hintText: 'e.g., 0.8 mg/dL',
-                            ),
-                          ]),
-                          const SizedBox(height: 24),
-
-                          // Registration Details Area
-                          _buildSectionHeader(
-                            'Registration Details',
-                            Icons.app_registration,
-                          ),
-                          _buildFormCard([
-                            _buildDatePickerField(
-                              context: context,
-                              label: 'Registration Date',
-                              date: registrationDate,
-                              icon: Icons.calendar_month,
-                              onTap: () async {
-                                final picked = await _showDatePickerModal(
-                                  context,
-                                );
-                                if (picked != null) {
-                                  setModalState(
-                                    () => registrationDate = picked,
-                                  );
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: registeredByController,
-                              label: 'Registered By',
-                              icon: Icons.person_pin,
-                              hintText: 'Enter staff name or ID',
-                              validator: requiredValidator,
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: additionalNoteController,
-                              label: 'Additional Note',
-                              icon: Icons.note,
-                              hintText: 'Enter any additional notes or remarks',
-                              maxLines: 4,
-                            ),
-                          ]),
-                          const SizedBox(height: 32),
-
-                          // Submit Button
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                final isFormValid =
-                                    formKey.currentState?.validate() ?? false;
-                                final isLmpDateValid = lmpDate != null;
-                                if (!isLmpDateValid) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('LMP date is required'),
-                                      backgroundColor: Color(0xFFE74C3C),
-                                      behavior: SnackBarBehavior.floating,
+                            _buildFormCard([
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: firstNameController,
+                                      label: 'First Name',
+                                      icon: Icons.person_outline,
+                                      hintText: 'Enter first name',
+                                      validator: requiredValidator,
                                     ),
-                                  );
-                                }
-                                if (!isFormValid || !isLmpDateValid) {
-                                  return;
-                                }
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: surnameController,
+                                      label: 'Surname',
+                                      icon: Icons.person_outline,
+                                      hintText: 'Enter surname',
+                                      validator: requiredValidator,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: ageController,
+                                      label: 'Age',
+                                      icon: Icons.cake,
+                                      hintText: 'Enter age',
+                                      keyboardType: TextInputType.number,
+                                      validator: ageValidator,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: patientIdController,
+                                      label: 'Patient ID',
+                                      icon: Icons.badge,
+                                      hintText: 'e.g., PAT-2026-001',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: addressController,
+                                label: 'Address',
+                                icon: Icons.home,
+                                hintText: 'Enter complete address',
+                                maxLines: 2,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: contactNumberController,
+                                label: 'Contact Number',
+                                icon: Icons.phone,
+                                hintText: 'e.g., +63 912 345 6789',
+                                keyboardType: TextInputType.phone,
+                                validator: requiredValidator,
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: civilStatusController,
+                                      label: 'Civil Status',
+                                      icon: Icons.favorite,
+                                      hintText: 'e.g., Single, Married',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: religionController,
+                                      label: 'Religion',
+                                      icon: Icons.church,
+                                      hintText: 'Enter religion',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: philhealthNumberController,
+                                      label: 'Philhealth Number',
+                                      icon: Icons.medical_information,
+                                      hintText: 'Enter Philhealth #',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: philhealthMemberController,
+                                      label: 'Philhealth Member',
+                                      icon: Icons.card_membership,
+                                      hintText: 'Member name',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ]),
+                            const SizedBox(height: 24),
 
-                                // Create new prenatal record
-                                final linkedPatientId = (patientSeed?['linkedPatientId'] ??
-                                        patientSeed?['id'] ??
-                                        patientIdController.text)
-                                    .toString()
-                                    .trim();
-                                final newRecord = {
-                                  if (linkedPatientId.isNotEmpty)
-                                    'linkedPatientId': linkedPatientId,
-                                  if (patientSeed?['patientCode'] != null)
-                                    'patientCode': patientSeed!['patientCode'],
-                                  'patientName':
-                                      '${firstNameController.text} ${surnameController.text}',
-                                  'age': ageController.text,
-                                  'address': addressController.text,
-                                  'patientId': patientIdController.text,
-                                  'contactNumber': contactNumberController.text,
-                                  'civilStatus': civilStatusController.text,
-                                  'religion': religionController.text,
-                                  'philhealthNumber':
-                                      philhealthNumberController.text,
-                                  'philhealthMember':
-                                      philhealthMemberController.text,
-                                  'lmpDate': lmpDate?.toIso8601String() ?? '',
-                                  'eddDate': eddDate?.toIso8601String() ?? '',
-                                  'lastDeliveryDate':
-                                      lastDeliveryDate?.toIso8601String() ?? '',
-                                  'gravida': gravidaController.text,
-                                  'para': paraController.text,
-                                  'riskLevel': selectedRiskLevel,
-                                  'bloodType': bloodTypeController.text,
-                                  'allergies': allergiesController.text,
-                                  'preExistingConditions':
-                                      preExistingConditionsController.text,
-                                  'previousComplications':
-                                      previousComplicationsController.text,
-                                  'aog': aogController.text,
-                                  'wt': wtController.text,
-                                  'at': atController.text,
-                                  'temp': tempController.text,
-                                  'bp': bpController.text,
-                                  'bmi': bmiController.text,
-                                  'fh': fhController.text,
-                                  'dhb': dhbController.text,
-                                  'tcb': tcbController.text,
-                                  'registrationDate':
-                                      registrationDate?.toIso8601String() ?? '',
-                                  'registeredBy': registeredByController.text,
-                                  'additionalNote':
-                                      additionalNoteController.text,
-                                  'gestationalAge': aogController.text,
-                                  'dueDate': eddDate?.toIso8601String() ?? '',
-                                  'status': selectedRiskLevel,
-                                };
-
-                                // AI Classification
-                                ClassificationResult? classification;
-                                try {
-                                  debugPrint(
-                                    '🤖 Starting prenatal AI classification...',
+                            // Pregnancy Detail Area
+                            _buildSectionHeader(
+                              'Pregnancy Detail',
+                              Icons.child_care,
+                            ),
+                            _buildFormCard([
+                              _buildDatePickerField(
+                                context: context,
+                                label: 'Last Menstrual Period (LMP)',
+                                date: lmpDate,
+                                icon: Icons.calendar_today,
+                                onTap: () async {
+                                  final picked = await _showDatePickerModal(
+                                    context,
                                   );
-                                  classification = await _aiClassifier.classify(
-                                    newRecord,
-                                  );
-                                  debugPrint(
-                                    '✅ Prenatal AI classification complete: ${classification.category}',
-                                  );
-
-                                  newRecord['ai_category'] =
-                                      classification.category;
-                                  newRecord['ai_severity'] =
-                                      classification.severity;
-                                  newRecord['ai_confidence'] = classification
-                                      .confidence
-                                      .toString();
-                                  newRecord['ai_method'] =
-                                      classification.method;
-                                  if (classification.keywords != null) {
-                                    newRecord['ai_keywords'] = classification
-                                        .keywords!
-                                        .join(', ');
+                                  if (picked != null) {
+                                    setModalState(() => lmpDate = picked);
                                   }
-                                  if (classification.recoveryPlan != null) {
-                                    final recoveryPlan =
-                                        Map<String, dynamic>.from(
-                                          classification.recoveryPlan!,
-                                        );
-                                    if (classification.decisionSupport !=
-                                        null) {
-                                      recoveryPlan['decision_support'] =
-                                          classification.decisionSupport!
-                                              .toJson();
-                                    }
-                                    newRecord['ai_recovery_plan'] = jsonEncode(
-                                      recoveryPlan,
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _buildDatePickerField(
+                                context: context,
+                                label: 'Estimated Due Date (EDD)',
+                                date: eddDate,
+                                icon: Icons.event,
+                                onTap: () async {
+                                  final picked = await _showDatePickerModal(
+                                    context,
+                                  );
+                                  if (picked != null) {
+                                    setModalState(() => eddDate = picked);
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _buildDatePickerField(
+                                context: context,
+                                label: 'Last Date of Delivery',
+                                date: lastDeliveryDate,
+                                icon: Icons.child_friendly,
+                                onTap: () async {
+                                  final picked = await _showDatePickerModal(
+                                    context,
+                                  );
+                                  if (picked != null) {
+                                    setModalState(
+                                      () => lastDeliveryDate = picked,
                                     );
                                   }
-                                } catch (e) {
-                                  debugPrint(
-                                    '❌ Prenatal AI classification failed: $e',
-                                  );
-                                }
-
-                                newRecord.addAll(
-                                  HealthScreeningEngine.attachToRecord(
-                                    newRecord,
-                                    HealthScreeningEngine.evaluate({
-                                      ...newRecord,
-                                      'pregnant': true,
-                                    }),
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: gravidaController,
+                                      label: 'Gravida (Number of Pregnancy)',
+                                      icon: Icons.numbers,
+                                      hintText: 'e.g., 1, 2, 3',
+                                      keyboardType: TextInputType.number,
+                                    ),
                                   ),
-                                );
-                                if (newRecord['ai_recovery_plan'] is Map) {
-                                  newRecord['ai_recovery_plan'] = jsonEncode(
-                                    newRecord['ai_recovery_plan'],
-                                  );
-                                }
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: paraController,
+                                      label: 'Para (Number of Live Births)',
+                                      icon: Icons.numbers,
+                                      hintText: 'e.g., 0, 1, 2',
+                                      keyboardType: TextInputType.number,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              _buildDropdownField(
+                                label: 'Risk Level',
+                                value: selectedRiskLevel,
+                                icon: Icons.warning_amber,
+                                items: ['Active', 'Follow Up', 'High Risk'],
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setModalState(
+                                      () => selectedRiskLevel = value,
+                                    );
+                                  }
+                                },
+                              ),
+                            ]),
+                            const SizedBox(height: 24),
 
-                                // Save to database (offline + Firebase sync)
-                                await _dbHelper.insertRecord(newRecord);
+                            // Medical History Area
+                            _buildSectionHeader(
+                              'Medical History',
+                              Icons.medical_services,
+                            ),
+                            _buildFormCard([
+                              _buildTextField(
+                                controller: bloodTypeController,
+                                label: 'Blood Type',
+                                icon: Icons.bloodtype,
+                                hintText: 'e.g., A+, B-, O+, AB+',
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: allergiesController,
+                                label: 'Allergies',
+                                icon: Icons.health_and_safety,
+                                hintText: 'List any known allergies',
+                                maxLines: 2,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: preExistingConditionsController,
+                                label: 'Pre-existing Medical Conditions',
+                                icon: Icons.local_hospital,
+                                hintText:
+                                    'e.g., Diabetes, Hypertension, Asthma',
+                                maxLines: 3,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: previousComplicationsController,
+                                label: 'Previous Pregnancy Complications',
+                                icon: Icons.warning,
+                                hintText:
+                                    'List any complications from previous pregnancies',
+                                maxLines: 3,
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: aogController,
+                                      label: 'AOG (Age of Gestation)',
+                                      icon: Icons.calendar_view_week,
+                                      hintText: 'e.g., 28 weeks',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: wtController,
+                                      label: 'WT (Weight)',
+                                      icon: Icons.monitor_weight,
+                                      hintText: 'e.g., 65 kg',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: tempController,
+                                      label: 'TEMP (Temperature)',
+                                      icon: Icons.thermostat,
+                                      hintText: 'e.g., 36.5°C',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: bpController,
+                                      label: 'BP (Blood Pressure)',
+                                      icon: Icons.favorite,
+                                      hintText: 'e.g., 120/80',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: bmiController,
+                                      label: 'BMI (Body Mass Index)',
+                                      icon: Icons.assessment,
+                                      hintText: 'e.g., 22.5',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: fhController,
+                                      label: 'FH (Fundal Height)',
+                                      icon: Icons.straighten,
+                                      hintText: 'e.g., 28 cm',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: dhbController,
+                                      label: 'DHB (Fetal Heart Beat)',
+                                      icon: Icons.favorite_border,
+                                      hintText: 'e.g., 140 bpm',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: atController,
+                                      label: 'AT (Abdominal Tenderness)',
+                                      icon: Icons.touch_app,
+                                      hintText: 'e.g., None, Mild',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: tcbController,
+                                label: 'TCB (Total Bilirubin)',
+                                icon: Icons.science,
+                                hintText: 'e.g., 0.8 mg/dL',
+                              ),
+                            ]),
+                            const SizedBox(height: 24),
 
-                                // Reload records
-                                await _loadRecords();
-
-                                // Show AI Classification modal with loading spinner
-                                if (context.mounted && classification != null) {
-                                  await _showPrenatalAIModal(
+                            // Registration Details Area
+                            _buildSectionHeader(
+                              'Registration Details',
+                              Icons.app_registration,
+                            ),
+                            _buildFormCard([
+                              _buildDatePickerField(
+                                context: context,
+                                label: 'Registration Date',
+                                date: registrationDate,
+                                icon: Icons.calendar_month,
+                                onTap: () async {
+                                  final picked = await _showDatePickerModal(
                                     context,
-                                    classification,
                                   );
-                                }
+                                  if (picked != null) {
+                                    setModalState(
+                                      () => registrationDate = picked,
+                                    );
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: registeredByController,
+                                label: 'Registered By',
+                                icon: Icons.person_pin,
+                                hintText: 'Enter staff name or ID',
+                                validator: requiredValidator,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: additionalNoteController,
+                                label: 'Additional Note',
+                                icon: Icons.note,
+                                hintText:
+                                    'Enter any additional notes or remarks',
+                                maxLines: 4,
+                              ),
+                            ]),
+                            const SizedBox(height: 32),
 
-                                if (context.mounted) {
-                                  Navigator.pop(context);
-                                }
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Prenatal registration saved successfully!',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                            // Submit Button
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  final isFormValid =
+                                      formKey.currentState?.validate() ?? false;
+                                  final isLmpDateValid = lmpDate != null;
+                                  if (!isLmpDateValid) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('LMP date is required'),
+                                        backgroundColor: Color(0xFFE74C3C),
+                                        behavior: SnackBarBehavior.floating,
                                       ),
-                                      backgroundColor: Colors.green,
-                                      behavior: SnackBarBehavior.floating,
+                                    );
+                                  }
+                                  if (!isFormValid || !isLmpDateValid) {
+                                    return;
+                                  }
+
+                                  // Create new prenatal record
+                                  final linkedPatientId =
+                                      (patientSeed?['linkedPatientId'] ??
+                                              patientSeed?['id'] ??
+                                              patientIdController.text)
+                                          .toString()
+                                          .trim();
+                                  final newRecord = {
+                                    if (linkedPatientId.isNotEmpty)
+                                      'linkedPatientId': linkedPatientId,
+                                    if (patientSeed?['patientCode'] != null)
+                                      'patientCode':
+                                          patientSeed!['patientCode'],
+                                    'patientName':
+                                        '${firstNameController.text} ${surnameController.text}',
+                                    'age': ageController.text,
+                                    'address': addressController.text,
+                                    'patientId': patientIdController.text,
+                                    'contactNumber':
+                                        contactNumberController.text,
+                                    'civilStatus': civilStatusController.text,
+                                    'religion': religionController.text,
+                                    'philhealthNumber':
+                                        philhealthNumberController.text,
+                                    'philhealthMember':
+                                        philhealthMemberController.text,
+                                    'lmpDate': lmpDate?.toIso8601String() ?? '',
+                                    'eddDate': eddDate?.toIso8601String() ?? '',
+                                    'lastDeliveryDate':
+                                        lastDeliveryDate?.toIso8601String() ??
+                                        '',
+                                    'gravida': gravidaController.text,
+                                    'para': paraController.text,
+                                    'riskLevel': selectedRiskLevel,
+                                    'bloodType': bloodTypeController.text,
+                                    'allergies': allergiesController.text,
+                                    'preExistingConditions':
+                                        preExistingConditionsController.text,
+                                    'previousComplications':
+                                        previousComplicationsController.text,
+                                    'aog': aogController.text,
+                                    'wt': wtController.text,
+                                    'at': atController.text,
+                                    'temp': tempController.text,
+                                    'bp': bpController.text,
+                                    'bmi': bmiController.text,
+                                    'fh': fhController.text,
+                                    'dhb': dhbController.text,
+                                    'tcb': tcbController.text,
+                                    'registrationDate':
+                                        registrationDate?.toIso8601String() ??
+                                        '',
+                                    'registeredBy': registeredByController.text,
+                                    'additionalNote':
+                                        additionalNoteController.text,
+                                    'gestationalAge': aogController.text,
+                                    'dueDate': eddDate?.toIso8601String() ?? '',
+                                    'status': selectedRiskLevel,
+                                  };
+
+                                  // AI Classification
+                                  ClassificationResult? classification;
+                                  try {
+                                    debugPrint(
+                                      '🤖 Starting prenatal AI classification...',
+                                    );
+                                    classification = await _aiClassifier
+                                        .classify(newRecord);
+                                    debugPrint(
+                                      '✅ Prenatal AI classification complete: ${classification.category}',
+                                    );
+
+                                    newRecord['ai_category'] =
+                                        classification.category;
+                                    newRecord['ai_severity'] =
+                                        classification.severity;
+                                    newRecord['ai_confidence'] = classification
+                                        .confidence
+                                        .toString();
+                                    newRecord['ai_method'] =
+                                        classification.method;
+                                    if (classification.keywords != null) {
+                                      newRecord['ai_keywords'] = classification
+                                          .keywords!
+                                          .join(', ');
+                                    }
+                                    if (classification.recoveryPlan != null) {
+                                      final recoveryPlan =
+                                          Map<String, dynamic>.from(
+                                            classification.recoveryPlan!,
+                                          );
+                                      if (classification.decisionSupport !=
+                                          null) {
+                                        recoveryPlan['decision_support'] =
+                                            classification.decisionSupport!
+                                                .toJson();
+                                      }
+                                      newRecord['ai_recovery_plan'] =
+                                          jsonEncode(recoveryPlan);
+                                    }
+                                  } catch (e) {
+                                    debugPrint(
+                                      '❌ Prenatal AI classification failed: $e',
+                                    );
+                                  }
+
+                                  newRecord.addAll(
+                                    HealthScreeningEngine.attachToRecord(
+                                      newRecord,
+                                      HealthScreeningEngine.evaluate({
+                                        ...newRecord,
+                                        'pregnant': true,
+                                      }),
                                     ),
                                   );
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _primaryAqua,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
+                                  if (newRecord['ai_recovery_plan'] is Map) {
+                                    newRecord['ai_recovery_plan'] = jsonEncode(
+                                      newRecord['ai_recovery_plan'],
+                                    );
+                                  }
+
+                                  // Save to database (offline + Firebase sync)
+                                  await _dbHelper.insertRecord(newRecord);
+
+                                  // Reload records
+                                  await _loadRecords();
+
+                                  // Show AI Classification modal with loading spinner
+                                  if (context.mounted &&
+                                      classification != null) {
+                                    await _showPrenatalAIModal(
+                                      context,
+                                      classification,
+                                    );
+                                  }
+
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                  }
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Prenatal registration saved successfully!',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.green,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _primaryAqua,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 2,
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 2,
-                              ),
-                              child: const Text(
-                                'Register Prenatal Patient',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                child: const Text(
+                                  'Register Prenatal Patient',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 24),
-                        ],
+                            const SizedBox(height: 24),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      },
-    ),
-  );
+          );
+        },
+      ),
+    );
   }
 
   void _showEditPrenatalModal(

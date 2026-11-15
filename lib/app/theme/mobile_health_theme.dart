@@ -272,7 +272,7 @@ abstract final class AppDesign {
           backgroundColor: surface,
           disabledForegroundColor: disabled,
           side: const BorderSide(color: borderStrong),
-          minimumSize: const Size(48, 44),
+          minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
           shape: rounded,
           textStyle: const TextStyle(fontWeight: FontWeight.w700),
@@ -428,7 +428,10 @@ abstract final class AppDesign {
         return blue;
       }),
       elevation: const WidgetStatePropertyAll(0),
-      minimumSize: const WidgetStatePropertyAll(Size(48, 44)),
+      // Android's recommended touch target is 48dp. Applying it in the
+      // shared theme raises accessibility across every module and dialog,
+      // rather than relying on individual screens to remember it.
+      minimumSize: const WidgetStatePropertyAll(Size(48, 48)),
       padding: const WidgetStatePropertyAll(
         EdgeInsets.symmetric(horizontal: 16, vertical: 11),
       ),

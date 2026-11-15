@@ -297,6 +297,8 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
         savedCount++;
       }
 
+      if (!mounted) return;
+
       // Close loading dialog
       Navigator.of(context).pop();
 
@@ -316,6 +318,7 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       // Close loading dialog
       Navigator.of(context).pop();
 
@@ -397,7 +400,10 @@ class _BarangayRecordsPageState extends State<BarangayRecordsPage> {
                   Expanded(
                     child: Text(
                       'Last updated: ${_lastUpdated != null ? _formatDateTime(_lastUpdated!) : "N/A"}',
-                      style: const TextStyle(color: AppDesign.ink, fontSize: 13),
+                      style: const TextStyle(
+                        color: AppDesign.ink,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ],

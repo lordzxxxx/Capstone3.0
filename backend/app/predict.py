@@ -255,6 +255,15 @@ def load_artifacts(
     )
 
 
+def artifacts_cache_is_warm() -> bool:
+    """Report whether a verified artifact set is already cached.
+
+    This is intentionally non-blocking so liveness endpoints never deserialize
+    the model or perform filesystem work on the request path.
+    """
+    return _load_artifacts_cached.cache_info().currsize > 0
+
+
 def clear_artifact_cache() -> None:
     """Clear cached artifacts for isolated tests or controlled deployments."""
     _load_artifacts_cached.cache_clear()
@@ -348,10 +357,9 @@ def recognize_symptoms(
         "Symptoms matched to model vocabulary",
         extra={
             "event": "symptom_matching",
-            "incomingSymptoms": raw_symptoms,
-            "normalizedSymptoms": normalized_symptoms,
-            "recognizedSymptoms": recognized,
-            "ignoredSymptoms": ignored,
+            "submittedSymptomCount": len(raw_symptoms),
+            "recognizedSymptomCount": len(recognized),
+            "ignoredSymptomCount": len(ignored),
             "featureVectorCount": feature_vector_count,
         },
     )
@@ -395,7 +403,12 @@ def predict_top_diseases(
     ]
     LOGGER.debug(
         "Model probability ranking completed",
-        extra={"event": "model_prediction", "topPredictions": predictions},
+        extra={
+            "event": "model_prediction",
+            "recognizedSymptomCount": len(recognized),
+            "ignoredSymptomCount": len(ignored),
+            "topPredictionCount": len(predictions),
+        },
     )
     return {
         "topPredictions": predictions,

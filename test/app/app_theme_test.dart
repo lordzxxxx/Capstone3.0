@@ -17,6 +17,10 @@ void main() {
     expect(theme.appBarTheme.foregroundColor, AppDesign.ink);
     expect(AppDesign.blue, const Color(0xFF2F80ED));
     expect(AppDesign.page, const Color(0xFFF5F7FA));
+    expect(theme.filledButtonTheme.style?.minimumSize?.resolve({}),
+        const Size(48, 48));
+    expect(theme.outlinedButtonTheme.style?.minimumSize?.resolve({}),
+        const Size(48, 48));
   });
 
   test('chart palette stays within the blue brand system', () {

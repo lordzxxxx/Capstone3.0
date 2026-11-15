@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/app/features/auth/reset_password_service.dart';
-import 'package:mycapstone_project/app/features/auth/login.dart';
 import 'package:mycapstone_project/app/theme/app_theme.dart';
 import 'package:mycapstone_project/app/shared/navigation/mobile_routes.dart';
 import 'package:mycapstone_project/shared/password_policy.dart';

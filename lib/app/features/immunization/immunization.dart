@@ -1283,7 +1283,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             builder: (context, scrollController) => Container(
               decoration: BoxDecoration(
                 color: _darkDeepTeal,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.1),
@@ -1309,17 +1311,23 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                               children: [
                                 Text(
                                   modalTitle,
-                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                    color: _lightOffWhite,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        color: _lightOffWhite,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Record vaccine administration and dose schedule details',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: _lightOffWhite.withValues(alpha: 0.8),
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: _lightOffWhite.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                      ),
                                 ),
                               ],
                             ),
@@ -1361,465 +1369,483 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                          // Patient Details
-                          _buildSectionHeader('Patient Details', Icons.person),
-                          _buildFormCard([
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: firstNameController,
-                                    label: 'First Name',
-                                    icon: Icons.person_outline,
-                                    hintText: 'Enter first name',
-                                    readOnly: true,
-                                    validator: (value) =>
-                                        value == null || value.isEmpty
-                                        ? 'Required'
-                                        : null,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: surnameController,
-                                    label: 'Surname',
-                                    icon: Icons.person,
-                                    hintText: 'Enter surname',
-                                    readOnly: true,
-                                    validator: (value) =>
-                                        value == null || value.isEmpty
-                                        ? 'Required'
-                                        : null,
-                                  ),
-                                ),
-                              ],
+                            // Patient Details
+                            _buildSectionHeader(
+                              'Patient Details',
+                              Icons.person,
                             ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: middleNameController,
-                              label: 'Middle Name',
-                              icon: Icons.person_outline,
-                              hintText: 'Optional middle name',
-                              readOnly: true,
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: patientIdController,
-                                    label: 'Patient ID',
-                                    icon: Icons.badge,
-                                    hintText: 'e.g., PAT-2026-001',
-                                    readOnly: true,
+                            _buildFormCard([
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: firstNameController,
+                                      label: 'First Name',
+                                      icon: Icons.person_outline,
+                                      hintText: 'Enter first name',
+                                      readOnly: true,
+                                      validator: (value) =>
+                                          value == null || value.isEmpty
+                                          ? 'Required'
+                                          : null,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: ageController,
-                                    label: 'Age',
-                                    icon: Icons.cake,
-                                    hintText: 'Enter age',
-                                    readOnly: true,
-                                    keyboardType: TextInputType.number,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: surnameController,
+                                      label: 'Surname',
+                                      icon: Icons.person,
+                                      hintText: 'Enter surname',
+                                      readOnly: true,
+                                      validator: (value) =>
+                                          value == null || value.isEmpty
+                                          ? 'Required'
+                                          : null,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: contactNumberController,
-                              label: 'Contact Number',
-                              icon: Icons.phone,
-                              hintText: 'e.g., +63 912 345 6789',
-                              readOnly: true,
-                              keyboardType: TextInputType.phone,
-                            ),
-                            if (isPediatricPatient) ...[
+                                ],
+                              ),
                               const SizedBox(height: 16),
                               _buildTextField(
-                                controller: guardianController,
-                                label: 'Parent/Guardian Name',
-                                icon: Icons.family_restroom,
-                                hintText: 'For children or dependent patients',
+                                controller: middleNameController,
+                                label: 'Middle Name',
+                                icon: Icons.person_outline,
+                                hintText: 'Optional middle name',
                                 readOnly: true,
                               ),
-                            ],
-                          ]),
-                          const SizedBox(height: 12),
-                          _buildPatientProfileReference(
-                            selectedPatient,
-                            isPediatric: isPediatricPatient,
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Vaccine Details
-                          _buildSectionHeader(
-                            'Vaccine Details',
-                            Icons.medical_services,
-                          ),
-                          _buildFormCard([
-                            _buildDropdownField(
-                              label: 'Vaccine Type',
-                              value: selectedVaccineType,
-                              icon: Icons.vaccines,
-                              items: _vaccineTypeOptions,
-                              allowEmpty: true,
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setModalState(
-                                    () => selectedVaccineType = value,
-                                  );
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: vaccineBrandController,
-                              label: 'Vaccine Brand',
-                              icon: Icons.business,
-                              hintText: 'Enter vaccine brand/manufacturer',
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: batchNumberController,
-                              label: 'Batch/Lot Number',
-                              icon: Icons.numbers,
-                              hintText: 'Enter batch or lot number',
-                            ),
-                            const SizedBox(height: 16),
-                            _buildModalDatePickerField(
-                              context: context,
-                              label: 'Expiration Date',
-                              date: expirationDate,
-                              icon: Icons.event_busy,
-                              onTap: () async {
-                                final picked = await _showModalDatePicker(
-                                  context,
-                                );
-                                if (picked != null) {
-                                  setModalState(() => expirationDate = picked);
-                                }
-                              },
-                            ),
-                          ]),
-                          const SizedBox(height: 24),
-
-                          // Administration Details
-                          _buildSectionHeader(
-                            'Administration Details',
-                            Icons.local_hospital,
-                          ),
-                          _buildFormCard([
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildModalDatePickerField(
-                                    context: context,
-                                    label: 'Administration Date',
-                                    date: administrationDate,
-                                    icon: Icons.calendar_today,
-                                    onTap: () async {
-                                      final picked = await _showModalDatePicker(
-                                        context,
-                                      );
-                                      if (picked != null) {
-                                        setModalState(
-                                          () => administrationDate = picked,
-                                        );
-                                      }
-                                    },
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: patientIdController,
+                                      label: 'Patient ID',
+                                      icon: Icons.badge,
+                                      hintText: 'e.g., PAT-2026-001',
+                                      readOnly: true,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTimePickerField(
-                                    context: context,
-                                    label: 'Administration Time',
-                                    time: administrationTime,
-                                    icon: Icons.access_time,
-                                    onTap: () async {
-                                      final picked = await showTimePicker(
-                                        context: context,
-                                        initialTime:
-                                            administrationTime ??
-                                            TimeOfDay.now(),
-                                        builder: (context, child) {
-                                          return Theme(
-                                            data: Theme.of(context).copyWith(
-                                              colorScheme: ColorScheme.light(
-                                                primary: _primaryAqua,
-                                                onPrimary: Colors.white,
-                                                onSurface: AppDesign.ink,
-                                              ),
-                                            ),
-                                            child: child!,
-                                          );
-                                        },
-                                      );
-                                      if (picked != null) {
-                                        setModalState(
-                                          () => administrationTime = picked,
-                                        );
-                                      }
-                                    },
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: ageController,
+                                      label: 'Age',
+                                      icon: Icons.cake,
+                                      hintText: 'Enter age',
+                                      readOnly: true,
+                                      keyboardType: TextInputType.number,
+                                    ),
                                   ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: contactNumberController,
+                                label: 'Contact Number',
+                                icon: Icons.phone,
+                                hintText: 'e.g., +63 912 345 6789',
+                                readOnly: true,
+                                keyboardType: TextInputType.phone,
+                              ),
+                              if (isPediatricPatient) ...[
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: guardianController,
+                                  label: 'Parent/Guardian Name',
+                                  icon: Icons.family_restroom,
+                                  hintText:
+                                      'For children or dependent patients',
+                                  readOnly: true,
                                 ),
                               ],
+                            ]),
+                            const SizedBox(height: 12),
+                            _buildPatientProfileReference(
+                              selectedPatient,
+                              isPediatric: isPediatricPatient,
                             ),
-                            const SizedBox(height: 16),
-                            _buildDropdownField(
-                              label: 'Dose Number',
-                              icon: Icons.format_list_numbered,
-                              value: selectedDose,
-                              items: immunizationDoseOptions(
-                                existing: selectedDose,
+                            const SizedBox(height: 24),
+
+                            // Vaccine Details
+                            _buildSectionHeader(
+                              'Vaccine Details',
+                              Icons.medical_services,
+                            ),
+                            _buildFormCard([
+                              _buildDropdownField(
+                                label: 'Vaccine Type',
+                                value: selectedVaccineType,
+                                icon: Icons.vaccines,
+                                items: _vaccineTypeOptions,
+                                allowEmpty: true,
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setModalState(
+                                      () => selectedVaccineType = value,
+                                    );
+                                  }
+                                },
                               ),
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setModalState(() => selectedDose = value);
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            _buildDropdownField(
-                              label: 'Route of Administration',
-                              value: selectedRouteOfAdministration,
-                              icon: Icons.medical_information,
-                              items: kImmunizationRouteOptions,
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setModalState(
-                                    () => selectedRouteOfAdministration = value,
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: vaccineBrandController,
+                                label: 'Vaccine Brand',
+                                icon: Icons.business,
+                                hintText: 'Enter vaccine brand/manufacturer',
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: batchNumberController,
+                                label: 'Batch/Lot Number',
+                                icon: Icons.numbers,
+                                hintText: 'Enter batch or lot number',
+                              ),
+                              const SizedBox(height: 16),
+                              _buildModalDatePickerField(
+                                context: context,
+                                label: 'Expiration Date',
+                                date: expirationDate,
+                                icon: Icons.event_busy,
+                                onTap: () async {
+                                  final picked = await _showModalDatePicker(
+                                    context,
                                   );
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            _buildDropdownField(
-                              label: 'Injection Site',
-                              value: selectedInjectionSite,
-                              icon: Icons.place,
-                              items: kImmunizationSiteOptions,
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setModalState(
-                                    () => selectedInjectionSite = value,
-                                  );
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: administeredByController,
-                              label: 'Administered By',
-                              icon: Icons.person_pin,
-                              hintText: 'Enter staff name or ID',
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                  ? 'Required'
-                                  : null,
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: adverseEventsController,
-                              label:
-                                  'Adverse Events Following Immunization (AEFI)',
-                              icon: Icons.warning,
-                              hintText: 'Note any adverse reactions or events',
-                              maxLines: 3,
-                            ),
-                            const SizedBox(height: 16),
-                            _buildModalDatePickerField(
-                              context: context,
-                              label: 'Next Dose Due Date',
-                              date: nextDoseDueDate,
-                              icon: Icons.event,
-                              onTap: () async {
-                                final picked = await _showModalDatePicker(
-                                  context,
-                                );
-                                if (picked != null) {
-                                  setModalState(() => nextDoseDueDate = picked);
-                                }
-                              },
-                            ),
-                          ]),
-                          const SizedBox(height: 32),
+                                  if (picked != null) {
+                                    setModalState(
+                                      () => expirationDate = picked,
+                                    );
+                                  }
+                                },
+                              ),
+                            ]),
+                            const SizedBox(height: 24),
 
-                          // Submit Button
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                final isFormValid =
-                                    formKey.currentState?.validate() ?? false;
-                                if (!isFormValid) {
-                                  return;
-                                }
-                                if (selectedVaccineType.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Vaccine type is required'),
-                                      backgroundColor: AppDesign.danger,
-                                      behavior: SnackBarBehavior.floating,
+                            // Administration Details
+                            _buildSectionHeader(
+                              'Administration Details',
+                              Icons.local_hospital,
+                            ),
+                            _buildFormCard([
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildModalDatePickerField(
+                                      context: context,
+                                      label: 'Administration Date',
+                                      date: administrationDate,
+                                      icon: Icons.calendar_today,
+                                      onTap: () async {
+                                        final picked =
+                                            await _showModalDatePicker(context);
+                                        if (picked != null) {
+                                          setModalState(
+                                            () => administrationDate = picked,
+                                          );
+                                        }
+                                      },
                                     ),
-                                  );
-                                  return;
-                                }
-                                if (administrationDate == null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Administration date is required',
-                                      ),
-                                      backgroundColor: AppDesign.danger,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                // Create new immunization record
-                                final linkedPatientId =
-                                    (patientIdentity['linkedPatientId'] ??
-                                            patientIdentity['patientId'] ??
-                                            '')
-                                        .toString()
-                                        .trim();
-                                final canonicalPatientId =
-                                    (patientIdentity['patientId'] ?? '')
-                                        .toString()
-                                        .trim();
-                                if (canonicalPatientId.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Select a registered patient before saving.',
-                                      ),
-                                      backgroundColor: AppDesign.danger,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                  return;
-                                }
-                                final shouldContinue =
-                                    await _confirmPotentialDuplicate(context, {
-                                      'patientId': canonicalPatientId,
-                                      'vaccine': selectedVaccineType,
-                                      'doseNumber': selectedDose,
-                                      'administrationDate': administrationDate!
-                                          .toIso8601String(),
-                                    });
-                                if (!shouldContinue || !context.mounted) {
-                                  return;
-                                }
-                                final newRecord = {
-                                  if (linkedPatientId.isNotEmpty)
-                                    'linkedPatientId': linkedPatientId,
-                                  if (selectedPatient['patientCode'] != null)
-                                    'patientCode':
-                                        selectedPatient['patientCode'],
-                                  'time':
-                                      '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
-                                  'patientName':
-                                      [
-                                            firstNameController.text.trim(),
-                                            middleNameController.text.trim(),
-                                            surnameController.text.trim(),
-                                          ]
-                                          .where((value) => value.isNotEmpty)
-                                          .join(' '),
-                                  'patientId': canonicalPatientId,
-                                  'middleName': middleNameController.text
-                                      .trim(),
-                                  if (isPediatricPatient)
-                                    'parentGuardianName': guardianController
-                                        .text
-                                        .trim(),
-                                  'age': ageController.text,
-                                  'contactNumber': contactNumberController.text,
-                                  'vaccine': selectedVaccineType,
-                                  'vaccineBrand': vaccineBrandController.text,
-                                  'batchNumber': batchNumberController.text,
-                                  'expirationDate':
-                                      expirationDate?.toIso8601String() ?? '',
-                                  'administrationDate':
-                                      administrationDate?.toIso8601String() ??
-                                      '',
-                                  'administrationTime':
-                                      '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
-                                  'doseNumber': selectedDose,
-                                  'routeOfAdministration':
-                                      selectedRouteOfAdministration,
-                                  'injectionSite': selectedInjectionSite,
-                                  'administeredBy':
-                                      administeredByController.text,
-                                  'adverseEvents': adverseEventsController.text,
-                                  'nextDoseDueDate':
-                                      nextDoseDueDate?.toIso8601String() ?? '',
-                                  'status': 'Completed',
-                                  'date':
-                                      administrationDate?.toIso8601String() ??
-                                      '',
-                                };
-
-                                // Save to database (offline + Firebase sync)
-                                await _dbHelper.insertRecord(newRecord);
-
-                                // Reload records
-                                await _loadRecords();
-                                if (!context.mounted) return;
-
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Immunization record saved successfully!',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    backgroundColor: AppDesign.success,
-                                    behavior: SnackBarBehavior.floating,
                                   ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _primaryAqua,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 2,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTimePickerField(
+                                      context: context,
+                                      label: 'Administration Time',
+                                      time: administrationTime,
+                                      icon: Icons.access_time,
+                                      onTap: () async {
+                                        final picked = await showTimePicker(
+                                          context: context,
+                                          initialTime:
+                                              administrationTime ??
+                                              TimeOfDay.now(),
+                                          builder: (context, child) {
+                                            return Theme(
+                                              data: Theme.of(context).copyWith(
+                                                colorScheme: ColorScheme.light(
+                                                  primary: _primaryAqua,
+                                                  onPrimary: Colors.white,
+                                                  onSurface: AppDesign.ink,
+                                                ),
+                                              ),
+                                              child: child!,
+                                            );
+                                          },
+                                        );
+                                        if (picked != null) {
+                                          setModalState(
+                                            () => administrationTime = picked,
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
-                              child: const Text(
-                                'Save Immunization Record',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                              const SizedBox(height: 16),
+                              _buildDropdownField(
+                                label: 'Dose Number',
+                                icon: Icons.format_list_numbered,
+                                value: selectedDose,
+                                items: immunizationDoseOptions(
+                                  existing: selectedDose,
+                                ),
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setModalState(() => selectedDose = value);
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _buildDropdownField(
+                                label: 'Route of Administration',
+                                value: selectedRouteOfAdministration,
+                                icon: Icons.medical_information,
+                                items: kImmunizationRouteOptions,
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setModalState(
+                                      () =>
+                                          selectedRouteOfAdministration = value,
+                                    );
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _buildDropdownField(
+                                label: 'Injection Site',
+                                value: selectedInjectionSite,
+                                icon: Icons.place,
+                                items: kImmunizationSiteOptions,
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setModalState(
+                                      () => selectedInjectionSite = value,
+                                    );
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: administeredByController,
+                                label: 'Administered By',
+                                icon: Icons.person_pin,
+                                hintText: 'Enter staff name or ID',
+                                validator: (value) =>
+                                    value == null || value.isEmpty
+                                    ? 'Required'
+                                    : null,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: adverseEventsController,
+                                label:
+                                    'Adverse Events Following Immunization (AEFI)',
+                                icon: Icons.warning,
+                                hintText:
+                                    'Note any adverse reactions or events',
+                                maxLines: 3,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildModalDatePickerField(
+                                context: context,
+                                label: 'Next Dose Due Date',
+                                date: nextDoseDueDate,
+                                icon: Icons.event,
+                                onTap: () async {
+                                  final picked = await _showModalDatePicker(
+                                    context,
+                                  );
+                                  if (picked != null) {
+                                    setModalState(
+                                      () => nextDoseDueDate = picked,
+                                    );
+                                  }
+                                },
+                              ),
+                            ]),
+                            const SizedBox(height: 32),
+
+                            // Submit Button
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  final isFormValid =
+                                      formKey.currentState?.validate() ?? false;
+                                  if (!isFormValid) {
+                                    return;
+                                  }
+                                  if (selectedVaccineType.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Vaccine type is required',
+                                        ),
+                                        backgroundColor: AppDesign.danger,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  if (administrationDate == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Administration date is required',
+                                        ),
+                                        backgroundColor: AppDesign.danger,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  // Create new immunization record
+                                  final linkedPatientId =
+                                      (patientIdentity['linkedPatientId'] ??
+                                              patientIdentity['patientId'] ??
+                                              '')
+                                          .toString()
+                                          .trim();
+                                  final canonicalPatientId =
+                                      (patientIdentity['patientId'] ?? '')
+                                          .toString()
+                                          .trim();
+                                  if (canonicalPatientId.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Select a registered patient before saving.',
+                                        ),
+                                        backgroundColor: AppDesign.danger,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  final shouldContinue =
+                                      await _confirmPotentialDuplicate(
+                                        context,
+                                        {
+                                          'patientId': canonicalPatientId,
+                                          'vaccine': selectedVaccineType,
+                                          'doseNumber': selectedDose,
+                                          'administrationDate':
+                                              administrationDate!
+                                                  .toIso8601String(),
+                                        },
+                                      );
+                                  if (!shouldContinue || !context.mounted) {
+                                    return;
+                                  }
+                                  final newRecord = {
+                                    if (linkedPatientId.isNotEmpty)
+                                      'linkedPatientId': linkedPatientId,
+                                    if (selectedPatient['patientCode'] != null)
+                                      'patientCode':
+                                          selectedPatient['patientCode'],
+                                    'time':
+                                        '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
+                                    'patientName':
+                                        [
+                                              firstNameController.text.trim(),
+                                              middleNameController.text.trim(),
+                                              surnameController.text.trim(),
+                                            ]
+                                            .where((value) => value.isNotEmpty)
+                                            .join(' '),
+                                    'patientId': canonicalPatientId,
+                                    'middleName': middleNameController.text
+                                        .trim(),
+                                    if (isPediatricPatient)
+                                      'parentGuardianName': guardianController
+                                          .text
+                                          .trim(),
+                                    'age': ageController.text,
+                                    'contactNumber':
+                                        contactNumberController.text,
+                                    'vaccine': selectedVaccineType,
+                                    'vaccineBrand': vaccineBrandController.text,
+                                    'batchNumber': batchNumberController.text,
+                                    'expirationDate':
+                                        expirationDate?.toIso8601String() ?? '',
+                                    'administrationDate':
+                                        administrationDate?.toIso8601String() ??
+                                        '',
+                                    'administrationTime':
+                                        '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
+                                    'doseNumber': selectedDose,
+                                    'routeOfAdministration':
+                                        selectedRouteOfAdministration,
+                                    'injectionSite': selectedInjectionSite,
+                                    'administeredBy':
+                                        administeredByController.text,
+                                    'adverseEvents':
+                                        adverseEventsController.text,
+                                    'nextDoseDueDate':
+                                        nextDoseDueDate?.toIso8601String() ??
+                                        '',
+                                    'status': 'Completed',
+                                    'date':
+                                        administrationDate?.toIso8601String() ??
+                                        '',
+                                  };
+
+                                  // Save to database (offline + Firebase sync)
+                                  await _dbHelper.insertRecord(newRecord);
+
+                                  // Reload records
+                                  await _loadRecords();
+                                  if (!context.mounted) return;
+
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Immunization record saved successfully!',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      backgroundColor: AppDesign.success,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _primaryAqua,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 2,
+                                ),
+                                child: const Text(
+                                  'Save Immunization Record',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 24),
-                        ],
+                            const SizedBox(height: 24),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      },
-    ),
-  );
+          );
+        },
+      ),
+    );
   }
 
   Future<DateTime?> _showModalDatePicker(BuildContext context) async {
@@ -3200,7 +3226,9 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
             builder: (context, scrollController) => Container(
               decoration: BoxDecoration(
                 color: _darkDeepTeal,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.1),
@@ -3226,17 +3254,23 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                               children: [
                                 Text(
                                   'Edit Immunization Record',
-                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                    color: _lightOffWhite,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        color: _lightOffWhite,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Update administration logs and dose schedule',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: _lightOffWhite.withValues(alpha: 0.8),
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: _lightOffWhite.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                      ),
                                 ),
                               ],
                             ),
@@ -3275,386 +3309,371 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                       const SizedBox(height: 24),
                       // Patient Details
                       _buildSectionHeader('Patient Details', Icons.person),
-                        _buildFormCard([
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: firstNameController,
-                                  label: 'First Name',
-                                  icon: Icons.person_outline,
-                                  hintText: 'Enter first name',
-                                  readOnly: true,
-                                ),
+                      _buildFormCard([
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildTextField(
+                                controller: firstNameController,
+                                label: 'First Name',
+                                icon: Icons.person_outline,
+                                hintText: 'Enter first name',
+                                readOnly: true,
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: surnameController,
-                                  label: 'Surname',
-                                  icon: Icons.person,
-                                  hintText: 'Enter surname',
-                                  readOnly: true,
-                                ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildTextField(
+                                controller: surnameController,
+                                label: 'Surname',
+                                icon: Icons.person,
+                                hintText: 'Enter surname',
+                                readOnly: true,
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: middleNameController,
-                            label: 'Middle Name',
-                            icon: Icons.person_outline,
-                            hintText: 'Optional middle name',
-                            readOnly: true,
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: patientIdController,
-                                  label: 'Patient ID',
-                                  icon: Icons.badge,
-                                  hintText: 'e.g., PAT-2026-001',
-                                  readOnly: true,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: ageController,
-                                  label: 'Age',
-                                  icon: Icons.cake,
-                                  hintText: 'Enter age',
-                                  readOnly: true,
-                                  keyboardType: TextInputType.number,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: contactNumberController,
-                            label: 'Contact Number',
-                            icon: Icons.phone,
-                            hintText: 'e.g., +63 912 345 6789',
-                            readOnly: true,
-                            keyboardType: TextInputType.phone,
-                          ),
-                          if (isPediatricPatient) ...[
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: guardianController,
-                              label: 'Parent/Guardian Name',
-                              icon: Icons.family_restroom,
-                              hintText: 'For children or dependent patients',
-                              readOnly: true,
                             ),
                           ],
-                        ]),
-                        const SizedBox(height: 12),
-                        _buildPatientProfileReference(
-                          patientProfile,
-                          isPediatric: isPediatricPatient,
                         ),
-                        const SizedBox(height: 24),
-
-                        // Vaccine Details
-                        _buildSectionHeader(
-                          'Vaccine Details',
-                          Icons.medical_services,
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: middleNameController,
+                          label: 'Middle Name',
+                          icon: Icons.person_outline,
+                          hintText: 'Optional middle name',
+                          readOnly: true,
                         ),
-                        _buildFormCard([
-                          _buildDropdownField(
-                            label: 'Vaccine Type',
-                            value: selectedVaccineType,
-                            icon: Icons.vaccines,
-                            items: _vaccineTypeOptions,
-                            allowEmpty: true,
-                            onChanged: (value) {
-                              if (value != null) {
-                                setModalState(
-                                  () => selectedVaccineType = value,
-                                );
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: vaccineBrandController,
-                            label: 'Vaccine Brand',
-                            icon: Icons.business,
-                            hintText: 'Enter vaccine brand/manufacturer',
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: batchNumberController,
-                            label: 'Batch/Lot Number',
-                            icon: Icons.numbers,
-                            hintText: 'Enter batch or lot number',
-                          ),
-                          const SizedBox(height: 16),
-                          _buildModalDatePickerField(
-                            context: context,
-                            label: 'Expiration Date',
-                            date: expirationDate,
-                            icon: Icons.event_busy,
-                            onTap: () async {
-                              final picked = await _showModalDatePicker(
-                                context,
-                              );
-                              if (picked != null) {
-                                setModalState(() => expirationDate = picked);
-                              }
-                            },
-                          ),
-                        ]),
-                        const SizedBox(height: 24),
-
-                        // Administration Details
-                        _buildSectionHeader(
-                          'Administration Details',
-                          Icons.medical_information,
-                        ),
-                        _buildFormCard([
-                          _buildModalDatePickerField(
-                            context: context,
-                            label: 'Administration Date',
-                            date: administrationDate,
-                            icon: Icons.event,
-                            onTap: () async {
-                              final picked = await _showModalDatePicker(
-                                context,
-                              );
-                              if (picked != null) {
-                                setModalState(
-                                  () => administrationDate = picked,
-                                );
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildModalTimePickerField(
-                            context: context,
-                            label: 'Administration Time',
-                            time: administrationTime,
-                            icon: Icons.access_time,
-                            onTap: () async {
-                              final picked = await _showModalTimePicker(
-                                context,
-                                administrationTime,
-                              );
-                              if (picked != null) {
-                                setModalState(
-                                  () => administrationTime = picked,
-                                );
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildDropdownField(
-                            label: 'Dose Number',
-                            icon: Icons.filter_1,
-                            value: selectedDose,
-                            items: immunizationDoseOptions(
-                              existing: selectedDose,
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildTextField(
+                                controller: patientIdController,
+                                label: 'Patient ID',
+                                icon: Icons.badge,
+                                hintText: 'e.g., PAT-2026-001',
+                                readOnly: true,
+                              ),
                             ),
-                            onChanged: (value) {
-                              if (value != null) {
-                                setModalState(() => selectedDose = value);
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildDropdownField(
-                            label: 'Route of Administration',
-                            value: selectedRouteOfAdministration,
-                            icon: Icons.route,
-                            items: kImmunizationRouteOptions,
-                            onChanged: (value) {
-                              if (value != null) {
-                                setModalState(
-                                  () => selectedRouteOfAdministration = value,
-                                );
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildDropdownField(
-                            label: 'Injection Site',
-                            value: selectedInjectionSite,
-                            icon: Icons.place,
-                            items: kImmunizationSiteOptions,
-                            onChanged: (value) {
-                              if (value != null) {
-                                setModalState(
-                                  () => selectedInjectionSite = value,
-                                );
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: administeredByController,
-                            label: 'Administered By',
-                            icon: Icons.person_pin,
-                            hintText: 'Name of healthcare provider',
-                          ),
-                        ]),
-                        const SizedBox(height: 24),
-
-                        // Additional Information
-                        _buildSectionHeader(
-                          'Additional Information',
-                          Icons.info_outline,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildTextField(
+                                controller: ageController,
+                                label: 'Age',
+                                icon: Icons.cake,
+                                hintText: 'Enter age',
+                                readOnly: true,
+                                keyboardType: TextInputType.number,
+                              ),
+                            ),
+                          ],
                         ),
-                        _buildFormCard([
-                          _buildTextField(
-                            controller: adverseEventsController,
-                            label:
-                                'Adverse Events Following Immunization (AEFI)',
-                            icon: Icons.warning_amber,
-                            hintText: 'Any adverse reactions observed',
-                            maxLines: 3,
-                          ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: contactNumberController,
+                          label: 'Contact Number',
+                          icon: Icons.phone,
+                          hintText: 'e.g., +63 912 345 6789',
+                          readOnly: true,
+                          keyboardType: TextInputType.phone,
+                        ),
+                        if (isPediatricPatient) ...[
                           const SizedBox(height: 16),
-                          _buildModalDatePickerField(
-                            context: context,
-                            label: 'Next Dose Due Date',
-                            date: nextDoseDueDate,
-                            icon: Icons.event_available,
-                            onTap: () async {
-                              final picked = await _showModalDatePicker(
-                                context,
-                              );
-                              if (picked != null) {
-                                setModalState(() => nextDoseDueDate = picked);
-                              }
-                            },
+                          _buildTextField(
+                            controller: guardianController,
+                            label: 'Parent/Guardian Name',
+                            icon: Icons.family_restroom,
+                            hintText: 'For children or dependent patients',
+                            readOnly: true,
                           ),
-                        ]),
-                        const SizedBox(height: 24),
+                        ],
+                      ]),
+                      const SizedBox(height: 12),
+                      _buildPatientProfileReference(
+                        patientProfile,
+                        isPediatric: isPediatricPatient,
+                      ),
+                      const SizedBox(height: 24),
 
-                        // Save Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              if (canonicalPatientId.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'This record is not linked to a registered patient and cannot be reassigned.',
-                                    ),
-                                    backgroundColor: AppDesign.danger,
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                                return;
-                              }
-                              final shouldContinue =
-                                  await _confirmPotentialDuplicate(context, {
-                                    'patientId': canonicalPatientId,
-                                    'vaccine': selectedVaccineType,
-                                    'doseNumber': selectedDose,
-                                    'administrationDate':
-                                        administrationDate?.toIso8601String() ??
-                                        '',
-                                  }, excludeId: record['id']?.toString());
-                              if (!shouldContinue || !context.mounted) {
-                                return;
-                              }
-                              // Update immunization record
-                              final updatedRecord = {
-                                'time':
-                                    '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
-                                'patientName': [
-                                  firstNameController.text.trim(),
-                                  middleNameController.text.trim(),
-                                  surnameController.text.trim(),
-                                ].where((value) => value.isNotEmpty).join(' '),
-                                'patientId': canonicalPatientId,
-                                'linkedPatientId': canonicalLinkedPatientId,
-                                'middleName': middleNameController.text.trim(),
-                                if (isPediatricPatient)
-                                  'parentGuardianName': guardianController.text
-                                      .trim(),
-                                'age': ageController.text,
-                                'contactNumber': contactNumberController.text,
-                                'vaccine': selectedVaccineType,
-                                'vaccineBrand': vaccineBrandController.text,
-                                'batchNumber': batchNumberController.text,
-                                'expirationDate':
-                                    expirationDate?.toIso8601String() ?? '',
-                                'administrationDate':
-                                    administrationDate?.toIso8601String() ?? '',
-                                'administrationTime':
-                                    '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
-                                'doseNumber': selectedDose,
-                                'routeOfAdministration':
-                                    selectedRouteOfAdministration,
-                                'injectionSite': selectedInjectionSite,
-                                'administeredBy': administeredByController.text,
-                                'adverseEvents': adverseEventsController.text,
-                                'nextDoseDueDate':
-                                    nextDoseDueDate?.toIso8601String() ?? '',
-                                'status': record['status'] ?? 'Completed',
-                                'date':
-                                    administrationDate?.toIso8601String() ?? '',
-                              };
+                      // Vaccine Details
+                      _buildSectionHeader(
+                        'Vaccine Details',
+                        Icons.medical_services,
+                      ),
+                      _buildFormCard([
+                        _buildDropdownField(
+                          label: 'Vaccine Type',
+                          value: selectedVaccineType,
+                          icon: Icons.vaccines,
+                          items: _vaccineTypeOptions,
+                          allowEmpty: true,
+                          onChanged: (value) {
+                            if (value != null) {
+                              setModalState(() => selectedVaccineType = value);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: vaccineBrandController,
+                          label: 'Vaccine Brand',
+                          icon: Icons.business,
+                          hintText: 'Enter vaccine brand/manufacturer',
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: batchNumberController,
+                          label: 'Batch/Lot Number',
+                          icon: Icons.numbers,
+                          hintText: 'Enter batch or lot number',
+                        ),
+                        const SizedBox(height: 16),
+                        _buildModalDatePickerField(
+                          context: context,
+                          label: 'Expiration Date',
+                          date: expirationDate,
+                          icon: Icons.event_busy,
+                          onTap: () async {
+                            final picked = await _showModalDatePicker(context);
+                            if (picked != null) {
+                              setModalState(() => expirationDate = picked);
+                            }
+                          },
+                        ),
+                      ]),
+                      const SizedBox(height: 24),
 
-                              // Update in database
-                              final id = record['id']?.toString() ?? '';
-                              if (id.isNotEmpty) {
-                                await _dbHelper.updateRecord(id, updatedRecord);
-                              }
+                      // Administration Details
+                      _buildSectionHeader(
+                        'Administration Details',
+                        Icons.medical_information,
+                      ),
+                      _buildFormCard([
+                        _buildModalDatePickerField(
+                          context: context,
+                          label: 'Administration Date',
+                          date: administrationDate,
+                          icon: Icons.event,
+                          onTap: () async {
+                            final picked = await _showModalDatePicker(context);
+                            if (picked != null) {
+                              setModalState(() => administrationDate = picked);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildModalTimePickerField(
+                          context: context,
+                          label: 'Administration Time',
+                          time: administrationTime,
+                          icon: Icons.access_time,
+                          onTap: () async {
+                            final picked = await _showModalTimePicker(
+                              context,
+                              administrationTime,
+                            );
+                            if (picked != null) {
+                              setModalState(() => administrationTime = picked);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDropdownField(
+                          label: 'Dose Number',
+                          icon: Icons.filter_1,
+                          value: selectedDose,
+                          items: immunizationDoseOptions(
+                            existing: selectedDose,
+                          ),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setModalState(() => selectedDose = value);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDropdownField(
+                          label: 'Route of Administration',
+                          value: selectedRouteOfAdministration,
+                          icon: Icons.route,
+                          items: kImmunizationRouteOptions,
+                          onChanged: (value) {
+                            if (value != null) {
+                              setModalState(
+                                () => selectedRouteOfAdministration = value,
+                              );
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDropdownField(
+                          label: 'Injection Site',
+                          value: selectedInjectionSite,
+                          icon: Icons.place,
+                          items: kImmunizationSiteOptions,
+                          onChanged: (value) {
+                            if (value != null) {
+                              setModalState(
+                                () => selectedInjectionSite = value,
+                              );
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: administeredByController,
+                          label: 'Administered By',
+                          icon: Icons.person_pin,
+                          hintText: 'Name of healthcare provider',
+                        ),
+                      ]),
+                      const SizedBox(height: 24),
 
-                              // Reload records
-                              await _loadRecords();
-                              if (!context.mounted) return;
+                      // Additional Information
+                      _buildSectionHeader(
+                        'Additional Information',
+                        Icons.info_outline,
+                      ),
+                      _buildFormCard([
+                        _buildTextField(
+                          controller: adverseEventsController,
+                          label: 'Adverse Events Following Immunization (AEFI)',
+                          icon: Icons.warning_amber,
+                          hintText: 'Any adverse reactions observed',
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildModalDatePickerField(
+                          context: context,
+                          label: 'Next Dose Due Date',
+                          date: nextDoseDueDate,
+                          icon: Icons.event_available,
+                          onTap: () async {
+                            final picked = await _showModalDatePicker(context);
+                            if (picked != null) {
+                              setModalState(() => nextDoseDueDate = picked);
+                            }
+                          },
+                        ),
+                      ]),
+                      const SizedBox(height: 24),
 
-                              Navigator.pop(context);
+                      // Save Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (canonicalPatientId.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
+                                const SnackBar(
                                   content: Text(
-                                    'Immunization record updated successfully!',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    'This record is not linked to a registered patient and cannot be reassigned.',
                                   ),
-                                  backgroundColor: AppDesign.success,
+                                  backgroundColor: AppDesign.danger,
                                   behavior: SnackBarBehavior.floating,
                                 ),
                               );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _primaryAqua,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                              return;
+                            }
+                            final shouldContinue =
+                                await _confirmPotentialDuplicate(context, {
+                                  'patientId': canonicalPatientId,
+                                  'vaccine': selectedVaccineType,
+                                  'doseNumber': selectedDose,
+                                  'administrationDate':
+                                      administrationDate?.toIso8601String() ??
+                                      '',
+                                }, excludeId: record['id']?.toString());
+                            if (!shouldContinue || !context.mounted) {
+                              return;
+                            }
+                            // Update immunization record
+                            final updatedRecord = {
+                              'time':
+                                  '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
+                              'patientName': [
+                                firstNameController.text.trim(),
+                                middleNameController.text.trim(),
+                                surnameController.text.trim(),
+                              ].where((value) => value.isNotEmpty).join(' '),
+                              'patientId': canonicalPatientId,
+                              'linkedPatientId': canonicalLinkedPatientId,
+                              'middleName': middleNameController.text.trim(),
+                              if (isPediatricPatient)
+                                'parentGuardianName': guardianController.text
+                                    .trim(),
+                              'age': ageController.text,
+                              'contactNumber': contactNumberController.text,
+                              'vaccine': selectedVaccineType,
+                              'vaccineBrand': vaccineBrandController.text,
+                              'batchNumber': batchNumberController.text,
+                              'expirationDate':
+                                  expirationDate?.toIso8601String() ?? '',
+                              'administrationDate':
+                                  administrationDate?.toIso8601String() ?? '',
+                              'administrationTime':
+                                  '${administrationTime?.hour.toString().padLeft(2, '0')}:${administrationTime?.minute.toString().padLeft(2, '0')}',
+                              'doseNumber': selectedDose,
+                              'routeOfAdministration':
+                                  selectedRouteOfAdministration,
+                              'injectionSite': selectedInjectionSite,
+                              'administeredBy': administeredByController.text,
+                              'adverseEvents': adverseEventsController.text,
+                              'nextDoseDueDate':
+                                  nextDoseDueDate?.toIso8601String() ?? '',
+                              'status': record['status'] ?? 'Completed',
+                              'date':
+                                  administrationDate?.toIso8601String() ?? '',
+                            };
+
+                            // Update in database
+                            final id = record['id']?.toString() ?? '';
+                            if (id.isNotEmpty) {
+                              await _dbHelper.updateRecord(id, updatedRecord);
+                            }
+
+                            // Reload records
+                            await _loadRecords();
+                            if (!context.mounted) return;
+
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Immunization record updated successfully!',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                backgroundColor: AppDesign.success,
+                                behavior: SnackBarBehavior.floating,
                               ),
-                              elevation: 2,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _primaryAqua,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Text(
-                              'Update Immunization Record',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            elevation: 2,
+                          ),
+                          child: const Text(
+                            'Update Immunization Record',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                   ),
                 ),
               ),
-            );
-          },
-        ),
-      );
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildDetailRow(String label, String value) {
@@ -4352,15 +4371,14 @@ class _ImmunizationPageState extends State<ImmunizationPage> {
                 if (id != null) {
                   await _dbHelper.deleteRecords([id]);
                   await _loadRecords();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Record deleted successfully'),
-                        backgroundColor: AppDesign.success,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Record deleted successfully'),
+                      backgroundColor: AppDesign.success,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
                 }
               },
               child: const Text(

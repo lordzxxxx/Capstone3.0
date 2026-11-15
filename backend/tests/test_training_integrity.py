@@ -34,6 +34,7 @@ def test_saved_metrics_record_actual_quality_gate_and_artifacts() -> None:
     assert metrics["diseases"] == 100
     assert metrics["train_test_feature_vector_overlap_groups"] == 0
     assert metrics["model_version"] == "disease_model_v4"
+    assert metrics["scikit_learn_version"] == "1.9.0"
     assert metrics["accuracy"] == 0.8933985850311187
     assert metrics["top2_accuracy"] == 0.9654236927496144
     assert metrics["top3_accuracy"] == 0.9850523964040641

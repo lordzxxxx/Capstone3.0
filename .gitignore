@@ -31,6 +31,10 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .flutter
 .flutter_tool_state
+.venv/
+**/.venv/
+.pytest_cache/
+**/.pytest_cache/
 .codex-tmp/
 .pub-cache/
 .pub/

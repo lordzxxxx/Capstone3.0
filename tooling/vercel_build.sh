@@ -7,6 +7,28 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 flutter_version="3.44.9"
 
+# The Flutter client receives the AI host at compile time. A production build
+# with an empty value silently produces a web app that can never call guidance
+# or OCR, so fail the deployment before Vercel publishes that artifact.
+if [[ "${VERCEL_ENV:-}" == "production" || "${VERCEL_ENV:-}" == "preview" ]]; then
+  if [[ -z "${AI_API_BASE_URL:-}" ]]; then
+    echo "AI_API_BASE_URL must be set for Vercel production/preview builds." >&2
+    exit 1
+  fi
+  if [[ "${AI_API_BASE_URL}" != https://* ]]; then
+    echo "AI_API_BASE_URL must be an HTTPS URL for Vercel production/preview builds." >&2
+    exit 1
+  fi
+  if [[ "${AI_API_BASE_URL}" == */ ]]; then
+    echo "AI_API_BASE_URL must not have a trailing slash." >&2
+    exit 1
+  fi
+  if [[ "${AI_API_BASE_URL}" == *localhost* || "${AI_API_BASE_URL}" == *127.0.0.1* ]]; then
+    echo "AI_API_BASE_URL must not target a local host in Vercel builds." >&2
+    exit 1
+  fi
+fi
+
 system_flutter_version=""
 if command -v flutter >/dev/null 2>&1; then
   system_flutter_version="$(flutter --version 2>/dev/null | sed -n 's/^Flutter \([0-9][0-9.]*\).*/\1/p' | head -1)"

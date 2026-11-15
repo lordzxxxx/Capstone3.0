@@ -1,5 +1,6 @@
 {
   "model_version": "disease_model_v4",
+  "scikit_learn_version": "1.9.0",
   "dataset_version": "merged_dataset_v3",
   "dataset_path": "/Users/lylesmac/capstone2-modify/backend/dataset/processed/merged_dataset.csv",
   "dataset_sha256": "cc53ccfdf09da298ea13dc5e5d4047eb7a15d7eb47c1cb103b68de65a9457a9d",

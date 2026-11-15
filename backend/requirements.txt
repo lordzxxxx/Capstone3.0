@@ -1,6 +1,9 @@
 joblib>=1.3
 pandas>=2.1
-scikit-learn>=1.4
+# The checked-in disease_model.pkl was serialized with scikit-learn 1.9.0.
+# Keep the inference runtime aligned with the artifact until a retrained model
+# is produced and revalidated under a newer version.
+scikit-learn==1.9.0
 fastapi>=0.115
 python-multipart>=0.0.9
 firebase-admin>=6.5

@@ -1,6 +1,6 @@
 # Phase 5 — End-to-end validation log
 
-Run date: 2026-08-15 (Asia/Manila)
+Run date: 2026-10-15 (Asia/Manila)
 
 This log separates checks that executed in this repository from release gates
 that require the team's Firebase project, real accounts, or physical devices.
@@ -14,11 +14,12 @@ stored in this repository.
 | E2E-01 backend locally | Uvicorn local smoke run from Phase 3: `/` 200, `/health` 200, protected `/guidance` 401 without credentials, `/predict` 404 | Passed |
 | E2E-02 Flutter to backend contract | `disease_prediction_api_service.dart`, authenticated/App Check headers, debug Android default `10.0.2.2:8000`, release fail-closed behavior, service tests | Passed in code/tests; live authenticated request remains open |
 | E2E-05 OCR-to-record path | Shared Google ML Kit capture/review/parser flow plus `ocr_extraction_test.dart`, `ocr_record_action_test.dart`, and form validation tests | Passed in code/tests; real printed forms remain open |
-| E2E-07 BHW/CHO/doctor permissions | `npm run test:firestore-rules`: 17 passing; `npm run test:workflow-persistence`: 1 passing against the Firestore emulator | Passed |
+| E2E-07 BHW/CHO/doctor permissions | Firestore rules: 33 passing; Storage rules: 6 passing; six Functions emulator suites and the connected workflow persistence suite pass | Passed locally; production identities remain open |
 | E2E-08 Android target smoke | Android 14 emulator detected; `flutter build apk --debug --no-pub` succeeded; APK installed and launched on `emulator-5554` | Emulator smoke passed; physical target-device run remains open |
 | E2E-10 bug classification | No critical or major failure was found in the automated checks below; remaining items are external release gates | Recorded below |
 | E2E-11 critical/major fixes | Backend tests, Flutter tests, Firestore rules, workflow persistence, and Android build/install completed without a blocking failure | No repository critical/major fix currently required |
-| E2E-12 regression | Backend `pytest`: 69 passed; Flutter full suite: 91 passed; release web build and Android debug build succeeded | Passed for available local targets |
+| E2E-06 offline/synchronization scope hardening | Shared mobile outbound scope helper covers Patient, Prenatal, Immunization, Morbidity, and Mortality create/update/retry paths; module-level outbound queues serialize save-triggered and connectivity-triggered retries; focused queue/scope tests pass | Locally hardened and tested; real device offline/reconnect/readback remains open |
+| E2E-12 regression | Backend `pytest`: 109 passed; Flutter full suite: 220 passed; release web build, Functions lint/emulator suites, and attachment authorization tests succeeded | Passed for available local targets |
 
 ## Current bug and release-gate classification
 
@@ -38,11 +39,12 @@ evidence.
 ## Commands and results
 
 ```text
-backend/.venv/bin/pytest -q                         69 passed
-npm run test:firestore-rules                       17 passing
-npm run test:workflow-persistence                   1 passing
-flutter test                                        91 passed
-flutter build web --release --no-tree-shake-icons   succeeded
+backend/.venv/bin/pytest -q                         109 passed
+npm run test:firestore-rules                       33 passing
+npm run test:storage-rules                          6 passing
+npm run test:workflow-persistence                   passed
+flutter test                                        220 passed
+flutter build web --release --no-wasm-dry-run       succeeded
 flutter build apk --debug --no-pub                  succeeded
 adb install + launch on emulator-5554              succeeded
 ```

@@ -63,6 +63,8 @@ dependencies:
   google_mlkit_text_recognition: ^0.16.0
   lottie: ^3.5.1
   path_provider: ^2.1.2
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
 
 dev_dependencies:
   flutter_test:
@@ -80,6 +82,7 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
+  sqflite_common_ffi: ^2.4.0+2
 flutter:
 
   # The following line ensures that the Material Icons font is

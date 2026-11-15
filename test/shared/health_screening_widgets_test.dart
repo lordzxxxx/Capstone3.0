@@ -58,4 +58,32 @@ void main() {
     expect(find.text('Assigned barangay'), findsOneWidget);
     await tester.binding.setSurfaceSize(null);
   });
+
+  testWidgets('referral panel keeps oxygen and respiratory reasons visible', (
+    tester,
+  ) async {
+    final record = HealthScreeningEngine.attachToRecord(
+      {'id': 'checkup-oxygen'},
+      HealthScreeningEngine.evaluate({
+        'age': 30,
+        'oxygenSaturation': 90,
+        'respiratoryRate': 34,
+      }),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(12),
+            child: HealthScreeningPanel(record: record),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Oxygen saturation'), findsOneWidget);
+    expect(find.text('Respiratory rate'), findsOneWidget);
+    expect(find.textContaining('Oxygen saturation:'), findsWidgets);
+    expect(find.textContaining('Respiratory rate:'), findsWidgets);
+  });
 }

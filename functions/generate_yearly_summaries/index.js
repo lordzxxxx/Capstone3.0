@@ -4,15 +4,16 @@
  * This is a template — adapt collection names, field mapping, and auth as needed.
  */
 
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v1');
 const admin = require('firebase-admin');
+const {getFirestore, FieldValue} = require('firebase-admin/firestore');
 admin.initializeApp();
 
 // Scheduled to run once per year (example cron: every Jan 1st at 00:00)
 exports.scheduledYearlySummaries = functions.pubsub.schedule('0 0 1 1 *')
   .timeZone('UTC')
   .onRun(async (context) => {
-    const db = admin.firestore();
+    const db = getFirestore(admin.getApp());
     // Fetch all patient records or iterate users collection
     const patientsSnap = await db.collection('patient_records').get();
     const nowYear = new Date().getUTCFullYear() - 1; // generate for previous year
@@ -37,7 +38,7 @@ exports.scheduledYearlySummaries = functions.pubsub.schedule('0 0 1 1 *')
         year: nowYear,
         type: 'yearly',
         text: summaryText,
-        generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        generatedAt: FieldValue.serverTimestamp(),
       });
     }
 

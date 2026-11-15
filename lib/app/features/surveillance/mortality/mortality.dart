@@ -1507,238 +1507,6 @@ class _MortalityPageState extends State<MortalityPage>
             ],
           );
         }),
-        if (false)
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: _primaryAqua.withValues(alpha: 0.5),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                headingRowColor: WidgetStateProperty.all(
-                  _primaryAqua.withValues(alpha: 0.12),
-                ),
-                dataRowColor: WidgetStateProperty.all(Colors.transparent),
-                columns: const [
-                  DataColumn(
-                    label: Text(
-                      'Name',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: _lightOffWhite,
-                      ),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Age / Gender',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: _lightOffWhite,
-                      ),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Cause',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: _lightOffWhite,
-                      ),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Place',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: _lightOffWhite,
-                      ),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Date',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: _lightOffWhite,
-                      ),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Verification',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: _lightOffWhite,
-                      ),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Actions',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: _lightOffWhite,
-                      ),
-                    ),
-                  ),
-                ],
-                rows: _pagedFilteredRecords.map((record) {
-                  final nameValue = record['name']?.toString().trim() ?? '';
-                  final name = nameValue.isEmpty ? 'Unknown' : nameValue;
-                  final age = record['age']?.toString() ?? 'N/A';
-                  final gender = record['gender']?.toString() ?? 'N/A';
-                  final causeValue =
-                      record['causeOfDeath']?.toString().trim() ?? '';
-                  final cause = causeValue.isEmpty
-                      ? 'No cause recorded'
-                      : causeValue;
-                  final placeValue = record['place']?.toString().trim() ?? '';
-                  final place = placeValue.isEmpty
-                      ? 'No place recorded'
-                      : placeValue;
-                  final date = _formatDate(
-                    (record['date'] ?? record['dateReported'] ?? '').toString(),
-                  );
-                  final verification =
-                      record['verification']?.toString() ?? 'Pending';
-                  final verificationColor = _getVerificationColor(verification);
-
-                  return DataRow(
-                    onLongPress: () => _showRecordActionModal(context, record),
-                    cells: [
-                      DataCell(
-                        Text(
-                          name,
-                          style: const TextStyle(color: _lightOffWhite),
-                        ),
-                        onTap: () => _showMortalityHistory(context, record),
-                      ),
-                      DataCell(
-                        Text(
-                          '$age / $gender',
-                          style: const TextStyle(color: _lightOffWhite),
-                        ),
-                        onTap: () => _showMortalityHistory(context, record),
-                      ),
-                      DataCell(
-                        SizedBox(
-                          width: 210,
-                          child: Text(
-                            cause,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: _lightOffWhite),
-                          ),
-                        ),
-                        onTap: () => _showMortalityHistory(context, record),
-                      ),
-                      DataCell(
-                        SizedBox(
-                          width: 180,
-                          child: Text(
-                            place,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: _lightOffWhite),
-                          ),
-                        ),
-                        onTap: () => _showMortalityHistory(context, record),
-                      ),
-                      DataCell(
-                        Text(
-                          date,
-                          style: const TextStyle(color: _lightOffWhite),
-                        ),
-                        onTap: () => _showMortalityHistory(context, record),
-                      ),
-                      DataCell(
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: verificationColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: verificationColor.withValues(alpha: 0.35),
-                            ),
-                          ),
-                          child: Text(
-                            verification,
-                            style: TextStyle(
-                              color: verificationColor,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ),
-                      DataCell(
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.history,
-                                color: _primaryAqua,
-                                size: 20,
-                              ),
-                              tooltip: 'History',
-                              onPressed: () =>
-                                  _showMortalityHistory(context, record),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.orange,
-                                size: 20,
-                              ),
-                              tooltip: 'Edit',
-                              onPressed: () => _editRecord(record),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.verified,
-                                color: Color(0xFF4CAF50),
-                                size: 20,
-                              ),
-                              tooltip: 'Verify',
-                              onPressed: () => _verifyRecord(record),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.print,
-                                color: Color(0xFF607D8B),
-                                size: 20,
-                              ),
-                              tooltip: 'Print',
-                              onPressed: () => _printRecord(record),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
         const SizedBox(height: 12),
         MobilePaginationControls(
           currentPage: _safeCurrentPage,
@@ -1821,7 +1589,7 @@ class _MortalityPageState extends State<MortalityPage>
   ) async {
     final patient = _buildPatientHistorySeed(record);
     final snapshot = await _patientHistoryService.loadPatientHistory(patient);
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
 
@@ -1925,6 +1693,8 @@ class _MortalityPageState extends State<MortalityPage>
       if (!mounted || patientSeed == null) return;
     }
 
+    if (!mounted) return;
+
     final nameController = TextEditingController(
       text:
           (patientSeed['name'] ??
@@ -1935,29 +1705,29 @@ class _MortalityPageState extends State<MortalityPage>
               .toString(),
     );
     final ageController = TextEditingController(
-      text: (patientSeed?['age'] ?? '').toString(),
+      text: (patientSeed['age'] ?? '').toString(),
     );
     final causeController = TextEditingController(
       text:
-          (patientSeed?['cause'] ??
-                  patientSeed?['causeOfDeath'] ??
-                  patientSeed?['diagnosis'] ??
-                  patientSeed?['disease'] ??
+          (patientSeed['cause'] ??
+                  patientSeed['causeOfDeath'] ??
+                  patientSeed['diagnosis'] ??
+                  patientSeed['disease'] ??
                   '')
               .toString(),
     );
     final placeController = TextEditingController(
       text:
-          (patientSeed?['place'] ??
-                  patientSeed?['placeOfDeath'] ??
-                  patientSeed?['address'] ??
+          (patientSeed['place'] ??
+                  patientSeed['placeOfDeath'] ??
+                  patientSeed['address'] ??
                   '')
               .toString(),
     );
     final reportedByController = TextEditingController(
-      text: (patientSeed?['reportedBy'] ?? '').toString(),
+      text: (patientSeed['reportedBy'] ?? '').toString(),
     );
-    final rawGender = (patientSeed?['gender'] ?? patientSeed?['sex'] ?? 'Male')
+    final rawGender = (patientSeed['gender'] ?? patientSeed['sex'] ?? 'Male')
         .toString();
     String selectedGender =
         (rawGender.toLowerCase() == 'female' || rawGender.toLowerCase() == 'f')
@@ -2202,7 +1972,8 @@ class _MortalityPageState extends State<MortalityPage>
                     reportedByController.text,
                     patientSeed: patientSeed,
                   );
-                  if (saved && mounted) {
+                  if (!context.mounted) return;
+                  if (saved) {
                     Navigator.pop(context);
                   }
                 },
@@ -2249,17 +2020,19 @@ class _MortalityPageState extends State<MortalityPage>
 
     try {
       final parsedAge = int.parse(age);
-      final linkedPatientId = (patientSeed?['linkedPatientId'] ??
-              patientSeed?['id'] ??
-              patientSeed?['patientId'] ??
-              '')
-          .toString()
-          .trim();
-      final patientId = (patientSeed?['patientId'] ??
-              patientSeed?['patientCode'] ??
-              linkedPatientId)
-          .toString()
-          .trim();
+      final linkedPatientId =
+          (patientSeed?['linkedPatientId'] ??
+                  patientSeed?['id'] ??
+                  patientSeed?['patientId'] ??
+                  '')
+              .toString()
+              .trim();
+      final patientId =
+          (patientSeed?['patientId'] ??
+                  patientSeed?['patientCode'] ??
+                  linkedPatientId)
+              .toString()
+              .trim();
       final newRecord = {
         'id': '${DateTime.now().millisecondsSinceEpoch}',
         if (linkedPatientId.isNotEmpty) 'linkedPatientId': linkedPatientId,
@@ -2283,6 +2056,7 @@ class _MortalityPageState extends State<MortalityPage>
       // Insert record into database
       await _mortalityHelper.insertRecord(newRecord);
 
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Record added successfully'),
@@ -2294,6 +2068,7 @@ class _MortalityPageState extends State<MortalityPage>
       _loadData();
       return true;
     } catch (e) {
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error adding record: $e'),

@@ -136,7 +136,7 @@ class DatabaseHelper {
           );
         }
         rethrow;
-      } catch (e, stackTrace) {
+      } catch (e) {
         if (kDebugMode) {
           debugPrint('Checkup record write failed: ${e.runtimeType}');
         }

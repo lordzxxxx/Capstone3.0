@@ -149,19 +149,23 @@ class _MortalityAnalyticsPageState extends State<MortalityAnalyticsPage> {
     final value = cause.toLowerCase();
     if (value.contains('heart') ||
         value.contains('stroke') ||
-        value.contains('cardio'))
+        value.contains('cardio')) {
       return 'Cardiovascular';
+    }
     if (value.contains('pneumonia') ||
         value.contains('respiratory') ||
-        value.contains('lung'))
+        value.contains('lung')) {
       return 'Respiratory';
+    }
     if (value.contains('cancer') || value.contains('tumor')) return 'Cancer';
     if (value.contains('infection') ||
         value.contains('sepsis') ||
-        value.contains('dengue'))
+        value.contains('dengue')) {
       return 'Infectious Diseases';
-    if (value.contains('maternal') || value.contains('pregnan'))
+    }
+    if (value.contains('maternal') || value.contains('pregnan')) {
       return 'Maternal';
+    }
     if (value.contains('diabetes')) return 'Metabolic';
     return 'Other';
   }
@@ -208,8 +212,9 @@ class _MortalityAnalyticsPageState extends State<MortalityAnalyticsPage> {
     for (final row in _records) {
       final barangay = _barangay(row);
       final population = int.tryParse(_v(row, 'population'));
-      if (population != null && population > 0)
+      if (population != null && population > 0) {
         populations[barangay] = population;
+      }
     }
     return deaths.map((barangay, count) {
       final population = populations[barangay] ?? 10000;
@@ -412,8 +417,9 @@ class _MortalityAnalyticsPageState extends State<MortalityAnalyticsPage> {
                   reservedSize: 54,
                   getTitlesWidget: (value, meta) {
                     final index = value.toInt();
-                    if (index < 0 || index >= entries.length)
+                    if (index < 0 || index >= entries.length) {
                       return const SizedBox();
+                    }
                     return SideTitleWidget(
                       meta: meta,
                       space: 8,
@@ -522,8 +528,9 @@ class _MortalityAnalyticsPageState extends State<MortalityAnalyticsPage> {
                     final index = value.toInt();
                     if (index < 0 ||
                         index >= entries.length ||
-                        value != index.toDouble())
+                        value != index.toDouble()) {
                       return const SizedBox();
+                    }
                     return SideTitleWidget(
                       meta: meta,
                       child: Text(

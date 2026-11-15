@@ -1,8 +1,9 @@
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v1');
 const { onDocumentWritten } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
-const {getFirestore, FieldValue} = require('firebase-admin/firestore');
-const {ServerValue} = require('firebase-admin/database');
+const {getAuth} = require('firebase-admin/auth');
+const {getFirestore, FieldValue, Timestamp} = require('firebase-admin/firestore');
+const {getDatabase, ServerValue} = require('firebase-admin/database');
 const crypto = require('crypto');
 const {sendSystemEmail} = require('./mailer');
 const {
@@ -20,13 +21,15 @@ const {
 } = require('./email_templates');
 const {sendDoctorAccountSetupEmail} = require('./doctor_access');
 
-if (!admin.apps.length) {
+if (!(typeof admin.getApps === 'function' ? admin.getApps() : admin.apps).length) {
   admin.initializeApp();
 }
 
 // Keep this aligned with lib/firebase_helper.dart.
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
-const db = getFirestore(admin.app(), FIRESTORE_DATABASE_ID);
+const db = getFirestore(admin.getApp(), FIRESTORE_DATABASE_ID);
+const auth = getAuth(admin.getApp());
+const rtdb = {ref: (...args) => getDatabase(admin.getApp()).ref(...args)};
 const REGISTRATION_INTENT_TTL_MS = 30 * 60 * 1000;
 const CHO_ADMIN_ROLES = new Set(['CHO_ADMIN', 'CHO_SUPER_ADMIN']);
 const MAIN_CHO_ADMIN_UID = 'q1Osb263nZcvlo64ws5drFDoIXf1';
@@ -460,7 +463,7 @@ async function findEmailOwner(email) {
   if (!normalized) return null;
 
   try {
-    const authUser = await admin.auth().getUserByEmail(normalized);
+    const authUser = await auth.getUserByEmail(normalized);
     return {
       uid: authUser.uid,
       email: authUser.email || normalized,
@@ -1138,7 +1141,7 @@ exports.createRegistrationAccount = functions.https.onCall(async (data, context)
 
   let userRecord;
   try {
-    userRecord = await admin.auth().createUser({
+    userRecord = await auth.createUser({
       email,
       password,
       displayName: username,
@@ -1177,13 +1180,13 @@ exports.createRegistrationAccount = functions.https.onCall(async (data, context)
       barangayCode,
       registrationNonce,
       createdAt: FieldValue.serverTimestamp(),
-      expiresAt: admin.firestore.Timestamp.fromMillis(
+      expiresAt: Timestamp.fromMillis(
           Date.now() + REGISTRATION_INTENT_TTL_MS,
       ),
     });
   } catch (error) {
     try {
-      await admin.auth().deleteUser(userRecord.uid);
+      await auth.deleteUser(userRecord.uid);
     } catch (rollbackError) {
       console.error('createRegistrationAccount Auth rollback failed', {
         uid: userRecord.uid,
@@ -1202,11 +1205,11 @@ exports.createRegistrationAccount = functions.https.onCall(async (data, context)
 
   let customToken;
   try {
-    customToken = await admin.auth().createCustomToken(userRecord.uid);
+    customToken = await auth.createCustomToken(userRecord.uid);
   } catch (error) {
     await db.collection('registration_intents').doc(userRecord.uid).delete();
     try {
-      await admin.auth().deleteUser(userRecord.uid);
+      await auth.deleteUser(userRecord.uid);
     } catch (rollbackError) {
       console.error('createRegistrationAccount token rollback failed', {
         uid: userRecord.uid,
@@ -1512,7 +1515,7 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
     }
   });
 
-  const existingAuthUser = await admin.auth().getUser(uid);
+  const existingAuthUser = await auth.getUser(uid);
   const updatedClaims = {...(existingAuthUser.customClaims || {})};
   const isApprovedAccount =
     completedPayload.approvalStatus.toLowerCase() === 'approved' &&
@@ -1530,10 +1533,10 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
       }
     }
   }
-  await admin.auth().setCustomUserClaims(uid, updatedClaims);
+  await auth.setCustomUserClaims(uid, updatedClaims);
 
   try {
-    await admin.database().ref(`users/${uid}`).update({
+    await rtdb.ref(`users/${uid}`).update({
       uid,
       username,
       email,
@@ -1662,13 +1665,13 @@ async function provisionManagedAccount(data, context) {
   let userRecord;
   let created = false;
   try {
-    userRecord = await admin.auth().getUserByEmail(email);
+    userRecord = await auth.getUserByEmail(email);
   } catch (error) {
     if (error.code !== 'auth/user-not-found') throw doctorRegistrationError(error, 'Failed to find the account.');
     // The random password is only used to satisfy Auth account creation. It
     // is never returned, logged, or stored; the activation link is the only
     // onboarding path shown to the new user.
-    userRecord = await admin.auth().createUser({
+    userRecord = await auth.createUser({
       email,
       password: generateTemporaryPassword(),
       displayName: fullName,
@@ -1750,12 +1753,12 @@ async function provisionManagedAccount(data, context) {
       }, {merge: true});
     });
 
-    await admin.auth().updateUser(userRecord.uid, {
+    await auth.updateUser(userRecord.uid, {
       displayName: fullName,
       disabled: accountStatus === 'disabled',
     });
-    const freshAuth = await admin.auth().getUser(userRecord.uid);
-    await admin.auth().setCustomUserClaims(userRecord.uid, {
+    const freshAuth = await auth.getUser(userRecord.uid);
+    await auth.setCustomUserClaims(userRecord.uid, {
       ...(freshAuth.customClaims || {}),
       role: role.toLowerCase(),
       approvalStatus: 'approved',
@@ -1763,7 +1766,7 @@ async function provisionManagedAccount(data, context) {
     });
   } catch (error) {
     if (created) {
-      try { await admin.auth().deleteUser(userRecord.uid); } catch (_) {}
+      try { await auth.deleteUser(userRecord.uid); } catch (_) {}
     }
     throw doctorRegistrationError(error, 'Managed account creation failed.');
   }
@@ -1774,7 +1777,7 @@ async function provisionManagedAccount(data, context) {
   if (!process.env.FUNCTIONS_EMULATOR ||
       process.env.FIREBASE_DATABASE_EMULATOR_HOST) {
     try {
-      await admin.database().ref(`users/${userRecord.uid}`).update({
+      await rtdb.ref(`users/${userRecord.uid}`).update({
         uid: userRecord.uid,
         username: fullName,
         fullName,
@@ -1826,7 +1829,7 @@ async function provisionManagedAccount(data, context) {
   } else {
     let resetLink = null;
     try {
-      resetLink = await admin.auth().generatePasswordResetLink(email);
+      resetLink = await auth.generatePasswordResetLink(email);
     } catch (error) {
       console.error('Managed account activation link generation failed', {
         uid: userRecord.uid,
@@ -1950,7 +1953,7 @@ exports.reviewBhwRegistration = functions.runWith({
   }
   await batch.commit();
 
-  const authUser = await admin.auth().getUser(uid);
+  const authUser = await auth.getUser(uid);
   const claims = {...(authUser.customClaims || {})};
   if (approved) {
     claims.role = 'bhw';
@@ -1965,10 +1968,10 @@ exports.reviewBhwRegistration = functions.runWith({
       if (!claims.roles.length) delete claims.roles;
     }
   }
-  await admin.auth().setCustomUserClaims(uid, claims);
-  await admin.auth().updateUser(uid, {disabled: !approved});
+  await auth.setCustomUserClaims(uid, claims);
+  await auth.updateUser(uid, {disabled: !approved});
   try {
-    await admin.database().ref(`users/${uid}`).update({
+    await rtdb.ref(`users/${uid}`).update({
       role: 'BHW',
       accessRoleKey: 'BHW',
       permissions: defaultPermissionsForRole('BHW'),
@@ -2207,7 +2210,7 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
     }, {merge: true});
   }
 
-  const targetAuth = await admin.auth().getUser(uid);
+  const targetAuth = await auth.getUser(uid);
   const claims = {...(targetAuth.customClaims || {})};
   if (nextAccountStatus === 'active' && ['approved', 'active'].includes(normalizeText(current.approvalStatus || ''))) {
     claims.role = nextRole.toLowerCase();
@@ -2218,9 +2221,9 @@ exports.updateChoAccount = functions.https.onCall(async (data, context) => {
     delete claims.approvalStatus;
     delete claims.accountStatus;
   }
-  await admin.auth().setCustomUserClaims(uid, claims);
-  await admin.auth().updateUser(uid, {disabled: nextAccountStatus !== 'active'});
-  await admin.database().ref(`users/${uid}`).update({
+  await auth.setCustomUserClaims(uid, claims);
+  await auth.updateUser(uid, {disabled: nextAccountStatus !== 'active'});
+  await rtdb.ref(`users/${uid}`).update({
     role: nextRole,
     accessRoleKey: accessRole.roleKey,
     permissions: accessRole.permissions,
@@ -2312,14 +2315,14 @@ exports.archiveChoAccount = functions.https.onCall(async (data, context) => {
   };
   await targetRef.set(archivePayload, {merge: true});
 
-  const targetAuth = await admin.auth().getUser(uid);
+  const targetAuth = await auth.getUser(uid);
   const claims = {...(targetAuth.customClaims || {})};
   delete claims.role;
   delete claims.approvalStatus;
   delete claims.accountStatus;
-  await admin.auth().setCustomUserClaims(uid, claims);
-  await admin.auth().updateUser(uid, {disabled: true});
-  await admin.database().ref(`users/${uid}`).update({
+  await auth.setCustomUserClaims(uid, claims);
+  await auth.updateUser(uid, {disabled: true});
+  await rtdb.ref(`users/${uid}`).update({
     accountStatus: 'archived',
     status: 'Archived',
     isApproved: false,

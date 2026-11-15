@@ -5,19 +5,22 @@
  * Restricted to callers who already hold a CHO-tier administrative role.
  */
 
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v1');
 const admin = require('firebase-admin');
+const {getAuth} = require('firebase-admin/auth');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
-const { ServerValue } = require('firebase-admin/database');
+const {getDatabase, ServerValue} = require('firebase-admin/database');
 const { defaultPermissionsForRole } = require('./rbac_policy');
 
-if (!admin.apps.length) {
+if (!(typeof admin.getApps === 'function' ? admin.getApps() : admin.apps).length) {
   admin.initializeApp();
 }
 
 // Keep this aligned with lib/firebase_helper.dart and account_policy.js.
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
-const db = getFirestore(admin.app(), FIRESTORE_DATABASE_ID);
+const db = getFirestore(admin.getApp(), FIRESTORE_DATABASE_ID);
+const auth = getAuth(admin.getApp());
+const rtdb = {ref: (...args) => getDatabase(admin.getApp()).ref(...args)};
 const CHO_OPERATOR_ROLES = ['CHO_ADMIN', 'CHO_SUPER_ADMIN'];
 const MAIN_CHO_ADMIN_UID = 'q1Osb263nZcvlo64ws5drFDoIXf1';
 const MAIN_CHO_ADMIN_EMAIL = 'theo@gmail.com';
@@ -37,7 +40,7 @@ async function ensureCallerIsChoOperator(context) {
   }
 
   const [authRecord, profileSnapshot] = await Promise.all([
-    admin.auth().getUser(context.auth.uid),
+    auth.getUser(context.auth.uid),
     db.doc(`users/${context.auth.uid}`).get(),
   ]);
 
@@ -129,14 +132,14 @@ exports.setUserRole = functions.https.onCall(async (data, context) => {
       updatedAt: FieldValue.serverTimestamp(),
     }, {merge: true});
 
-    const targetAuth = await admin.auth().getUser(uid);
-    await admin.auth().setCustomUserClaims(uid, {
+    const targetAuth = await auth.getUser(uid);
+    await auth.setCustomUserClaims(uid, {
       ...(targetAuth.customClaims || {}),
       role: normalizedRole.toLowerCase(),
     });
 
     // Update Realtime Database
-    await admin.database().ref(`users/${uid}`).update({
+    await rtdb.ref(`users/${uid}`).update({
       role: normalizedRole,
       accessRoleKey: normalizedRole,
       permissions: defaultPermissionsForRole(normalizedRole),

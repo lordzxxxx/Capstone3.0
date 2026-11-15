@@ -117,12 +117,14 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       await _dbHelper.seedSamplePatientData();
 
       // Close loading dialog
+      if (!mounted) return;
       Navigator.of(context).pop();
 
       // Reload patients
       await _loadPatients();
 
       // Show success message
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Successfully added 100 sample patient records.'),
@@ -132,6 +134,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       );
     } catch (e) {
       // Close loading dialog
+      if (!mounted) return;
       Navigator.of(context).pop();
 
       // Show error message
@@ -1820,6 +1823,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       // Reload the patient list
       await _loadPatients();
 
+      if (!mounted) return;
       setState(() {
         _selectedIndices.clear();
         _isSelectionMode = false;
@@ -1837,6 +1841,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
       );
     } catch (e) {
       print('Error deleting patients: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error deleting patients: $e'),
@@ -1947,7 +1952,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                 try {
                   await _dbHelper.deleteRecords([patientId]);
                   await _loadPatients();
-                  if (mounted) {
+                  if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
@@ -1960,7 +1965,7 @@ class _PatientRecordPageState extends State<PatientRecordPage> {
                     );
                   }
                 } catch (e) {
-                  if (mounted) {
+                  if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Error deleting patient: $e'),

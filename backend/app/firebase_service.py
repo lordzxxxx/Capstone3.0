@@ -28,7 +28,12 @@ class FirebaseConfigurationError(RuntimeError):
 
 
 def get_firebase_app() -> Any:
-    """Return the default Admin app, initializing it from safe credentials."""
+    """Return the default Admin app using a key file or ADC.
+
+    Cloud Run and other Google-managed runtimes provide Application Default
+    Credentials through the attached service account. Requiring a JSON key
+    file would make the production deployment both less secure and unusable.
+    """
     _load_project_environment()
     try:
         import firebase_admin
@@ -41,16 +46,19 @@ def get_firebase_app() -> Any:
         try:
             return firebase_admin.get_app()
         except ValueError:
-            if not os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
+            credential_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "").strip()
+            if credential_path and not Path(credential_path).is_file():
                 raise FirebaseConfigurationError(
-                    "GOOGLE_APPLICATION_CREDENTIALS is not set. Point it to a "
-                    "service-account JSON file; never commit that file."
+                    "The configured Firebase credential file does not exist."
                 )
             try:
+                # initialize_app() uses GOOGLE_APPLICATION_CREDENTIALS when set
+                # and ADC when it is absent (the Cloud Run production path).
                 return firebase_admin.initialize_app()
             except Exception as exc:
                 raise FirebaseConfigurationError(
-                    f"Firebase Admin initialization failed: {exc}"
+                    "Firebase Admin initialization failed. Check ADC or the "
+                    "configured service-account file."
                 ) from exc
 
 
@@ -97,7 +105,8 @@ def get_firestore_client(
             client = firestore.client(database_id=selected_database)
         except Exception as exc:
             raise FirebaseConfigurationError(
-                f"Could not create the Firestore client: {exc}"
+                "Could not create the Firestore client. Check the database ID "
+                "and service-account permissions."
             ) from exc
         _FIRESTORE_CLIENTS[selected_database] = client
         return client

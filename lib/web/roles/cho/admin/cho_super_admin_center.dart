@@ -47,6 +47,8 @@ class ChoSuperAdminCenter extends StatefulWidget {
 }
 
 class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
+  static const int _userReadLimit = 500;
+
   final FirebaseFirestore _firestore = getFirestoreInstance();
   final BarangayBrandingService _brandingService =
       BarangayBrandingService.instance;
@@ -664,10 +666,10 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                     logoStoragePath = uploaded.storagePath;
                   }
                 });
-              } catch (e) {
+              } catch (_) {
                 Get.snackbar(
                   'Upload failed',
-                  'Could not upload the selected image: $e',
+                  'Could not upload the selected image. Check the file type, size, and connection.',
                   backgroundColor: _primaryAqua,
                   colorText: Colors.white,
                 );
@@ -1473,7 +1475,11 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
         ),
         title: 'Manage CHO Access',
         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: _firestore.collection('users').snapshots(),
+          stream: _firestore
+              .collection('users')
+              .orderBy(FieldPath.documentId)
+              .limit(_userReadLimit)
+              .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return ChoErrorState(
@@ -1541,6 +1547,17 @@ class _ChoSuperAdminCenterState extends State<ChoSuperAdminCenter> {
                       ),
                     ],
                   ),
+                  if (docs.length >= _userReadLimit)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: Text(
+                        'Showing the first 500 user accounts for stability. Narrow the filters or use the account workflow for a complete review.',
+                        style: TextStyle(
+                          color: AppColors.warning,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 16),
                   LayoutBuilder(
                     builder: (context, constraints) {

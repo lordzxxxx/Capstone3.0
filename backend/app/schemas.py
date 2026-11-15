@@ -90,6 +90,14 @@ class HealthResponse(BaseModel):
     firestoreConfigured: bool
 
 
+class ReadinessResponse(BaseModel):
+    """Dependency readiness returned to an orchestrator or uptime check."""
+
+    status: str
+    modelLoaded: bool
+    firestoreReachable: bool
+
+
 class TurnstileVerifyRequest(BaseModel):
     """One-time Cloudflare Turnstile token from a web auth form."""
 
@@ -110,6 +118,29 @@ class GuidanceReference(BaseModel):
     organization: str = ""
     title: str = ""
     url: str = ""
+
+
+class GuidanceEvidence(BaseModel):
+    citationId: str
+    sourceId: str
+    title: str = ""
+    organization: str = ""
+    version: str = ""
+    publicationDate: str = ""
+    reviewStatus: str = "needs_review"
+    url: str = ""
+    matchedTerms: list[str] = Field(default_factory=list)
+    relevanceScore: float = Field(ge=0.0, le=1.0)
+    vectorSimilarity: float = Field(default=0.0, ge=0.0, le=1.0)
+
+
+class GuidanceExplanation(BaseModel):
+    provider: str
+    status: str
+    summary: str
+    uncertainty: str
+    citationIds: list[str] = Field(default_factory=list)
+    promptVersion: str
 
 
 class SymptomGuidanceResponse(BaseModel):
@@ -135,6 +166,9 @@ class SymptomGuidanceResponse(BaseModel):
     categoryUnmappedConditions: list[str]
     categoryMatchedSymptoms: list[str]
     categoryUnmappedSymptoms: list[str]
+    retrievedEvidence: list[GuidanceEvidence] = Field(default_factory=list)
+    retrievalMethod: str = "local_tfidf_keyword_metadata_v1"
+    explanation: GuidanceExplanation | None = None
 
 
 class ErrorResponse(BaseModel):

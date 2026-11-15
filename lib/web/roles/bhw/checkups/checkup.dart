@@ -524,23 +524,23 @@ class _CheckUpPageState extends State<CheckUpPage> {
         .toString()
         .toLowerCase();
     final triage = (record['triageLevel'] ?? '').toString().toLowerCase();
-    final priority = (sev == 'critical' ||
-            sev == 'emergency' ||
-            triage.contains('triage 1'))
+    final priority =
+        (sev == 'critical' || sev == 'emergency' || triage.contains('triage 1'))
         ? 'emergency'
         : (sev == 'high' ||
-                triage.contains('triage 2') ||
-                triage.contains('triage 3') ||
-                record['referralRecommended'] == true)
-            ? 'urgent'
-            : 'routine';
+              triage.contains('triage 2') ||
+              triage.contains('triage 3') ||
+              record['referralRecommended'] == true)
+        ? 'urgent'
+        : 'routine';
 
     _openReferralOverlay(
       initialRecord: record,
       initialPatient: referralSeed,
       initialObservations: observationsParts.join('\n'),
-      initialReason:
-          diagnosis.isNotEmpty && diagnosis != 'General' ? diagnosis : null,
+      initialReason: diagnosis.isNotEmpty && diagnosis != 'General'
+          ? diagnosis
+          : null,
       initialPriority: priority,
     );
   }
@@ -605,34 +605,35 @@ class _CheckUpPageState extends State<CheckUpPage> {
       if (vitals.isNotEmpty) 'Vitals: $vitals',
     ];
 
-    final diagnosis = (savedRecord['diagnosis'] ??
-            savedRecord['clinicalImpression'] ??
-            savedRecord['disease'] ??
-            savedRecord['diseaseType'] ??
-            '')
-        .toString()
-        .trim();
+    final diagnosis =
+        (savedRecord['diagnosis'] ??
+                savedRecord['clinicalImpression'] ??
+                savedRecord['disease'] ??
+                savedRecord['diseaseType'] ??
+                '')
+            .toString()
+            .trim();
     final sev = (savedRecord['ai_severity'] ?? savedRecord['severity'] ?? '')
         .toString()
         .toLowerCase();
     final triage = (savedRecord['triageLevel'] ?? '').toString().toLowerCase();
-    final priority = (sev == 'critical' ||
-            sev == 'emergency' ||
-            triage.contains('triage 1'))
+    final priority =
+        (sev == 'critical' || sev == 'emergency' || triage.contains('triage 1'))
         ? 'emergency'
         : (sev == 'high' ||
-                triage.contains('triage 2') ||
-                triage.contains('triage 3') ||
-                savedRecord['referralRecommended'] == true)
-            ? 'urgent'
-            : 'routine';
+              triage.contains('triage 2') ||
+              triage.contains('triage 3') ||
+              savedRecord['referralRecommended'] == true)
+        ? 'urgent'
+        : 'routine';
 
     _openReferralOverlay(
       initialRecord: savedRecord,
       initialPatient: referralSeed,
       initialObservations: observationsParts.join('\n'),
-      initialReason:
-          diagnosis.isNotEmpty && diagnosis != 'General' ? diagnosis : null,
+      initialReason: diagnosis.isNotEmpty && diagnosis != 'General'
+          ? diagnosis
+          : null,
       initialPriority: priority,
     );
   }
@@ -3850,7 +3851,8 @@ class _CheckUpCard extends StatelessWidget {
       record['patientId'] ?? record['linkedPatientId'] ?? record['id'],
       '-',
     );
-    final rawDateTime = record['datetime'] ??
+    final rawDateTime =
+        record['datetime'] ??
         record['date'] ??
         record['consultationDate'] ??
         record['createdAt'] ??
@@ -3859,9 +3861,9 @@ class _CheckUpCard extends StatelessWidget {
     final dateLabel = parsedDt != null
         ? DateFormat('MMMM d, yyyy').format(parsedDt.toLocal())
         : (rawDateTime?.toString().trim().isNotEmpty == true &&
-                !rawDateTime.toString().contains('Timestamp(')
-            ? rawDateTime.toString().split('T').first.split(' ').first
-            : 'N/A');
+                  !rawDateTime.toString().contains('Timestamp(')
+              ? rawDateTime.toString().split('T').first.split(' ').first
+              : 'N/A');
     final timeLabel = parsedDt != null
         ? DateFormat('h:mm a').format(parsedDt.toLocal())
         : '';
@@ -3903,8 +3905,8 @@ class _CheckUpCard extends StatelessWidget {
     final followUpLabel = followUpDt != null
         ? DateFormat('MMMM d, yyyy').format(followUpDt.toLocal())
         : (followUp.isNotEmpty && !followUp.toLowerCase().contains('timestamp')
-            ? followUp
-            : '');
+              ? followUp
+              : '');
     final status = _safe(record['status'], 'Completed');
 
     return GestureDetector(
@@ -4067,12 +4069,14 @@ class _CheckUpCard extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF163B66)
-                                .withValues(alpha: 0.08),
+                            color: const Color(
+                              0xFF163B66,
+                            ).withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
-                              color: const Color(0xFF163B66)
-                                  .withValues(alpha: 0.2),
+                              color: const Color(
+                                0xFF163B66,
+                              ).withValues(alpha: 0.2),
                               width: 1,
                             ),
                           ),
@@ -5170,10 +5174,7 @@ class _NewCheckUpFullScreenModalState
 
       final screeningResult = HealthScreeningEngine.evaluate(newRecord);
       newRecord.addAll(
-        HealthScreeningEngine.attachToRecord(
-          newRecord,
-          screeningResult,
-        ),
+        HealthScreeningEngine.attachToRecord(newRecord, screeningResult),
       );
 
       // Call the callback to save the record
@@ -5229,24 +5230,17 @@ class _NewCheckUpFullScreenModalState
     // Evaluate health screening from the record if available
     final screening = record != null
         ? (HealthScreeningEngine.resultFromRecord(record) ??
-            HealthScreeningEngine.evaluate(record))
+              HealthScreeningEngine.evaluate(record))
         : null;
 
-    // Filter findings to exclude oxygen saturation and respiratory rate per requirement
-    final actionableFindings = screening?.findings.where((f) {
-          final lower = f.measurement.toLowerCase();
-          return !f.isInformational &&
-              !lower.contains('oxygen') &&
-              !lower.contains('respiratory');
-        }).toList() ??
+    // Preserve every non-informational vital sign in the referral trail.
+    final actionableFindings =
+        screening?.findings
+            .where((finding) => !finding.isInformational)
+            .toList() ??
         <HealthMeasurementFinding>[];
 
-    // Filter referral reasons to exclude oxygen saturation and respiratory rate
-    final filteredReferralReasons = screening?.referralReasons.where((r) {
-          final lower = r.toLowerCase();
-          return !lower.contains('oxygen') && !lower.contains('respiratory');
-        }).toList() ??
-        <String>[];
+    final filteredReferralReasons = screening?.referralReasons ?? <String>[];
 
     final category = result.suggestedHealthCategory;
 
@@ -5657,14 +5651,19 @@ class _NewCheckUpFullScreenModalState
       barrierDismissible: false,
       builder: (dialogContext) {
         final isDesktopLayout = screenSize.width >= 960;
-        final dialogWidth =
-            screenSize.width > 1160 ? 1120.0 : (screenSize.width * 0.95);
-        final dialogHeight =
-            screenSize.height > 860 ? 800.0 : (screenSize.height * 0.92);
+        final dialogWidth = screenSize.width > 1160
+            ? 1120.0
+            : (screenSize.width * 0.95);
+        final dialogHeight = screenSize.height > 860
+            ? 800.0
+            : (screenSize.height * 0.92);
 
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 20,
+          ),
           child: Container(
             width: dialogWidth,
             height: dialogHeight,
@@ -5691,10 +5690,7 @@ class _NewCheckUpFullScreenModalState
                   decoration: const BoxDecoration(
                     color: Color(0xFF0F172A),
                     border: Border(
-                      bottom: BorderSide(
-                        color: Color(0x20FFFFFF),
-                        width: 1,
-                      ),
+                      bottom: BorderSide(color: Color(0x20FFFFFF), width: 1),
                     ),
                   ),
                   child: Row(
@@ -5703,10 +5699,14 @@ class _NewCheckUpFullScreenModalState
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2563EB).withValues(alpha: 0.20),
+                          color: const Color(
+                            0xFF2563EB,
+                          ).withValues(alpha: 0.20),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: const Color(0xFF2563EB).withValues(alpha: 0.40),
+                            color: const Color(
+                              0xFF2563EB,
+                            ).withValues(alpha: 0.40),
                           ),
                         ),
                         child: const Icon(
@@ -5915,7 +5915,8 @@ class _NewCheckUpFullScreenModalState
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: buildMetricTile(
-                                      icon: Icons.transfer_within_a_station_rounded,
+                                      icon: Icons
+                                          .transfer_within_a_station_rounded,
                                       iconColor: nextStepColor,
                                       iconBg: const Color(0xFFEFF6FF),
                                       label: 'Recommended',
@@ -5972,7 +5973,9 @@ class _NewCheckUpFullScreenModalState
                                         fontStyle: FontStyle.italic,
                                       ),
                                     ),
-                                  if (result.recognizedConditions.isNotEmpty) ...[
+                                  if (result
+                                      .recognizedConditions
+                                      .isNotEmpty) ...[
                                     const SizedBox(width: 4),
                                     const Text(
                                       'Conditions: ',
@@ -5997,7 +6000,8 @@ class _NewCheckUpFullScreenModalState
                               if (screening != null &&
                                   (screening.referralRecommendation.index >=
                                           HealthReferralRecommendation
-                                              .considerReferral.index ||
+                                              .considerReferral
+                                              .index ||
                                       filteredReferralReasons.isNotEmpty)) ...[
                                 const SizedBox(height: 12),
                                 Container(
@@ -6022,7 +6026,8 @@ class _NewCheckUpFullScreenModalState
                                       Row(
                                         children: [
                                           const Icon(
-                                            Icons.notification_important_rounded,
+                                            Icons
+                                                .notification_important_rounded,
                                             size: 16,
                                             color: Color(0xFF1D4ED8),
                                           ),
@@ -6037,12 +6042,14 @@ class _NewCheckUpFullScreenModalState
                                           ),
                                         ],
                                       ),
-                                      if (filteredReferralReasons.isNotEmpty) ...[
+                                      if (filteredReferralReasons
+                                          .isNotEmpty) ...[
                                         const SizedBox(height: 4),
                                         ...filteredReferralReasons.map(
                                           (reason) => Padding(
-                                            padding:
-                                                const EdgeInsets.only(bottom: 2),
+                                            padding: const EdgeInsets.only(
+                                              bottom: 2,
+                                            ),
                                             child: Text(
                                               '• $reason',
                                               style: const TextStyle(
@@ -6247,10 +6254,7 @@ class _NewCheckUpFullScreenModalState
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     border: Border(
-                      top: BorderSide(
-                        color: Color(0xFFE2E8F0),
-                        width: 1,
-                      ),
+                      top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
                     ),
                   ),
                   child: Row(
@@ -6414,7 +6418,6 @@ class _NewCheckUpFullScreenModalState
     );
   }
 }
-
 
 // Edit Check Up Modal
 class _EditCheckUpFullScreenModal extends StatefulWidget {

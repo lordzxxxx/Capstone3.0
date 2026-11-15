@@ -1085,7 +1085,9 @@ class _MorbidityPageState extends State<MorbidityPage> {
               context,
               formType: ClinicalFormType.morbidity,
               record: record,
-              patientName: (record['patientName'] ?? record['patient'] ?? record['name'])?.toString(),
+              patientName:
+                  (record['patientName'] ?? record['patient'] ?? record['name'])
+                      ?.toString(),
             );
           },
         ),
@@ -1770,11 +1772,7 @@ Future<void> showNewMorbidityModal(
   Map<String, dynamic>? patientSeed,
   Future<void> Function()? onSaved,
 }) =>
-    _showNewMorbidityModal(
-      context,
-      patientSeed: patientSeed,
-      onSaved: onSaved,
-    );
+    _showNewMorbidityModal(context, patientSeed: patientSeed, onSaved: onSaved);
 
 Future<void> _showNewMorbidityModal(
   BuildContext context, {
@@ -1792,13 +1790,14 @@ Future<void> _showNewMorbidityModal(
       onRegisterPatient: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) =>
-              const PatientRecordPage(openRegistrationOnLoad: true),
+          builder: (_) => const PatientRecordPage(openRegistrationOnLoad: true),
         ),
       ),
     );
     if (!context.mounted || patientSeed == null) return;
   }
+
+  if (!context.mounted) return;
 
   final formKey = GlobalKey<FormState>();
   final patientNameController = TextEditingController(
@@ -1907,17 +1906,19 @@ Future<void> _showNewMorbidityModal(
 
               final navigator = Navigator.of(context);
               final messenger = ScaffoldMessenger.of(context);
-              final linkedPatientId = (patientSeed?['linkedPatientId'] ??
-                      patientSeed?['id'] ??
-                      patientSeed?['patientId'] ??
-                      '')
-                  .toString()
-                  .trim();
-              final patientId = (patientSeed?['patientId'] ??
-                      patientSeed?['patientCode'] ??
-                      linkedPatientId)
-                  .toString()
-                  .trim();
+              final linkedPatientId =
+                  (patientSeed?['linkedPatientId'] ??
+                          patientSeed?['id'] ??
+                          patientSeed?['patientId'] ??
+                          '')
+                      .toString()
+                      .trim();
+              final patientId =
+                  (patientSeed?['patientId'] ??
+                          patientSeed?['patientCode'] ??
+                          linkedPatientId)
+                      .toString()
+                      .trim();
               final newRecord = {
                 'id': DateTime.now().millisecondsSinceEpoch.toString(),
                 if (linkedPatientId.isNotEmpty)
@@ -2044,157 +2045,163 @@ void _showMorbidityDetails(BuildContext context, Map<String, dynamic> record) {
                               topRight: Radius.circular(20),
                             ),
                     ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.12),
-                    ),
-                    child: const Icon(
-                      Icons.local_hospital,
-                      color: _lightOffWhite,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        const Text(
-                          'Morbidity Record Details',
-                          style: TextStyle(
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.12),
+                          ),
+                          child: const Icon(
+                            Icons.local_hospital,
                             color: _lightOffWhite,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                            size: 24,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          patientName,
-                          style: TextStyle(
-                            color: _lightOffWhite.withValues(alpha: 0.8),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Morbidity Record Details',
+                                style: TextStyle(
+                                  color: _lightOffWhite,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                patientName,
+                                style: TextStyle(
+                                  color: _lightOffWhite.withValues(alpha: 0.8),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(
+                            Icons.close,
+                            color: _lightOffWhite.withValues(alpha: 0.8),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: Icon(
-                      Icons.close,
-                      color: _lightOffWhite.withValues(alpha: 0.8),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildMorbidityDetailSection('Patient Information', [
+                            _buildMorbidityDetailRow(
+                              'Patient Name',
+                              patientName,
+                            ),
+                            _buildMorbidityDetailRow(
+                              'Patient ID',
+                              record['patientId']?.toString() ?? 'N/A',
+                            ),
+                            _buildMorbidityDetailRow(
+                              'Age',
+                              record['age']?.toString() ?? 'N/A',
+                            ),
+                            _buildMorbidityDetailRow(
+                              'Gender',
+                              record['gender']?.toString() ?? 'N/A',
+                            ),
+                          ]),
+                          const SizedBox(height: 16),
+                          _buildMorbidityDetailSection('Clinical Details', [
+                            _buildMorbidityDetailRow(
+                              'Disease',
+                              record['disease']?.toString() ?? 'N/A',
+                            ),
+                            _buildMorbidityDetailRow(
+                              'Severity',
+                              record['severity']?.toString() ?? 'N/A',
+                            ),
+                            _buildMorbidityDetailRow(
+                              'Status',
+                              record['status']?.toString() ?? 'N/A',
+                            ),
+                            _buildMorbidityDetailRow(
+                              'Treatment',
+                              record['treatment']?.toString() ?? 'N/A',
+                            ),
+                          ]),
+                          const SizedBox(height: 16),
+                          _buildMorbidityDetailSection('Reporting Details', [
+                            _buildMorbidityDetailRow(
+                              'Health Facility',
+                              record['healthFacility']?.toString() ?? 'N/A',
+                            ),
+                            _buildMorbidityDetailRow(
+                              'Reported By',
+                              record['reportedBy']?.toString() ?? 'N/A',
+                            ),
+                            _buildMorbidityDetailRow(
+                              'Date Reported',
+                              record['dateReported']
+                                      ?.toString()
+                                      .split('T')
+                                      .first ??
+                                  'N/A',
+                            ),
+                            _buildMorbidityDetailRow(
+                              'Time',
+                              record['time']?.toString() ?? 'N/A',
+                            ),
+                            _buildMorbidityDetailRow(
+                              'Record ID',
+                              record['id']?.toString() ?? 'N/A',
+                            ),
+                          ]),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close, color: _lightOffWhite),
+                        label: const Text(
+                          'Close',
+                          style: TextStyle(
+                            color: _lightOffWhite,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: _lightOffWhite.withValues(alpha: 0.3),
+                            width: 1.5,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildMorbidityDetailSection('Patient Information', [
-                      _buildMorbidityDetailRow('Patient Name', patientName),
-                      _buildMorbidityDetailRow(
-                        'Patient ID',
-                        record['patientId']?.toString() ?? 'N/A',
-                      ),
-                      _buildMorbidityDetailRow(
-                        'Age',
-                        record['age']?.toString() ?? 'N/A',
-                      ),
-                      _buildMorbidityDetailRow(
-                        'Gender',
-                        record['gender']?.toString() ?? 'N/A',
-                      ),
-                    ]),
-                    const SizedBox(height: 16),
-                    _buildMorbidityDetailSection('Clinical Details', [
-                      _buildMorbidityDetailRow(
-                        'Disease',
-                        record['disease']?.toString() ?? 'N/A',
-                      ),
-                      _buildMorbidityDetailRow(
-                        'Severity',
-                        record['severity']?.toString() ?? 'N/A',
-                      ),
-                      _buildMorbidityDetailRow(
-                        'Status',
-                        record['status']?.toString() ?? 'N/A',
-                      ),
-                      _buildMorbidityDetailRow(
-                        'Treatment',
-                        record['treatment']?.toString() ?? 'N/A',
-                      ),
-                    ]),
-                    const SizedBox(height: 16),
-                    _buildMorbidityDetailSection('Reporting Details', [
-                      _buildMorbidityDetailRow(
-                        'Health Facility',
-                        record['healthFacility']?.toString() ?? 'N/A',
-                      ),
-                      _buildMorbidityDetailRow(
-                        'Reported By',
-                        record['reportedBy']?.toString() ?? 'N/A',
-                      ),
-                      _buildMorbidityDetailRow(
-                        'Date Reported',
-                        record['dateReported']?.toString().split('T').first ??
-                            'N/A',
-                      ),
-                      _buildMorbidityDetailRow(
-                        'Time',
-                        record['time']?.toString() ?? 'N/A',
-                      ),
-                      _buildMorbidityDetailRow(
-                        'Record ID',
-                        record['id']?.toString() ?? 'N/A',
-                      ),
-                    ]),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, color: _lightOffWhite),
-                  label: const Text(
-                    'Close',
-                    style: TextStyle(
-                      color: _lightOffWhite,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(
-                      color: _lightOffWhite.withValues(alpha: 0.3),
-                      width: 1.5,
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-            ),
-            ],
           ),
         ),
-      ),
-      ),
-    );
-  },
+      );
+    },
   );
 }
 

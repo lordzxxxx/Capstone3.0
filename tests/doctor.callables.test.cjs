@@ -1,10 +1,13 @@
 const assert = require('node:assert/strict');
 
 const admin = require('../functions/node_modules/firebase-admin');
+const {getAuth} = require('../functions/node_modules/firebase-admin/lib/auth');
+const {getFirestore, FieldValue} = require('../functions/node_modules/firebase-admin/lib/firestore');
 
 const projectId = process.env.GCLOUD_PROJECT || 'demo-doctor-portal';
-if (!admin.apps.length) admin.initializeApp({projectId});
-const db = new admin.firestore.Firestore({projectId, databaseId: 'capstone-c98f9'});
+if (!admin.getApps().length) admin.initializeApp({projectId});
+const auth = getAuth(admin.getApp());
+const db = getFirestore(admin.getApp(), 'capstone-c98f9');
 
 const doctorUid = 'doctor-portal-test-doctor';
 const targetUid = 'doctor-portal-test-target';
@@ -45,13 +48,13 @@ async function main() {
   let doctorAuth;
   let targetAuth;
   try {
-    doctorAuth = await admin.auth().createUser({
+    doctorAuth = await auth.createUser({
       uid: doctorUid,
       email: doctorEmail,
       password: 'A-strong-test-password-123!',
       displayName: 'Portal Test Doctor',
     });
-    targetAuth = await admin.auth().createUser({
+    targetAuth = await auth.createUser({
       uid: targetUid,
       email: targetEmail,
       password: 'A-strong-test-password-123!',
@@ -94,8 +97,8 @@ async function main() {
       assignmentEventId: `${id}:${doctorUid}`,
       assignmentNotificationStatus: 'sent',
       assignmentNotificationSentFor: `${id}:${doctorUid}`,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
     await db.collection('referrals').doc(referralId).set(
         referralData(referralId, 'Controlled Test Patient'));
@@ -221,8 +224,8 @@ async function main() {
     await db.collection('referrals').doc(declineReferralId).delete().catch(() => {});
     await db.collection('users').doc(doctorUid).delete().catch(() => {});
     await db.collection('users').doc(targetUid).delete().catch(() => {});
-    if (doctorAuth) await admin.auth().deleteUser(doctorAuth.uid).catch(() => {});
-    if (targetAuth) await admin.auth().deleteUser(targetAuth.uid).catch(() => {});
+    if (doctorAuth) await auth.deleteUser(doctorAuth.uid).catch(() => {});
+    if (targetAuth) await auth.deleteUser(targetAuth.uid).catch(() => {});
   }
 }
 

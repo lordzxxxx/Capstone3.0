@@ -2,17 +2,17 @@ const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 
 const admin = require('../functions/node_modules/firebase-admin');
+const {getAuth} = require('../functions/node_modules/firebase-admin/lib/auth');
+const {getFirestore, Timestamp} = require('../functions/node_modules/firebase-admin/lib/firestore');
 const {
   createDoctorSetupLink,
   DOCTOR_SETUP_LINK_TTL_MS,
 } = require('../functions/doctor_access');
 
 const projectId = process.env.GCLOUD_PROJECT || 'demo-doctor-access';
-if (!admin.apps.length) admin.initializeApp({projectId});
-const db = new admin.firestore.Firestore({
-  projectId,
-  databaseId: 'capstone-c98f9',
-});
+if (!admin.getApps().length) admin.initializeApp({projectId});
+const auth = getAuth(admin.getApp());
+const db = getFirestore(admin.getApp(), 'capstone-c98f9');
 
 const doctorUid = 'doctor-access-lifecycle-test';
 const doctorEmail = 'doctor-access-lifecycle@example.test';
@@ -52,7 +52,7 @@ function tokenFromLink(link) {
 async function main() {
   let authUser;
   try {
-    authUser = await admin.auth().createUser({
+    authUser = await auth.createUser({
       uid: doctorUid,
       email: doctorEmail,
       password: 'Initial-Doctor-Password-123!',
@@ -102,7 +102,7 @@ async function main() {
       source: 'test-expired',
     });
     await db.collection('doctor_access_links').doc(doctorUid).update({
-      expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() - 1),
+      expiresAt: Timestamp.fromMillis(Date.now() - 1),
     });
     const expiredVerification = await call('verifyDoctorSetupLink', {
       token: tokenFromLink(expiredLink),
@@ -158,7 +158,7 @@ async function main() {
     await db.collection('doctor_setup_rate_limits').doc(`email_${hash(doctorEmail)}`).delete().catch(() => {});
     await db.collection('doctor_setup_rate_limits').doc(`ip_${hash('127.0.0.1')}`).delete().catch(() => {});
     await db.collection('users').doc(doctorUid).delete().catch(() => {});
-    if (authUser) await admin.auth().deleteUser(authUser.uid).catch(() => {});
+    if (authUser) await auth.deleteUser(authUser.uid).catch(() => {});
   }
 }
 

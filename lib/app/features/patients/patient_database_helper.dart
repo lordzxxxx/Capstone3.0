@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mycapstone_project/firebase_helper.dart';
+import 'package:mycapstone_project/app/core/services/mobile_sync_utils.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
 
@@ -13,6 +14,7 @@ class PatientDatabaseHelper {
   bool _connectivityListenerStarted = false;
   bool _isConnectivitySyncRunning = false;
   bool _isInboundSyncRunning = false;
+  final MobileSyncQueue _outboundSyncQueue = MobileSyncQueue();
 
   PatientDatabaseHelper._init();
 
@@ -228,11 +230,12 @@ class PatientDatabaseHelper {
       try {
         final firestoreData = Map<String, dynamic>.from(recordWithId);
         firestoreData.remove('synced'); // Don't save synced flag to Firestore
+        final scopedData = await currentMobileFirestoreData(firestoreData);
 
         await getFirestoreInstance()
             .collection('patient_records')
             .doc(id)
-            .set(firestoreData);
+            .set(scopedData);
 
         await db.update(
           'patient_records',
@@ -268,15 +271,36 @@ class PatientDatabaseHelper {
     final firstName = (record['firstName'] ?? '').toString().trim();
     final middleName = (record['middleName'] ?? '').toString().trim();
     final surname = (record['surname'] ?? '').toString().trim();
-    final computedFullName = [firstName, middleName, surname]
-        .where((s) => s.isNotEmpty)
-        .join(' ');
+    final computedFullName = [
+      firstName,
+      middleName,
+      surname,
+    ].where((s) => s.isNotEmpty).join(' ');
     final fullName = (record['fullName'] ?? computedFullName).toString().trim();
-    final address = (record['address'] ?? record['street'] ?? '').toString().trim();
-    final contactNumber = (record['contactNumber'] ?? record['phoneNumber'] ?? record['phone'] ?? '').toString().trim();
-    final emergencyContact = (record['emergencyContact'] ?? record['emergencyContactName'] ?? '').toString().trim();
-    final emergencyContactNumber = (record['emergencyContactNumber'] ?? record['emergencyContactPhone'] ?? '').toString().trim();
-    final medicalHistory = (record['medicalHistory'] ?? record['pastMedicalHistory'] ?? '').toString().trim();
+    final address = (record['address'] ?? record['street'] ?? '')
+        .toString()
+        .trim();
+    final contactNumber =
+        (record['contactNumber'] ??
+                record['phoneNumber'] ??
+                record['phone'] ??
+                '')
+            .toString()
+            .trim();
+    final emergencyContact =
+        (record['emergencyContact'] ?? record['emergencyContactName'] ?? '')
+            .toString()
+            .trim();
+    final emergencyContactNumber =
+        (record['emergencyContactNumber'] ??
+                record['emergencyContactPhone'] ??
+                '')
+            .toString()
+            .trim();
+    final medicalHistory =
+        (record['medicalHistory'] ?? record['pastMedicalHistory'] ?? '')
+            .toString()
+            .trim();
 
     return {
       'id': id,
@@ -460,7 +484,7 @@ class PatientDatabaseHelper {
       whereArgs: [id],
     );
 
-    _syncToFirebase();
+    await _syncToFirebase();
     return result;
   }
 
@@ -528,7 +552,10 @@ class PatientDatabaseHelper {
   }
 
   // Sync local data to Firebase
-  Future<void> _syncToFirebase() async {
+  Future<void> _syncToFirebase() =>
+      _outboundSyncQueue.run(_syncToFirebaseUnsafe);
+
+  Future<void> _syncToFirebaseUnsafe() async {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
@@ -547,11 +574,12 @@ class PatientDatabaseHelper {
         try {
           final recordData = Map<String, dynamic>.from(record);
           recordData.remove('synced');
+          final scopedData = await currentMobileFirestoreData(recordData);
 
           await getFirestoreInstance()
               .collection('patient_records')
               .doc(record['id'] as String)
-              .set(recordData);
+              .set(scopedData);
 
           // Mark as synced
           await db.update(

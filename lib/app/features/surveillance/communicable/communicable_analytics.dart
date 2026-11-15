@@ -99,8 +99,9 @@ class _CommunicableAnalyticsPageState extends State<CommunicableAnalyticsPage> {
       'ai_category',
     ]) {
       final value = _v(row, key);
-      if (value.isNotEmpty && value.toLowerCase() != 'communicable')
+      if (value.isNotEmpty && value.toLowerCase() != 'communicable') {
         return value;
+      }
     }
     return 'Not specified';
   }
@@ -393,8 +394,9 @@ class _CommunicableAnalyticsPageState extends State<CommunicableAnalyticsPage> {
                   reservedSize: 54,
                   getTitlesWidget: (value, meta) {
                     final index = value.toInt();
-                    if (index < 0 || index >= entries.length)
+                    if (index < 0 || index >= entries.length) {
                       return const SizedBox();
+                    }
                     return SideTitleWidget(
                       meta: meta,
                       space: 8,
@@ -500,8 +502,9 @@ class _CommunicableAnalyticsPageState extends State<CommunicableAnalyticsPage> {
                     final index = value.toInt();
                     if (index < 0 ||
                         index >= entries.length ||
-                        value != index.toDouble())
+                        value != index.toDouble()) {
                       return const SizedBox();
+                    }
                     return SideTitleWidget(
                       meta: meta,
                       child: Text(

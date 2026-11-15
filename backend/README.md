@@ -9,8 +9,8 @@ binary datasets to `dataset/raw`, then run these commands from the project root:
 .\venv\Scripts\python.exe backend\scripts\inspect_dataset.py
 .\venv\Scripts\python.exe backend\scripts\merge_datasets.py
 .\venv\Scripts\python.exe backend\scripts\train_model.py
-python backend/scripts/verify_ai_requirements.py
-python backend/scripts/accuracy_audit.py
+backend/.venv/bin/python backend/scripts/verify_ai_requirements.py
+backend/.venv/bin/python backend/scripts/accuracy_audit.py
 ```
 
 The verification command writes `reports/ai_requirements_verification.json`
@@ -65,6 +65,11 @@ symptom-list column; this avoids misclassifying catalog/remedy tables.
 
 ## Production symptom-guidance API
 
+The production HTTPS deployment is prepared for Cloud Run in
+[`docs/AI_API_DEPLOYMENT.md`](../docs/AI_API_DEPLOYMENT.md). Do not set a
+Vercel production `AI_API_BASE_URL` until `/health` and `/ready` succeed from
+the final HTTPS host.
+
 > The check-up workflow uses the authenticated `POST /guidance` endpoint for
 > recognition-only symptom guidance. The legacy `POST /predict` route is no
 > longer registered and returns HTTP 404.
@@ -79,6 +84,19 @@ An exact or aliased condition explicitly entered by staff (for example `UTI`,
 `BPH`, or `COPD`) is matched against the known condition vocabulary and uses the
 existing Firestore `diseases` guidance. Such values are returned separately as
 `recognizedConditions` and are never described as AI predictions.
+
+The response now also exposes a bounded, traceable retrieval layer:
+`retrievedEvidence` contains citation IDs, source/version metadata, review
+status, relevance scores, and reference URLs. The current retriever is an
+explainable local TF-IDF vector plus keyword/metadata ranker over active
+Firestore guidance records; it is not a persistent vector embedding index and
+is not presented as improved classifier accuracy. An optional
+OpenAI-compatible JSON provider can generate a short grounded explanation
+behind `LLM_PROVIDER=http_json`. The provider is disabled
+by default, requires an API key and endpoint, validates citation IDs and output
+shape, rejects medication/unsupported diagnostic claims, and falls back to the
+local deterministic explanation on timeout or invalid output. Live provider
+authorization and clinical review remain deployment gates.
 
 Validate the local guidance seed without writing to Firestore:
 
@@ -134,6 +152,16 @@ $env:AI_REQUIRE_APP_CHECK = 'true'
 $env:AI_CHECK_REVOKED_TOKENS = 'true'
 $env:AI_RATE_LIMIT_REQUESTS = '30'
 $env:AI_RATE_LIMIT_WINDOW_SECONDS = '60'
+$env:API_RATE_LIMIT_REQUESTS = '120'
+$env:API_RATE_LIMIT_WINDOW_SECONDS = '60'
+$env:AI_OCR_RATE_LIMIT_REQUESTS = '10'
+$env:AI_OCR_RATE_LIMIT_WINDOW_SECONDS = '60'
+$env:RATE_LIMIT_BACKEND = 'memory' # use 'firestore' for staging/production
+$env:RAG_TOP_K = '8'
+$env:RAG_MIN_SCORE = '0.12'
+$env:LLM_PROVIDER = 'disabled'
+$env:LLM_TIMEOUT_SECONDS = '8'
+$env:LLM_MAX_TOKENS = '300'
 ```
 
 `MODEL_PATH`, `FEATURE_COLUMNS_PATH`, and `CONFIDENCE_THRESHOLD` have safe local
@@ -155,8 +183,9 @@ Set-Location backend
 ..\venv\Scripts\python.exe -m uvicorn app.api:app --reload
 ```
 
-Open `http://127.0.0.1:8000/docs`. Status endpoints are `GET /` and
-`GET /health`.
+Open `http://127.0.0.1:8000/docs`. Status endpoints are `GET /`, `GET /health`,
+and `GET /ready`. `/health` is a liveness/model check; `/ready` also verifies
+Firebase Admin credentials and a Firestore read.
 
 ### Run the protected Flutter web client
 

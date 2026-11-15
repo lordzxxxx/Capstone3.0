@@ -21,8 +21,8 @@ fixed feature vector. All four are documented below.
 
 ## Model 1 — Random Forest disease classifier (`backend/models/disease_model.pkl`)
 
-`/predict` is disabled in production (see `AI_ALGORITHM_QA.md` §18); this
-model is trained and evaluated but not currently reachable by any active
+`/predict` is disabled in production (see `docs/AI_REQUIREMENTS_STATUS.md`).
+This model is trained and evaluated but not currently reachable by any active
 route.
 
 ### Independent Variables — `X` (228 features)
@@ -74,8 +74,7 @@ as an unordered flat vector, with no theme metadata):
 **Behavioral/social:** `abusing alcohol`, `antisocial behavior`.
 
 There is no explicit demographic, vital-sign, or lab-result feature in
-this model — see the "Only symptoms" limitation in `AI_ALGORITHM_QA.md`
-§17.
+this model — see the current limitations in `docs/AI_ACCURACY_GAP_ANALYSIS.md`.
 
 ### Target Variable — `y`
 
@@ -181,7 +180,7 @@ Grouped by category, per the task's requested grouping:
 
 | Variable | Source field(s) | Effect |
 |---|---|---|
-| Systolic/diastolic blood pressure | `details` (regex `BP: sys/dia`) or direct `bp` field | +1 or +2 to severity score at defined thresholds (§20 of `AI_ALGORITHM_QA.md`) |
+| Systolic/diastolic blood pressure | `details` (regex `BP: sys/dia`) or direct `bp` field | +1 or +2 to severity score at defined thresholds (see `docs/AI_SCREENING_ARCHITECTURE.md`) |
 | Temperature | `details` (regex `Temp: x`) or direct `temp` field | +1 or +2 at defined thresholds |
 
 **Demographics/risk factors:**

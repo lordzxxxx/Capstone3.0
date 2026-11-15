@@ -1,7 +1,7 @@
 // Master barrel exports for all mobile feature modules, analytics, and SQLite helpers.
 
 // 1. Dashboard & Core Navigation
-export 'dashboard/homepage.dart';
+export 'dashboard/homepage.dart' hide BarData;
 export 'dashboard/barangay.dart';
 
 // 2. Authentication
@@ -34,12 +34,12 @@ export 'referrals/referral_analytics.dart';
 
 // 4. Disease Surveillance
 export 'surveillance/communicable/communicable.dart';
-export 'surveillance/morbidity/morbidity.dart';
+export 'surveillance/morbidity/morbidity.dart' hide MonthlyTrend;
 export 'surveillance/morbidity/morbidity_database_helper.dart';
-export 'surveillance/mortality/mortality.dart';
+export 'surveillance/mortality/mortality.dart' hide AgeDistribution;
 export 'surveillance/mortality/mortality_database_helper.dart';
 export 'surveillance/non_communicable/non_communicable.dart';
 
 // 5. Analytics
-export 'analytics/analytics.dart';
+export 'analytics/analytics.dart' hide BarData, LineData, PieData;
 export 'analytics/health_metrics.dart';

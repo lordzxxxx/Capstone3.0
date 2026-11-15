@@ -15,6 +15,7 @@ class MorbidityDatabaseHelper {
   static Database? _database;
   bool _connectivityListenerStarted = false;
   bool _isConnectivitySyncRunning = false;
+  final MobileSyncQueue _outboundSyncQueue = MobileSyncQueue();
 
   MorbidityDatabaseHelper._init();
 
@@ -128,11 +129,12 @@ class MorbidityDatabaseHelper {
       try {
         final firestoreData = Map<String, dynamic>.from(recordWithId);
         firestoreData.remove('synced');
+        final scopedData = await currentMobileFirestoreData(firestoreData);
 
         await getFirestoreInstance()
             .collection('morbidity_records')
             .doc(id)
-            .set(firestoreData);
+            .set(scopedData);
 
         await db.update(
           'morbidity_records',
@@ -284,7 +286,10 @@ class MorbidityDatabaseHelper {
   }
 
   // Sync all unsynced records from local to Firebase
-  Future<void> _syncToFirebase() async {
+  Future<void> _syncToFirebase() =>
+      _outboundSyncQueue.run(_syncToFirebaseUnsafe);
+
+  Future<void> _syncToFirebaseUnsafe() async {
     if (kIsWeb) return;
 
     try {
@@ -294,8 +299,8 @@ class MorbidityDatabaseHelper {
         return;
       }
 
-      final accessScope =
-          await UserAccessScopeService.instance.loadCurrentScope();
+      final accessScope = await UserAccessScopeService.instance
+          .loadCurrentScope();
       if (!accessScope.isAuthenticated) {
         return;
       }
@@ -320,21 +325,12 @@ class MorbidityDatabaseHelper {
           final id = recordData['id'] as String;
           recordData.remove('synced');
           recordData.remove('id');
-
-          if (accessScope.barangayCode.isNotEmpty) {
-            recordData['barangayCode'] = accessScope.barangayCode;
-          }
-          if (accessScope.barangay.isNotEmpty) {
-            recordData['barangay'] = accessScope.barangay;
-          }
-          if ((recordData['createdBy'] ?? '').toString().trim().isEmpty) {
-            recordData['createdBy'] = currentUser.uid;
-          }
+          final scopedData = await currentMobileFirestoreData(recordData);
 
           await getFirestoreInstance()
               .collection('morbidity_records')
               .doc(id)
-              .set(recordData, SetOptions(merge: true));
+              .set(scopedData, SetOptions(merge: true));
 
           await db.update(
             'morbidity_records',
@@ -409,10 +405,7 @@ class MorbidityDatabaseHelper {
       final db = await database;
       final tableColumns = (await db.rawQuery(
         'PRAGMA table_info(morbidity_records)',
-      ))
-          .map((row) => row['name']?.toString())
-          .whereType<String>()
-          .toSet();
+      )).map((row) => row['name']?.toString()).whereType<String>().toSet();
 
       for (final record in records) {
         final data = Map<String, dynamic>.from(record);
@@ -537,10 +530,11 @@ class MorbidityDatabaseHelper {
       try {
         final updateData = Map<String, dynamic>.from(record);
         updateData.remove('synced');
+        final scopedData = await currentMobileFirestoreData(updateData);
         await getFirestoreInstance()
             .collection('morbidity_records')
             .doc(id)
-            .update(updateData);
+            .update(scopedData);
 
         await db.update(
           'morbidity_records',

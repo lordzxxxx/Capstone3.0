@@ -132,6 +132,11 @@ def test_guidance_endpoint_returns_no_disease_prediction_fields() -> None:
     assert payload["suggestedHealthCategory"] == "Communicable"
     assert payload["categoryBasis"] == "symptom_keyword_mapping"
     assert payload["categoryRequiresReview"] is True
+    assert payload["retrievalMethod"] == "local_tfidf_keyword_metadata_v1"
+    assert payload["retrievedEvidence"]
+    assert "vectorSimilarity" in payload["retrievedEvidence"][0]
+    assert payload["explanation"]["provider"] == "deterministic_grounded"
+    assert payload["explanation"]["citationIds"]
 
 
 def test_guidance_endpoint_accepts_explicit_disease_without_predicting() -> None:

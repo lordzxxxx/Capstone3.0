@@ -27,7 +27,7 @@ decision support. Built around two capstone features:
 - **Backend** — `backend/` (Python, FastAPI). Serves authenticated symptom
   guidance from Firestore-authored content, plus the supporting offline model
   evaluation/training pipeline. The Random Forest is not an active diagnosis
-  endpoint. See
+  endpoint. The deployable API includes liveness/readiness checks. See
   [backend/README.md](backend/README.md) for the full pipeline, API, and
   deployment details.
 - **Firebase** — Authentication, Firestore, App Check, and Hosting. Every
@@ -40,6 +40,7 @@ decision support. Built around two capstone features:
 |--------|-------------|-----------------------------------------------|
 | GET    | `/`         | API and model status                          |
 | GET    | `/health`   | Health and dependency readiness               |
+| GET    | `/ready`    | Model and Firestore readiness                 |
 | GET    | `/symptoms` | List every valid model symptom                |
 | POST   | `/guidance` | Authenticated symptom guidance (decision support) |
 
@@ -90,6 +91,22 @@ configuration, troubleshooting) is documented in
   demonstration script.
 - [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md) — production
   gates and final handoff checklist.
+- [docs/PRODUCTION_BLOCKER_REPORT.md](docs/PRODUCTION_BLOCKER_REPORT.md) —
+  current blocker status and evidence.
+- [docs/AI_API_DEPLOYMENT.md](docs/AI_API_DEPLOYMENT.md) — FastAPI/Cloud Run
+  deployment and Vercel configuration.
+- [docs/FIREBASE_STORAGE_RUNBOOK.md](docs/FIREBASE_STORAGE_RUNBOOK.md) —
+  Storage provisioning, rules, and validation.
+- [docs/PRODUCTION_TEST_ACCOUNT_MATRIX.md](docs/PRODUCTION_TEST_ACCOUNT_MATRIX.md)
+  — synthetic role-account and App Check verification.
+- [docs/LOAD_AND_OPERATIONS_TEST_PLAN.md](docs/LOAD_AND_OPERATIONS_TEST_PLAN.md)
+  — bounded staging load and failure testing.
+- [docs/BACKUP_RESTORE_RUNBOOK.md](docs/BACKUP_RESTORE_RUNBOOK.md) — isolated
+  recovery procedure.
+- [docs/CLINICAL_REVIEW_CHECKLIST.md](docs/CLINICAL_REVIEW_CHECKLIST.md) —
+  external clinical approval gate.
+- [docs/PRODUCTION_MONITORING_RUNBOOK.md](docs/PRODUCTION_MONITORING_RUNBOOK.md)
+  — production signals, alerts, and incident response.
 - [docs/DATASET_PROVENANCE.md](docs/DATASET_PROVENANCE.md) — training data
   sources and lineage.
 - [docs/AI_REQUIREMENTS_STATUS.md](docs/AI_REQUIREMENTS_STATUS.md) /

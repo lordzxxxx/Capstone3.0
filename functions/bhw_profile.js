@@ -1,15 +1,18 @@
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v1');
 const admin = require('firebase-admin');
+const {getAuth} = require('firebase-admin/auth');
 const {getFirestore, FieldValue} = require('firebase-admin/firestore');
-const {ServerValue} = require('firebase-admin/database');
+const {getDatabase, ServerValue} = require('firebase-admin/database');
 const {defaultPermissionsForRole} = require('./rbac_policy');
 
-if (!admin.apps.length) {
+if (!(typeof admin.getApps === 'function' ? admin.getApps() : admin.apps).length) {
   admin.initializeApp();
 }
 
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
-const db = getFirestore(admin.app(), FIRESTORE_DATABASE_ID);
+const db = getFirestore(admin.getApp(), FIRESTORE_DATABASE_ID);
+const auth = getAuth(admin.getApp());
+const rtdb = {ref: (...args) => getDatabase(admin.getApp()).ref(...args)};
 
 function normalizeText(value) {
   return String(value || '').trim().toLowerCase();
@@ -158,7 +161,7 @@ exports.updateOwnBhwProfile = functions.https.onCall(async (data, context) => {
   await batch.commit();
 
   try {
-    await admin.auth().updateUser(uid, {displayName: fullName});
+    await auth.updateUser(uid, {displayName: fullName});
   } catch (error) {
     console.error('updateOwnBhwProfile Auth display name sync failed', {
       uid,
@@ -166,7 +169,7 @@ exports.updateOwnBhwProfile = functions.https.onCall(async (data, context) => {
     });
   }
 
-  await admin.database().ref(`users/${uid}`).update({
+  await rtdb.ref(`users/${uid}`).update({
     fullName,
     displayName: fullName,
     username,
@@ -262,14 +265,14 @@ exports.updateOwnChoProfile = functions.https.onCall(async (data, context) => {
   await userRef.set(updates, {merge: true});
 
   try {
-    await admin.auth().updateUser(uid, {displayName: fullName});
+    await auth.updateUser(uid, {displayName: fullName});
   } catch (error) {
     console.error('updateOwnChoProfile Auth display name sync failed', {
       uid,
       code: error?.code || 'unknown',
     });
   }
-  await admin.database().ref(`users/${uid}`).update({
+  await rtdb.ref(`users/${uid}`).update({
     fullName,
     displayName: fullName,
     username,
@@ -377,7 +380,7 @@ exports.updateOwnDoctorProfile = functions.https.onCall(async (data, context) =>
   await userRef.set(updates, {merge: true});
 
   try {
-    await admin.auth().updateUser(uid, {displayName: fullName});
+    await auth.updateUser(uid, {displayName: fullName});
   } catch (error) {
     console.error('updateOwnDoctorProfile Auth display name sync failed', {
       uid,
@@ -387,7 +390,7 @@ exports.updateOwnDoctorProfile = functions.https.onCall(async (data, context) =>
   if (!process.env.FUNCTIONS_EMULATOR ||
       process.env.FIREBASE_DATABASE_EMULATOR_HOST) {
     try {
-      await admin.database().ref(`users/${uid}`).update({
+      await rtdb.ref(`users/${uid}`).update({
         fullName,
         displayName: fullName,
         username,

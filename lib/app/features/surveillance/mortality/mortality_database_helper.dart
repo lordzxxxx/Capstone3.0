@@ -16,6 +16,7 @@ class MortalityDatabaseHelper {
   static Database? _database;
   bool _connectivityListenerStarted = false;
   bool _isConnectivitySyncRunning = false;
+  final MobileSyncQueue _outboundSyncQueue = MobileSyncQueue();
 
   MortalityDatabaseHelper._init();
 
@@ -184,11 +185,12 @@ class MortalityDatabaseHelper {
       try {
         final firestoreData = Map<String, dynamic>.from(recordWithId);
         firestoreData.remove('synced');
+        final scopedData = await currentMobileFirestoreData(firestoreData);
 
         await getFirestoreInstance()
             .collection('mortality_records')
             .doc(id)
-            .set(firestoreData);
+            .set(scopedData);
 
         await db.update(
           'mortality_records',
@@ -427,7 +429,10 @@ class MortalityDatabaseHelper {
   }
 
   // Sync all unsynced records from local to Firebase
-  Future<void> _syncToFirebase() async {
+  Future<void> _syncToFirebase() =>
+      _outboundSyncQueue.run(_syncToFirebaseUnsafe);
+
+  Future<void> _syncToFirebaseUnsafe() async {
     if (kIsWeb) return;
 
     try {
@@ -452,11 +457,12 @@ class MortalityDatabaseHelper {
           final id = recordData['id'] as String;
           recordData.remove('synced');
           recordData.remove('id');
+          final scopedData = await currentMobileFirestoreData(recordData);
 
           await getFirestoreInstance()
               .collection('mortality_records')
               .doc(id)
-              .set(recordData, SetOptions(merge: true));
+              .set(scopedData, SetOptions(merge: true));
 
           await db.update(
             'mortality_records',
@@ -633,10 +639,11 @@ class MortalityDatabaseHelper {
       try {
         final updateData = Map<String, dynamic>.from(record);
         updateData.remove('synced');
+        final scopedData = await currentMobileFirestoreData(updateData);
         await getFirestoreInstance()
             .collection('mortality_records')
             .doc(id)
-            .update(updateData);
+            .update(scopedData);
         await db.update(
           'mortality_records',
           {'synced': 1},
@@ -930,10 +937,11 @@ class MortalityDatabaseHelper {
           for (var sample in samples) {
             final firestoreData = Map<String, dynamic>.from(sample);
             firestoreData.remove('synced');
+            final scopedData = await currentMobileFirestoreData(firestoreData);
             await firestore
                 .collection('mortality_records')
                 .doc(sample['id'])
-                .set(firestoreData);
+                .set(scopedData);
           }
           print('✅ Synced $inserted sample mortality records to Firestore');
         } catch (e) {

@@ -522,7 +522,7 @@ class _WebAppSidebarState extends State<WebAppSidebar> {
               tooltip: 'Expand Menu',
               onPressed: _toggleCollapse,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
             ),
           ],
         ),

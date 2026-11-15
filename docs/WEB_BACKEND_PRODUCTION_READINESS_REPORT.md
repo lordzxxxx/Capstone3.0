@@ -2,6 +2,9 @@
 
 Date: 2026-09-15
 
+> Historical release snapshot. For the current blocker-by-blocker status and
+> verification evidence, see [PRODUCTION_BLOCKER_REPORT.md](PRODUCTION_BLOCKER_REPORT.md).
+
 Scope: Flutter web, FastAPI, Firebase Authentication, Firestore, Storage,
 Cloud Functions, APIs, server-side synchronization, and production
 configuration. The mobile application was not built, launched, or tested.
@@ -156,11 +159,16 @@ streams still aggregate large collections in memory.
   changed Functions are deployed; Storage is not provisioned, and indexes,
   API CORS/TrustedHost, and authenticated production workflows still need
   direct verification.
-- In-process API rate limiting is suitable for one process but is not a
-  distributed limit when the API is scaled across multiple workers or hosts.
-- Several CHO dashboard listeners and some archive queries remain unbounded or
-  aggregate many records in memory. They need pagination, time windows, or
-  server-side summaries before record volume grows substantially.
+- The code now supports a Firestore transaction-backed rate limiter for
+  staging/production; `RATE_LIMIT_BACKEND=firestore` and a TTL policy on
+  `api_rate_limits.expiresAt` still require deployment configuration and live
+  verification. Local/test environments intentionally use the in-process
+  limiter.
+- CHO dashboard, referral, and governance listeners now have explicit
+  500-record safety limits and surface a warning when the limit is reached.
+  The resulting client-side analytics are intentionally not a substitute for
+  complete historical reporting; pagination, time windows, or server-side
+  summaries are still required before production-scale reporting.
 - The Firestore REST reader currently performs one bounded query and does not
   paginate beyond its requested page size; large support-center lists need a
   cursor/pagination design.
@@ -176,14 +184,14 @@ streams still aggregate large collections in memory.
 
 ## 10. Tests and validations performed
 
-- Backend: `93 passed` with the project virtual environment; six dependency
-  warnings remain (Starlette/httpx deprecation and scikit-learn model/runtime
-  version mismatch).
-- Firestore rules: `32 passing` with the local emulator.
-- Storage rules: `4 passing` with the local emulator.
-- Cloud Functions syntax/lint: passed with `npm --prefix functions run lint`.
-- Focused web browser regression for BHW canonical routes: `1 passed` after
-  the scope-query fix.
+- Backend: `109 passed` with the project virtual environment; two dependency
+  deprecation warnings remain from Starlette/httpx. The scikit-learn artifact
+  mismatch is resolved by pinning the runtime to 1.9.0.
+- Firestore rules: `33 passing` with the local emulator.
+- Storage rules: `6 passing` with the local emulator.
+- Cloud Functions syntax/lint and emulator suites: passed.
+- Web browser regression: `42 passed` across desktop, tablet, and mobile-sized
+  Chromium viewports.
 - Full web browser matrix: `42 passed` across desktop, tablet, and
   mobile-width browser projects; this tested the web layout/runtime only, not
   the mobile application.
@@ -218,11 +226,14 @@ tested rules.
    `API_ALLOWED_HOSTS`, `WEB_ALLOWED_ORIGINS`, and web `AI_API_BASE_URL`.
 2. Configure and verify production Firebase App Check, Auth, Firestore,
    Storage, Functions, indexes, and hosting rules.
-3. Pin the Python dependency/model build together; resolve the scikit-learn
-   model/runtime version mismatch and record the artifact checksum.
-4. Add distributed rate limiting at the edge or API gateway before using more
-   than one backend process.
-5. Add pagination or server-side summaries for unbounded CHO/archive queries.
+3. Keep the pinned scikit-learn 1.9.0 dependency and startup compatibility
+   check with the model artifact; verify the checksum during deployment.
+4. Set `RATE_LIMIT_BACKEND=firestore`, configure the `expiresAt` TTL policy,
+   and verify rate-limit behavior across more than one backend instance; an
+   edge limiter can be added later as an additional perimeter control.
+5. Replace the current 500-record safety limits with cursor pagination,
+   time-window queries, or server-side summaries for complete CHO/archive
+   reporting.
 6. Run a staging load test covering login, list/search/filter, CRUD, OCR,
    uploads, Cloud Functions, and simultaneous synchronization.
 7. Test backup/restore and define monitoring, alerting, log retention, and
@@ -231,9 +242,8 @@ tested rules.
    deploy and verify `storage.rules` only after the bucket exists.
 9. Obtain clinical/content approval and document the decision-support
    limitations before exposing guidance to evaluators.
-10. Upgrade Cloud Functions from Node.js 20 before its 2026-10-30
-    decommissioning date and update the Firebase Functions SDK in a separate
-    tested release.
+10. Deploy and verify the already-upgraded Node.js 22 Functions runtime in
+    staging before the 2026-10-30 legacy-runtime decommissioning date.
 11. Run a final authenticated staging smoke test with real production-like
    configuration. Keep mobile verification limited to backend/API/database
    synchronization as required by this task.

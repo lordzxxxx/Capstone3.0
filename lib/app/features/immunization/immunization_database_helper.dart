@@ -15,6 +15,7 @@ class ImmunizationDatabaseHelper {
   static Database? _database;
   bool _connectivityListenerStarted = false;
   bool _isConnectivitySyncRunning = false;
+  final MobileSyncQueue _outboundSyncQueue = MobileSyncQueue();
 
   ImmunizationDatabaseHelper._init();
 
@@ -182,11 +183,12 @@ class ImmunizationDatabaseHelper {
       try {
         final firestoreData = Map<String, dynamic>.from(recordWithId);
         firestoreData.remove('synced'); // Don't save synced flag to Firestore
+        final scopedData = await currentMobileFirestoreData(firestoreData);
 
         await getFirestoreInstance()
             .collection('immunization_records')
             .doc(id)
-            .set(firestoreData);
+            .set(scopedData);
 
         await db.update(
           'immunization_records',
@@ -304,7 +306,7 @@ class ImmunizationDatabaseHelper {
       whereArgs: [id],
     );
 
-    _syncToFirebase();
+    await _syncToFirebase();
     return result;
   }
 
@@ -376,7 +378,10 @@ class ImmunizationDatabaseHelper {
   }
 
   // Sync local data to Firebase
-  Future<void> _syncToFirebase() async {
+  Future<void> _syncToFirebase() =>
+      _outboundSyncQueue.run(_syncToFirebaseUnsafe);
+
+  Future<void> _syncToFirebaseUnsafe() async {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
@@ -397,11 +402,12 @@ class ImmunizationDatabaseHelper {
           final id = recordData['id'];
           recordData.remove('synced');
           recordData.remove('id');
+          final scopedData = await currentMobileFirestoreData(recordData);
 
           await getFirestoreInstance()
               .collection('immunization_records')
               .doc(id)
-              .set(recordData, SetOptions(merge: true));
+              .set(scopedData, SetOptions(merge: true));
 
           // Mark as synced
           await db.update(
@@ -753,10 +759,13 @@ class ImmunizationDatabaseHelper {
         try {
           final firestore = getFirestoreInstance();
           for (var sample in samples) {
+            final firestoreData = Map<String, dynamic>.from(sample);
+            firestoreData.remove('synced');
+            final scopedData = await currentMobileFirestoreData(firestoreData);
             await firestore
                 .collection('immunization_records')
                 .doc(sample['id'])
-                .set(sample);
+                .set(scopedData);
           }
           print('✅ Synced sample immunization records to Firestore');
         } catch (e) {

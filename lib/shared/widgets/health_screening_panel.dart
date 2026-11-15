@@ -24,16 +24,12 @@ class HealthScreeningPanel extends StatelessWidget {
     if (result == null) return const SizedBox.shrink();
 
     final statusColor = _statusColor(result.status);
-    final actionableFindings = result.findings.where((finding) {
-      final lower = finding.measurement.toLowerCase();
-      return !finding.isInformational &&
-          !lower.contains('oxygen') &&
-          !lower.contains('respiratory');
-    }).toList(growable: false);
-    final filteredReferralReasons = result.referralReasons.where((r) {
-      final lower = r.toLowerCase();
-      return !lower.contains('oxygen') && !lower.contains('respiratory');
-    }).toList(growable: false);
+    // Every non-informational vital-sign finding must stay visible. Hiding
+    // oxygen saturation or respiratory rate breaks the referral review trail.
+    final actionableFindings = result.findings
+        .where((finding) => !finding.isInformational)
+        .toList(growable: false);
+    final referralReasons = result.referralReasons;
     final canSuggestReferral =
         result.referralRecommendation.index >=
         HealthReferralRecommendation.considerReferral.index;
@@ -93,8 +89,8 @@ class HealthScreeningPanel extends StatelessWidget {
                           label: 'Data: ${result.dataQuality.label}',
                           color:
                               result.dataQuality == HealthDataQuality.complete
-                              ? AppColors.primary
-                              : AppColors.secondary,
+                              ? AppColors.success
+                              : AppColors.warningStrong,
                         ),
                       ],
                     ),
@@ -170,8 +166,9 @@ class HealthScreeningPanel extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.surfaceSubtle,
+              color: statusColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: statusColor.withValues(alpha: 0.22)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,9 +181,9 @@ class HealthScreeningPanel extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                if (filteredReferralReasons.isNotEmpty) ...[
+                if (referralReasons.isNotEmpty) ...[
                   const SizedBox(height: 6),
-                  ...filteredReferralReasons.map(
+                  ...referralReasons.map(
                     (reason) => Padding(
                       padding: const EdgeInsets.only(bottom: 3),
                       child: Text(
@@ -204,12 +201,12 @@ class HealthScreeningPanel extends StatelessWidget {
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
-                    child: OutlinedButton(
+                    child: FilledButton(
                       onPressed: onReferralRequested,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.secondary,
-                        side: const BorderSide(color: AppColors.primary),
-                        minimumSize: const Size(0, 44),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: statusColor,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(0, 48),
                       ),
                       child: const Row(
                         children: [
@@ -243,15 +240,15 @@ class HealthScreeningPanel extends StatelessWidget {
   static Color _statusColor(HealthScreeningStatus status) {
     switch (status) {
       case HealthScreeningStatus.urgentAssessment:
-        return AppColors.secondary;
+        return AppColors.error;
       case HealthScreeningStatus.referralReview:
-        return AppColors.secondary;
+        return AppColors.referralStrong;
       case HealthScreeningStatus.needsAttention:
-        return AppColors.secondary;
+        return AppColors.warningStrong;
       case HealthScreeningStatus.needsProfessionalReview:
         return AppColors.secondary;
       case HealthScreeningStatus.withinExpectedRange:
-        return AppColors.primary;
+        return AppColors.success;
     }
   }
 

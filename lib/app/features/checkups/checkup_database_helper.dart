@@ -15,6 +15,7 @@ class DatabaseHelper {
   static Database? _database;
   bool _connectivityListenerStarted = false;
   bool _isConnectivitySyncRunning = false;
+  final MobileSyncQueue _outboundSyncQueue = MobileSyncQueue();
 
   DatabaseHelper._init();
 
@@ -284,35 +285,6 @@ class DatabaseHelper {
     return value.trim().toUpperCase();
   }
 
-  Map<String, dynamic> _applyAccessScopeToFirestoreData(
-    Map<String, dynamic> source,
-    UserAccessScope accessScope, {
-    String? currentUserId,
-  }) {
-    final scoped = Map<String, dynamic>.from(source);
-    final scopeCode = _normalizeScopeCode(accessScope.barangayCode);
-    final scopeBarangay = accessScope.barangay.trim();
-    final scopeDistrict = accessScope.barangayDistrict.trim();
-
-    if (scopeCode.isNotEmpty) {
-      scoped['barangayCode'] = scopeCode;
-    }
-    if (scopeBarangay.isNotEmpty) {
-      scoped['barangay'] = scopeBarangay;
-    }
-    if (scopeDistrict.isNotEmpty) {
-      scoped['barangayDistrict'] = scopeDistrict;
-    }
-
-    if ((scoped['createdBy'] ?? '').toString().trim().isEmpty &&
-        currentUserId != null &&
-        currentUserId.isNotEmpty) {
-      scoped['createdBy'] = currentUserId;
-    }
-
-    return scoped;
-  }
-
   Future<List<Map<String, dynamic>>> _loadRemoteScopedRecords(
     UserAccessScope accessScope,
   ) async {
@@ -531,18 +503,7 @@ class DatabaseHelper {
       try {
         final firestoreData = Map<String, dynamic>.from(recordWithId);
         firestoreData.remove('synced'); // Don't save synced flag to Firestore
-
-        UserAccessScope accessScope = UserAccessScope.unauthenticated;
-        try {
-          accessScope = await UserAccessScopeService.instance
-              .loadCurrentScope();
-        } catch (_) {}
-
-        final scopedData = _applyAccessScopeToFirestoreData(
-          firestoreData,
-          accessScope,
-          currentUserId: FirebaseAuth.instance.currentUser?.uid,
-        );
+        final scopedData = await currentMobileFirestoreData(firestoreData);
 
         await getFirestoreInstance()
             .collection('checkup_records')
@@ -696,7 +657,7 @@ class DatabaseHelper {
       whereArgs: [id],
     );
 
-    _syncToFirebase();
+    await _syncToFirebase();
     return result;
   }
 
@@ -764,7 +725,10 @@ class DatabaseHelper {
   }
 
   // Sync local data to Firebase
-  Future<void> _syncToFirebase() async {
+  Future<void> _syncToFirebase() =>
+      _outboundSyncQueue.run(_syncToFirebaseUnsafe);
+
+  Future<void> _syncToFirebaseUnsafe() async {
     // On web, data is already in Firebase
     if (kIsWeb) return;
 
@@ -788,18 +752,7 @@ class DatabaseHelper {
           final id = recordData['id'];
           recordData.remove('synced');
           recordData.remove('id');
-
-          UserAccessScope accessScope = UserAccessScope.unauthenticated;
-          try {
-            accessScope = await UserAccessScopeService.instance
-                .loadCurrentScope();
-          } catch (_) {}
-
-          final scopedData = _applyAccessScopeToFirestoreData(
-            recordData,
-            accessScope,
-            currentUserId: FirebaseAuth.instance.currentUser?.uid,
-          );
+          final scopedData = await currentMobileFirestoreData(recordData);
 
           await getFirestoreInstance()
               .collection('checkup_records')
@@ -1237,10 +1190,11 @@ class DatabaseHelper {
           for (var sample in samples) {
             final firestoreData = Map<String, dynamic>.from(sample);
             firestoreData.remove('synced');
+            final scopedData = await currentMobileFirestoreData(firestoreData);
             await firestore
                 .collection('checkup_records')
                 .doc(sample['id'])
-                .set(firestoreData);
+                .set(scopedData);
           }
           print('✅ Synced sample checkup records to Firestore');
         } catch (e) {
@@ -1431,14 +1385,18 @@ class DatabaseHelper {
       final bp = '${110 + (i % 25)}/${70 + (i % 15)}';
       final hr = 78 + (i % 35);
       final age = (i % 5 == 0)
-          ? 1 + (i % 5) // 0-5 pediatric
+          ? 1 +
+                (i % 5) // 0-5 pediatric
           : (i % 5 == 1)
-              ? 6 + (i % 12) // 6-17 teen
-              : (i % 4 == 0)
-                  ? 18 + (i % 27) // 18-44 young adult
-                  : (i % 3 == 0)
-                      ? 45 + (i % 20) // 45-64 middle age
-                      : 65 + (i % 18); // 65+ senior
+          ? 6 +
+                (i % 12) // 6-17 teen
+          : (i % 4 == 0)
+          ? 18 +
+                (i % 27) // 18-44 young adult
+          : (i % 3 == 0)
+          ? 45 +
+                (i % 20) // 45-64 middle age
+          : 65 + (i % 18); // 65+ senior
       final gender = i.isEven ? 'Male' : 'Female';
       final severities = ['Mild', 'Moderate', 'Severe', 'Critical'];
       final severity = severities[i % severities.length];
@@ -1480,7 +1438,8 @@ class DatabaseHelper {
         'ai_severity': severity,
         'ai_confidence': '${82 + (i % 16)}%',
         'ai_method': 'Epidemiological Surveillance and Triage',
-        'ai_keywords': '$disease, transmissible, isolation, contact tracing, surveillance',
+        'ai_keywords':
+            '$disease, transmissible, isolation, contact tracing, surveillance',
         'ai_recovery_plan':
             'Complete isolation protocol. Daily symptom logging. Re-evaluation upon symptom resolution.',
         'synced': 1,
@@ -1516,10 +1475,11 @@ class DatabaseHelper {
           for (var sample in samples) {
             final firestoreData = Map<String, dynamic>.from(sample);
             firestoreData.remove('synced');
+            final scopedData = await currentMobileFirestoreData(firestoreData);
             await firestore
                 .collection('checkup_records')
                 .doc(sample['id'])
-                .set(firestoreData);
+                .set(scopedData);
           }
           print('✅ Synced sample communicable disease records to Firestore');
         } catch (e) {
@@ -1792,8 +1752,7 @@ class DatabaseHelper {
         'currentStatus': status,
         'address': '$barangay, Malaybalay City',
         'barangay': barangay,
-        'vitalsigns':
-            'BP: $bp | BMI: $bmi | HR: $hr bpm | Temp: 36.6°C',
+        'vitalsigns': 'BP: $bp | BMI: $bmi | HR: $hr bpm | Temp: 36.6°C',
         'bloodPressure': bp,
         'bmi': bmi,
         'riskFactors': risk,
@@ -1849,10 +1808,11 @@ class DatabaseHelper {
           for (var sample in samples) {
             final firestoreData = Map<String, dynamic>.from(sample);
             firestoreData.remove('synced');
+            final scopedData = await currentMobileFirestoreData(firestoreData);
             await firestore
                 .collection('checkup_records')
                 .doc(sample['id'])
-                .set(firestoreData);
+                .set(scopedData);
           }
           print(
             '✅ Synced sample non-communicable disease records to Firestore',

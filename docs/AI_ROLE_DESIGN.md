@@ -42,3 +42,15 @@ clinical and reporting interfaces.
 
 Every interface labels the output as decision support and requires clinical or
 authorized human review before action.
+
+## Grounded explanation boundary
+
+The backend separates three concerns: the offline classifier remains an
+independently evaluated artifact; the `/guidance` retriever ranks active
+Firestore guidance records and returns stable citation metadata; and the
+optional explanation provider summarizes only the recognized terms and
+retrieved evidence. The provider is disabled by default and falls back to a
+deterministic local explanation. It cannot change the category, remove an
+emergency warning, invent a citation, prescribe, or turn the result into a
+diagnosis. The current retriever is a bounded local TF-IDF vector ranker plus
+exact metadata matches; it is not a persistent embedding/vector index.

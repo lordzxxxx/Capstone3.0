@@ -110,7 +110,7 @@ but it is a legitimate, verified correctness fix and is kept.
 | Local path | `backend/dataset/knowledge_base/AI_DSUHIS_Disease_Self_Care_Knowledge_Base.csv` |
 | Source/provider | **Project-authored.** This is not an external dataset — it is the reviewed content draft the project team wrote, one row per RF disease class (100 rows), consumed by `backend/firebase/generate_disease_seed.py` ("Transform the reviewed source draft into one seed per production model class") to produce `disease_seed.json` for Firestore. Columns include `disease_id`, `disease_key`, `disease_name`, `category`, `training_records`, `dataset_top_symptoms`, `self_care_level`, `safe_self_care_draft` — the presence of `training_records`/`dataset_top_symptoms` columns indicates this file was authored *with reference to* the RF's training data, not as an independent dataset. |
 | Record count | 100 rows (one per RF disease class) |
-| How the system uses it | Source for Firestore `diseases` collection content — self-care guidance shown by `/guidance` (§ `AI_ALGORITHM_QA.md`) |
+| How the system uses it | Source for Firestore `diseases` collection content — self-care guidance shown by `/guidance` (see `docs/AI_WORKFLOW.md`) |
 | Philippine-specific | Not applicable (authored content, not epidemiological data) |
 | Status | **Reference** — feeds the knowledge base, never used to train or evaluate the RF |
 

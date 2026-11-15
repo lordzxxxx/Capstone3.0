@@ -449,8 +449,9 @@ class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
                   reservedSize: 52,
                   getTitlesWidget: (value, meta) {
                     final index = value.toInt();
-                    if (index < 0 || index >= entries.length)
+                    if (index < 0 || index >= entries.length) {
                       return const SizedBox();
+                    }
                     return SideTitleWidget(
                       meta: meta,
                       space: 8,
@@ -555,8 +556,9 @@ class _ImmunizationAnalyticsPageState extends State<ImmunizationAnalyticsPage> {
                     final index = value.toInt();
                     if (index < 0 ||
                         index >= entries.length ||
-                        value != index.toDouble())
+                        value != index.toDouble()) {
                       return const SizedBox();
+                    }
                     return SideTitleWidget(
                       meta: meta,
                       child: Text(

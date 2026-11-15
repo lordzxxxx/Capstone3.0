@@ -481,7 +481,7 @@ anything.
   personality disorder) have recall below 70% and would need additional
   distinguishing features, not just tuning, to improve meaningfully.
 - This evaluation, like the production model's, is not a clinical
-  validation — see `AI_ALGORITHM_QA.md` §12 for that distinction.
+  validation — see `docs/AI_VALIDATION_REPORT.md` for that distinction.
 - The experimental model file itself is not stored in git (111.3 MB,
   exceeds GitHub's 100 MB limit) — only its checksum, hyperparameters,
   and a deterministic reproduction command are versioned.

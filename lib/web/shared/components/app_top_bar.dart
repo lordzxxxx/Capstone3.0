@@ -111,113 +111,113 @@ class WebAppTopBar extends StatelessWidget implements PreferredSizeWidget {
       container: true,
       header: true,
       label: '$title header',
-      child: Container(
-        height: height,
-        padding: effectivePadding,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            if (showMenuButton)
-              IconButton(
-                tooltip: 'Open navigation menu',
-                onPressed: () {
-                  if (onMenuPressed != null) {
-                    onMenuPressed!();
-                  } else {
-                    scaffoldKey?.currentState?.openDrawer();
-                  }
-                },
-                icon: const Icon(Icons.menu_rounded),
-                color: titleColor,
-              ),
-            Expanded(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style:
-                    titleStyle ??
-                    Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: titleColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Keep the header usable at tablet widths. Actions remain keyboard
-            // reachable and scroll horizontally instead of overflowing the
-            // whole page or pushing the title off-screen.
-            Flexible(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                reverse: true,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (selectionCount != null && selectionCount! > 0) ...[
-                      Semantics(
-                        liveRegion: true,
-                        label: '$selectionCount $selectionLabel',
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: AppColors.primary,
-                              width: 1.2,
-                            ),
-                          ),
-                          child: Text(
-                            '$selectionCount $selectionLabel',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
-                          ),
+      child: WebGlassSurface(
+        borderRadius: BorderRadius.zero,
+        tint: backgroundColor,
+        tintOpacity: 0.90,
+        borderColor: Colors.white.withValues(alpha: 0.14),
+        child: SizedBox(
+          height: height,
+          child: Padding(
+            padding: effectivePadding,
+            child: Row(
+              children: [
+                if (showMenuButton)
+                  IconButton(
+                    tooltip: 'Open navigation menu',
+                    onPressed: () {
+                      if (onMenuPressed != null) {
+                        onMenuPressed!();
+                      } else {
+                        scaffoldKey?.currentState?.openDrawer();
+                      }
+                    },
+                    icon: const Icon(Icons.menu_rounded),
+                    color: titleColor,
+                  ),
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style:
+                        titleStyle ??
+                        Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: titleColor,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                    ],
-                    if (onGenerateReport != null) ...[
-                      FilledButton.icon(
-                        onPressed: isLoading ? null : onGenerateReport,
-                        style: AppButtonStyles.report(),
-                        icon: Icon(generateReportIcon, size: 18),
-                        label: Text(
-                          generateReportLabel,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                    ],
-                    if (onRefresh != null)
-                      IconButton(
-                        icon: const Icon(Icons.refresh_rounded),
-                        tooltip: refreshTooltip,
-                        onPressed: isLoading ? null : onRefresh,
-                        color: Colors.white70,
-                      ),
-                    ...actions,
-                    if (trailing != null) trailing!,
-                  ],
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                // Keep the header usable at tablet widths. Actions remain keyboard
+                // reachable and scroll horizontally instead of overflowing the
+                // whole page or pushing the title off-screen.
+                Flexible(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (selectionCount != null && selectionCount! > 0) ...[
+                          Semantics(
+                            liveRegion: true,
+                            label: '$selectionCount $selectionLabel',
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: AppColors.primary,
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: Text(
+                                '$selectionCount $selectionLabel',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                        if (onGenerateReport != null) ...[
+                          FilledButton.icon(
+                            onPressed: isLoading ? null : onGenerateReport,
+                            style: AppButtonStyles.report(),
+                            icon: Icon(generateReportIcon, size: 18),
+                            label: Text(
+                              generateReportLabel,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                        if (onRefresh != null)
+                          IconButton(
+                            icon: const Icon(Icons.refresh_rounded),
+                            tooltip: refreshTooltip,
+                            onPressed: isLoading ? null : onRefresh,
+                            color: Colors.white70,
+                          ),
+                        ...actions,
+                        if (trailing != null) trailing!,
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

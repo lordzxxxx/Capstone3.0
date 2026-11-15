@@ -13,7 +13,8 @@
     }
   ],
   "functions": {
-    "source": "functions"
+    "source": "functions",
+    "runtime": "nodejs22"
   },
   "hosting": {
     "public": "build/web",
@@ -31,6 +32,9 @@
     },
     "firestore": {
       "port": 8085
+    },
+    "database": {
+      "port": 9000
     },
     "storage": {
       "port": 9199

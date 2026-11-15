@@ -1,15 +1,15 @@
 const assert = require('assert/strict');
 
 const admin = require('../functions/node_modules/firebase-admin');
+const {getAuth} = require('../functions/node_modules/firebase-admin/lib/auth');
+const {getFirestore, FieldValue} = require('../functions/node_modules/firebase-admin/lib/firestore');
 
-if (!admin.apps.length) {
+if (!admin.getApps().length) {
   admin.initializeApp({projectId: process.env.GCLOUD_PROJECT || 'demo-capstone-auto'});
 }
+const auth = getAuth(admin.getApp());
 
-const db = new admin.firestore.Firestore({
-  projectId: process.env.GCLOUD_PROJECT || 'demo-capstone-auto',
-  databaseId: 'capstone-c98f9',
-});
+const db = getFirestore(admin.getApp(), 'capstone-c98f9');
 const doctorId = 'automatic-referral-test-doctor';
 const referralId = 'automatic-referral-test-referral';
 const secondReferralId = 'automatic-referral-test-referral-2';
@@ -53,8 +53,8 @@ async function main() {
       createdByRole: 'bhw',
       status: 'submitted',
       submissionStatus: 'submitted',
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     const referralPayload = (id, patientName) => ({
@@ -68,8 +68,8 @@ async function main() {
       createdByRole: 'bhw',
       status: 'submitted',
       submissionStatus: 'submitted',
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
     await db.collection('referrals').doc(secondReferralId).set(
         referralPayload(secondReferralId, 'Automatic Referral Test Patient 2'));

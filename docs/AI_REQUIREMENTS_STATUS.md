@@ -6,7 +6,7 @@ record for counts and metrics. Regenerate it after changing data or model
 artifacts:
 
 ```bash
-python3 backend/scripts/verify_ai_requirements.py
+backend/.venv/bin/python backend/scripts/verify_ai_requirements.py
 ```
 
 The verifier reads the repository's actual files and saved model, reconstructs
@@ -45,6 +45,6 @@ clinical variables are available.
 
 Current verified result: 93,993 usable records, 228 Random Forest inputs,
 100 classes, 89.3399% held-out accuracy, 89.1082% five-fold training-only CV
-mean accuracy with 0.1136 percentage-point standard deviation, and zero
+mean accuracy with 0.2373 percentage-point standard deviation, and zero
 train/test exact feature-vector overlap. The 150,000-record and 95% gates
 remain `not_met`.

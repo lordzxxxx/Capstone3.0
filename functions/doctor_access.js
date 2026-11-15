@@ -1,12 +1,13 @@
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v1');
 const admin = require('firebase-admin');
+const {getAuth} = require('firebase-admin/auth');
 const {getFirestore, FieldValue, Timestamp} = require('firebase-admin/firestore');
 const crypto = require('crypto');
 const {sendSystemEmail} = require('./mailer');
 const {buildAccountOnboardingEmail} = require('./email_templates');
 const {assertStrongPassword} = require('./password_policy');
 
-if (!admin.apps.length) {
+if (!(typeof admin.getApps === 'function' ? admin.getApps() : admin.apps).length) {
   admin.initializeApp();
 }
 
@@ -19,7 +20,8 @@ const DOCTOR_SETUP_IP_COOLDOWN_MS = 5 * 1000;
 const DOCTOR_SETUP_IP_MAX_PER_WINDOW = 20;
 const DOCTOR_SETUP_IP_WINDOW_MS = 60 * 60 * 1000;
 
-const db = getFirestore(admin.app(), FIRESTORE_DATABASE_ID);
+const db = getFirestore(admin.getApp(), FIRESTORE_DATABASE_ID);
+const auth = getAuth(admin.getApp());
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -118,7 +120,7 @@ function linkState(data, tokenHash, now = Date.now()) {
 async function findDoctorForEmail(email) {
   let authUser;
   try {
-    authUser = await admin.auth().getUserByEmail(email);
+    authUser = await auth.getUserByEmail(email);
   } catch (error) {
     if (error?.code === 'auth/user-not-found') return null;
     throw error;
@@ -273,7 +275,7 @@ exports.verifyDoctorSetupLink = functions.https.onCall(async (data) => {
     return {valid: false, reason: loaded.state.reason, message: linkError(loaded.state.reason)};
   }
 
-  const authUser = await admin.auth().getUser(loaded.parsed.uid);
+  const authUser = await auth.getUser(loaded.parsed.uid);
   const profileSnapshot = await db.collection('users').doc(loaded.parsed.uid).get();
   const profile = profileSnapshot.exists ? profileSnapshot.data() || {} : {};
   if (!isEligibleDoctor(profile, authUser) ||
@@ -310,7 +312,7 @@ exports.completeDoctorAccountSetup = functions.https.onCall(async (data) => {
     );
   }
 
-  const authUser = await admin.auth().getUser(loaded.parsed.uid);
+  const authUser = await auth.getUser(loaded.parsed.uid);
   const profileSnapshot = await db.collection('users').doc(loaded.parsed.uid).get();
   const profile = profileSnapshot.exists ? profileSnapshot.data() || {} : {};
   if (!isEligibleDoctor(profile, authUser) ||
@@ -349,9 +351,9 @@ exports.completeDoctorAccountSetup = functions.https.onCall(async (data) => {
 
   let authPasswordUpdated = false;
   try {
-    await admin.auth().updateUser(loaded.parsed.uid, {password: newPassword});
+    await auth.updateUser(loaded.parsed.uid, {password: newPassword});
     authPasswordUpdated = true;
-    await admin.auth().revokeRefreshTokens(loaded.parsed.uid);
+    await auth.revokeRefreshTokens(loaded.parsed.uid);
     await db.runTransaction(async (transaction) => {
       const snapshot = await transaction.get(linkRef);
       const current = snapshot.exists ? snapshot.data() || {} : {};

@@ -23,6 +23,8 @@ class ChoRbacCenter extends StatefulWidget {
 }
 
 class _ChoRbacCenterState extends State<ChoRbacCenter> {
+  static const int _managedUserReadLimit = 500;
+
   final FirebaseFirestore _firestore = getFirestoreInstance();
   final AccountPolicyService _accountPolicy = AccountPolicyService.instance;
   RbacRoleCatalog _catalog = RbacRoleCatalog(
@@ -1215,7 +1217,11 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
 
   Widget _buildUsers() {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: _firestore.collection('users').snapshots(),
+      stream: _firestore
+          .collection('users')
+          .orderBy(FieldPath.documentId)
+          .limit(_managedUserReadLimit)
+          .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return ChoErrorState(
@@ -1256,6 +1262,14 @@ class _ChoRbacCenterState extends State<ChoRbacCenter> {
               'CHO roles and permissions are managed here. Existing doctor and BHW accounts remain visible for continuity; their operational workflows stay in Referrals and BHW Management.',
               style: TextStyle(color: AppColors.textSecondary),
             ),
+            if (docs.length >= _managedUserReadLimit)
+              const Padding(
+                padding: EdgeInsets.only(top: AppSpacing.xs),
+                child: Text(
+                  'Showing the first 500 accounts for stability. Use account search or the dedicated BHW/doctor workflow for a complete review.',
+                  style: TextStyle(color: AppColors.warning, fontSize: 12),
+                ),
+              ),
             const SizedBox(height: AppSpacing.md),
             if (docs.isEmpty)
               const ChoEmptyState(

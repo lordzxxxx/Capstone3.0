@@ -1,10 +1,13 @@
 const assert = require('node:assert/strict');
 
 const admin = require('../functions/node_modules/firebase-admin');
+const {getAuth} = require('../functions/node_modules/firebase-admin/lib/auth');
+const {getFirestore} = require('../functions/node_modules/firebase-admin/lib/firestore');
 
 const projectId = process.env.GCLOUD_PROJECT || 'capstone-c98f9';
-if (!admin.apps.length) admin.initializeApp({projectId});
-const db = new admin.firestore.Firestore({projectId, databaseId: 'capstone-c98f9'});
+if (!admin.getApps().length) admin.initializeApp({projectId});
+const auth = getAuth(admin.getApp());
+const db = getFirestore(admin.getApp(), 'capstone-c98f9');
 const adminUid = 'rbac-callable-test-admin';
 const targetUid = 'rbac-callable-test-user';
 const email = 'rbac-callable-test-admin@example.test';
@@ -30,7 +33,7 @@ async function main() {
   let authUser;
   let targetAuthUser;
   try {
-    authUser = await admin.auth().createUser({
+    authUser = await auth.createUser({
       uid: adminUid,
       email,
       password: 'A-strong-test-password-123!',
@@ -45,7 +48,7 @@ async function main() {
       approvalStatus: 'approved',
       accountStatus: 'active',
     });
-    await admin.auth().setCustomUserClaims(adminUid, {
+    await auth.setCustomUserClaims(adminUid, {
       role: 'CHO_ADMIN',
       approvalStatus: 'approved',
       accountStatus: 'active',
@@ -102,7 +105,7 @@ async function main() {
       barangay: 'Barangay 10',
       barangayCode: 'BARANGAY_10',
     });
-    targetAuthUser = await admin.auth().createUser({
+    targetAuthUser = await auth.createUser({
       uid: targetUid,
       email: targetEmail,
       password: 'A-strong-test-password-123!',
@@ -152,7 +155,7 @@ async function main() {
     const archivedTarget = (await db.collection('users').doc(targetUid).get()).data();
     assert.equal(archivedTarget.accountStatus, 'archived');
     assert.equal(archivedTarget.status, 'Archived');
-    assert.equal((await admin.auth().getUser(targetUid)).disabled, true);
+    assert.equal((await auth.getUser(targetUid)).disabled, true);
 
     const deleted = await call('deleteAccessRole', signInBody.idToken, {
       roleKey: 'CUSTOM_REFERRAL_INTAKE_HELPER',
@@ -164,8 +167,8 @@ async function main() {
     await db.collection('users').doc(targetUid).delete().catch(() => {});
     await db.collection('users').doc(adminUid).delete().catch(() => {});
     await db.collection('roles').doc('CUSTOM_REFERRAL_INTAKE_HELPER').delete().catch(() => {});
-    if (targetAuthUser) await admin.auth().deleteUser(targetAuthUser.uid).catch(() => {});
-    if (authUser) await admin.auth().deleteUser(authUser.uid).catch(() => {});
+    if (targetAuthUser) await auth.deleteUser(targetAuthUser.uid).catch(() => {});
+    if (authUser) await auth.deleteUser(authUser.uid).catch(() => {});
   }
 }
 

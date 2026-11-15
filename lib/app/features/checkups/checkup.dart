@@ -209,8 +209,8 @@ class _CheckUpPageState extends State<CheckUpPage> {
     patientSeed = await _patientHistoryService.resolveRegisteredPatient(
       patientSeed,
     );
+    if (!context.mounted) return;
     if (patientSeed == null) {
-      if (!context.mounted) return;
       patientSeed = await PatientFirstServiceSelector.selectRegisteredPatient(
         context,
         serviceLabel: 'Check-up',
@@ -266,6 +266,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
 
   void _handleEditRecord(BuildContext context, Map<String, dynamic> record) {
     Future.microtask(() {
+      if (!context.mounted) return;
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -1087,6 +1088,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
                                 },
                                 onEdit: (record) {
                                   Future.microtask(() {
+                                    if (!context.mounted) return;
                                     showModalBottomSheet(
                                       context: context,
                                       isScrollControlled: true,
@@ -1590,6 +1592,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
     // Delete from database
     await _dbHelper.deleteRecords(idsToDelete);
 
+    if (!mounted) return;
     setState(() {
       _selectedIndices.clear();
       _isSelectionMode = false;
@@ -1598,18 +1601,17 @@ class _CheckUpPageState extends State<CheckUpPage> {
     // Reload records
     await _loadRecords();
 
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Successfully deleted $count record(s)',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Successfully deleted $count record(s)',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-      );
-    }
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   List<Map<String, dynamic>> _getCheckUpHistory(Map<String, dynamic> record) {
@@ -1647,7 +1649,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
   ) async {
     final patient = _buildPatientHistorySeed(record);
     final snapshot = await _patientHistoryService.loadPatientHistory(patient);
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
 
@@ -1714,6 +1716,7 @@ class _CheckUpPageState extends State<CheckUpPage> {
           icon: Icons.edit_outlined,
           onPressed: () {
             Future.microtask(() {
+              if (!context.mounted) return;
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
@@ -2423,241 +2426,245 @@ void _showCheckUpDetailsDialog(
                               topRight: Radius.circular(20),
                             ),
                     ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.8),
-                      ),
-                      child: const Icon(
-                        Icons.medical_services_outlined,
-                        color: AppDesign.blue,
-                        size: 24,
-                      ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.8),
+                          ),
+                          child: const Icon(
+                            Icons.medical_services_outlined,
+                            color: AppDesign.blue,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Check-Up Record Details',
+                                style: TextStyle(
+                                  color: AppDesign.ink,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                patientName,
+                                style: TextStyle(
+                                  color: AppDesign.ink.withValues(alpha: 0.8),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(
+                            Icons.close,
+                            color: AppDesign.ink.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
+                  ),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Check-Up Record Details',
-                            style: TextStyle(
-                              color: AppDesign.ink,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                          // Patient Info Section
+                          _buildDetailSection('Patient Information', [
+                            _buildDetailRow('Name', patientName),
+                            _buildDetailRow('Age', age),
+                            _buildDetailRow('Address', address),
+                          ]),
+                          const SizedBox(height: 16),
+
+                          // Check-Up Details Section
+                          _buildDetailSection('Check-Up Details', [
+                            _buildDetailRow('Date & Time', datetime),
+                            _buildDetailRow('Temperature', temperature),
+                            _buildDetailRow('Blood Pressure', bloodPressure),
+                            _buildDetailRow('Heart Rate', heartRate),
+                            _buildDetailRow('Weight', weight),
+                            _buildDetailRow('Height', height),
+                          ]),
+                          const SizedBox(height: 16),
+
+                          // Status Section
+                          _buildDetailSection('Status', [
+                            _buildDetailRow('Status', status),
+                          ]),
+                          const SizedBox(height: 16),
+
+                          // Symptoms Section
+                          _buildDetailSection('Symptoms', [
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: _lightOffWhite.withValues(alpha: 0.04),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: _lightOffWhite.withValues(alpha: 0.08),
+                                ),
+                              ),
+                              child: Text(
+                                symptoms,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: _lightOffWhite,
+                                  height: 1.5,
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            patientName,
-                            style: TextStyle(
-                              color: AppDesign.ink.withValues(alpha: 0.8),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
+                          ]),
+                          const SizedBox(height: 16),
+
+                          // Treatment Plan Section
+                          _buildDetailSection('Treatment Plan', [
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: _lightOffWhite.withValues(alpha: 0.04),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: _lightOffWhite.withValues(alpha: 0.08),
+                                ),
+                              ),
+                              child: Text(
+                                plan,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: _lightOffWhite,
+                                  height: 1.5,
+                                ),
+                              ),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          ]),
+                          const SizedBox(height: 16),
+
+                          // Follow-up Section
+                          _buildDetailSection('Follow-up Schedule', [
+                            _buildDetailRow('Follow-up Date', followup),
+                          ]),
                         ],
                       ),
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(
-                        Icons.close,
-                        color: AppDesign.ink.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-
-                // Patient Info Section
-                _buildDetailSection('Patient Information', [
-                  _buildDetailRow('Name', patientName),
-                  _buildDetailRow('Age', age),
-                  _buildDetailRow('Address', address),
-                ]),
-                const SizedBox(height: 16),
-
-                // Check-Up Details Section
-                _buildDetailSection('Check-Up Details', [
-                  _buildDetailRow('Date & Time', datetime),
-                  _buildDetailRow('Temperature', temperature),
-                  _buildDetailRow('Blood Pressure', bloodPressure),
-                  _buildDetailRow('Heart Rate', heartRate),
-                  _buildDetailRow('Weight', weight),
-                  _buildDetailRow('Height', height),
-                ]),
-                const SizedBox(height: 16),
-
-                // Status Section
-                _buildDetailSection('Status', [
-                  _buildDetailRow('Status', status),
-                ]),
-                const SizedBox(height: 16),
-
-                // Symptoms Section
-                _buildDetailSection('Symptoms', [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _lightOffWhite.withValues(alpha: 0.04),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _lightOffWhite.withValues(alpha: 0.08),
-                      ),
-                    ),
-                    child: Text(
-                      symptoms,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: _lightOffWhite,
-                        height: 1.5,
-                      ),
+                  ),
+                  // Action Buttons
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                    child: Row(
+                      children: [
+                        // Refer Button
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Get.to(
+                                () => ReferralsPage(initialRecord: record),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppDesign.blue,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.assignment_return_outlined,
+                              size: 18,
+                            ),
+                            label: const Text(
+                              'Refer to CHO',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Edit Button
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              pageState?._handleEditRecord(context, record);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppDesign.navy,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: const Icon(Icons.edit, size: 18),
+                            label: const Text(
+                              'Edit',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Close Button
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: _lightOffWhite,
+                              side: const BorderSide(
+                                color: AppDesign.border,
+                                width: 1.5,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Close',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: _lightOffWhite,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ]),
-                const SizedBox(height: 16),
-
-                // Treatment Plan Section
-                _buildDetailSection('Treatment Plan', [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _lightOffWhite.withValues(alpha: 0.04),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _lightOffWhite.withValues(alpha: 0.08),
-                      ),
-                    ),
-                    child: Text(
-                      plan,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: _lightOffWhite,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                ]),
-                const SizedBox(height: 16),
-
-                // Follow-up Section
-                _buildDetailSection('Follow-up Schedule', [
-                  _buildDetailRow('Follow-up Date', followup),
-                ]),
-                    ],
-                  ),
-                ),
+                ],
               ),
-              // Action Buttons
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                child: Row(
-                  children: [
-                    // Refer Button
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Get.to(() => ReferralsPage(initialRecord: record));
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppDesign.blue,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.assignment_return_outlined, size: 18),
-                        label: const Text(
-                          'Refer to CHO',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Edit Button
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          pageState?._handleEditRecord(context, record);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppDesign.navy,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.edit, size: 18),
-                        label: const Text(
-                          'Edit',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Close Button
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _lightOffWhite,
-                          side: const BorderSide(
-                            color: AppDesign.border,
-                            width: 1.5,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Close',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: _lightOffWhite,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
-      ),
-    );
-  },
+      );
+    },
   );
 }
 
@@ -3848,16 +3855,14 @@ class _NewCheckUpFullScreenModalState
       _addressController.text = brgy;
     }
 
-    final rawSymptoms = (patientSeed['symptoms'] ??
-            patientSeed['chiefComplaint'] ??
-            '')
-        .toString()
-        .trim();
-    final rawDiagnosis = (patientSeed['diagnosis'] ??
-            patientSeed['disease'] ??
-            '')
-        .toString()
-        .trim();
+    final rawSymptoms =
+        (patientSeed['symptoms'] ?? patientSeed['chiefComplaint'] ?? '')
+            .toString()
+            .trim();
+    final rawDiagnosis =
+        (patientSeed['diagnosis'] ?? patientSeed['disease'] ?? '')
+            .toString()
+            .trim();
     if (rawSymptoms.isNotEmpty &&
         rawDiagnosis.isNotEmpty &&
         rawSymptoms.toLowerCase() != rawDiagnosis.toLowerCase()) {
@@ -3889,12 +3894,13 @@ class _NewCheckUpFullScreenModalState
     _heightController.text = (patientSeed['height'] ?? patientSeed['ht'] ?? '')
         .toString();
 
-    final followUpStr = (patientSeed['nextVisitDate'] ??
-            patientSeed['followUpDate'] ??
-            patientSeed['followup'] ??
-            '')
-        .toString()
-        .trim();
+    final followUpStr =
+        (patientSeed['nextVisitDate'] ??
+                patientSeed['followUpDate'] ??
+                patientSeed['followup'] ??
+                '')
+            .toString()
+            .trim();
     if (followUpStr.isNotEmpty) {
       _followUpDate = DateTime.tryParse(followUpStr);
     }
@@ -3920,16 +3926,18 @@ class _NewCheckUpFullScreenModalState
 
     final vitalSignsString = vitalSignsParts.join(', ');
     final now = DateTime.now();
-    final linkedPatientId = (widget.patientSeed?['linkedPatientId'] ??
-            widget.patientSeed?['id'] ??
-            '')
-        .toString()
-        .trim();
-    final patientId = (widget.patientSeed?['patientId'] ??
-            widget.patientSeed?['patientCode'] ??
-            linkedPatientId)
-        .toString()
-        .trim();
+    final linkedPatientId =
+        (widget.patientSeed?['linkedPatientId'] ??
+                widget.patientSeed?['id'] ??
+                '')
+            .toString()
+            .trim();
+    final patientId =
+        (widget.patientSeed?['patientId'] ??
+                widget.patientSeed?['patientCode'] ??
+                linkedPatientId)
+            .toString()
+            .trim();
 
     final payload = <String, dynamic>{
       'id': now.millisecondsSinceEpoch.toString(),
@@ -3941,7 +3949,8 @@ class _NewCheckUpFullScreenModalState
           '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
       'type': 'General',
       'diseaseType': 'General',
-      'patient': '${_firstNameController.text} ${_surnameController.text}'.trim(),
+      'patient': '${_firstNameController.text} ${_surnameController.text}'
+          .trim(),
       'age': _ageController.text.trim(),
       'address': _addressController.text.trim(),
       'vitalsigns': vitalSignsString,
@@ -3965,7 +3974,9 @@ class _NewCheckUpFullScreenModalState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Please complete all required fields before referring.'),
+            content: Text(
+              'Please complete all required fields before referring.',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -3977,22 +3988,20 @@ class _NewCheckUpFullScreenModalState
     try {
       await widget.onSave(newRecord);
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Unable to save check-up record: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        setState(() => _isSaving = false);
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to save check-up record: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() => _isSaving = false);
       return;
     }
 
-    if (context.mounted) {
-      Navigator.of(context).pop();
-      Get.to(() => ReferralsPage(initialRecord: newRecord));
-    }
+    if (!mounted) return;
+    Navigator.of(context).pop();
+    Get.to(() => ReferralsPage(initialRecord: newRecord));
   }
 
   // Helper method to build section cards
@@ -4177,7 +4186,9 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: TextFormField(
                                     controller: _firstNameController,
-                                    style: const TextStyle(color: _lightOffWhite),
+                                    style: const TextStyle(
+                                      color: _lightOffWhite,
+                                    ),
                                     decoration: _buildInputDecoration(
                                       'First Name',
                                     ),
@@ -4190,7 +4201,9 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: TextFormField(
                                     controller: _surnameController,
-                                    style: const TextStyle(color: _lightOffWhite),
+                                    style: const TextStyle(
+                                      color: _lightOffWhite,
+                                    ),
                                     decoration: _buildInputDecoration(
                                       'Surname',
                                     ),
@@ -4208,7 +4221,9 @@ class _NewCheckUpFullScreenModalState
                                   flex: 1,
                                   child: TextFormField(
                                     controller: _ageController,
-                                    style: const TextStyle(color: _lightOffWhite),
+                                    style: const TextStyle(
+                                      color: _lightOffWhite,
+                                    ),
                                     decoration: _buildInputDecoration('Age'),
                                     keyboardType: TextInputType.number,
                                     validator: (v) => v == null || v.isEmpty
@@ -4221,7 +4236,9 @@ class _NewCheckUpFullScreenModalState
                                   flex: 2,
                                   child: TextFormField(
                                     controller: _addressController,
-                                    style: const TextStyle(color: _lightOffWhite),
+                                    style: const TextStyle(
+                                      color: _lightOffWhite,
+                                    ),
                                     decoration: _buildInputDecoration(
                                       'Address',
                                     ),
@@ -4249,7 +4266,9 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: TextFormField(
                                     controller: _bloodPressureController,
-                                    style: const TextStyle(color: _lightOffWhite),
+                                    style: const TextStyle(
+                                      color: _lightOffWhite,
+                                    ),
                                     decoration: _buildInputDecoration(
                                       'Blood Pressure (e.g., 120/80)',
                                     ),
@@ -4259,7 +4278,9 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: TextFormField(
                                     controller: _temperatureController,
-                                    style: const TextStyle(color: _lightOffWhite),
+                                    style: const TextStyle(
+                                      color: _lightOffWhite,
+                                    ),
                                     decoration: _buildInputDecoration(
                                       'Temperature (°C)',
                                     ),
@@ -4277,7 +4298,9 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: TextFormField(
                                     controller: _heartRateController,
-                                    style: const TextStyle(color: _lightOffWhite),
+                                    style: const TextStyle(
+                                      color: _lightOffWhite,
+                                    ),
                                     decoration: _buildInputDecoration(
                                       'Heart Rate (bpm)',
                                     ),
@@ -4288,7 +4311,9 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: TextFormField(
                                     controller: _weightController,
-                                    style: const TextStyle(color: _lightOffWhite),
+                                    style: const TextStyle(
+                                      color: _lightOffWhite,
+                                    ),
                                     decoration: _buildInputDecoration(
                                       'Weight (kg)',
                                     ),
@@ -4451,7 +4476,11 @@ class _NewCheckUpFullScreenModalState
                               ),
                               elevation: 3,
                             ),
-                            icon: const Icon(Icons.assignment_return_outlined, size: 18, color: Colors.white),
+                            icon: const Icon(
+                              Icons.assignment_return_outlined,
+                              size: 18,
+                              color: Colors.white,
+                            ),
                             label: const Text(
                               'Save & Refer to CHO',
                               style: TextStyle(
@@ -4500,7 +4529,9 @@ class _NewCheckUpFullScreenModalState
                                     if (!(_formKey.currentState?.validate() ??
                                         false)) {
                                       if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           const SnackBar(
                                             content: Text(
                                               'Please complete all required fields before saving.',
@@ -4514,70 +4545,71 @@ class _NewCheckUpFullScreenModalState
                                     setState(() => _isSaving = true);
                                     final newRecord = _buildNewRecordPayload();
 
-                                      SymptomGuidanceResult? guidance;
-                                      String? guidanceError;
-                                      try {
-                                        await widget.onSave(newRecord);
-                                      } catch (e) {
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Unable to save check-up record: $e',
-                                              ),
-                                              backgroundColor: Colors.red,
+                                    SymptomGuidanceResult? guidance;
+                                    String? guidanceError;
+                                    try {
+                                      await widget.onSave(newRecord);
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Unable to save check-up record: $e',
                                             ),
-                                          );
-                                          setState(() => _isSaving = false);
-                                        }
-                                        return;
-                                      }
-
-                                      try {
-                                        guidance = await widget.guidanceApi
-                                            .getGuidanceFromText(
-                                              _symptomsController.text,
-                                            );
-                                        newRecord.addAll(
-                                          guidance.toRecordFields(),
+                                            backgroundColor: Colors.red,
+                                          ),
                                         );
-                                      } catch (e) {
-                                        final fallback = DiseasePredictionApiService
-                                            .localHealthCategoryFallback(
-                                              _symptomsController.text,
-                                            );
-                                        newRecord.addAll(fallback);
-                                        guidance = SymptomGuidanceResult.fromFallback(
-                                          fallbackMap: fallback,
-                                        );
+                                        setState(() => _isSaving = false);
                                       }
+                                      return;
+                                    }
 
-                                      final screening =
-                                          HealthScreeningEngine.evaluate(
-                                            newRecord,
+                                    try {
+                                      guidance = await widget.guidanceApi
+                                          .getGuidanceFromText(
+                                            _symptomsController.text,
                                           );
                                       newRecord.addAll(
-                                        HealthScreeningEngine.attachToRecord(
-                                          newRecord,
-                                          screening,
-                                        ),
+                                        guidance.toRecordFields(),
                                       );
-                                      await widget.onGuidanceSave(newRecord);
+                                    } catch (e) {
+                                      final fallback =
+                                          DiseasePredictionApiService.localHealthCategoryFallback(
+                                            _symptomsController.text,
+                                          );
+                                      newRecord.addAll(fallback);
+                                      guidance =
+                                          SymptomGuidanceResult.fromFallback(
+                                            fallbackMap: fallback,
+                                          );
+                                    }
 
-                                      if (context.mounted && guidance != null) {
-                                        await _showSymptomGuidanceModal(
-                                          context,
-                                          guidance,
-                                          record: newRecord,
+                                    final screening =
+                                        HealthScreeningEngine.evaluate(
+                                          newRecord,
                                         );
-                                      }
+                                    newRecord.addAll(
+                                      HealthScreeningEngine.attachToRecord(
+                                        newRecord,
+                                        screening,
+                                      ),
+                                    );
+                                    await widget.onGuidanceSave(newRecord);
 
-                                      if (context.mounted) {
-                                        Navigator.of(context).pop();
-                                      }
-                                    },
+                                    if (context.mounted) {
+                                      await _showSymptomGuidanceModal(
+                                        context,
+                                        guidance,
+                                        record: newRecord,
+                                      );
+                                    }
+
+                                    if (context.mounted) {
+                                      Navigator.of(context).pop();
+                                    }
+                                  },
                           ),
                         ],
                       ),
@@ -4603,24 +4635,17 @@ class _NewCheckUpFullScreenModalState
     // Evaluate health screening from the record if available
     final screening = record != null
         ? (HealthScreeningEngine.resultFromRecord(record) ??
-            HealthScreeningEngine.evaluate(record))
+              HealthScreeningEngine.evaluate(record))
         : null;
 
-    // Filter findings to exclude oxygen saturation and respiratory rate per requirement
-    final actionableFindings = screening?.findings.where((f) {
-          final lower = f.measurement.toLowerCase();
-          return !f.isInformational &&
-              !lower.contains('oxygen') &&
-              !lower.contains('respiratory');
-        }).toList() ??
+    // Preserve every non-informational vital sign in the referral trail.
+    final actionableFindings =
+        screening?.findings
+            .where((finding) => !finding.isInformational)
+            .toList() ??
         <HealthMeasurementFinding>[];
 
-    // Filter referral reasons to exclude oxygen saturation and respiratory rate
-    final filteredReferralReasons = screening?.referralReasons.where((r) {
-          final lower = r.toLowerCase();
-          return !lower.contains('oxygen') && !lower.contains('respiratory');
-        }).toList() ??
-        <String>[];
+    final filteredReferralReasons = screening?.referralReasons ?? <String>[];
 
     final category = result.suggestedHealthCategory;
 
@@ -5034,14 +5059,18 @@ class _NewCheckUpFullScreenModalState
         final dialogWidth = screenSize.width > 1160
             ? 1120.0
             : (screenSize.width > 600
-                ? screenSize.width * 0.92
-                : screenSize.width * 0.96);
-        final dialogHeight =
-            screenSize.height > 860 ? 800.0 : (screenSize.height * 0.92);
+                  ? screenSize.width * 0.92
+                  : screenSize.width * 0.96);
+        final dialogHeight = screenSize.height > 860
+            ? 800.0
+            : (screenSize.height * 0.92);
 
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
           child: Container(
             width: dialogWidth,
             height: dialogHeight,
@@ -5068,10 +5097,7 @@ class _NewCheckUpFullScreenModalState
                   decoration: const BoxDecoration(
                     color: Color(0xFF0F172A),
                     border: Border(
-                      bottom: BorderSide(
-                        color: Color(0x20FFFFFF),
-                        width: 1,
-                      ),
+                      bottom: BorderSide(color: Color(0x20FFFFFF), width: 1),
                     ),
                   ),
                   child: Row(
@@ -5080,10 +5106,14 @@ class _NewCheckUpFullScreenModalState
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2563EB).withValues(alpha: 0.20),
+                          color: const Color(
+                            0xFF2563EB,
+                          ).withValues(alpha: 0.20),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: const Color(0xFF2563EB).withValues(alpha: 0.40),
+                            color: const Color(
+                              0xFF2563EB,
+                            ).withValues(alpha: 0.40),
                           ),
                         ),
                         child: const Icon(
@@ -5210,14 +5240,17 @@ class _NewCheckUpFullScreenModalState
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Container(
                                         width: 32,
                                         height: 32,
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFEFF6FF),
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         child: const Icon(
                                           Icons.auto_awesome_rounded,
@@ -5251,7 +5284,8 @@ class _NewCheckUpFullScreenModalState
                                           ],
                                         ),
                                       ),
-                                      if (screening != null && isDesktopLayout) ...[
+                                      if (screening != null &&
+                                          isDesktopLayout) ...[
                                         const SizedBox(width: 8),
                                         Wrap(
                                           spacing: 6,
@@ -5261,7 +5295,9 @@ class _NewCheckUpFullScreenModalState
                                             buildUnifiedBadge(
                                               label:
                                                   'Data: ${screening.dataQuality.label}',
-                                              textColor: const Color(0xFF1D4ED8),
+                                              textColor: const Color(
+                                                0xFF1D4ED8,
+                                              ),
                                               bgColor: const Color(0xFFEFF6FF),
                                               icon: Icons.verified_outlined,
                                             ),
@@ -5270,7 +5306,8 @@ class _NewCheckUpFullScreenModalState
                                       ],
                                     ],
                                   ),
-                                  if (screening != null && !isDesktopLayout) ...[
+                                  if (screening != null &&
+                                      !isDesktopLayout) ...[
                                     const SizedBox(height: 8),
                                     Wrap(
                                       spacing: 6,
@@ -5329,7 +5366,8 @@ class _NewCheckUpFullScreenModalState
                                         const SizedBox(width: 10),
                                         Expanded(
                                           child: buildMetricTile(
-                                            icon: Icons.transfer_within_a_station_rounded,
+                                            icon: Icons
+                                                .transfer_within_a_station_rounded,
                                             iconColor: nextStepColor,
                                             iconBg: const Color(0xFFEFF6FF),
                                             label: 'Recommended',
@@ -5360,8 +5398,9 @@ class _NewCheckUpFullScreenModalState
                                             Expanded(
                                               child: buildMetricTile(
                                                 icon: Icons.checklist_rounded,
-                                                iconColor:
-                                                    const Color(0xFF2563EB),
+                                                iconColor: const Color(
+                                                  0xFF2563EB,
+                                                ),
                                                 iconBg: const Color(0xFFEFF6FF),
                                                 label: 'Symptoms',
                                                 value:
@@ -5371,8 +5410,8 @@ class _NewCheckUpFullScreenModalState
                                             const SizedBox(width: 8),
                                             Expanded(
                                               child: buildMetricTile(
-                                                icon: Icons
-                                                    .warning_amber_rounded,
+                                                icon:
+                                                    Icons.warning_amber_rounded,
                                                 iconColor: hasEmergencyWarnings
                                                     ? const Color(0xFF0F172A)
                                                     : const Color(0xFF64748B),
@@ -5412,13 +5451,15 @@ class _NewCheckUpFullScreenModalState
                                             Expanded(
                                               child: buildMetricTile(
                                                 icon: Icons.category_rounded,
-                                                iconColor:
-                                                    const Color(0xFF1D4ED8),
+                                                iconColor: const Color(
+                                                  0xFF1D4ED8,
+                                                ),
                                                 iconBg: const Color(0xFFEFF6FF),
                                                 label: 'Category',
                                                 value: category,
-                                                valueColor:
-                                                    const Color(0xFF1D4ED8),
+                                                valueColor: const Color(
+                                                  0xFF1D4ED8,
+                                                ),
                                                 valueIsString: true,
                                               ),
                                             ),
@@ -5459,7 +5500,9 @@ class _NewCheckUpFullScreenModalState
                                         fontStyle: FontStyle.italic,
                                       ),
                                     ),
-                                  if (result.recognizedConditions.isNotEmpty) ...[
+                                  if (result
+                                      .recognizedConditions
+                                      .isNotEmpty) ...[
                                     const SizedBox(width: 4),
                                     const Text(
                                       'Conditions: ',
@@ -5484,7 +5527,8 @@ class _NewCheckUpFullScreenModalState
                               if (screening != null &&
                                   (screening.referralRecommendation.index >=
                                           HealthReferralRecommendation
-                                              .considerReferral.index ||
+                                              .considerReferral
+                                              .index ||
                                       filteredReferralReasons.isNotEmpty)) ...[
                                 const SizedBox(height: 12),
                                 Container(
@@ -5509,7 +5553,8 @@ class _NewCheckUpFullScreenModalState
                                       Row(
                                         children: [
                                           const Icon(
-                                            Icons.notification_important_rounded,
+                                            Icons
+                                                .notification_important_rounded,
                                             size: 16,
                                             color: Color(0xFF1D4ED8),
                                           ),
@@ -5524,12 +5569,14 @@ class _NewCheckUpFullScreenModalState
                                           ),
                                         ],
                                       ),
-                                      if (filteredReferralReasons.isNotEmpty) ...[
+                                      if (filteredReferralReasons
+                                          .isNotEmpty) ...[
                                         const SizedBox(height: 4),
                                         ...filteredReferralReasons.map(
                                           (reason) => Padding(
-                                            padding:
-                                                const EdgeInsets.only(bottom: 2),
+                                            padding: const EdgeInsets.only(
+                                              bottom: 2,
+                                            ),
                                             child: Text(
                                               '• $reason',
                                               style: const TextStyle(
@@ -5734,10 +5781,7 @@ class _NewCheckUpFullScreenModalState
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     border: Border(
-                      top: BorderSide(
-                        color: Color(0xFFE2E8F0),
-                        width: 1,
-                      ),
+                      top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
                     ),
                   ),
                   child: isDesktopLayout
@@ -5763,14 +5807,17 @@ class _NewCheckUpFullScreenModalState
                                 onPressed: () {
                                   Navigator.of(dialogContext).pop();
                                   final payload = _buildNewRecordPayload();
-                                  Get.to(() => ReferralsPage(
-                                        initialRecord: payload,
-                                        initialObservations: result
-                                                .emergencyWarningSigns
-                                                .isNotEmpty
-                                            ? 'Emergency warning signs: ${result.emergencyWarningSigns.join(', ')}'
-                                            : 'When to seek care: ${result.whenToSeekCare.join(', ')}',
-                                      ));
+                                  Get.to(
+                                    () => ReferralsPage(
+                                      initialRecord: payload,
+                                      initialObservations:
+                                          result
+                                              .emergencyWarningSigns
+                                              .isNotEmpty
+                                          ? 'Emergency warning signs: ${result.emergencyWarningSigns.join(', ')}'
+                                          : 'When to seek care: ${result.whenToSeekCare.join(', ')}',
+                                    ),
+                                  );
                                 },
                                 icon: const Icon(
                                   Icons.assignment_return_outlined,
@@ -5851,14 +5898,17 @@ class _NewCheckUpFullScreenModalState
                                         Navigator.of(dialogContext).pop();
                                         final payload =
                                             _buildNewRecordPayload();
-                                        Get.to(() => ReferralsPage(
-                                              initialRecord: payload,
-                                              initialObservations: result
-                                                      .emergencyWarningSigns
-                                                      .isNotEmpty
-                                                  ? 'Emergency warning signs: ${result.emergencyWarningSigns.join(', ')}'
-                                                  : 'When to seek care: ${result.whenToSeekCare.join(', ')}',
-                                            ));
+                                        Get.to(
+                                          () => ReferralsPage(
+                                            initialRecord: payload,
+                                            initialObservations:
+                                                result
+                                                    .emergencyWarningSigns
+                                                    .isNotEmpty
+                                                ? 'Emergency warning signs: ${result.emergencyWarningSigns.join(', ')}'
+                                                : 'When to seek care: ${result.whenToSeekCare.join(', ')}',
+                                          ),
+                                        );
                                       },
                                       icon: const Icon(
                                         Icons.assignment_return_outlined,
@@ -5872,16 +5922,18 @@ class _NewCheckUpFullScreenModalState
                                         ),
                                       ),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            const Color(0xFF0F172A),
+                                        backgroundColor: const Color(
+                                          0xFF0F172A,
+                                        ),
                                         foregroundColor: Colors.white,
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 10,
                                           vertical: 10,
                                         ),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -5891,16 +5943,14 @@ class _NewCheckUpFullScreenModalState
                                 Expanded(
                                   child: ElevatedButton.icon(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          const Color(0xFF2563EB),
+                                      backgroundColor: const Color(0xFF2563EB),
                                       foregroundColor: Colors.white,
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 10,
                                         vertical: 10,
                                       ),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
                                     ),
                                     onPressed: () =>
@@ -5930,7 +5980,6 @@ class _NewCheckUpFullScreenModalState
       },
     );
   }
-
 
   Future<void> _showDiseasePredictionModal(
     BuildContext context,

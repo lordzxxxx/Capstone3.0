@@ -6,43 +6,46 @@
  * CHO/doctor accounts must be created by the CHO Admin callable workflow.
  * 
  * Usage:
- *   firebase login (already done)
+ *   gcloud auth application-default login
  *   node set_cho_claims_auth.js theo@gmail.com
  */
 
-const admin = require('firebase-admin');
+const {applicationDefault, initializeApp} = require('firebase-admin/app');
+const {getAuth} = require('firebase-admin/auth');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
-const { ServerValue } = require('firebase-admin/database');
+const {getDatabase, ServerValue} = require('firebase-admin/database');
 
 const MAIN_CHO_ADMIN_EMAIL = 'theo@gmail.com';
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 
-// Initialize with default credentials from authenticated Firebase CLI
-const serviceAccount = require('./serviceAccount.json');
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+// Use Application Default Credentials instead of a checked-in/local JSON key.
+// For local execution, authenticate with `gcloud auth application-default login`
+// or set GOOGLE_APPLICATION_CREDENTIALS to a protected file outside this repo.
+const app = initializeApp({
+  credential: applicationDefault(),
   projectId: 'capstone-c98f9',
   databaseURL: 'https://capstone-c98f9-default-rtdb.firebaseio.com'
 });
+const auth = getAuth(app);
+const rtdb = getDatabase(app);
 
 async function fixCHORole(email) {
-  if (String(email || '').trim().toLowerCase() !== MAIN_CHO_ADMIN_EMAIL) {
-    throw new Error(`This bootstrap script only accepts ${MAIN_CHO_ADMIN_EMAIL}.`);
-  }
-  console.log(`\nAttempting to fix CHO role for: ${email}\n`);
-  
   try {
+    if (String(email || '').trim().toLowerCase() !== MAIN_CHO_ADMIN_EMAIL) {
+      throw new Error(`This bootstrap script only accepts ${MAIN_CHO_ADMIN_EMAIL}.`);
+    }
+    console.log(`\nAttempting to fix CHO role for: ${email}\n`);
+
     // Step 1: Get user by email
     console.log('Step 1: Looking up user by email...');
-    const user = await admin.auth().getUserByEmail(email);
+    const user = await auth.getUserByEmail(email);
     console.log(`✓ Found user: ${user.uid}`);
     console.log(`  Email: ${user.email}`);
     
     // Step 2: Set custom claims
     console.log('\nStep 2: Setting custom claims...');
     try {
-      await admin.auth().setCustomUserClaims(user.uid, {
+      await auth.setCustomUserClaims(user.uid, {
         role: 'cho_admin',
         approvalStatus: 'approved',
         accountStatus: 'active',
@@ -55,7 +58,7 @@ async function fixCHORole(email) {
     
     // Step 3: Ensure the Firestore governance profile is the source of truth.
     console.log('\nStep 3: Setting the CHO Admin governance profile...');
-    await getFirestore(admin.app(), FIRESTORE_DATABASE_ID).collection('users').doc(user.uid).set({
+    await getFirestore(app, FIRESTORE_DATABASE_ID).collection('users').doc(user.uid).set({
       uid: user.uid,
       email: user.email || MAIN_CHO_ADMIN_EMAIL,
       emailLower: MAIN_CHO_ADMIN_EMAIL,
@@ -72,7 +75,7 @@ async function fixCHORole(email) {
 
     // Step 4: Ensure Realtime Database mirror is set
     console.log('\nStep 4: Setting Realtime Database role...');
-    await admin.database().ref(`users/${user.uid}`).update({
+    await rtdb.ref(`users/${user.uid}`).update({
       role: 'CHO_ADMIN',
       approvalStatus: 'approved',
       accountStatus: 'active',
@@ -82,7 +85,7 @@ async function fixCHORole(email) {
     
     // Step 4: Verify
     console.log('\nStep 5: Verifying...');
-    const snapshot = await admin.database().ref(`users/${user.uid}/role`).get();
+    const snapshot = await rtdb.ref(`users/${user.uid}/role`).get();
     const savedRole = snapshot.val();
     console.log('✓ Verified RTDB role:', savedRole);
     
@@ -101,8 +104,7 @@ async function fixCHORole(email) {
       console.error('2. Are using the correct email address');
       console.error('3. Check that signup completed successfully');
     }
-  } finally {
-    process.exit(0);
+    process.exitCode = 1;
   }
 }
 
@@ -113,4 +115,4 @@ if (!email) {
   process.exit(1);
 }
 
-fixCHORole(email);
+void fixCHORole(email);

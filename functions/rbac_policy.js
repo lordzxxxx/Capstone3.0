@@ -1,13 +1,13 @@
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v1');
 const admin = require('firebase-admin');
 const {getFirestore, FieldValue} = require('firebase-admin/firestore');
 
-if (!admin.apps.length) {
+if (!(typeof admin.getApps === 'function' ? admin.getApps() : admin.apps).length) {
   admin.initializeApp();
 }
 
 const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
-const db = getFirestore(admin.app(), FIRESTORE_DATABASE_ID);
+const db = getFirestore(admin.getApp(), FIRESTORE_DATABASE_ID);
 
 // These are the permissions exposed to administrators. They intentionally
 // describe real portal features and actions, rather than accepting arbitrary

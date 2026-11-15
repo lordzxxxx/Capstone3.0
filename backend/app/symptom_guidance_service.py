@@ -7,8 +7,10 @@ from typing import Any, Callable, Iterable
 
 try:
     from .firebase_service import get_firestore_client
+    from .rag_service import build_evidence_sources, rank_evidence
 except ImportError:  # Direct execution support.
     from firebase_service import get_firestore_client
+    from rag_service import build_evidence_sources, rank_evidence
 
 
 def normalize_symptom_key(value: object) -> str:
@@ -43,10 +45,14 @@ class SymptomGuidanceService:
         db: Any | None = None,
         client_factory: Callable[[], Any] | None = None,
         timeout_seconds: float = 5.0,
+        rag_top_k: int = 8,
+        rag_min_score: float = 0.12,
     ) -> None:
         self._db = db
         self._client_factory = client_factory
         self._timeout_seconds = timeout_seconds
+        self._rag_top_k = rag_top_k
+        self._rag_min_score = rag_min_score
 
     @property
     def db(self) -> Any:
@@ -103,15 +109,44 @@ class SymptomGuidanceService:
                 documents[key] = dict(data)
         return documents
 
+    def _get_all_active_documents(self) -> dict[str, dict[str, Any]]:
+        """Load the small active corpus for local vector ranking when possible."""
+        collection = self.db.collection("symptom_guidance")
+        where = getattr(collection, "where", None)
+        if not callable(where):
+            return {}
+        query = where("isActive", "==", True)
+        stream = getattr(query, "stream", None)
+        if not callable(stream):
+            return {}
+        documents: dict[str, dict[str, Any]] = {}
+        for snapshot in stream(timeout=self._timeout_seconds):
+            data = snapshot.to_dict() or {}
+            if data.get("isActive") is not True:
+                continue
+            key = str(
+                data.get("symptomKey") or getattr(snapshot, "id", "")
+            ).strip()
+            if key:
+                documents[key] = dict(data)
+        return documents
+
     def get_for_symptoms(self, symptoms: Iterable[str]) -> dict[str, Any]:
         """Merge default and symptom-specific guidance without diagnosis logic."""
         canonical = list(dict.fromkeys(str(item).strip() for item in symptoms))
         documents: list[dict[str, Any]] = []
+        evidence_documents: list[dict[str, Any]] = []
         matched: list[str] = []
         missing: list[str] = []
 
         symptom_keys = [normalize_symptom_key(symptom) for symptom in canonical]
         loaded = self._get_active_documents(["_default", *symptom_keys])
+        try:
+            loaded.update(self._get_all_active_documents())
+        except Exception:
+            # Exact-key retrieval remains the safe compatibility path for
+            # test doubles and older Firestore clients.
+            pass
         default = loaded.get("_default")
         if default is not None:
             documents.append(default)
@@ -123,6 +158,12 @@ class SymptomGuidanceService:
                 continue
             documents.append(document)
             matched.append(symptom)
+
+        evidence_documents = [
+            {**document, "symptomKey": key}
+            for key, document in loaded.items()
+            if document.get("isActive") is True
+        ]
 
         def merged(field: str) -> list[str]:
             return _deduplicate(
@@ -150,6 +191,17 @@ class SymptomGuidanceService:
                     }
                 )
 
+        retrieved_evidence = rank_evidence(
+            canonical,
+            build_evidence_sources(
+                evidence_documents,
+                source_prefix="symptom_guidance",
+                matched_terms=matched,
+            ),
+            top_k=self._rag_top_k,
+            minimum_score=self._rag_min_score,
+        )
+
         return {
             "matchedGuidanceSymptoms": matched,
             "missingGuidanceSymptoms": missing,
@@ -159,4 +211,6 @@ class SymptomGuidanceService:
             "emergencyWarningSigns": merged("emergencyWarningSigns"),
             "references": references,
             "contentAvailable": bool(documents),
+            "retrievedEvidence": retrieved_evidence,
+            "retrievalMethod": "local_tfidf_keyword_metadata_v1",
         }
