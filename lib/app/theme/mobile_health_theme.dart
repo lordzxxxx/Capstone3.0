@@ -10,11 +10,11 @@ abstract final class AppDesign {
   static const displayFontFamily = 'Roboto';
 
   // Brand.
-  static const blue = Color(0xFF176B87);
-  static const bluePressed = Color(0xFF11566E);
-  static const navy = Color(0xFF123342);
-  static const blueSoft = Color(0xFFE7F2F5);
-  static const teal = Color(0xFF0F766E);
+  static const blue = Color(0xFF2563EB);
+  static const bluePressed = Color(0xFF1D4ED8);
+  static const navy = Color(0xFF163A70);
+  static const blueSoft = Color(0xFFEAF2FF);
+  static const teal = Color(0xFF1D4ED8);
   static const green = Color(0xFF18794E);
   static const orange = Color(0xFF9A3412);
   static const red = Color(0xFFB42318);

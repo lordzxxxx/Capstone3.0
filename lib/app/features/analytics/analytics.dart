@@ -463,18 +463,20 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           },
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_rounded),
-              activeIcon: _ActiveNavigationIcon(icon: Icons.dashboard_rounded),
+              icon: Icon(Icons.dashboard_outlined),
+              activeIcon: _ActiveNavigationIcon(icon: Icons.dashboard_outlined),
               label: 'Dashboard',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.analytics_rounded),
-              activeIcon: _ActiveNavigationIcon(icon: Icons.analytics_rounded),
+              icon: Icon(Icons.query_stats_outlined),
+              activeIcon: _ActiveNavigationIcon(
+                icon: Icons.query_stats_outlined,
+              ),
               label: 'Analytics',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.hub_rounded),
-              activeIcon: _ActiveNavigationIcon(icon: Icons.hub_rounded),
+              icon: Icon(Icons.apps_outlined),
+              activeIcon: _ActiveNavigationIcon(icon: Icons.apps_outlined),
               label: 'Hub',
             ),
           ],

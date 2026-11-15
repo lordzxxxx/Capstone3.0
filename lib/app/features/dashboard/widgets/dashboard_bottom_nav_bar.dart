@@ -54,17 +54,19 @@ class DashboardBottomNavBar extends StatelessWidget {
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard_outlined),
-              activeIcon: _ActiveNavigationIcon(icon: Icons.dashboard_rounded),
+              activeIcon: _ActiveNavigationIcon(icon: Icons.dashboard_outlined),
               label: 'Dashboard',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.query_stats_outlined),
-              activeIcon: _ActiveNavigationIcon(icon: Icons.analytics_rounded),
+              activeIcon: _ActiveNavigationIcon(
+                icon: Icons.query_stats_outlined,
+              ),
               label: 'Analytics',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.apps_outlined),
-              activeIcon: _ActiveNavigationIcon(icon: Icons.apps_rounded),
+              activeIcon: _ActiveNavigationIcon(icon: Icons.apps_outlined),
               label: 'Hub',
             ),
           ],
