@@ -220,6 +220,92 @@ class ClinicalInsightHero extends StatelessWidget {
   }
 }
 
+/// Shared full-width destination action. It keeps Hub and Analytics aligned,
+/// guarantees a 48dp target, and gives repeated actions immediate but quiet
+/// feedback without animating layout.
+class ClinicalDestinationTile extends StatefulWidget {
+  const ClinicalDestinationTile({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  State<ClinicalDestinationTile> createState() =>
+      _ClinicalDestinationTileState();
+}
+
+class _ClinicalDestinationTileState extends State<ClinicalDestinationTile> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Open ${widget.label}',
+      child: AnimatedScale(
+        scale: _pressed ? .98 : 1,
+        duration: const Duration(milliseconds: 110),
+        curve: Curves.easeOutCubic,
+        child: Material(
+          color: AppDesign.canvas,
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            onTap: widget.onTap,
+            onHighlightChanged: (value) => setState(() => _pressed = value),
+            borderRadius: BorderRadius.circular(14),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 60),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppDesign.blueSoft,
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: Icon(widget.icon, color: AppDesign.blue, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        widget.label,
+                        style: const TextStyle(
+                          color: AppDesign.ink,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          height: 1.25,
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppDesign.subtle,
+                      size: 22,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// A deterministic skeleton for record, dashboard and analytics loading.
 /// It reserves layout before data arrives without a distracting shimmer loop.
 class ClinicalLoadingSkeleton extends StatelessWidget {

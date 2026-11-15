@@ -118,9 +118,14 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   Future<void> _loadAllData({bool syncFirebase = true}) async {
     try {
       if (syncFirebase) await _syncAnalyticsSources();
-      final checkup = await _checkupDB.getAllRecords();
-      final prenatal = await _prenatalDB.getAllRecords();
-      final immunization = await _immunizationDB.getAllRecords();
+      final records = await Future.wait([
+        _checkupDB.getAllRecords(),
+        _prenatalDB.getAllRecords(),
+        _immunizationDB.getAllRecords(),
+      ]);
+      final checkup = records[0];
+      final prenatal = records[1];
+      final immunization = records[2];
 
       if (mounted) {
         setState(() {
@@ -388,8 +393,6 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                             const SizedBox(height: 2),
                             Text(
                               category['subtitle'] as String,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],
@@ -405,10 +408,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (context, buttonIndex) {
                       final button = buttons[buttonIndex];
-                      return _AnalyticsDestinationTile(
+                      return ClinicalDestinationTile(
                         icon: button['icon'] as IconData,
                         label: button['label'] as String,
-                        color: category['color'] as Color,
                         onTap: button['onTap'] as void Function(),
                       );
                     },

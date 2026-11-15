@@ -111,20 +111,8 @@ class ModulesHubView extends StatelessWidget {
                 final category = hubCategories[index];
                 final buttons =
                     category['buttons'] as List<Map<String, dynamic>>;
-                return Container(
+                return ClinicalGlassSurface(
                   padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppDesign.surface,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppDesign.border),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppDesign.navy.withValues(alpha: 0.05),
-                        blurRadius: 14,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -157,8 +145,6 @@ class ModulesHubView extends StatelessWidget {
                                 const SizedBox(height: 2),
                                 Text(
                                   category['subtitle'] as String,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
                                   style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ],
@@ -174,10 +160,9 @@ class ModulesHubView extends StatelessWidget {
                         separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, buttonIndex) {
                           final button = buttons[buttonIndex];
-                          return _HubWorkflowTile(
+                          return ClinicalDestinationTile(
                             icon: button['icon'] as IconData,
                             label: button['label'] as String,
-                            color: AppDesign.blue,
                             onTap: button['onTap'] as VoidCallback,
                           );
                         },
