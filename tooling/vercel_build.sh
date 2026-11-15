@@ -78,7 +78,12 @@ flutter pub get
 # The existing release command remains the single source of truth for the
 # compiler flags, app-version file, APK artifact, and SPA output.
 cd "${repo_root}"
-if [[ -f "${repo_root}/web/downloads/ai-dsuhis-bhw.apk" ]]; then
+if [[ -n "${BHW_APK_URL:-}" ]]; then
+  # A release asset may be hosted outside Vercel (for example, GitHub
+  # Releases). Preserve the configured HTTPS URL instead of replacing it with
+  # an empty value just because no APK is checked into the web source tree.
+  export BHW_APK_URL
+elif [[ -f "${repo_root}/web/downloads/ai-dsuhis-bhw.apk" ]]; then
   export BHW_APK_URL="${BHW_APK_URL:-/downloads/ai-dsuhis-bhw.apk}"
 else
   # Never render a download action for an artifact that was not supplied to
