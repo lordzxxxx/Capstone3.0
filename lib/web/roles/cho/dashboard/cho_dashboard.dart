@@ -188,6 +188,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
   String _doctorSpecialtyFilter = 'All specialties';
   bool _isCheckingDoctorAvailability = false;
   bool _showDoctorAvailabilityResults = true;
+  bool _showAllHeatmapLocations = false;
   String? _doctorAvailabilityError;
   List<Map<String, dynamic>> _doctorAvailabilityResults =
       <Map<String, dynamic>>[];
@@ -5799,24 +5800,44 @@ class _ChoDashboardState extends State<ChoDashboard> {
   String _barangayHeatmapKey(String value) =>
       value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
 
-  List<_CityHeatmapEntry> _cityHeatmapEntries() {
+  List<_CityMorbidityRecord> _cityMorbidityRecords() {
+    final start = _analyticsWindowStart(DateTime.now());
+    final records = <_CityMorbidityRecord>[];
+    for (final row in _morbidityRows) {
+      final reportedAt = _morbidityRecordDate(row);
+      if (!_isWithinAnalyticsWindow(reportedAt, start)) continue;
+      final location = (row['barangay'] ?? row['barangayName'] ?? '')
+          .toString()
+          .trim();
+      final key = _barangayHeatmapKey(location);
+      final barangay = MalaybalayBarangays.all.where((candidate) {
+        return key == _barangayHeatmapKey(candidate.name) ||
+            key == _barangayHeatmapKey(candidate.code);
+      }).firstOrNull;
+      if (barangay == null) continue;
+      final condition =
+          (row['disease'] ?? row['diagnosis'] ?? row['condition'] ?? 'Other')
+              .toString()
+              .trim();
+      records.add(
+        _CityMorbidityRecord(
+          barangay: barangay,
+          condition: condition.isEmpty ? 'Other' : condition,
+          reportedAt: reportedAt,
+        ),
+      );
+    }
+    return records;
+  }
+
+  List<_CityHeatmapEntry> _cityHeatmapEntries(
+    Iterable<_CityMorbidityRecord> records,
+  ) {
     final counts = <String, int>{
       for (final barangay in MalaybalayBarangays.all) barangay.code: 0,
     };
-    final start = _analyticsWindowStart(DateTime.now());
-    for (final row in _morbidityRows) {
-      if (!_isWithinAnalyticsWindow(_morbidityRecordDate(row), start)) {
-        continue;
-      }
-      final reportedBarangay = (row['barangay'] ?? row['barangayName'] ?? '')
-          .toString()
-          .trim();
-      final match = MalaybalayBarangays.all.where((barangay) {
-        final key = _barangayHeatmapKey(reportedBarangay);
-        return key == _barangayHeatmapKey(barangay.name) ||
-            key == _barangayHeatmapKey(barangay.code);
-      }).firstOrNull;
-      if (match != null) counts.update(match.code, (value) => value + 1);
+    for (final record in records) {
+      counts.update(record.barangay.code, (value) => value + 1);
     }
     final entries =
         MalaybalayBarangays.all
@@ -5832,14 +5853,39 @@ class _ChoDashboardState extends State<ChoDashboard> {
   }
 
   Widget _buildCityWideHeatmap() {
-    final entries = _cityHeatmapEntries();
+    final records = _cityMorbidityRecords();
+    final entries = _cityHeatmapEntries(records);
+    final activeEntries = entries
+        .where((entry) => entry.caseCount > 0)
+        .toList();
     final maxCases = entries.fold<int>(
       1,
       (max, entry) => entry.caseCount > max ? entry.caseCount : max,
     );
-    final reported = entries.where((entry) => entry.caseCount > 0).length;
+    final totalCases = records.length;
+    final topLocation = activeEntries.isEmpty ? null : activeEntries.first;
+    final noReportCount = entries.length - activeEntries.length;
+    final conditionTotals = <String, int>{};
+    final conditionByBarangay = <String, Map<String, int>>{};
+    for (final record in records) {
+      conditionTotals.update(
+        record.condition,
+        (value) => value + 1,
+        ifAbsent: () => 1,
+      );
+      final values = conditionByBarangay.putIfAbsent(
+        record.barangay.code,
+        () => <String, int>{},
+      );
+      values.update(record.condition, (value) => value + 1, ifAbsent: () => 1);
+    }
+    final topConditions = conditionTotals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final visibleLocations = _showAllHeatmapLocations
+        ? activeEntries
+        : activeEntries.take(8).toList(growable: false);
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: ChoColors.surface,
         borderRadius: BorderRadius.circular(14),
@@ -5850,11 +5896,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
         children: [
           Row(
             children: [
-              const Icon(Icons.grid_view_rounded, color: ChoColors.aqua),
+              const Icon(Icons.monitor_heart_outlined, color: ChoColors.aqua),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
-                  'City-wide morbidity heatmap',
+                  'Morbidity surveillance',
                   style: TextStyle(
                     color: ChoColors.text,
                     fontSize: 17,
@@ -5863,7 +5909,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 ),
               ),
               Text(
-                '$reported reporting',
+                'Live sync',
                 style: const TextStyle(
                   color: ChoColors.muted,
                   fontSize: 12,
@@ -5874,79 +5920,386 @@ class _ChoDashboardState extends State<ChoDashboard> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Morbidity reports by barangay in ${_analyticsWindowLabel().toLowerCase()}. Every Malaybalay barangay is shown, including zero-report areas.',
+            'Case concentration from subscribed records in ${_analyticsWindowLabel().toLowerCase()}. Counts are not diagnoses or prevalence.',
             style: const TextStyle(color: ChoColors.muted, fontSize: 12),
           ),
           const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {
-              final columns = constraints.maxWidth >= 1120
-                  ? 5
-                  : constraints.maxWidth >= 760
+              final columns = constraints.maxWidth >= 900
                   ? 4
-                  : constraints.maxWidth >= 500
-                  ? 3
-                  : 2;
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: entries.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columns,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  mainAxisExtent: 74,
+                  : constraints.maxWidth >= 520
+                  ? 2
+                  : 1;
+              final width = columns == 1
+                  ? constraints.maxWidth
+                  : (constraints.maxWidth - 10 * (columns - 1)) / columns;
+              final values = <Widget>[
+                _heatmapMetric(
+                  'Reported cases',
+                  '$totalCases',
+                  Icons.monitor_heart_outlined,
                 ),
-                itemBuilder: (context, index) {
-                  final entry = entries[index];
-                  final intensity = entry.caseCount / maxCases;
-                  final color = entry.caseCount == 0
-                      ? ChoColors.surfaceAlt
-                      : Color.lerp(
-                          ChoColors.ice.withValues(alpha: .22),
-                          ChoColors.aqua.withValues(alpha: .9),
-                          intensity,
-                        )!;
-                  return Semantics(
-                    label:
-                        '${entry.barangay.name}, ${entry.caseCount} morbidity reports',
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: color,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: ChoColors.border),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            entry.barangay.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: ChoColors.text,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${entry.caseCount} case${entry.caseCount == 1 ? '' : 's'}',
-                            style: const TextStyle(
-                              color: ChoColors.text,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                _heatmapMetric(
+                  'Reporting barangays',
+                  '${activeEntries.length} of ${entries.length}',
+                  Icons.location_city_outlined,
+                ),
+                _heatmapMetric(
+                  'Highest concentration',
+                  topLocation?.barangay.name ?? 'No reports',
+                  Icons.priority_high_rounded,
+                ),
+                _heatmapMetric(
+                  'No report received',
+                  '$noReportCount areas',
+                  Icons.visibility_off_outlined,
+                ),
+              ];
+              return Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: values
+                    .map((value) => SizedBox(width: width, child: value))
+                    .toList(),
               );
             },
           ),
+          if (topLocation != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(11),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF4E5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFF0B66F)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.fact_check_outlined,
+                    color: Color(0xFF9A5B13),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Review signal: ${topLocation.barangay.name} has ${topLocation.caseCount} subscribed reports. Verify record quality and coordinate follow-up before drawing clinical conclusions.',
+                      style: const TextStyle(
+                        color: Color(0xFF6D4610),
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final matrix = _buildConditionHeatMatrix(
+                activeEntries.take(6).toList(),
+                topConditions.take(3).map((entry) => entry.key).toList(),
+                conditionByBarangay,
+                maxCases,
+              );
+              final locations = _buildHeatmapLocationList(
+                visibleLocations,
+                maxCases,
+                activeEntries.length,
+                noReportCount,
+              );
+              if (constraints.maxWidth < 980) {
+                return Column(
+                  children: [matrix, const SizedBox(height: 12), locations],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(flex: 3, child: matrix),
+                  const SizedBox(width: 12),
+                  Expanded(flex: 2, child: locations),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _heatmapMetric(String label, String value, IconData icon) => Container(
+    padding: const EdgeInsets.all(11),
+    decoration: BoxDecoration(
+      color: ChoColors.surfaceAlt,
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: ChoColors.border),
+    ),
+    child: Row(
+      children: [
+        Icon(icon, color: ChoColors.aqua, size: 18),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: ChoColors.muted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: ChoColors.text,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _buildConditionHeatMatrix(
+    List<_CityHeatmapEntry> locations,
+    List<String> conditions,
+    Map<String, Map<String, int>> values,
+    int maxCases,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ChoColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ChoColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Condition concentration matrix',
+            style: TextStyle(
+              color: ChoColors.text,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 3),
+          const Text(
+            'Darker cells indicate more reports.',
+            style: TextStyle(color: ChoColors.muted, fontSize: 11),
+          ),
+          const SizedBox(height: 8),
+          if (locations.isEmpty || conditions.isEmpty)
+            const Text(
+              'No location-linked morbidity reports in this period.',
+              style: TextStyle(color: ChoColors.muted, fontSize: 12),
+            )
+          else
+            Table(
+              columnWidths: {
+                0: const FlexColumnWidth(1.4),
+                for (var index = 0; index < conditions.length; index++)
+                  index + 1: const FlexColumnWidth(1),
+              },
+              children: [
+                TableRow(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.all(6),
+                      child: Text(
+                        'Location',
+                        style: TextStyle(
+                          color: ChoColors.muted,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    ...conditions.map(
+                      (condition) => Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: Text(
+                          _truncateLabel(condition, max: 11),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: ChoColors.muted,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                ...locations.map(
+                  (location) => TableRow(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 8,
+                        ),
+                        child: Text(
+                          location.barangay.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: ChoColors.text,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      ...conditions.map((condition) {
+                        final count =
+                            values[location.barangay.code]?[condition] ?? 0;
+                        return Semantics(
+                          label:
+                              '${location.barangay.name}, $condition, $count reports',
+                          child: Container(
+                            margin: const EdgeInsets.all(3),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: count == 0
+                                  ? Colors.white
+                                  : Color.lerp(
+                                      const Color(0xFFFFF0D9),
+                                      const Color(0xFFC9481A),
+                                      count / maxCases,
+                                    )!,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '$count',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: ChoColors.text,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeatmapLocationList(
+    List<_CityHeatmapEntry> locations,
+    int maxCases,
+    int activeCount,
+    int noReportCount,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ChoColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Location signals',
+            style: TextStyle(
+              color: ChoColors.text,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            '$activeCount reporting · $noReportCount without a report',
+            style: const TextStyle(color: ChoColors.muted, fontSize: 11),
+          ),
+          const SizedBox(height: 8),
+          ...locations.map((entry) {
+            final ratio = entry.caseCount / maxCases;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          entry.barangay.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: ChoColors.text,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${entry.caseCount}',
+                        style: const TextStyle(
+                          color: ChoColors.text,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: ratio,
+                      minHeight: 5,
+                      color: ratio > .65
+                          ? const Color(0xFFC9481A)
+                          : ratio > .25
+                          ? const Color(0xFFE39B25)
+                          : ChoColors.aqua,
+                      backgroundColor: ChoColors.surfaceAlt,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          if (activeCount > 8)
+            TextButton.icon(
+              onPressed: () => setState(
+                () => _showAllHeatmapLocations = !_showAllHeatmapLocations,
+              ),
+              icon: Icon(
+                _showAllHeatmapLocations
+                    ? Icons.unfold_less_rounded
+                    : Icons.unfold_more_rounded,
+                size: 17,
+              ),
+              label: Text(
+                _showAllHeatmapLocations
+                    ? 'Show fewer locations'
+                    : 'Show all $activeCount locations',
+              ),
+            ),
         ],
       ),
     );
@@ -6403,26 +6756,34 @@ class _ChoDashboardState extends State<ChoDashboard> {
                           ),
                           if (_syncTruncated.values.any((value) => value)) ...[
                             const SizedBox(height: 8),
-                            const Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.info_outline_rounded,
-                                  color: ChoColors.warning,
-                                  size: 16,
-                                ),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Some dashboard totals are limited to up to 500 records for stability. Use module records or reporting filters for a complete historical review.',
-                                    style: TextStyle(
-                                      color: ChoColors.warning,
-                                      fontSize: 12,
-                                      height: 1.35,
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: ChoColors.surfaceAlt,
+                                borderRadius: BorderRadius.circular(9),
+                                border: Border.all(color: ChoColors.border),
+                              ),
+                              child: const Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.info_outline_rounded,
+                                    color: ChoColors.aqua,
+                                    size: 16,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Operational data scope: this live dashboard displays up to 500 subscribed records per module. Use Reports for complete historical analysis.',
+                                      style: TextStyle(
+                                        color: ChoColors.muted,
+                                        fontSize: 12,
+                                        height: 1.35,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ],
                         ],
@@ -6560,4 +6921,16 @@ class _CityHeatmapEntry {
 
   final BarangayReference barangay;
   final int caseCount;
+}
+
+class _CityMorbidityRecord {
+  const _CityMorbidityRecord({
+    required this.barangay,
+    required this.condition,
+    required this.reportedAt,
+  });
+
+  final BarangayReference barangay;
+  final String condition;
+  final DateTime? reportedAt;
 }
