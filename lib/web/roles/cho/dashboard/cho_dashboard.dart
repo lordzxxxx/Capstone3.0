@@ -5796,6 +5796,162 @@ class _ChoDashboardState extends State<ChoDashboard> {
     );
   }
 
+  String _barangayHeatmapKey(String value) =>
+      value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+
+  List<_CityHeatmapEntry> _cityHeatmapEntries() {
+    final counts = <String, int>{
+      for (final barangay in MalaybalayBarangays.all) barangay.code: 0,
+    };
+    final start = _analyticsWindowStart(DateTime.now());
+    for (final row in _morbidityRows) {
+      if (!_isWithinAnalyticsWindow(_morbidityRecordDate(row), start)) {
+        continue;
+      }
+      final reportedBarangay = (row['barangay'] ?? row['barangayName'] ?? '')
+          .toString()
+          .trim();
+      final match = MalaybalayBarangays.all.where((barangay) {
+        final key = _barangayHeatmapKey(reportedBarangay);
+        return key == _barangayHeatmapKey(barangay.name) ||
+            key == _barangayHeatmapKey(barangay.code);
+      }).firstOrNull;
+      if (match != null) counts.update(match.code, (value) => value + 1);
+    }
+    final entries =
+        MalaybalayBarangays.all
+            .map(
+              (barangay) => _CityHeatmapEntry(
+                barangay: barangay,
+                caseCount: counts[barangay.code] ?? 0,
+              ),
+            )
+            .toList(growable: false)
+          ..sort((a, b) => b.caseCount.compareTo(a.caseCount));
+    return entries;
+  }
+
+  Widget _buildCityWideHeatmap() {
+    final entries = _cityHeatmapEntries();
+    final maxCases = entries.fold<int>(
+      1,
+      (max, entry) => entry.caseCount > max ? entry.caseCount : max,
+    );
+    final reported = entries.where((entry) => entry.caseCount > 0).length;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: ChoColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: ChoColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.grid_view_rounded, color: ChoColors.aqua),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'City-wide morbidity heatmap',
+                  style: TextStyle(
+                    color: ChoColors.text,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Text(
+                '$reported reporting',
+                style: const TextStyle(
+                  color: ChoColors.muted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Morbidity reports by barangay in ${_analyticsWindowLabel().toLowerCase()}. Every Malaybalay barangay is shown, including zero-report areas.',
+            style: const TextStyle(color: ChoColors.muted, fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 1120
+                  ? 5
+                  : constraints.maxWidth >= 760
+                  ? 4
+                  : constraints.maxWidth >= 500
+                  ? 3
+                  : 2;
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: entries.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columns,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  mainAxisExtent: 74,
+                ),
+                itemBuilder: (context, index) {
+                  final entry = entries[index];
+                  final intensity = entry.caseCount / maxCases;
+                  final color = entry.caseCount == 0
+                      ? ChoColors.surfaceAlt
+                      : Color.lerp(
+                          ChoColors.ice.withValues(alpha: .22),
+                          ChoColors.aqua.withValues(alpha: .9),
+                          intensity,
+                        )!;
+                  return Semantics(
+                    label:
+                        '${entry.barangay.name}, ${entry.caseCount} morbidity reports',
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: ChoColors.border),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            entry.barangay.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: ChoColors.text,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${entry.caseCount} case${entry.caseCount == 1 ? '' : 's'}',
+                            style: const TextStyle(
+                              color: ChoColors.text,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   int _forecastValue(Map<int, int> values, int days) => values[days] ?? 0;
 
   Color _riskColor(String riskLabel) {
@@ -6370,6 +6526,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     const SizedBox(height: 14),
                     _buildPowerBiCharts(),
                     const SizedBox(height: 14),
+                    _buildCityWideHeatmap(),
+                    const SizedBox(height: 14),
                     const Text(
                       'Population Follow-up Queue',
                       style: TextStyle(
@@ -6395,4 +6553,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
       ),
     );
   }
+}
+
+class _CityHeatmapEntry {
+  const _CityHeatmapEntry({required this.barangay, required this.caseCount});
+
+  final BarangayReference barangay;
+  final int caseCount;
 }

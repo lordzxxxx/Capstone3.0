@@ -508,6 +508,7 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
             )
           else
             WebAdaptiveRecords(
+              breakpoint: 1500,
               table: WebTableSurface(
                 minWidth: 1380,
                 child: Column(

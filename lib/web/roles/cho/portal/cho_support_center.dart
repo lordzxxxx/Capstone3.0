@@ -374,15 +374,20 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
             icon: _icon,
           );
         }
-        return WebTableSurface(
-          minWidth: 760,
-          child: Column(
-            children: docs.map((doc) {
-              final row = doc.data();
-              return ListTile(
-                leading: Icon(_icon, color: ChoColors.aqua),
+        return Column(
+          children: docs.map((doc) {
+            final row = doc.data();
+            return WebRecordCard(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                minVerticalPadding: 0,
+                leading: Icon(_icon, color: ChoColors.aqua, size: 20),
                 title: Text(
                   _value(row, titleKeys),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: ChoColors.text,
                     fontWeight: FontWeight.w700,
@@ -393,14 +398,16 @@ class _ChoSupportCenterState extends State<ChoSupportCenter> {
                       .map((key) => _value(row, [key]))
                       .where((value) => value != '—')
                       .join(' • '),
-                  style: const TextStyle(color: ChoColors.muted),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: ChoColors.muted, fontSize: 12),
                 ),
                 trailing: readOnly
                     ? const ChoStatusBadge('Read only')
                     : ChoStatusBadge(_value(row, const ['status', 'priority'])),
-              );
-            }).toList(),
-          ),
+              ),
+            );
+          }).toList(),
         );
       },
     );

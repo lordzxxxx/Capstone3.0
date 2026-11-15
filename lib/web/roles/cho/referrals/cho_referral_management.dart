@@ -1252,26 +1252,23 @@ class _CHOPreferralPageState extends State<CHOPreferralPage> {
           style: const TextStyle(color: ChoColors.muted),
         ),
         const SizedBox(height: 14),
-        WebTableSurface(
-          minWidth: 1120,
-          child: Column(
-            children: records
-                .map(
-                  (record) => _ReferralCard(
-                    record: record,
-                    mode: mode,
-                    onDetails: () => _details(record),
-                    onReassign:
-                        _isChoAdmin && (record.isPending || record.isActive)
-                        ? () => _reassign(record)
-                        : null,
-                    onSendEmail: _isChoAdmin && record.doctorUid.isNotEmpty
-                        ? () => _sendAssignmentEmail(record)
-                        : null,
-                  ),
-                )
-                .toList(growable: false),
-          ),
+        Column(
+          children: records
+              .map(
+                (record) => _ReferralCard(
+                  record: record,
+                  mode: mode,
+                  onDetails: () => _details(record),
+                  onReassign:
+                      _isChoAdmin && (record.isPending || record.isActive)
+                      ? () => _reassign(record)
+                      : null,
+                  onSendEmail: _isChoAdmin && record.doctorUid.isNotEmpty
+                      ? () => _sendAssignmentEmail(record)
+                      : null,
+                ),
+              )
+              .toList(growable: false),
         ),
       ],
     );

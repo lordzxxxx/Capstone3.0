@@ -2106,6 +2106,10 @@ class _DoctorSidebarState extends State<_DoctorSidebar> {
                           const SizedBox(height: 4),
                           Expanded(
                             child: ListView(
+                              key: const PageStorageKey<String>(
+                                'doctor-navigation-scroll',
+                              ),
+                              primary: false,
                               padding: EdgeInsets.symmetric(
                                 horizontal: effectiveCollapsed ? 8 : 10,
                                 vertical: 4,

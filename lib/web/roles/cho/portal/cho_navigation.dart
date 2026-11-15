@@ -145,6 +145,10 @@ class _ChoNavigationDrawerState extends State<ChoNavigationDrawer> {
                                   const SizedBox(height: 4),
                                   Expanded(
                                     child: ListView(
+                                      key: const PageStorageKey<String>(
+                                        'cho-navigation-scroll',
+                                      ),
+                                      primary: false,
                                       padding: EdgeInsets.symmetric(
                                         horizontal: effectiveCollapsed ? 8 : 10,
                                         vertical: 4,
