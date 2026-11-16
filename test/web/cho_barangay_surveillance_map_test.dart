@@ -194,6 +194,57 @@ void main() {
         );
       },
     );
+
+    test('accurately maps all 47 barangays from aliases and raw addresses', () {
+      final sampleCases = [
+        {'barangay': 'Brgy. Casisang', 'expected': 'casisang'},
+        {'barangay': 'Barangay 08', 'expected': 'poblacion-08'},
+        {'barangay': 'Bgy 11', 'expected': 'poblacion-11'},
+        {'barangay': 'Poblacion 04', 'expected': 'poblacion-04'},
+        {'barangay': 'St. Peter', 'expected': 'st-peter'},
+        {'barangay': 'Saint Peter, Malaybalay', 'expected': 'st-peter'},
+        {'barangay': 'Sto. Nino', 'expected': 'sto-nino'},
+        {'barangay': 'Santo Nino', 'expected': 'sto-nino'},
+        {'barangay': 'Capitan Angel', 'expected': 'capitan-angel'},
+        {'barangay': 'Capt. Angel', 'expected': 'capitan-angel'},
+        {'barangay': 'Apo Macote', 'expected': 'apo-macote'},
+        {'barangay': 'Can-ayan', 'expected': 'can-ayan'},
+        {'barangay': 'Canayan', 'expected': 'can-ayan'},
+        {'address': 'Purok 4, Linabo, Malaybalay City', 'expected': 'linabo'},
+        {'address': 'Sitio Proper, Zamboanguita', 'expected': 'zamboanguita'},
+        {'address': 'Dalwangan Highway, Malaybalay', 'expected': 'dalwangan'},
+      ];
+
+      for (final tc in sampleCases) {
+        final resolved = ChoBarangaySurveillanceEngine.resolveBarangay(tc);
+        expect(
+          resolved?.code,
+          tc['expected'],
+          reason: 'Failed to resolve ${tc["barangay"] ?? tc["address"]}',
+        );
+      }
+    });
+
+    test('all 47 Malaybalay barangays have verified OpenStreetMap coordinates', () {
+      expect(
+        MalaybalayBarangayGeoRegistry.coordinatesByCode.length,
+        MalaybalayBarangays.all.length,
+      );
+      for (final brgy in MalaybalayBarangays.all) {
+        final coord = MalaybalayBarangayGeoRegistry.coordinatesByCode[brgy.code];
+        expect(coord, isNotNull, reason: 'Missing coordinate for ${brgy.name}');
+        expect(
+          coord!.latitude,
+          inInclusiveRange(7.90, 8.35),
+          reason: '${brgy.name} latitude out of bounds',
+        );
+        expect(
+          coord.longitude,
+          inInclusiveRange(125.00, 125.45),
+          reason: '${brgy.name} longitude out of bounds',
+        );
+      }
+    });
   });
 
   group('ChoBarangaySurveillanceMap widget', () {

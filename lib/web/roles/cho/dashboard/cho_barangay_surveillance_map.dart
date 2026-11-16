@@ -197,68 +197,68 @@ class BarangayMapSurveillanceSummary {
 class MalaybalayBarangayGeoRegistry {
   MalaybalayBarangayGeoRegistry._();
 
-  static const LatLng cityCenter = LatLng(8.1485, 125.1580);
-  static const LatLng poblacionCenter = LatLng(8.1562, 125.1285);
+  static const LatLng cityCenter = LatLng(8.1500, 125.1300);
+  static const LatLng poblacionCenter = LatLng(8.1550, 125.1280);
 
-  /// Verified coordinates for every Malaybalay City barangay in
-  /// [MalaybalayBarangays.all].
+  /// Verified OpenStreetMap coordinates for every Malaybalay City barangay in
+  /// [MalaybalayBarangays.all], matched to official municipal centroids.
   static const Map<String, LatLng> coordinatesByCode = <String, LatLng>{
     // Poblacion District (11 urban barangays)
-    'poblacion-01': LatLng(8.1618, 125.1242),
-    'poblacion-02': LatLng(8.1622, 125.1288),
-    'poblacion-03': LatLng(8.1615, 125.1334),
-    'poblacion-04': LatLng(8.1578, 125.1235),
-    'poblacion-05': LatLng(8.1580, 125.1282),
-    'poblacion-06': LatLng(8.1576, 125.1330),
-    'poblacion-07': LatLng(8.1538, 125.1238),
-    'poblacion-08': LatLng(8.1540, 125.1285),
-    'poblacion-09': LatLng(8.1535, 125.1332),
-    'poblacion-10': LatLng(8.1496, 125.1255),
-    'poblacion-11': LatLng(8.1494, 125.1312),
+    'poblacion-01': LatLng(8.1610, 125.1292),
+    'poblacion-02': LatLng(8.1588, 125.1252),
+    'poblacion-03': LatLng(8.1572, 125.1250),
+    'poblacion-04': LatLng(8.1547, 125.1270),
+    'poblacion-05': LatLng(8.1553, 125.1284),
+    'poblacion-06': LatLng(8.1557, 125.1304),
+    'poblacion-07': LatLng(8.1498, 125.1298),
+    'poblacion-08': LatLng(8.1530, 125.1303),
+    'poblacion-09': LatLng(8.1501, 125.1331),
+    'poblacion-10': LatLng(8.1516, 125.1243),
+    'poblacion-11': LatLng(8.1483, 125.1249),
 
     // South Highway District (6 barangays)
-    'casisang': LatLng(8.1285, 125.1288),
-    'san-jose': LatLng(8.1035, 125.1342),
-    'magsaysay': LatLng(8.0815, 125.1385),
-    'aglayan': LatLng(8.0592, 125.1428),
-    'cabangahan': LatLng(8.0418, 125.1225),
-    'bangcud': LatLng(7.9975, 125.1368),
+    'casisang': LatLng(8.1349, 125.1269),
+    'san-jose': LatLng(8.1036, 125.1286),
+    'magsaysay': LatLng(8.0959, 125.0981),
+    'aglayan': LatLng(8.0532, 125.1354),
+    'cabangahan': LatLng(8.0222, 125.1395),
+    'bangcud': LatLng(7.9943, 125.1322),
 
     // North Highway District (7 barangays)
-    'sumpong': LatLng(8.1695, 125.1185),
-    'kalasungay': LatLng(8.1872, 125.1145),
-    'patpat': LatLng(8.2045, 125.1278),
-    'dalwangan': LatLng(8.2345, 125.1062),
-    'manalog': LatLng(8.2680, 125.1585),
-    'laguitas': LatLng(8.1215, 125.1085),
-    'miglamin': LatLng(8.1585, 125.1745),
+    'sumpong': LatLng(8.1581, 125.1198),
+    'kalasungay': LatLng(8.1720, 125.1031),
+    'patpat': LatLng(8.1962, 125.0638),
+    'dalwangan': LatLng(8.2003, 125.0433),
+    'manalog': LatLng(8.2944, 125.1545),
+    'laguitas': LatLng(8.0868, 125.1322),
+    'miglamin': LatLng(8.0394, 125.2428),
 
     // Basakan District (13 barangays)
-    'linabo': LatLng(8.0485, 125.1662),
-    'violeta': LatLng(8.0215, 125.1542),
-    'maligaya': LatLng(8.0285, 125.1748),
-    'managok': LatLng(8.0372, 125.1975),
-    'sto-nino': LatLng(8.0122, 125.1825),
-    'simaya': LatLng(7.9882, 125.1665),
-    'apo-macote': LatLng(7.9625, 125.1518),
-    'sinanglanan': LatLng(7.9725, 125.1965),
-    'san-martin': LatLng(8.0048, 125.2115),
-    'imbayao': LatLng(8.1265, 125.0745),
-    'mapayag': LatLng(8.0965, 125.0685),
-    'kibalabag': LatLng(8.2085, 125.1885),
-    'st-peter': LatLng(8.1865, 125.3625),
+    'linabo': LatLng(8.0553, 125.1544),
+    'violeta': LatLng(8.0269, 125.1585),
+    'maligaya': LatLng(8.0410, 125.2054),
+    'managok': LatLng(8.0268, 125.1903),
+    'sto-nino': LatLng(7.9791, 125.1818),
+    'simaya': LatLng(8.0032, 125.1553),
+    'apo-macote': LatLng(7.9766, 125.2077),
+    'sinanglanan': LatLng(7.9927, 125.1985),
+    'san-martin': LatLng(8.0005, 125.1945),
+    'imbayao': LatLng(8.1175, 125.0328),
+    'mapayag': LatLng(8.0846, 125.0427),
+    'kibalabag': LatLng(8.2455, 125.1766),
+    'st-peter': LatLng(8.2242, 125.2836),
 
     // Upper Pulangi District (10 barangays)
-    'can-ayan': LatLng(8.1855, 125.1535),
-    'capitan-angel': LatLng(8.1615, 125.0885),
-    'dumalaguing': LatLng(8.2215, 125.2385),
-    'busdi': LatLng(8.1525, 125.2685),
-    'kulaman': LatLng(8.1745, 125.2945),
-    'silae': LatLng(8.1985, 125.3185),
-    'caburacanan': LatLng(8.1225, 125.3125),
-    'mapulo': LatLng(8.1365, 125.3445),
-    'indalasa': LatLng(8.1625, 125.3565),
-    'zamboanguita': LatLng(8.1285, 125.3885),
+    'can-ayan': LatLng(8.1867, 125.1550),
+    'capitan-angel': LatLng(8.1478, 125.0220),
+    'dumalaguing': LatLng(8.2615, 125.2150),
+    'busdi': LatLng(8.2822, 125.2530),
+    'kulaman': LatLng(8.2395, 125.2648),
+    'silae': LatLng(8.1585, 125.2840),
+    'caburacanan': LatLng(8.2142, 125.2771),
+    'mapulo': LatLng(8.1882, 125.2975),
+    'indalasa': LatLng(8.1873, 125.3062),
+    'zamboanguita': LatLng(8.2017, 125.2979),
   };
 
   static final Map<String, List<LatLng>> _cachedPolygons =
@@ -300,17 +300,17 @@ class MalaybalayBarangayGeoRegistry {
   static ({LatLng center, double zoom}) cameraForDistrict(String district) {
     switch (district) {
       case 'Poblacion District':
-        return (center: poblacionCenter, zoom: 14.3);
+        return (center: poblacionCenter, zoom: 14.5);
       case 'South Highway District':
-        return (center: const LatLng(8.0680, 125.1340), zoom: 12.0);
+        return (center: const LatLng(8.0650, 125.1300), zoom: 12.0);
       case 'North Highway District':
-        return (center: const LatLng(8.1950, 125.1320), zoom: 11.8);
+        return (center: const LatLng(8.1850, 125.0950), zoom: 11.5);
       case 'Basakan District':
-        return (center: const LatLng(8.0350, 125.1680), zoom: 11.4);
+        return (center: const LatLng(8.0250, 125.1600), zoom: 11.5);
       case 'Upper Pulangi District':
-        return (center: const LatLng(8.1650, 125.2850), zoom: 11.2);
+        return (center: const LatLng(8.2150, 125.2750), zoom: 11.3);
       default:
-        return (center: cityCenter, zoom: 11.2);
+        return (center: cityCenter, zoom: 11.0);
     }
   }
 
@@ -338,8 +338,8 @@ class MalaybalayBarangayGeoRegistry {
     for (final target in all) {
       final center = centerFor(target);
       final isPoblacion = target.district == 'Poblacion District';
-      final initialRadius = isPoblacion ? 0.0040 : 0.022;
-      var poly = _radialPolygon(center, initialRadius, sides: 18);
+      final initialRadius = isPoblacion ? 0.0035 : 0.026;
+      var poly = _radialPolygon(center, initialRadius, sides: 20);
 
       for (final other in all) {
         if (other.code == target.code) continue;
@@ -364,7 +364,7 @@ class MalaybalayBarangayGeoRegistry {
 
       result[target.code.toLowerCase()] = poly.length >= 3
           ? poly
-          : _radialPolygon(center, isPoblacion ? 0.0018 : 0.008, sides: 10);
+          : _radialPolygon(center, isPoblacion ? 0.0020 : 0.010, sides: 12);
     }
     return result;
   }
@@ -612,7 +612,7 @@ class ChoBarangaySurveillanceEngine {
 
     final lower = trimmed.toLowerCase();
     final numberedMatch = RegExp(
-      r'(?:barangay|brgy\.?|poblacion)\s*[-#]?\s*0*(\d{1,2})\b',
+      r'(?:barangay|brgy\.?|bgy\.?|poblacion)\s*[-#]?\s*0*(\d{1,2})\b',
       caseSensitive: false,
     ).firstMatch(lower);
     if (numberedMatch != null) {
@@ -631,7 +631,14 @@ class ChoBarangaySurveillanceEngine {
           .replaceAll('ñ', 'n')
           .replaceAll('santo nino', 'stonino')
           .replaceAll('sto. nino', 'stonino')
-          .replaceAll('saint peter', 'stpeter'),
+          .replaceAll('sto nino', 'stonino')
+          .replaceAll('saint peter', 'stpeter')
+          .replaceAll('st. peter', 'stpeter')
+          .replaceAll('st peter', 'stpeter')
+          .replaceAll('capt. angel', 'capitanangel')
+          .replaceAll('capt angel', 'capitanangel')
+          .replaceAll('canayan', 'canayan')
+          .replaceAll('apo macote', 'apomacote'),
     );
 
     for (final candidate in MalaybalayBarangays.all) {
@@ -643,7 +650,7 @@ class ChoBarangaySurveillanceEngine {
     }
     for (final candidate in MalaybalayBarangays.all) {
       final candidateNameKey = _cleanKey(candidate.name);
-      if (candidateNameKey.length >= 5 &&
+      if (candidateNameKey.length >= 4 &&
           normalized.contains(candidateNameKey)) {
         return candidate;
       }
