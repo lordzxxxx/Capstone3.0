@@ -1651,9 +1651,12 @@ class _ChoBarangaySurveillanceMapState
     final activeBarangaysCount = filteredSummaries
         .where((item) => item.totalCases > 0)
         .length;
-    final topHotspot = filteredSummaries.isEmpty
+    final BarangayMapSurveillanceSummary? topHotspot = filteredSummaries.isEmpty
         ? null
-        : filteredSummaries.first;
+        : filteredSummaries.reduce(
+            (current, next) =>
+                next.totalCases > current.totalCases ? next : current,
+          );
     final maxCases = filteredSummaries.fold<int>(
       1,
       (max, item) => item.totalCases > max ? item.totalCases : max,

@@ -461,6 +461,7 @@ void main() {
           find.descendant(of: reportedKpi, matching: find.text('3 cases')),
           findsOneWidget,
         );
+        expect(find.text('Casisang (2)'), findsOneWidget);
         final mortalityView = find.byKey(
           const ValueKey('heatmap-view-mortality'),
         );
