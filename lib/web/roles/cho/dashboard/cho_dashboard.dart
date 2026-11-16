@@ -5972,6 +5972,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
       selectedBarangayCode: _selectedDemographicBarangayCode,
       isSyncingAllBarangays: _isSyncingAllBarangays,
       isDataTruncated: _syncTruncated.values.any((value) => value),
+      morbiditySourceLoaded: _syncStatus['morbidity_records'] == true,
+      mortalitySourceLoaded: _syncStatus['mortality_records'] == true,
       onSyncAllBarangays: () =>
           unawaited(_syncAllBarangaysAndBhwWorkspaces(showFeedback: true)),
       onBarangaySelected: (barangay) {

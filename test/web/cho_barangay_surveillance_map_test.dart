@@ -57,6 +57,50 @@ void main() {
       expect(summary.morbidityCount, 1);
     });
 
+    test('monitoring counts only reported records for each source', () {
+      final cases = ChoBarangaySurveillanceEngine.aggregateAllCases(
+        morbidityRows: const [
+          {'id': 'morb-1', 'barangay': 'Casisang', 'disease': 'Dengue'},
+          {
+            'id': 'baseline-casisang-morb-0',
+            'barangay': 'Casisang',
+            'disease': 'Influenza',
+          },
+        ],
+        checkupRows: const [
+          {'id': 'check-1', 'barangay': 'Casisang', 'diagnosis': 'Cough'},
+        ],
+        mortalityRows: const [
+          {'id': 'death-1', 'barangay': 'Aglayan', 'causeOfDeath': 'Stroke'},
+        ],
+        prenatalRows: const [],
+        immunizationRows: const [],
+        referralRows: const [],
+        patientRows: const [],
+        bhwUsers: const [],
+      );
+      final morbidity = ChoBarangaySurveillanceEngine.buildSummaries(
+        allCases: cases,
+        bhwUsers: const [],
+        syncedWorkspaceCodes: const {},
+        categoryFilter: SurveillanceCaseCategory.morbidity,
+      );
+      final mortality = ChoBarangaySurveillanceEngine.buildSummaries(
+        allCases: cases,
+        bhwUsers: const [],
+        syncedWorkspaceCodes: const {},
+        categoryFilter: SurveillanceCaseCategory.mortality,
+      );
+      expect(morbidity.fold<int>(0, (total, row) => total + row.totalCases), 1);
+      expect(mortality.fold<int>(0, (total, row) => total + row.totalCases), 1);
+      expect(morbidity.first.barangay.code, 'casisang');
+      expect(mortality.first.barangay.code, 'aglayan');
+      expect(
+        morbidity.first.badgeColor,
+        isNot(equals(morbidity.last.badgeColor)),
+      );
+    });
+
     test(
       'resolves barangays from aliases, Firestore path, and BHW user link',
       () {
@@ -287,6 +331,8 @@ void main() {
                 syncedWorkspaceCodes: const {},
                 windowLabel: 'Last 6 months',
                 isDataTruncated: true,
+                morbiditySourceLoaded: false,
+                mortalitySourceLoaded: false,
               ),
             ),
           ),
@@ -300,16 +346,37 @@ void main() {
       );
       final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
       final before = map.mapController!.camera.zoom;
+      final centerBefore = map.mapController!.camera.center;
       final zoomIn = find.byTooltip('Zoom in');
       await tester.ensureVisible(zoomIn);
+      expect(zoomIn.hitTestable(), findsOneWidget);
       await tester.tap(zoomIn);
       await tester.pumpAndSettle();
       expect(map.mapController!.camera.zoom, greaterThan(before));
+      expect(
+        map.mapController!.camera.center.latitude,
+        closeTo(centerBefore.latitude, 0.0001),
+      );
+      expect(
+        map.mapController!.camera.center.longitude,
+        closeTo(centerBefore.longitude, 0.0001),
+      );
       final zoomOut = find.byTooltip('Zoom out');
+      expect(find.text('−'), findsOneWidget);
+      expect(zoomOut.hitTestable(), findsOneWidget);
+      expect(
+        tester.getRect(zoomOut).top,
+        greaterThan(tester.getRect(zoomIn).top),
+      );
       await tester.tap(zoomOut);
       await tester.pumpAndSettle();
       expect(map.mapController!.camera.zoom, closeTo(before, 0.01));
       expect(find.text('Barangay Case & Color Directory'), findsOneWidget);
+      expect(find.text('Mortality & Morbidity Monitoring'), findsOneWidget);
+      expect(
+        find.textContaining('Source unavailable or still loading'),
+        findsNWidgets(2),
+      );
       final browseAll = find.text('Browse all 46 barangays');
       await tester.ensureVisible(browseAll);
       await tester.tap(browseAll);
@@ -322,7 +389,86 @@ void main() {
       await tester.tap(find.byTooltip('Close barangay directory'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+      for (final width in <double>[768, 1024, 1440]) {
+        await tester.binding.setSurfaceSize(Size(width, 900));
+        await tester.pumpAndSettle();
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'Layout failed at $width px',
+        );
+      }
     });
+
+    testWidgets(
+      'monitoring selects reported morbidity and mortality barangays',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(1280, 900));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final cases = ChoBarangaySurveillanceEngine.aggregateAllCases(
+          morbidityRows: const [
+            {
+              'id': 'morb-casisang-1',
+              'barangay': 'Casisang',
+              'disease': 'Dengue',
+            },
+            {
+              'id': 'morb-casisang-2',
+              'barangay': 'Casisang',
+              'disease': 'Influenza',
+            },
+          ],
+          checkupRows: const [],
+          mortalityRows: const [
+            {
+              'id': 'death-aglayan-1',
+              'barangay': 'Aglayan',
+              'causeOfDeath': 'Stroke',
+            },
+          ],
+          prenatalRows: const [],
+          immunizationRows: const [],
+          referralRows: const [],
+          patientRows: const [],
+          bhwUsers: const [],
+        );
+        BarangayReference? selected;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: ChoBarangaySurveillanceMap(
+                  allCases: cases,
+                  bhwUsers: const [],
+                  syncedWorkspaceCodes: const {},
+                  windowLabel: 'Last 6 months',
+                  onBarangaySelected: (barangay) => selected = barangay,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Mortality & Morbidity Monitoring'), findsOneWidget);
+        final morbidityRow = find.byKey(
+          const ValueKey('monitoring-morbidity-casisang'),
+        );
+        await tester.ensureVisible(morbidityRow);
+        await tester.tap(morbidityRow);
+        await tester.pumpAndSettle();
+        expect(selected?.code, 'casisang');
+        expect(find.textContaining('Casisang: 2'), findsOneWidget);
+        final mortalityRow = find.byKey(
+          const ValueKey('monitoring-mortality-aglayan'),
+        );
+        await tester.ensureVisible(mortalityRow);
+        await tester.tap(mortalityRow);
+        await tester.pumpAndSettle();
+        expect(selected?.code, 'aglayan');
+        expect(find.textContaining('Aglayan: 1'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
 
     testWidgets(
       'renders interactive FlutterMap, layers, and selects barangay',

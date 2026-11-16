@@ -1591,12 +1591,13 @@ class ChoBarangaySurveillanceEngine {
         .where((c) {
           if (categoryFilter != SurveillanceCaseCategory.all) {
             if (categoryFilter == SurveillanceCaseCategory.morbidity) {
-              final isMorb =
-                  c.sourceCollection == 'morbidity_records' ||
-                  c.category == SurveillanceCaseCategory.morbidity ||
-                  c.category == SurveillanceCaseCategory.communicable ||
-                  c.category == SurveillanceCaseCategory.nonCommunicable;
-              if (!isMorb) return false;
+              if (!isReportedMonitoringCase(c, 'morbidity_records')) {
+                return false;
+              }
+            } else if (categoryFilter == SurveillanceCaseCategory.mortality) {
+              if (!isReportedMonitoringCase(c, 'mortality_records')) {
+                return false;
+              }
             } else if (c.category != categoryFilter) {
               return false;
             }
@@ -1742,6 +1743,14 @@ class ChoBarangaySurveillanceEngine {
     });
     return summaries;
   }
+
+  static bool isReportedMonitoringCase(
+    BarangaySurveillanceCase item,
+    String sourceCollection,
+  ) =>
+      item.sourceCollection == sourceCollection &&
+      item.isPersistedInFirestore &&
+      !item.id.toLowerCase().contains('baseline-');
 }
 
 /// Interactive OpenStreetMap Leaflet Choropleth & Barangay Surveillance Map
@@ -1758,6 +1767,8 @@ class ChoBarangaySurveillanceMap extends StatefulWidget {
     this.onSyncAllBarangays,
     this.isSyncingAllBarangays = false,
     this.isDataTruncated = false,
+    this.morbiditySourceLoaded = true,
+    this.mortalitySourceLoaded = true,
   });
 
   final List<BarangaySurveillanceCase> allCases;
@@ -1769,6 +1780,8 @@ class ChoBarangaySurveillanceMap extends StatefulWidget {
   final VoidCallback? onSyncAllBarangays;
   final bool isSyncingAllBarangays;
   final bool isDataTruncated;
+  final bool morbiditySourceLoaded;
+  final bool mortalitySourceLoaded;
 
   @override
   State<ChoBarangaySurveillanceMap> createState() =>
@@ -1780,6 +1793,7 @@ class _ChoBarangaySurveillanceMapState
   final MapController _mapController = MapController();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _directoryScrollController = ScrollController();
+  final GlobalKey _mapSectionKey = GlobalKey();
 
   SurveillanceCaseCategory _selectedCategory = SurveillanceCaseCategory.all;
   String _selectedDisease = 'ALL';
@@ -1841,12 +1855,19 @@ class _ChoBarangaySurveillanceMapState
     for (final c in widget.allCases) {
       if (_selectedCategory != SurveillanceCaseCategory.all) {
         if (_selectedCategory == SurveillanceCaseCategory.morbidity) {
-          final isMorb =
-              c.sourceCollection == 'morbidity_records' ||
-              c.category == SurveillanceCaseCategory.morbidity ||
-              c.category == SurveillanceCaseCategory.communicable ||
-              c.category == SurveillanceCaseCategory.nonCommunicable;
-          if (!isMorb) continue;
+          if (!ChoBarangaySurveillanceEngine.isReportedMonitoringCase(
+            c,
+            'morbidity_records',
+          )) {
+            continue;
+          }
+        } else if (_selectedCategory == SurveillanceCaseCategory.mortality) {
+          if (!ChoBarangaySurveillanceEngine.isReportedMonitoringCase(
+            c,
+            'mortality_records',
+          )) {
+            continue;
+          }
         } else if (c.category != _selectedCategory) {
           continue;
         }
@@ -2038,6 +2059,10 @@ class _ChoBarangaySurveillanceMapState
                 ],
               );
             },
+          ),
+          const SizedBox(height: 20),
+          _buildMortalityMorbidityMonitoring(
+            selectedBarangayCode: selectedSummary.barangay.code,
           ),
           const SizedBox(height: 20),
           _buildConditionMatrix(
@@ -2875,6 +2900,7 @@ class _ChoBarangaySurveillanceMapState
     final showExpandedPills = _showBarangayLabels;
 
     return Container(
+      key: _mapSectionKey,
       height: compact ? 520 : 620,
       decoration: BoxDecoration(
         color: const Color(0xFFEAF2F8),
@@ -3111,6 +3137,7 @@ class _ChoBarangaySurveillanceMapState
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Container(
+                  width: 46,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.96),
                     borderRadius: BorderRadius.circular(10),
@@ -3128,16 +3155,22 @@ class _ChoBarangaySurveillanceMapState
                     children: [
                       _mapControlIconButton(
                         tooltip: 'Zoom in',
-                        icon: Icons.add_rounded,
+                        glyph: const Text(
+                          '+',
+                          style: TextStyle(fontSize: 24, height: 1),
+                        ),
                         onTap: () => _moveCamera(
-                          selectedSummary.center,
+                          _mapController.camera.center,
                           _currentZoom + 0.8,
                         ),
                       ),
                       const Divider(height: 1, color: Color(0xFFE2E8F0)),
                       _mapControlIconButton(
                         tooltip: 'Zoom out',
-                        icon: Icons.remove_rounded,
+                        glyph: const Text(
+                          '−',
+                          style: TextStyle(fontSize: 26, height: 1),
+                        ),
                         onTap: () => _moveCamera(
                           _mapController.camera.center,
                           _currentZoom - 0.8,
@@ -3146,7 +3179,7 @@ class _ChoBarangaySurveillanceMapState
                       const Divider(height: 1, color: Color(0xFFE2E8F0)),
                       _mapControlIconButton(
                         tooltip: 'Reset to Malaybalay City view',
-                        icon: Icons.my_location_rounded,
+                        glyph: const Icon(Icons.my_location_rounded, size: 19),
                         onTap: () {
                           setState(() => _selectedDistrict = 'ALL');
                           _moveCamera(
@@ -3276,7 +3309,7 @@ class _ChoBarangaySurveillanceMapState
 
   Widget _mapControlIconButton({
     required String tooltip,
-    required IconData icon,
+    required Widget glyph,
     required VoidCallback onTap,
   }) {
     return Tooltip(
@@ -3287,7 +3320,15 @@ class _ChoBarangaySurveillanceMapState
         child: SizedBox(
           width: 44,
           height: 44,
-          child: Icon(icon, size: 20, color: const Color(0xFF1E3A5F)),
+          child: Center(
+            child: DefaultTextStyle(
+              style: const TextStyle(color: Color(0xFF1E3A5F)),
+              child: IconTheme(
+                data: const IconThemeData(color: Color(0xFF1E3A5F)),
+                child: glyph,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -4076,6 +4117,294 @@ class _ChoBarangaySurveillanceMapState
           fontSize: 10,
           fontWeight: FontWeight.w700,
         ),
+      ),
+    );
+  }
+
+  void _focusMonitoringSource(
+    SurveillanceCaseCategory category, [
+    BarangayMapSurveillanceSummary? barangay,
+  ]) {
+    setState(() {
+      _selectedCategory = category;
+      _selectedDisease = 'ALL';
+      _selectedDistrict = 'ALL';
+      _searchQuery = '';
+      _searchController.clear();
+      if (barangay != null) _focusedBarangayCode = barangay.barangay.code;
+    });
+    if (barangay != null) {
+      _moveCamera(
+        barangay.center,
+        barangay.barangay.district == 'Poblacion District' ? 14.8 : 13.0,
+      );
+      widget.onBarangaySelected?.call(barangay.barangay);
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final mapContext = _mapSectionKey.currentContext;
+      if (mounted && mapContext != null) {
+        Scrollable.ensureVisible(
+          mapContext,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
+  }
+
+  Widget _buildMortalityMorbidityMonitoring({
+    required String selectedBarangayCode,
+  }) {
+    final morbidity = ChoBarangaySurveillanceEngine.buildSummaries(
+      allCases: widget.allCases,
+      bhwUsers: widget.bhwUsers,
+      syncedWorkspaceCodes: widget.syncedWorkspaceCodes,
+      categoryFilter: SurveillanceCaseCategory.morbidity,
+      colorMetric: _colorMetric,
+    );
+    final mortality = ChoBarangaySurveillanceEngine.buildSummaries(
+      allCases: widget.allCases,
+      bhwUsers: widget.bhwUsers,
+      syncedWorkspaceCodes: widget.syncedWorkspaceCodes,
+      categoryFilter: SurveillanceCaseCategory.mortality,
+      colorMetric: _colorMetric,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.monitor_heart_outlined,
+                size: 18,
+                color: Color(0xFF2563EB),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Mortality & Morbidity Monitoring',
+                  style: TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 3),
+          Text(
+            '${widget.windowLabel} · Mapped clinical reports only; generated baseline records excluded.',
+            style: const TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cards = [
+                _buildMonitoringSourceCard(
+                  category: SurveillanceCaseCategory.morbidity,
+                  title: 'Morbidity',
+                  meaning: 'Reported illnesses and disease cases',
+                  summaries: morbidity,
+                  loaded: widget.morbiditySourceLoaded,
+                  selectedBarangayCode: selectedBarangayCode,
+                ),
+                _buildMonitoringSourceCard(
+                  category: SurveillanceCaseCategory.mortality,
+                  title: 'Mortality',
+                  meaning: 'Reported deaths',
+                  summaries: mortality,
+                  loaded: widget.mortalitySourceLoaded,
+                  selectedBarangayCode: selectedBarangayCode,
+                ),
+              ];
+              if (constraints.maxWidth < 700) {
+                return Column(
+                  children: [
+                    cards.first,
+                    const SizedBox(height: 10),
+                    cards.last,
+                  ],
+                );
+              }
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: cards.first),
+                    const SizedBox(width: 12),
+                    Expanded(child: cards.last),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonitoringSourceCard({
+    required SurveillanceCaseCategory category,
+    required String title,
+    required String meaning,
+    required List<BarangayMapSurveillanceSummary> summaries,
+    required bool loaded,
+    required String selectedBarangayCode,
+  }) {
+    final reported = summaries.fold<int>(
+      0,
+      (total, item) => total + item.totalCases,
+    );
+    final affected = summaries.where((item) => item.totalCases > 0).length;
+    final selected = summaries.firstWhere(
+      (item) => item.barangay.code == selectedBarangayCode,
+    );
+    final topBarangays = summaries
+        .where((item) => item.totalCases > 0)
+        .take(4)
+        .toList();
+    final maxCount = topBarangays.isEmpty ? 1 : topBarangays.first.totalCases;
+    final active = _selectedCategory == category;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: active ? const Color(0xFFF0F7FF) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: active ? const Color(0xFF93C5FD) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Color(0xFF0F172A),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      meaning,
+                      style: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                loaded ? '$reported' : '—',
+                style: const TextStyle(
+                  color: Color(0xFF1E3A5F),
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            loaded
+                ? '$affected of ${summaries.length} barangays affected · ${selected.barangay.name}: ${selected.totalCases}'
+                : 'Source unavailable or still loading; counts are not shown.',
+            style: const TextStyle(color: Color(0xFF475569), fontSize: 11),
+          ),
+          const SizedBox(height: 10),
+          if (loaded && topBarangays.isNotEmpty)
+            ...topBarangays.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: InkWell(
+                  key: ValueKey(
+                    'monitoring-${category.name}-${item.barangay.code}',
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => _focusMonitoringSource(category, item),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 4,
+                              backgroundColor: item.badgeColor,
+                            ),
+                            const SizedBox(width: 7),
+                            Expanded(
+                              child: Text(
+                                item.barangay.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Color(0xFF334155),
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${item.totalCases} · ${item.tierLabel}',
+                              style: TextStyle(
+                                color: item.strokeColor,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        LinearProgressIndicator(
+                          value: item.totalCases / maxCount,
+                          minHeight: 4,
+                          color: item.badgeColor,
+                          backgroundColor: const Color(0xFFE2E8F0),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            )
+          else if (loaded)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                'No mapped reports in this period.',
+                style: TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
+              ),
+            ),
+          OutlinedButton.icon(
+            onPressed: loaded ? () => _focusMonitoringSource(category) : null,
+            icon: const Icon(Icons.map_outlined, size: 17),
+            label: Text('View $title on map'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF1D4ED8),
+              minimumSize: const Size(0, 44),
+              side: const BorderSide(color: Color(0xFFBFDBFE)),
+            ),
+          ),
+        ],
       ),
     );
   }
