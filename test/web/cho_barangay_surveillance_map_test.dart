@@ -93,6 +93,12 @@ void main() {
       );
       expect(morbidity.fold<int>(0, (total, row) => total + row.totalCases), 1);
       expect(mortality.fold<int>(0, (total, row) => total + row.totalCases), 1);
+      final all = ChoBarangaySurveillanceEngine.buildSummaries(
+        allCases: cases,
+        bhwUsers: const [],
+        syncedWorkspaceCodes: const {},
+      );
+      expect(all.fold<int>(0, (total, row) => total + row.totalCases), 3);
       expect(morbidity.first.barangay.code, 'casisang');
       expect(mortality.first.barangay.code, 'aglayan');
       expect(
@@ -202,9 +208,11 @@ void main() {
           syncedWorkspaceCodes: {'CASISANG'},
         );
 
-        // Every Malaybalay barangay is covered and has active cases.
+        // Every Malaybalay barangay remains mapped, including those without reports.
         expect(summaries.length, MalaybalayBarangays.all.length);
-        expect(summaries.every((s) => s.totalCases > 0), isTrue);
+        expect(summaries.where((s) => s.totalCases > 0).length, 5);
+        expect(summaries.any((s) => s.totalCases == 0), isTrue);
+        expect(allCases.every((item) => item.isPersistedInFirestore), isTrue);
 
         // Casisang has the highest load -> Critical tier color
         final casisangSummary = summaries.firstWhere(
@@ -213,14 +221,12 @@ void main() {
         expect(casisangSummary.tier, BarangayEpidemiologicalTier.critical);
         expect(casisangSummary.assignedBhwUsers.first.name, 'Elena Santos');
 
-        // Distinct tiers and colors exist across barangays (Low, Moderate, High, Critical)
+        // Reported case load, rather than generated baselines, controls colors.
         final distinctTiers = summaries.map((s) => s.tier).toSet();
         expect(
           distinctTiers,
           containsAll(<BarangayEpidemiologicalTier>[
-            BarangayEpidemiologicalTier.low,
-            BarangayEpidemiologicalTier.moderate,
-            BarangayEpidemiologicalTier.high,
+            BarangayEpidemiologicalTier.baseline,
             BarangayEpidemiologicalTier.critical,
           ]),
         );
@@ -450,6 +456,91 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(find.text('Mortality & Morbidity Monitoring'), findsOneWidget);
+        final reportedKpi = find.byKey(const ValueKey('heatmap-kpi-reported'));
+        expect(
+          find.descendant(of: reportedKpi, matching: find.text('3 cases')),
+          findsOneWidget,
+        );
+        final mortalityView = find.byKey(
+          const ValueKey('heatmap-view-mortality'),
+        );
+        await tester.ensureVisible(mortalityView);
+        await tester.tap(mortalityView);
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(of: reportedKpi, matching: find.text('1 cases')),
+          findsOneWidget,
+        );
+        final morbidityView = find.byKey(
+          const ValueKey('heatmap-view-morbidity'),
+        );
+        await tester.tap(morbidityView);
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(of: reportedKpi, matching: find.text('2 cases')),
+          findsOneWidget,
+        );
+        final conditionsView = find.byKey(
+          const ValueKey('heatmap-view-conditions'),
+        );
+        await tester.tap(conditionsView);
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(of: reportedKpi, matching: find.text('3 cases')),
+          findsOneWidget,
+        );
+        final chooseCondition = find.byKey(
+          const ValueKey('choose-condition-button'),
+        );
+        await tester.ensureVisible(chooseCondition);
+        await tester.tap(chooseCondition);
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byKey(const ValueKey('condition-picker-search')),
+          'Dengue',
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('condition-Dengue Fever')));
+        await tester.pumpAndSettle();
+        expect(find.text('Viewing: Dengue Fever'), findsOneWidget);
+        expect(find.text('Dengue Fever by Barangay'), findsOneWidget);
+        expect(
+          find.descendant(of: reportedKpi, matching: find.text('1 cases')),
+          findsOneWidget,
+        );
+        final barangaySearch = find.byType(TextField).first;
+        await tester.enterText(barangaySearch, 'no such barangay');
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(of: reportedKpi, matching: find.text('0 cases')),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('No barangays match these filters'),
+          findsOneWidget,
+        );
+        await tester.enterText(barangaySearch, '');
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(of: reportedKpi, matching: find.text('1 cases')),
+          findsOneWidget,
+        );
+        await tester.tap(chooseCondition);
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('condition-all')));
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(of: reportedKpi, matching: find.text('3 cases')),
+          findsOneWidget,
+        );
+        await tester.tap(find.byKey(const ValueKey('condition-source-all')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Communicable Diseases').last);
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(of: reportedKpi, matching: find.text('2 cases')),
+          findsOneWidget,
+        );
         final morbidityRow = find.byKey(
           const ValueKey('monitoring-morbidity-casisang'),
         );
@@ -470,97 +561,98 @@ void main() {
       },
     );
 
-    testWidgets(
-      'renders interactive FlutterMap, layers, and selects barangay',
-      (tester) async {
-        await tester.binding.setSurfaceSize(const Size(1440, 1100));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
+    testWidgets('renders interactive FlutterMap, layers, and selects barangay', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1440, 1100));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-        final cases = ChoBarangaySurveillanceEngine.aggregateAllCases(
-          morbidityRows: const [],
-          checkupRows: const [],
-          mortalityRows: const [],
-          prenatalRows: const [],
-          immunizationRows: const [],
-          referralRows: const [],
-          patientRows: const [],
-          bhwUsers: const [],
-        );
+      final cases = ChoBarangaySurveillanceEngine.aggregateAllCases(
+        morbidityRows: const [],
+        checkupRows: const [],
+        mortalityRows: const [],
+        prenatalRows: const [],
+        immunizationRows: const [],
+        referralRows: const [],
+        patientRows: const [],
+        bhwUsers: const [],
+      );
 
-        BarangayReference? selected;
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SingleChildScrollView(
-                child: ChoBarangaySurveillanceMap(
-                  allCases: cases,
-                  bhwUsers: const [],
-                  syncedWorkspaceCodes: const {'POBLACION-01', 'CASISANG'},
-                  windowLabel: 'Last 6 Months',
-                  onBarangaySelected: (b) => selected = b,
-                ),
+      BarangayReference? selected;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ChoBarangaySurveillanceMap(
+                allCases: cases,
+                bhwUsers: const [],
+                syncedWorkspaceCodes: const {'POBLACION-01', 'CASISANG'},
+                windowLabel: 'Last 6 Months',
+                onBarangaySelected: (b) => selected = b,
               ),
             ),
           ),
-        );
-        await tester.pumpAndSettle();
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        expect(
-          find.text('Interactive Barangay Disease & Case Surveillance Map'),
-          findsOneWidget,
-        );
-        expect(find.byType(FlutterMap), findsOneWidget);
-        expect(find.byType(PolygonLayer), findsNothing);
-        expect(find.byType(CircleLayer), findsNothing);
-        expect(find.byType(MarkerLayer), findsOneWidget);
-        expect(find.byTooltip('Zoom in'), findsOneWidget);
-        expect(find.byTooltip('Zoom out'), findsOneWidget);
+      expect(
+        find.text('Interactive Barangay Disease & Case Surveillance Map'),
+        findsOneWidget,
+      );
+      expect(find.byType(FlutterMap), findsOneWidget);
+      expect(find.byType(PolygonLayer), findsNothing);
+      expect(find.byType(CircleLayer), findsNothing);
+      expect(find.byType(MarkerLayer), findsOneWidget);
+      expect(find.byTooltip('Zoom in'), findsOneWidget);
+      expect(find.byTooltip('Zoom out'), findsOneWidget);
 
-        final mapFinder = find.byType(FlutterMap);
-        await tester.ensureVisible(mapFinder);
-        await tester.pumpAndSettle();
-        final map = tester.widget<FlutterMap>(mapFinder);
-        final casisang = MalaybalayBarangays.byCode('casisang')!;
-        final point = map.mapController!.camera.latLngToScreenOffset(
+      final mapFinder = find.byType(FlutterMap);
+      await tester.ensureVisible(mapFinder);
+      await tester.pumpAndSettle();
+      final map = tester.widget<FlutterMap>(mapFinder);
+      final casisang = MalaybalayBarangays.byCode('casisang')!;
+      final point = map.mapController!.camera.latLngToScreenOffset(
+        MalaybalayBarangayGeoRegistry.centerFor(casisang),
+      );
+      expect(
+        MalaybalayBarangayGeoRegistry.isPointInPolygon(
           MalaybalayBarangayGeoRegistry.centerFor(casisang),
-        );
-        expect(
-          MalaybalayBarangayGeoRegistry.isPointInPolygon(
-            MalaybalayBarangayGeoRegistry.centerFor(casisang),
-            MalaybalayBarangayGeoRegistry.polygonFor(casisang),
-          ),
-          isTrue,
-        );
-        await tester.tapAt(tester.getTopLeft(mapFinder) + point);
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pumpAndSettle();
-        expect(selected?.code, 'casisang');
+          MalaybalayBarangayGeoRegistry.polygonFor(casisang),
+        ),
+        isTrue,
+      );
+      await tester.tapAt(tester.getTopLeft(mapFinder) + point);
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+      expect(selected?.code, 'casisang');
 
-        // Filter by Communicable Diseases chip
-        final communicableFilter = find.text('Communicable Diseases');
-        await tester.ensureVisible(communicableFilter);
-        await tester.tap(communicableFilter);
-        await tester.pumpAndSettle();
+      // Switch to the dedicated condition explorer before using the directory.
+      final conditionView = find.byKey(
+        const ValueKey('heatmap-view-conditions'),
+      );
+      await tester.ensureVisible(conditionView);
+      await tester.tap(conditionView);
+      await tester.pumpAndSettle();
 
-        // Browse, search for a barangay below the initially visible rows,
-        // then select it to focus the map.
-        final browseAll = find.text('Browse all 46 barangays');
-        await tester.ensureVisible(browseAll);
-        await tester.tap(browseAll);
-        await tester.pumpAndSettle();
-        await tester.enterText(
-          find.byKey(const ValueKey('barangay-directory-search')),
-          'Casisang',
-        );
-        await tester.pumpAndSettle();
-        selected = null;
-        await tester.tap(
-          find.byKey(const ValueKey<String>('all-barangay-item-casisang')),
-        );
-        await tester.pumpAndSettle();
-        expect(selected?.code, 'casisang');
-        expect(find.text('Browse barangays'), findsNothing);
-      },
-    );
+      // Browse, search for a barangay below the initially visible rows,
+      // then select it to focus the map.
+      final browseAll = find.text('Browse all 46 barangays');
+      await tester.ensureVisible(browseAll);
+      await tester.tap(browseAll);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('barangay-directory-search')),
+        'Casisang',
+      );
+      await tester.pumpAndSettle();
+      selected = null;
+      await tester.tap(
+        find.byKey(const ValueKey<String>('all-barangay-item-casisang')),
+      );
+      await tester.pumpAndSettle();
+      expect(selected?.code, 'casisang');
+      expect(find.text('Browse barangays'), findsNothing);
+    });
   });
 }

@@ -98,8 +98,6 @@ class _ChoDashboardState extends State<ChoDashboard> {
   final List<Map<String, dynamic>> _overdueFollowUps = [];
   List<SyncedBhwUserSummary> _bhwUsers = const <SyncedBhwUserSummary>[];
   final Set<String> _syncedBarangayWorkspaceCodes = <String>{};
-  bool _isSyncingAllBarangays = false;
-  bool _autoBaselineSyncTriggered = false;
   bool _isLoading = false;
   bool _authorized = false;
   _ChoAnalyticsWindow _analyticsWindow = _ChoAnalyticsWindow.last6Months;
@@ -1246,61 +1244,6 @@ class _ChoDashboardState extends State<ChoDashboard> {
         );
   }
 
-  Future<void> _syncAllBarangaysAndBhwWorkspaces({
-    bool showFeedback = false,
-  }) async {
-    if (_isSyncingAllBarangays || !mounted) return;
-    setState(() => _isSyncingAllBarangays = true);
-    try {
-      final persistedBarangayCodes = <String>{};
-      for (final row in <Map<String, dynamic>>[
-        ..._morbidityRows,
-        ..._checkupRows,
-      ]) {
-        final brgy = ChoBarangaySurveillanceEngine.resolveBarangay(row);
-        if (brgy != null) {
-          persistedBarangayCodes.add(brgy.code.toLowerCase());
-        }
-      }
-      final written =
-          await ChoBarangaySurveillanceEngine.syncMissingBarangaysToFirestore(
-            firestore: _firestore,
-            barangayCodesWithPersistedCases: showFeedback
-                ? const <String>{}
-                : persistedBarangayCodes,
-            bhwUsers: _bhwUsers,
-          );
-      if (mounted && showFeedback) {
-        Get.snackbar(
-          'Barangay & BHW Sync Complete',
-          written > 0
-              ? 'Synchronized $written surveillance cases across all ${MalaybalayBarangays.all.length} barangays and BHW workspaces.'
-              : 'All ${MalaybalayBarangays.all.length} barangays and BHW workspaces are already up to date.',
-          backgroundColor: _primaryAqua,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 3),
-        );
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Barangay surveillance baseline sync notice: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isSyncingAllBarangays = false);
-      }
-    }
-  }
-
-  void _maybeTriggerAutoBarangayBaselineSync() {
-    if (_autoBaselineSyncTriggered) return;
-    if (_syncStatus['morbidity_records'] == true &&
-        _syncStatus['checkup_records'] == true) {
-      _autoBaselineSyncTriggered = true;
-      unawaited(_syncAllBarangaysAndBhwWorkspaces(showFeedback: false));
-    }
-  }
-
   void _refreshSync() {
     _choRootFallbackEnabled.clear();
     Get.snackbar(
@@ -1602,7 +1545,6 @@ class _ChoDashboardState extends State<ChoDashboard> {
               _syncStatus['checkup_records'] = true;
               _recomputeAnalyticsState();
             });
-            _maybeTriggerAutoBarangayBaselineSync();
           },
           onError: (e) {
             if (kDebugMode) debugPrint('✗ Checkup sync error: $e');
@@ -1844,7 +1786,6 @@ class _ChoDashboardState extends State<ChoDashboard> {
               _syncStatus['morbidity_records'] = true;
               _recomputeAnalyticsState();
             });
-            _maybeTriggerAutoBarangayBaselineSync();
           },
           onError: (e) {
             if (kDebugMode) debugPrint('✗ Morbidity sync error: $e');
@@ -5970,12 +5911,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
       syncedWorkspaceCodes: _syncedBarangayWorkspaceCodes,
       windowLabel: _analyticsWindowLabel(),
       selectedBarangayCode: _selectedDemographicBarangayCode,
-      isSyncingAllBarangays: _isSyncingAllBarangays,
       isDataTruncated: _syncTruncated.values.any((value) => value),
+      hasUnavailableSources: _syncStatus.values.any((loaded) => !loaded),
       morbiditySourceLoaded: _syncStatus['morbidity_records'] == true,
       mortalitySourceLoaded: _syncStatus['mortality_records'] == true,
-      onSyncAllBarangays: () =>
-          unawaited(_syncAllBarangaysAndBhwWorkspaces(showFeedback: true)),
+      onRefreshData: _refreshSync,
       onBarangaySelected: (barangay) {
         if (!mounted) return;
         setState(() {

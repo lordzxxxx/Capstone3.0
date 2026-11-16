@@ -17,7 +17,6 @@ import 'package:mycapstone_project/web/shared/theme/app_theme.dart';
 import 'package:mycapstone_project/web/shared/navigation/web_routes.dart';
 import 'package:mycapstone_project/web/roles/bhw/dashboard/bhw_quick_actions.dart';
 import 'package:mycapstone_project/web/roles/bhw/patients/canonical_patient_registration_modal.dart';
-import 'package:mycapstone_project/web/roles/cho/dashboard/cho_barangay_surveillance_map.dart';
 
 // Use the same centralized palette as the shared BHW/CHO web components.
 // The dashboard uses navy and blue tones for all presentation accents; labels
@@ -379,46 +378,16 @@ class _HomePageState extends State<HomePage> {
         _loadScopedDashboardRecords('morbidity_records', accessScope: scope),
       ]);
       final patients = results[0];
-      var checkups = results[1];
-      final prenatal = results[2];
-      var morbidity = results[3];
-      if (checkups.isEmpty && morbidity.isEmpty) {
-        final brgyRef = ChoBarangaySurveillanceEngine.resolveBarangay(<
-          String,
-          dynamic
-        >{
-          'barangay': scope.barangay,
-          'barangayCode': scope.barangayCode,
-        });
-        if (brgyRef != null) {
-          try {
-            await ChoBarangaySurveillanceEngine
-                .syncSingleBarangayBaselineIfNeeded(
-                  firestore: getFirestoreInstance(),
-                  barangay: brgyRef,
-                  bhwUid: scope.userId,
-                );
-            final refreshed = await Future.wait<List<Map<String, dynamic>>>([
-              _loadScopedDashboardRecords(
-                'checkup_records',
-                accessScope: scope,
-              ),
-              _loadScopedDashboardRecords(
-                'morbidity_records',
-                accessScope: scope,
-              ),
-            ]);
-            checkups = refreshed[0];
-            morbidity = refreshed[1];
-          } catch (syncError) {
-            if (kDebugMode) {
-              debugPrint(
-                'BHW baseline surveillance sync skipped for ${brgyRef.code}: $syncError',
-              );
-            }
-          }
-        }
+      bool isReportedRecord(Map<String, dynamic> row) {
+        final id = (row['id'] ?? row['recordId'] ?? row['_firestorePath'] ?? '')
+            .toString()
+            .toLowerCase();
+        return !id.contains('baseline-');
       }
+
+      final checkups = results[1].where(isReportedRecord).toList();
+      final prenatal = results[2];
+      final morbidity = results[3].where(isReportedRecord).toList();
       List<Map<String, dynamic>> referrals = const [];
       try {
         // Referral rules intentionally expose only records created by this
