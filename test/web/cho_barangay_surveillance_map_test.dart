@@ -35,6 +35,28 @@ void main() {
   });
 
   group('ChoBarangaySurveillanceEngine', () {
+    test('counts a morbidity record once in the inspector', () {
+      final casisang = MalaybalayBarangays.byCode('casisang')!;
+      final summary = ChoBarangaySurveillanceEngine.buildSummaries(
+        allCases: [
+          BarangaySurveillanceCase(
+            id: 'morbidity-1',
+            barangay: casisang,
+            disease: 'Unspecified illness',
+            category: SurveillanceCaseCategory.morbidity,
+            sourceCollection: 'morbidity_records',
+            severityLabel: 'Low',
+            severityWeight: 1,
+            reportedAt: null,
+          ),
+        ],
+        bhwUsers: const [],
+        syncedWorkspaceCodes: const {},
+      ).firstWhere((item) => item.barangay.code == casisang.code);
+      expect(summary.totalCases, 1);
+      expect(summary.morbidityCount, 1);
+    });
+
     test(
       'resolves barangays from aliases, Firestore path, and BHW user link',
       () {
@@ -250,6 +272,42 @@ void main() {
   });
 
   group('ChoBarangaySurveillanceMap widget', () {
+    testWidgets('mobile cards, map controls, and directory remain usable', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ChoBarangaySurveillanceMap(
+                allCases: const [],
+                bhwUsers: const [],
+                syncedWorkspaceCodes: const {},
+                windowLabel: 'Last 6 months',
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
+      final before = map.mapController!.camera.zoom;
+      final zoomIn = find.byTooltip('Zoom in');
+      await tester.ensureVisible(zoomIn);
+      await tester.tap(zoomIn);
+      await tester.pumpAndSettle();
+      expect(map.mapController!.camera.zoom, greaterThan(before));
+      final zoomOut = find.byTooltip('Zoom out');
+      await tester.tap(zoomOut);
+      await tester.pumpAndSettle();
+      expect(map.mapController!.camera.zoom, closeTo(before, 0.01));
+      expect(find.text('Barangay Case & Color Directory'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets(
       'renders interactive FlutterMap, layers, and selects barangay',
       (tester) async {
@@ -290,22 +348,39 @@ void main() {
           findsOneWidget,
         );
         expect(find.byType(FlutterMap), findsOneWidget);
-        expect(find.byType(PolygonLayer), findsNWidgets(46));
-        expect(find.byType(CircleLayer), findsOneWidget);
+        expect(find.byType(PolygonLayer), findsNothing);
+        expect(find.byType(CircleLayer), findsNothing);
         expect(find.byType(MarkerLayer), findsOneWidget);
+        expect(find.byTooltip('Zoom in'), findsOneWidget);
+        expect(find.byTooltip('Zoom out'), findsOneWidget);
+
+        final mapFinder = find.byType(FlutterMap);
+        await tester.ensureVisible(mapFinder);
+        await tester.pumpAndSettle();
+        final map = tester.widget<FlutterMap>(mapFinder);
+        final casisang = MalaybalayBarangays.byCode('casisang')!;
+        final point = map.mapController!.camera.latLngToScreenOffset(
+          MalaybalayBarangayGeoRegistry.centerFor(casisang),
+        );
+        expect(
+          MalaybalayBarangayGeoRegistry.isPointInPolygon(
+            MalaybalayBarangayGeoRegistry.centerFor(casisang),
+            MalaybalayBarangayGeoRegistry.polygonFor(casisang),
+          ),
+          isTrue,
+        );
+        await tester.tapAt(tester.getTopLeft(mapFinder) + point);
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pumpAndSettle();
+        expect(selected?.code, 'casisang');
 
         // Filter by Communicable Diseases chip
-        await tester.tap(find.text('Communicable Diseases'));
+        final communicableFilter = find.text('Communicable Diseases');
+        await tester.ensureVisible(communicableFilter);
+        await tester.tap(communicableFilter);
         await tester.pumpAndSettle();
 
-        // Expand all barangays in directory and select Casisang
-        final showAllFinder = find.textContaining('Show All');
-        if (showAllFinder.evaluate().isNotEmpty) {
-          await tester.ensureVisible(showAllFinder);
-          await tester.tap(showAllFinder);
-          await tester.pumpAndSettle();
-        }
-
+        // Scroll the full directory and select Casisang.
         final directoryListFinder = find.byType(ListView);
         await tester.ensureVisible(directoryListFinder);
         await tester.pumpAndSettle();
@@ -322,6 +397,7 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
+        selected = null;
         await tester.tap(casisangDirItem);
         await tester.pumpAndSettle();
         expect(selected?.code, 'casisang');
