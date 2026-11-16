@@ -1757,6 +1757,7 @@ class ChoBarangaySurveillanceMap extends StatefulWidget {
     this.onBarangaySelected,
     this.onSyncAllBarangays,
     this.isSyncingAllBarangays = false,
+    this.isDataTruncated = false,
   });
 
   final List<BarangaySurveillanceCase> allCases;
@@ -1767,6 +1768,7 @@ class ChoBarangaySurveillanceMap extends StatefulWidget {
   final ValueChanged<BarangayReference>? onBarangaySelected;
   final VoidCallback? onSyncAllBarangays;
   final bool isSyncingAllBarangays;
+  final bool isDataTruncated;
 
   @override
   State<ChoBarangaySurveillanceMap> createState() =>
@@ -1951,6 +1953,36 @@ class _ChoBarangaySurveillanceMapState
             totalBarangays: summaries.length,
             trackedDiseasesCount: sortedDiseases.length,
           ),
+          if (widget.isDataTruncated) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: Color(0xFF475569),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Map counts may be incomplete: a source reached the 2,500-record dashboard read limit. Use Reports for complete historical analysis.',
+                      style: TextStyle(
+                        color: Color(0xFF334155),
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           _buildKpiRow(
             totalCases: totalFilteredCases,

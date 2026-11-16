@@ -5971,6 +5971,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
       windowLabel: _analyticsWindowLabel(),
       selectedBarangayCode: _selectedDemographicBarangayCode,
       isSyncingAllBarangays: _isSyncingAllBarangays,
+      isDataTruncated: _syncTruncated.values.any((value) => value),
       onSyncAllBarangays: () =>
           unawaited(_syncAllBarangaysAndBhwWorkspaces(showFeedback: true)),
       onBarangaySelected: (barangay) {

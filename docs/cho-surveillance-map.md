@@ -12,4 +12,6 @@ The release-browser regression test checks all decoded points remain inside the 
 
 The map aggregates cases by normalized barangay code. The selected category, disease, and color metric recompute the per-barangay counts, score, thresholds, legend, and polygon colors. Zero values are neutral gray; positive tiers use progressively darker red shades. Thresholds are calculated from the nonzero barangay values in the current view, so the displayed numeric ranges must be read with the selected filter. The directory lists all matching barangays, sorted by reported cases; its progress line compares each count with the highest current count.
 
+Dashboard source subscriptions are capped at 2,500 records per collection. When any collection reaches that cap, the map displays an incomplete-count notice; the displayed totals must not be read as a complete historical census.
+
 The city mask is cut from the same polygon geometry as the fills. Selecting a polygon or directory row opens that barangay's inspector. Zoom controls change the current camera zoom; Reset returns to the city view.

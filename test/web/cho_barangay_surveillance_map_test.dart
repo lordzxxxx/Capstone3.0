@@ -286,6 +286,7 @@ void main() {
                 bhwUsers: const [],
                 syncedWorkspaceCodes: const {},
                 windowLabel: 'Last 6 months',
+                isDataTruncated: true,
               ),
             ),
           ),
@@ -293,6 +294,10 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+      expect(
+        find.textContaining('Map counts may be incomplete'),
+        findsOneWidget,
+      );
       final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
       final before = map.mapController!.camera.zoom;
       final zoomIn = find.byTooltip('Zoom in');
