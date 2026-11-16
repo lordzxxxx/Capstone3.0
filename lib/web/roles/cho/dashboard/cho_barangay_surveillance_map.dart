@@ -263,91 +263,93 @@ class MalaybalayBarangayGeoRegistry {
 
   static const Map<String, String> _encodedPolygonsByCode = <String, String>{
     'aglayan':
-        'b3NmcEBhe3l6Vn50QHxPcktrTWhEYkV0RnlGYk9Dckx3SHNAdUhyX0BrQG5Ke0hqR2BKdlBxRH5AeEdqRmVEdEV8RXpEeHFBbU5mQHVMflN6QWZMZXBAYmRAYUNgdkBxUGxVZkFkdUBvSXxsQGllQmZhQXNgQGBIcUt3bEFkSGNLeUBjT2VEYUZpQ3xCaEF7cUBfTWFVYU9sRHZXeXFBYFJ9QGBcb2tAeklzd0E=',
+        'b3NmcEBhe3l6VnJLZkByRGJDfFR2Q3RBZkFEbkNiQ2NCZEFmQnJDQWRDUWBEeUJkQHVFZEFpQnBBTE9uQmZCZEF0RnlGcERpQGxEYkFiRF1gQXtCcEp7RFFlQX1CVXpBeUVgQUFgQnZBaE9rRGRHS35BdEB2QXNBeEB5Q3xFbUFgQVxWdERwRGxDakJrQX5EWXBAfUJoQXZCbkNlQXJAeEBKfkVqRmVEdEV8RWVBeEN4QW5CaEJwX0B8QHxoQHtGbkJxRmdBX0RuRmVBYEdvRWxEakB+Q3BDcEFhQnREa0V0RF9OaEZ3RXxIZ0pwSXVEY0BjQ3ZDcEBwRXNAZk17QFZvQn5EekNqSXNCZkNsQGJGaUB2RG9DfkZMfEFhR0NtRHJKVWxGZkJ8XUl4Tm1CfFJhRn5YeUZsRmN3QG5ea2VAaFpzYEBgSHFLd2xBZkB5QHhDUWJCd0htQGVDVHNGYUBpQ2VEYUZ1QXBDc0BTP21EYkNhQ0xvQVFvRGlEZ0V8QWlGU3lEckF9RmlAYUVnQ2dGe0VjRXtBdUdhT2xEdld5cUFqS2lBdEVKfEZlUnxIbUxkSntKckN9U0Z5QmFAQGBGfX5A',
     'apo-macote':
-        'Z3Z2b0Blfm97VnhAb3ZBdHZEdmxHZGlAZFp6QWJMeWxAbmJDfWBAZE97THpgQGtLfkphXnBIcWJAZUFzcEBkXHhBZ3ZBX0tzfEBgR2t3Q2VGbXZD',
+        'Z3Z2b0Blfm97VnhAb3ZBdHZEdmxHZGlAZFp6QWJMY0BuTHFKdlZ5QnBSaVx0aUFvSHpFbVdoSH1IeFB9QmBPcUN6QXlGYkh7VWhDZUdmRGNZS3dCfUF1RGJAc3BAZFx+Q3dqQGVBb2pAX0tzfEBgR2t3Q2VGbXZD',
     'bangcud':
-        'YWt6b0BxZHh6VmJOcUVgSHZFcE1rS2lHd09qXFNgUmVIZ0JpRnRUY2ZAZmZAekdzQWxLdEhgRntHblZkR2RIeVFiQHlIa0dHZmVAZVd5QHRRbGtAc2lAfkd1R3xHeElgTGtDYkN9U2tBfUd6RnNDZ0p9RWpIb0lNP2RRX3FAbUJ1RWlZaEdfRUFxZEB6THpDeFVxZEA=',
+        'YWt6b0BxZHh6VnZFS2pHZUVkQVxkQX5DdENYdkV1RGhBb0NuRGVBXG9Ad0B9Ql9Fa0JxQF9CQH1DeEN9QGJGTnBId0F6RnBCckhxRmxIc0B1QGdCaUFfQFZhQm5Ob11kRXNHZkVxQXpWakN4Q2pBaEN0Q3FCdEVcdkR+Q3JEdENsQHVBakNmQGhEcUR8Q19BaENCcENsQXhDdkRkQT9kQX1CZEBfQnFCbUFPbUh+QnlIa0d3QnBHbEViT1lkSWNBakJ5QVx1QnFDa0R7QGlLdEJCZEhkTWJOaEJsRGBBZEZfQG5GZ0pkQnFJe0F1SWpHY0lId0F0Q3VCaEBnQXxBdkBwQWxEYEFyQmxHa0NiQ3NEckBfRndCaUdHZUN8QHlAdEN9QWZAZUBtQFZ9RWVDe0FvQnpBbUJuRWVBQnVBdUFzRGJBcUBqQEJyRGJEbkd1QnRBd0ZMaUJ3QWlEbEB7QXNAU29CX0lgRHFQZUNxQXRAYUJ7QnNCbVVSfUBmRV9BbEBhQUFxZEBUXWRMeERsRWFJU2VBYEJlRGRMX1BWY0I=',
     'busdi':
-        'Z2p2cUBpanl7VmJ6QG9fQWhdaW1Bbm9BY3NAbmBFaU9wS29Fd0J+Y01nWkRtQHRFbEVyeUlnaEp3SHFBcXhGeWJAaXFIcnBAY1Y=',
+        'Z2p2cUBpanl7VmJ6QG9fQWhdaW1Bbm9BY3NAbmBFaU9oQ3FDZkd9QHdCfmNNfUxxQGlMdkBtQHRFbEVyeUlnaEp3SFBjZ0N9QHtPWHl9QF9Bd2BAeWJAaXFIcnBAY1Y=',
     'cabangahan':
-        'Y3R9b0B3dHl6VnZNYUFiSWhOamNAYER4akB6XHlVcGRAe0x7Q0BwZEBpR35EcERoYUB3S2xHa2tDcWdCZ0RvaUF4T31HbFV+TnpLbUNuSWhJZkpvRHhRbEM=',
+        'ZX59b0Blc3l6VnhXc0J8RXZDZEJwSXpPYEBoRmZEbkJOdEd3QHxDbkFwQ2BIaEduQnJJfkZsSUR8Q3JFV2JCZUx+T2FCZERSZEFtRWBJZUx5RFVcQHBkQG1AYEFnRX5AU3xAckJsVWBCekJlQmJDYEF6Qn1EckB5RXhFY0R9QXdFeUl7QVBzfEJrekF9QH1oQGlCcV9AZEppQGxDa0FkQGdEckJkQG5KbkloRmhDakZYbkRnRHhFaEd0Qn5AZEZfQGBAeUF+QXVAZkFAbkV8RA==',
     'caburacanan':
-        'cXNlcUBtaHJ7VmZtQHdPd0BhYEBzS3NJYkRlVWBQY0p2b0B7SXpNYEVkVH1fQHpwQXp5R290QWJ6RHNxQntBd1Z7Z0hiQndlQA==',
+        'cXNlcUBtaHJ7VmJHZ0B6UWtKZk59QH5CZUFoQH1BU3VDb0NxSGxCY0hrQHdFY0J3QXFFX0BXa0NlQW9BZEBfTnxCZUZ4QGVAeERmQGBBXWpGZ0lqVX1Call9RXhEfkByQXhDbEVXaEVzRFRpR3BDc0FgR31JcEBtRHJPfmhAdmxAcG1EblJoYUFvdEFiekRzcUJ7QXdWe2dIfkBxWGtAc0FkQXdBa0FtQnRBa0M=',
     'can-ayan':
-        'aWxhcUB9dWd7Vm50QWN6RHZ1Q2pIdmZGeVB6Tl9IZkp6RHZDal9Bcl1ke0B0ZEVmeUBqQGRpQ31rQmBLe3VCeHxAbVV+cUBrUHhCZXNAfnRAeUdgU3JFdHBBX3FAe0FvXnRMb0t0U3lYdkxwQnJwQGtacEZxZkFlQXNlQHxIa25AX15zaUBgXX1uQHNDZ1V3ZEFxSnt5RFRnX0JoUG99Qw==',
+        'aWxhcUB9dWd7Vm50QWN6RHZ1Q2pIdmZGeVBySndAZkNnRmZKekR2Q2pfQXJdZHtAdGRFZnlAakBkaUN9a0JgS3t1Qnh8QG1VfnFAa1B4QmVKdFF3T3xNb0xiRHdJZk55R2BTekR0aUBWfmVAX3FAe0FhU3JEbUpgR3lEbEt1RWZHe1NgRn1DdEVsQWhNb0BgSXJBZlhrWnBGb2VAcEBhYEB3QnNlQHxIZ0VXY0V3RGtDS3lHZ0x1RWNAY053SHNpQGBdfW5Ac0NlSHNVYUxjbkBxSnt5RFRnX0JoUG99Qw==',
     'capitan-angel':
-        'X216cEB1YWd6VmRvQHNBdGtAe2hAbl5weEB6RGdBZmFAZmBAaEx0QmRQZGFAek9RYF9AYGVBbEB0XnlMYmlAcFF4bUJwWXZ4QH5ZflxvdEdpSXF1QG13QXBSd2VGfUVrS2xEYUdxV2dUcEVvYUBoW2NR',
+        'X216cEB1YWd6Vn5UZURkWXBBZmdAX2JAbEN7RWJFaFFsRmBDZkNuR2xFfkZ2Qn5FUHxDZEJeR3ZEZkFYckJhQmZCdkRsQVZuRXhFYkhiQmBGbkNmRWpHZ0BuQFpsQX5EUGhGYkJGekFkQWZAXXpAakJyS2JCZkRoRWxCekF6RX5ATmZCcUFqQ2xBbkFBeEBxQXxBdEBmQ2ZJckNwQmxBeEN0QG5MZkhoRWNAekdoRXBEYEB4TXBCakFxQnZRekN0R0JmQ3dBfkNhSmJkQGJGfH1AbEp6bkBkUnZgQGpGflZ+WX5cb3RHaUlxdUBtd0F0UHtgRnpAe0NhRHlDe0BxRnpDdUNQa0JnRXtEaUFnRXVIaUJpRXlEcEVvYUBoW2NR',
     'casisang':
-        'a3h1cEB3a3Z6VnJOUm5JdUhiTHpEZENjWn1Ic2dAb0NlfUNwUmliQG5MY0R6akNwaURfVXRIe09kbkFyUWRcZkV8ekB+R3ZAdEpoVG5IbGVAbFF6TmpBdmpBZllqdEFhR2RDXnRZaEpwVXFJflFsRGZPa0VoRn5HdEN4QHxUcUdwXmtKbEloSXBgQHtMbEZnUVtjcEBxe0BrX0BvWH14QG9dekJzVW9Kc2dAekd9T19SbUx1RnFiQHVIZkBVdUx1SH1CekRtSHlCeUp5TnNHbERlRnNGb0VeX1d1UWFUcENzXXdHX0J8Rm9FdUh9TnxIcVRtVGlbYEpfVW9Jb0FmQmVdfU19SWJTQA==',
+        'bWZ2cEBhbXZ6VnRVbkJ+RXFAbENxQXJDe0VsQEd8RmBBZER4QmRDY1p9SHNnQGFBa2xAZENjXldfZkB7RHVpQHhHYVN2SWdObkxjRHpqQ3BpRHVIdEZlQGpBb0ZhQXNCdEBiQGBMb0R2S2ZAckRfQG5CZUtyV1FyUnZMdFVBdkJ8Q3ZBUGRDX0J6QmBDakFBfkRlQmJBdEFuQkF2Q25CbkM/cktyQmxCeEB6Q2dCZENNbkJ+QWRBekF9QGJCbkBxQHpDeEB0Q2xKdkpmQHxIckN4QltkQnFDZkR+R3pBRHBCeEF6Qk16QHtBZEBKekFsUXpOakF2akFgUnh7QGBBdkt6QnpCaUBiQERyQ2pBZEFxQWZEc0BvRXtCbER6QXZGdUF4QlhiTnRBekR2QFphQH5CaEJoQUl0QnxCekFefEFXakBnQGdAb0BYekFsQXVBXGhAbkRhRHRAQmJBZEFOQHJBbUFHbUJuQUB6QGBCT2ZBakBPbkRhQnBAckJsRXtBYEVvQmZAfkN0Qn5CXkdgSHlAZEF2QWJBRXJFaEB8QHdAeEFCdkJzRGpEakF0SG9DXFh+R3dCaEBjQmZESHxAc0FJZUFmQUF4QHxBeEF1QG5CZEFBcEBiQWFAZkNiQHJEekR2Q3tAckBKaEFpQEhmQW5De0xsRmdRW31dX2NAZVFxV2tfQG9Yc29AcVNefUJ3QHVEcUZkQF9Ab0ByQHFEY0F9RmpDY0hpQHtBc0JRQWVFYUFfQ25BYUJtQHVCdkBxS2FFZ0FlQG1EcENfRHpAeUVwQWtAQ3dCb0NnR2NCUXNEaEF3RH1FW2dCekBpQl9CYUdhQm1BYEJ3Q29Be0B3QWRBd0BnQF55Q2pBdUBhQWlFfUBPbUNqQWlCU11hQ2BBc0J5QF9Fd0JfQndDRGVAY0B+QHNCdkFpQGJAb0N5QGFDdUFdVHlFdUJUbUFnQH1CZ0hlQ2RBcUBfQENzQWxCU2JBfUJtQWFDZURtQUpnRnFBZUZkQnFIZ0J3QntGfUJXa0hzQm9CZUJPYEB3R21AZ0R4Q2lKQmlEY0JhQX1AdEF1QnNCZEZzQ1Z7QHFHaUZ4QGFBfUFxRUxvQGJCQmtBc0R4Qm9HfENhRWlETXhAe0B5QmNKbURsQXlCbUJwQl9CWGNFZ0h3Q2RIdUdCfUBrQntAaUFtQmxGYUVzQHlAX0ZmQHtAfUBKe0NkQn1DYUFpQXpAZ0FRfUNhQndBakJvQEJzRW1BdUB7REZzRW9IYEVnQA==',
     'dalwangan':
-        'e297cEBhbWV6VnBXZlRtRGBHfEVqS3FSdmVGcHVAbHdBbXtCe3hAcW5AcWZBd2tAZ2NAYkFvTmdsQGFgQGtPa1llUXFDcVt7WWVYc0J5R3VLa0h2QntLfUtnakF9R3NHYUtlSV9zQXxEcWBAeUdjWHhKbUB3R2NhQHVXfUptRGNwQGRFaWtAd0hjY0BmSHN0QHVEZVVhTW9FYFdrRm5qQHRyQHJRYG1DfntEYH1BZE1sVX5LeEB+QXBVclNvUGRzQmZmQGRHeUF6RHBM',
+        'e297cEBhbWV6VmhFeER0SGhCaEFmRWZFekRRakJ7Q3RDekBwRmBEeEN7QHpDdVB6YEZwdUBsd0Fte0J7eEBxbkBxZkF1UWtOd0h9Sm1HYUB7RntGZ0JxQ2pEfUllRH1BeURXQGtBbkFrQVV1QHNCW2VAcUJrQnhASWFEbUhPc0B9QE1zQ3lGXXtAc0VtRVNxQWlCXWlEaUNjQUl7RGVEcUFhQmVGe0VxQHdCVHFGdUJzQHlDX0N3Q3dKbUJ5QWlGa0dxRXNDekBlQndAa0BzQndBVUBgQ2NAP3FCc0RzR2JBY0BdZEBxQmVDa0B3QHlDfUFfQXlCTV9BZEJxQl51QXdGfUJAZ0VnRH1CYkFjTnNDX09Mb1VnRHVQc0BzR2FLZUlfc0F8Q2lJckBrSlN7Sm9AbUdxRGlHd0BrR2xAe0BwRWhAeEJbc0RjTEJpQnlAX0FqQWNGeUJxR3lHY0JrQnVFYUVSbUV3QWlAX01gQGlIYUFvTmNCaUlwQHdYckNxUWFCd1Z1RWtLYEJhYUBkRXFSdURlVWFNb0VgV2tGbmpAdHJAclFgbUNsa0J0eUBwb0FqYkBuTWpSSWBCdkRkQGZAeUBiQkdZckB6QFRBdEF6QGlBV3JGZEFJVGJEbkBDTXBAZEF4QW9CdkBiQXRAX0BsQXpDQnZDdUh+SX1GZHNCZmZAfEFLYEJhQmRBUmhCZkNCdkFtQW5DXmZBekJF',
     'imbayao':
-        'X2R2cEBvaWx6VnhZdVpyckB2QH5Bdk5sUm5OaUh6TXRGeEhcfHVAaHhBbnVAYnBAcHtAYl9AcUV6R25RYUN6RXpKaG1Ab0Z+Sm5KZFttTGxdYEx0V3FAaG1AaFZuckBiQGRnQH1mQn5oQWlqQGRSX1pfXXFZd3hAbUp7bkBjRn19QHhMY2lAZ0ppfkBrVnVmQHdOeEBlSGlJX0d7VmlMdUJnYUBnYEB7RGZBb15xeEB4U3lyQGZbbUdkUGVUY1V7aEA=',
+        'X2R2cEBvaWx6VmZMdUd+RF9FckF1R3xDaUNqSkZ8RGFDYEZmQWBEZEN4Q050QF9DcEV3QGBFfkJgQkp+QmRIe0BoQlpmQnZEfEVyRGlBYkJQfENoSW1DeERJYENxQ35DZEBsRHxDZEBwQGRCZUFsSWxAdEJvQWBCYEF+QkBkRXJCUGhAekFrQ2JIYEFwRHFAfEZebkBwRmVAdkB0RF9AfEJyb0BwU2pfQG5YZFFwV3xdfmJAZlFaekxtRnJAbkFTfkJsQWBAXX5CZkB+QGhBSHhBckNZbkBoQHBCcUN4QGRCYkVUcFB4Q3JPcEFsQVJwQn1DfkRxQX5EbkpkW3lCfEdhR2BHcUBsTHxCdEh+Q2JFYkN6R054Q3tDfk1WbFFgQWBHZEJ6RXZHYkpoQmpIaUFmRlZ2QnJIYkx5QGxdfEF2SHtcZllpakB6VHddelhpakBkUl9aX11rRl9XZVJ3YEBtSntuQGNGfX1AYEpjZEB2QV9EQ2dDe0N1R3BCd1FxQmtBYUB5TWlFcURiQHtHZ0hpRXVAb0xtQXlDc0NxQmtEb0p5QE15QHBBe0VrQWdCcEFfQU97QXtFaUVtQmNCZ0RrQnNLXHtAZUFnQEd7QWlGY0JfRVFbbUFmQG9AZ0VrR2FGb0NjSGNCb0V5RW1BV2dCd0RzQmBCZ0FZRndEZUJfQFF9Q3dCX0ZtRV9HZ0NvR21GYUNjRWlRbEtlXT93QmpDYURYeURyQW9BUG9DZk9Vfkp3RmRQZVRjVXtoQA==',
     'indalasa':
-        'YWB9cEBpY2Z8VmRLdHxBfEV2ZEdzWWJLYENkTHtUbEN0R2BWaF9AalBxRWZJd2RAdE5pXWdBYUFmTWNYcVVsSXtfQGRMdURpSV9LYUh9bkBpWGV9QHNzQHdfRnhgQGBCal9Ab0ZiQmpIYF9Aa0p2VGBCfFtvWXdBeVVuSXtB',
+        'YWB9cEBpY2Z8VmRLdHxBfEV2ZEdzWWJLX0B2QHBFakZvQGBDa0l8QWdDc0FnRmJDdEdgVnRRckhuSFZiQ35FZ0F8RGlDaENpQnZAfUlMcUt6RHNDYkRpRW5BY0ZXZUhoQ3tHYURjRFdjQG5AXXZLaUBpQXFBUn1AdURlREllQ31DcUR7QGtDYUdsQmFIfkB1S35DY0p6QWNCfENEakR3QWNCX0ZlRl9EUGVBc0h3bEBpWGV9QHNiQHNxQ19QY21BbENxQGZFZkJqSXFCdkt8Q2xGX0FyQ3tCekV1QGhHbkFiRG1BYkJqSHRCV2pGe0N+R0h+SmFFckNFdEJ2QHhHTXBBakFgQU10QXtEfkBVekFkQm5AT1ZhR3BHdUJeeUVwSGFDQH1BfUJ3QWRDcUVhQnFJakN1QWJFRQ==',
     'kalasungay':
-        'eXhpcUBtcHF6VmZgQHNsQHhOaEx0SWFFbkB3U3JQdVlxUl9MeFBnTnRab0F2SHJYcGlAdnFAZHdHfEl6T21CckV7TnhDdEV8SXFUckdySn5RY01sVnRBdE10Z0NudUFufEFiVXpoQGVQZFRnW2xHZ1h0eUBnZ0B+YUBlb0ByQXtTe1F1QH1SYUh9R2dOd3tBcWBAd2lAY0BjTWhHY0FyRGlaaV11TnRAZUl9SFByQXVHY3RAZkNfe0d3ZEFpdEBlQWRBZ0U=',
+        'X3tpcUBlanF6VnRLY1l0TG9IfEJtQ3pAcUdmQmdCdkNcdEN6RmpFbkN0RmFBfkFfQ3xAZ0JNb1BsSnFIZkJrQ3xBd0tzQHNEfU5xQGtBdUJKY0F0RXVGYkpxRnJKUmBPY0J2SHJYcGlAdnFAZHdHfElgTXVAeEF3QGpBb0RBZ0B3QExqQl9BZUFnQHpDaUV4Q3RFQXNBckBJYEVfR2hCc0laZkFgQ1J0QnZHfEBlRGpEcUJ0QE9yQ2JCaEBjQ35ARWBBdUJuSWdAeEZ4QmJEQnhCYEJ6SXJkQ2Z+QGJgQWZWaltiVXpoQGVQZFRfS3ZGZ09UUW5Dc0FuQVl4RGtDYEQ/dkJtS2RdbUN6RWdnQH5hQGVZcUFfVWREX09xT3tDaUF1QH1SdUFlQUxtQHFCSWdCX0RqQHNEbUF3RH5AX0NzRW1EUmFCa0FtQW5DZ0l5QG9AS3tEZUFjQUBrQ2FFdUl0Ql9Dc0VfRWpBbUt1QWNCaEBhRXNNb1B5SGdPQ3VBbUZfQ3FAaUF+QWtGcUJ5QlF9QXBAYUB2Q2ZAfkBpQWxGYVB5QGdJY0V5Q2VXe0l4QnFDeUFxQFRhQ19GbkB9QV1yQXVHZVN2Q31fQE9fe0d3ZEFpdEBlQQ==',
     'kibalabag':
-        'Z2xrcUBxfWZ7VnJnQGdaaHZHekFpUG59Q3pJYnpHaURgW3tOYlJsQ25JdVJySEtiTXFaZk13SW9Mb2JAelF1T3BaQGRVdXhAfkF9Tn5Ka0B0RmBScEdzUHRZb0B2U3VJYEV5TmlMZ2BAcmxAZkBjZEBtekFnfUlvYUJ3bEhmaEN+Qg==',
+        'Z2xrcUBxfWZ7VnJnQGdadGNEP3JxQnpBaVBufUNVZl9CcEp6eURzRm5QS35CdEFwRXNCYEFnS2BQdkNwR0l8QHlEZEF9RWhFfUViQHBBbkd9QXJEdUN+QGVCU3dNZkp9Q3JAZ0NpQGFDcUptQVNpSGpGd0JuQH1EX0BzQnhAbUd4Q21DakNlSGxJb0ZiUEtqSX5AZEdxQHJCZ0NkQHdYVWFPYkJzSlNhRWhCe0h0R3tAZkJObENuQGpAfE5wQHJAckR9QXZLZ0JqQ21KcEhMblB9QGZCX0J+QnVGYEFrRW9DdUN7RndDXWdCZkJ7QHBHfUJsQ3VMbkhvSXpSd0FtVX5CdU1tekFnfUlvYUJ3bEhmaEN+Qg==',
     'kulaman':
-        'X3ZqcUBhX3J7VnRMcUB4UGtPeGBBX0piYEFwUmNCdmVAdlZ6Z0h1Y0Q/c2dAZlptRXN5SWxAdUVmWkU=',
+        'X3ZqcUBhX3J7VnRMcUB4UGtPZlFUflxlRWJFb0JsSl9BYlp+RHhbZEhkSGpDdUFqQ2pBbEJlQXZBakByQV9BcFh2VnpnSHVjRD9zZ0BmWm1Fc3lJbEB1RWhMd0B8THBA',
     'laguitas':
-        'a2hocEBtYl97VnFCZGpEbHdAeUJ7SXJ3QWFcbmtAYVJ8QHdXeHFBZ25BeUVtU3VmQmxMb2hHYnRCZ0g=',
+        'a2hocEBtYl97VnFCZGpEbHdAeUJhRnx+QGBAQUd4QnNDfFNlSnpKfUhsTH1GZFJ1RUtrS2hBd1d4cUFzWmtEc3JAbUBtQmtpQF9QaXxAbExvaEdidEJnSA==',
     'linabo':
-        'a2hocEBtYl97Vn5HZ3xDclZtQG5lQHp0QGp2QWhsQGZmQHxkQX5iQHRXdVd4S3hEYnJBa0R6TXdDb0dvSnpIc19AakByQHRIc0x2SGNPQnVGeEZpRGNFc0tqTXlyQGFQc3lAfEJwQmVqRA==',
+        'a2hocEBtYl97Vn5HZ3xDclZtQG5lQHp0QGp2QWhsQGZmQHxkQX5iQHRXdVd4S2BAfmRBdkNiTGtEek19QHtAV3VEYUFdfUVsQXlAeEN3QXJBX0J1QGVHSmlPakRhQndBYUFAe0F4RXxCVFBkQXFKekRhQXpCY0RcbURjQXFEaEB1RnhGZ0JlQU5vQnFBTWVBaEJlQHRFYUR4QmVDUHNDQGVBZ0JjQ2JCRW9DdUFnQX1Ud0NzRGNDbUlrQHN5QHxCcEJlakQ=',
     'magsaysay':
-        'b3ZrcEBfaHN6VmZuQXhFYE9tRH5MYFVpQXpxQGhDfUJkRGBGeEBiT2VIYktwS3ZsQWNMeEp7U2Z0QGFAYmVAX1RiTWtUdVpvUWJCckJvR29Qb1ZnYkBnXW9nQHdTYVJ5e0BrQXdqQXJoQHxAcFJnR2JXaXFA',
+        'b3ZrcEBfaHN6VnJyQGxAclpqRGBPbUR6QXRHekViRWZDZkZoQGBFc0F8RlJ4RH1BaEZoRGZFUG5ETW5BY0NgQz9sRHJAUnRBcUNkRGBGYEBoQ1VyRmxAZENjQnZIeUNQZ0B4QHBLdmxBbUdmQ3VDcEZnQm5Oe0ZqVndIak15QHJHSnpKfEJkRnFCbElzREZrTnpMdU97Tm9CZ0VlQHFEY0RkQHFAfENxRXNDZ0RyQHJCb0d9RWVAcUlpVWdiQGddb2dAd1NhUnl7QGtBd2pBalZsQWZRT3BSZ0diV2lxQA==',
     'maligaya':
-        'X2tocEB5ZWh7VmxjQmFSdnNAe1B8QG52QHJ+QG5JaGlBdnhAdEN2UW1TbllxcEB4YkBzYUF+fkBrdkFpbEBvZUB7dEBfakJuRGtAZWlDYmhBPw==',
+        'X2tocEB5ZWh7VmxjQmFSdnNAe1ByQ3hJZ0R8UHBBdllyfkBuSWhpQXZ4QHxDYklHckdtUHhQX0J0R3FwQHhiQGFhQGRhQHFfQHhca3ZBaWxAb2VAe3RAX2pCbkRrQGVpQ2JoQT8=',
     'managok':
-        'ZW1jcEB9X2l7VmxhQXdQbl9EdUp1QG5xQ3FUam5EZ1Fuc0F7aUJpV19jQHVXZ2ZAfWRBcmFBX19BcHBAeWJAdFNjYkBnbkF7YkFzfkBvSXRBdWtA',
+        'ZW1jcEB9X2l7VmBkQGtKalxrRW5fRHVKdUBucUNxVGpuRGdRbnNBY2JBaUp3ZkBfTF9jQHVXZ2ZAfWRBcF9AeVxgYUBlYUBwcEB5YkB+QXVHbFB5UEZzR31DY0lpaUF3eEBzfkBvSXFBd1lmRH1Q',
     'manalog':
-        'b3VvcUBxYWd7Vm5hQnZsSGx6QWZ9SWNFdndAYEVySW9PbERvQHpPZ0pvT21Telx5Rm5CZ09nSnVAckx1VnpKbkNnVl9MaEBpd0R3e0dtfEFjdEFvW3dhS35+RXZE',
+        'b3VvcUBxYWd7Vm5hQnZsSGx6QWZ9SV9DdE12QWxVe0NyUmBFckl9S2RBcUJmQlxkTG1BdEJzQFx3QW9Ab0F5TGlBb0FhQUptU3pceUZuQmNLb0ljQ1d9QG5BekByRnNAbkJ1VnpKc0FfQ0FtQnxGY0lXdURpRGlDb0RsQGVBZENna0NhekVha0B1YEFtfEFjdEFvW3dhS35+RXZE',
     'mapayag':
-        'a3ZtcEB5Zm16Vm5nQHZTZmJAZl1uUG5Wc0JuR25RY0JqVHRacVZuekB6WGZrQm9AeFhhSWBPal5+XXhFaUVoTWJDeUBgT2VXemBAbVF+RXFJblhja0B8Vn1GdHVAa1R0U2NAZWdAaVZvckBwQGltQGFMdVdsTG1db0plW25GX0t7SmltQGBDe0VnUmdxQGxKZ0twR3FeeUB9VF9IfUJqRWFHbURnT3JJX1NrSnFUX0B1WWBHZUNlRnFX',
+        'a3ZtcEB5Zm16Vm5nQHZTZmJAZl1wSWhVfEVkQHNCbkdmRHNAcEVyQ3BAfUNiRGVAZEBwRG5CZkV0T3pOd0RkWH1MaEtLYktvQnpIQXhOYkl+UGZGdFlwR3ZuQEh0TnlAYklhSWBPdkFiRmhGbEhoVGxNeEVpRXpCbEFsSXRAeUBgT2VXemBAbVF+RXFJblhja0B8VmJAbFhhSGZcbUZ8SH1Mdkl9QXdIeEBtXXNIY0xXd0JoQWdGaUJrSHdHY0plQntFYUFhR1dtUXpDX05PeUNjQ3tHX0RjRX1CdUhwQG1MYEdhR3hCfUdvSmVbcEFfRXxDX0VTcUJxQW1BeUNzT1VxUGVCY0VwQ3lAaUBxQlhvQHlBc0NpQUlnQF9BXF9DbUFhQFJfQ3tCd0V4QW9De0R3Q2NAc0RgQGdDcUBjQWVBQHRAb0J9QXlBakBvQnRCTU93QGJCZ0R2QmlAWV9IbkNda0F1SHJEa0RDd0J2QHlBaUB9QERzRXdBY0F4QGVBRmFIX0h9Qm5CX0F6QWFFc0JtRWBCcUBOb0RnQWtAYUJOQXtAbEJvQWxBRkFzQWVBT0NjQWBEdUBpQG9EdEFde0FtQW5AWWZAZkBYa0FfRHlDSHVCaUJpQWBAX0N3QFt1QXtEWWNOdEF5QntBd0Z6Qm1EckBuRXBBZ0RrQWVBRXNDaEBjQHtCe0JhQXdL',
     'mapulo':
-        'YX1+cEB3c3d7VmBBZ01oXWZBdmRAdU5wRWdJek5kTFJmeUd9dUFkYEFxcUFre0dyW21MakZ6S2BUbEZmUmVsQA==',
+        'YX1+cEB3c3d7Vlx3S2JAb0BiRFZ6R2BEZEhpQ2JGVmhFb0FyQ2NEcEt7RHxJTWhCd0BoQ2lDZkF9RHpOZExSZnlHfXVBZGBBb1JpYUF3bEBxbURpUG9qQHxBcUNkRVVoSmNDdEBabkV9Q25CcEJDeER+Qm5CYEpuQmhEbkJ0Q0xiRm9FY0BhQEh1Q2ZNbV1pQG9B',
     'miglamin':
-        'dWZocEBvY2x7VmB0QmtvQH5uQW5FfkJnS2JRb0tEd01iYkB9Y0B2UndAclhlVHZDdU98RnhAfFtpVnZ7RXddeUBudkF3ZEJiUHt9QXpwQHJPeHxCb19EdEptYUF2UHNDeUl3c0B6UG1jQmBSaEN1fEI=',
+        'dWZocEBvY2x7VmB0QmtvQH5uQW5FRnNBdkRpQl9BaUVsRG9AQmdDdkN7QmxDSWpCcUFxQH1CYEF1QkljRnJEb0ZoSHFAcENpSmxGe0N+QXVFZERfRGZBT2BFdkFsSl9Dbkd3RXJCe0RuTHFHcEJhR1tvQ2BBY0N+QEVwQXRBakJVakNlQ2hIfUJmQ21EeER5QWREfUV2e0V3XXlAbnZBd2RCYlB7fUF6cEByT3h8Qm9fRHRKa1xqRWFkQGpKc0N5SXdzQHpQbWNCYFJoQ3V8Qg==',
     'patpat':
-        'X3tpcUBlanF6Vmh0QGRBfnpHdmRBYnRAZ0NzQXRHfEhRdUBkSWhddE5zRGhaaUdiQWJAYk1wYEB2aUBmTnZ7QWBIfEd0QHxSelN6UWlbYlFxRW5hQHtEcUxlR3hBZXNCZ2ZAc1NuUF9CcVVfTHlAZU1tVV98RGF9QXNRYW1Db2pAdXJAYVdqRntBa1Q=',
+        'X3tpcUBlanF6Vmh0QGRBfnpHdmRBfF9ATmRTd0NzQXRHfEFcfkVvQFVgQ3hBcEB5QnBDZFd6SWJFeEN4QGZJbUZgUF9BaEF3Q2dAcUBgQFB8QXBCeEJfQmpGcEBoQWxGfkJCdEF4SGZPck1uUGlAYEV0QWJCa0FsS3JFfkR1Qn5CYEV0SUFqQ2RBYkFKekR4QG5Ab0NmSWpBbEFTYEJyRWxEX0F+QmxBdkRrQHJEZkJ+Q3BCSE1sQHRBZEF0QHxSekNoQX5OcE9pW2JRcUVuYUB7QkRfQGdBbEFvQ0N3QWlCZ0NlQVNhQmBCfUFKZXNCZ2ZAX0p8RndDdEh7Q0NebUFjQXVAbkJ3QGVBeUFMcUBvQEJVY0RlQUhWc0Z7QGhBQHVBe0BVWHNAY0JGZ0B4QHdEZUBIYUJvTWtScW9Ba2JAbWtCdXlAc1FhbUNvakB1ckBhV2pGcURfR3RBa0w=',
     'poblacion-01':
-        'a2R5cEB3eHd6VmpDeFhiWGVEaUB+UHhIaENzQnhMfVl6Um1oQGliQHlRd0FrRndHe09wRGNgQHNacmVAfUhwZkFkQQ==',
+        'a2R5cEB3eHd6VmpDeFh+QVZwRXtBZkRkQnpDa0RsRFtiQX5FX0NwRlBsQmpCdEJsRVJpQX5ARWhDe0BwQVZ8Q31ZelJjVH1QZUlnRWNJY0pxSHVCZ0hcY0JpRGdDbUJtRnhBe0N6QnFDY0BzRXtFeUN7QG9DeUVjRkRnQm9CVWNDY0VzQ3JlQH1IYGBAdkJuZUBxQA==',
     'poblacion-02': 'ZWJ4cEB7X3Z6VmZEYkRlU3BWeUp9R3ZZd1I=',
-    'poblacion-03': 'fXx3cEB3enV6VnxKeEt9SnZPVHhRe1N5V2RTcVY=',
-    'poblacion-04': 'a3N3cEBtY3Z6VmpOZEdfTGhMfUp5S3BIdUc=',
-    'poblacion-05': 'X2J4cEBfYHZ6VnJNbUJxSHRHYURnRA==',
-    'poblacion-06': 'aV94cEB1bnZ6VmJKcUlmRWxHYVN4T3RBdU0=',
+    'poblacion-03':
+        'fXx3cEB3enV6VnxKeEtlQ2xCd0ZoTFx0Q3hBZkJhQnpJcUVvSWlNaU1kU3FW',
+    'poblacion-04': 'fXx3cEB3enV6VnpJb0hkRGJIakVpQm5BZEJjQmhFe0h+RX1KeUs=',
+    'poblacion-05': 'X2J4cEBfYHZ6VnJKeUZ+QWpDcUh0R2FEZ0Q=',
+    'poblacion-06':
+        'a353cEB5bXZ6VlV7QnpJcUZmRWxHY0liRXRAekFzSnhGV31DekBxQURpQ2hBX0E=',
     'poblacion-07':
-        'e2F3cEB1bXZ6VnhXYUx0T35Nd1JXbkFyRW1IaERhU3NCd0RgSGVEY0hkT21I',
-    'poblacion-08': 'fW13cEB5cHZ6VnhHc0RmQnZHb1BmSXVDZ0ZiSWNF',
+        'YXJ3cEBnZHZ6VmhkQHdUdEJXZEdiRG5Hekh3UlduQXJFbUhoRHVIakBrSV9EYUJ4QUR+QWhASGVDfEFlRGNI',
+    'poblacion-08': 'YXh3cEB1anZ6VnxRd0pmQnZHb1BmSXVDZ0Y=',
     'poblacion-09':
-        'd3R0cEBlX3t6VnJCZm9DY0x7RHtRfkl5WF9QfVViTGdCd0d5R3JEX0VtR3tPeElhQXVUY1hkRGtDeVhqWnFGakBpd0B6U2FGfFZ3W2BlQXdB',
+        'd3R0cEBlX3t6VmVDYl5gQWpsQHxIcmdAZUNiWmVEeUJ9RmFBaUd6R3FJYkFnRn1Ab0d7SHtEcUNlQ1N9VWJMZ0J3R3lHckRfRW1HY0pwRkd+QW9ERl9DdURgQ19IY0FfRm1EWntDakRnRGVCcUV6QV9CV2tDeVhqWnFGc0FnWG5AYUltQWlNfEN1RXpTYUZ0RWdHeERtS2xKYUdgU3NEfnBAekE=',
     'poblacion-10':
-        'Z3x3cEBranR6VkphVHRWfVh1RGFIeFV6QGtNaGVAcE16UHBLZmlDbFZkYEJjVGxSb3VBb3xBe05jbENgTGFQYGBAZUQ=',
+        'Z3x3cEBranR6VmBCX0h5QWNEXXVDYEBnQXRFYUpgTW1JfEFtQ29Ac0NpQ0tCYUN4QndAaEh+Q3RIa0BxRHRNZ0BBbEBqQHlIZEtwRGJEd0N+Q3RBekRiQnVAZEN0RkF4QXJDZEJwQXRhQH1BekdwQXhZakl6YkFyUXx6QWpBdENsQVB7QHZDX0V+RGdMdEdnVmtbZ35AY2BBe0lzZENpQ3NCVXtCYExhUHZEekBuSlN6SV9BfENtQw==',
     'poblacion-11':
-        'YXN2cEBxYHZ6VnBIb0RoS2hFc0JgXG5JbkFhSn5UbFRoW31IcFR0SHxOfUZuRXZHfkFxQ3JddFFgVF9AflZyRm5FbURkRnhOckdgQ2hMY0V8RnRIfEJUdEx0SGdAfkFuUnNfQGdEX1ZgS3lDZ0RfXHl+Q2VBa2VBcU17UGpNaWVA',
+        'YXN2cEBxYHZ6VnBEY0F+QmtCdkBMekBoQnpER3hBeEFVekRjQlJ+QWZCUHxDe0BmQWBBaEFlQnxDS3pDekB8QH5FZ0ByQHhAbUZgRWhBbEJqQnpAQ3xAZUh0R2ZIdkNZYkVxQn5BeEJsQmxEbUF4QmJKeUB6QGhETH1DYEV5Qm5HakFyRGNCQ01uQHxBcEV5QGBBcEdoRld6QGVGckN0QnJCfEB1QWJCYEFDaER5Q2hKbEBmRGFAdkdkQk5yQm5CVmpIekZ8QmZCdkJlQnBIcEFkRktmRmREbEFsQWBDY0F8Qm1CUkJyQXBAXmRDZUF8QmZIbEFmQHRCVVV4RXRBXGBBcERjRXxGZEBiQHZDRXZCfkF4QH5EYUFyQlxgQ2hCUmxDa0F8QE5gQWhFa0F0QF9AeEN2QGZAdkFlQW5BekBfQmhCSGxBbUZhQ3FFdkB1QH5CeUNPYURlQ2FGZ0F9RGBDa0pHfUNoQ1d8Qm1BUWtBdUNzUX16QWtJe2JBcUF5WXxBe0dxQXVhQHNDZUJAeUFlQ3VGY0J0QHVBe0R2Q19EcURjRHhIZUttQGtAZkBAcER1TQ==',
     'san-jose':
-        'd3JqcEBze2N7VmpyQWFDX0hmfENjdEJmSG1MbmhHbFN0ZkJjV2hxQHFSZkdzaEB9QG1Re05vSG1lQHVKaVRfSHdAZ0V9ekBzUWVcek9lbkF+VHVIe2pDcWlEfFpzYEBqUHlCbFVfckB6dUJ5fEB8a0JhSw==',
+        'd3JqcEBze2N7VmpyQWFDX0hmfENjdEJmSG1MbmhHfk9ofEBsQmppQGNXaHFAcVJmR2dRTmtWbUFtUXtOS3tBekFlQEx7QHlBe0JFcUJfSHtBcENnRFplQnNDeUJnQH1IbUp3SnlAdUNwQHtDY0JvQHtBfEBfQmVBTG9CZkJlQ3lAe0NzQm1CP3NLb0JvQ0B3Q3VBb0JkQmNBQF9FYUNrQX5Be0JRZUN9Q3dBQHdCd0x1VVBzUmRLc1deb0JnQHNEbkR3S2NAYUxyQnVAbkZgQWRAa0F0SHVGe2pDcWlEdk99TWRKdVFqUHlCbFVfckB6dUJ5fEB8a0JhSw==',
     'san-martin':
-        'Z2p8b0BrfWl7VnNPeXxCen1Be3BAbk1wbkRnS2JiQmpRaEV9Q2ZKeE1wSmJLeGpBXGJlQnVYZlNrdkJtQ3BUa25EdEBvcUM=',
+        'Z2p8b0BrfWl7VnNPeXxCen1Be3BAbk1wbkRnS2JiQmpDdUBTakFuQUpmQXBCckNmQHpAZ0BqQnRAa0FgSXFBZEB4TXBKYkt4akFfQ35gQHxDYmNBdVhmU2t2Qm1DcFRrbkR0QG9xQw==',
     'silae':
-        'a3B8cEB1eXh7VmlfQGtQdUdhVnpUbUNhQ2VMclljS31Fd2RHfUp1fkF9R3NTdFV7ZEB+TV9HeENqRnZEd1V4SHlGa0FxR35TX0R4QmtTdmpAX0p9QndOcktfRHRGaEZ4TXtIUHFNbEp3Q25DdkdiS2FCbkhhTHJTc0B2QHdNfEhjQmRgQHR8UntiQHJbcV1ub0JAfGhDZnhDcEN6SmpMb014RHRMYFtzSH5AVHJKa3JGcFJ3dUNrSHx1QWVgQVNneUd7TmVM',
+        'a3B8cEB1eXh7VmNDX0ZvSFd1UXNIdUdhVmZGY0NmQ3JBakl9QW5AYUNxRWtGXndAclljS31Fd2RHfUp1fkFxRGtFeUJ9RkxpRX5AZUF6Qk9+QWNDP2lHdkFnQWxCaUZiRWtCbkB5SGhLd0Z0QUdiQHJGdEJHXWlHbkFtQmJEfUBWZUF1QHtFekR9QE17Q2pDX0BOfUBzQmVCVm1CfEJlQXxIZkJiRmFFZkRlTW1BbUNed0BwR3tAckRrQ3JEdkBqRmNEdkdYeEZlQWZCa0RtQW1CbUVhQnRAe0JuR3tAYkNjQmJDfEBqQHJEZEFHfEJpRWZFVXJDe0FuQHFDXV9JbEp3Q25Ddkd6RGNCZkVAdkF7RHZFZUZ+R2NBckpOZUF5Q3xCfUh4RE5iQ3NCalx6e054QnhfQ3tiQHJbcV1ub0JAfGhDYm1CSGJqQGZDZER0SmJFTlBkQFdkQW9HYEBnRHBBbEBgTGJCfEF+RXZBWnhBd0BqQ35BYkFzSH5AQmZBeENiQWdDZkZrckZwUnd1Q2tIfHVBZWBBU2d5R3tOZUw=',
     'simaya':
-        'd3N9b0BfZ316VmZRb3NBanZCbEN4X0FnckBqQXhiRGhVZkh2RWxMZU1+R2ROb0BfRXBHYEdkSX1hQGVDdVRiZkBmQmhGYVJkSGtcUmhHdk9xTWpLYUh3RWNOcEV5akB7XGtjQGFEY0lpTndNYEFwQGdLa099SWROYXpB',
+        'YX19b0Bze3t6VnBae35CanZCbEN4X0FnckBqQXhiRHJKekdmRHdBbERiQmRAfEdsQ2JAYkBqQmtAUmNCYUF9QWBAeURuQ116Q2BBekBuQ2NDdkJpQHpDYEFOdEBnQ2JCZ0F2QmBHZEl5Q2tBX1RjQ3tBR2dFcEFlRXJHb05uXVdgQmhBXnRAZkJtSHJAc0hwRntGcUJxSHZBY0ZPeUN8QEF8Q3BAfkF+RGpCdkB8Ql1uQG9EZEFpQW5Dd0V0RHVDWWVBX0RlQV1rR2RFd0VKfUNzRW1JRXNJX0dpR29CcUNhSH1Db0F1R3ZAb0JPaUZnRHtPYUBlQnFJfUV3Q3dNYEFXY0FoQWNJZUJfQ3tGYUBhQW1FZ0JQekR1bkA=',
     'sinanglanan':
-        'Z3Z2b0Blfm97VmRGbHZDYUdqd0N+SnJ8QHlBZnZBb2FBZG1AXWNlQmNLeWpBeU1xSnxDZ0prUWlFZktjYkJvTXFuRHZkQmNQ',
+        'Z3Z2b0Blfm97VmRGbHZDYUdqd0N+SnJ8QGRBbmpAX0R2akBrWmROY2ZAfl19Q2NjQX5CX2FAY0t5akF5TXFKcEFlQGpBYUlrQnVAe0BmQHNDZ0BnQXFCb0FLUmtBa0N0QGZLY2JCb01xbkR2ZEJjUA==',
     'st-peter':
-        'Z3JqcUBhZGB8Vn51QmlTdFR0YEBoSXpsQHlabmJAfkF8RWlJYEdwQWBJcU1kTk90SnxHckloX0BoQGNDYEx0WGlBdEdqYUBkRGlIck10QXlDdkhyR2hFY0p8UmhMdUBgRWhIfUlwSGRKUGlIbEV8S1pxTXxKbkFkT3hJZklgXXZGaEFyVGRNck1lakBoSG9SYE11QWZSfkxqUHNCbltnaUBwTWNgQXFSeWBBfkl5UGpPdUxwQHZCX2RN',
+        'Z3JqcUBhZGB8Vn51QmlTdFR0YEBoSXpsQH1EckJmQG5Gb0NLbUByRHFCZkRfRmhEZ0BqRWtEZEF+QXxFcUNsQkJ2Q3NAWmdDX0BsQWhEQnZDa0JiQWVKYEx7QHZFakB8Q3xAckBqQ09oQHpBXWxDZkFkQX5Ea0BoQnVBbkdiRXRFd0F4Rn5AVnhAd0BgQ19DYkRaYEFkRUp0QnNCZEJiQXJCc0B+R0x+QHRESWRFZEJ0Q3hCZEF1QHpKdEB2QnxCdUJmQHNEeEBFdERkQ2JGaUBjQHREdUJgQ3JHaEVtR3RFa0F6RGBAYEFrQGhEfEE/dkBzQ3hBfkJyQ2FBZEBeTH5BdkR2Q0NwQHNAckBlQ2NAUWxAaEJ2QnNDY0BpQVhdZEN4QWxBbkRvQnpBckBtQHZBe0Z0QmZAckBuQ3dAeERHakBmQF18QGtGakJHdkJfRXpBZUByQnRBcEBZbENiQXhBSXZCfENmQXpEfkZqQ21Afk9kSH5EY0B0QWJAXG5EZUJ2QnZERnxBbkRpQ25AakByQmVAbkBqQmBBYENkRnZFakRlakBoSGtGZklhQVx5RGdAZ0NiQ29AZkNlQH5NZEFuQVZqQ3BFXmJCdkFqQHZFbUJiSG5DcEhSdENpQHxBX0NkQWdOfEB7UWpKY0dmQGVIa0N5W2VIY1pfRW1KfkBjRW5CX11kRWdRVXlQak91THBAdkJfZE0=',
     'sto-nino':
-        'fW12b0BveWF7Vmh2QGldelxoQm5GaE9tUWRMR2ZnQH1GbE56V3pafE1Sd0Z6aUJ3e0BAdkBgbEFhTGtRZ1BnRnJBbUtrS3tNfkRxR3lNaEF4THlId0VtTGlVZ0hrQXliRGpaZU4=',
+        'aWl3b0BpamF7Vn5rQWtrQHREY0B2QnxBYllKYkN8SmpCakN5TnpGc0FoRGVAckpgQWZMY0BqTn1GbE50QGRFZFZ0VHxNUkdkYEFfQ2ZEb0JsY0B3e0BARHBxQHBAbll9SXtKY0FvRV9CZUB3RVZ3Q19Cd0F5Ql13RHBCdUV9RXNFbURnR2ZBd0JmQ2NCT3VAe0F1QGVDQWFFYkR1QGFAT2dCbEF7QnBFY0N8QmBBakBTY0BrQm1DY0BlQH1HbURjQmdEdkFzSntHa0F5YkQ=',
     'sumpong':
-        'd3JhcUBpfHl6VmZVdmRBfG5AckNyaUBhXW5vQXJ5QHpPcURqRnZHeFF2QWJpQWBkQWFgQGREe0puVG1WdUFfUmJNc0dzSn1JcFR5Q3VFc0V6TntPbEJld0d9SXFpQHdxQHdIc1h+XE9wQ2thQGBTX1ViXHFLdkpsTHxXe0xKY010UnNIbUNvSXpOY1JoRGFb',
+        'd3JhcUBpfHl6VmBMYm5AZEhyVXxuQHJDcmlAYV1iTnZIdEViQGpHfEt4Q1RiRXZEZEd2QGRDckJUYkNmQm5CYkZFbkN4RXhDekByRXpFcENiQHpDe0JsRnlBZkNsQmJCaERmSF1wSHRCckluSnRIekR8X0B6WWhNaE1wRW5JfUNsQ3tJfkBvSlJ3RHtAc0tuTlF4QmhAZEFjREN5RnlCb0lmQGFBdEJfQURpQGJDc0NjQnVATmtEcEJ9QGREdUJ3R2FDU1tnQWlCcklhRX5Gc0BIQHJBeUN1RXtDaEVkQWZAa0J+QHZATUBmQGtBbkR5QXZAYU10QGV3R31JcWlAd3FAd0hzWHZYVGZDZUBwQHNCc0FlTnJEcU5gS2tOfkZzRW5Ha0N8RF52Qm9AfEl1RnpDbkt6RVxgUG9LZEJSdENfQXxBc0RxQW9HfEVjQHxFaUV4RGVBSH1Ad0NxR2ZLYVByQmFBdUFxRUpfQ3JGb1A=',
     'violeta':
-        'c35gcEBpX356VnppQmhXZU5gekFqT3xJcUBmS3lRbUNnSm5Eb0lpSXtLbENtVV9PeU98R3lBa0p7SmhAa0dtSV9OckNqRHtNeURjckF0V3lL',
+        'c35gcEBpX356VnZmQH5LYmJBaEppSGpqQHtEdG5AZkJRYEFsRXpGYEBkQn5CaUFiSVZiQWFJcEBvRX1EZ0FBX0J0QGFAeEFlRl51Ql9BeUVpR29EZkRrRllpRmlDb0pvSXNCZUBlQGZEbUNqQWVKaEB1QW1BYEF7RGVBYUJvQ3tCa0ZkRFdlR3dEcEB7QHlCX0F+Ql9FWGtCakFzQnFBakR7TXdDY0xhQF9lQXRXeUs=',
     'zamboanguita':
-        'Z3tmcUBreGB8Vn5sQn18QmpsQHBJcnNAdl9GaFhkfUBgSHxuQGhJfkplTHREcUl0XnBZZllxU3RpQGFUbUZrRntLdVh6R2NQamBAd0tqRWVbe1JpQXNUYV13RnlJZ0lvQWVPcE19Sn1LW2hIbUVlSlF8SXFIYUVpSGlMdEBiSn1Sc0dpRXhDd0hzTXVBZURoSHVHa2FAdVhoQXxDb0tjYEB7QGlJcU5sT31UYkRzWGxafWFAaUl7bEB1VHVgQA==',
+        'Z3tmcUBreGB8VmRPa1V2akF3eEFyQ0V2QWdDaERLakRfSH5HQnZGfERiSmRDekRlQGBGYkJwQ3NAfk9ibUFyYkBycUNoWGR9QHJIdmxAUWRBZEZ+Q2JCfkVrRHZBfUNFe0FiQl9EYkpfQXRLcUJ6Rm5DZkhwRHpAZEN8Q2RESHxAdERwQVNyQXhDZ01sXUl0Q2JAYEBjRm5FdUNNaURvQmFKb0JfQ29CQnlEb0JxQm9FfEN1QFtpSmJDZUVUbUF2QWtAdkdhR3xJcUNyQVVoR2lFckRtRVZTbUFjQ3FCdUJZcURwQHdFa0RhQ2VGa0JhQWRAb0BrQHNCaENvQH1Bb0R3REdkQndCXW9EdUFjQF9FYkBfUGVIa0NsQHtEX0d9Q2dBSHdCY0F5QVhtQ3VBcUBkQHNCfkR7QUZ3QmpGa0JcfUBrQGdAeURGb0N2QGdAc0B6RnVCbEB3QXtBc0BvRG5CeUFtQVxlQ2hBWXJDYkBpQndCUG1AZENiQHJAc0BCcUB3RHdDTV9CZUBfQHNDYEF5QV9Dd0ByQ31BP2pAaURhQGFBakF7RGxHdUVzR2lFdEJhQ2JAdURjRmhAdURlQ3lARGdAckR9QnRCdUB3QnRAe0p5QmVBZUJ1Q0hlRV9BdURfSE1zQnJAZUJjQXVCckJlRUtbYUF+QmNEeEBpRHNHcUF1RXZBb0djRWlCdEFfRWpAZ0FlQVJ7RHlAY0F3Q1pjQWdFekB3RWRKYUxqQmNBQ3dDc0FlQ3RAb0B2QWpAckBbQ3dDcENtQnNBb0Z+Q3NAZkBrRX5FaURwQmdEbEBzRG5DSmdAb0Z8RHNCaUl7bEB1VHVgQA==',
   };
 
   static final Map<String, List<LatLng>> _cachedPolygons =
@@ -2835,6 +2837,25 @@ class _ChoBarangaySurveillanceMapState
                 userAgentPackageName: 'com.aidsuhis.malaybalay.cho',
                 maxZoom: 19,
               ),
+              if (_showPolygons)
+                ...visibleMapSummaries.map((summary) {
+                  final isSelected =
+                      summary.barangay.code == selectedSummary.barangay.code;
+                  return PolygonLayer(
+                    polygons: <Polygon>[
+                      Polygon(
+                        points: summary.polygon,
+                        color: isSelected
+                            ? summary.badgeColor.withValues(alpha: 0.38)
+                            : summary.badgeColor.withValues(alpha: 0.20),
+                        borderColor: isSelected
+                            ? const Color(0xFF0F172A)
+                            : summary.strokeColor.withValues(alpha: 0.78),
+                        borderStrokeWidth: isSelected ? 2.4 : 1.25,
+                      ),
+                    ],
+                  );
+                }),
               if (_showHeatHalos)
                 CircleLayer(
                   circles: visibleMapSummaries
@@ -2855,224 +2876,156 @@ class _ChoBarangaySurveillanceMapState
                       })
                       .toList(growable: false),
                 ),
-              if (_showPolygons)
-                MarkerLayer(
-                  markers: orderedMarkers
-                      .map((summary) {
-                        final isSelected =
-                            summary.barangay.code ==
-                            selectedSummary.barangay.code;
-                        final showLabelForThisMarker =
-                            showExpandedPills || isSelected;
-                        final shortName = summary.barangay.name.replaceFirst(
-                          'Barangay ',
-                          'Brgy ',
-                        );
+              MarkerLayer(
+                markers: orderedMarkers
+                    .map((summary) {
+                      final isSelected =
+                          summary.barangay.code ==
+                          selectedSummary.barangay.code;
+                      final showLabelForThisMarker =
+                          showExpandedPills || isSelected;
+                      final shortName = summary.barangay.name.replaceFirst(
+                        'Barangay ',
+                        'Brgy ',
+                      );
 
-                        return Marker(
-                          point: summary.center,
-                          width: showLabelForThisMarker ? 134 : 32,
-                          height: showLabelForThisMarker ? 38 : 32,
-                          child: GestureDetector(
-                            key: ValueKey<String>(
-                              'barangay-map-marker-${summary.barangay.code}',
-                            ),
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => _selectBarangay(summary),
-                            child: Tooltip(
-                              message:
-                                  '${summary.barangay.name} (${summary.barangay.district})\n'
-                                  '${summary.totalCases} cases · ${summary.tierLabel}\n'
-                                  'Leading: ${summary.dominantDisease}',
-                              child: Center(
-                                child: showLabelForThisMarker
-                                    ? Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
+                      return Marker(
+                        point: summary.center,
+                        width: showLabelForThisMarker ? 134 : 32,
+                        height: showLabelForThisMarker ? 38 : 32,
+                        child: GestureDetector(
+                          key: ValueKey<String>(
+                            'barangay-map-marker-${summary.barangay.code}',
+                          ),
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => _selectBarangay(summary),
+                          child: Tooltip(
+                            message:
+                                '${summary.barangay.name} (${summary.barangay.district})\n'
+                                '${summary.totalCases} cases · ${summary.tierLabel}\n'
+                                'Leading: ${summary.dominantDisease}',
+                            child: Center(
+                              child: showLabelForThisMarker
+                                  ? Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? const Color(0xFF0F172A)
+                                            : const Color(0xFF1E293B),
+                                        borderRadius: BorderRadius.circular(
+                                          999,
                                         ),
-                                        decoration: BoxDecoration(
-                                          color: isSelected
-                                              ? const Color(0xFF0F172A)
-                                              : const Color(0xFF1E293B),
-                                          borderRadius: BorderRadius.circular(
-                                            999,
-                                          ),
-                                          border: Border.all(
-                                            color: Colors.white,
-                                            width: isSelected ? 2.2 : 1.6,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: summary.badgeColor
-                                                  .withValues(
-                                                    alpha: isSelected
-                                                        ? 0.60
-                                                        : 0.35,
-                                                  ),
-                                              blurRadius: isSelected ? 10 : 6,
-                                              spreadRadius: isSelected
-                                                  ? 1.5
-                                                  : 0,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: isSelected ? 2.2 : 1.6,
                                         ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Container(
-                                              width: 7,
-                                              height: 7,
-                                              decoration: BoxDecoration(
-                                                color: summary.badgeColor,
-                                                shape: BoxShape.circle,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 5),
-                                            Flexible(
-                                              child: Text(
-                                                shortName,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 10.5,
-                                                  fontWeight: FontWeight.w700,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: summary.badgeColor
+                                                .withValues(
+                                                  alpha: isSelected
+                                                      ? 0.60
+                                                      : 0.35,
                                                 ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 5),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 1.5,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: summary.badgeColor,
-                                                borderRadius:
-                                                    BorderRadius.circular(999),
-                                              ),
-                                              child: Text(
-                                                '${summary.totalCases}',
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 9.5,
-                                                  fontWeight: FontWeight.w900,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    : Container(
-                                        width: 28,
-                                        height: 28,
-                                        alignment: Alignment.center,
-                                        decoration: BoxDecoration(
-                                          color: summary.badgeColor,
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: Colors.white,
-                                            width: 2.0,
+                                            blurRadius: isSelected ? 10 : 6,
+                                            spreadRadius: isSelected ? 1.5 : 0,
+                                            offset: const Offset(0, 2),
                                           ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: summary.badgeColor
-                                                  .withValues(alpha: 0.45),
-                                              blurRadius: 6,
-                                              spreadRadius: 0.5,
-                                              offset: const Offset(0, 2),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 7,
+                                            height: 7,
+                                            decoration: BoxDecoration(
+                                              color: summary.badgeColor,
+                                              shape: BoxShape.circle,
                                             ),
-                                            const BoxShadow(
-                                              color: Color(0x33000000),
-                                              blurRadius: 3,
-                                              offset: Offset(0, 1),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Text(
-                                          '${summary.totalCases}',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w900,
                                           ),
+                                          const SizedBox(width: 5),
+                                          Flexible(
+                                            child: Text(
+                                              shortName,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 1.5,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: summary.badgeColor,
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                            ),
+                                            child: Text(
+                                              '${summary.totalCases}',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.w900,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : Container(
+                                      width: 28,
+                                      height: 28,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: summary.badgeColor,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2.0,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: summary.badgeColor
+                                                .withValues(alpha: 0.45),
+                                            blurRadius: 6,
+                                            spreadRadius: 0.5,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                          const BoxShadow(
+                                            color: Color(0x33000000),
+                                            blurRadius: 3,
+                                            offset: Offset(0, 1),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Text(
+                                        '${summary.totalCases}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w900,
                                         ),
                                       ),
-                              ),
+                                    ),
                             ),
                           ),
-                        );
-                      })
-                      .toList(growable: false),
-                ),
+                        ),
+                      );
+                    })
+                    .toList(growable: false),
+              ),
             ],
-          ),
-          // Top-left active scope overlay banner
-          Positioned(
-            top: 12,
-            left: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.94),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x120F172A),
-                    blurRadius: 10,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF10B981),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x4010B981),
-                              blurRadius: 4,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 7),
-                      Text(
-                        'Malaybalay surveillance • ${_selectedCategory.label}',
-                        style: const TextStyle(
-                          color: Color(0xFF0F172A),
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    '46 barangay reporting points • select a marker to inspect cases',
-                    style: TextStyle(
-                      color: Color(0xFF64748B),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
           // Top-right compact Leaflet navigation dock
           Positioned(
@@ -3202,8 +3155,8 @@ class _ChoBarangaySurveillanceMapState
                 spacing: 6,
                 children: [
                   _layerTogglePill(
-                    label: 'Case markers',
-                    icon: Icons.location_on_outlined,
+                    label: 'Barangay zones',
+                    icon: Icons.pentagon_outlined,
                     active: _showPolygons,
                     onTap: () => setState(() => _showPolygons = !_showPolygons),
                   ),

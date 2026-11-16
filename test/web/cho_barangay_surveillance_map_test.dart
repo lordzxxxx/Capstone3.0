@@ -290,7 +290,7 @@ void main() {
           findsOneWidget,
         );
         expect(find.byType(FlutterMap), findsOneWidget);
-        expect(find.byType(PolygonLayer), findsNothing);
+        expect(find.byType(PolygonLayer), findsNWidgets(46));
         expect(find.byType(CircleLayer), findsOneWidget);
         expect(find.byType(MarkerLayer), findsOneWidget);
 
