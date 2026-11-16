@@ -358,20 +358,11 @@ class MalaybalayBarangayGeoRegistry {
         ),
       );
 
-  /// Returns the geographic center for [barangay].
+  /// Returns the reviewed map reference point for [barangay].
+  ///
+  /// The published heatmap uses reporting points, not the historical polygon
+  /// asset, until that asset has passed visual GIS validation in Flutter Web.
   static LatLng centerFor(BarangayReference barangay) {
-    final polygon = _cachedPolygons[barangay.code.toLowerCase()];
-    if (polygon != null && polygon.isNotEmpty) {
-      final points = polygon.length > 1
-          ? polygon.sublist(0, polygon.length - 1)
-          : polygon;
-      return LatLng(
-        points.fold<double>(0, (total, point) => total + point.latitude) /
-            points.length,
-        points.fold<double>(0, (total, point) => total + point.longitude) /
-            points.length,
-      );
-    }
     return coordinatesByCode[barangay.code.toLowerCase()] ?? cityCenter;
   }
 
@@ -2844,28 +2835,6 @@ class _ChoBarangaySurveillanceMapState
                 userAgentPackageName: 'com.aidsuhis.malaybalay.cho',
                 maxZoom: 19,
               ),
-              // Keep each reference boundary in its own layer. Flutter Web's
-              // polygon batching can join unrelated complex paths and paint
-              // across the map when all 46 zones share a single canvas pass.
-              if (_showPolygons)
-                ...visibleMapSummaries.map((summary) {
-                  final isSelected =
-                      summary.barangay.code == selectedSummary.barangay.code;
-                  return PolygonLayer(
-                    polygons: <Polygon>[
-                      Polygon(
-                        points: summary.polygon,
-                        color: isSelected
-                            ? summary.badgeColor.withValues(alpha: 0.38)
-                            : summary.badgeColor.withValues(alpha: 0.16),
-                        borderColor: isSelected
-                            ? const Color(0xFF0F172A)
-                            : summary.strokeColor.withValues(alpha: 0.60),
-                        borderStrokeWidth: isSelected ? 2.6 : 1.2,
-                      ),
-                    ],
-                  );
-                }),
               if (_showHeatHalos)
                 CircleLayer(
                   circles: visibleMapSummaries
@@ -2886,155 +2855,159 @@ class _ChoBarangaySurveillanceMapState
                       })
                       .toList(growable: false),
                 ),
-              MarkerLayer(
-                markers: orderedMarkers
-                    .map((summary) {
-                      final isSelected =
-                          summary.barangay.code ==
-                          selectedSummary.barangay.code;
-                      final showLabelForThisMarker =
-                          showExpandedPills || isSelected;
-                      final shortName = summary.barangay.name.replaceFirst(
-                        'Barangay ',
-                        'Brgy ',
-                      );
+              if (_showPolygons)
+                MarkerLayer(
+                  markers: orderedMarkers
+                      .map((summary) {
+                        final isSelected =
+                            summary.barangay.code ==
+                            selectedSummary.barangay.code;
+                        final showLabelForThisMarker =
+                            showExpandedPills || isSelected;
+                        final shortName = summary.barangay.name.replaceFirst(
+                          'Barangay ',
+                          'Brgy ',
+                        );
 
-                      return Marker(
-                        point: summary.center,
-                        width: showLabelForThisMarker ? 134 : 32,
-                        height: showLabelForThisMarker ? 38 : 32,
-                        child: GestureDetector(
-                          key: ValueKey<String>(
-                            'barangay-map-marker-${summary.barangay.code}',
-                          ),
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () => _selectBarangay(summary),
-                          child: Tooltip(
-                            message:
-                                '${summary.barangay.name} (${summary.barangay.district})\n'
-                                '${summary.totalCases} cases · ${summary.tierLabel}\n'
-                                'Leading: ${summary.dominantDisease}',
-                            child: Center(
-                              child: showLabelForThisMarker
-                                  ? Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? const Color(0xFF0F172A)
-                                            : const Color(0xFF1E293B),
-                                        borderRadius: BorderRadius.circular(
-                                          999,
+                        return Marker(
+                          point: summary.center,
+                          width: showLabelForThisMarker ? 134 : 32,
+                          height: showLabelForThisMarker ? 38 : 32,
+                          child: GestureDetector(
+                            key: ValueKey<String>(
+                              'barangay-map-marker-${summary.barangay.code}',
+                            ),
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _selectBarangay(summary),
+                            child: Tooltip(
+                              message:
+                                  '${summary.barangay.name} (${summary.barangay.district})\n'
+                                  '${summary.totalCases} cases · ${summary.tierLabel}\n'
+                                  'Leading: ${summary.dominantDisease}',
+                              child: Center(
+                                child: showLabelForThisMarker
+                                    ? Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
                                         ),
-                                        border: Border.all(
-                                          color: Colors.white,
-                                          width: isSelected ? 2.2 : 1.6,
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? const Color(0xFF0F172A)
+                                              : const Color(0xFF1E293B),
+                                          borderRadius: BorderRadius.circular(
+                                            999,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: isSelected ? 2.2 : 1.6,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: summary.badgeColor
+                                                  .withValues(
+                                                    alpha: isSelected
+                                                        ? 0.60
+                                                        : 0.35,
+                                                  ),
+                                              blurRadius: isSelected ? 10 : 6,
+                                              spreadRadius: isSelected
+                                                  ? 1.5
+                                                  : 0,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
                                         ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: summary.badgeColor
-                                                .withValues(
-                                                  alpha: isSelected
-                                                      ? 0.60
-                                                      : 0.35,
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              width: 7,
+                                              height: 7,
+                                              decoration: BoxDecoration(
+                                                color: summary.badgeColor,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Flexible(
+                                              child: Text(
+                                                shortName,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10.5,
+                                                  fontWeight: FontWeight.w700,
                                                 ),
-                                            blurRadius: isSelected ? 10 : 6,
-                                            spreadRadius: isSelected ? 1.5 : 0,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Container(
-                                            width: 7,
-                                            height: 7,
-                                            decoration: BoxDecoration(
-                                              color: summary.badgeColor,
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 5),
-                                          Flexible(
-                                            child: Text(
-                                              shortName,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 10.5,
-                                                fontWeight: FontWeight.w700,
                                               ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 5),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 1.5,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: summary.badgeColor,
-                                              borderRadius:
-                                                  BorderRadius.circular(999),
-                                            ),
-                                            child: Text(
-                                              '${summary.totalCases}',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 9.5,
-                                                fontWeight: FontWeight.w900,
+                                            const SizedBox(width: 5),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 1.5,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: summary.badgeColor,
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                              ),
+                                              child: Text(
+                                                '${summary.totalCases}',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 9.5,
+                                                  fontWeight: FontWeight.w900,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  : Container(
-                                      width: 28,
-                                      height: 28,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: summary.badgeColor,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white,
-                                          width: 2.0,
+                                          ],
                                         ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: summary.badgeColor
-                                                .withValues(alpha: 0.45),
-                                            blurRadius: 6,
-                                            spreadRadius: 0.5,
-                                            offset: const Offset(0, 2),
+                                      )
+                                    : Container(
+                                        width: 28,
+                                        height: 28,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: summary.badgeColor,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2.0,
                                           ),
-                                          const BoxShadow(
-                                            color: Color(0x33000000),
-                                            blurRadius: 3,
-                                            offset: Offset(0, 1),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: summary.badgeColor
+                                                  .withValues(alpha: 0.45),
+                                              blurRadius: 6,
+                                              spreadRadius: 0.5,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                            const BoxShadow(
+                                              color: Color(0x33000000),
+                                              blurRadius: 3,
+                                              offset: Offset(0, 1),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Text(
+                                          '${summary.totalCases}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w900,
                                           ),
-                                        ],
-                                      ),
-                                      child: Text(
-                                        '${summary.totalCases}',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w900,
                                         ),
                                       ),
-                                    ),
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    })
-                    .toList(growable: false),
-              ),
+                        );
+                      })
+                      .toList(growable: false),
+                ),
             ],
           ),
           // Top-left active scope overlay banner
@@ -3090,7 +3063,7 @@ class _ChoBarangaySurveillanceMapState
                   ),
                   const SizedBox(height: 2),
                   const Text(
-                    '46 PSGC reference zones (2015) • click a zone to inspect cases',
+                    '46 barangay reporting points • select a marker to inspect cases',
                     style: TextStyle(
                       color: Color(0xFF64748B),
                       fontSize: 10,
@@ -3229,8 +3202,8 @@ class _ChoBarangaySurveillanceMapState
                 spacing: 6,
                 children: [
                   _layerTogglePill(
-                    label: 'Choropleth Zones',
-                    icon: Icons.pentagon_outlined,
+                    label: 'Case markers',
+                    icon: Icons.location_on_outlined,
                     active: _showPolygons,
                     onTap: () => setState(() => _showPolygons = !_showPolygons),
                   ),
