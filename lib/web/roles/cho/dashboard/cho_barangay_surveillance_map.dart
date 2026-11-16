@@ -2668,9 +2668,11 @@ class _ChoBarangaySurveillanceMapState
               },
             ),
             children: [
-              // Free OpenStreetMap Standard Leaflet Tile Server (No API key required)
+              // Free OpenStreetMap Leaflet Tile Server (Humanitarian OSM - No API key required)
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate:
+                    'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+                subdomains: const ['a', 'b', 'c'],
                 userAgentPackageName: 'com.aidsuhis.malaybalay.cho',
                 maxZoom: 19,
               ),
