@@ -2844,26 +2844,28 @@ class _ChoBarangaySurveillanceMapState
                 userAgentPackageName: 'com.aidsuhis.malaybalay.cho',
                 maxZoom: 19,
               ),
+              // Keep each reference boundary in its own layer. Flutter Web's
+              // polygon batching can join unrelated complex paths and paint
+              // across the map when all 46 zones share a single canvas pass.
               if (_showPolygons)
-                PolygonLayer(
-                  polygons: visibleMapSummaries
-                      .map((summary) {
-                        final isSelected =
-                            summary.barangay.code ==
-                            selectedSummary.barangay.code;
-                        return Polygon(
-                          points: summary.polygon,
-                          color: isSelected
-                              ? summary.badgeColor.withValues(alpha: 0.38)
-                              : summary.badgeColor.withValues(alpha: 0.16),
-                          borderColor: isSelected
-                              ? const Color(0xFF0F172A)
-                              : summary.strokeColor.withValues(alpha: 0.60),
-                          borderStrokeWidth: isSelected ? 2.6 : 1.2,
-                        );
-                      })
-                      .toList(growable: false),
-                ),
+                ...visibleMapSummaries.map((summary) {
+                  final isSelected =
+                      summary.barangay.code == selectedSummary.barangay.code;
+                  return PolygonLayer(
+                    polygons: <Polygon>[
+                      Polygon(
+                        points: summary.polygon,
+                        color: isSelected
+                            ? summary.badgeColor.withValues(alpha: 0.38)
+                            : summary.badgeColor.withValues(alpha: 0.16),
+                        borderColor: isSelected
+                            ? const Color(0xFF0F172A)
+                            : summary.strokeColor.withValues(alpha: 0.60),
+                        borderStrokeWidth: isSelected ? 2.6 : 1.2,
+                      ),
+                    ],
+                  );
+                }),
               if (_showHeatHalos)
                 CircleLayer(
                   circles: visibleMapSummaries

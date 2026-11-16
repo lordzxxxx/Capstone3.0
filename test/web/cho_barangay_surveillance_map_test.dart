@@ -26,6 +26,10 @@ void main() {
           greaterThanOrEqualTo(3),
           reason: '${barangay.name} must have a valid PSGC reference polygon',
         );
+        for (final point in polygon) {
+          expect(point.latitude, inInclusiveRange(7.90, 8.35));
+          expect(point.longitude, inInclusiveRange(124.90, 125.45));
+        }
       }
     });
   });
@@ -286,7 +290,7 @@ void main() {
           findsOneWidget,
         );
         expect(find.byType(FlutterMap), findsOneWidget);
-        expect(find.byType(PolygonLayer), findsOneWidget);
+        expect(find.byType(PolygonLayer), findsNWidgets(46));
         expect(find.byType(CircleLayer), findsOneWidget);
         expect(find.byType(MarkerLayer), findsOneWidget);
 
