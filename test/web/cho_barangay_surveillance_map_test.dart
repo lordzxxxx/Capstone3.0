@@ -1,0 +1,244 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
+import 'package:mycapstone_project/web/roles/cho/dashboard/cho_barangay_surveillance_map.dart';
+
+void main() {
+  group('MalaybalayBarangayGeoRegistry', () {
+    test('every Malaybalay barangay has valid coordinates and polygon', () {
+      for (final barangay in MalaybalayBarangays.all) {
+        final center = MalaybalayBarangayGeoRegistry.centerFor(barangay);
+        expect(
+          center.latitude,
+          inInclusiveRange(7.90, 8.35),
+          reason: '${barangay.name} latitude out of Malaybalay bounds',
+        );
+        expect(
+          center.longitude,
+          inInclusiveRange(125.00, 125.45),
+          reason: '${barangay.name} longitude out of Malaybalay bounds',
+        );
+
+        final polygon = MalaybalayBarangayGeoRegistry.polygonFor(barangay);
+        expect(
+          polygon.length,
+          greaterThanOrEqualTo(3),
+          reason: '${barangay.name} must have a valid Voronoi polygon',
+        );
+      }
+    });
+  });
+
+  group('ChoBarangaySurveillanceEngine', () {
+    test('resolves barangays from aliases, Firestore path, and BHW user link', () {
+      expect(
+        ChoBarangaySurveillanceEngine.resolveBarangay({
+          'barangay': 'Barangay 1',
+        })?.code,
+        'poblacion-01',
+      );
+      expect(
+        ChoBarangaySurveillanceEngine.resolveBarangay({
+          'barangay': 'Sto Nino',
+        })?.code,
+        'sto-nino',
+      );
+      expect(
+        ChoBarangaySurveillanceEngine.resolveBarangay({
+          '_firestorePath': 'barangays/CASISANG/checkup_records/rec-01',
+        })?.code,
+        'casisang',
+      );
+
+      final aglayan = MalaybalayBarangays.byCode('aglayan')!;
+      expect(
+        ChoBarangaySurveillanceEngine.resolveBarangay(
+          {'createdByUid': 'bhw-uid-99'},
+          bhwBarangayByUid: {'bhw-uid-99': aglayan},
+        )?.code,
+        'aglayan',
+      );
+    });
+
+    test(
+      'aggregates all collections, covers all barangays and diseases, and changes colors by case load',
+      () {
+        final bhwUsers = ChoBarangaySurveillanceEngine.parseBhwUsers([
+          {
+            'uid': 'bhw-casisang-1',
+            'fullName': 'Elena Santos',
+            'email': 'elena@aidsuhis.com',
+            'role': 'BHW',
+            'barangay': 'Casisang',
+            'barangayCode': 'CASISANG',
+          },
+        ]);
+        expect(bhwUsers.length, 1);
+        expect(bhwUsers.first.barangay.code, 'casisang');
+
+        final allCases = ChoBarangaySurveillanceEngine.aggregateAllCases(
+          morbidityRows: [
+            for (var i = 0; i < 22; i++)
+              {
+                'id': 'morb-casisang-$i',
+                'barangay': 'Casisang',
+                'disease': 'Dengue Fever',
+                'classification': 'communicable',
+                'severity': 'Critical',
+              },
+          ],
+          checkupRows: [
+            {
+              'id': 'chk-1',
+              'createdByUid': 'bhw-casisang-1',
+              'disease': 'Hypertension',
+              'diseaseType': 'Non-Communicable',
+              'severity': 'Moderate',
+            },
+          ],
+          mortalityRows: [
+            {
+              'id': 'mort-1',
+              'barangay': 'Aglayan',
+              'causeOfDeath': 'Stroke',
+              'severity': 'Critical',
+            },
+          ],
+          prenatalRows: [
+            {
+              'id': 'pren-1',
+              'barangay': 'Sumpong',
+              'riskLevel': 'High Risk',
+            },
+          ],
+          immunizationRows: [
+            {
+              'id': 'imm-1',
+              'barangay': 'Dalwangan',
+              'vaccine': 'BCG',
+            },
+          ],
+          referralRows: [
+            {
+              'id': 'ref-1',
+              'barangay': 'Kalasungay',
+              'referralReason': 'Severe Pneumonia',
+              'priority': 'Emergency',
+            },
+          ],
+          patientRows: const [],
+          bhwUsers: bhwUsers,
+        );
+
+        final summaries = ChoBarangaySurveillanceEngine.buildSummaries(
+          allCases: allCases,
+          bhwUsers: bhwUsers,
+          syncedWorkspaceCodes: {'CASISANG'},
+        );
+
+        // Every Malaybalay barangay is covered and has active cases.
+        expect(summaries.length, MalaybalayBarangays.all.length);
+        expect(summaries.every((s) => s.totalCases > 0), isTrue);
+
+        // Casisang has the highest load -> Critical tier color
+        final casisangSummary = summaries.firstWhere(
+          (s) => s.barangay.code == 'casisang',
+        );
+        expect(casisangSummary.tier, BarangayEpidemiologicalTier.critical);
+        expect(casisangSummary.assignedBhwUsers.first.name, 'Elena Santos');
+
+        // Distinct tiers and colors exist across barangays
+        final distinctTiers = summaries.map((s) => s.tier).toSet();
+        expect(distinctTiers.length, greaterThanOrEqualTo(3));
+
+        // Filtering by Mortality updates case counts & colors dynamically
+        final mortalitySummaries = ChoBarangaySurveillanceEngine.buildSummaries(
+          allCases: allCases,
+          bhwUsers: bhwUsers,
+          syncedWorkspaceCodes: {'CASISANG'},
+          categoryFilter: SurveillanceCaseCategory.mortality,
+        );
+        final aglayanMortality = mortalitySummaries.firstWhere(
+          (s) => s.barangay.code == 'aglayan',
+        );
+        final casisangMortality = mortalitySummaries.firstWhere(
+          (s) => s.barangay.code == 'casisang',
+        );
+        expect(aglayanMortality.totalCases, 1);
+        expect(casisangMortality.totalCases, 0);
+        expect(
+          aglayanMortality.badgeColor,
+          isNot(equals(casisangMortality.badgeColor)),
+        );
+      },
+    );
+  });
+
+  group('ChoBarangaySurveillanceMap widget', () {
+    testWidgets('renders interactive FlutterMap, layers, and selects barangay', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1440, 1100));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cases = ChoBarangaySurveillanceEngine.aggregateAllCases(
+        morbidityRows: const [],
+        checkupRows: const [],
+        mortalityRows: const [],
+        prenatalRows: const [],
+        immunizationRows: const [],
+        referralRows: const [],
+        patientRows: const [],
+        bhwUsers: const [],
+      );
+
+      BarangayReference? selected;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ChoBarangaySurveillanceMap(
+                allCases: cases,
+                bhwUsers: const [],
+                syncedWorkspaceCodes: const {'POBLACION-01', 'CASISANG'},
+                windowLabel: 'Last 6 Months',
+                onBarangaySelected: (b) => selected = b,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Interactive Barangay Disease & Case Surveillance Map'),
+        findsOneWidget,
+      );
+      expect(find.byType(FlutterMap), findsOneWidget);
+      expect(find.byType(PolygonLayer), findsOneWidget);
+      expect(find.byType(CircleLayer), findsOneWidget);
+      expect(find.byType(MarkerLayer), findsOneWidget);
+
+      // Filter by Communicable Diseases chip
+      await tester.tap(find.text('Communicable Diseases'));
+      await tester.pumpAndSettle();
+
+      // Expand all barangays in directory and select Casisang
+      final showAllFinder = find.textContaining('Show All');
+      if (showAllFinder.evaluate().isNotEmpty) {
+        await tester.ensureVisible(showAllFinder);
+        await tester.tap(showAllFinder);
+        await tester.pumpAndSettle();
+      }
+
+      final casisangDirItem = find.byKey(
+        const ValueKey<String>('barangay-directory-item-casisang'),
+      );
+      await tester.ensureVisible(casisangDirItem);
+      await tester.tap(casisangDirItem);
+      await tester.pumpAndSettle();
+      expect(selected?.code, 'casisang');
+    });
+  });
+}

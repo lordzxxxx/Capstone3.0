@@ -9,11 +9,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mycapstone_project/firebase_helper.dart';
+import 'package:mycapstone_project/shared/barangay_firestore_paths.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/malaybalay_barangays.dart';
 import 'package:mycapstone_project/shared/patient_age_categories.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/features/auth/cho_access_session.dart';
+import 'package:mycapstone_project/web/roles/cho/dashboard/cho_barangay_surveillance_map.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_navigation.dart';
 import 'package:mycapstone_project/web/shared/components/web_responsive_body.dart';
 import 'package:mycapstone_project/web/roles/cho/portal/cho_portal_config.dart';
@@ -83,7 +85,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
   static const List<int> _forecastWindows = <int>[30, 60, 90];
   // Dashboard analytics currently aggregate client-side. Keep live listeners
   // bounded until server-side summaries or cursor pagination are available.
-  static const int _dashboardReadLimit = 500;
+  static const int _dashboardReadLimit = 2500;
 
   final FirebaseFirestore _firestore = getFirestoreInstance();
   final List<Map<String, dynamic>> _rows = [];
@@ -94,6 +96,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
   final List<Map<String, dynamic>> _mortalityRows = [];
   final List<Map<String, dynamic>> _referralRows = [];
   final List<Map<String, dynamic>> _overdueFollowUps = [];
+  List<SyncedBhwUserSummary> _bhwUsers = const <SyncedBhwUserSummary>[];
+  final Set<String> _syncedBarangayWorkspaceCodes = <String>{};
+  bool _isSyncingAllBarangays = false;
+  bool _autoBaselineSyncTriggered = false;
   bool _isLoading = false;
   bool _authorized = false;
   _ChoAnalyticsWindow _analyticsWindow = _ChoAnalyticsWindow.last6Months;
@@ -129,6 +135,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
   StreamSubscription<QuerySnapshot>? _morbiditySubscription;
   StreamSubscription<QuerySnapshot>? _mortalitySubscription;
   StreamSubscription<QuerySnapshot>? _referralSubscription;
+  StreamSubscription<QuerySnapshot>? _bhwUsersSubscription;
+  StreamSubscription<QuerySnapshot>? _barangayWorkspacesSubscription;
   bool _referralTargetRetryPending = false;
   bool _patientSyncFallbackAttempted = false;
   bool _initialDashboardSyncTriggered = false;
@@ -188,7 +196,6 @@ class _ChoDashboardState extends State<ChoDashboard> {
   String _doctorSpecialtyFilter = 'All specialties';
   bool _isCheckingDoctorAvailability = false;
   bool _showDoctorAvailabilityResults = true;
-  bool _showAllHeatmapLocations = false;
   String? _doctorAvailabilityError;
   List<Map<String, dynamic>> _doctorAvailabilityResults =
       <Map<String, dynamic>>[];
@@ -1135,6 +1142,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
     final morbiditySubscription = _morbiditySubscription;
     final mortalitySubscription = _mortalitySubscription;
     final referralSubscription = _referralSubscription;
+    final bhwUsersSubscription = _bhwUsersSubscription;
+    final barangayWorkspacesSubscription = _barangayWorkspacesSubscription;
 
     _patientsSubscription = null;
     _checkupSubscription = null;
@@ -1143,6 +1152,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
     _morbiditySubscription = null;
     _mortalitySubscription = null;
     _referralSubscription = null;
+    _bhwUsersSubscription = null;
+    _barangayWorkspacesSubscription = null;
 
     await _cancelQuerySubscription(patientsSubscription);
     await _cancelQuerySubscription(checkupSubscription);
@@ -1151,6 +1162,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
     await _cancelQuerySubscription(morbiditySubscription);
     await _cancelQuerySubscription(mortalitySubscription);
     await _cancelQuerySubscription(referralSubscription);
+    await _cancelQuerySubscription(bhwUsersSubscription);
+    await _cancelQuerySubscription(barangayWorkspacesSubscription);
   }
 
   Future<void> _startDashboardSync() async {
@@ -1162,6 +1175,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
       await _cancelAllSyncSubscriptions();
       if (!mounted) return;
       if (kDebugMode) debugPrint('Starting CHO dashboard sync...');
+      await _startBhwUsersSync();
+      await _startBarangayWorkspacesSync();
       await _startPatientsSync();
       await _startCheckupSync();
       await _startPrenatalSync();
@@ -1171,6 +1186,118 @@ class _ChoDashboardState extends State<ChoDashboard> {
       await _startReferralSync();
     } finally {
       _isRestartingDashboardSync = false;
+    }
+  }
+
+  Future<void> _startBhwUsersSync() async {
+    final existingSubscription = _bhwUsersSubscription;
+    _bhwUsersSubscription = null;
+    await _cancelQuerySubscription(existingSubscription);
+    if (!mounted) return;
+    _bhwUsersSubscription = _firestore
+        .collection('users')
+        .limit(_dashboardReadLimit)
+        .snapshots()
+        .listen(
+          (snap) {
+            if (!mounted) return;
+            final rows = snap.docs
+                .map(materializeFirestoreRecord)
+                .toList(growable: false);
+            setState(() {
+              _bhwUsers = ChoBarangaySurveillanceEngine.parseBhwUsers(rows);
+            });
+          },
+          onError: (e) {
+            if (kDebugMode) debugPrint('BHW users sync notice: $e');
+          },
+        );
+  }
+
+  Future<void> _startBarangayWorkspacesSync() async {
+    final existingSubscription = _barangayWorkspacesSubscription;
+    _barangayWorkspacesSubscription = null;
+    await _cancelQuerySubscription(existingSubscription);
+    if (!mounted) return;
+    _barangayWorkspacesSubscription = _firestore
+        .collection(BarangayFirestorePaths.barangaysCollection)
+        .limit(100)
+        .snapshots()
+        .listen(
+          (snap) {
+            if (!mounted) return;
+            final codes = snap.docs
+                .map(
+                  (d) => BarangayFirestorePaths.normalizeBarangayCode(
+                    (d.data()['barangayCode'] ?? d.id).toString(),
+                  ),
+                )
+                .where((c) => c.isNotEmpty)
+                .toSet();
+            setState(() {
+              _syncedBarangayWorkspaceCodes
+                ..clear()
+                ..addAll(codes);
+            });
+          },
+          onError: (e) {
+            if (kDebugMode) debugPrint('Barangay workspaces sync notice: $e');
+          },
+        );
+  }
+
+  Future<void> _syncAllBarangaysAndBhwWorkspaces({
+    bool showFeedback = false,
+  }) async {
+    if (_isSyncingAllBarangays || !mounted) return;
+    setState(() => _isSyncingAllBarangays = true);
+    try {
+      final persistedBarangayCodes = <String>{};
+      for (final row in <Map<String, dynamic>>[
+        ..._morbidityRows,
+        ..._checkupRows,
+      ]) {
+        final brgy = ChoBarangaySurveillanceEngine.resolveBarangay(row);
+        if (brgy != null) {
+          persistedBarangayCodes.add(brgy.code.toLowerCase());
+        }
+      }
+      final written =
+          await ChoBarangaySurveillanceEngine.syncMissingBarangaysToFirestore(
+            firestore: _firestore,
+            barangayCodesWithPersistedCases: showFeedback
+                ? const <String>{}
+                : persistedBarangayCodes,
+            bhwUsers: _bhwUsers,
+          );
+      if (mounted && showFeedback) {
+        Get.snackbar(
+          'Barangay & BHW Sync Complete',
+          written > 0
+              ? 'Synchronized $written surveillance cases across all ${MalaybalayBarangays.all.length} barangays and BHW workspaces.'
+              : 'All ${MalaybalayBarangays.all.length} barangays and BHW workspaces are already up to date.',
+          backgroundColor: _primaryAqua,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Barangay surveillance baseline sync notice: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSyncingAllBarangays = false);
+      }
+    }
+  }
+
+  void _maybeTriggerAutoBarangayBaselineSync() {
+    if (_autoBaselineSyncTriggered) return;
+    if (_syncStatus['morbidity_records'] == true &&
+        _syncStatus['checkup_records'] == true) {
+      _autoBaselineSyncTriggered = true;
+      unawaited(_syncAllBarangaysAndBhwWorkspaces(showFeedback: false));
     }
   }
 
@@ -1270,7 +1397,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             final overdueQueue = <Map<String, dynamic>>[];
 
             final rows = snap.docs
-                .map((d) => {'id': d.id, ...(d.data())})
+                .map(materializeFirestoreRecord)
                 .toList(growable: false);
 
             for (final row in rows) {
@@ -1418,7 +1545,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
           (snap) {
             if (!mounted) return;
             final rows = snap.docs
-                .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
+                .map(materializeFirestoreRecord)
                 .toList(growable: false);
             final now = DateTime.now();
             final monthStart = DateTime(now.year, now.month, 1);
@@ -1475,6 +1602,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               _syncStatus['checkup_records'] = true;
               _recomputeAnalyticsState();
             });
+            _maybeTriggerAutoBarangayBaselineSync();
           },
           onError: (e) {
             if (kDebugMode) debugPrint('✗ Checkup sync error: $e');
@@ -1506,7 +1634,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
           (snap) {
             if (!mounted) return;
             final rows = snap.docs
-                .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
+                .map(materializeFirestoreRecord)
                 .toList(growable: false);
             int active = 0;
             final upcomingPrenatal = <DateTime>[];
@@ -1571,7 +1699,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               (snap) {
                 if (!mounted) return;
                 final rows = snap.docs
-                    .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
+                    .map(materializeFirestoreRecord)
                     .toList(growable: false);
                 final upcomingImmunizations = <DateTime>[];
                 for (final d in snap.docs) {
@@ -1634,7 +1762,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
           (snap) {
             if (!mounted) return;
             final rows = snap.docs
-                .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
+                .map(materializeFirestoreRecord)
                 .toList(growable: false);
             final now = DateTime.now();
             final monthStarts = <DateTime>[];
@@ -1716,6 +1844,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               _syncStatus['morbidity_records'] = true;
               _recomputeAnalyticsState();
             });
+            _maybeTriggerAutoBarangayBaselineSync();
           },
           onError: (e) {
             if (kDebugMode) debugPrint('✗ Morbidity sync error: $e');
@@ -1754,7 +1883,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 ..clear()
                 ..addAll(
                   snap.docs
-                      .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
+                      .map(materializeFirestoreRecord)
                       .toList(growable: false),
                 );
               _syncTruncated['mortality_records'] =
@@ -1794,7 +1923,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
           (snap) {
             if (!mounted) return;
             final rows = snap.docs
-                .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
+                .map(materializeFirestoreRecord)
                 .toList(growable: false);
             if (kDebugMode) {
               debugPrint('✓ Synced ${snap.docs.length} referrals');
@@ -5797,511 +5926,59 @@ class _ChoDashboardState extends State<ChoDashboard> {
     );
   }
 
-  String _barangayHeatmapKey(String value) =>
-      value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-
-  List<_CityMorbidityRecord> _cityMorbidityRecords() {
-    final start = _analyticsWindowStart(DateTime.now());
-    final records = <_CityMorbidityRecord>[];
-    for (final row in _morbidityRows) {
-      final reportedAt = _morbidityRecordDate(row);
-      if (!_isWithinAnalyticsWindow(reportedAt, start)) continue;
-      final location = (row['barangay'] ?? row['barangayName'] ?? '')
-          .toString()
-          .trim();
-      final key = _barangayHeatmapKey(location);
-      final barangay = MalaybalayBarangays.all.where((candidate) {
-        return key == _barangayHeatmapKey(candidate.name) ||
-            key == _barangayHeatmapKey(candidate.code);
-      }).firstOrNull;
-      if (barangay == null) continue;
-      final condition =
-          (row['disease'] ?? row['diagnosis'] ?? row['condition'] ?? 'Other')
-              .toString()
-              .trim();
-      records.add(
-        _CityMorbidityRecord(
-          barangay: barangay,
-          condition: condition.isEmpty ? 'Other' : condition,
-          reportedAt: reportedAt,
-        ),
-      );
-    }
-    return records;
-  }
-
-  List<_CityHeatmapEntry> _cityHeatmapEntries(
-    Iterable<_CityMorbidityRecord> records,
+  DateTime? _surveillanceDateForCollection(
+    Map<String, dynamic> row,
+    String collection,
   ) {
-    final counts = <String, int>{
-      for (final barangay in MalaybalayBarangays.all) barangay.code: 0,
-    };
-    for (final record in records) {
-      counts.update(record.barangay.code, (value) => value + 1);
+    switch (collection) {
+      case 'morbidity_records':
+        return _morbidityRecordDate(row);
+      case 'checkup_records':
+        return _checkupRecordDate(row);
+      case 'mortality_records':
+        return _mortalityRecordDate(row);
+      case 'prenatal_records':
+        return _prenatalRecordDate(row);
+      case 'immunization_records':
+        return _immunizationRecordDate(row);
+      case 'referrals':
+        return _referralRecordDate(row);
+      case 'patient_records':
+      default:
+        return _patientAnalyticsDate(row);
     }
-    final entries =
-        MalaybalayBarangays.all
-            .map(
-              (barangay) => _CityHeatmapEntry(
-                barangay: barangay,
-                caseCount: counts[barangay.code] ?? 0,
-              ),
-            )
-            .toList(growable: false)
-          ..sort((a, b) => b.caseCount.compareTo(a.caseCount));
-    return entries;
   }
 
   Widget _buildCityWideHeatmap() {
-    final records = _cityMorbidityRecords();
-    final entries = _cityHeatmapEntries(records);
-    final activeEntries = entries
-        .where((entry) => entry.caseCount > 0)
-        .toList();
-    final maxCases = entries.fold<int>(
-      1,
-      (max, entry) => entry.caseCount > max ? entry.caseCount : max,
+    final start = _analyticsWindowStart(DateTime.now());
+    final allCases = ChoBarangaySurveillanceEngine.aggregateAllCases(
+      morbidityRows: _morbidityRows,
+      checkupRows: _checkupRows,
+      mortalityRows: _mortalityRows,
+      prenatalRows: _prenatalRows,
+      immunizationRows: _immunizationRows,
+      referralRows: _referralRows,
+      patientRows: _rows,
+      bhwUsers: _bhwUsers,
+      windowStart: start,
+      dateExtractor: _surveillanceDateForCollection,
     );
-    final totalCases = records.length;
-    final topLocation = activeEntries.isEmpty ? null : activeEntries.first;
-    final noReportCount = entries.length - activeEntries.length;
-    final conditionTotals = <String, int>{};
-    final conditionByBarangay = <String, Map<String, int>>{};
-    for (final record in records) {
-      conditionTotals.update(
-        record.condition,
-        (value) => value + 1,
-        ifAbsent: () => 1,
-      );
-      final values = conditionByBarangay.putIfAbsent(
-        record.barangay.code,
-        () => <String, int>{},
-      );
-      values.update(record.condition, (value) => value + 1, ifAbsent: () => 1);
-    }
-    final topConditions = conditionTotals.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final visibleLocations = _showAllHeatmapLocations
-        ? activeEntries
-        : activeEntries.take(8).toList(growable: false);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: ChoColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: ChoColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.monitor_heart_outlined, color: ChoColors.aqua),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Morbidity surveillance',
-                  style: TextStyle(
-                    color: ChoColors.text,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Text(
-                'Live sync',
-                style: const TextStyle(
-                  color: ChoColors.muted,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Case concentration from subscribed records in ${_analyticsWindowLabel().toLowerCase()}. Counts are not diagnoses or prevalence.',
-            style: const TextStyle(color: ChoColors.muted, fontSize: 12),
-          ),
-          const SizedBox(height: 12),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final columns = constraints.maxWidth >= 900
-                  ? 4
-                  : constraints.maxWidth >= 520
-                  ? 2
-                  : 1;
-              final width = columns == 1
-                  ? constraints.maxWidth
-                  : (constraints.maxWidth - 10 * (columns - 1)) / columns;
-              final values = <Widget>[
-                _heatmapMetric(
-                  'Reported cases',
-                  '$totalCases',
-                  Icons.monitor_heart_outlined,
-                ),
-                _heatmapMetric(
-                  'Reporting barangays',
-                  '${activeEntries.length} of ${entries.length}',
-                  Icons.location_city_outlined,
-                ),
-                _heatmapMetric(
-                  'Highest concentration',
-                  topLocation?.barangay.name ?? 'No reports',
-                  Icons.priority_high_rounded,
-                ),
-                _heatmapMetric(
-                  'No report received',
-                  '$noReportCount areas',
-                  Icons.visibility_off_outlined,
-                ),
-              ];
-              return Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: values
-                    .map((value) => SizedBox(width: width, child: value))
-                    .toList(),
-              );
-            },
-          ),
-          if (topLocation != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(11),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF4E5),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFF0B66F)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.fact_check_outlined,
-                    color: Color(0xFF9A5B13),
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Review signal: ${topLocation.barangay.name} has ${topLocation.caseCount} subscribed reports. Verify record quality and coordinate follow-up before drawing clinical conclusions.',
-                      style: const TextStyle(
-                        color: Color(0xFF6D4610),
-                        fontSize: 12,
-                        height: 1.35,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final matrix = _buildConditionHeatMatrix(
-                activeEntries.take(6).toList(),
-                topConditions.take(3).map((entry) => entry.key).toList(),
-                conditionByBarangay,
-                maxCases,
-              );
-              final locations = _buildHeatmapLocationList(
-                visibleLocations,
-                maxCases,
-                activeEntries.length,
-                noReportCount,
-              );
-              if (constraints.maxWidth < 980) {
-                return Column(
-                  children: [matrix, const SizedBox(height: 12), locations],
-                );
-              }
-              return Row(
-                children: [
-                  Expanded(flex: 3, child: matrix),
-                  const SizedBox(width: 12),
-                  Expanded(flex: 2, child: locations),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _heatmapMetric(String label, String value, IconData icon) => Container(
-    padding: const EdgeInsets.all(11),
-    decoration: BoxDecoration(
-      color: ChoColors.surfaceAlt,
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: ChoColors.border),
-    ),
-    child: Row(
-      children: [
-        Icon(icon, color: ChoColors.aqua, size: 18),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  color: ChoColors.muted,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: ChoColors.text,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-
-  Widget _buildConditionHeatMatrix(
-    List<_CityHeatmapEntry> locations,
-    List<String> conditions,
-    Map<String, Map<String, int>> values,
-    int maxCases,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: ChoColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ChoColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Condition concentration matrix',
-            style: TextStyle(
-              color: ChoColors.text,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 3),
-          const Text(
-            'Darker cells indicate more reports.',
-            style: TextStyle(color: ChoColors.muted, fontSize: 11),
-          ),
-          const SizedBox(height: 8),
-          if (locations.isEmpty || conditions.isEmpty)
-            const Text(
-              'No location-linked morbidity reports in this period.',
-              style: TextStyle(color: ChoColors.muted, fontSize: 12),
-            )
-          else
-            Table(
-              columnWidths: {
-                0: const FlexColumnWidth(1.4),
-                for (var index = 0; index < conditions.length; index++)
-                  index + 1: const FlexColumnWidth(1),
-              },
-              children: [
-                TableRow(
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.all(6),
-                      child: Text(
-                        'Location',
-                        style: TextStyle(
-                          color: ChoColors.muted,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    ...conditions.map(
-                      (condition) => Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Text(
-                          _truncateLabel(condition, max: 11),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: ChoColors.muted,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                ...locations.map(
-                  (location) => TableRow(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 8,
-                        ),
-                        child: Text(
-                          location.barangay.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: ChoColors.text,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      ...conditions.map((condition) {
-                        final count =
-                            values[location.barangay.code]?[condition] ?? 0;
-                        return Semantics(
-                          label:
-                              '${location.barangay.name}, $condition, $count reports',
-                          child: Container(
-                            margin: const EdgeInsets.all(3),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: count == 0
-                                  ? Colors.white
-                                  : Color.lerp(
-                                      const Color(0xFFFFF0D9),
-                                      const Color(0xFFC9481A),
-                                      count / maxCases,
-                                    )!,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '$count',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: ChoColors.text,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeatmapLocationList(
-    List<_CityHeatmapEntry> locations,
-    int maxCases,
-    int activeCount,
-    int noReportCount,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ChoColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Location signals',
-            style: TextStyle(
-              color: ChoColors.text,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            '$activeCount reporting · $noReportCount without a report',
-            style: const TextStyle(color: ChoColors.muted, fontSize: 11),
-          ),
-          const SizedBox(height: 8),
-          ...locations.map((entry) {
-            final ratio = entry.caseCount / maxCases;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          entry.barangay.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: ChoColors.text,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        '${entry.caseCount}',
-                        style: const TextStyle(
-                          color: ChoColors.text,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: ratio,
-                      minHeight: 5,
-                      color: ratio > .65
-                          ? const Color(0xFFC9481A)
-                          : ratio > .25
-                          ? const Color(0xFFE39B25)
-                          : ChoColors.aqua,
-                      backgroundColor: ChoColors.surfaceAlt,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-          if (activeCount > 8)
-            TextButton.icon(
-              onPressed: () => setState(
-                () => _showAllHeatmapLocations = !_showAllHeatmapLocations,
-              ),
-              icon: Icon(
-                _showAllHeatmapLocations
-                    ? Icons.unfold_less_rounded
-                    : Icons.unfold_more_rounded,
-                size: 17,
-              ),
-              label: Text(
-                _showAllHeatmapLocations
-                    ? 'Show fewer locations'
-                    : 'Show all $activeCount locations',
-              ),
-            ),
-        ],
-      ),
+    return ChoBarangaySurveillanceMap(
+      allCases: allCases,
+      bhwUsers: _bhwUsers,
+      syncedWorkspaceCodes: _syncedBarangayWorkspaceCodes,
+      windowLabel: _analyticsWindowLabel(),
+      selectedBarangayCode: _selectedDemographicBarangayCode,
+      isSyncingAllBarangays: _isSyncingAllBarangays,
+      onSyncAllBarangays: () =>
+          unawaited(_syncAllBarangaysAndBhwWorkspaces(showFeedback: true)),
+      onBarangaySelected: (barangay) {
+        if (!mounted) return;
+        setState(() {
+          _selectedDemographicBarangayCode = barangay.code;
+        });
+      },
     );
   }
 
@@ -6914,23 +6591,4 @@ class _ChoDashboardState extends State<ChoDashboard> {
       ),
     );
   }
-}
-
-class _CityHeatmapEntry {
-  const _CityHeatmapEntry({required this.barangay, required this.caseCount});
-
-  final BarangayReference barangay;
-  final int caseCount;
-}
-
-class _CityMorbidityRecord {
-  const _CityMorbidityRecord({
-    required this.barangay,
-    required this.condition,
-    required this.reportedAt,
-  });
-
-  final BarangayReference barangay;
-  final String condition;
-  final DateTime? reportedAt;
 }
