@@ -148,9 +148,30 @@ void main() {
         expect(casisangSummary.tier, BarangayEpidemiologicalTier.critical);
         expect(casisangSummary.assignedBhwUsers.first.name, 'Elena Santos');
 
-        // Distinct tiers and colors exist across barangays
+        // Distinct tiers and colors exist across barangays (Low, Moderate, High, Critical)
         final distinctTiers = summaries.map((s) => s.tier).toSet();
-        expect(distinctTiers.length, greaterThanOrEqualTo(3));
+        expect(
+          distinctTiers,
+          containsAll(<BarangayEpidemiologicalTier>[
+            BarangayEpidemiologicalTier.low,
+            BarangayEpidemiologicalTier.moderate,
+            BarangayEpidemiologicalTier.high,
+            BarangayEpidemiologicalTier.critical,
+          ]),
+        );
+
+        // Verify OpenStreetMap tile URL is used and routine patient records without conditions are ignored
+        expect(
+          ChoBarangaySurveillanceEngine.classifyDiseaseAndCategory(
+            'patient_records',
+            {'firstName': 'Juan', 'chronicConditions': 'None'},
+          ),
+          isNull,
+        );
+        expect(
+          ChoBarangaySurveillanceEngine.normalizeDiseaseDisplayName('fever'),
+          'Acute Febrile Illness',
+        );
 
         // Filtering by Mortality updates case counts & colors dynamically
         final mortalitySummaries = ChoBarangaySurveillanceEngine.buildSummaries(
@@ -232,10 +253,22 @@ void main() {
         await tester.pumpAndSettle();
       }
 
+      final directoryListFinder = find.byType(ListView);
+      await tester.ensureVisible(directoryListFinder);
+      await tester.pumpAndSettle();
+
       final casisangDirItem = find.byKey(
         const ValueKey<String>('barangay-directory-item-casisang'),
       );
-      await tester.ensureVisible(casisangDirItem);
+      await tester.scrollUntilVisible(
+        casisangDirItem,
+        120,
+        scrollable: find.descendant(
+          of: directoryListFinder,
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(casisangDirItem);
       await tester.pumpAndSettle();
       expect(selected?.code, 'casisang');

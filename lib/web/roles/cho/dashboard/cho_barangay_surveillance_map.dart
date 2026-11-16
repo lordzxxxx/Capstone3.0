@@ -46,6 +46,19 @@ enum SurveillanceColorMetric {
   final String label;
 }
 
+/// Computed threshold cutoffs for the 5 epidemiological color tiers.
+class EpidemiologicalTierThresholds {
+  const EpidemiologicalTierThresholds({
+    required this.lowMax,
+    required this.moderateMax,
+    required this.highMax,
+  });
+
+  final int lowMax;
+  final int moderateMax;
+  final int highMax;
+}
+
 /// Represents a synchronized BHW user assigned to a Malaybalay barangay.
 class SyncedBhwUserSummary {
   const SyncedBhwUserSummary({
@@ -151,7 +164,7 @@ class BarangayMapSurveillanceSummary {
   final double intensityRatio;
 
   String get dominantDisease {
-    if (diseaseCounts.isEmpty) return 'No active disease';
+    if (diseaseCounts.isEmpty) return 'No active cases';
     final sorted = diseaseCounts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     return sorted.first.key;
@@ -298,7 +311,7 @@ class MalaybalayBarangayGeoRegistry {
       case 'Upper Pulangi District':
         return (center: const LatLng(8.1650, 125.2850), zoom: 11.2);
       default:
-        return (center: cityCenter, zoom: 11.1);
+        return (center: cityCenter, zoom: 11.2);
     }
   }
 
@@ -326,7 +339,7 @@ class MalaybalayBarangayGeoRegistry {
     for (final target in all) {
       final center = centerFor(target);
       final isPoblacion = target.district == 'Poblacion District';
-      final initialRadius = isPoblacion ? 0.0042 : 0.024;
+      final initialRadius = isPoblacion ? 0.0040 : 0.022;
       var poly = _radialPolygon(center, initialRadius, sides: 18);
 
       for (final other in all) {
@@ -337,8 +350,6 @@ class MalaybalayBarangayGeoRegistry {
         final dist = math.sqrt(dx * dx + dy * dy);
         if (dist <= 0.00001 || dist > initialRadius * 2.2) continue;
 
-        // Midpoint shifted slightly (48%) toward target so adjacent polygons
-        // have a crisp visual separation line.
         final midLng = center.longitude + dx * 0.485;
         final midLat = center.latitude + dy * 0.485;
 
@@ -430,8 +441,8 @@ class MalaybalayBarangayGeoRegistry {
   }
 }
 
-/// Core epidemiological aggregation, color-scale computation, and BHW
-/// barangay workspace synchronization engine.
+/// Core epidemiological aggregation, quantile-aware color-scale computation,
+/// and BHW barangay workspace synchronization engine.
 class ChoBarangaySurveillanceEngine {
   ChoBarangaySurveillanceEngine._();
 
@@ -470,6 +481,41 @@ class ChoBarangaySurveillanceEngine {
   static String _cleanKey(String raw) =>
       raw.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
 
+  /// Normalizes raw disease/condition labels so variations like `'fever'` or
+  /// `'dengue'` display cleanly as `'Fever'` or `'Dengue Fever'`.
+  static String normalizeDiseaseDisplayName(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return 'General Consultation';
+    final lower = trimmed.toLowerCase();
+    if (lower == 'fever' || lower == 'high fever') return 'Acute Febrile Illness';
+    if (lower == 'dengue') return 'Dengue Fever';
+    if (lower == 'tb') return 'Tuberculosis';
+    if (lower == 'covid' || lower == 'covid19' || lower == 'covid-19') {
+      return 'COVID-19';
+    }
+    if (lower == 'copd') return 'COPD';
+    if (lower == 'uri' || lower == 'urti') {
+      return 'Upper Respiratory Infection';
+    }
+    if (lower == 'uti') return 'Urinary Tract Infection';
+    if (trimmed.length <= 4 && trimmed == trimmed.toUpperCase()) {
+      return trimmed;
+    }
+    // Capitalize first letter if lowercase
+    if (trimmed[0] == trimmed[0].toLowerCase() &&
+        trimmed[0] != trimmed[0].toUpperCase()) {
+      return trimmed
+          .split(RegExp(r'\s+'))
+          .map(
+            (w) => w.isEmpty
+                ? w
+                : '${w[0].toUpperCase()}${w.substring(1)}',
+          )
+          .join(' ');
+    }
+    return trimmed;
+  }
+
   /// Resolves any barangay string, code, Firestore path, or BHW creator link
   /// to a canonical [BarangayReference] in Malaybalay City.
   static BarangayReference? resolveBarangay(
@@ -478,11 +524,9 @@ class ChoBarangaySurveillanceEngine {
     Map<String, BarangayReference>? bhwBarangayByEmail,
     Map<String, BarangayReference>? bhwBarangayByName,
   }) {
-    // 1. Direct inference via shared scope helper.
     final direct = inferBarangayReference(record);
     if (direct != null) return direct;
 
-    // 2. Check Firestore document path: barangays/{BARANGAY_CODE}/{collection}/{id}
     for (final pathKey in const ['_firestorePath', 'barangayPath', 'path']) {
       final rawPath = (record[pathKey] ?? '').toString().trim();
       if (rawPath.isEmpty) continue;
@@ -497,9 +541,6 @@ class ChoBarangaySurveillanceEngine {
       }
     }
 
-    // 3. Flexible matching on explicit barangay/location/address fields
-    // (handles "Barangay 1" -> "Barangay 01", "Brgy. 3", "Poblacion",
-    // "Sto Nino", "St Peter", "Canayan", etc.).
     final candidates = <String>[
       (record['barangayCode'] ?? '').toString(),
       (record['barangay'] ?? '').toString(),
@@ -515,7 +556,6 @@ class ChoBarangaySurveillanceEngine {
       if (matched != null) return matched;
     }
 
-    // 4. Match via synced BHW user who created/submitted the record.
     if (bhwBarangayByUid != null && bhwBarangayByUid.isNotEmpty) {
       for (final uidKey in const [
         'createdByUid',
@@ -572,8 +612,6 @@ class ChoBarangaySurveillanceEngine {
     if (byName != null) return byName;
 
     final lower = trimmed.toLowerCase();
-    // Handle numbered Poblacion barangays: "Barangay 1", "Brgy 1", "Brgy. 01",
-    // "Poblacion 1", "Poblacion 01", or standalone "Poblacion"
     final numberedMatch = RegExp(
       r'(?:barangay|brgy\.?|poblacion)\s*[-#]?\s*0*(\d{1,2})\b',
       caseSensitive: false,
@@ -652,7 +690,7 @@ class ChoBarangaySurveillanceEngine {
 
   /// Classifies a clinical or surveillance record into a specific disease
   /// label and [SurveillanceCaseCategory].
-  static ({String disease, SurveillanceCaseCategory category})
+  static ({String disease, SurveillanceCaseCategory category})?
   classifyDiseaseAndCategory(
     String sourceCollection,
     Map<String, dynamic> row,
@@ -668,15 +706,18 @@ class ChoBarangaySurveillanceEngine {
     String pickFirst(List<String> keys) {
       for (final key in keys) {
         final val = (row[key] ?? '').toString().trim();
+        final lower = val.toLowerCase();
         if (val.isNotEmpty &&
-            val.toLowerCase() != 'null' &&
-            val.toLowerCase() != 'none' &&
-            val.toLowerCase() != 'n/a' &&
-            val.toLowerCase() != 'general' &&
-            val.toLowerCase() != 'communicable' &&
-            val.toLowerCase() != 'non-communicable' &&
-            val.toLowerCase() != 'non_communicable') {
-          return val;
+            lower != 'null' &&
+            lower != 'none' &&
+            lower != 'n/a' &&
+            lower != 'normal' &&
+            lower != 'general' &&
+            lower != 'communicable' &&
+            lower != 'non-communicable' &&
+            lower != 'non_communicable' &&
+            lower != 'active health screening') {
+          return normalizeDiseaseDisplayName(val);
         }
       }
       return '';
@@ -765,8 +806,9 @@ class ChoBarangaySurveillanceEngine {
       case 'immunization_records':
         final vaccine = pickFirst(['vaccineName', 'vaccine', 'disease']);
         return (
-          disease:
-              vaccine.isEmpty ? 'Routine Immunization' : 'Immunization ($vaccine)',
+          disease: vaccine.isEmpty
+              ? 'Routine Immunization'
+              : 'Immunization ($vaccine)',
           category: SurveillanceCaseCategory.immunization,
         );
 
@@ -785,6 +827,9 @@ class ChoBarangaySurveillanceEngine {
 
       case 'patient_records':
       default:
+        // Only count patient_records when they carry an actual chronic
+        // condition or clinical symptom — routine demographic registrations
+        // without a condition are not disease cases.
         final chronic = pickFirst([
           'chronicConditions',
           'chiefComplaint',
@@ -792,10 +837,7 @@ class ChoBarangaySurveillanceEngine {
           'diagnosis',
         ]);
         if (chronic.isEmpty) {
-          return (
-            disease: 'Active Health Screening',
-            category: SurveillanceCaseCategory.checkups,
-          );
+          return null;
         }
         final isNcd = _isNonCommunicableText(chronic);
         final isComm = _isCommunicableText(chronic);
@@ -842,6 +884,8 @@ class ChoBarangaySurveillanceEngine {
       'amoebiasis',
       'hand foot',
       'infection',
+      'febrile',
+      'fever',
     ];
     return keywords.any(lower.contains);
   }
@@ -933,9 +977,9 @@ class ChoBarangaySurveillanceEngine {
       barangay.code,
     );
 
-    // Deterministic case count between 4 and 18 per barangay so the 47
+    // Deterministic case count between 4 and 24 per barangay so the 47
     // barangays span Low, Moderate, High, and Critical color tiers naturally.
-    final caseCount = 4 + ((seed * 7 + 3) % 15);
+    final caseCount = 4 + ((seed * 7 + 3) % 21);
     final bhwName = assignedBhw?.name ?? '${barangay.name} BHW Surveillance';
     final bhwUid = assignedBhw?.uid ?? 'system-cho-surveillance-sync';
     const severities = <String>['Mild', 'Moderate', 'Severe', 'Critical'];
@@ -1026,8 +1070,7 @@ class ChoBarangaySurveillanceEngine {
 
   /// Synchronizes deterministic baseline surveillance cases into Firestore
   /// (`barangays/{BARANGAY_CODE}/morbidity_records` and `checkup_records`)
-  /// for any barangay that currently has zero persisted disease records,
-  /// ensuring both CHO and all BHW users per barangay share identical data.
+  /// for any barangay that currently has zero persisted disease records.
   static Future<int> syncMissingBarangaysToFirestore({
     required FirebaseFirestore firestore,
     required Set<String> barangayCodesWithPersistedCases,
@@ -1049,7 +1092,6 @@ class ChoBarangaySurveillanceEngine {
     var totalWritten = 0;
     final now = DateTime.now();
 
-    // Commit in safe batches (< 400 operations per Firestore write batch).
     WriteBatch batch = firestore.batch();
     var opsInBatch = 0;
 
@@ -1096,9 +1138,6 @@ class ChoBarangaySurveillanceEngine {
         opsInBatch++;
         totalWritten++;
 
-        // Mirror into barangay checkup_records so BHW Communicable,
-        // Non-Communicable, Check-ups, and Morbidity views all receive the
-        // synced records immediately.
         final checkupDocId = docId.replaceFirst('-morb-', '-chk-');
         final checkupRef = barangayDocRef
             .collection('checkup_records')
@@ -1221,8 +1260,6 @@ class ChoBarangaySurveillanceEngine {
         final rawId = (row['id'] ?? row['recordId'] ?? row['caseId'] ?? '')
             .toString()
             .trim();
-        // Deduplicate mirrored baseline checkup/morbidity records so a
-        // single baseline case written to both collections is counted once.
         final canonicalId = rawId.replaceFirst('-chk-', '-morb-');
         final dedupKey = canonicalId.startsWith('baseline-')
             ? canonicalId
@@ -1247,6 +1284,8 @@ class ChoBarangaySurveillanceEngine {
         }
 
         final classified = classifyDiseaseAndCategory(collection, row);
+        if (classified == null) continue;
+
         final weight = severityWeightOf(row);
         final bhwLabel = <Object?>[
           row['bhwName'],
@@ -1298,8 +1337,6 @@ class ChoBarangaySurveillanceEngine {
     processCollection('referrals', referralRows);
     processCollection('patient_records', patientRows);
 
-    // Ensure every single barangay in Malaybalay City has active multi-disease
-    // cases even before the background Firestore write completes.
     for (final barangay in MalaybalayBarangays.all) {
       final codeKey = barangay.code.toLowerCase();
       if (barangaysWithPersistedDiseaseCases.contains(codeKey)) continue;
@@ -1315,6 +1352,7 @@ class ChoBarangaySurveillanceEngine {
           'morbidity_records',
           payload,
         );
+        if (classified == null) continue;
         final weight = severityWeightOf(payload);
         cases.add(
           BarangaySurveillanceCase(
@@ -1339,8 +1377,43 @@ class ChoBarangaySurveillanceEngine {
     return cases;
   }
 
+  /// Computes quantile-aware epidemiological tier thresholds across all
+  /// non-zero barangay metric values so that outliers (e.g. one barangay
+  /// having 200+ cases while others have 4–24) never flatten the rest of
+  /// the map into a single color.
+  static EpidemiologicalTierThresholds computeThresholds(
+    Iterable<int> metricValues,
+  ) {
+    final nonZero = metricValues.where((v) => v > 0).toList()..sort();
+    if (nonZero.isEmpty) {
+      return const EpidemiologicalTierThresholds(
+        lowMax: 3,
+        moderateMax: 8,
+        highMax: 15,
+      );
+    }
+
+    int percentileValue(double p) {
+      final idx = ((nonZero.length - 1) * p).round().clamp(
+        0,
+        nonZero.length - 1,
+      );
+      return nonZero[idx];
+    }
+
+    final p30 = math.max(1, percentileValue(0.30));
+    final p60 = math.max(p30 + 1, percentileValue(0.60));
+    final p85 = math.max(p60 + 1, percentileValue(0.85));
+
+    return EpidemiologicalTierThresholds(
+      lowMax: p30,
+      moderateMax: p60,
+      highMax: p85,
+    );
+  }
+
   /// Computes the epidemiological tier and high-contrast choropleth colors
-  /// for a barangay given its metric value and the city-wide maximum.
+  /// for a barangay given its metric value and the quantile-aware [thresholds].
   static ({
     BarangayEpidemiologicalTier tier,
     Color fillColor,
@@ -1350,22 +1423,31 @@ class ChoBarangaySurveillanceEngine {
   }) computeBarangayColors({
     required int metricValue,
     required int maxMetricValue,
+    EpidemiologicalTierThresholds? thresholds,
   }) {
     if (metricValue <= 0) {
       return (
         tier: BarangayEpidemiologicalTier.baseline,
-        fillColor: const Color(0xFF10B981).withValues(alpha: 0.25),
+        fillColor: const Color(0xFF10B981).withValues(alpha: 0.28),
         strokeColor: const Color(0xFF059669),
         badgeColor: const Color(0xFF059669),
         ratio: 0.0,
       );
     }
 
-    final effectiveMax = math.max(maxMetricValue, 4);
-    final ratio = (metricValue / effectiveMax).clamp(0.05, 1.0);
+    final resolvedThresholds =
+        thresholds ??
+        EpidemiologicalTierThresholds(
+          lowMax: math.max(1, (maxMetricValue * 0.28).round()),
+          moderateMax: math.max(2, (maxMetricValue * 0.55).round()),
+          highMax: math.max(3, (maxMetricValue * 0.80).round()),
+        );
 
-    if (ratio <= 0.28) {
-      final t = (ratio / 0.28).clamp(0.0, 1.0);
+    if (metricValue <= resolvedThresholds.lowMax) {
+      final t = (metricValue / math.max(1, resolvedThresholds.lowMax)).clamp(
+        0.0,
+        1.0,
+      );
       final base = Color.lerp(
         const Color(0xFF0EA5E9),
         const Color(0xFF0284C7),
@@ -1373,14 +1455,22 @@ class ChoBarangaySurveillanceEngine {
       )!;
       return (
         tier: BarangayEpidemiologicalTier.low,
-        fillColor: base.withValues(alpha: 0.34 + 0.08 * t),
+        fillColor: base.withValues(alpha: 0.35 + 0.08 * t),
         strokeColor: const Color(0xFF0369A1),
         badgeColor: const Color(0xFF0284C7),
-        ratio: ratio,
+        ratio: 0.22 + (0.18 * t),
       );
     }
-    if (ratio <= 0.55) {
-      final t = ((ratio - 0.28) / 0.27).clamp(0.0, 1.0);
+
+    if (metricValue <= resolvedThresholds.moderateMax) {
+      final span = math.max(
+        1,
+        resolvedThresholds.moderateMax - resolvedThresholds.lowMax,
+      );
+      final t = ((metricValue - resolvedThresholds.lowMax) / span).clamp(
+        0.0,
+        1.0,
+      );
       final base = Color.lerp(
         const Color(0xFFF59E0B),
         const Color(0xFFD97706),
@@ -1391,11 +1481,19 @@ class ChoBarangaySurveillanceEngine {
         fillColor: base.withValues(alpha: 0.42 + 0.08 * t),
         strokeColor: const Color(0xFFB45309),
         badgeColor: const Color(0xFFD97706),
-        ratio: ratio,
+        ratio: 0.45 + (0.18 * t),
       );
     }
-    if (ratio <= 0.80) {
-      final t = ((ratio - 0.55) / 0.25).clamp(0.0, 1.0);
+
+    if (metricValue <= resolvedThresholds.highMax) {
+      final span = math.max(
+        1,
+        resolvedThresholds.highMax - resolvedThresholds.moderateMax,
+      );
+      final t = ((metricValue - resolvedThresholds.moderateMax) / span).clamp(
+        0.0,
+        1.0,
+      );
       final base = Color.lerp(
         const Color(0xFFF97316),
         const Color(0xFFEA580C),
@@ -1406,11 +1504,15 @@ class ChoBarangaySurveillanceEngine {
         fillColor: base.withValues(alpha: 0.50 + 0.08 * t),
         strokeColor: const Color(0xFFC2410C),
         badgeColor: const Color(0xFFEA580C),
-        ratio: ratio,
+        ratio: 0.68 + (0.16 * t),
       );
     }
 
-    final t = ((ratio - 0.80) / 0.20).clamp(0.0, 1.0);
+    final span = math.max(1, maxMetricValue - resolvedThresholds.highMax);
+    final t = ((metricValue - resolvedThresholds.highMax) / span).clamp(
+      0.0,
+      1.0,
+    );
     final base = Color.lerp(
       const Color(0xFFEF4444),
       const Color(0xFFB91C1C),
@@ -1418,10 +1520,10 @@ class ChoBarangaySurveillanceEngine {
     )!;
     return (
       tier: BarangayEpidemiologicalTier.critical,
-      fillColor: base.withValues(alpha: 0.58 + 0.10 * t),
+      fillColor: base.withValues(alpha: 0.58 + 0.12 * t),
       strokeColor: const Color(0xFF991B1B),
       badgeColor: const Color(0xFFDC2626),
-      ratio: ratio,
+      ratio: 0.85 + (0.15 * t),
     );
   }
 
@@ -1487,6 +1589,8 @@ class ChoBarangaySurveillanceEngine {
       if (metric > maxMetric) maxMetric = metric;
     }
 
+    final thresholds = computeThresholds(rawMetrics.values);
+
     final summaries = <BarangayMapSurveillanceSummary>[];
     for (final b in MalaybalayBarangays.all) {
       final codeKey = b.code.toLowerCase();
@@ -1545,6 +1649,7 @@ class ChoBarangaySurveillanceEngine {
       final colors = computeBarangayColors(
         metricValue: rawMetrics[codeKey] ?? 0,
         maxMetricValue: maxMetric,
+        thresholds: thresholds,
       );
 
       final normalizedCode = BarangayFirestorePaths.normalizeBarangayCode(
@@ -1592,7 +1697,8 @@ class ChoBarangaySurveillanceEngine {
   }
 }
 
-/// Interactive GIS Choropleth & Barangay Surveillance Map widget for `/cho/dashboard`.
+/// Interactive OpenStreetMap Leaflet Choropleth & Barangay Surveillance Map
+/// widget for `/cho/dashboard`.
 class ChoBarangaySurveillanceMap extends StatefulWidget {
   const ChoBarangaySurveillanceMap({
     super.key,
@@ -1633,7 +1739,7 @@ class _ChoBarangaySurveillanceMapState
   String? _focusedBarangayCode;
   bool _showPolygons = true;
   bool _showHeatHalos = true;
-  bool _showBarangayLabels = true;
+  bool _showBarangayLabels = false;
   bool _showAllDirectoryRows = false;
   double _currentZoom = 11.2;
 
@@ -1676,7 +1782,7 @@ class _ChoBarangaySurveillanceMapState
     setState(() => _focusedBarangayCode = summary.barangay.code);
     if (zoomToBarangay) {
       final isPoblacion = summary.barangay.district == 'Poblacion District';
-      _moveCamera(summary.center, isPoblacion ? 15.0 : 13.2);
+      _moveCamera(summary.center, isPoblacion ? 14.8 : 13.0);
     }
     widget.onBarangaySelected?.call(summary.barangay);
   }
@@ -1723,6 +1829,14 @@ class _ChoBarangaySurveillanceMapState
       colorMetric: _colorMetric,
     );
 
+    final thresholds = ChoBarangaySurveillanceEngine.computeThresholds(
+      summaries.map(
+        (s) => _colorMetric == SurveillanceColorMetric.caseVolume
+            ? s.totalCases
+            : s.severityScore,
+      ),
+    );
+
     final query = _searchQuery.trim().toLowerCase();
     final filteredSummaries = summaries.where((s) {
       if (_selectedDistrict != 'ALL' &&
@@ -1742,8 +1856,9 @@ class _ChoBarangaySurveillanceMapState
       (s) =>
           s.barangay.code.toLowerCase() ==
           (_focusedBarangayCode ?? '').toLowerCase(),
-      orElse: () =>
-          filteredSummaries.isNotEmpty ? filteredSummaries.first : summaries.first,
+      orElse: () => filteredSummaries.isNotEmpty
+          ? filteredSummaries.first
+          : summaries.first,
     );
 
     final totalFilteredCases = summaries.fold<int>(
@@ -1767,11 +1882,18 @@ class _ChoBarangaySurveillanceMapState
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: ChoColors.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ChoColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: ChoColors.ice.withValues(alpha: 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1782,7 +1904,7 @@ class _ChoBarangaySurveillanceMapState
             totalBarangays: summaries.length,
             trackedDiseasesCount: sortedDiseases.length,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           _buildKpiRow(
             totalCases: totalFilteredCases,
             activeBarangays: activeBarangaysCount,
@@ -1790,14 +1912,17 @@ class _ChoBarangaySurveillanceMapState
             topHotspot: topHotspot,
             trackedDiseasesCount: sortedDiseases.length,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           _buildFilterControls(
             sortedDiseases: sortedDiseases,
             activeDiseaseFilter: activeDiseaseFilter,
           ),
           const SizedBox(height: 12),
-          _buildColorLegendBar(tierCounts: tierCounts, maxCases: maxCases),
-          const SizedBox(height: 12),
+          _buildColorLegendBar(
+            tierCounts: tierCounts,
+            thresholds: thresholds,
+          ),
+          const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
               final mapPanel = _buildInteractiveMapCanvas(
@@ -1810,12 +1935,12 @@ class _ChoBarangaySurveillanceMapState
                 maxCases: maxCases,
               );
 
-              if (constraints.maxWidth < 1040) {
+              if (constraints.maxWidth < 1060) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     mapPanel,
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     inspectorPanel,
                   ],
                 );
@@ -1823,14 +1948,14 @@ class _ChoBarangaySurveillanceMapState
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(flex: 7, child: mapPanel),
+                  Expanded(flex: 13, child: mapPanel),
                   const SizedBox(width: 14),
-                  Expanded(flex: 5, child: inspectorPanel),
+                  Expanded(flex: 10, child: inspectorPanel),
                 ],
               );
             },
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           _buildConditionMatrix(
             summaries: filteredSummaries.take(8).toList(growable: false),
             topDiseases: sortedDiseases
@@ -1860,10 +1985,10 @@ class _ChoBarangaySurveillanceMapState
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(9),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: ChoColors.aqua.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 Icons.map_rounded,
@@ -1871,7 +1996,7 @@ class _ChoBarangaySurveillanceMapState
                 size: 22,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Flexible(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1884,9 +2009,9 @@ class _ChoBarangaySurveillanceMapState
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
-                    'Real-time geospatial choropleth across all $totalBarangays Malaybalay City barangays (${widget.windowLabel.toLowerCase()}) • $trackedDiseasesCount diseases tracked & synced with BHW workspaces.',
+                    'OpenStreetMap Leaflet GIS across all $totalBarangays Malaybalay City barangays (${widget.windowLabel.toLowerCase()}) • $trackedDiseasesCount diseases tracked & synced with BHW workspaces.',
                     style: const TextStyle(
                       color: ChoColors.muted,
                       fontSize: 12,
@@ -1903,7 +2028,7 @@ class _ChoBarangaySurveillanceMapState
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
               decoration: BoxDecoration(
                 color: const Color(0xFFECFDF5),
                 borderRadius: BorderRadius.circular(999),
@@ -1954,6 +2079,7 @@ class _ChoBarangaySurveillanceMapState
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: ChoColors.aqua,
+                  backgroundColor: Colors.white,
                   side: const BorderSide(color: ChoColors.aqua),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -2001,17 +2127,15 @@ class _ChoBarangaySurveillanceMapState
           ),
           _kpiTile(
             label: 'Highest Case Concentration',
-            value:
-                '${topHotspot.barangay.name} (${topHotspot.totalCases})',
-            subtitle: 'Top: ${topHotspot.dominantDisease}',
+            value: '${topHotspot.barangay.name} (${topHotspot.totalCases})',
+            subtitle: 'Leading: ${topHotspot.dominantDisease}',
             icon: Icons.local_fire_department_rounded,
             accent: topHotspot.badgeColor,
           ),
           _kpiTile(
             label: 'Diseases & BHW Network',
-            value: '$trackedDiseasesCount diseases',
-            subtitle:
-                'Synced to $totalBarangays BHW barangay scopes',
+            value: '$trackedDiseasesCount conditions',
+            subtitle: 'Synced to $totalBarangays BHW barangay scopes',
             icon: Icons.hub_outlined,
             accent: ChoColors.ice,
           ),
@@ -2035,24 +2159,24 @@ class _ChoBarangaySurveillanceMapState
     required Color accent,
   }) {
     return Container(
-      padding: const EdgeInsets.all(11),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
       decoration: BoxDecoration(
         color: ChoColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: ChoColors.border),
       ),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(9),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: accent, size: 19),
+            child: Icon(icon, color: accent, size: 20),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 11),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2061,7 +2185,7 @@ class _ChoBarangaySurveillanceMapState
                   label,
                   style: const TextStyle(
                     color: ChoColors.muted,
-                    fontSize: 10,
+                    fontSize: 10.5,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -2072,17 +2196,18 @@ class _ChoBarangaySurveillanceMapState
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: ChoColors.text,
-                    fontSize: 14,
+                    fontSize: 14.5,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
+                const SizedBox(height: 1),
                 Text(
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: ChoColors.muted,
-                    fontSize: 10,
+                    fontSize: 10.5,
                   ),
                 ),
               ],
@@ -2112,7 +2237,6 @@ class _ChoBarangaySurveillanceMapState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Category filter chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -2120,33 +2244,46 @@ class _ChoBarangaySurveillanceMapState
                 final selected = _selectedCategory == category;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    selected: selected,
-                    showCheckmark: false,
-                    avatar: Icon(
-                      category.icon,
-                      size: 15,
-                      color: selected ? Colors.white : ChoColors.aqua,
-                    ),
-                    label: Text(
-                      category.label,
-                      style: TextStyle(
-                        color: selected ? Colors.white : ChoColors.text,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    selectedColor: ChoColors.aqua,
-                    backgroundColor: Colors.white,
-                    side: BorderSide(
-                      color: selected ? ChoColors.aqua : ChoColors.border,
-                    ),
-                    onSelected: (_) {
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(999),
+                    onTap: () {
                       setState(() {
                         _selectedCategory = category;
                         _selectedDisease = 'ALL';
                       });
                     },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selected ? ChoColors.aqua : Colors.white,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: selected ? ChoColors.aqua : ChoColors.border,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            category.icon,
+                            size: 15,
+                            color: selected ? Colors.white : ChoColors.aqua,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            category.label,
+                            style: TextStyle(
+                              color: selected ? Colors.white : ChoColors.text,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               }).toList(growable: false),
@@ -2158,9 +2295,8 @@ class _ChoBarangaySurveillanceMapState
             runSpacing: 10,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              // Specific disease selector
               SizedBox(
-                width: 250,
+                width: 245,
                 child: DropdownButtonFormField<String>(
                   initialValue: activeDiseaseFilter,
                   isExpanded: true,
@@ -2212,7 +2348,6 @@ class _ChoBarangaySurveillanceMapState
                   },
                 ),
               ),
-              // District selector
               SizedBox(
                 width: 215,
                 child: DropdownButtonFormField<String>(
@@ -2258,7 +2393,6 @@ class _ChoBarangaySurveillanceMapState
                   },
                 ),
               ),
-              // Color Metric selector
               SizedBox(
                 width: 195,
                 child: DropdownButtonFormField<SurveillanceColorMetric>(
@@ -2301,9 +2435,8 @@ class _ChoBarangaySurveillanceMapState
                   },
                 ),
               ),
-              // Barangay search field
               SizedBox(
-                width: 220,
+                width: 225,
                 child: TextField(
                   controller: _searchController,
                   onChanged: (value) => setState(() => _searchQuery = value),
@@ -2351,21 +2484,21 @@ class _ChoBarangaySurveillanceMapState
 
   Widget _buildColorLegendBar({
     required Map<BarangayEpidemiologicalTier, int> tierCounts,
-    required int maxCases,
+    required EpidemiologicalTierThresholds thresholds,
   }) {
-    final lowMax = math.max(1, (maxCases * 0.28).round());
-    final modMax = math.max(lowMax + 1, (maxCases * 0.55).round());
-    final highMax = math.max(modMax + 1, (maxCases * 0.80).round());
+    final lowMax = thresholds.lowMax;
+    final modMax = thresholds.moderateMax;
+    final highMax = thresholds.highMax;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: ChoColors.border),
       ),
       child: Wrap(
-        spacing: 14,
+        spacing: 16,
         runSpacing: 8,
         alignment: WrapAlignment.spaceBetween,
         crossAxisAlignment: WrapCrossAlignment.center,
@@ -2373,20 +2506,20 @@ class _ChoBarangaySurveillanceMapState
           const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.palette_outlined, size: 15, color: ChoColors.aqua),
+              Icon(Icons.palette_outlined, size: 16, color: ChoColors.aqua),
               SizedBox(width: 6),
               Text(
                 'Barangay Case Color Scale:',
                 style: TextStyle(
                   color: ChoColors.text,
-                  fontSize: 11.5,
+                  fontSize: 12,
                   fontWeight: FontWeight.w800,
                 ),
               ),
             ],
           ),
           Wrap(
-            spacing: 12,
+            spacing: 14,
             runSpacing: 6,
             children: [
               _legendChip(
@@ -2426,27 +2559,35 @@ class _ChoBarangaySurveillanceMapState
     required String label,
     required int count,
   }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(3),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.30)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(3),
+            ),
           ),
-        ),
-        const SizedBox(width: 5),
-        Text(
-          '$label · $count brgy${count == 1 ? '' : 's'}',
-          style: const TextStyle(
-            color: ChoColors.text,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
+          const SizedBox(width: 6),
+          Text(
+            '$label · $count brgy${count == 1 ? '' : 's'}',
+            style: const TextStyle(
+              color: ChoColors.text,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -2462,8 +2603,21 @@ class _ChoBarangaySurveillanceMapState
       return true;
     }).toList(growable: false);
 
+    // Put selected summary last in marker order so it always renders on top.
+    final orderedMarkers = <BarangayMapSurveillanceSummary>[
+      ...visibleMapSummaries.where(
+        (s) => s.barangay.code != selectedSummary.barangay.code,
+      ),
+      if (visibleMapSummaries.any(
+        (s) => s.barangay.code == selectedSummary.barangay.code,
+      ))
+        selectedSummary,
+    ];
+
+    final showExpandedPills = _showBarangayLabels || _currentZoom >= 13.0;
+
     return Container(
-      height: 540,
+      height: 556,
       decoration: BoxDecoration(
         color: const Color(0xFFEAF2F8),
         borderRadius: BorderRadius.circular(14),
@@ -2482,6 +2636,11 @@ class _ChoBarangaySurveillanceMapState
               interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.all,
               ),
+              onPositionChanged: (camera, hasGesture) {
+                if ((camera.zoom - _currentZoom).abs() >= 0.25 && mounted) {
+                  setState(() => _currentZoom = camera.zoom);
+                }
+              },
               onTap: (tapPosition, point) {
                 for (final item in visibleMapSummaries) {
                   if (MalaybalayBarangayGeoRegistry.isPointInPolygon(
@@ -2509,11 +2668,11 @@ class _ChoBarangaySurveillanceMapState
               },
             ),
             children: [
+              // Free OpenStreetMap Standard Leaflet Tile Server (No API key required)
               TileLayer(
-                urlTemplate:
-                    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-                subdomains: const ['a', 'b', 'c'],
-                userAgentPackageName: 'com.aidsuhis.mycapstone_project',
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.aidsuhis.malaybalay.cho',
+                maxZoom: 19,
               ),
               if (_showPolygons)
                 PolygonLayer(
@@ -2523,12 +2682,12 @@ class _ChoBarangaySurveillanceMapState
                     return Polygon(
                       points: summary.polygon,
                       color: isSelected
-                          ? summary.badgeColor.withValues(alpha: 0.62)
+                          ? summary.badgeColor.withValues(alpha: 0.58)
                           : summary.fillColor,
                       borderColor: isSelected
                           ? const Color(0xFF0B1F3A)
                           : summary.strokeColor,
-                      borderStrokeWidth: isSelected ? 2.8 : 1.5,
+                      borderStrokeWidth: isSelected ? 2.8 : 1.6,
                     );
                   }).toList(growable: false),
                 ),
@@ -2537,31 +2696,33 @@ class _ChoBarangaySurveillanceMapState
                   circles: visibleMapSummaries.map((summary) {
                     final isPoblacion =
                         summary.barangay.district == 'Poblacion District';
-                    final baseRadius = isPoblacion ? 14.0 : 22.0;
+                    final baseRadius = isPoblacion ? 11.0 : 18.0;
                     final radius =
-                        baseRadius + (summary.intensityRatio * 18.0);
+                        baseRadius + (summary.intensityRatio * 14.0);
                     return CircleMarker(
                       point: summary.center,
                       radius: radius,
                       useRadiusInMeter: false,
-                      color: summary.badgeColor.withValues(alpha: 0.22),
-                      borderColor: summary.strokeColor.withValues(alpha: 0.75),
+                      color: summary.badgeColor.withValues(alpha: 0.24),
+                      borderColor: summary.strokeColor.withValues(alpha: 0.80),
                       borderStrokeWidth: 1.2,
                     );
                   }).toList(growable: false),
                 ),
               MarkerLayer(
-                markers: visibleMapSummaries.map((summary) {
+                markers: orderedMarkers.map((summary) {
                   final isSelected =
                       summary.barangay.code == selectedSummary.barangay.code;
+                  final showLabelForThisMarker =
+                      showExpandedPills || isSelected;
                   final shortName = summary.barangay.name.replaceFirst(
                     'Barangay ',
                     'Brgy ',
                   );
                   return Marker(
                     point: summary.center,
-                    width: _showBarangayLabels ? 116 : 42,
-                    height: _showBarangayLabels ? 44 : 34,
+                    width: showLabelForThisMarker ? 124 : 34,
+                    height: showLabelForThisMarker ? 38 : 34,
                     child: GestureDetector(
                       key: ValueKey<String>(
                         'barangay-map-marker-${summary.barangay.code}',
@@ -2572,75 +2733,106 @@ class _ChoBarangaySurveillanceMapState
                         message:
                             '${summary.barangay.name} (${summary.barangay.district})\n'
                             '${summary.totalCases} cases · ${summary.tierLabel}\n'
-                            'Top: ${summary.dominantDisease}',
-                        child: AnimatedScale(
-                          scale: isSelected ? 1.12 : 1.0,
-                          duration: const Duration(milliseconds: 180),
-                          child: Center(
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: _showBarangayLabels ? 7 : 6,
-                                vertical: 3.5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? const Color(0xFF0B1F3A)
-                                    : summary.badgeColor,
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: isSelected ? 2.2 : 1.4,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.25),
-                                    blurRadius: isSelected ? 8 : 4,
-                                    offset: const Offset(0, 2),
+                            'Leading: ${summary.dominantDisease}',
+                        child: Center(
+                          child: showLabelForThisMarker
+                              ? Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
                                   ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (_showBarangayLabels) ...[
-                                    Flexible(
-                                      child: Text(
-                                        shortName,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 9.5,
-                                          fontWeight: FontWeight.w800,
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? const Color(0xFF0B1F3A)
+                                        : summary.badgeColor,
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: isSelected ? 2.2 : 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.28,
+                                        ),
+                                        blurRadius: isSelected ? 8 : 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          shortName,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                  ],
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 5,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? summary.badgeColor
-                                          : Colors.black.withValues(alpha: 0.22),
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                    child: Text(
-                                      '${summary.totalCases}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w900,
+                                      const SizedBox(width: 5),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 5.5,
+                                          vertical: 1.5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? summary.badgeColor
+                                              : Colors.black.withValues(
+                                                  alpha: 0.24,
+                                                ),
+                                          borderRadius: BorderRadius.circular(
+                                            999,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '${summary.totalCases}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
                                       ),
+                                    ],
+                                  ),
+                                )
+                              : Container(
+                                  width: 28,
+                                  height: 28,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: summary.badgeColor,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 1.8,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.22,
+                                        ),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 1.5),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    '${summary.totalCases}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                          ),
+                                ),
                         ),
                       ),
                     ),
@@ -2649,14 +2841,14 @@ class _ChoBarangaySurveillanceMapState
               ),
             ],
           ),
-          // Top-left active scope overlay pill
+          // Top-left active scope overlay banner
           Positioned(
             top: 12,
             left: 12,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.94),
+                color: Colors.white.withValues(alpha: 0.95),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: ChoColors.border),
                 boxShadow: [
@@ -2670,17 +2862,29 @@ class _ChoBarangaySurveillanceMapState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'Malaybalay City GIS Surveillance • ${_selectedCategory.label}',
-                    style: const TextStyle(
-                      color: ChoColors.text,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.layers_outlined,
+                        size: 14,
+                        color: ChoColors.aqua,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Malaybalay City GIS • ${_selectedCategory.label}',
+                        style: const TextStyle(
+                          color: ChoColors.text,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    'Click any barangay zone or pin to inspect diseases & BHW sync',
-                    style: const TextStyle(
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Click any colored barangay zone or badge to inspect cases & BHW sync',
+                    style: TextStyle(
                       color: ChoColors.muted,
                       fontSize: 10,
                     ),
@@ -2689,7 +2893,7 @@ class _ChoBarangaySurveillanceMapState
               ),
             ),
           ),
-          // Top-right quick camera & layer controls
+          // Top-right compact Leaflet-style navigation & zoom controls
           Positioned(
             top: 12,
             right: 12,
@@ -2698,39 +2902,45 @@ class _ChoBarangaySurveillanceMapState
               children: [
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.95),
+                    color: Colors.white.withValues(alpha: 0.96),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: ChoColors.border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 8,
+                      ),
+                    ],
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(
+                      _mapControlIconButton(
                         tooltip: 'Zoom in',
-                        icon: const Icon(Icons.add_rounded, size: 18),
-                        onPressed: () => _moveCamera(
+                        icon: Icons.add_rounded,
+                        onTap: () => _moveCamera(
                           selectedSummary.center,
                           _currentZoom + 0.8,
                         ),
                       ),
-                      const Divider(height: 1),
-                      IconButton(
+                      const Divider(height: 1, color: ChoColors.border),
+                      _mapControlIconButton(
                         tooltip: 'Zoom out',
-                        icon: const Icon(Icons.remove_rounded, size: 18),
-                        onPressed: () => _moveCamera(
+                        icon: Icons.remove_rounded,
+                        onTap: () => _moveCamera(
                           MalaybalayBarangayGeoRegistry.cityCenter,
                           _currentZoom - 0.8,
                         ),
                       ),
-                      const Divider(height: 1),
-                      IconButton(
+                      const Divider(height: 1, color: ChoColors.border),
+                      _mapControlIconButton(
                         tooltip: 'Reset to Malaybalay City view',
-                        icon: const Icon(Icons.my_location_rounded, size: 17),
-                        onPressed: () {
+                        icon: Icons.my_location_rounded,
+                        onTap: () {
                           setState(() => _selectedDistrict = 'ALL');
                           _moveCamera(
                             MalaybalayBarangayGeoRegistry.cityCenter,
-                            11.1,
+                            11.2,
                           );
                         },
                       ),
@@ -2738,74 +2948,175 @@ class _ChoBarangaySurveillanceMapState
                   ),
                 ),
                 const SizedBox(height: 8),
-                FilledButton.tonalIcon(
-                  onPressed: () => _moveCamera(
-                    MalaybalayBarangayGeoRegistry.poblacionCenter,
-                    14.5,
-                  ),
-                  icon: const Icon(Icons.zoom_in_map_rounded, size: 15),
-                  label: const Text(
-                    'Focus Poblacion (01–11)',
-                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800),
-                  ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.94),
-                    foregroundColor: ChoColors.text,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
+                Material(
+                  color: Colors.white.withValues(alpha: 0.96),
+                  borderRadius: BorderRadius.circular(9),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(9),
+                    onTap: () => _moveCamera(
+                      MalaybalayBarangayGeoRegistry.poblacionCenter,
+                      14.5,
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(9),
+                        border: Border.all(color: ChoColors.border),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.zoom_in_map_rounded,
+                            size: 14,
+                            color: ChoColors.aqua,
+                          ),
+                          SizedBox(width: 5),
+                          Text(
+                            'Poblacion (01–11)',
+                            style: TextStyle(
+                              color: ChoColors.text,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          // Bottom-left layer toggles
+          // Bottom-left high-contrast layer toggle buttons
           Positioned(
             bottom: 12,
             left: 12,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.94),
+                color: Colors.white.withValues(alpha: 0.96),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: ChoColors.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 8,
+                  ),
+                ],
               ),
               child: Wrap(
                 spacing: 6,
                 children: [
-                  FilterChip(
-                    selected: _showPolygons,
-                    label: const Text(
-                      'Choropleth Zones',
-                      style: TextStyle(fontSize: 10.5),
-                    ),
-                    visualDensity: VisualDensity.compact,
-                    onSelected: (v) => setState(() => _showPolygons = v),
+                  _layerTogglePill(
+                    label: 'Choropleth Zones',
+                    icon: Icons.pentagon_outlined,
+                    active: _showPolygons,
+                    onTap: () => setState(() => _showPolygons = !_showPolygons),
                   ),
-                  FilterChip(
-                    selected: _showHeatHalos,
-                    label: const Text(
-                      'Heat Halos',
-                      style: TextStyle(fontSize: 10.5),
-                    ),
-                    visualDensity: VisualDensity.compact,
-                    onSelected: (v) => setState(() => _showHeatHalos = v),
+                  _layerTogglePill(
+                    label: 'Heat Halos',
+                    icon: Icons.blur_circular_rounded,
+                    active: _showHeatHalos,
+                    onTap: () =>
+                        setState(() => _showHeatHalos = !_showHeatHalos),
                   ),
-                  FilterChip(
-                    selected: _showBarangayLabels,
-                    label: const Text(
-                      'Brgy Labels',
-                      style: TextStyle(fontSize: 10.5),
+                  _layerTogglePill(
+                    label: 'All Names',
+                    icon: Icons.label_outline_rounded,
+                    active: _showBarangayLabels,
+                    onTap: () => setState(
+                      () => _showBarangayLabels = !_showBarangayLabels,
                     ),
-                    visualDensity: VisualDensity.compact,
-                    onSelected: (v) => setState(() => _showBarangayLabels = v),
                   ),
                 ],
               ),
             ),
           ),
+          // Bottom-right OpenStreetMap attribution pill
+          Positioned(
+            bottom: 12,
+            right: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.90),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: ChoColors.border),
+              ),
+              child: const Text(
+                '© OpenStreetMap contributors • Leaflet GIS',
+                style: TextStyle(
+                  color: ChoColors.muted,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _mapControlIconButton({
+    required String tooltip,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          width: 34,
+          height: 34,
+          child: Icon(icon, size: 18, color: ChoColors.text),
+        ),
+      ),
+    );
+  }
+
+  Widget _layerTogglePill({
+    required String label,
+    required IconData icon,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(7),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(
+          color: active ? ChoColors.aqua : ChoColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(7),
+          border: Border.all(
+            color: active ? ChoColors.aqua : ChoColors.border,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 13,
+              color: active ? Colors.white : ChoColors.muted,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: active ? Colors.white : ChoColors.text,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2817,199 +3128,242 @@ class _ChoBarangaySurveillanceMapState
   }) {
     final visibleRows = _showAllDirectoryRows
         ? filteredSummaries
-        : filteredSummaries.take(10).toList(growable: false);
+        : filteredSummaries.take(12).toList(growable: false);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildSelectedBarangayInspector(selectedSummary),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: ChoColors.surfaceAlt,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: ChoColors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Barangay Case & Color Directory',
-                      style: TextStyle(
-                        color: ChoColors.text,
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '${filteredSummaries.length} barangays',
-                    style: const TextStyle(
-                      color: ChoColors.muted,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+    return SizedBox(
+      height: 556,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildSelectedBarangayInspector(selectedSummary),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ChoColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: ChoColors.border),
               ),
-              const SizedBox(height: 8),
-              ...visibleRows.map((entry) {
-                final isSelected =
-                    entry.barangay.code == selectedSummary.barangay.code;
-                final ratio = (entry.totalCases / maxCases).clamp(0.0, 1.0);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: InkWell(
-                    key: ValueKey<String>(
-                      'barangay-directory-item-${entry.barangay.code}',
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                    onTap: () => _selectBarangay(entry),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 7,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.format_list_bulleted_rounded,
+                        size: 16,
+                        color: ChoColors.aqua,
                       ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? ChoColors.aqua.withValues(alpha: 0.12)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isSelected
-                              ? ChoColors.aqua
-                              : ChoColors.border,
+                      const SizedBox(width: 6),
+                      const Expanded(
+                        child: Text(
+                          'Barangay Case & Color Directory',
+                          style: TextStyle(
+                            color: ChoColors.text,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 10,
-                                height: 10,
-                                decoration: BoxDecoration(
-                                  color: entry.badgeColor,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 7),
-                              Expanded(
-                                child: Text(
-                                  entry.barangay.name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: ChoColors.text,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: entry.badgeColor.withValues(
-                                    alpha: 0.14,
-                                  ),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  '${entry.totalCases} cases · ${entry.tierLabel}',
-                                  style: TextStyle(
-                                    color: entry.strokeColor,
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                            ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: ChoColors.border),
+                        ),
+                        child: Text(
+                          '${filteredSummaries.length} barangays',
+                          style: const TextStyle(
+                            color: ChoColors.muted,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '${entry.barangay.district} • Top: ${entry.dominantDisease}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: ChoColors.muted,
-                                    fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: ListView.separated(
+                      padding: EdgeInsets.zero,
+                      itemCount: visibleRows.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 6),
+                      itemBuilder: (context, index) {
+                        final entry = visibleRows[index];
+                        final isSelected =
+                            entry.barangay.code ==
+                            selectedSummary.barangay.code;
+                        final ratio = (entry.totalCases / maxCases).clamp(
+                          0.04,
+                          1.0,
+                        );
+                        return InkWell(
+                          key: ValueKey<String>(
+                            'barangay-directory-item-${entry.barangay.code}',
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: () => _selectBarangay(entry),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? ChoColors.aqua.withValues(alpha: 0.10)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isSelected
+                                    ? ChoColors.aqua
+                                    : ChoColors.border,
+                                width: isSelected ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: BoxDecoration(
+                                        color: entry.badgeColor,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        entry.barangay.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: ChoColors.text,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 2.5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: entry.badgeColor.withValues(
+                                          alpha: 0.14,
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        '${entry.totalCases} cases · ${entry.tierLabel}',
+                                        style: TextStyle(
+                                          color: entry.strokeColor,
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${entry.barangay.district} • Leading: ${entry.dominantDisease}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: ChoColors.muted,
+                                          fontSize: 10.5,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Icon(
+                                      Icons.verified_user_outlined,
+                                      size: 11,
+                                      color: Color(0xFF059669),
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      entry.assignedBhwUsers.isEmpty
+                                          ? 'BHW Synced'
+                                          : '${entry.assignedBhwUsers.length} BHW',
+                                      style: const TextStyle(
+                                        color: Color(0xFF059669),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 5),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: ratio,
+                                    minHeight: 4,
+                                    color: entry.badgeColor,
+                                    backgroundColor: ChoColors.surfaceAlt,
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 6),
-                              const Icon(
-                                Icons.verified_user_outlined,
-                                size: 11,
-                                color: Color(0xFF059669),
-                              ),
-                              const SizedBox(width: 2),
-                              Text(
-                                entry.assignedBhwUsers.isEmpty
-                                    ? 'BHW Synced'
-                                    : '${entry.assignedBhwUsers.length} BHW',
-                                style: const TextStyle(
-                                  color: Color(0xFF059669),
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: ratio,
-                              minHeight: 4,
-                              color: entry.badgeColor,
-                              backgroundColor: ChoColors.surfaceAlt,
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
-                );
-              }),
-              if (filteredSummaries.length > 10)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: () => setState(
-                      () => _showAllDirectoryRows = !_showAllDirectoryRows,
-                    ),
-                    icon: Icon(
-                      _showAllDirectoryRows
-                          ? Icons.unfold_less_rounded
-                          : Icons.unfold_more_rounded,
-                      size: 16,
-                    ),
-                    label: Text(
-                      _showAllDirectoryRows
-                          ? 'Show Top 10 Barangays'
-                          : 'Show All ${filteredSummaries.length} Barangays',
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
+                  if (filteredSummaries.length > 12) ...[
+                    const SizedBox(height: 6),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                        ),
+                        onPressed: () => setState(
+                          () => _showAllDirectoryRows = !_showAllDirectoryRows,
+                        ),
+                        icon: Icon(
+                          _showAllDirectoryRows
+                              ? Icons.unfold_less_rounded
+                              : Icons.unfold_more_rounded,
+                          size: 16,
+                        ),
+                        label: Text(
+                          _showAllDirectoryRows
+                              ? 'Show Top 12 Barangays'
+                              : 'Show All ${filteredSummaries.length} Barangays',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-            ],
+                  ],
+                ],
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -3021,13 +3375,13 @@ class _ChoBarangaySurveillanceMapState
     final bhwNames = summary.assignedBhwUsers.map((u) => u.name).toList();
 
     return Container(
-      padding: const EdgeInsets.all(13),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: summary.badgeColor.withValues(alpha: 0.55),
-          width: 1.4,
+          color: summary.badgeColor.withValues(alpha: 0.45),
+          width: 1.5,
         ),
       ),
       child: Column(
@@ -3052,7 +3406,7 @@ class _ChoBarangaySurveillanceMapState
                       summary.barangay.name,
                       style: const TextStyle(
                         color: ChoColors.text,
-                        fontSize: 15,
+                        fontSize: 15.5,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -3068,8 +3422,8 @@ class _ChoBarangaySurveillanceMapState
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 4,
+                  horizontal: 10,
+                  vertical: 4.5,
                 ),
                 decoration: BoxDecoration(
                   color: summary.badgeColor,
@@ -3088,7 +3442,7 @@ class _ChoBarangaySurveillanceMapState
           ),
           const SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xFFF0FDF4),
               borderRadius: BorderRadius.circular(8),
@@ -3106,7 +3460,7 @@ class _ChoBarangaySurveillanceMapState
                   child: Text(
                     bhwNames.isEmpty
                         ? 'Synced with BHW Workspace (barangays/${summary.barangay.code.toUpperCase()})'
-                        : 'Synced BHW(${bhwNames.length}): ${bhwNames.join(", ")}',
+                        : 'Synced BHW (${bhwNames.length}): ${bhwNames.join(", ")}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -3168,7 +3522,7 @@ class _ChoBarangaySurveillanceMapState
                     color: summary.badgeColor.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
-                      color: summary.badgeColor.withValues(alpha: 0.32),
+                      color: summary.badgeColor.withValues(alpha: 0.30),
                     ),
                   ),
                   child: Text(
@@ -3189,7 +3543,7 @@ class _ChoBarangaySurveillanceMapState
 
   Widget _miniStatPill(String label, int value) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
       decoration: BoxDecoration(
         color: ChoColors.surfaceAlt,
         borderRadius: BorderRadius.circular(6),
@@ -3216,29 +3570,35 @@ class _ChoBarangaySurveillanceMapState
     }
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: ChoColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: ChoColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Multi-Disease Barangay Concentration Matrix',
-            style: TextStyle(
-              color: ChoColors.text,
-              fontSize: 13.5,
-              fontWeight: FontWeight.w800,
-            ),
+          const Row(
+            children: [
+              Icon(Icons.grid_on_rounded, size: 16, color: ChoColors.aqua),
+              SizedBox(width: 6),
+              Text(
+                'Multi-Disease Barangay Concentration Matrix',
+                style: TextStyle(
+                  color: ChoColors.text,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 2),
           const Text(
             'Cross-barangay distribution of leading diseases and clinical cases. Click any barangay row to focus on the map.',
             style: TextStyle(color: ChoColors.muted, fontSize: 11),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: ConstrainedBox(
@@ -3247,9 +3607,9 @@ class _ChoBarangaySurveillanceMapState
                 defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                 columnWidths: {
                   0: const FixedColumnWidth(160),
-                  1: const FixedColumnWidth(90),
+                  1: const FixedColumnWidth(96),
                   for (var i = 0; i < topDiseases.length; i++)
-                    i + 2: const FixedColumnWidth(115),
+                    i + 2: const FixedColumnWidth(120),
                 },
                 children: [
                   TableRow(
