@@ -2844,26 +2844,6 @@ class _ChoBarangaySurveillanceMapState
                 userAgentPackageName: 'com.aidsuhis.malaybalay.cho',
                 maxZoom: 19,
               ),
-              // Keep the city legible at a glance: the map is intentionally
-              // de-emphasized outside the sourced Malaybalay barangay shapes.
-              PolygonLayer(
-                polygons: <Polygon>[
-                  Polygon(
-                    points: const <LatLng>[
-                      LatLng(7.82, 124.82),
-                      LatLng(7.82, 125.52),
-                      LatLng(8.52, 125.52),
-                      LatLng(8.52, 124.82),
-                    ],
-                    holePointsList: summaries
-                        .map((summary) => summary.polygon)
-                        .toList(growable: false),
-                    color: const Color(0x661E293B),
-                    borderStrokeWidth: 0,
-                    disableHolesBorder: true,
-                  ),
-                ],
-              ),
               if (_showPolygons)
                 PolygonLayer(
                   polygons: visibleMapSummaries
@@ -3305,11 +3285,12 @@ class _ChoBarangaySurveillanceMapState
     return Tooltip(
       message: tooltip,
       child: InkWell(
+        borderRadius: BorderRadius.circular(9),
         onTap: onTap,
         child: SizedBox(
-          width: 34,
-          height: 34,
-          child: Icon(icon, size: 18, color: const Color(0xFF334155)),
+          width: 44,
+          height: 44,
+          child: Icon(icon, size: 20, color: const Color(0xFF1E3A5F)),
         ),
       ),
     );
@@ -3366,7 +3347,7 @@ class _ChoBarangaySurveillanceMapState
         : filteredSummaries.take(12).toList(growable: false);
 
     return SizedBox(
-      height: 600,
+      height: 620,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
