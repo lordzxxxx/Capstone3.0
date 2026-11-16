@@ -252,11 +252,6 @@ class MalaybalayBarangays {
       district: 'Upper Pulangi District',
       code: 'capitan-angel',
     ),
-    BarangayReference(
-      name: 'Dumalaguing',
-      district: 'Upper Pulangi District',
-      code: 'dumalaguing',
-    ),
   ];
 
   static const List<String> roleOptions = <String>[

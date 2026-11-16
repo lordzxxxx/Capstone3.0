@@ -24,42 +24,45 @@ void main() {
         expect(
           polygon.length,
           greaterThanOrEqualTo(3),
-          reason: '${barangay.name} must have a valid Voronoi polygon',
+          reason: '${barangay.name} must have a valid PSGC reference polygon',
         );
       }
     });
   });
 
   group('ChoBarangaySurveillanceEngine', () {
-    test('resolves barangays from aliases, Firestore path, and BHW user link', () {
-      expect(
-        ChoBarangaySurveillanceEngine.resolveBarangay({
-          'barangay': 'Barangay 1',
-        })?.code,
-        'poblacion-01',
-      );
-      expect(
-        ChoBarangaySurveillanceEngine.resolveBarangay({
-          'barangay': 'Sto Nino',
-        })?.code,
-        'sto-nino',
-      );
-      expect(
-        ChoBarangaySurveillanceEngine.resolveBarangay({
-          '_firestorePath': 'barangays/CASISANG/checkup_records/rec-01',
-        })?.code,
-        'casisang',
-      );
+    test(
+      'resolves barangays from aliases, Firestore path, and BHW user link',
+      () {
+        expect(
+          ChoBarangaySurveillanceEngine.resolveBarangay({
+            'barangay': 'Barangay 1',
+          })?.code,
+          'poblacion-01',
+        );
+        expect(
+          ChoBarangaySurveillanceEngine.resolveBarangay({
+            'barangay': 'Sto Nino',
+          })?.code,
+          'sto-nino',
+        );
+        expect(
+          ChoBarangaySurveillanceEngine.resolveBarangay({
+            '_firestorePath': 'barangays/CASISANG/checkup_records/rec-01',
+          })?.code,
+          'casisang',
+        );
 
-      final aglayan = MalaybalayBarangays.byCode('aglayan')!;
-      expect(
-        ChoBarangaySurveillanceEngine.resolveBarangay(
-          {'createdByUid': 'bhw-uid-99'},
-          bhwBarangayByUid: {'bhw-uid-99': aglayan},
-        )?.code,
-        'aglayan',
-      );
-    });
+        final aglayan = MalaybalayBarangays.byCode('aglayan')!;
+        expect(
+          ChoBarangaySurveillanceEngine.resolveBarangay(
+            {'createdByUid': 'bhw-uid-99'},
+            bhwBarangayByUid: {'bhw-uid-99': aglayan},
+          )?.code,
+          'aglayan',
+        );
+      },
+    );
 
     test(
       'aggregates all collections, covers all barangays and diseases, and changes colors by case load',
@@ -106,18 +109,10 @@ void main() {
             },
           ],
           prenatalRows: [
-            {
-              'id': 'pren-1',
-              'barangay': 'Sumpong',
-              'riskLevel': 'High Risk',
-            },
+            {'id': 'pren-1', 'barangay': 'Sumpong', 'riskLevel': 'High Risk'},
           ],
           immunizationRows: [
-            {
-              'id': 'imm-1',
-              'barangay': 'Dalwangan',
-              'vaccine': 'BCG',
-            },
+            {'id': 'imm-1', 'barangay': 'Busdi', 'vaccine': 'BCG'},
           ],
           referralRows: [
             {
@@ -195,43 +190,46 @@ void main() {
       },
     );
 
-    test('accurately maps all 47 barangays from aliases and raw addresses', () {
-      final sampleCases = [
-        {'barangay': 'Brgy. Casisang', 'expected': 'casisang'},
-        {'barangay': 'Barangay 08', 'expected': 'poblacion-08'},
-        {'barangay': 'Bgy 11', 'expected': 'poblacion-11'},
-        {'barangay': 'Poblacion 04', 'expected': 'poblacion-04'},
-        {'barangay': 'St. Peter', 'expected': 'st-peter'},
-        {'barangay': 'Saint Peter, Malaybalay', 'expected': 'st-peter'},
-        {'barangay': 'Sto. Nino', 'expected': 'sto-nino'},
-        {'barangay': 'Santo Nino', 'expected': 'sto-nino'},
-        {'barangay': 'Capitan Angel', 'expected': 'capitan-angel'},
-        {'barangay': 'Capt. Angel', 'expected': 'capitan-angel'},
-        {'barangay': 'Apo Macote', 'expected': 'apo-macote'},
-        {'barangay': 'Can-ayan', 'expected': 'can-ayan'},
-        {'barangay': 'Canayan', 'expected': 'can-ayan'},
-        {'address': 'Purok 4, Linabo, Malaybalay City', 'expected': 'linabo'},
-        {'address': 'Sitio Proper, Zamboanguita', 'expected': 'zamboanguita'},
-        {'address': 'Dalwangan Highway, Malaybalay', 'expected': 'dalwangan'},
-      ];
+    test(
+      'accurately maps all 46 configured barangays from aliases and raw addresses',
+      () {
+        final sampleCases = [
+          {'barangay': 'Brgy. Casisang', 'expected': 'casisang'},
+          {'barangay': 'Barangay 08', 'expected': 'poblacion-08'},
+          {'barangay': 'Bgy 11', 'expected': 'poblacion-11'},
+          {'barangay': 'Poblacion 04', 'expected': 'poblacion-04'},
+          {'barangay': 'St. Peter', 'expected': 'st-peter'},
+          {'barangay': 'Saint Peter, Malaybalay', 'expected': 'st-peter'},
+          {'barangay': 'Sto. Nino', 'expected': 'sto-nino'},
+          {'barangay': 'Santo Nino', 'expected': 'sto-nino'},
+          {'barangay': 'Capitan Angel', 'expected': 'capitan-angel'},
+          {'barangay': 'Capt. Angel', 'expected': 'capitan-angel'},
+          {'barangay': 'Apo Macote', 'expected': 'apo-macote'},
+          {'barangay': 'Can-ayan', 'expected': 'can-ayan'},
+          {'barangay': 'Canayan', 'expected': 'can-ayan'},
+          {'address': 'Purok 4, Linabo, Malaybalay City', 'expected': 'linabo'},
+          {'address': 'Sitio Proper, Zamboanguita', 'expected': 'zamboanguita'},
+        ];
 
-      for (final tc in sampleCases) {
-        final resolved = ChoBarangaySurveillanceEngine.resolveBarangay(tc);
-        expect(
-          resolved?.code,
-          tc['expected'],
-          reason: 'Failed to resolve ${tc["barangay"] ?? tc["address"]}',
-        );
-      }
-    });
+        for (final tc in sampleCases) {
+          final resolved = ChoBarangaySurveillanceEngine.resolveBarangay(tc);
+          expect(
+            resolved?.code,
+            tc['expected'],
+            reason: 'Failed to resolve ${tc["barangay"] ?? tc["address"]}',
+          );
+        }
+      },
+    );
 
-    test('all 47 Malaybalay barangays have verified OpenStreetMap coordinates', () {
+    test('all 46 configured barangays have reference coordinates', () {
       expect(
         MalaybalayBarangayGeoRegistry.coordinatesByCode.length,
         MalaybalayBarangays.all.length,
       );
       for (final brgy in MalaybalayBarangays.all) {
-        final coord = MalaybalayBarangayGeoRegistry.coordinatesByCode[brgy.code];
+        final coord =
+            MalaybalayBarangayGeoRegistry.coordinatesByCode[brgy.code];
         expect(coord, isNotNull, reason: 'Missing coordinate for ${brgy.name}');
         expect(
           coord!.latitude,
@@ -248,81 +246,82 @@ void main() {
   });
 
   group('ChoBarangaySurveillanceMap widget', () {
-    testWidgets('renders interactive FlutterMap, layers, and selects barangay', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(const Size(1440, 1100));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+    testWidgets(
+      'renders interactive FlutterMap, layers, and selects barangay',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(1440, 1100));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final cases = ChoBarangaySurveillanceEngine.aggregateAllCases(
-        morbidityRows: const [],
-        checkupRows: const [],
-        mortalityRows: const [],
-        prenatalRows: const [],
-        immunizationRows: const [],
-        referralRows: const [],
-        patientRows: const [],
-        bhwUsers: const [],
-      );
+        final cases = ChoBarangaySurveillanceEngine.aggregateAllCases(
+          morbidityRows: const [],
+          checkupRows: const [],
+          mortalityRows: const [],
+          prenatalRows: const [],
+          immunizationRows: const [],
+          referralRows: const [],
+          patientRows: const [],
+          bhwUsers: const [],
+        );
 
-      BarangayReference? selected;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: ChoBarangaySurveillanceMap(
-                allCases: cases,
-                bhwUsers: const [],
-                syncedWorkspaceCodes: const {'POBLACION-01', 'CASISANG'},
-                windowLabel: 'Last 6 Months',
-                onBarangaySelected: (b) => selected = b,
+        BarangayReference? selected;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: ChoBarangaySurveillanceMap(
+                  allCases: cases,
+                  bhwUsers: const [],
+                  syncedWorkspaceCodes: const {'POBLACION-01', 'CASISANG'},
+                  windowLabel: 'Last 6 Months',
+                  onBarangaySelected: (b) => selected = b,
+                ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text('Interactive Barangay Disease & Case Surveillance Map'),
-        findsOneWidget,
-      );
-      expect(find.byType(FlutterMap), findsOneWidget);
-      expect(find.byType(PolygonLayer), findsOneWidget);
-      expect(find.byType(CircleLayer), findsOneWidget);
-      expect(find.byType(MarkerLayer), findsOneWidget);
-
-      // Filter by Communicable Diseases chip
-      await tester.tap(find.text('Communicable Diseases'));
-      await tester.pumpAndSettle();
-
-      // Expand all barangays in directory and select Casisang
-      final showAllFinder = find.textContaining('Show All');
-      if (showAllFinder.evaluate().isNotEmpty) {
-        await tester.ensureVisible(showAllFinder);
-        await tester.tap(showAllFinder);
+        );
         await tester.pumpAndSettle();
-      }
 
-      final directoryListFinder = find.byType(ListView);
-      await tester.ensureVisible(directoryListFinder);
-      await tester.pumpAndSettle();
+        expect(
+          find.text('Interactive Barangay Disease & Case Surveillance Map'),
+          findsOneWidget,
+        );
+        expect(find.byType(FlutterMap), findsOneWidget);
+        expect(find.byType(PolygonLayer), findsNWidgets(2));
+        expect(find.byType(CircleLayer), findsOneWidget);
+        expect(find.byType(MarkerLayer), findsOneWidget);
 
-      final casisangDirItem = find.byKey(
-        const ValueKey<String>('barangay-directory-item-casisang'),
-      );
-      await tester.scrollUntilVisible(
-        casisangDirItem,
-        120,
-        scrollable: find.descendant(
-          of: directoryListFinder,
-          matching: find.byType(Scrollable),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(casisangDirItem);
-      await tester.pumpAndSettle();
-      expect(selected?.code, 'casisang');
-    });
+        // Filter by Communicable Diseases chip
+        await tester.tap(find.text('Communicable Diseases'));
+        await tester.pumpAndSettle();
+
+        // Expand all barangays in directory and select Casisang
+        final showAllFinder = find.textContaining('Show All');
+        if (showAllFinder.evaluate().isNotEmpty) {
+          await tester.ensureVisible(showAllFinder);
+          await tester.tap(showAllFinder);
+          await tester.pumpAndSettle();
+        }
+
+        final directoryListFinder = find.byType(ListView);
+        await tester.ensureVisible(directoryListFinder);
+        await tester.pumpAndSettle();
+
+        final casisangDirItem = find.byKey(
+          const ValueKey<String>('barangay-directory-item-casisang'),
+        );
+        await tester.scrollUntilVisible(
+          casisangDirItem,
+          120,
+          scrollable: find.descendant(
+            of: directoryListFinder,
+            matching: find.byType(Scrollable),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(casisangDirItem);
+        await tester.pumpAndSettle();
+        expect(selected?.code, 'casisang');
+      },
+    );
   });
 }
