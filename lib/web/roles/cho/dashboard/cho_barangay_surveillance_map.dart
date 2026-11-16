@@ -2141,21 +2141,21 @@ class _ChoBarangaySurveillanceMapState
             value: '$activeBarangays of $totalBarangays',
             subtitle: 'All barangays mapped & colored',
             icon: Icons.location_city_outlined,
-            accent: const Color(0xFF059669),
+            accent: const Color(0xFF2563EB),
           ),
           _kpiTile(
             label: 'Highest Hotspot',
             value: '${topHotspot.barangay.name} (${topHotspot.totalCases})',
             subtitle: 'Leading: ${topHotspot.dominantDisease}',
             icon: Icons.local_fire_department_rounded,
-            accent: topHotspot.badgeColor,
+            accent: const Color(0xFF2563EB),
           ),
           _kpiTile(
             label: 'Diseases & BHW Network',
             value: '$trackedDiseasesCount conditions',
             subtitle: 'Synced to $totalBarangays BHW barangay scopes',
             icon: Icons.hub_outlined,
-            accent: const Color(0xFF7C3AED),
+            accent: const Color(0xFF2563EB),
           ),
         ];
         return Wrap(
@@ -3643,7 +3643,7 @@ class _ChoBarangaySurveillanceMapState
                 child: _executiveMiniStatCard(
                   label: 'Total Cases',
                   value: '${summary.totalCases}',
-                  accent: summary.badgeColor,
+                  accent: const Color(0xFF2563EB),
                   icon: Icons.personal_injury_outlined,
                 ),
               ),
@@ -3652,7 +3652,7 @@ class _ChoBarangaySurveillanceMapState
                 child: _executiveMiniStatCard(
                   label: 'Morbidity',
                   value: '${summary.morbidityCount}',
-                  accent: const Color(0xFF0284C7),
+                  accent: const Color(0xFF2563EB),
                   icon: Icons.sick_outlined,
                 ),
               ),
@@ -3661,7 +3661,7 @@ class _ChoBarangaySurveillanceMapState
                 child: _executiveMiniStatCard(
                   label: 'Check-ups',
                   value: '${summary.checkupCount}',
-                  accent: const Color(0xFF059669),
+                  accent: const Color(0xFF2563EB),
                   icon: Icons.medical_services_outlined,
                 ),
               ),
@@ -3670,7 +3670,7 @@ class _ChoBarangaySurveillanceMapState
                 child: _executiveMiniStatCard(
                   label: 'Risk Score',
                   value: '${summary.severityScore}',
-                  accent: summary.badgeColor,
+                  accent: const Color(0xFF2563EB),
                   icon: Icons.speed_rounded,
                 ),
               ),
