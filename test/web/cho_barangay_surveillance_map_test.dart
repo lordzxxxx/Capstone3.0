@@ -310,6 +310,17 @@ void main() {
       await tester.pumpAndSettle();
       expect(map.mapController!.camera.zoom, closeTo(before, 0.01));
       expect(find.text('Barangay Case & Color Directory'), findsOneWidget);
+      final browseAll = find.text('Browse all 46 barangays');
+      await tester.ensureVisible(browseAll);
+      await tester.tap(browseAll);
+      await tester.pumpAndSettle();
+      expect(find.text('Browse barangays'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('barangay-directory-search')),
+        findsOneWidget,
+      );
+      await tester.tap(find.byTooltip('Close barangay directory'));
+      await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     });
 
@@ -385,27 +396,24 @@ void main() {
         await tester.tap(communicableFilter);
         await tester.pumpAndSettle();
 
-        // Scroll the full directory and select Casisang.
-        final directoryListFinder = find.byType(ListView);
-        await tester.ensureVisible(directoryListFinder);
+        // Browse, search for a barangay below the initially visible rows,
+        // then select it to focus the map.
+        final browseAll = find.text('Browse all 46 barangays');
+        await tester.ensureVisible(browseAll);
+        await tester.tap(browseAll);
         await tester.pumpAndSettle();
-
-        final casisangDirItem = find.byKey(
-          const ValueKey<String>('barangay-directory-item-casisang'),
-        );
-        await tester.scrollUntilVisible(
-          casisangDirItem,
-          120,
-          scrollable: find.descendant(
-            of: directoryListFinder,
-            matching: find.byType(Scrollable),
-          ),
+        await tester.enterText(
+          find.byKey(const ValueKey('barangay-directory-search')),
+          'Casisang',
         );
         await tester.pumpAndSettle();
         selected = null;
-        await tester.tap(casisangDirItem);
+        await tester.tap(
+          find.byKey(const ValueKey<String>('all-barangay-item-casisang')),
+        );
         await tester.pumpAndSettle();
         expect(selected?.code, 'casisang');
+        expect(find.text('Browse barangays'), findsNothing);
       },
     );
   });

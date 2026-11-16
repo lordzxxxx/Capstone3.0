@@ -1779,6 +1779,7 @@ class _ChoBarangaySurveillanceMapState
     extends State<ChoBarangaySurveillanceMap> {
   final MapController _mapController = MapController();
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _directoryScrollController = ScrollController();
 
   SurveillanceCaseCategory _selectedCategory = SurveillanceCaseCategory.all;
   String _selectedDisease = 'ALL';
@@ -1809,6 +1810,7 @@ class _ChoBarangaySurveillanceMapState
   @override
   void dispose() {
     _searchController.dispose();
+    _directoryScrollController.dispose();
     _mapController.dispose();
     super.dispose();
   }
@@ -3427,150 +3429,321 @@ class _ChoBarangaySurveillanceMapState
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.only(top: 4, bottom: 4),
-              itemCount: visibleRows.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 6),
-              itemBuilder: (context, index) {
-                final entry = visibleRows[index];
-                final isSelected =
-                    entry.barangay.code == selectedSummary.barangay.code;
-                final ratio = (entry.totalCases / maxCases).clamp(0.0, 1.0);
-                return InkWell(
-                  key: ValueKey<String>(
-                    'barangay-directory-item-${entry.barangay.code}',
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: () => _selectBarangay(entry),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 11,
-                      vertical: 8,
+            child: Scrollbar(
+              controller: _directoryScrollController,
+              thumbVisibility: true,
+              child: ListView.separated(
+                controller: _directoryScrollController,
+                padding: const EdgeInsets.only(top: 4, bottom: 4),
+                itemCount: visibleRows.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 6),
+                itemBuilder: (context, index) {
+                  final entry = visibleRows[index];
+                  final isSelected =
+                      entry.barangay.code == selectedSummary.barangay.code;
+                  final ratio = (entry.totalCases / maxCases).clamp(0.0, 1.0);
+                  return InkWell(
+                    key: ValueKey<String>(
+                      'barangay-directory-item-${entry.barangay.code}',
                     ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? const Color(0xFFF0F7FF)
-                          : Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSelected
-                            ? const Color(0xFF93C5FD)
-                            : const Color(0xFFE2E8F0),
-                        width: isSelected ? 1.5 : 1.0,
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () => _selectBarangay(entry),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 8,
                       ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x050F172A),
-                          blurRadius: 4,
-                          offset: Offset(0, 1),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? const Color(0xFFF0F7FF)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFF93C5FD)
+                              : const Color(0xFFE2E8F0),
+                          width: isSelected ? 1.5 : 1.0,
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 9,
-                              height: 9,
-                              decoration: BoxDecoration(
-                                color: entry.badgeColor,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                entry.barangay.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: isSelected
-                                      ? const Color(0xFF1E3A8A)
-                                      : const Color(0xFF0F172A),
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w800,
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x050F172A),
+                            blurRadius: 4,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 9,
+                                height: 9,
+                                decoration: BoxDecoration(
+                                  color: entry.badgeColor,
+                                  shape: BoxShape.circle,
                                 ),
                               ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 2.5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: entry.badgeColor.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                '${entry.totalCases} cases · ${entry.tierLabel}',
-                                style: TextStyle(
-                                  color: entry.strokeColor,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  entry.barangay.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: isSelected
+                                        ? const Color(0xFF1E3A8A)
+                                        : const Color(0xFF0F172A),
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 3),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${entry.barangay.district} • Leading: ${entry.dominantDisease}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Color(0xFF64748B),
-                                  fontSize: 10.5,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 2.5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: entry.badgeColor.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  '${entry.totalCases} cases · ${entry.tierLabel}',
+                                  style: TextStyle(
+                                    color: entry.strokeColor,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            Icon(
-                              entry.workspaceSynced
-                                  ? Icons.cloud_done_outlined
-                                  : Icons.cloud_off_outlined,
-                              size: 12,
-                              color: entry.workspaceSynced
-                                  ? const Color(0xFF166534)
-                                  : const Color(0xFF64748B),
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              entry.workspaceSynced
-                                  ? '${entry.assignedBhwUsers.length} BHW · synced'
-                                  : '${entry.assignedBhwUsers.length} BHW · pending',
-                              style: TextStyle(
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '${entry.barangay.district} • Leading: ${entry.dominantDisease}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontSize: 10.5,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Icon(
+                                entry.workspaceSynced
+                                    ? Icons.cloud_done_outlined
+                                    : Icons.cloud_off_outlined,
+                                size: 12,
                                 color: entry.workspaceSynced
                                     ? const Color(0xFF166534)
                                     : const Color(0xFF64748B),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 5),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: ratio,
-                            minHeight: 2.5,
-                            color: entry.badgeColor,
-                            backgroundColor: const Color(0xFFE2E8F0),
+                              const SizedBox(width: 3),
+                              Text(
+                                entry.workspaceSynced
+                                    ? '${entry.assignedBhwUsers.length} BHW · synced'
+                                    : '${entry.assignedBhwUsers.length} BHW · pending',
+                                style: TextStyle(
+                                  color: entry.workspaceSynced
+                                      ? const Color(0xFF166534)
+                                      : const Color(0xFF64748B),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 5),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: ratio,
+                              minHeight: 2.5,
+                              color: entry.badgeColor,
+                              backgroundColor: const Color(0xFFE2E8F0),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _showAllBarangays(visibleRows),
+              icon: const Icon(Icons.grid_view_rounded, size: 17),
+              label: Text('Browse all ${visibleRows.length} barangays'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF1D4ED8),
+                side: const BorderSide(color: Color(0xFFBFDBFE)),
+                minimumSize: const Size.fromHeight(44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _showAllBarangays(
+    List<BarangayMapSurveillanceSummary> summaries,
+  ) async {
+    var query = '';
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          final results = summaries.where((entry) {
+            final term = query.trim().toLowerCase();
+            return entry.barangay.name.toLowerCase().contains(term) ||
+                entry.barangay.district.toLowerCase().contains(term);
+          }).toList();
+          final size = MediaQuery.sizeOf(dialogContext);
+          return Dialog(
+            insetPadding: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 620,
+                maxHeight: size.height * 0.86,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Browse barangays',
+                            style: TextStyle(
+                              color: Color(0xFF0F172A),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Close barangay directory',
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${summaries.length} barangays · select one to focus the map',
+                      style: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      key: const ValueKey('barangay-directory-search'),
+                      autofocus: false,
+                      onChanged: (value) => setDialogState(() => query = value),
+                      decoration: InputDecoration(
+                        hintText: 'Search barangay or district',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: results.isEmpty
+                          ? const Center(child: Text('No barangays found'))
+                          : Scrollbar(
+                              child: ListView.separated(
+                                itemCount: results.length,
+                                separatorBuilder: (_, _) => const Divider(
+                                  height: 1,
+                                  color: Color(0xFFE2E8F0),
+                                ),
+                                itemBuilder: (context, index) {
+                                  final entry = results[index];
+                                  return ListTile(
+                                    key: ValueKey<String>(
+                                      'all-barangay-item-${entry.barangay.code}',
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    leading: CircleAvatar(
+                                      radius: 6,
+                                      backgroundColor: entry.badgeColor,
+                                    ),
+                                    title: Text(
+                                      entry.barangay.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      entry.barangay.district,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    trailing: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          '${entry.totalCases} cases',
+                                          style: TextStyle(
+                                            color: entry.strokeColor,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        Text(
+                                          entry.tierLabel,
+                                          style: const TextStyle(
+                                            color: Color(0xFF64748B),
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    onTap: () {
+                                      Navigator.of(dialogContext).pop();
+                                      _selectBarangay(entry);
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
