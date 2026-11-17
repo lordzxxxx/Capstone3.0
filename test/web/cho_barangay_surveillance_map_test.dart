@@ -99,6 +99,17 @@ void main() {
         syncedWorkspaceCodes: const {},
       );
       expect(all.fold<int>(0, (total, row) => total + row.totalCases), 3);
+      final checkups = ChoBarangaySurveillanceEngine.buildSummaries(
+        allCases: cases,
+        bhwUsers: const [],
+        syncedWorkspaceCodes: const {},
+        categoryFilter: SurveillanceCaseCategory.checkups,
+      );
+      expect(checkups.fold<int>(0, (total, row) => total + row.totalCases), 1);
+      expect(
+        all.firstWhere((row) => row.barangay.code == 'casisang').checkupCount,
+        1,
+      );
       expect(morbidity.first.barangay.code, 'casisang');
       expect(mortality.first.barangay.code, 'aglayan');
       expect(
@@ -469,30 +480,69 @@ void main() {
         await tester.tap(mortalityView);
         await tester.pumpAndSettle();
         expect(
-          find.descendant(of: reportedKpi, matching: find.text('1 cases')),
+          find.descendant(of: reportedKpi, matching: find.text('1 death')),
           findsOneWidget,
         );
+        expect(find.text('Barangay Mortality Directory'), findsOneWidget);
+        final chooseCondition = find.byKey(
+          const ValueKey('choose-condition-button'),
+        );
+        await tester.ensureVisible(chooseCondition);
+        await tester.tap(chooseCondition);
+        await tester.pumpAndSettle();
+        expect(find.text('All Causes'), findsOneWidget);
+        await tester.enterText(
+          find.byKey(const ValueKey('condition-picker-search')),
+          'Stroke',
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('condition-Stroke')));
+        await tester.pumpAndSettle();
+        expect(find.text('Stroke by Barangay'), findsOneWidget);
         final morbidityView = find.byKey(
           const ValueKey('heatmap-view-morbidity'),
         );
+        await tester.ensureVisible(morbidityView);
         await tester.tap(morbidityView);
         await tester.pumpAndSettle();
         expect(
-          find.descendant(of: reportedKpi, matching: find.text('2 cases')),
+          find.descendant(of: reportedKpi, matching: find.text('2 illnesses')),
+          findsOneWidget,
+        );
+        expect(find.text('Barangay Morbidity Directory'), findsOneWidget);
+        await tester.ensureVisible(chooseCondition);
+        await tester.tap(chooseCondition);
+        await tester.pumpAndSettle();
+        expect(find.byKey(const ValueKey('condition-Stroke')), findsNothing);
+        await tester.enterText(
+          find.byKey(const ValueKey('condition-picker-search')),
+          'Dengue',
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('condition-Dengue Fever')));
+        await tester.pumpAndSettle();
+        expect(find.text('Dengue Fever by Barangay'), findsOneWidget);
+        expect(
+          find.descendant(of: reportedKpi, matching: find.text('1 illness')),
           findsOneWidget,
         );
         final conditionsView = find.byKey(
           const ValueKey('heatmap-view-conditions'),
         );
+        await tester.ensureVisible(conditionsView);
         await tester.tap(conditionsView);
         await tester.pumpAndSettle();
         expect(
           find.descendant(of: reportedKpi, matching: find.text('3 cases')),
           findsOneWidget,
         );
-        final chooseCondition = find.byKey(
-          const ValueKey('choose-condition-button'),
-        );
+        await tester.tap(find.byKey(const ValueKey('condition-source-all')));
+        await tester.pumpAndSettle();
+        expect(find.text('Communicable Diseases'), findsOneWidget);
+        expect(find.text('Clinical Check-ups'), findsNothing);
+        expect(find.text('Non-Communicable (NCD)'), findsNothing);
+        await tester.tap(find.text('All record types').last);
+        await tester.pumpAndSettle();
         await tester.ensureVisible(chooseCondition);
         await tester.tap(chooseCondition);
         await tester.pumpAndSettle();
@@ -503,10 +553,9 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const ValueKey('condition-Dengue Fever')));
         await tester.pumpAndSettle();
-        expect(find.text('Viewing: Dengue Fever'), findsOneWidget);
         expect(find.text('Dengue Fever by Barangay'), findsOneWidget);
         expect(
-          find.descendant(of: reportedKpi, matching: find.text('1 cases')),
+          find.descendant(of: reportedKpi, matching: find.text('1 case')),
           findsOneWidget,
         );
         final barangaySearch = find.byType(TextField).first;
@@ -523,7 +572,7 @@ void main() {
         await tester.enterText(barangaySearch, '');
         await tester.pumpAndSettle();
         expect(
-          find.descendant(of: reportedKpi, matching: find.text('1 cases')),
+          find.descendant(of: reportedKpi, matching: find.text('1 case')),
           findsOneWidget,
         );
         await tester.tap(chooseCondition);
@@ -542,6 +591,29 @@ void main() {
           find.descendant(of: reportedKpi, matching: find.text('2 cases')),
           findsOneWidget,
         );
+        await tester.tap(chooseCondition);
+        await tester.pumpAndSettle();
+        expect(find.byKey(const ValueKey('condition-Stroke')), findsNothing);
+        await tester.tap(find.byKey(const ValueKey('condition-all')));
+        await tester.pumpAndSettle();
+        final reset = find.text('Reset');
+        await tester.ensureVisible(reset);
+        await tester.tap(reset);
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey('condition-source-all')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: reportedKpi, matching: find.text('3 cases')),
+          findsOneWidget,
+        );
+        final overviewView = find.byKey(
+          const ValueKey('heatmap-view-overview'),
+        );
+        await tester.ensureVisible(overviewView);
+        await tester.tap(overviewView);
+        await tester.pumpAndSettle();
         final morbidityRow = find.byKey(
           const ValueKey('monitoring-morbidity-casisang'),
         );
@@ -549,7 +621,10 @@ void main() {
         await tester.tap(morbidityRow);
         await tester.pumpAndSettle();
         expect(selected?.code, 'casisang');
-        expect(find.textContaining('Casisang: 2'), findsOneWidget);
+        expect(find.text('Barangay Morbidity Directory'), findsOneWidget);
+        await tester.ensureVisible(overviewView);
+        await tester.tap(overviewView);
+        await tester.pumpAndSettle();
         final mortalityRow = find.byKey(
           const ValueKey('monitoring-mortality-aglayan'),
         );
@@ -557,10 +632,73 @@ void main() {
         await tester.tap(mortalityRow);
         await tester.pumpAndSettle();
         expect(selected?.code, 'aglayan');
-        expect(find.textContaining('Aglayan: 1'), findsOneWidget);
+        expect(find.text('Barangay Mortality Directory'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
     );
+
+    testWidgets('record category filters clinical check-up reports', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final cases = ChoBarangaySurveillanceEngine.aggregateAllCases(
+        morbidityRows: const [
+          {'id': 'morb-1', 'barangay': 'Casisang', 'disease': 'Influenza'},
+        ],
+        checkupRows: const [
+          {'id': 'check-1', 'barangay': 'Aglayan', 'diagnosis': 'Dengue'},
+        ],
+        mortalityRows: const [],
+        prenatalRows: const [],
+        immunizationRows: const [],
+        referralRows: const [],
+        patientRows: const [],
+        bhwUsers: const [],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ChoBarangaySurveillanceMap(
+                allCases: cases,
+                bhwUsers: const [],
+                syncedWorkspaceCodes: const {},
+                windowLabel: 'Last 6 months',
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('heatmap-view-conditions')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('condition-source-all')));
+      await tester.pumpAndSettle();
+      expect(find.text('Clinical Check-ups'), findsOneWidget);
+      await tester.tap(find.text('Clinical Check-ups'));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('heatmap-kpi-reported')),
+          matching: find.text('1 case'),
+        ),
+        findsOneWidget,
+      );
+      final selector = find.byKey(const ValueKey('choose-condition-button'));
+      await tester.ensureVisible(selector);
+      await tester.tap(selector);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('condition-Dengue Fever')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('condition-Influenza')), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('condition-Dengue Fever')));
+      await tester.pumpAndSettle();
+      expect(find.text('Dengue Fever by Barangay'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
 
     testWidgets('renders interactive FlutterMap, layers, and selects barangay', (
       tester,

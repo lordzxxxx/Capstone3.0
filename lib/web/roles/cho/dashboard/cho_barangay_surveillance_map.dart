@@ -1281,19 +1281,7 @@ class ChoBarangaySurveillanceEngine {
     final filteredCases = allCases
         .where((c) {
           if (!isReportedCase(c)) return false;
-          if (categoryFilter != SurveillanceCaseCategory.all) {
-            if (categoryFilter == SurveillanceCaseCategory.morbidity) {
-              if (!isReportedMonitoringCase(c, 'morbidity_records')) {
-                return false;
-              }
-            } else if (categoryFilter == SurveillanceCaseCategory.mortality) {
-              if (!isReportedMonitoringCase(c, 'mortality_records')) {
-                return false;
-              }
-            } else if (c.category != categoryFilter) {
-              return false;
-            }
-          }
+          if (!matchesCategory(c, categoryFilter)) return false;
           if (diseaseFilter != 'ALL' &&
               c.disease.toLowerCase() != diseaseFilter.toLowerCase()) {
             return false;
@@ -1360,29 +1348,27 @@ class ChoBarangaySurveillanceEngine {
             ncd++;
             break;
           case SurveillanceCaseCategory.morbidity:
-            morb++;
-            break;
           case SurveillanceCaseCategory.checkups:
-            chk++;
-            break;
           case SurveillanceCaseCategory.prenatal:
-            pren++;
-            break;
           case SurveillanceCaseCategory.immunization:
-            imm++;
-            break;
           case SurveillanceCaseCategory.mortality:
-            mort++;
-            break;
           case SurveillanceCaseCategory.referrals:
-            ref++;
-            break;
           case SurveillanceCaseCategory.all:
             break;
         }
-        if (item.sourceCollection == 'morbidity_records' &&
-            item.category != SurveillanceCaseCategory.morbidity) {
-          morb++;
+        switch (item.sourceCollection) {
+          case 'morbidity_records':
+            morb++;
+          case 'checkup_records':
+            chk++;
+          case 'prenatal_records':
+            pren++;
+          case 'immunization_records':
+            imm++;
+          case 'mortality_records':
+            mort++;
+          case 'referrals':
+            ref++;
         }
       }
 
@@ -1438,6 +1424,26 @@ class ChoBarangaySurveillanceEngine {
     BarangaySurveillanceCase item,
     String sourceCollection,
   ) => item.sourceCollection == sourceCollection && isReportedCase(item);
+
+  static bool matchesCategory(
+    BarangaySurveillanceCase item,
+    SurveillanceCaseCategory category,
+  ) => switch (category) {
+    SurveillanceCaseCategory.all => true,
+    SurveillanceCaseCategory.morbidity =>
+      item.sourceCollection == 'morbidity_records',
+    SurveillanceCaseCategory.mortality =>
+      item.sourceCollection == 'mortality_records',
+    SurveillanceCaseCategory.checkups =>
+      item.sourceCollection == 'checkup_records',
+    SurveillanceCaseCategory.prenatal =>
+      item.sourceCollection == 'prenatal_records',
+    SurveillanceCaseCategory.immunization =>
+      item.sourceCollection == 'immunization_records',
+    SurveillanceCaseCategory.referrals => item.sourceCollection == 'referrals',
+    SurveillanceCaseCategory.communicable ||
+    SurveillanceCaseCategory.nonCommunicable => item.category == category,
+  };
 
   static bool isReportedCase(BarangaySurveillanceCase item) =>
       item.isPersistedInFirestore &&
@@ -1506,6 +1512,17 @@ class _ChoBarangaySurveillanceMapState
   @override
   void didUpdateWidget(covariant ChoBarangaySurveillanceMap oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (_selectedView == HeatmapView.conditions &&
+        !_availableRecordCategories().contains(_selectedCategory)) {
+      _selectedCategory = SurveillanceCaseCategory.all;
+      _selectedDisease = 'ALL';
+    }
+    if (_selectedDisease != 'ALL' &&
+        !_availableDiseasesForCategory(_activeCategory).keys.any(
+          (name) => name.toLowerCase() == _selectedDisease.toLowerCase(),
+        )) {
+      _selectedDisease = 'ALL';
+    }
     if (widget.selectedBarangayCode != null &&
         widget.selectedBarangayCode != oldWidget.selectedBarangayCode &&
         widget.selectedBarangayCode != _focusedBarangayCode) {
@@ -1549,11 +1566,46 @@ class _ChoBarangaySurveillanceMapState
     HeatmapView.overview => SurveillanceCaseCategory.all,
   };
 
+  String _reportedCount(int count) => switch (_selectedView) {
+    HeatmapView.mortality => '$count ${count == 1 ? 'death' : 'deaths'}',
+    HeatmapView.morbidity => '$count ${count == 1 ? 'illness' : 'illnesses'}',
+    _ => '$count ${count == 1 ? 'case' : 'cases'}',
+  };
+
+  String get _reportedPlural => switch (_selectedView) {
+    HeatmapView.mortality => 'deaths',
+    HeatmapView.morbidity => 'illnesses',
+    _ => 'cases',
+  };
+
   void _selectHeatmapView(HeatmapView view) {
     setState(() {
       _selectedView = view;
+      _selectedDisease = 'ALL';
       _focusedBarangayCode = null;
     });
+  }
+
+  List<SurveillanceCaseCategory> _availableRecordCategories() {
+    final reported = widget.allCases
+        .where(ChoBarangaySurveillanceEngine.isReportedCase)
+        .toList(growable: false);
+    return [
+      SurveillanceCaseCategory.all,
+      for (final category in const [
+        SurveillanceCaseCategory.communicable,
+        SurveillanceCaseCategory.nonCommunicable,
+        SurveillanceCaseCategory.checkups,
+        SurveillanceCaseCategory.prenatal,
+        SurveillanceCaseCategory.immunization,
+        SurveillanceCaseCategory.referrals,
+      ])
+        if (reported.any(
+          (item) =>
+              ChoBarangaySurveillanceEngine.matchesCategory(item, category),
+        ))
+          category,
+    ];
   }
 
   Map<String, int> _availableDiseasesForCategory(
@@ -1562,24 +1614,8 @@ class _ChoBarangaySurveillanceMapState
     final counts = <String, int>{};
     for (final c in widget.allCases) {
       if (!ChoBarangaySurveillanceEngine.isReportedCase(c)) continue;
-      if (category != SurveillanceCaseCategory.all) {
-        if (category == SurveillanceCaseCategory.morbidity) {
-          if (!ChoBarangaySurveillanceEngine.isReportedMonitoringCase(
-            c,
-            'morbidity_records',
-          )) {
-            continue;
-          }
-        } else if (category == SurveillanceCaseCategory.mortality) {
-          if (!ChoBarangaySurveillanceEngine.isReportedMonitoringCase(
-            c,
-            'mortality_records',
-          )) {
-            continue;
-          }
-        } else if (c.category != category) {
-          continue;
-        }
+      if (!ChoBarangaySurveillanceEngine.matchesCategory(c, category)) {
+        continue;
       }
       counts.update(c.disease, (v) => v + 1, ifAbsent: () => 1);
     }
@@ -1593,10 +1629,9 @@ class _ChoBarangaySurveillanceMapState
     final sortedDiseases = diseaseTotalsMap.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     final activeDiseaseFilter =
-        _selectedView != HeatmapView.conditions ||
-            _selectedDisease == 'ALL' ||
+        _selectedView != HeatmapView.overview &&
             diseaseTotalsMap.keys.any(
-              (k) => k.toLowerCase() == _selectedDisease.toLowerCase(),
+              (name) => name.toLowerCase() == _selectedDisease.toLowerCase(),
             )
         ? _selectedDisease
         : 'ALL';
@@ -1814,12 +1849,14 @@ class _ChoBarangaySurveillanceMapState
               );
             },
           ),
-          const SizedBox(height: 20),
-          _buildMortalityMorbidityMonitoring(
-            selectedBarangayCode: filteredSummaries.isEmpty
-                ? ''
-                : selectedSummary.barangay.code,
-          ),
+          if (_selectedView == HeatmapView.overview) ...[
+            const SizedBox(height: 20),
+            _buildMortalityMorbidityMonitoring(
+              selectedBarangayCode: filteredSummaries.isEmpty
+                  ? ''
+                  : selectedSummary.barangay.code,
+            ),
+          ],
           const SizedBox(height: 20),
           _buildConditionMatrix(
             summaries: filteredSummaries.take(8).toList(growable: false),
@@ -1842,6 +1879,13 @@ class _ChoBarangaySurveillanceMapState
     required int totalBarangays,
     required int trackedDiseasesCount,
   }) {
+    final trackedLabel = _selectedView == HeatmapView.mortality
+        ? trackedDiseasesCount == 1
+              ? 'reported cause'
+              : 'reported causes'
+        : trackedDiseasesCount == 1
+        ? 'tracked condition'
+        : 'tracked conditions';
     return Wrap(
       spacing: 14,
       runSpacing: 12,
@@ -1891,7 +1935,7 @@ class _ChoBarangaySurveillanceMapState
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    'Malaybalay City · $totalBarangays barangays · ${widget.windowLabel} · $trackedDiseasesCount tracked conditions. Boundaries: ${MalaybalayBarangayGeoRegistry.boundarySourceLabel}.',
+                    'Malaybalay City · $totalBarangays barangays · ${widget.windowLabel} · $trackedDiseasesCount $trackedLabel. Boundaries: ${MalaybalayBarangayGeoRegistry.boundarySourceLabel}.',
                     style: const TextStyle(
                       color: Color(0xFF64748B),
                       fontSize: 12,
@@ -2030,10 +2074,14 @@ class _ChoBarangaySurveillanceMapState
           KeyedSubtree(
             key: const ValueKey('heatmap-kpi-reported'),
             child: _kpiTile(
-              label: 'Reported Cases',
-              value: '$totalCases cases',
+              label: switch (_selectedView) {
+                HeatmapView.mortality => 'Reported Deaths',
+                HeatmapView.morbidity => 'Reported Illnesses',
+                _ => 'Reported Cases',
+              },
+              value: _reportedCount(totalCases),
               subtitle:
-                  _selectedView == HeatmapView.conditions &&
+                  _selectedView != HeatmapView.overview &&
                       _selectedDisease != 'ALL'
                   ? _selectedDisease
                   : _selectedView.label,
@@ -2044,24 +2092,30 @@ class _ChoBarangaySurveillanceMapState
           _kpiTile(
             label: 'Barangays Reporting',
             value: '$activeBarangays of $totalBarangays',
-            subtitle: 'With cases in the selected view',
+            subtitle: 'With reports in the selected view',
             icon: Icons.location_city_outlined,
             accent: const Color(0xFF2563EB),
           ),
           _kpiTile(
-            label: 'Highest Hotspot',
+            label: _selectedView == HeatmapView.mortality
+                ? 'Most Reports'
+                : 'Highest Hotspot',
             value: topHotspot == null || topHotspot.totalCases == 0
                 ? 'No reported cases'
                 : '${topHotspot.barangay.name} (${topHotspot.totalCases})',
             subtitle: topHotspot == null || topHotspot.totalCases == 0
                 ? 'In the selected view'
-                : 'Leading: ${topHotspot.dominantDisease}',
+                : '${_selectedView == HeatmapView.mortality ? 'Leading cause' : 'Leading'}: ${topHotspot.dominantDisease}',
             icon: Icons.local_fire_department_rounded,
             accent: const Color(0xFF2563EB),
           ),
           _kpiTile(
-            label: 'Conditions in View',
-            value: '$trackedDiseasesCount conditions',
+            label: _selectedView == HeatmapView.mortality
+                ? 'Causes in View'
+                : 'Conditions in View',
+            value: _selectedView == HeatmapView.mortality
+                ? '$trackedDiseasesCount ${trackedDiseasesCount == 1 ? 'cause' : 'causes'}'
+                : '$trackedDiseasesCount ${trackedDiseasesCount == 1 ? 'condition' : 'conditions'}',
             subtitle: 'Across matching barangay reports',
             icon: Icons.hub_outlined,
             accent: const Color(0xFF2563EB),
@@ -2163,14 +2217,15 @@ class _ChoBarangaySurveillanceMapState
     EpidemiologicalTierThresholds? thresholds,
   }) {
     final districts = <String>['ALL', ...MalaybalayBarangays.districtOrder];
+    final recordCategories = _availableRecordCategories();
 
     final isFiltered =
-        _selectedView != HeatmapView.overview ||
         (_selectedView == HeatmapView.conditions &&
             _selectedCategory != SurveillanceCaseCategory.all) ||
         activeDiseaseFilter != 'ALL' ||
         _selectedDistrict != 'ALL' ||
-        _searchQuery.isNotEmpty;
+        _searchQuery.isNotEmpty ||
+        _colorMetric != SurveillanceColorMetric.caseVolume;
 
     return Container(
       width: double.infinity,
@@ -2187,100 +2242,129 @@ class _ChoBarangaySurveillanceMapState
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (_selectedView == HeatmapView.conditions) ...[
+              if (_selectedView != HeatmapView.overview) ...[
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    OutlinedButton.icon(
-                      key: const ValueKey('choose-condition-button'),
-                      onPressed: () => _showConditionPicker(sortedDiseases),
-                      icon: const Icon(
-                        Icons.medical_information_outlined,
-                        size: 17,
-                      ),
-                      label: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 240),
-                        child: Text(
-                          activeDiseaseFilter == 'ALL'
-                              ? 'Choose disease or condition'
-                              : activeDiseaseFilter,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1D4ED8),
-                        backgroundColor: Colors.white,
-                        minimumSize: Size(compact ? controlWidth : 0, 44),
-                        side: const BorderSide(color: Color(0xFF93C5FD)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: compact ? controlWidth : 230,
-                      child: DropdownButtonFormField<SurveillanceCaseCategory>(
-                        key: ValueKey(
-                          'condition-source-${_selectedCategory.name}',
-                        ),
-                        initialValue: _selectedCategory,
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          labelText: 'Record type',
-                          prefixIcon: const Icon(
-                            Icons.filter_list_rounded,
-                            size: 17,
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          isDense: true,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        items:
-                            const [
-                                  SurveillanceCaseCategory.all,
-                                  SurveillanceCaseCategory.communicable,
-                                  SurveillanceCaseCategory.nonCommunicable,
-                                  SurveillanceCaseCategory.checkups,
-                                  SurveillanceCaseCategory.prenatal,
-                                  SurveillanceCaseCategory.immunization,
-                                  SurveillanceCaseCategory.referrals,
-                                ]
-                                .map(
-                                  (category) => DropdownMenuItem(
-                                    value: category,
-                                    child: Text(
-                                      category == SurveillanceCaseCategory.all
-                                          ? 'All record types'
-                                          : category.label,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                    if (_selectedView == HeatmapView.conditions)
+                      SizedBox(
+                        width: compact ? controlWidth : 250,
+                        child:
+                            DropdownButtonFormField<SurveillanceCaseCategory>(
+                              key: ValueKey(
+                                'condition-source-${_selectedCategory.name}',
+                              ),
+                              initialValue: _selectedCategory,
+                              isExpanded: true,
+                              menuMaxHeight: 360,
+                              decoration: InputDecoration(
+                                labelText: 'Record type',
+                                prefixIcon: const Icon(
+                                  Icons.filter_list_rounded,
+                                  size: 17,
+                                ),
+                                filled: true,
+                                fillColor: Colors.white,
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 10,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE2E8F0),
                                   ),
-                                )
-                                .toList(growable: false),
-                        onChanged: (category) {
-                          if (category == null) return;
-                          setState(() {
-                            _selectedCategory = category;
-                            _selectedDisease = 'ALL';
-                            _focusedBarangayCode = null;
-                          });
-                        },
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF2563EB),
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                              items: recordCategories
+                                  .map(
+                                    (category) => DropdownMenuItem(
+                                      value: category,
+                                      child: Text(
+                                        category == SurveillanceCaseCategory.all
+                                            ? 'All record types'
+                                            : category.label,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  )
+                                  .toList(growable: false),
+                              onChanged: (category) {
+                                if (category == null) return;
+                                setState(() {
+                                  _selectedCategory = category;
+                                  _selectedDisease = 'ALL';
+                                  _focusedBarangayCode = null;
+                                });
+                              },
+                            ),
                       ),
-                    ),
-                    Text(
-                      activeDiseaseFilter == 'ALL'
-                          ? 'Viewing all ${sortedDiseases.length} conditions'
-                          : 'Viewing: $activeDiseaseFilter',
-                      style: const TextStyle(
-                        color: Color(0xFF475569),
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
+                    SizedBox(
+                      width: compact ? controlWidth : 260,
+                      child: Semantics(
+                        button: true,
+                        label: _selectedView == HeatmapView.mortality
+                            ? 'Select cause of death'
+                            : 'Select disease or condition',
+                        child: InkWell(
+                          key: const ValueKey('choose-condition-button'),
+                          onTap: () => _showConditionPicker(sortedDiseases),
+                          borderRadius: BorderRadius.circular(10),
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: _selectedView == HeatmapView.mortality
+                                  ? 'Cause of death'
+                                  : 'Disease or condition',
+                              prefixIcon: Icon(
+                                _selectedView == HeatmapView.mortality
+                                    ? Icons.heart_broken_outlined
+                                    : Icons.medical_information_outlined,
+                                size: 18,
+                              ),
+                              suffixIcon: const Icon(
+                                Icons.arrow_drop_down_rounded,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE2E8F0),
+                                ),
+                              ),
+                              isDense: true,
+                            ),
+                            child: Text(
+                              activeDiseaseFilter == 'ALL'
+                                  ? _selectedView == HeatmapView.mortality
+                                        ? 'All causes'
+                                        : 'All conditions'
+                                  : activeDiseaseFilter,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFF0F172A),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -2486,9 +2570,9 @@ class _ChoBarangaySurveillanceMapState
                         setState(() {
                           _selectedCategory = SurveillanceCaseCategory.all;
                           _selectedDisease = 'ALL';
-                          _selectedView = HeatmapView.overview;
                           _focusedBarangayCode = null;
                           _selectedDistrict = 'ALL';
+                          _colorMetric = SurveillanceColorMetric.caseVolume;
                           _searchController.clear();
                           _searchQuery = '';
                         });
@@ -2557,7 +2641,7 @@ class _ChoBarangaySurveillanceMapState
                           const SizedBox(width: 6),
                           Text(
                             _colorMetric == SurveillanceColorMetric.caseVolume
-                                ? '${_selectedView.label} · case scale:'
+                                ? '${_selectedView.label} · $_reportedPlural scale:'
                                 : '${_selectedView.label} · risk score scale:',
                             style: const TextStyle(
                               color: Color(0xFF0F172A),
@@ -2658,10 +2742,12 @@ class _ChoBarangaySurveillanceMapState
                   children: [
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Diseases & Conditions',
-                            style: TextStyle(
+                            _selectedView == HeatmapView.mortality
+                                ? 'Causes of death'
+                                : 'Diseases & Conditions',
+                            style: const TextStyle(
                               color: Color(0xFF0F172A),
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
@@ -2677,7 +2763,7 @@ class _ChoBarangaySurveillanceMapState
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${conditions.length} reported conditions · select one to update the heatmap',
+                      '${conditions.length} reported ${_selectedView == HeatmapView.mortality ? 'causes' : 'conditions'} · select one to update the heatmap',
                       style: const TextStyle(
                         color: Color(0xFF64748B),
                         fontSize: 12,
@@ -2688,7 +2774,9 @@ class _ChoBarangaySurveillanceMapState
                       key: const ValueKey('condition-picker-search'),
                       onChanged: (value) => setDialogState(() => query = value),
                       decoration: InputDecoration(
-                        hintText: 'Search diseases and health conditions',
+                        hintText: _selectedView == HeatmapView.mortality
+                            ? 'Search causes of death'
+                            : 'Search diseases and health conditions',
                         prefixIcon: const Icon(Icons.search_rounded),
                         isDense: true,
                         border: OutlineInputBorder(
@@ -2704,9 +2792,15 @@ class _ChoBarangaySurveillanceMapState
                           Icons.layers_outlined,
                           color: Color(0xFF2563EB),
                         ),
-                        title: const Text('All Conditions'),
-                        subtitle: const Text(
-                          'Show all reported conditions in this record type',
+                        title: Text(
+                          _selectedView == HeatmapView.mortality
+                              ? 'All Causes'
+                              : 'All Conditions',
+                        ),
+                        subtitle: Text(
+                          _selectedView == HeatmapView.conditions
+                              ? 'Show all reported conditions in this record type'
+                              : 'Show all reported ${_selectedView == HeatmapView.mortality ? 'causes of death' : 'illnesses'}',
                         ),
                         selected: _selectedDisease == 'ALL',
                         onTap: () {
@@ -2929,7 +3023,7 @@ class _ChoBarangaySurveillanceMapState
                           child: Tooltip(
                             message:
                                 '${summary.barangay.name} (${summary.barangay.district})\n'
-                                '${summary.totalCases} cases · ${summary.tierLabel}\n'
+                                '${_reportedCount(summary.totalCases)} · ${summary.tierLabel}\n'
                                 'Leading: ${summary.dominantDisease}',
                             child: Center(
                               child: showLabelForThisMarker
@@ -3375,9 +3469,13 @@ class _ChoBarangaySurveillanceMapState
                 color: Color(0xFF2563EB),
               ),
               const SizedBox(width: 7),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Barangay Case & Color Directory',
+                  _selectedView == HeatmapView.mortality
+                      ? 'Barangay Mortality Directory'
+                      : _selectedView == HeatmapView.morbidity
+                      ? 'Barangay Morbidity Directory'
+                      : 'Barangay Case & Color Directory',
                   style: TextStyle(
                     color: Color(0xFF0F172A),
                     fontSize: 13.5,
@@ -3404,9 +3502,13 @@ class _ChoBarangaySurveillanceMapState
             ],
           ),
           const SizedBox(height: 3),
-          const Text(
-            'Sorted by reported cases · select a row to focus the map',
-            style: TextStyle(color: Color(0xFF64748B), fontSize: 10.5),
+          Text(
+            'Sorted by reported ${_selectedView == HeatmapView.mortality
+                ? 'deaths'
+                : _selectedView == HeatmapView.morbidity
+                ? 'illnesses'
+                : 'cases'} · select a row to focus the map',
+            style: const TextStyle(color: Color(0xFF64748B), fontSize: 10.5),
           ),
           const SizedBox(height: 8),
           Expanded(
@@ -3501,7 +3603,7 @@ class _ChoBarangaySurveillanceMapState
                                         ),
                                       ),
                                       child: Text(
-                                        '${entry.totalCases} cases · ${entry.tierLabel}',
+                                        '${_reportedCount(entry.totalCases)} · ${entry.tierLabel}',
                                         style: TextStyle(
                                           color: entry.strokeColor,
                                           fontSize: 10,
@@ -3809,7 +3911,7 @@ class _ChoBarangaySurveillanceMapState
                   ),
                 ),
                 child: Text(
-                  '${summary.totalCases} Cases · ${summary.tierLabel}',
+                  '${_reportedCount(summary.totalCases)} · ${summary.tierLabel}',
                   style: TextStyle(
                     color: summary.strokeColor,
                     fontSize: 11,
@@ -3874,7 +3976,11 @@ class _ChoBarangaySurveillanceMapState
                   (constraints.maxWidth - (columns - 1) * 6) / columns;
               final stats = <({String label, String value, IconData icon})>[
                 (
-                  label: 'Total cases',
+                  label: _selectedView == HeatmapView.mortality
+                      ? 'Deaths'
+                      : _selectedView == HeatmapView.morbidity
+                      ? 'Illnesses'
+                      : 'Total cases',
                   value: '${summary.totalCases}',
                   icon: Icons.personal_injury_outlined,
                 ),
@@ -4072,25 +4178,24 @@ class _ChoBarangaySurveillanceMapState
   }
 
   void _focusMonitoringSource(
-    SurveillanceCaseCategory category, [
-    BarangayMapSurveillanceSummary? barangay,
-  ]) {
+    SurveillanceCaseCategory category,
+    BarangayMapSurveillanceSummary barangay,
+  ) {
     setState(() {
       _selectedView = category == SurveillanceCaseCategory.mortality
           ? HeatmapView.mortality
           : HeatmapView.morbidity;
+      _selectedDisease = 'ALL';
       _selectedDistrict = 'ALL';
       _searchQuery = '';
       _searchController.clear();
-      if (barangay != null) _focusedBarangayCode = barangay.barangay.code;
+      _focusedBarangayCode = barangay.barangay.code;
     });
-    if (barangay != null) {
-      _moveCamera(
-        barangay.center,
-        barangay.barangay.district == 'Poblacion District' ? 14.8 : 13.0,
-      );
-      widget.onBarangaySelected?.call(barangay.barangay);
-    }
+    _moveCamera(
+      barangay.center,
+      barangay.barangay.district == 'Poblacion District' ? 14.8 : 13.0,
+    );
+    widget.onBarangaySelected?.call(barangay.barangay);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final mapContext = _mapSectionKey.currentContext;
       if (mounted && mapContext != null) {
@@ -4350,16 +4455,6 @@ class _ChoBarangaySurveillanceMapState
                 style: TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
               ),
             ),
-          OutlinedButton.icon(
-            onPressed: loaded ? () => _focusMonitoringSource(category) : null,
-            icon: const Icon(Icons.map_outlined, size: 17),
-            label: Text('View $title on map'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF1D4ED8),
-              minimumSize: const Size(0, 44),
-              side: const BorderSide(color: Color(0xFFBFDBFE)),
-            ),
-          ),
         ],
       ),
     );
@@ -4371,7 +4466,7 @@ class _ChoBarangaySurveillanceMapState
     required int maxCases,
   }) {
     final focusedCondition =
-        _selectedView == HeatmapView.conditions && _selectedDisease != 'ALL';
+        _selectedView != HeatmapView.overview && _selectedDisease != 'ALL';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -4466,15 +4561,19 @@ class _ChoBarangaySurveillanceMapState
                                 ),
                               ),
                             ),
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.symmetric(
                                 horizontal: 8,
                                 vertical: 8,
                               ),
                               child: Text(
-                                'Total Cases',
+                                _selectedView == HeatmapView.mortality
+                                    ? 'Deaths'
+                                    : _selectedView == HeatmapView.morbidity
+                                    ? 'Illnesses'
+                                    : 'Total Cases',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: Color(0xFF475569),
                                   fontSize: 11,
                                   fontWeight: FontWeight.w800,
