@@ -1899,11 +1899,7 @@ class _ChoBarangaySurveillanceMapState
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: const Color(0xFF1D4ED8),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: const [
                   BoxShadow(
@@ -1990,23 +1986,26 @@ class _ChoBarangaySurveillanceMapState
               ),
             ),
             if (widget.onRefreshData != null)
-              OutlinedButton.icon(
-                onPressed: widget.onRefreshData,
-                icon: const Icon(Icons.refresh_rounded, size: 16),
-                label: const Text(
-                  'Refresh map data',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF2563EB),
-                  backgroundColor: Colors.white,
-                  side: const BorderSide(color: Color(0xFF93C5FD)),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
+              Tooltip(
+                message: 'Fetch the latest saved clinical records',
+                child: OutlinedButton.icon(
+                  onPressed: widget.onRefreshData,
+                  icon: const Icon(Icons.refresh_rounded, size: 16),
+                  label: const Text(
+                    'Refresh map data',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2563EB),
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: Color(0xFF93C5FD)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
