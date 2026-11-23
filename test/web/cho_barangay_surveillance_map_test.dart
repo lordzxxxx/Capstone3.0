@@ -118,6 +118,52 @@ void main() {
       );
     });
 
+    test('keeps communicable and NCD source classifications in program totals', () {
+      final cases = ChoBarangaySurveillanceEngine.aggregateAllCases(
+        morbidityRows: const [],
+        checkupRows: const [
+          {
+            'id': 'comm-1',
+            'barangay': 'Barangay 03',
+            'diseaseType': 'Communicable',
+            'chiefComplaint': 'Cough and fever after a sick contact',
+          },
+          {
+            'id': 'ncd-1',
+            'barangay': 'Barangay 03',
+            'diseaseType': 'Non-Communicable',
+            'chiefComplaint': 'BP monitoring for known hypertension',
+          },
+        ],
+        mortalityRows: const [],
+        prenatalRows: const [
+          {'id': 'prenatal-1', 'barangay': 'Barangay 03'},
+        ],
+        immunizationRows: const [
+          {'id': 'imm-1', 'barangay': 'Barangay 03', 'vaccine': 'MCV 1'},
+        ],
+        referralRows: const [
+          {'id': 'referral-1', 'barangay': 'Barangay 03'},
+        ],
+        patientRows: const [],
+        bhwUsers: const [],
+      );
+      final barangay3 = ChoBarangaySurveillanceEngine.buildSummaries(
+        allCases: cases,
+        bhwUsers: const [],
+        syncedWorkspaceCodes: const {'POBLACION-03'},
+      ).firstWhere((summary) => summary.barangay.code == 'poblacion-03');
+
+      expect(barangay3.totalCases, 5);
+      expect(barangay3.communicableCount, 1);
+      expect(barangay3.nonCommunicableCount, 1);
+      expect(barangay3.checkupCount, 2);
+      expect(barangay3.prenatalCount, 1);
+      expect(barangay3.immunizationCount, 1);
+      expect(barangay3.referralCount, 1);
+      expect(barangay3.workspaceSynced, isTrue);
+    });
+
     test(
       'resolves barangays from aliases, Firestore path, and BHW user link',
       () {
