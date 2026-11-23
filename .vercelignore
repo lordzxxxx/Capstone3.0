@@ -1,0 +1,23 @@
+# Local/generated files are not inputs to the Vercel Flutter web build.
+.git/
+.dart_tool/
+build/
+node_modules/
+functions/node_modules/
+.venv/
+backend/.venv/
+.pytest_cache/
+coverage/
+test-results/
+qa/playwright-report/
+
+# User-local working material must never become deployment input.
+.obsidian/
+.playwright-cli/
+artifacts/
+Untitled.md
+
+# Platform/editor files.
+.idea/
+.vscode/
+.DS_Store
