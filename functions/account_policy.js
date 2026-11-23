@@ -20,13 +20,16 @@ const {
   buildReferralAssignmentEmail,
 } = require('./email_templates');
 const {sendDoctorAccountSetupEmail} = require('./doctor_access');
+const {
+  FIRESTORE_DATABASE_ID,
+  FIRESTORE_TRIGGER_REGION,
+} = require('./firestore_trigger_config');
 
 if (!(typeof admin.getApps === 'function' ? admin.getApps() : admin.apps).length) {
   admin.initializeApp();
 }
 
 // Keep this aligned with lib/firebase_helper.dart.
-const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 const db = getFirestore(admin.getApp(), FIRESTORE_DATABASE_ID);
 const auth = getAuth(admin.getApp());
 const rtdb = {ref: (...args) => getDatabase(admin.getApp()).ref(...args)};
@@ -1565,10 +1568,10 @@ exports.completeRegistration = functions.https.onCall(async (data, context) => {
 // Firestore Enterprise requires Eventarc/2nd-gen triggers. This uses a new
 // export name because Firebase does not support upgrading an existing 1st-gen
 // function in place; the old trigger is removed after this replacement is live.
-exports.syncAccountGovernanceLocksV2 = onDocumentWritten({
+exports.syncAccountGovernanceLocksAsiaEast1 = onDocumentWritten({
   document: 'users/{uid}',
   database: FIRESTORE_DATABASE_ID,
-  region: 'us-central1',
+  region: FIRESTORE_TRIGGER_REGION,
 }, async (event) => {
   const change = event.data;
   const uid = event.params.uid;
@@ -3037,10 +3040,10 @@ exports.assignDoctorToReferral = functions.runWith({
   return result;
 });
 
-exports.autoAssignReferralOnWrite = onDocumentWritten({
+exports.autoAssignReferralAsiaEast1 = onDocumentWritten({
   document: 'referrals/{referralId}',
   database: FIRESTORE_DATABASE_ID,
-  region: 'us-central1',
+  region: FIRESTORE_TRIGGER_REGION,
   secrets: ['RESEND_API_KEY'],
 }, async (event) => {
   const change = event.data;

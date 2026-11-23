@@ -6,7 +6,7 @@
 
 // Import and export callable functions
 const { setUserRole } = require('./set_user_role');
-const { processInvitation } = require('./process_invitations');
+const { processInvitationAsiaEast1 } = require('./process_invitations');
 const {
 	sendPasswordResetEmail,
 	verifyResetCode,
@@ -25,8 +25,8 @@ const {
   sendReferralAssignmentEmail,
   listDoctorTransferTargets,
   doctorReferralAction,
-  autoAssignReferralOnWrite,
-	syncAccountGovernanceLocksV2,
+  autoAssignReferralAsiaEast1,
+	syncAccountGovernanceLocksAsiaEast1,
 	suggestDoctorAssignment,
 } = require('./account_policy');
 const {
@@ -50,7 +50,10 @@ const {
 
 // Export functions
 exports.setUserRole = setUserRole;
-exports.processInvitation = processInvitation;
+// Firestore Eventarc functions use a region-qualified name so the repaired
+// asia-east1 trigger can coexist with (and be verified before removing) the
+// previously broken us-central1 deployment.
+exports.processInvitationAsiaEast1 = processInvitationAsiaEast1;
 exports.sendPasswordResetEmail = sendPasswordResetEmail;
 exports.verifyResetCode = verifyResetCode;
 exports.completePasswordReset = completePasswordReset;
@@ -66,8 +69,8 @@ exports.assignDoctorToReferral = assignDoctorToReferral;
 exports.sendReferralAssignmentEmail = sendReferralAssignmentEmail;
 exports.listDoctorTransferTargets = listDoctorTransferTargets;
 exports.doctorReferralAction = doctorReferralAction;
-exports.autoAssignReferralOnWrite = autoAssignReferralOnWrite;
-exports.syncAccountGovernanceLocksV2 = syncAccountGovernanceLocksV2;
+exports.autoAssignReferralAsiaEast1 = autoAssignReferralAsiaEast1;
+exports.syncAccountGovernanceLocksAsiaEast1 = syncAccountGovernanceLocksAsiaEast1;
 exports.suggestDoctorAssignment = suggestDoctorAssignment;
 exports.listAccessRoles = listAccessRoles;
 exports.saveAccessRole = saveAccessRole;
