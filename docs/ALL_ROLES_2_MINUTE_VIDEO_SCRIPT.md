@@ -8,64 +8,66 @@ confident delivery at approximately 135–145 words per minute.
 
 **Show:** BHW dashboard, then CHO dashboard.
 
-> AI-DSUHIS connects barangay health work, city-level operations, and protected
-> doctor coordination in one role-aware health information platform. Each user
-> sees the tools appropriate to their responsibility, while shared clinical
-> records remain synchronized.
+> AI-DSUHIS connects barangay health work, city operations, and protected doctor
+> coordination in one role-aware platform. Each user sees the tools appropriate
+> to their responsibility, while shared clinical records stay synchronized.
 
 ## 0:10–0:38 — BHW workflow
 
 **Show:** BHW dashboard → patient records → check-ups → analytics.
 
-> The Barangay Health Worker starts with quick actions for registering a
-> resident, recording a check-up, creating a health summary, and opening
-> prenatal or immunization services. Patient Records keeps each resident’s
-> identity connected to their care history. Check-ups captures consultations,
-> while Analytics turns barangay activity into filtered insights for follow-up
-> and outreach. The same workspace also supports communicable and
-> non-communicable surveillance, morbidity, mortality, referrals, notifications,
-> and profile management.
+> The Barangay Health Worker can register residents, record check-ups, create
+> summaries, and open prenatal or immunization services. Patient Records keeps
+> each identity connected to its care history. Check-ups and Analytics turn
+> barangay activity into follow-up insights, while surveillance, referrals,
+> notifications, and profile tools support daily field work.
 
-## 0:38–1:16 — CHO operations
+## 0:38–1:02 — AI training, input, process and output
+
+**Show:** BHW check-up or Summary Generation view, then the AI review/output
+panel.
+
+> The AI starts with symptom text or structured check-up fields. Its trained
+> disease model uses 75,194 training records, 228 binary symptom features, and
+> 100 labeled classes. At runtime, input is normalized, authenticated, and
+> checked against supported terms. A local TF-IDF, keyword, and metadata ranker
+> retrieves source-backed guidance. The output is a reviewable explanation with
+> precautions, referral or emergency prompts, confidence, and source context.
+> OCR can prefill paper-form fields, but staff must verify them. This is support,
+> not an automated diagnosis, prescription, or treatment decision.
+
+## 1:02–1:32 — CHO operations
 
 **Show:** CHO dashboard → patients → check-ups → reports.
 
-> The City Health Office sees the wider operational picture. Its command center
-> reports synchronization status, active population, referral completion, and
-> clinical attention before moving into the program snapshot. The patient and
-> check-up workspaces expose the same authorized records without counting
-> mirrored documents twice. CHO staff can review prenatal, immunization,
-> morbidity, mortality, and referral activity, then use Reports for operational
-> exports and longer-range review. The dashboard also provides barangay
-> demographics, analytics filters, insights, and geographic surveillance for
-> city-level coordination.
+> The City Health Office sees the wider operational picture: synchronization,
+> population, referrals, clinical attention, and program performance. Its
+> patient and check-up workspaces expose the same authorized records without
+> double-counting mirrors. CHO staff can review every health program, export
+> reports, and use demographics, analytics, insights, and geographic
+> surveillance for city-level coordination.
 
-## 1:16–1:42 — Governance and collaboration
+## 1:32–1:54 — Governance and collaboration
 
 **Show:** CHO Manage Access, then CHO referrals or BHW referrals.
 
-> Governance is built into the workflow. CHO administrators manage approved
-> accounts, roles, and permissions, while referrals provide the handoff between
-> barangay services, city review, and clinical follow-through. Data quality,
-> audit logs, announcements, notifications, and BHW management support the
-> operational controls behind the clinical pages.
+> Governance is built in. CHO administrators manage approved accounts, roles,
+> and permissions, while referrals connect barangay services, city review, and
+> clinical follow-through. Data quality, audit logs, announcements, and BHW
+> management support the operational controls.
 
-## 1:42–1:56 — Doctor portal
+## 1:54–1:58 — Doctor portal
 
-**Show:** Doctor login, then the Doctor portal feature list or approved doctor
-management view.
+**Show:** Doctor login or approved doctor management view.
 
-> Doctors enter through a separate protected portal. Their workspace is designed
-> for assigned referrals, patient-level review, accepting or updating care,
-> closing or transferring referrals, maintaining a profile, and preserving
-> doctor-note history for the next attending clinician.
+> Doctors enter a protected portal for assigned referrals and clinical
+> follow-through, with profile, archive, transfer, and doctor-note tools.
 
-## 1:56–2:00 — Closing
+## 1:58–2:00 — Closing
 
 **Show:** CHO dashboard with synchronization status visible.
 
-> Together, these role-specific modules make AI-DSUHIS a connected workflow from
-> barangay registration to city oversight and clinical action.
+> AI-DSUHIS connects registration, evidence-led guidance, oversight, and care.
 
 ### Recording note
 
