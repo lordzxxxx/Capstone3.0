@@ -185,10 +185,12 @@ class ImmunizationDatabaseHelper {
         firestoreData.remove('synced'); // Don't save synced flag to Firestore
         final scopedData = await currentMobileFirestoreData(firestoreData);
 
-        await getFirestoreInstance()
-            .collection('immunization_records')
-            .doc(id)
-            .set(scopedData);
+        final reference = await currentMobileFirestoreDocumentReference(
+          'immunization_records',
+          id.toString(),
+          record: scopedData,
+        );
+        await reference.set(scopedData);
 
         await db.update(
           'immunization_records',
@@ -404,10 +406,12 @@ class ImmunizationDatabaseHelper {
           recordData.remove('id');
           final scopedData = await currentMobileFirestoreData(recordData);
 
-          await getFirestoreInstance()
-              .collection('immunization_records')
-              .doc(id)
-              .set(scopedData, SetOptions(merge: true));
+          final reference = await currentMobileFirestoreDocumentReference(
+            'immunization_records',
+            id.toString(),
+            record: scopedData,
+          );
+          await reference.set(scopedData, SetOptions(merge: true));
 
           // Mark as synced
           await db.update(

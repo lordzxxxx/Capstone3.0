@@ -238,10 +238,12 @@ class PrenatalDatabaseHelper {
         firestoreData.remove('synced'); // Don't save synced flag to Firestore
         final scopedData = await currentMobileFirestoreData(firestoreData);
 
-        await getFirestoreInstance()
-            .collection('prenatal_records')
-            .doc(id)
-            .set(scopedData);
+        final reference = await currentMobileFirestoreDocumentReference(
+          'prenatal_records',
+          id.toString(),
+          record: scopedData,
+        );
+        await reference.set(scopedData);
 
         await db.update(
           'prenatal_records',
@@ -468,10 +470,12 @@ class PrenatalDatabaseHelper {
           recordData.remove('id');
           final scopedData = await currentMobileFirestoreData(recordData);
 
-          await getFirestoreInstance()
-              .collection('prenatal_records')
-              .doc(id)
-              .set(scopedData, SetOptions(merge: true));
+          final reference = await currentMobileFirestoreDocumentReference(
+            'prenatal_records',
+            id.toString(),
+            record: scopedData,
+          );
+          await reference.set(scopedData, SetOptions(merge: true));
 
           // Mark as synced
           await db.update(

@@ -131,10 +131,12 @@ class MorbidityDatabaseHelper {
         firestoreData.remove('synced');
         final scopedData = await currentMobileFirestoreData(firestoreData);
 
-        await getFirestoreInstance()
-            .collection('morbidity_records')
-            .doc(id)
-            .set(scopedData);
+        final reference = await currentMobileFirestoreDocumentReference(
+          'morbidity_records',
+          id.toString(),
+          record: scopedData,
+        );
+        await reference.set(scopedData);
 
         await db.update(
           'morbidity_records',
@@ -327,10 +329,12 @@ class MorbidityDatabaseHelper {
           recordData.remove('id');
           final scopedData = await currentMobileFirestoreData(recordData);
 
-          await getFirestoreInstance()
-              .collection('morbidity_records')
-              .doc(id)
-              .set(scopedData, SetOptions(merge: true));
+          final reference = await currentMobileFirestoreDocumentReference(
+            'morbidity_records',
+            id,
+            record: scopedData,
+          );
+          await reference.set(scopedData, SetOptions(merge: true));
 
           await db.update(
             'morbidity_records',
@@ -531,10 +535,12 @@ class MorbidityDatabaseHelper {
         final updateData = Map<String, dynamic>.from(record);
         updateData.remove('synced');
         final scopedData = await currentMobileFirestoreData(updateData);
-        await getFirestoreInstance()
-            .collection('morbidity_records')
-            .doc(id)
-            .update(scopedData);
+        final reference = await currentMobileFirestoreDocumentReference(
+          'morbidity_records',
+          id,
+          record: scopedData,
+        );
+        await reference.update(scopedData);
 
         await db.update(
           'morbidity_records',

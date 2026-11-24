@@ -136,7 +136,6 @@ class _ChoDashboardState extends State<ChoDashboard> {
   StreamSubscription<QuerySnapshot>? _bhwUsersSubscription;
   StreamSubscription<QuerySnapshot>? _barangayWorkspacesSubscription;
   bool _referralTargetRetryPending = false;
-  bool _patientSyncFallbackAttempted = false;
   bool _initialDashboardSyncTriggered = false;
   bool _initialDoctorAvailabilityCheckTriggered = false;
   bool _isRestartingDashboardSync = false;
@@ -1199,9 +1198,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
         .listen(
           (snap) {
             if (!mounted) return;
-            final rows = snap.docs
-                .map(materializeFirestoreRecord)
-                .toList(growable: false);
+            final rows = deduplicateFirestoreRecords(
+              snap.docs.map(materializeFirestoreRecord),
+            );
             setState(() {
               _bhwUsers = ChoBarangaySurveillanceEngine.parseBhwUsers(rows);
             });
@@ -1298,12 +1297,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
     return true;
   }
 
-  Future<void> _startPatientsSync({bool resetFallback = true}) async {
+  Future<void> _startPatientsSync() async {
     final existingSubscription = _patientsSubscription;
     _patientsSubscription = null;
     await _cancelQuerySubscription(existingSubscription);
     if (!mounted) return;
-    if (resetFallback) _patientSyncFallbackAttempted = false;
     setState(() {
       _isLoading = true;
       _syncStatus['patient_records'] = false;
@@ -1311,13 +1309,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     if (kDebugMode) debugPrint('Syncing patient records...');
 
     final accessScope = _accessScope ?? await _ensureAccessScopeLoaded();
-    Query<Map<String, dynamic>> patientQuery = _buildModuleQuery(
-      'patient_records',
-      accessScope,
-    );
-    if (!_patientSyncFallbackAttempted) {
-      patientQuery = patientQuery.orderBy('createdAt', descending: true);
-    }
+    final patientQuery = _buildModuleQuery('patient_records', accessScope);
 
     _patientsSubscription = patientQuery
         .limit(_dashboardReadLimit)
@@ -1339,9 +1331,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
             final upcomingCheckups = <DateTime>[];
             final overdueQueue = <Map<String, dynamic>>[];
 
-            final rows = snap.docs
-                .map(materializeFirestoreRecord)
-                .toList(growable: false);
+            final rows = deduplicateFirestoreRecords(
+              snap.docs.map(materializeFirestoreRecord),
+            );
 
             for (final row in rows) {
               final riskLabel = _patientRiskLabel(row);
@@ -1439,23 +1431,12 @@ class _ChoDashboardState extends State<ChoDashboard> {
           onError: (e) {
             if (!mounted) return;
             if (kDebugMode) debugPrint('✗ Patient sync error: $e');
-            if (!_patientSyncFallbackAttempted) {
-              _patientSyncFallbackAttempted = true;
-              if (kDebugMode) {
-                debugPrint(
-                  'Primary patient Firestore sync failed; retrying without createdAt sort: $e',
-                );
-              }
-              unawaited(_startPatientsSync(resetFallback: false));
-              return;
-            }
-
             if (_activateChoRootFallbackIfNeeded(
               'patient_records',
               e,
               accessScope,
             )) {
-              unawaited(_startPatientsSync(resetFallback: false));
+              unawaited(_startPatientsSync());
               return;
             }
 
@@ -1487,9 +1468,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
         .listen(
           (snap) {
             if (!mounted) return;
-            final rows = snap.docs
-                .map(materializeFirestoreRecord)
-                .toList(growable: false);
+            final rows = deduplicateFirestoreRecords(
+              snap.docs.map(materializeFirestoreRecord),
+            );
             final now = DateTime.now();
             final monthStart = DateTime(now.year, now.month, 1);
             final monthStarts = <DateTime>[];
@@ -1509,8 +1490,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               for (final key in monthKeys) key: 0,
             };
             int total = 0;
-            for (final d in snap.docs) {
-              final data = d.data();
+            for (final data in rows) {
               final date = _parseDocDate(data, [
                 'datetime',
                 'date',
@@ -1528,7 +1508,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             }
             if (kDebugMode) {
               debugPrint(
-                '✓ Synced ${snap.docs.length} checkup records ($total this month)',
+                '✓ Synced ${rows.length} checkup records ($total this month)',
               );
             }
             setState(() {
@@ -1575,13 +1555,12 @@ class _ChoDashboardState extends State<ChoDashboard> {
         .listen(
           (snap) {
             if (!mounted) return;
-            final rows = snap.docs
-                .map(materializeFirestoreRecord)
-                .toList(growable: false);
+            final rows = deduplicateFirestoreRecords(
+              snap.docs.map(materializeFirestoreRecord),
+            );
             int active = 0;
             final upcomingPrenatal = <DateTime>[];
-            for (final d in snap.docs) {
-              final data = d.data();
+            for (final data in rows) {
               final status = (data['status'] ?? '').toString().toLowerCase();
               if (status.contains('active')) active++;
               final dueDate = _parseDocDate(data, <String>[
@@ -1595,7 +1574,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             }
             if (kDebugMode) {
               debugPrint(
-                '✓ Synced ${snap.docs.length} prenatal records ($active active)',
+                '✓ Synced ${rows.length} prenatal records ($active active)',
               );
             }
             setState(() {
@@ -1640,12 +1619,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
             .listen(
               (snap) {
                 if (!mounted) return;
-                final rows = snap.docs
-                    .map(materializeFirestoreRecord)
-                    .toList(growable: false);
+                final rows = deduplicateFirestoreRecords(
+                  snap.docs.map(materializeFirestoreRecord),
+                );
                 final upcomingImmunizations = <DateTime>[];
-                for (final d in snap.docs) {
-                  final data = d.data();
+                for (final data in rows) {
                   final dueDate = _parseDocDate(data, <String>[
                     'nextDoseDueDate',
                     'dueDate',
@@ -1656,9 +1634,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   if (dueDate != null) upcomingImmunizations.add(dueDate);
                 }
                 if (kDebugMode) {
-                  debugPrint(
-                    '✓ Synced ${snap.docs.length} immunization records',
-                  );
+                  debugPrint('✓ Synced ${rows.length} immunization records');
                 }
                 setState(() {
                   _immunizationRows
@@ -1666,7 +1642,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     ..addAll(rows);
                   _syncTruncated['immunization_records'] =
                       snap.docs.length >= _dashboardReadLimit;
-                  _immunizationRecords = snap.docs.length;
+                  _immunizationRecords = rows.length;
                   _immunizationForecast = _countUpcomingByWindow(
                     upcomingImmunizations,
                   );
@@ -1703,9 +1679,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
         .listen(
           (snap) {
             if (!mounted) return;
-            final rows = snap.docs
-                .map(materializeFirestoreRecord)
-                .toList(growable: false);
+            final rows = deduplicateFirestoreRecords(
+              snap.docs.map(materializeFirestoreRecord),
+            );
             final now = DateTime.now();
             final monthStarts = <DateTime>[];
             for (int i = 5; i >= 0; i--) {
@@ -1724,8 +1700,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             final diseaseTotals = <String, int>{};
             final monthlyDiseaseCounts = <String, Map<String, int>>{};
 
-            for (final d in snap.docs) {
-              final data = d.data();
+            for (final data in rows) {
               final diseaseRaw =
                   (data['disease'] ??
                           data['diagnosis'] ??
@@ -1772,7 +1747,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             }
 
             if (kDebugMode) {
-              debugPrint('✓ Synced ${snap.docs.length} morbidity records');
+              debugPrint('✓ Synced ${rows.length} morbidity records');
             }
             setState(() {
               _morbidityRows
@@ -1780,7 +1755,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 ..addAll(rows);
               _syncTruncated['morbidity_records'] =
                   snap.docs.length >= _dashboardReadLimit;
-              _morbidityReports = snap.docs.length;
+              _morbidityReports = rows.length;
               _diseaseTrendMonthLabels = monthLabels;
               _diseaseTrendSeries = trendSeries;
               _syncStatus['morbidity_records'] = true;
@@ -1816,20 +1791,19 @@ class _ChoDashboardState extends State<ChoDashboard> {
         .listen(
           (snap) {
             if (!mounted) return;
+            final rows = deduplicateFirestoreRecords(
+              snap.docs.map(materializeFirestoreRecord),
+            );
             if (kDebugMode) {
-              debugPrint('✓ Synced ${snap.docs.length} mortality records');
+              debugPrint('✓ Synced ${rows.length} mortality records');
             }
             setState(() {
               _mortalityRows
                 ..clear()
-                ..addAll(
-                  snap.docs
-                      .map(materializeFirestoreRecord)
-                      .toList(growable: false),
-                );
+                ..addAll(rows);
               _syncTruncated['mortality_records'] =
                   snap.docs.length >= _dashboardReadLimit;
-              _mortalityReports = snap.docs.length;
+              _mortalityReports = rows.length;
               _syncStatus['mortality_records'] = true;
               _recomputeAnalyticsState();
             });
@@ -1863,11 +1837,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
         .listen(
           (snap) {
             if (!mounted) return;
-            final rows = snap.docs
-                .map(materializeFirestoreRecord)
-                .toList(growable: false);
+            final rows = deduplicateFirestoreRecords(
+              snap.docs.map(materializeFirestoreRecord),
+            );
             if (kDebugMode) {
-              debugPrint('✓ Synced ${snap.docs.length} referrals');
+              debugPrint('✓ Synced ${rows.length} referrals');
             }
             setState(() {
               _referralRows

@@ -1081,6 +1081,7 @@ class ChoBarangaySurveillanceEngine {
     ) {
       var fallbackIdx = 0;
       for (final row in rows) {
+        if (isSyntheticDemoRecord(row)) continue;
         final rawId = (row['id'] ?? row['recordId'] ?? row['caseId'] ?? '')
             .toString()
             .trim();

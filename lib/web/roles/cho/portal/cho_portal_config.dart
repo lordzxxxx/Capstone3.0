@@ -61,7 +61,7 @@ class ChoModuleConfig {
     dateKeys: ['registrationDate', 'createdAt', 'updatedAt'],
     columns: [
       ChoFieldColumn('Patient ID', ['patientId', 'id']),
-      ChoFieldColumn('Full Name', ['fullName', 'name'], flex: 2),
+      ChoFieldColumn('Full Name', ['fullName', 'patientName', 'name'], flex: 2),
       ChoFieldColumn('Age', ['age']),
       ChoFieldColumn('Sex', ['sex', 'gender']),
       ChoFieldColumn('Barangay', ['barangay', 'barangayName'], flex: 2),
@@ -108,7 +108,13 @@ class ChoModuleConfig {
     collection: 'prenatal_records',
     icon: Icons.pregnant_woman_rounded,
     tabs: ['Insights', 'Records', 'High-Risk Cases', 'Pending Validation'],
-    dateKeys: ['lastVisit', 'visitDate', 'createdAt'],
+    dateKeys: [
+      'lastVisit',
+      'visitDate',
+      'registrationDate',
+      'date',
+      'createdAt',
+    ],
     columns: [
       ChoFieldColumn('Maternal ID', ['maternalRecordId', 'recordId', 'id']),
       ChoFieldColumn('Patient', ['patientName', 'fullName', 'name'], flex: 2),
@@ -194,14 +200,25 @@ class ChoModuleConfig {
     collection: 'mortality_records',
     icon: Icons.heart_broken_outlined,
     tabs: ['Insights', 'Records', 'Pending Validation'],
-    dateKeys: ['dateOfDeath', 'date', 'createdAt'],
+    dateKeys: [
+      'dateOfDeath',
+      'dateTimeOfDeath',
+      'dateReported',
+      'date',
+      'createdAt',
+    ],
     columns: [
       ChoFieldColumn('Record ID', ['recordId', 'id']),
       ChoFieldColumn('Authorized Identifier', [
         'patientId',
         'patientName',
       ], flex: 2),
-      ChoFieldColumn('Date of Death', ['dateOfDeath', 'date']),
+      ChoFieldColumn('Date of Death', [
+        'dateOfDeath',
+        'dateTimeOfDeath',
+        'dateReported',
+        'date',
+      ]),
       ChoFieldColumn('Age', ['age']),
       ChoFieldColumn('Sex', ['sex', 'gender']),
       ChoFieldColumn('Barangay', ['barangay', 'barangayName']),

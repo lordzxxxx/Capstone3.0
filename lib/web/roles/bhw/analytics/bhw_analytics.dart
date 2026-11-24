@@ -239,13 +239,7 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
               (record) =>
                   applyBarangayScopeToRecord(record, accessScope: scope),
             )
-            .where(
-              (record) => recordMatchesAccessScope(
-                record,
-                scope,
-                allowHistoricalBhwAnalyticsDemo: true,
-              ),
-            )
+            .where((record) => recordMatchesAccessScope(record, scope))
             .toList();
         rawByCollection[collection] = scopedRecords;
       }
@@ -1206,7 +1200,8 @@ class _BHWAnalyticsPageState extends State<BHWAnalyticsPage> {
                       scopeLabel: _accessScope.canViewAllBarangays
                           ? 'Screening results across the authorized city-wide scope'
                           : 'Screening results from the assigned barangay',
-                      onReviewReferral: () => Get.toNamed(WebRoutes.bhwReferrals),
+                      onReviewReferral: () =>
+                          Get.toNamed(WebRoutes.bhwReferrals),
                     ),
                     const SizedBox(height: 20),
                     _buildProgramBoard(),

@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:mycapstone_project/firebase_helper.dart';
 import 'package:mycapstone_project/shared/barangay_scope_utils.dart';
 import 'package:mycapstone_project/shared/user_access_scope.dart';
 import 'package:mycapstone_project/web/shared/services/user_access_scope_service.dart';
@@ -65,11 +67,7 @@ Future<List<MobileSyncStepResult>> runMobileSyncOperations(
       results.add(MobileSyncStepResult(module: entry.key, succeeded: true));
     } catch (error) {
       results.add(
-        MobileSyncStepResult(
-          module: entry.key,
-          succeeded: false,
-          error: error,
-        ),
+        MobileSyncStepResult(module: entry.key, succeeded: false, error: error),
       );
     }
   }
@@ -133,6 +131,29 @@ Future<Map<String, dynamic>> currentMobileFirestoreData(
     record,
     accessScope: accessScope,
     currentUserId: currentUser.uid,
+  );
+}
+
+/// Resolves the same canonical document path used by the web BHW workspace.
+/// Mobile previously attached barangay metadata but still wrote to the root
+/// collection, so CHO could see an event that the BHW web workspace could not.
+Future<DocumentReference<Map<String, dynamic>>>
+currentMobileFirestoreDocumentReference(
+  String collectionName,
+  String documentId, {
+  Map<String, dynamic>? record,
+}) async {
+  final currentUser = FirebaseAuth.instance.currentUser;
+  if (currentUser == null) {
+    throw StateError('Sign in before synchronizing mobile records.');
+  }
+  final accessScope = await UserAccessScopeService.instance.loadCurrentScope();
+  return resolveScopedRecordDocumentReference(
+    getFirestoreInstance(),
+    collectionName,
+    documentId,
+    accessScope: accessScope,
+    record: record,
   );
 }
 
